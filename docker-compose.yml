@@ -15,6 +15,7 @@ dev:
     DNSDOCK_NAME: api
     DNSDOCK_IMAGE: hid
     PORT: 80
+    NODE_ENV: local
 test:
   image: unocha/alpine-nodejs
   volumes:

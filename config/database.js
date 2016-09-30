@@ -15,12 +15,16 @@ module.exports = {
    */
   stores: {
 
+    local: {
+      migrate: 'create',
+      uri: 'mongodb://db:27017/hid',
+      options: {}
+    },
+
     development: {
       // should be 'create' or 'drop'
       migrate: 'create',
-
-      uri: 'mongodb://db:27017/hid',
-
+      uri: 'mongodb://db:27017/development',
       options: {}
     },
 
@@ -32,7 +36,7 @@ module.exports = {
   },
 
   models: {
-    defaultStore: 'development',
+    defaultStore: 'local',
     migrate: 'create'
   }
 }

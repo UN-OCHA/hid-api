@@ -1,3 +1,9 @@
 'use strict'
 
-module.exports = {}
+module.exports = {
+  database: {
+    models: {
+      defaultStore: 'development'
+    }
+  }
+}
