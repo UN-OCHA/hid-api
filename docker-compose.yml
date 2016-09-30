@@ -1,0 +1,28 @@
+db:
+  image: unocha/alpine-mongo
+  volumes:
+    - ./db:/srv/db
+  environment:
+    DNSDOCK_NAME: db
+    DNSDOCK_IMAGE: hid
+dev:
+  image: unocha/alpine-nodejs
+  volumes:
+    - .:/srv/www
+  links:
+    - db
+  environment:
+    DNSDOCK_NAME: api
+    DNSDOCK_IMAGE: hid
+    PORT: 80
+test:
+  image: unocha/alpine-nodejs
+  volumes:
+   - .:/srv/www
+  links:
+   - db
+  environment:
+    DNSDOCK_NAME: apitest
+    DNSDOCK_IMAGE: hid
+    PORT: 80
+    NODE_ENV: testing
