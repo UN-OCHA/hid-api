@@ -36,6 +36,15 @@ module.exports = class User extends Model {
   }
 
   static schema () {
+    const checkInSchema = new Schema({
+      list: Schema.ObjectId,
+      checkoutDate: Date,
+      pending: {
+        type: Boolean,
+        default: true
+      }
+    });
+
     return {
       given_name: {
         type: String,
@@ -150,7 +159,8 @@ module.exports = class User extends Model {
       favoriteLists: [{
         type: Schema.ObjectId,
         ref: 'List'
-      }]
+      }],
+      checkins: [ checkInSchema ]
     };
   }
 

@@ -24,7 +24,10 @@ module.exports = class UserController extends Controller{
       criteria['name'] = new RegExp(criteria['name'], "i")
     }
 
-    this.log.debug(criteria);
+    if (criteria['country']) {
+      criteria['location.country.id'] = criteria['country'];
+      delete criteria['country'];
+    }
 
     this.log.debug('[FootprintController] (find) model = user, criteria =', request.query, request.params.id,
       'options =', options)
