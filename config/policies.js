@@ -18,8 +18,6 @@ module.exports = {
 
   UserController: ['AuthPolicy.isAuthenticated'],
 
-  ListUserController: ['AuthPolicy.isAuthenticated'],
-
   ListController: ['AuthPolicy.isAuthenticated'],
 
   DefaultController: {

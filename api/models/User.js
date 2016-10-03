@@ -117,9 +117,7 @@ module.exports = class User extends Model {
       organization: {
         type: Schema.Types.Mixed
       },
-      organizations: {
-        type: Array
-      },
+      organizations: [ checkInSchema ],
       // TODO: verify valid phone number with libphonenumber and reformat if needed
       phone_number: {
         type: String
@@ -160,7 +158,10 @@ module.exports = class User extends Model {
         type: Schema.ObjectId,
         ref: 'List'
       }],
-      checkins: [ checkInSchema ]
+      checkins: [ checkInSchema ],
+      operations: [ checkInSchema ],
+      bundles: [ checkInSchema ],
+      disasters: [ checkInSchema ]
     };
   }
 
