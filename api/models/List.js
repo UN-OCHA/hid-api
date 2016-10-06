@@ -21,21 +21,26 @@ module.exports = class List extends Model {
       },
 
       type: {
-        type: 'string',
-        enum: ['operation', 'bundle', 'disaster', 'list'],
+        type: String,
+        enum: ['operation', 'bundle', 'disaster', 'list', 'organization'],
         required: [true, 'Type is required']
       },
 
       visibility: {
-        type: 'string',
+        type: String,
         enum: ['me', 'inlist', 'all', 'verified'],
         required: [true, 'Visibility is required']
       },
 
       joinability: {
-        type: 'string',
+        type: String,
         enum: ['public', 'moderated', 'private'],
         required: [true, 'Joinability is required']
+      },
+
+      // TODO: make sure it can not be set through the API
+      remote_id: {
+        type: Number
       },
 
       owner: {
@@ -46,19 +51,23 @@ module.exports = class List extends Model {
       managers: [{
         type: Schema.ObjectId,
         ref: 'User'
-      }]
+      }],
+
+      // TODO: make sure it can not be set through the API
+      metadata: {
+        type: Schema.Types.Mixed
+      }
     }
   }
 
   static onSchema(schema) {
-    schema.post('remove', function (next) {
-      console.log('Entering remove');
-      console.log(this);
+    // TODO: remove all checkins from users in this list
+    /*schema.post('remove', function (next) {
       orm['listuser'].find({list: this._id}).remove(function (err) {
         console.log('removed listusers');
         next ();
       });
-    });
+    });*/
   }
 
 }

@@ -1,3 +1,5 @@
+exports.caches = require('./caches')
+exports.cron = require('./cron')
 exports.database = require('./database')
 exports.env = require('./env')
 exports.footprints = require('./footprints')

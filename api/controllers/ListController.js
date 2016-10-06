@@ -17,6 +17,10 @@ module.exports = class ListController extends Controller{
 
     if (!options.populate) options.populate = "owner managers"
 
+    if (criteria['name']) {
+      criteria['name'] = new RegExp(criteria['name'], "i")
+    }
+
     this.log.debug('[ListController] (find) model = list, criteria =', request.query, request.params.id,
       'options =', options)
 
@@ -57,10 +61,9 @@ module.exports = class ListController extends Controller{
           {owner: request.params.token.id},
           {managers: request.params.token.id},
         ];
-      }
-
-      if (currentUser.verified) {
-        criteria.$or.push({visibility: "verified"});
+        if (currentUser.verified) {
+          criteria.$or.push({visibility: "verified"});
+        }
       }
 
       response = FootprintService.find('list', criteria, options)

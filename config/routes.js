@@ -72,17 +72,5 @@ module.exports = [
     method: 'DELETE',
     path: '/api/v2/list/{id?}',
     handler: 'ListController.destroy'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/listuser/{id?}',
-    handler: 'ListUserController.find'
-  },
-
-  {
-    method: 'POST',
-    path: '/api/v2/listuser',
-    handler: 'ListUserController.create'
   }
 ]

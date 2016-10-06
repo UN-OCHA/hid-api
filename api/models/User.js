@@ -158,7 +158,7 @@ module.exports = class User extends Model {
         type: Schema.ObjectId,
         ref: 'List'
       }],
-      checkins: [ checkInSchema ],
+      lists: [ checkInSchema ],
       operations: [ checkInSchema ],
       bundles: [ checkInSchema ],
       disasters: [ checkInSchema ]
