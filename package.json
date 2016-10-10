@@ -16,9 +16,7 @@
   ],
   "dependencies": {
     "bcryptjs": "^2.3.0",
-    "boom": "^3.1.1",
     "jsonwebtoken": "^7.1.9",
-    "mongoose": "^4.4.11",
     "trailpack-autoreload": "^1.0.2",
     "trailpack-cache": "^1.0.0",
     "trailpack-core": "^1.0.0-beta-3",

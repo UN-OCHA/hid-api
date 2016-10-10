@@ -6,7 +6,7 @@ db:
     DNSDOCK_NAME: db
     DNSDOCK_IMAGE: hid
 dev:
-  image: unocha/alpine-nodejs
+  image: unocha/alpine-nodejs:201610.npm3
   volumes:
     - .:/srv/www
   links:
@@ -17,7 +17,7 @@ dev:
     PORT: 80
     NODE_ENV: local
 test:
-  image: unocha/alpine-nodejs
+  image: unocha/alpine-nodejs:201610.npm3
   volumes:
    - .:/srv/www
   links:
