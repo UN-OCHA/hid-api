@@ -20,16 +20,19 @@ module.exports = class AuthController extends Controller{
       reply(Boom.unauthorized('email and password required'));
     }
     else {
+      var that = this;
       var app = this.app;
       var query = this.app.orm.User.where({ email: email });
       query
         .populate("favoriteLists")
         .findOne(function (err, user) {
           if (!user) {
+            that.log.info('Could not find user');
             return reply(Boom.unauthorized('invalid email or password'));
           }
 
           if (!user.validPassword(password)) {
+            that.log.info("Wrong password");
             return reply(Boom.unauthorized('invalid email or password'));
           }
           else {

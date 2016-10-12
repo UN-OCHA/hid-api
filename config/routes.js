@@ -39,6 +39,12 @@ module.exports = [
   },
 
   {
+    method: 'POST',
+    path: '/api/v2/user',
+    handler: 'UserController.create'
+  },
+
+  {
     method: 'GET',
     path: '/api/v2/user/{id?}',
     handler: 'UserController.find'
@@ -54,6 +60,18 @@ module.exports = [
     method: 'DELETE',
     path: '/api/v2/user/{id?}',
     handler: 'UserController.destroy'
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v2/user/{id}/{childAttribute}',
+    handler: 'UserController.checkin'
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/user/{id}/{childAttribute}/{checkInId}',
+    handler: 'UserController.checkout'
   },
 
   {

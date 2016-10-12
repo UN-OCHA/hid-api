@@ -167,7 +167,7 @@ module.exports = class User extends Model {
 
   static onSchema(schema) {
     schema.pre('save', function (next) {
-      if (this.password) {
+      if (this.password && this.confirm_password) {
         this.password = Bcrypt.hashSync(this.password, 11);
       }
       if (this.middle_name) {

@@ -17,6 +17,8 @@ module.exports = class ListController extends Controller{
 
     if (!options.populate) options.populate = "owner managers"
 
+    if (!options.sort) options.sort = "name"
+
     if (criteria['name']) {
       criteria['name'] = new RegExp(criteria['name'], "i")
     }

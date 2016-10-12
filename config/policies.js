@@ -16,7 +16,14 @@ module.exports = {
 
   FootprintController: ['AuthPolicy.isAuthenticated', 'ListOwner.set'],
 
-  UserController: ['AuthPolicy.isAuthenticated'],
+  UserController: {
+    create: [ ],
+    find: ['AuthPolicy.isAuthenticated'],
+    update: ['AuthPolicy.isAuthenticated'],
+    destroy: ['AuthPolicy.isAuthenticated'],
+    checkin: ['AuthPolicy.isAuthenticated'],
+    checkout: ['AuthPolicy.isAuthenticated']
+  },
 
   ListController: ['AuthPolicy.isAuthenticated'],
 
