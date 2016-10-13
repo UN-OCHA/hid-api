@@ -81,6 +81,12 @@ module.exports = [
   },
 
   {
+    method: 'PUT',
+    path: '/api/v2/user/password',
+    handler: 'UserController.resetPassword'
+  },
+
+  {
     method: 'GET',
     path: '/api/v2/list/{id?}',
     handler: 'ListController.find'

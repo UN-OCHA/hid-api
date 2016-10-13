@@ -253,5 +253,21 @@ module.exports = class UserController extends Controller{
       })
   }
 
+  resetPassword (request, reply) {
+    const Model = this.app.orm['user']
+    const app_reset_url = request.payload.app_reset_url
+
+    if (request.payload.email) {
+      var that = this
+      Model
+        .findOne({email: request.payload.email})
+        .then(record => {
+          that.app.services.EmailService.sendResetPassword(record, app_reset_url, function (merr, info) {
+            return reply('Password reset email sent successfully').code(202)
+          })
+        })
+    }
+  }
+
 }
 
