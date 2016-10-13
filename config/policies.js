@@ -22,7 +22,8 @@ module.exports = {
     update: ['AuthPolicy.isAuthenticated'],
     destroy: ['AuthPolicy.isAuthenticated'],
     checkin: ['AuthPolicy.isAuthenticated'],
-    checkout: ['AuthPolicy.isAuthenticated']
+    checkout: ['AuthPolicy.isAuthenticated'],
+    verifyEmail: [ ]
   },
 
   ListController: ['AuthPolicy.isAuthenticated'],

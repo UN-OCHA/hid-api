@@ -21,5 +21,31 @@ module.exports = class EmailService extends Service {
     });
     templateSender(options, context, callback);
   }
+
+  sendRegister (user, app_verify_url, callback) {
+    var mailOptions = {
+      to: user.email,
+      locale: user.locale
+    };
+    var context = {
+      name: user.name,
+      reset_url: app_verify_url + '/' + user._id + '/' + user.generateHash()
+    };
+    this.send(mailOptions, 'register', context, callback);
+  }
+
+
+  sendPostRegister (user, callback) {
+    var mailOptions = {
+      to: user.email,
+      locale: user.locale
+    };
+    var context = {
+      given_name: user.given_name,
+      profile_url: process.env.APP_URL + '/users/' + user._id
+    };
+    this.send(mailOptions, 'post_register', context, callback);
+  }
+
 }
 

@@ -75,6 +75,12 @@ module.exports = [
   },
 
   {
+    method: 'PUT',
+    path: '/api/v2/user/{id}/email_verified',
+    handler: 'UserController.verifyEmail'
+  },
+
+  {
     method: 'GET',
     path: '/api/v2/list/{id?}',
     handler: 'ListController.find'

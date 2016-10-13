@@ -16,10 +16,12 @@ dev:
     DNSDOCK_IMAGE: hid
     PORT: 80
     NODE_ENV: local
+    ROOT_URL: http://api.hid.vm
     SMTP_HOST: app.mailhog.vm
     SMTP_PORT: 1025
     SMTP_USER: humanitarianid
     SMTP_PASS: smtp_password
+    APP_URL: http://app.hid.vm
 test:
   image: unocha/alpine-nodejs:201610.npm3
   volumes:
@@ -31,7 +33,9 @@ test:
     DNSDOCK_IMAGE: hid
     PORT: 80
     NODE_ENV: testing
+    ROOT_URL: http://apitest.hid.vm
     SMTP_HOST: app.mailhog.vm
     SMTP_PORT: 1025
     SMTP_USER: humanitarianid
     SMTP_PASS: smtp_password
+    APP_URL: http://app.hid.vm

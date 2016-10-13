@@ -26,6 +26,37 @@ module.exports = class User extends Model {
           return Bcrypt.compareSync(password, this.password)
         },
 
+        generateHash: function () {
+          const now = Date.now()
+          return new Buffer(this.email + "/" + now + "/" + new Buffer(Bcrypt.hashSync(this.password + now + this._id, 11)).toString('base64')).toString('base64')
+        },
+
+        // Validate the hash of a confirmation link
+        validHash: function (hashLink) {
+          const key = new Buffer(hashLink, 'base64').toString('ascii')
+          const parts = key.split('/')
+          const email = parts[0]
+          const timestamp = parts[1]
+          const hash = new Buffer(parts[2], 'base64').toString('ascii')
+          const now = Date.now()
+
+          // Verify hash
+          // verify timestamp is not too old (allow up to 7 days in milliseconds)
+          if (timestamp < (now - 7 * 86400000) || timestamp > now) {
+            return 'Expired confirmation link'
+          }
+
+          if (this.email != email) {
+            return 'Wrong user or wrong email in the hash';
+          }
+
+          // verify hash
+          if (!Bcrypt.compareSync(this.password + timestamp + this._id, hash)) {
+            return 'This verification link has already been used';
+          }
+          return true
+        },
+
         toJSON: function () {
           const user = this.toObject()
           delete user.password
@@ -167,9 +198,6 @@ module.exports = class User extends Model {
 
   static onSchema(schema) {
     schema.pre('save', function (next) {
-      if (this.password && this.confirm_password) {
-        this.password = Bcrypt.hashSync(this.password, 11);
-      }
       if (this.middle_name) {
         this.name = this.given_name + ' ' + this.middle_name + ' ' + this.family_name
       }

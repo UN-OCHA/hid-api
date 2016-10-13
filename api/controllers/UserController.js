@@ -2,6 +2,7 @@
 
 const Controller = require('trails-controller')
 const Boom = require('boom')
+const Bcrypt = require('bcryptjs')
 const childAttributes = ['lists', 'organizations', 'operations', 'bundles', 'disasters']
 
 /**
@@ -17,19 +18,18 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('[UserController] (create) payload =', request.payload, 'options =', options)
 
+    if (request.payload.password && request.payload.confirm_password) {
+      request.payload.password = Bcrypt.hashSync(request.payload.password, 11);
+    }
+
+    var app_verify_url = request.payload.app_verify_url
+    delete request.payload.app_verify_url
+
     var that = this
     Model.create(request.payload, function (err, user) {
       // TODO: do error handling
       if (user.email) {
-        var mailOptions = {
-          to: user.email,
-          locale: user.locale
-        };
-        var context = {
-          name: user.name,
-          reset_url: 'http://www.humanitarian.id'
-        };
-        that.app.services.EmailService.send(mailOptions, 'register', context, function (merr, info) {
+        that.app.services.EmailService.sendRegister(user, app_verify_url, function (merr, info) {
           return reply(user);
         });
       }
@@ -46,6 +46,9 @@ module.exports = class UserController extends Controller{
     let response, count
 
     if (!options.populate) options.populate = "favoriteLists";
+
+    // Hide unconfirmed users
+    if (request.params.currentUser && !request.params.currentUser.is_admin) criteria['email_verified'] = true
 
     if (criteria['roles.id']) {
       criteria['roles.id'] = parseInt(criteria['roles.id']);
@@ -187,7 +190,6 @@ module.exports = class UserController extends Controller{
     const checkInId = request.params.checkInId
     const payload = request.payload
     const Model = this.app.orm['user']
-    const List = this.app.orm['list']
 
     this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,
       'options =', options)
@@ -202,6 +204,33 @@ module.exports = class UserController extends Controller{
         record.save().then(() => {
           return reply(record)
         })
+      })
+  }
+
+  verifyEmail (request, reply) {
+    const userId = request.params.id
+    const Model = this.app.orm['user']
+
+    if (!request.payload.hash) return reply(Boom.badRequest('Missing hash parameter'))
+
+    var that = this;
+    Model
+      .findOne({ _id: userId })
+      .then(record => {
+        // Verify hash
+        var valid = record.validHash(request.payload.hash)
+        if (valid === true) {
+          // Verify user email
+          record.email_verified = true
+          record.save().then(() => {
+            that.app.services.EmailService.sendPostRegister(record, function (merr, info) {
+              return reply(record);
+            });
+          })
+        }
+        else {
+          return reply(Boom.badRequest(valid))
+        }
       })
   }
 

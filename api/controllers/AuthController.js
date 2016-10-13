@@ -31,6 +31,11 @@ module.exports = class AuthController extends Controller{
             return reply(Boom.unauthorized('invalid email or password'));
           }
 
+          if (!user.email_verified) {
+            that.log.info('User has not verified his email');
+            return reply(Boom.unauthorized('Please verify your email address'));
+          }
+
           if (!user.validPassword(password)) {
             that.log.info("Wrong password");
             return reply(Boom.unauthorized('invalid email or password'));
