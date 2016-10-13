@@ -19,7 +19,7 @@ module.exports = class UserController extends Controller{
     this.log.debug('[UserController] (create) payload =', request.payload, 'options =', options)
 
     if (request.payload.password && request.payload.confirm_password) {
-      request.payload.password = Bcrypt.hashSync(request.payload.password, 11);
+      request.payload.password = Model.hashPassword(request.payload.password);
     }
 
     var app_verify_url = request.payload.app_verify_url
@@ -92,6 +92,7 @@ module.exports = class UserController extends Controller{
     const FootprintService = this.app.services.FootprintService
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query)
     const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query)
+    const Model = this.app.orm['user']
 
     if (!options.populate) options.populate = "favoriteLists"
 
@@ -100,11 +101,29 @@ module.exports = class UserController extends Controller{
 
     // Do not allow childAttributes to be updated through the update method
     for (var i = 0, len = childAttributes.length; i < len; i++) {
-      delete request.payload.childAttributes[i];
+      if (request.payload[childAttributes[i]]) {
+        delete request.payload[childAttributes[i]]
+      }
     }
 
     if (request.params.id) {
-      reply(FootprintService.update('user', request.params.id, request.payload, options))
+      if (request.payload.old_password && request.payload.new_password) {
+        // Check old password
+        Model
+          .findOne({_id: request.params.id})
+          .then((user) => {
+            if (user.validPassword(request.payload.old_password)) {
+              request.payload.password = Model.hashPassword(request.payload.new_password)
+              return reply(FootprintService.update('user', request.params.id, request.payload, options))
+            }
+            else {
+              return reply(Boom.badRequest('The old password is wrong'))
+            }
+          });
+      }
+      else {
+        reply(FootprintService.update('user', request.params.id, request.payload, options))
+      }
     }
     else {
       reply(FootprintService.update('user', criteria, request.payload, options))

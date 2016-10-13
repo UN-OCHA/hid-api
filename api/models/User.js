@@ -21,6 +21,11 @@ module.exports = class User extends Model {
           virtuals: true
         }
       },
+      statics: {
+        hashPassword: function (password) {
+          return Bcrypt.hashSync(password, 11)
+        }
+      },
       methods: {
         validPassword: function (password)  {
           return Bcrypt.compareSync(password, this.password)
