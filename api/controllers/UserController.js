@@ -4,6 +4,7 @@ const Controller = require('trails-controller')
 const Boom = require('boom')
 const Bcrypt = require('bcryptjs')
 const childAttributes = ['lists', 'organizations', 'operations', 'bundles', 'disasters']
+const forbiddenAttributes = ['is_orphan', 'is_ghost', 'createdBy']
 
 /**
  * @module UserController
@@ -19,19 +20,52 @@ module.exports = class UserController extends Controller{
     this.log.debug('[UserController] (create) payload =', request.payload, 'options =', options)
 
     if (request.payload.password && request.payload.confirm_password) {
-      request.payload.password = Model.hashPassword(request.payload.password);
+      request.payload.password = Model.hashPassword(request.payload.password)
+    }
+    else {
+      // Set a random password
+      // TODO: check that the password is random and long enough
+      request.payload.password = Model.hashPassword(Math.random().toString(36).slice(2))
     }
 
+    if (!request.payload.app_verify_url) return reply(Boom.badRequest('Missing app_verify_url'))
     var app_verify_url = request.payload.app_verify_url
     delete request.payload.app_verify_url
 
+    // Do not allow childAttributes to be updated through the update method
+    for (var i = 0, len = childAttributes.length; i < len; i++) {
+      if (request.payload[childAttributes[i]]) {
+        delete request.payload[childAttributes[i]]
+      }
+    }
+
+    // Do not allow forbiddenAttributes to be created through the create method
+    for (var i = 0, len = forbiddenAttributes.length; i < len; i++) {
+      if (request.payload[forbiddenAttributes[i]]) {
+        delete request.payload[forbiddenAttributes[i]]
+      }
+    }
+
+    // TODO: make sure only admins or anonymous users can create users
+
+    if (request.params.currentUser) request.payload.createdBy = request.params.currentUser._id
+
     var that = this
     Model.create(request.payload, function (err, user) {
+      if (!user) return reply(Boom.badRequest('An error occured'))
       // TODO: do error handling
       if (user.email) {
-        that.app.services.EmailService.sendRegister(user, app_verify_url, function (merr, info) {
-          return reply(user);
-        });
+        if (!request.params.currentUser) {
+          that.app.services.EmailService.sendRegister(user, app_verify_url, function (merr, info) {
+            return reply(user);
+          });
+        }
+        else {
+          // An admin is creating an orphan user
+          that.app.services.EmailService.sendRegisterOrphan(user, request.params.currentUser, app_verify_url, function (merr, info) {
+            return reply(user);
+          });
+        }
       }
       else {
         return reply(user);
@@ -103,6 +137,13 @@ module.exports = class UserController extends Controller{
     for (var i = 0, len = childAttributes.length; i < len; i++) {
       if (request.payload[childAttributes[i]]) {
         delete request.payload[childAttributes[i]]
+      }
+    }
+
+    // Do not allow forbiddenAttributes to be updated through the update method
+    for (var i = 0, len = forbiddenAttributes.length; i < len; i++) {
+      if (request.payload[forbiddenAttributes[i]]) {
+        delete request.payload[forbiddenAttributes[i]]
       }
     }
 
@@ -227,14 +268,15 @@ module.exports = class UserController extends Controller{
   }
 
   verifyEmail (request, reply) {
-    const userId = request.params.id
     const Model = this.app.orm['user']
 
     if (!request.payload.hash) return reply(Boom.badRequest('Missing hash parameter'))
 
+    const parts = Model.explodeHash(request.payload.hash)
+
     var that = this;
     Model
-      .findOne({ _id: userId })
+      .findOne({ email: parts.email })
       .then(record => {
         // Verify hash
         var valid = record.validHash(request.payload.hash)
@@ -262,10 +304,35 @@ module.exports = class UserController extends Controller{
       Model
         .findOne({email: request.payload.email})
         .then(record => {
+          if (!record) return reply(Boom.badRequest('Email could not be found'))
           that.app.services.EmailService.sendResetPassword(record, app_reset_url, function (merr, info) {
             return reply('Password reset email sent successfully').code(202)
           })
         })
+    }
+    else {
+      if (request.payload.hash && request.payload.password) {
+        const parts = Model.explodeHash(request.payload.hash)
+        Model
+          .findOne({email: parts.email})
+          .then(record => {
+            if (!record) return reply(Boom.badRequest('Email could not be found'))
+            var valid = record.validHash(request.payload.hash)
+            if (valid === true) {
+              record.password = Model.hashPassword(request.payload.password)
+              record.email_verified = true
+              record.save().then(() => {
+                return reply().code(204)
+              })
+            }
+            else {
+              return reply(Boom.badRequest(valid))
+            }
+          })
+      }
+      else {
+        return reply(Boom.badRequest('Wrong arguments'));
+      }
     }
   }
 

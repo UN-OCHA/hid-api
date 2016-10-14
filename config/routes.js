@@ -76,7 +76,7 @@ module.exports = [
 
   {
     method: 'PUT',
-    path: '/api/v2/user/{id}/email_verified',
+    path: '/api/v2/user/email_verified',
     handler: 'UserController.verifyEmail'
   },
 

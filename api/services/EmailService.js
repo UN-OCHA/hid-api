@@ -25,13 +25,26 @@ module.exports = class EmailService extends Service {
   sendRegister (user, app_verify_url, callback) {
     var mailOptions = {
       to: user.email,
-      locale: user.locale
+      locale: user.locale || 'en'
     };
     var context = {
       name: user.name,
-      reset_url: app_verify_url + '/' + user._id + '/' + user.generateHash()
+      reset_url: app_verify_url + '/' + user.generateHash()
     };
     this.send(mailOptions, 'register', context, callback);
+  }
+
+  sendRegisterOrphan(user, admin, app_verify_url, callback) {
+    var mailOptions = {
+      to: user.email,
+      locale: user.locale || 'en'
+    };
+    var context = {
+      user: user,
+      admin: admin,
+      reset_url: app_verify_url + '/' + user.generateHash()
+    };
+    this.send(mailOptions, 'register_orphan', context, callback);
   }
 
 

@@ -24,6 +24,15 @@ module.exports = class User extends Model {
       statics: {
         hashPassword: function (password) {
           return Bcrypt.hashSync(password, 11)
+        },
+        explodeHash: function (hashLink) {
+          const key = new Buffer(hashLink, 'base64').toString('ascii')
+          const parts = key.split('/')
+          return {
+            'email': parts[0],
+            'timestamp': parts[1],
+            'hash': new Buffer(parts[2], 'base64').toString('ascii')
+          }
         }
       },
       methods: {
@@ -190,6 +199,18 @@ module.exports = class User extends Model {
         type: Boolean,
         default: false
       },
+      is_orphan: {
+        type: Boolean,
+        default: false
+      },
+      is_ghost: {
+        type: Boolean,
+        default: false
+      },
+      createdBy: {
+        type: Schema.ObjectId,
+        ref: 'User'
+      },
       favoriteLists: [{
         type: Schema.ObjectId,
         ref: 'List'
@@ -208,6 +229,18 @@ module.exports = class User extends Model {
       }
       else {
         this.name = this.given_name + ' ' + this.family_name
+      }
+      if (!this.email) {
+        this.is_ghost = true
+      }
+      else {
+        this.is_ghost = false
+      }
+      if (this.createdBy && !this.email_verified && this.email) {
+        this.is_orphan = true;
+      }
+      else {
+        this.is_orphan = false;
       }
       next ();
     });
