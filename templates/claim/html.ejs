@@ -1,0 +1,17 @@
+<p>Dear <%= name %></p>
+
+<p>You have been invited to join Humanitarian ID - a neutral humanitarian login and contact management system for humanitarian responders. In order to add your details and connect with other responders, please register using the link below</p>
+
+<p><a href="<%= reset_url %>"><%= reset_url %></a></p>
+
+<% include../includes/footer_en %>
+
+hr.
+
+p Bonjour #{nameGiven}
+
+p Vous avez été invité à joindre Humanitarian ID – un système autonome pour gérer les contacts des acteurs humanitaires. Pour ajouter vos détails et pour rentrer en contact avec d'autres humanitaires, nous vous prions de bien vouloir vous enregistrer en utilisant le lien ci-dessous.
+
+a(href=reset_url) #{reset_url}
+
+include ../includes/footer_fr.jade

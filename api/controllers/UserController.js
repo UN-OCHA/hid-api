@@ -336,5 +336,21 @@ module.exports = class UserController extends Controller{
     }
   }
 
+  claimEmail (request, reply) {
+    const Model = this.app.orm['user']
+    const app_reset_url = request.payload.app_reset_url
+    const userId = request.params.id
+
+    var that = this
+    Model
+      .findOne({_id: userId})
+      .then(record => {
+        if (!record) return reply(Boom.notFound())
+        that.app.services.EmailService.sendClaim(record, app_reset_url, function (err, info) {
+          return reply('Claim email sent successfully').code(202)
+        })
+      })
+  }
+
 }
 

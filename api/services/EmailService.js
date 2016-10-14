@@ -72,6 +72,18 @@ module.exports = class EmailService extends Service {
     this.send(mailOptions, 'reset_password', context, callback);
   }
 
+  sendClaim (user, app_reset_url, callback) {
+    var mailOptions = {
+      to: user.email,
+      locale: user.locale
+    };
+    var context = {
+      name: user.name,
+      reset_url: app_reset_url + '/' + user.generateHash()
+    };
+    this.send(mailOptions, 'claim', context, callback);
+  }
+
 
 }
 

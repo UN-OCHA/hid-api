@@ -87,6 +87,12 @@ module.exports = [
   },
 
   {
+    method: 'PUT',
+    path: '/api/v2/user/{id}/orphan',
+    handler: 'UserController.claimEmail'
+  },
+
+  {
     method: 'GET',
     path: '/api/v2/list/{id?}',
     handler: 'ListController.find'
