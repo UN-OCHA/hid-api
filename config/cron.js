@@ -23,7 +23,7 @@ module.exports = {
       onTick: function (app) {
         const List = app.orm['list']
         const listTypes = ['operation', 'bundle', 'disaster', 'organization']
-        const Cache = app.services.CacheService.getCaches(['local-cache'])
+        //const Cache = app.services.CacheService.getCaches(['local-cache'])
         var hasNextPage = false, pageNumber = 1, path = '';
 
         var _createList = function (listType, item, cb) {
@@ -62,10 +62,10 @@ module.exports = {
           }
         };
 
-
-        Cache.then((mongoCache) => {
-          return mongoCache.get('lastPull', function (err, lastPull) {
-            if (err) app.log.info(err)
+        var lastPull = 0
+        //Cache.then((mongoCache) => {
+          //return mongoCache.get('lastPull', function (err, lastPull) {
+            //if (err) app.log.info(err)
             if (!lastPull) lastPull = 0
             // For each list type
             async.eachSeries(listTypes,
@@ -111,9 +111,9 @@ module.exports = {
               var currentTime = Math.round(Date.now() / 1000);
               // Keep item in cache 12 minutes (720 seconds)
               app.log.info(currentTime);
-              mongoCache.set('lastPull', currentTime, {ttl: 720}, function (err) {
+              /*mongoCache.set('lastPull', currentTime, {ttl: 720}, function (err) {
                 app.log.info(err);
-              });
+              });*/
               app.log.info('Done processing all list types');
             });
           });
