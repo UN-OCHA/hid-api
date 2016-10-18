@@ -19,7 +19,7 @@ module.exports = {
       }
     },*/
     importLists: {
-      schedule: '*/10 * * * *', // Run every 10 minutes
+      schedule: '*/60 * * * *', // Run every 10 minutes
       onTick: function (app) {
         const List = app.orm['list']
         const listTypes = ['operation', 'bundle', 'disaster', 'organization']
