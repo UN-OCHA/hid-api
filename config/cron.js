@@ -116,8 +116,8 @@ module.exports = {
               });*/
               app.log.info('Done processing all list types');
             });
-          });
-        });
+          //});
+        //});
       },
       onComplete: function (app) {
         app.log.info('I am done');
