@@ -11,7 +11,7 @@ module.exports = class AuthPolicy extends Policy {
 
   isAuthenticated(request, reply) {
     // If we are creating a user and we are not authenticated, allow it
-    if (request.params.model && request.params.model == 'user' && request.method == 'post' && !request.headers.authorization && !request.params.token) {
+    if (request.path == '/api/v2/user' && request.method == 'post' && !request.headers.authorization && !request.params.token) {
       return reply();
     }
 
