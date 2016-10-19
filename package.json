@@ -26,7 +26,7 @@
     "trailpack-cron": "^1.1.0",
     "trailpack-footprints": "^1.0.1",
     "trailpack-hapi": "^1.0.4",
-    "trailpack-mongoose": "^0.4.3",
+    "trailpack-mongoose": "^0.4.4",
     "trailpack-router": "^1.0.0-beta-4",
     "trails": "^1.1.0",
     "trails-controller": "^1.0.0-beta-2",
