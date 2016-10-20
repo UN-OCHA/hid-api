@@ -205,8 +205,11 @@ module.exports = class UserController extends Controller{
     if (!payload.list)
       return reply(Boom.badRequest('Missing list attribute'))
 
+    var that = this
+
     List
       .findOne({ _id: payload.list })
+      .catch(err => { return reply(Boom.badImplementation(err.toString())) })
       .then((list) => {
         // Check that the list added corresponds to the right attribute
         if (childAttribute != list.type + 's') 
@@ -218,6 +221,7 @@ module.exports = class UserController extends Controller{
 
         Model
           .findOne({ _id: userId })
+          .catch(err => { return reply(Boom.badImplementation(err.toString())) })
           .then((record) => {
             if (!record)
               return reply(Boom.notFound())
@@ -236,8 +240,11 @@ module.exports = class UserController extends Controller{
 
             record[childAttribute].push(payload)
 
-            record.save().then(() => {
-              return reply(record)
+            record
+              .save()
+              .catch(err => { return reply(Boom.badImplementation(err.toString())) })
+              .then((record2) => {
+              return reply(record2)
             })
         })
       })
