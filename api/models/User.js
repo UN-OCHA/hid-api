@@ -82,7 +82,10 @@ module.exports = class User extends Model {
 
   static schema () {
     const checkInSchema = new Schema({
-      list: Schema.ObjectId,
+      list: {
+        type: Schema.ObjectId,
+        ref: 'List'
+      },
       checkoutDate: Date,
       pending: {
         type: Boolean,

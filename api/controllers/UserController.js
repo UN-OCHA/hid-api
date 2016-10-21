@@ -79,7 +79,10 @@ module.exports = class UserController extends Controller{
     const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query)
     let response, count
 
-    if (!options.populate) options.populate = "favoriteLists";
+    if (!options.populate) {
+      options.populate = "favoriteLists";
+      if (request.params.id) options.populate = "favoriteLists operations.list disasters.list bundles.list organizations.list"
+    }
 
     // Hide unconfirmed users
     if (request.params.currentUser && !request.params.currentUser.is_admin) criteria['email_verified'] = true
@@ -261,17 +264,19 @@ module.exports = class UserController extends Controller{
     this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,
       'options =', options)
 
+    var that = this
     Model
       .findOne({ _id: userId })
       .then(record => {
-        record[childAttribute].filter(function (elt, index) {
-          return !checkInId.equals(elt._id);
+        record[childAttribute] = record[childAttribute].filter(function (elt, index) {
+          return !elt._id.equals(checkInId);
         });
 
         record.save().then(() => {
           return reply(record)
         })
       })
+      .catch(err => { return reply(Boom.badImplementation(err.toString())) })
   }
 
   verifyEmail (request, reply) {
