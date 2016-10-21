@@ -19,9 +19,9 @@ module.exports = class ListController extends Controller{
 
     if (!options.sort) options.sort = "name"
 
-    if (criteria['name']) {
-      criteria['name'] = new RegExp(criteria['name'], "i")
-    }
+    // Search with contains when searching in name or full_name
+    if (criteria['name']) criteria['name'] = new RegExp(criteria['name'], "i")
+    if (criteria['label']) criteria['label'] = new RegExp(criteria['label'], "i")
 
     this.log.debug('[ListController] (find) model = list, criteria =', request.query, request.params.id,
       'options =', options)

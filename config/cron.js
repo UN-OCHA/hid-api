@@ -27,7 +27,7 @@ module.exports = {
         var hasNextPage = false, pageNumber = 1, path = '';
 
         var _createList = function (listType, item, cb) {
-          var tmpList = {}, visibility = '', name = '';
+          var tmpList = {}, visibility = '', label = '', acronym = '';
           if ((listType == 'operation' && item.status != 'inactive') || listType != 'operation') {
             List.findOne({type: listType, remote_id: item.id}, function (err, list) {
               if (!list) {
@@ -35,12 +35,16 @@ module.exports = {
                 if (item.hid_access && item.hid_access == 'closed') {
                   visibility = 'verified';
                 }
-                name = item.label;
+                label = item.label;
                 if (listType == 'bundle') {
-                  name = item.operation[0].label + ': ' + item.label;
+                  label = item.operation[0].label + ': ' + item.label;
+                }
+                if (listType == 'organization' && item.acronym) {
+                  acronym = item.acronym
                 }
                 tmpList = {
-                  name: name,
+                  label: label,
+                  acronym: acronym,
                   type: listType,
                   visibility: visibility,
                   joinability: 'public',

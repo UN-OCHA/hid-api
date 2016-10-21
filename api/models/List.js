@@ -15,9 +15,19 @@ module.exports = class List extends Model {
   static schema () {
     return {
       name: {
+        type: String
+      },
+
+      // Acronym for organizations
+      acronym: {
+        type: String,
+        trim: true
+      },
+
+      label: {
         type: String,
         trim: true,
-        required: [true, 'Name is required']
+        required: [true, 'Label is required']
       },
 
       type: {
@@ -62,6 +72,23 @@ module.exports = class List extends Model {
 
   static onSchema(schema) {
     // TODO: remove all checkins from users in this list
+    schema.pre('save', function (next) {
+      if (this.acronym) {
+        this.name = this.label + ' (' + this.acronym + ')'
+      }
+      else {
+        this.name = this.label
+      }
+      next ();
+    });
+    schema.pre('update', function (next) {
+      if (this.acronym) {
+        this.name = this.label + ' (' + this.acronym + ')'
+      }
+      else {
+        this.name = this.label
+      }
+    });
     /*schema.post('remove', function (next) {
       orm['listuser'].find({list: this._id}).remove(function (err) {
         console.log('removed listusers');
