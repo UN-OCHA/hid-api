@@ -32,6 +32,12 @@ module.exports = class UserController extends Controller{
     var app_verify_url = request.payload.app_verify_url
     delete request.payload.app_verify_url
 
+    var registration_type = ''
+    if (request.payload.registration_type) {
+      registration_type = request.payload.registration_type
+      delete request.payload.registration_type
+    }
+
     // Do not allow childAttributes to be updated through the update method
     for (var i = 0, len = childAttributes.length; i < len; i++) {
       if (request.payload[childAttributes[i]]) {
@@ -61,10 +67,17 @@ module.exports = class UserController extends Controller{
           });
         }
         else {
-          // An admin is creating an orphan user
-          that.app.services.EmailService.sendRegisterOrphan(user, request.params.currentUser, app_verify_url, function (merr, info) {
-            return reply(user);
-          });
+          // An admin is creating an orphan user or Kiosk registration
+          if (registration_type == 'kiosk') {
+            that.app.services.EmailService.sendRegisterKiosk(user, app_verify_url, function (merr, info) {
+              return reply(user)
+            });
+          }
+          else {
+            that.app.services.EmailService.sendRegisterOrphan(user, request.params.currentUser, app_verify_url, function (merr, info) {
+              return reply(user);
+            });
+          }
         }
       }
       else {

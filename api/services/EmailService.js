@@ -47,6 +47,17 @@ module.exports = class EmailService extends Service {
     this.send(mailOptions, 'register_orphan', context, callback);
   }
 
+  sendRegisterKiosk(user, app_verify_url, callback) {
+    var mailOptions = {
+      to: user.email,
+      locale: user.locale || 'en'
+    };
+    var context = {
+      user: user,
+      reset_url: app_verify_url + '/' + user.generateHash()
+    };
+    this.send(mailOptions, 'register_kiosk', context, callback);
+  }
 
   sendPostRegister (user, callback) {
     var mailOptions = {
