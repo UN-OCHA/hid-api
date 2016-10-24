@@ -310,6 +310,7 @@ module.exports = class UserController extends Controller{
         if (valid === true) {
           // Verify user email
           record.email_verified = true
+          record.expires = new Date(0, 0, 1, 0, 0, 0)
           record.save().then(() => {
             that.app.services.EmailService.sendPostRegister(record, function (merr, info) {
               return reply(record);
@@ -348,6 +349,7 @@ module.exports = class UserController extends Controller{
             if (valid === true) {
               record.password = Model.hashPassword(request.payload.password)
               record.email_verified = true
+              record.expires = new Date(0, 0, 1, 0, 0, 0)
               record.save().then(() => {
                 return reply().code(204)
               })
