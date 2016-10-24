@@ -210,6 +210,10 @@ module.exports = class User extends Model {
         type: Boolean,
         default: false
       },
+      expires: {
+        type: Date,
+        default: +new Date() + 7*24*60*60*1000
+      },
       createdBy: {
         type: Schema.ObjectId,
         ref: 'User'

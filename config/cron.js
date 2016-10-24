@@ -4,20 +4,20 @@ const async = require('async')
 
 module.exports = {
   jobs: {
-    /*cacheTest: {
+    deleteExpired: {
+      schedule: '*/60 * * * *',
       onTick: function (app) {
-        //app.config.cron.lastPull = Math.round(Date.now() / 1000);
-        const Cache = app.services.CacheService.getCaches(['local-cache'])
-        Cache.then((mongoCache) => {
-          return mongoCache.set('test', 'hello', 60, function (err) {
-            if (err) app.log.info(err)
-            mongoCache.get('test', function (err, result) {
-              app.log.info(result);
-            });
-          });
-        });
-      }
-    },*/
+        const User = app.orm['user']
+        var now = Date.now()
+        var start = new Date(2016, 0, 1, 0, 0, 0)
+        User.remove({expires: {$gt: start, $lt: now}});
+      },
+      onComplete: function (app) {
+        app.log.info('Done deleting expired users')
+      },
+      start: true
+    },
+    // Import lists from Humanitarianresponse
     importLists: {
       schedule: '*/60 * * * *', // Run every 10 minutes
       onTick: function (app) {

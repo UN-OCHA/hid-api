@@ -4,7 +4,7 @@ const Controller = require('trails-controller')
 const Boom = require('boom')
 const Bcrypt = require('bcryptjs')
 const childAttributes = ['lists', 'organizations', 'operations', 'bundles', 'disasters']
-const forbiddenAttributes = ['is_orphan', 'is_ghost', 'createdBy']
+const forbiddenAttributes = ['is_orphan', 'is_ghost', 'createdBy', 'expires']
 
 /**
  * @module UserController
@@ -55,6 +55,8 @@ module.exports = class UserController extends Controller{
     // TODO: make sure only admins or anonymous users can create users
 
     if (request.params.currentUser) request.payload.createdBy = request.params.currentUser._id
+    // If an orphan is being created, do not expire
+    if (request.params.currentUser && registration_type == '') request.payload.expires = new Date(0, 0, 1, 0, 0, 0)
 
     var that = this
     Model.create(request.payload, function (err, user) {
