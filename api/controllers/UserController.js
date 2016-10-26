@@ -60,8 +60,7 @@ module.exports = class UserController extends Controller{
 
     var that = this
     Model.create(request.payload, function (err, user) {
-      if (!user) return reply(Boom.badRequest('An error occured'))
-      // TODO: do error handling
+      if (!user) return reply(Boom.badRequest(err.message))
       if (user.email) {
         if (!request.params.currentUser) {
           that.app.services.EmailService.sendRegister(user, app_verify_url, function (merr, info) {
@@ -140,13 +139,22 @@ module.exports = class UserController extends Controller{
     })
   }
 
+  _updateQuery (request, options) {
+    const Model = this.app.orm['user']
+    return Model
+      .update({ _id: request.params.id }, request.payload, {runValidators: true})
+      .exec()
+      .then(() => Model.findOne({ _id: request.params.id }).populate(options.populate).exec())
+      .catch(err => { return Boom.badRequest(err.message) })
+  }
+
   update (request, reply) {
     const FootprintService = this.app.services.FootprintService
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query)
     const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query)
     const Model = this.app.orm['user']
 
-    if (!options.populate) options.populate = "favoriteLists"
+    if (!options.populate) options.populate = "favoriteLists operations.list disasters.list bundles.list organizations.list"
 
     this.log.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
       ', values = ', request.payload)
@@ -165,6 +173,7 @@ module.exports = class UserController extends Controller{
       }
     }
 
+    var that = this
     if (request.params.id) {
       if (request.payload.old_password && request.payload.new_password) {
         // Check old password
@@ -173,7 +182,7 @@ module.exports = class UserController extends Controller{
           .then((user) => {
             if (user.validPassword(request.payload.old_password)) {
               request.payload.password = Model.hashPassword(request.payload.new_password)
-              return reply(FootprintService.update('user', request.params.id, request.payload, options))
+              return reply(that._updateQuery(request, options))
             }
             else {
               return reply(Boom.badRequest('The old password is wrong'))
@@ -181,11 +190,11 @@ module.exports = class UserController extends Controller{
           });
       }
       else {
-        reply(FootprintService.update('user', request.params.id, request.payload, options))
+        reply(this._updateQuery(request, options))
       }
     }
     else {
-      reply(FootprintService.update('user', criteria, request.payload, options))
+      reply(Boom.badRequest())
     }
   }
 

@@ -3,6 +3,7 @@
 const Model = require('trails-model');
 const Schema = require('mongoose').Schema;
 const Bcrypt = require('bcryptjs');
+const Libphonenumber = require('google-libphonenumber');
 
 /**
  * @module User
@@ -111,20 +112,40 @@ module.exports = class User extends Model {
       name: {
         type: String
       },
-      // TODO: make sure email is valid
       email: {
         type: String,
         lowercase: true,
         trim: true,
-        unique: true
+        unique: true,
+        match: /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/
       },
       email_verified: {
         type: Boolean,
         default: false
       },
-      // TODO: make sure emails are valid
       emails: {
-        type: Array
+        type: Array,
+        validate: {
+          validator: function (v) {
+            if (v.length) {
+              var out = true;
+              var emailRegex = /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/;
+              for (var i = 0, len = v.length; i < len; i++) {
+                if (!v[i].type || (v[i].type != 'Work' && v[i].type != 'Personal') || !v[i].email) {
+                  out = false;
+                }
+                if (!emailRegex.test(v[i].email)) {
+                  out = false;
+                }
+              }
+              return out;
+            }
+            else {
+              return true;
+            }
+          },
+          message: 'There is an invalid email'
+        }
       },
       password: {
         type: String
@@ -157,25 +178,60 @@ module.exports = class User extends Model {
       zoneinfo: {
         type: String
       },
-      // TODO: validate locale
       locale: {
-        type: String
+        type: String,
+        enum: ['en', 'fr']
       },
       // TODO :make sure it's a valid organization
       organization: {
         type: Schema.Types.Mixed
       },
       organizations: [ checkInSchema ],
-      // TODO: verify valid phone number with libphonenumber and reformat if needed
+      // Verify valid phone number with libphonenumber and reformat if needed
       phone_number: {
-        type: String
+        type: String,
+        validate: {
+          validator: function (v) {
+            if (v != '') {
+              const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
+              const phone = phoneUtil.parse(v);
+              return phoneUtil.isValidNumber(phone);
+            }
+            else {
+              return true;
+            }
+          },
+          message: '{VALUE} is not a valid phone number !'
+        }
       },
       phone_number_type: {
         type: String,
         enum: ['Mobile', 'Landline'],
       },
       phone_numbers: {
-        type: Array
+        type: Array,
+        validate: {
+          validator: function (v) {
+            if (v.length) {
+              const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
+              var out = true;
+              for (var i = 0, len = v.length; i < len; i++) {
+                if (!v[i].type || (v[i].type != 'Mobile' && v[i].type != 'Landline') || !v[i].number) {
+                  out = false;
+                }
+                var phone = phoneUtil.parse(v[i].number);
+                if (!phoneUtil.isValidNumber(phone)) {
+                  out = false;
+                }
+              }
+              return out;
+            }
+            else {
+              return true;
+            }
+          },
+          message: 'Invalid phone number'
+        }
       },
       job_title: {
         type: String

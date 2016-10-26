@@ -18,6 +18,7 @@
     "bcryptjs": "^2.3.0",
     "ejs": "^2.5.2",
     "email-templates": "^2.5.2",
+    "google-libphonenumber": "^2.0.3",
     "jsonwebtoken": "^7.1.9",
     "nodemailer": "^2.6.4",
     "trailpack-autoreload": "^1.0.2",
