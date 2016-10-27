@@ -3,8 +3,9 @@
 const Controller = require('trails-controller')
 const Boom = require('boom')
 const Bcrypt = require('bcryptjs')
-const childAttributes = ['lists', 'organizations', 'operations', 'bundles', 'disasters']
+const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters']
 const forbiddenAttributes = ['is_orphan', 'is_ghost', 'createdBy', 'expires']
+const userPopulate = "favoriteLists operations.list disasters.list bundles.list organization.list organizations.list"
 
 /**
  * @module UserController
@@ -95,7 +96,12 @@ module.exports = class UserController extends Controller{
 
     if (!options.populate) {
       options.populate = "favoriteLists";
-      if (request.params.id) options.populate = "favoriteLists operations.list disasters.list bundles.list organizations.list"
+      if (request.params.id) options.populate = userPopulate
+    }
+
+    if (criteria["organizations.list"]) {
+      criteria.$or = [{"organizations.list": criteria["organizations.list"]}, {"organization.list": criteria["organizations.list"]}];
+      delete criteria["organizations.list"];
     }
 
     // Hide unconfirmed users
@@ -154,7 +160,7 @@ module.exports = class UserController extends Controller{
     const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query)
     const Model = this.app.orm['user']
 
-    if (!options.populate) options.populate = "favoriteLists operations.list disasters.list bundles.list organizations.list"
+    if (!options.populate) options.populate = userPopulate
 
     this.log.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
       ', values = ', request.payload)
@@ -239,7 +245,7 @@ module.exports = class UserController extends Controller{
       .catch(err => { return reply(Boom.badImplementation(err.toString())) })
       .then((list) => {
         // Check that the list added corresponds to the right attribute
-        if (childAttribute != list.type + 's') 
+        if (childAttribute != list.type + 's' && childAttribute != list.type) 
           return reply(Boom.badRequest('Wrong list type'))
         
         //Set the proper pending attribute depending on list type
@@ -253,19 +259,24 @@ module.exports = class UserController extends Controller{
             if (!record)
               return reply(Boom.notFound())
 
-            if (!record[childAttribute])
-              record[childAttribute] = []
+            if (childAttribute != 'organization') {
+              if (!record[childAttribute])
+                record[childAttribute] = []
 
-            // Make sure user is not already checked in this list
-            for (var i = 0, len = record[childAttribute].length; i < len; i++) {
-              if (record[childAttribute][i].list.equals(list._id)) {
-                return reply(Boom.badRequest('User is already checked in'));
+              // Make sure user is not already checked in this list
+              for (var i = 0, len = record[childAttribute].length; i < len; i++) {
+                if (record[childAttribute][i].list.equals(list._id)) {
+                  return reply(Boom.badRequest('User is already checked in'));
+                }
               }
+
+              // TODO: make sure user is allowed to join this list
+
+              record[childAttribute].push(payload)
             }
-
-            // TODO: make sure user is allowed to join this list
-
-            record[childAttribute].push(payload)
+            else {
+              record.organization = payload;
+            }
 
             record
               .save()
@@ -288,13 +299,21 @@ module.exports = class UserController extends Controller{
     this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,
       'options =', options)
 
+     if (childAttributes.indexOf(childAttribute) === -1)
+      return reply(Boom.notFound())
+
     var that = this
     Model
       .findOne({ _id: userId })
       .then(record => {
-        record[childAttribute] = record[childAttribute].filter(function (elt, index) {
-          return !elt._id.equals(checkInId);
-        });
+        if (childAttribute != 'organization') {
+          record[childAttribute] = record[childAttribute].filter(function (elt, index) {
+            return !elt._id.equals(checkInId);
+          });
+        }
+        else {
+          record.organization = {};
+        }
 
         record.save().then(() => {
           return reply(record)

@@ -183,9 +183,7 @@ module.exports = class User extends Model {
         enum: ['en', 'fr']
       },
       // TODO :make sure it's a valid organization
-      organization: {
-        type: Schema.Types.Mixed
-      },
+      organization: checkInSchema,
       organizations: [ checkInSchema ],
       // Verify valid phone number with libphonenumber and reformat if needed
       phone_number: {

@@ -24,7 +24,7 @@ module.exports = class AuthController extends Controller{
       var app = this.app;
       var query = this.app.orm.User.where({ email: email });
       query
-        .populate("favoriteLists")
+        .populate("favoriteLists operations.list organizations.list organization.list bundles.list lists.list")
         .findOne(function (err, user) {
           if (!user) {
             that.log.info('Could not find user');
