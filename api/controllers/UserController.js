@@ -95,8 +95,7 @@ module.exports = class UserController extends Controller{
     let response, count
 
     if (!options.populate) {
-      options.populate = "favoriteLists";
-      if (request.params.id) options.populate = userPopulate
+      options.populate = userPopulate;
     }
 
     if (criteria["organizations.list"]) {
