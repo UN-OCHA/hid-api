@@ -93,6 +93,19 @@ module.exports = [
   },
 
   {
+    method: 'POST',
+    path: '/api/v2/user/{id}/picture',
+    handler: 'UserController.updatePicture',
+    config: {
+      payload: {
+        output: 'stream',
+        parse: true,
+        allow: 'multipart/form-data'
+      }
+    }
+  },
+
+  {
     method: 'GET',
     path: '/api/v2/list/{id?}',
     handler: 'ListController.find'

@@ -4,6 +4,7 @@ const Model = require('trails-model');
 const Schema = require('mongoose').Schema;
 const Bcrypt = require('bcryptjs');
 const Libphonenumber = require('google-libphonenumber');
+const Http = require('http');
 
 /**
  * @module User
@@ -121,7 +122,8 @@ module.exports = class User extends Model {
       },
       email_verified: {
         type: Boolean,
-        default: false
+        default: false,
+        readonly: true
       },
       emails: {
         type: Array,
@@ -150,29 +152,67 @@ module.exports = class User extends Model {
       password: {
         type: String
       },
-      // TODO: make sure only admins can set this
+      // Only admins can set this
       verified: {
         type: Boolean,
-        default: false
+        default: false,
+        adminOnly: true
       },
       verified_by: {
         type: Schema.ObjectId,
-        ref: 'User'
+        ref: 'User',
+        readonly: true
       },
-      // TODO: make sure it's a valid URL
+      // Makes sure it's a valid URL
       picture: {
-        type: String
+        type: String,
+        match: /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/
       },
       notes: {
         type: String
       },
-      // TODO: validate an array of VoIP objects
+      // Validates an array of VoIP objects
       voips: {
-        type: Array
+        type: Array,
+        validate: {
+          validator: function (v) {
+            if (v.length) {
+              var out = true, types = ['Skype', 'Google'];
+              for (var i = 0, len = v.length; i < len; i++) {
+                if (!v[i].username || !v[i].type || (v[i].type && types.indexOf(v[i].type) === -1)) {
+                  out = false;
+                }
+              }
+              return out;
+            }
+            else {
+              return true;
+            }
+          },
+          message: 'Invalid voip found'
+        }
       },
-      // TODO: validate urls
+      // Validates urls
       websites: {
-        type: Array
+        type: Array,
+        validate: {
+          validator: function (v) {
+            if (v.length) {
+              var out = true;
+              var urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
+              for (var i = 0, len = v.length; i < len; i++) {
+                if (!urlRegex.test(v[i].url)) {
+                  out = false;
+                }
+              }
+              return out;
+            }
+            else {
+              return true;
+            }
+          },
+          message: 'There is an invalid url'
+        }
       },
       // TODO: validate timezone
       zoneinfo: {
@@ -237,9 +277,27 @@ module.exports = class User extends Model {
       job_titles: {
         type: Array
       },
-      // TODO: verify that roles belong to hrinfo functional roles
+      // TODO: Verifies that roles belong to hrinfo functional roles
       roles: {
-        type: Array
+        type: Array,
+        adminOnly: true,
+        validate: {
+          validator: function (v) {
+            if (v.length) {
+              var out = true;
+              for (var i = 0, len = v.length; i < len; i++) {
+                if (!v[i].id || !v[i].label || !v[i].self) {
+                  out = false;
+                }
+              }
+              return out;
+            }
+            else {
+              return true;
+            }
+          },
+          message: 'Invalid role found'
+        }
       },
       status: {
         type: String
@@ -251,26 +309,31 @@ module.exports = class User extends Model {
       locations: {
         type: Array
       },
-      // TODO: make sure only an admin can set this
+      // Only an admin can set this
       is_admin: {
         type: Boolean,
-        default: false
+        default: false,
+        adminOnly: true
       },
       is_orphan: {
         type: Boolean,
-        default: false
+        default: false,
+        readonly: true
       },
       is_ghost: {
         type: Boolean,
-        default: false
+        default: false,
+        readonly: true
       },
       expires: {
         type: Date,
-        default: +new Date() + 7*24*60*60*1000
+        default: +new Date() + 7*24*60*60*1000,
+        readonly: true
       },
       createdBy: {
         type: Schema.ObjectId,
-        ref: 'User'
+        ref: 'User',
+        readonly: true
       },
       favoriteLists: [{
         type: Schema.ObjectId,

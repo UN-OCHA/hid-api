@@ -1,10 +1,11 @@
 'use strict'
 
+
 const Controller = require('trails-controller')
 const Boom = require('boom')
 const Bcrypt = require('bcryptjs')
+const fs = require('fs')
 const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters']
-const forbiddenAttributes = ['is_orphan', 'is_ghost', 'createdBy', 'expires']
 const userPopulate = "favoriteLists operations.list disasters.list bundles.list organization.list organizations.list"
 
 /**
@@ -12,6 +13,44 @@ const userPopulate = "favoriteLists operations.list disasters.list bundles.list 
  * @description Generated Trails.js Controller.
  */
 module.exports = class UserController extends Controller{
+
+  _getAdminOnlyAttributes () {
+    return this._getSchemaAttributes('adminOnlyAttributes', 'adminOnly')
+  }
+
+  _getReadonlyAttributes () {
+    return this._getSchemaAttributes('readonlyAttributes', 'readonly')
+  }
+
+  _getSchemaAttributes (variableName, attributeName) {
+    if (!this[variableName] || this[variableName].length == 0) {
+      const Model = this.app.orm['user']
+      this[variableName] = []
+      var that = this
+      Model.schema.eachPath(function (path, options) {
+        if (options.options[attributeName]) {
+          that[variableName].push(path)
+        }
+      })
+    }
+    return this[variableName]
+  }
+
+  _removeForbiddenAttributes (request) {
+    var forbiddenAttributes = []
+    if (!request.params.currentUser || !request.params.currentUser.is_admin) {
+      forbiddenAttributes = childAttributes.concat(this._getReadonlyAttributes(), this._getAdminOnlyAttributes())
+    }
+    else {
+      forbiddenAttributes = childAttributes.concat(this._getReadonlyAttributes())
+    }
+    // Do not allow forbiddenAttributes to be updated directly
+    for (var i = 0, len = forbiddenAttributes.length; i < len; i++) {
+      if (request.payload[forbiddenAttributes[i]]) {
+        delete request.payload[forbiddenAttributes[i]]
+      }
+    }
+  }
 
   create (request, reply) {
     const FootprintService = this.app.services.FootprintService
@@ -39,21 +78,10 @@ module.exports = class UserController extends Controller{
       delete request.payload.registration_type
     }
 
-    // Do not allow childAttributes to be updated through the update method
-    for (var i = 0, len = childAttributes.length; i < len; i++) {
-      if (request.payload[childAttributes[i]]) {
-        delete request.payload[childAttributes[i]]
-      }
-    }
+    this._removeForbiddenAttributes(request)
 
-    // Do not allow forbiddenAttributes to be created through the create method
-    for (var i = 0, len = forbiddenAttributes.length; i < len; i++) {
-      if (request.payload[forbiddenAttributes[i]]) {
-        delete request.payload[forbiddenAttributes[i]]
-      }
-    }
-
-    // TODO: make sure only admins or anonymous users can create users
+    // Makes sure only admins or anonymous users can create users
+    if (request.params.currentUser && !request.params.currentUser.is_admin) return reply(Boom.forbidden('You need to be an administrator'))
 
     if (request.params.currentUser) request.payload.createdBy = request.params.currentUser._id
     // If an orphan is being created, do not expire
@@ -164,33 +192,29 @@ module.exports = class UserController extends Controller{
     this.log.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
       ', values = ', request.payload)
 
-    // Do not allow childAttributes to be updated through the update method
-    for (var i = 0, len = childAttributes.length; i < len; i++) {
-      if (request.payload[childAttributes[i]]) {
-        delete request.payload[childAttributes[i]]
-      }
-    }
-
-    // Do not allow forbiddenAttributes to be updated through the update method
-    for (var i = 0, len = forbiddenAttributes.length; i < len; i++) {
-      if (request.payload[forbiddenAttributes[i]]) {
-        delete request.payload[forbiddenAttributes[i]]
-      }
-    }
+    this._removeForbiddenAttributes(request)
+    if (request.payload.password) delete request.payload.password
 
     var that = this
     if (request.params.id) {
-      if (request.payload.old_password && request.payload.new_password) {
+      if ((request.payload.old_password && request.payload.new_password) || request.payload.verified) {
         // Check old password
         Model
           .findOne({_id: request.params.id})
           .then((user) => {
-            if (user.validPassword(request.payload.old_password)) {
-              request.payload.password = Model.hashPassword(request.payload.new_password)
-              return reply(that._updateQuery(request, options))
+            // If verifying user, set verified_by
+            if (request.payload.verified && !user.verified) request.payload.verified_by = request.params.currentUser._id
+            if (request.payload.old_password) {
+              if (user.validPassword(request.payload.old_password)) {
+                request.payload.password = Model.hashPassword(request.payload.new_password)
+                return reply(that._updateQuery(request, options))
+              }
+              else {
+                return reply(Boom.badRequest('The old password is wrong'))
+              }
             }
             else {
-              return reply(Boom.badRequest('The old password is wrong'))
+              return reply(that._updateQuery(request, options))
             }
           });
       }
@@ -406,6 +430,40 @@ module.exports = class UserController extends Controller{
           return reply('Claim email sent successfully').code(202)
         })
       })
+  }
+
+  updatePicture (request, reply) {
+    const Model = this.app.orm['user']
+    const userId = request.params.id
+
+    var data = request.payload;
+    if (data.file) {
+      Model
+        .findOne({_id: userId})
+        .then(record => {
+          if (!record) return reply(Boom.notFound())
+          var ext = data.file.hapi.filename.split('.').pop();
+          var path = __dirname + "/../../pictures/" + userId + '.' + ext;
+          var file = fs.createWriteStream(path);
+
+          file.on('error', function (err) {
+            reply(Boom.badImplementation(err))
+          });
+
+          data.file.pipe(file);
+
+          data.file.on('end', function (err) {
+            record.picture = process.env.ROOT_URL + "/pictures/" + userId + "." + ext;
+            record.save().then(() => {
+              return reply(record)
+            })
+            .catch(err => { return reply(Boom.badImplementation(err.toString())) })
+          })
+        })
+    }
+    else {
+      return reply(Boom.badRequest('No file found'))
+    }
   }
 
 }
