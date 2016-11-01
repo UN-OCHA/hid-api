@@ -105,6 +105,24 @@ module.exports = class User extends Model {
       }
     });
 
+    const emailSchema = new Schema({
+      type: {
+        type: String,
+        enum: ['Work', 'Personal']
+      },
+      email: {
+        type: String,
+        lowercase: true,
+        trim: true,
+        unique: true,
+        match: /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/
+      },
+      validated: {
+        type: Boolean,
+        default: false
+      }
+    }, { readonly: true });
+
     return {
       given_name: {
         type: String,
@@ -135,30 +153,7 @@ module.exports = class User extends Model {
         default: false,
         readonly: true
       },
-      emails: {
-        type: Array,
-        validate: {
-          validator: function (v) {
-            if (v.length) {
-              var out = true;
-              var emailRegex = /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/;
-              for (var i = 0, len = v.length; i < len; i++) {
-                if (!v[i].type || (v[i].type != 'Work' && v[i].type != 'Personal') || !v[i].email) {
-                  out = false;
-                }
-                if (!emailRegex.test(v[i].email)) {
-                  out = false;
-                }
-              }
-              return out;
-            }
-            else {
-              return true;
-            }
-          },
-          message: 'There is an invalid email'
-        }
-      },
+      emails: [emailSchema],
       password: {
         type: String
       },

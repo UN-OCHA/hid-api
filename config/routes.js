@@ -101,19 +101,25 @@ module.exports = [
 
   {
     method: 'POST',
-    path: '/api/v2/user/{id}/email',
+    path: '/api/v2/user/{id}/emails',
     handler: 'UserController.addEmail'
   },
 
   {
     method: 'PUT',
-    path: '/api/v2/user/email/{email?}',
-    handler: 'UserController.verifyEmail'
+    path: '/api/v2/user/{id}/email',
+    handler: 'UserController.setPrimaryEmail'
+  },
+
+  {
+    method: 'PUT',
+    path: '/api/v2/user/emails/{email?}',
+    handler: 'UserController.validateEmail'
   },
 
   {
     method: 'DELETE',
-    path: '/api/v2/user/{id}/email/{email}',
+    path: '/api/v2/user/{id}/emails/{email}',
     handler: 'UserController.dropEmail'
   },
 
