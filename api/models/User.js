@@ -42,9 +42,9 @@ module.exports = class User extends Model {
           return Bcrypt.compareSync(password, this.password)
         },
 
-        generateHash: function () {
+        generateHash: function (email) {
           const now = Date.now()
-          return new Buffer(this.email + "/" + now + "/" + new Buffer(Bcrypt.hashSync(this.password + now + this._id, 11)).toString('base64')).toString('base64')
+          return new Buffer(email + "/" + now + "/" + new Buffer(Bcrypt.hashSync(this.password + now + this._id, 11)).toString('base64')).toString('base64')
         },
 
         // Validate the hash of a confirmation link
@@ -62,7 +62,7 @@ module.exports = class User extends Model {
             return 'Expired confirmation link'
           }
 
-          if (this.email != email) {
+          if (this.emailIndex(email) == -1) {
             return 'Wrong user or wrong email in the hash';
           }
 
@@ -71,6 +71,16 @@ module.exports = class User extends Model {
             return 'This verification link has already been used';
           }
           return true
+        },
+
+        emailIndex: function (email) {
+          var index = -1
+          for (var i = 0, len = this.emails.length; i < len; i++) {
+            if (this.emails[i].email == email) {
+              index = i
+            }
+          }
+          return index
         },
 
         toJSON: function () {

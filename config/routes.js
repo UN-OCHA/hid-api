@@ -76,12 +76,6 @@ module.exports = [
 
   {
     method: 'PUT',
-    path: '/api/v2/user/email_verified',
-    handler: 'UserController.verifyEmail'
-  },
-
-  {
-    method: 'PUT',
     path: '/api/v2/user/password',
     handler: 'UserController.resetPassword'
   },
@@ -103,6 +97,24 @@ module.exports = [
         allow: 'multipart/form-data'
       }
     }
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v2/user/{id}/email',
+    handler: 'UserController.addEmail'
+  },
+
+  {
+    method: 'PUT',
+    path: '/api/v2/user/email/{email?}',
+    handler: 'UserController.verifyEmail'
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/user/{id}/email/{email}',
+    handler: 'UserController.dropEmail'
   },
 
   {

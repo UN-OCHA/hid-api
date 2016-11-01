@@ -348,25 +348,44 @@ module.exports = class UserController extends Controller{
   verifyEmail (request, reply) {
     const Model = this.app.orm['user']
 
+    this.log.debug('[UserController] Verifying email ')
+
     if (!request.payload.hash) return reply(Boom.badRequest('Missing hash parameter'))
 
     const parts = Model.explodeHash(request.payload.hash)
 
     var that = this;
     Model
-      .findOne({ email: parts.email })
+      .findOne({ 'emails.email': parts.email })
       .then(record => {
         // Verify hash
         var valid = record.validHash(request.payload.hash)
         if (valid === true) {
           // Verify user email
-          record.email_verified = true
-          record.expires = new Date(0, 0, 1, 0, 0, 0)
-          record.save().then(() => {
-            that.app.services.EmailService.sendPostRegister(record, function (merr, info) {
-              return reply(record);
-            });
-          })
+          if (record.email == parts.email) {
+            record.email_verified = true
+            record.expires = new Date(0, 0, 1, 0, 0, 0)
+            record.emails[0].verified = true
+            record.emails.set(0, record.emails[0])
+            record.save().then(() => {
+              that.app.services.EmailService.sendPostRegister(record, function (merr, info) {
+                return reply(record);
+              });
+            })
+            .catch(err => { return reply(Boom.badImplementation(err.toString())) })
+          }
+          else {
+            for (var i = 0, len = record.emails.length; i < len; i++) {
+              if (record.emails[i].email == parts.email) {
+                record.emails[i].verified = true
+                record.emails.set(i, record.emails[i])
+              }
+            }
+            record.save().then((r) => {
+              return reply(r)
+            })
+            .catch(err => { return reply(Boom.badImplementation(err.toString())) })
+          }
         }
         else {
           return reply(Boom.badRequest(valid))
@@ -464,6 +483,53 @@ module.exports = class UserController extends Controller{
     else {
       return reply(Boom.badRequest('No file found'))
     }
+  }
+
+  addEmail (request, reply) {
+    const Model = this.app.orm['user']
+    const app_validation_url = request.payload.app_validation_url
+    const userId = request.params.id
+
+    if (!app_validation_url) return reply(Boom.badRequest())
+
+    var that = this
+    Model
+      .findOne({_id: userId})
+      .then(record => {
+        if (!record) return reply(Boom.notFound())
+        var email = request.payload.email
+        if (record.emailIndex(email) != -1) return reply(Boom.badRequest('Email already exists'))
+        // Send confirmation email
+        that.app.services.EmailService.sendValidationEmail(record, email, app_validation_url, function (err, info) {
+          var data = { email: email, type: request.payload.type, verified: false };
+          record.emails.push(data);
+          record.save().then(() => {
+            return reply(record)
+          })
+          .catch(err => { return reply(Boom.badImplementation(err.toString())) })
+        })
+      })
+  }
+
+  dropEmail (request, reply) {
+    const Model = this.app.orm['user']
+    const userId = request.params.id
+
+    var that = this
+    Model
+      .findOne({_id: userId})
+      .then(record => {
+        if (!record) return reply(Boom.notFound())
+        var email = request.params.email
+        if (email == record.email) return reply(Boom.badRequest('You can not remove the primary email'))
+        var index = record.emailIndex(email)
+        if (index == -1) return reply(Boom.badRequest('Email does not exist'))
+        record.emails.splice(index, 1)
+        record.save().then(() => {
+          return reply(record)
+        })
+        .catch(err => { return reply(Boom.badImplementation(err.toString())) })
+      })
   }
 
 }

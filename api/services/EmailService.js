@@ -29,7 +29,7 @@ module.exports = class EmailService extends Service {
     };
     var context = {
       name: user.name,
-      reset_url: app_verify_url + '/' + user.generateHash()
+      reset_url: app_verify_url + '/' + user.generateHash(user.email)
     };
     this.send(mailOptions, 'register', context, callback);
   }
@@ -42,7 +42,7 @@ module.exports = class EmailService extends Service {
     var context = {
       user: user,
       admin: admin,
-      reset_url: app_verify_url + '/' + user.generateHash()
+      reset_url: app_verify_url + '/' + user.generateHash(user.email)
     };
     this.send(mailOptions, 'register_orphan', context, callback);
   }
@@ -54,7 +54,7 @@ module.exports = class EmailService extends Service {
     };
     var context = {
       user: user,
-      reset_url: app_verify_url + '/' + user.generateHash()
+      reset_url: app_verify_url + '/' + user.generateHash(user.email)
     };
     this.send(mailOptions, 'register_kiosk', context, callback);
   }
@@ -78,7 +78,7 @@ module.exports = class EmailService extends Service {
     };
     var context = {
       name: user.name,
-      reset_url: app_reset_url + '/' + user.generateHash()
+      reset_url: app_reset_url + '/' + user.generateHash(user.email)
     };
     this.send(mailOptions, 'reset_password', context, callback);
   }
@@ -90,9 +90,21 @@ module.exports = class EmailService extends Service {
     };
     var context = {
       name: user.name,
-      reset_url: app_reset_url + '/' + user.generateHash()
+      reset_url: app_reset_url + '/' + user.generateHash(user.email)
     };
     this.send(mailOptions, 'claim', context, callback);
+  }
+
+  sendValidationEmail (user, email, app_validation_url, callback) {
+    var mailOptions = {
+      to: email,
+      locale: user.locale
+    };
+    var context = {
+      user: user,
+      reset_url: app_validation_url + '/' + user.generateHash(email)
+    };
+    this.send(mailOptions, 'email_validation', context, callback);
   }
 
 
