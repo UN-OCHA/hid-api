@@ -91,17 +91,22 @@ module.exports = {
                       body += d;
                     });
                     response.on('end', function() {
-                      var parsed = JSON.parse(body);
-                      hasNextPage = parsed.next ? true: false;
-                      async.eachSeries(parsed.data, function (item, cb) {
-                        // TODO: do not add disasters more than 2 years old
-                        _createList(listType, item, cb);
-                      }, function (err) {
-                        setTimeout(function() {
-                          app.log.info('Done loading page ' + pageNumber + ' for ' + listType);
-                          nextPage();
-                        }, 1000);
-                      });
+                      var parsed = {};
+                      try {
+                        parsed = JSON.parse(body);
+                        hasNextPage = parsed.next ? true: false;
+                        async.eachSeries(parsed.data, function (item, cb) {
+                          // TODO: do not add disasters more than 2 years old
+                          _createList(listType, item, cb);
+                        }, function (err) {
+                          setTimeout(function() {
+                            app.log.info('Done loading page ' + pageNumber + ' for ' + listType);
+                            nextPage();
+                          }, 1000);
+                        });
+                      } catch (e) {
+                        app.log.info('Error parsing hrinfo API: ' + e)
+                      }
                     });
                   });
               }, function () {

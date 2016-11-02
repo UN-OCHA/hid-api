@@ -87,6 +87,11 @@ module.exports = class UserController extends Controller{
     // If an orphan is being created, do not expire
     if (request.params.currentUser && registration_type == '') request.payload.expires = new Date(0, 0, 1, 0, 0, 0)
 
+    if (request.payload.email) {
+      request.payload.emails = new Array()
+      request.payload.emails.push({type: 'Work', email: request.payload.email, validated: false})
+    }
+
     var that = this
     Model.create(request.payload, function (err, user) {
       if (!user) return reply(Boom.badRequest(err.message))
@@ -664,7 +669,8 @@ module.exports = class UserController extends Controller{
           }
         }
         if (index == -1) return reply(Boom.badRequest('Phone does not exist'))
-        record.phone_number = phone
+        record.phone_number = record.phone_numbers[index].type
+        record.phone_number_type = record.phone_numbers[index].type
         record.save().then(() => {
           return reply(record)
         })
