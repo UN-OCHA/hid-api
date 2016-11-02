@@ -123,6 +123,33 @@ module.exports = class User extends Model {
       }
     }, { readonly: true });
 
+    const phoneSchema = new Schema({
+      type: {
+        type: String,
+        enum: ['Landline', 'Mobile']
+      },
+      number: {
+        type: String,
+        validate: {
+          validator: function (v) {
+            if (v != '') {
+              const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
+              const phone = phoneUtil.parse(v);
+              return phoneUtil.isValidNumber(phone);
+            }
+            else {
+              return true;
+            }
+          },
+          message: '{VALUE} is not a valid phone number !'
+        }
+      },
+      validated: {
+        type: Boolean,
+        default: false
+      }
+    });
+
     return {
       given_name: {
         type: String,
@@ -153,6 +180,7 @@ module.exports = class User extends Model {
         default: false,
         readonly: true
       },
+      // TODO: find a way to set this as readonly
       emails: [emailSchema],
       password: {
         type: String
@@ -251,31 +279,8 @@ module.exports = class User extends Model {
         type: String,
         enum: ['Mobile', 'Landline'],
       },
-      phone_numbers: {
-        type: Array,
-        validate: {
-          validator: function (v) {
-            if (v.length) {
-              const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
-              var out = true;
-              for (var i = 0, len = v.length; i < len; i++) {
-                if (!v[i].type || (v[i].type != 'Mobile' && v[i].type != 'Landline') || !v[i].number) {
-                  out = false;
-                }
-                var phone = phoneUtil.parse(v[i].number);
-                if (!phoneUtil.isValidNumber(phone)) {
-                  out = false;
-                }
-              }
-              return out;
-            }
-            else {
-              return true;
-            }
-          },
-          message: 'Invalid phone number'
-        }
-      },
+      // TODO: find a way to set this as readonly
+      phone_numbers: [phoneSchema],
       job_title: {
         type: String
       },

@@ -590,5 +590,87 @@ module.exports = class UserController extends Controller{
       })
   }
 
+  addPhone (request, reply) {
+    const Model = this.app.orm['user']
+    const userId = request.params.id
+
+    this.log.debug('[UserController] adding phone number')
+
+    // TODO: make sure current user can do this
+
+    var that = this
+    Model
+      .findOne({_id: userId})
+      .then(record => {
+        if (!record) return reply(Boom.notFound())
+        var data = { number: request.payload.number, type: request.payload.type };
+        record.phone_numbers.push(data);
+        record.save().then(() => {
+          return reply(record)
+        })
+        .catch(err => { return reply(Boom.badImplementation(err.toString())) })
+      })
+  }
+
+  dropPhone (request, reply) {
+    const Model = this.app.orm['user']
+    const userId = request.params.id
+    const phoneId = request.params.pid
+
+    this.log.debug('[UserController] dropping phone number')
+
+    // TODO: make sure current user can do this
+
+    var that = this
+    Model
+      .findOne({_id: userId})
+      .then(record => {
+        if (!record) return reply(Boom.notFound())
+        var index = -1
+        for (var i = 0, len = record.phone_numbers.length; i < len; i++) {
+          if (record.phone_numbers[i]._id == phoneId) {
+            index = i
+          }
+        }
+        if (index == -1) return reply(Boom.notFound())
+        // Do not allow deletion of primary phone number
+        if (record.phone_numbers[index].number == record.phone_number) return reply(Boom.badRequest('Can not remove primary phone number'))
+        record.phone_numbers.splice(index, 1)
+        record.save().then(() => {
+          return reply(record)
+        })
+        .catch(err => { return reply(Boom.badImplementation(err.toString())) })
+      })
+  }
+
+  setPrimaryPhone (request, reply) {
+    const Model = this.app.orm['user']
+    const phone = request.payload.phone
+
+    this.log.debug('[UserController] Setting primary phone number')
+
+    if (!request.payload.phone) return reply(Boom.badRequest())
+    // TODO: make sure user can set primary phone number
+
+    Model
+      .findOne({ _id: request.params.id})
+      .then(record => {
+        if (!record) return reply(Boom.notFound())
+        // Make sure phone is part of phone_numbers
+        var index = -1
+        for (var i = 0, len = record.phone_numbers.length; i < len; i++) {
+          if (record.phone_numbers[i].number == phone) {
+            index = i
+          }
+        }
+        if (index == -1) return reply(Boom.badRequest('Phone does not exist'))
+        record.phone_number = phone
+        record.save().then(() => {
+          return reply(record)
+        })
+        .catch(err => { return reply(Boom.badImplementation(err.message)) })
+      })
+  }
+
 }
 

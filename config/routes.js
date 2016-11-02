@@ -124,6 +124,24 @@ module.exports = [
   },
 
   {
+    method: 'POST',
+    path: '/api/v2/user/{id}/phone_numbers',
+    handler: 'UserController.addPhone'
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/user/{id}/phone_numbers/{pid}',
+    handler: 'UserController.dropPhone'
+  },
+
+  {
+    method: 'PUT',
+    path: '/api/v2/user/{id}/phone_number',
+    handler: 'UserController.setPrimaryPhone'
+  },
+
+  {
     method: 'GET',
     path: '/api/v2/list/{id?}',
     handler: 'ListController.find'
