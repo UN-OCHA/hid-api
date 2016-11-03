@@ -18,6 +18,13 @@ module.exports = {
    */
   host: process.env.HOST || '0.0.0.0',
 
+  views: {
+    engines: {
+      html: require('ejs')
+    },
+    path: 'templates'
+  },
+
   options: {
     routes: {
       cors: {

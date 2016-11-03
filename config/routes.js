@@ -17,7 +17,7 @@ module.exports = [
   {
     method: 'GET',
     path: '/',
-    handler: 'ViewController.helloWorld'
+    handler: 'ViewController.login'
   },
 
   /**
