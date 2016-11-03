@@ -3,7 +3,7 @@
 const Service = require('trails-service')
 const Nodemailer = require('nodemailer')
 const EmailTemplate = require('email-templates').EmailTemplate;
-const TemplateDir = require('path').join(__dirname, '../../templates/')
+const TemplateDir = require('path').join(__dirname, '../../emails/')
 const Transporter = Nodemailer.createTransport('smtp://' + process.env.SMTP_USER + ':' + process.env.SMTP_PASS + '@' + process.env.SMTP_HOST + ':' + process.env.SMTP_PORT)
 
 /**
