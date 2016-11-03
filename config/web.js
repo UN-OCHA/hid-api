@@ -24,6 +24,17 @@ module.exports = {
     },
     path: 'templates'
   },
+  
+  plugins: [
+    {
+      register: require('yar'),
+      options: { }
+    },
+    {
+      register: require('hapi-oauth2orize'),
+      options: { }
+    }
+  ],
 
   options: {
     routes: {

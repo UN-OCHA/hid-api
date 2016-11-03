@@ -40,6 +40,18 @@ module.exports = [
 
   {
     method: 'POST',
+    path: '/api/v2/oauth/authorize',
+    handler: 'AuthController.authorizeOauth2'
+  },
+
+  {
+    method: ['GET', 'POST'],
+    path: '/api/v2/oauth/token',
+    handler: 'AuthController.authenticateOauth2'
+  },
+
+  {
+    method: 'POST',
     path: '/api/v2/user',
     handler: 'UserController.create'
   },

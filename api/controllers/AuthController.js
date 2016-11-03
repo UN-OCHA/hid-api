@@ -50,6 +50,15 @@ module.exports = class AuthController extends Controller{
     }
   }
 
+  authorizeOauth2 (request, reply) {
+    
+  }
+
+  authenticateOauth2 (request, reply) {
+    var oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
+    
+  }
+
 
 }
 
