@@ -40,13 +40,25 @@ module.exports = [
 
   {
     method: 'POST',
-    path: '/api/v2/oauth/authorize',
+    path: '/login',
+    handler: 'AuthController.login'
+  },
+
+  {
+    method: 'GET',
+    path: '/oauth/authorize',
+    handler: 'AuthController.authorizeDialogOauth2'
+  },
+
+  {
+    method: 'POST',
+    path: '/oauth/authorize',
     handler: 'AuthController.authorizeOauth2'
   },
 
   {
     method: ['GET', 'POST'],
-    path: '/api/v2/oauth/token',
+    path: '/oauth/token',
     handler: 'AuthController.authenticateOauth2'
   },
 

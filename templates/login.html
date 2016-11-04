@@ -1,1 +1,23 @@
+<% include header %>
+
 <h1>Log into Humanitarian ID</h1>
+<form method="post" action="/login">
+  <div class="form-group">
+    <label for="email" translate>Email</label>
+    <input type="email" class="form-control" name="email" id="email" required>
+  </div>
+  <div class="form-group">
+    <label for="password"><span translate>Password</span> <a href="/password_reset" translate>Forgot your password ?</a></label>
+    <input type="password" class="form-control" name="password" id="password" required>
+  </div>
+  <input type="hidden" name="redirect" value="<%= query.redirect %>" />
+  <input type="hidden" name="client_id" value="<%= query.client_id %>" />
+  <input type="hidden" name="redirect_uri" value="<%= query.redirect_uri %>" />
+  <input type="hidden" name="response_type" value="<%= query.response_type %>" />
+  <input type="hidden" name="state" value="<%= query.state %>" />
+  <input type="hidden" name="scope" value="<%= query.scope %>" />
+  <button type="submit" class="btn btn-primary">Login</button>
+</form>
+<a href="/register" class="btn btn-default">Need to register ?</a>
+
+<% include footer %>

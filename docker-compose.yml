@@ -22,6 +22,7 @@ dev:
     SMTP_USER: humanitarianid
     SMTP_PASS: smtp_password
     APP_URL: http://app.hid.vm
+    COOKIE_PASSWORD: 6*a!_5;1:|7~+%5**WdS:^;X%PN||~:_:_R
 test:
   image: unocha/alpine-nodejs:201610.npm3
   volumes:
@@ -39,3 +40,4 @@ test:
     SMTP_USER: humanitarianid
     SMTP_PASS: smtp_password
     APP_URL: http://app.hid.vm
+    COOKIE_PASSWORD: 6*a!_5;1:|7~+%5**WdS:^;X%PN||~:_:_R

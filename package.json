@@ -16,6 +16,7 @@
   ],
   "dependencies": {
     "bcryptjs": "^2.3.0",
+    "crypto": "0.0.3",
     "ejs": "^2.5.2",
     "email-templates": "^2.5.2",
     "google-libphonenumber": "^2.0.3",
