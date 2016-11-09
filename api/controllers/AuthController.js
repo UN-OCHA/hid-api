@@ -193,7 +193,7 @@ module.exports = class AuthController extends Controller{
     oauth.authorize(request, reply, function (req, res) {
       console.log(req);
       console.log(res);
-      reply()
+      //reply()
     }, {}, function (clientID, redirect, done) {
       done(null, clientID, redirect);
     });
