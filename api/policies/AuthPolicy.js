@@ -43,7 +43,7 @@ module.exports = class AuthPolicy extends Policy {
 
     var that = this;
 
-    this.app.services.JwtService.verify(token, function (err, token) {
+    this.app.services.JwtService.verify(token, function (err, jtoken) {
       if (err) {
         // Verify it's not an oauth access token
         console.log('OAuth Access Token' + token)
@@ -59,8 +59,8 @@ module.exports = class AuthPolicy extends Policy {
       }
       else {
         console.log('JWT Token')
-        request.params.token = token; // This is the decrypted token or the payload you provided
-        that.app.orm['user'].findOne({_id: token.id}, function (err, user) {
+        request.params.token = jtoken; // This is the decrypted token or the payload you provided
+        that.app.orm['user'].findOne({_id: jtoken.id}, function (err, user) {
           if (!err && user) {
             request.params.currentUser = user;
             reply();
