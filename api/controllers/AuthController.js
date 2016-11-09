@@ -190,13 +190,7 @@ module.exports = class AuthController extends Controller{
   accessTokenOauth2 (request, reply) {
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize']
     request.auth.credentials = request.params.currentUser
-    oauth.authorize(request, reply, function (req, res) {
-      console.log(req);
-      console.log(res);
-      //reply()
-    }, {}, function (clientID, redirect, done) {
-      done(null, clientID, redirect);
-    });
+    oauth.token(request, reply);
   }
 
 
