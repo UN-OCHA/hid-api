@@ -124,7 +124,7 @@ module.exports = class AuthController extends Controller{
         scope = request.query.scope;
 
       if (err) {
-        that.log.warn('An error occurred in /oauth/authorize while trying to fetch the user record for ' + email + ' who is an active session.');
+        that.log.warn('An error occurred in /oauth/authorize while trying to fetch the user record for ' + cookie.userId + ' who is an active session.');
         return reply(Boom.badImplementation('An error occurred while processing request. Please try logging in again.'))
       }
       else if (user && user.authorized_services && user.authorized_services.hasOwnProperty(clientId) && user.authorized_services[clientId].indexOf(scope) !== -1) {
@@ -162,8 +162,31 @@ module.exports = class AuthController extends Controller{
   }
 
   authorizeOauth2 (request, reply) {
-    var oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize']
-    oauth.decision(request, reply)
+    const User = this.app.orm.User
+    const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize']
+    const cookie = request.yar.get('session')
+    if (!cookie.userId) {
+      this.log.info('Got request to /oauth/authorize without session. Redirecting to the login page.');
+      return reply.redirect('/?redirect=/oauth/authorize&client_id=' + request.query.client_id + '&redirect_uri=' + request.query.redirect_uri + '&response_type=' + request.query.response_type + '&state=' + request.query.state + '&scope=' + request.query.scope + '#login');
+    }
+    
+    var that = this
+    User.findOne({_id: cookie.userId}, function (err, user) {
+      if (err) {
+        that.log.warn('An error occurred in /oauth/authorize while trying to fetch the user record for ' + cookie.userId + ' who is an active session.')
+        return reply(Boom.badImplementation('An error occurred while processing request. Please try logging in again.'))
+      }
+      if (!user) {
+        that.log.warn('Could not find user with ID ' + cookie.userId)
+        return reply(Boom.badRequest('Could not find user'))
+      }
+      request.auth.credentials = user
+      oauth.decision(request, reply)
+    })
+  }
+
+  authenticateOauth2 (request, reply) {
+    reply()
   }
 
 
