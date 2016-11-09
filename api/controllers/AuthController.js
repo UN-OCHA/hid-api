@@ -138,7 +138,7 @@ module.exports = class AuthController extends Controller{
       else {
         request.auth.credentials = user
         oauth.authorize(request, reply, function (req, res) {
-          if (!request.response.isBoom) {
+          if (!request.response || (request.response && !request.response.isBoom)) {
             // The user has not confirmed authorization, so present the
             // authorization page.
             return reply.view('authorize', {
