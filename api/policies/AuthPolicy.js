@@ -30,12 +30,12 @@ module.exports = class AuthPolicy extends Policy {
       } else {
         return reply(Boom.unauthorized('Format is Authorization: Bearer [token]'));
       }
-    } else if (request.params.token) {
-      token = request.params.token;
+    } else if (request.query.token) {
+      token = request.query.token;
       // We delete the token from param to not mess with blueprints
       delete request.query.token;
-    } else if (request.params.access_token) {
-      token = request.params.access_token;
+    } else if (request.query.access_token) {
+      token = request.query.access_token;
       delete request.query.access_token;
     } else {
       return reply(Boom.unauthorized('No Authorization header was found'));
