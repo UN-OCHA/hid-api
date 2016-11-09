@@ -58,8 +58,8 @@ module.exports = [
 
   {
     method: ['GET', 'POST'],
-    path: '/oauth/token',
-    handler: 'AuthController.authenticateOauth2'
+    path: '/oauth/access_token',
+    handler: 'AuthController.accessTokenOauth2'
   },
 
   {

@@ -64,7 +64,7 @@ module.exports = class AuthController extends Controller{
     this._loginHelper(request, reply, function (user) {
       // Redirect to /oauth/authorize
       request.yar.set('session', { userId: user._id })
-      var redirect = request.payload.redirect || '/account';
+      var redirect = request.payload.redirect || '/oauth/authorize';
       redirect += "?client_id=" + request.payload.client_id;
       redirect += "&redirect_uri=" + request.payload.redirect_uri;
       redirect += "&response_type=" + request.payload.response_type;
@@ -138,6 +138,7 @@ module.exports = class AuthController extends Controller{
       else {
         request.auth.credentials = user
         oauth.authorize(request, reply, function (req, res) {
+          if (!request.response.isBoom) {
             // The user has not confirmed authorization, so present the
             // authorization page.
             return reply.view('authorize', {
@@ -149,6 +150,7 @@ module.exports = class AuthController extends Controller{
               transactionID: req.oauth2.transactionID
               //csrf: req.csrfToken()
             });
+          }
         }, {}, function (clientID, redirect, done) {
           Client.findOne({id: clientID}, function (err, client) {
             if (err || !client || !client.id) {
@@ -185,7 +187,8 @@ module.exports = class AuthController extends Controller{
     })
   }
 
-  authenticateOauth2 (request, reply) {
+  accessTokenOauth2 (request, reply) {
+    
     reply()
   }
 
