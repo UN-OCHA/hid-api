@@ -10,6 +10,7 @@ const Boom = require('boom');
 module.exports = class AuthPolicy extends Policy {
 
   isAuthenticated(request, reply) {
+    const OauthAccessToken = this.app.orm['OauthAccessToken']
     // If we are creating a user and we are not authenticated, allow it
     if (request.path == '/api/v2/user' && request.method == 'post' && !request.headers.authorization && !request.params.token) {
       return reply();
@@ -33,6 +34,9 @@ module.exports = class AuthPolicy extends Policy {
       token = request.params.token;
       // We delete the token from param to not mess with blueprints
       delete request.query.token;
+    } else if (request.params.access_token) {
+      token = request.params.access_token;
+      delete request.query.access_token;
     } else {
       return reply(Boom.unauthorized('No Authorization header was found'));
     }
@@ -40,17 +44,29 @@ module.exports = class AuthPolicy extends Policy {
     var that = this;
 
     this.app.services.JwtService.verify(token, function (err, token) {
-      if (err) return reply(Boom.unauthorized('Invalid Token!'));
-      request.params.token = token; // This is the decrypted token or the payload you provided
-      that.app.orm['user'].findOne({_id: token.id}, function (err, user) {
-        if (!err && user) {
-          request.params.currentUser = user;
-          reply();
-        }
-        else {
-          reply(Boom.unauthorized('Invalid Token!'));
-        }
-      });
+      if (err) {
+        // Verify it's not an oauth access token
+        OauthAccessToken
+          .findOne({token: token})
+          .populate('user client')
+          .exec(function (err, tok) {
+            if (err || !tok) return reply(Boom.unauthorized('Invalid Token!'));
+            request.params.currentUser = tok.user
+            reply()
+          });
+      }
+      else {
+        request.params.token = token; // This is the decrypted token or the payload you provided
+        that.app.orm['user'].findOne({_id: token.id}, function (err, user) {
+          if (!err && user) {
+            request.params.currentUser = user;
+            reply();
+          }
+          else {
+            reply(Boom.unauthorized('Invalid Token!'));
+          }
+        });
+      }
     });
   }
 

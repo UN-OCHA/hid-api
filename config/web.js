@@ -60,7 +60,7 @@ module.exports = {
         };
         OauthAccessToken.create(ftoken, function (err, tok) {
           if (err) done(err)
-          done(null, tok._id, {expires_in: 3600})
+          done(null, tok.token, {expires_in: 3600})
         })
       })
     }));
