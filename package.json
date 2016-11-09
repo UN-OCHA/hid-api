@@ -21,7 +21,7 @@
     "email-templates": "^2.5.2",
     "google-libphonenumber": "^2.0.3",
     "hapi": "^14.0.0",
-    "hapi-oauth2orize": "blinkmobile/hapi-oauth2orize",
+    "hapi-oauth2orize": "UN-OCHA/hapi-oauth2orize",
     "jsonwebtoken": "^7.1.9",
     "nodemailer": "^2.6.4",
     "trailpack-autoreload": "^1.0.2",
