@@ -145,6 +145,34 @@ module.exports = {
       });
     }));
 
+    oauth.exchange(oauth.exchanges.refreshToken(function (client, refreshToken, scope, done) {
+      var expires = new Date();
+      expires.setSeconds(expires.getSeconds() + 3600);
+      OauthToken
+        .findOne({type: 'refresh', token: refreshToken})
+        .populate('client user')
+        .exec(function (err, tok) {
+          if (err) return done(err)
+          if (tok.client._id !== client._id) {
+            return done(null, false, { message: 'This refresh token is for a different client'});
+          }
+          OauthToken.generate(function (err, atok) {
+            if (err) return done(err)
+            var atoken = {
+              type: 'access',
+              token: atok,
+              user: tok.user._id,
+              client: tok.client._id,
+              expires: expires
+            }
+            OauthToken.create(atoken, function (err, ctok) {
+              if (err) return done(err)
+              done(null, ctok.token, null, {expires_in: 3600});
+            });
+          });
+        });
+    }));
+
     // Client Serializers
     oauth.serializeClient(function (client, done) {
       done(null, client._id);
