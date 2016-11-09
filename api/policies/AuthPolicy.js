@@ -24,7 +24,7 @@ module.exports = class AuthPolicy extends Policy {
         var scheme = parts[0],
           credentials = parts[1];
 
-        if (/^Bearer$/i.test(scheme)) {
+        if (/^Bearer$/i.test(scheme) || /^OAuth$/i.test(scheme)) {
           token = credentials;
         }
       } else {
