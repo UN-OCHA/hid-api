@@ -10,7 +10,7 @@ const Boom = require('boom');
 module.exports = class AuthPolicy extends Policy {
 
   isAuthenticated(request, reply) {
-    const OauthAccessToken = this.app.orm['OauthAccessToken']
+    const OauthToken = this.app.orm['OauthToken']
     // If we are creating a user and we are not authenticated, allow it
     if (request.path == '/api/v2/user' && request.method == 'post' && !request.headers.authorization && !request.params.token) {
       return reply();
@@ -46,10 +46,11 @@ module.exports = class AuthPolicy extends Policy {
     this.app.services.JwtService.verify(token, function (err, jtoken) {
       if (err) {
         // Verify it's not an oauth access token
-        OauthAccessToken
-          .findOne({token: token})
+        OauthToken
+          .findOne({token: token, type: 'access'})
           .populate('user client')
           .exec(function (err, tok) {
+            // TODO: make sure the token is not expired
             if (err || !tok) return reply(Boom.unauthorized('Invalid Token!'));
             request.params.currentUser = tok.user
             reply()

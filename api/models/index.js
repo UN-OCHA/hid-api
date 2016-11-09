@@ -2,5 +2,4 @@
 exports.User = require('./User')
 exports.List = require('./List')
 exports.Client = require('./Client')
-exports.OauthCode = require('./OauthCode')
-exports.OauthAccessToken = require('./OauthAccessToken')
+exports.OauthToken = require('./OauthToken')

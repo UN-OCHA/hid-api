@@ -44,21 +44,21 @@ module.exports = {
   onPluginsLoaded: function (err) {
     const oauth = this.packs.hapi.server.plugins['hapi-oauth2orize'];
     const Client = this.orm.Client
-    const OauthCode = this.orm.OauthCode
-    const OauthAccessToken = this.orm.OauthAccessToken
+    const OauthToken = this.orm.OauthToken
     // Implicit Grant Flow
     oauth.grant(oauth.grants.token(function (client, user, ares, done) {
-      OauthAccessToken.generate(function (err, token) {
+      OauthToken.generate(function (err, token) {
         if (err) return done(err)
         var expires = new Date();
         expires.setSeconds(expires.getSeconds() + 3600);
         var ftoken = {
+          type: 'access',
           token: token,
           client: client._id,
           user: user._id,
           expires: expires
         };
-        OauthAccessToken.create(ftoken, function (err, tok) {
+        OauthToken.create(ftoken, function (err, tok) {
           if (err) done(err)
           done(null, tok.token, {expires_in: 3600})
         })
@@ -66,48 +66,83 @@ module.exports = {
     }));
     // Authorization code exchange flow
     oauth.grant(oauth.grants.code(function (client, redirectURI, user, ares, done) {
-      OauthCode.generateCode(function (err, code) {
+      OauthToken.generate(function (err, code) {
         if (err) return done(err)
         var expires = new Date();
         expires.setSeconds(expires.getSeconds() + 3600);
         var token = {
-          code: code,
+          type: 'code',
+          token: code,
           client: client._id,
           user: user._id,
           nonce: '',
           expires: expires
         };
-        OauthCode.create(token, function (err, tok) {
+        OauthToken.create(token, function (err, tok) {
           if (err) done (err)
-          done(null, tok.code)
+          done(null, tok.token)
         })
       });
     }));
 
     oauth.exchange(oauth.exchanges.code(function (client, code, redirectURI, done) {
-      
-      /*server.helpers.find('code', code, function (code) {
-        if (!code || client.id !== code.client || redirectURI !== code.redirectURI) {
-          return done(null, false);
-        }
-        server.helpers.insert('refreshToken', {
-          client: code.client,
-          principal: code.principal,
-          scope: code.scope
-        }, function (refreshToken) {
-          server.helpers.insert('token', {
-            client: code.client,
-            principal: code.principal,
-            scope: code.scope,
-            created: Date.now(),
-            expires_in: 3600
-          }, function (token) {
-            server.helpers.remove('code', code._id, function () {
-              done(null, token._id, refreshToken._id, {expires_in: token.expires_in});
-            });
-          });
-        });
-      });*/
+      OauthToken
+        .findOne({token: code, type: 'code'})
+        .populate('client user')
+        .exec(function (err, ocode) {
+          if (err || ocode.client._id !== client._id || redirectURI !== ocode.client.redirectUri) {
+            return done(null, false);
+          }
+          var expires = new Date();
+          expires.setSeconds(expires.getSeconds() + 3600);
+          async.auto({
+            // Create refresh token
+            refreshToken: function (callback) {
+              OauthToken.generate(function (err, token) {
+                if (err) return callback(err)
+                var ftoken = {
+                  type: 'refresh',
+                  token: token,
+                  client: client._id,
+                  user: ocode.user._id,
+                  expires: expires
+                };
+                OauthToken.create(ftoken, function (err, tok) {
+                  if (err) return callback(err)
+                  callback(null, tok)
+                });
+              });
+            },
+            // Create access token
+            accessToken: function (callback) {
+              OauthToken.generate(function (err, token) {
+                if (err) return callback(err)
+                var ftoken = {
+                  type: 'access',
+                  token: token,
+                  client: client._id,
+                  user: ocode.user._id,
+                  expires: expires
+                };
+                OauthToken.create(ftoken, function (err, tok) {
+                  if (err) return callback(err)
+                  callback(null, tok)
+                });
+              });
+            },
+            // Delete code token
+            deleteCode: function (callback) {
+              OauthToken.remove({type: 'code', token: code}, function (err) {
+                if (err) return callback(err)
+                callback()
+              });
+            }
+          }, function (err, results) {
+            if (err) return done(err)
+            done(null, results[1].token, results[0].token, {expires_in: 3600})
+          }
+        );
+      });
     }));
 
     // Client Serializers
