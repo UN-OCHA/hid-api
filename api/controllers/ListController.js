@@ -60,8 +60,8 @@ module.exports = class ListController extends Controller{
       if (!currentUser.is_admin) {
         criteria.$or = [
           {visibility: "all"},
-          {owner: request.params.token.id},
-          {managers: request.params.token.id},
+          {owner: currentUser._id},
+          {managers: currentUser._id},
         ];
         if (currentUser.verified) {
           criteria.$or.push({visibility: "verified"});
