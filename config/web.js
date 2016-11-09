@@ -141,7 +141,7 @@ module.exports = {
             }
           }, function (err, results) {
             if (err) return done(err)
-            done(null, results[1].token, results[0].token, {expires_in: 3600})
+            done(null, results.accessToken.token, results.refreshToken.token, {expires_in: 3600})
           }
         );
       });
