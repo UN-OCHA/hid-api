@@ -15,6 +15,7 @@
     "trailsjs"
   ],
   "dependencies": {
+    "async": "^2.1.2",
     "bcryptjs": "^2.3.0",
     "crypto": "0.0.3",
     "ejs": "^2.5.2",
