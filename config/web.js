@@ -90,6 +90,8 @@ module.exports = {
         .findOne({token: code, type: 'code'})
         .populate('client user')
         .exec(function (err, ocode) {
+          console.log(code);
+          console.log(ocode);
           if (err || ocode.client._id !== client._id || redirectURI !== ocode.client.redirectUri) {
             return done(null, false);
           }
