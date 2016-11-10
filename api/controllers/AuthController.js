@@ -190,7 +190,6 @@ module.exports = class AuthController extends Controller{
   accessTokenOauth2 (request, reply) {
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize']
     const OauthToken = this.app.orm.OauthToken
-    console.log(request.payload)
     const code = request.payload.code
     if (!code) return reply(Boom.badRequest('Missing authorization code'))
     OauthToken

@@ -87,15 +87,13 @@ module.exports = {
     }));
 
     oauth.exchange(oauth.exchanges.code(function (client, code, redirectURI, done) {
-      console.log(client)
       OauthToken
         .findOne({token: code, type: 'code'})
         .populate('client user')
         .exec(function (err, ocode) {
-          var client = ocode.client
-          /*if (err || ocode.client._id !== client._id || redirectURI !== ocode.client.redirectUri) {
+          if (err || ocode.client._id !== client._id || redirectURI !== ocode.client.redirectUri) {
             return done(null, false);
-          }*/
+          }
           var expires = new Date();
           expires.setSeconds(expires.getSeconds() + 3600);
           async.auto({
