@@ -189,8 +189,17 @@ module.exports = class AuthController extends Controller{
 
   accessTokenOauth2 (request, reply) {
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize']
-    request.auth.credentials = request.params.currentUser
-    oauth.token(request, reply);
+    const OauthToken = this.app.orm.OauthToken
+    const code = request.query.code
+    if (!code) return reply(Boom.badRequest('Missing authorization code'))
+    OauthToken
+      .findOne({token: code, type: 'code'})
+      .populate('client user')
+      .exec(function (err, ocode) {
+        if (err) return reply(Boom.badRequest('Wrong authorization code'))
+        request.auth.credentials = ocode.client
+        oauth.token(request, reply)
+      })
   }
 
 

@@ -87,6 +87,7 @@ module.exports = {
     }));
 
     oauth.exchange(oauth.exchanges.code(function (client, code, redirectURI, done) {
+      console.log(client)
       OauthToken
         .findOne({token: code, type: 'code'})
         .populate('client user')
