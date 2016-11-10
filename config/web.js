@@ -36,6 +36,10 @@ module.exports = {
       }
     },
     {
+      register: require('crumb'),
+      options: { }
+    },
+    {
       register: require('hapi-oauth2orize'),
       options: { }
     }

@@ -6,6 +6,7 @@
 
 <form action="/oauth/authorize" method="post">
   <input type="hidden" name="transaction_id" value="<%= transactionID %>" />
+  <input type="hidden" name="crumb" value="<%= crumb %>" />
   <div>
     <input type="submit" value="Allow" id="allow">
     <input type="submit" value="Deny" name="cancel" id="deny">
