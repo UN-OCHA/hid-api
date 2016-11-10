@@ -37,7 +37,14 @@ module.exports = {
     },
     {
       register: require('crumb'),
-      options: { }
+      options: {
+        skip: function (request, reply) {
+          if (request.path != '/' && request.path != '/oauth/authorize') {
+            return true;
+          }
+          return false;
+        }
+      }
     },
     {
       register: require('hapi-oauth2orize'),

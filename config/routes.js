@@ -12,7 +12,7 @@
 module.exports = [
 
   /**
-   * Render the HelloWorld view
+   * Render the login view
    */
   {
     method: 'GET',
