@@ -102,11 +102,6 @@ module.exports = class AuthController extends Controller{
     const User = this.app.orm.User
     const Client = this.app.orm.Client
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
-    // If a nonce value is provided, add it to the session to support either
-    // authorization route as well as the redirect through login.
-    /*if (req.query.nonce && req.query.nonce.length) {
-      req.session.nonce = req.query.nonce;
-    }*/
 
     // If the user is not authenticated, redirect to the login page and preserve
     // all relevant query parameters.

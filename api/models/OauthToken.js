@@ -49,9 +49,6 @@ module.exports = class OauthToken extends Model {
         type: Schema.ObjectId,
         ref: 'User'
       },
-      nonce: {
-        type: String
-      },
       expires: {
         type: Date
       }

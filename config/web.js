@@ -76,7 +76,6 @@ module.exports = {
           token: code,
           client: client._id,
           user: user._id,
-          nonce: '',
           expires: expires
         };
         OauthToken.create(token, function (err, tok) {
