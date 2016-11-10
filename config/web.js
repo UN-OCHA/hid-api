@@ -91,7 +91,7 @@ module.exports = {
         .findOne({token: code, type: 'code'})
         .populate('client user')
         .exec(function (err, ocode) {
-          if (err || ocode.client._id !== client._id || redirectURI !== ocode.client.redirectUri) {
+          if (err || !ocode.client._id.equals(client._id) || redirectURI !== ocode.client.redirectUri) {
             return done(null, false);
           }
           var expires = new Date();
