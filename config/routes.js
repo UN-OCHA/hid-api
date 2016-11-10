@@ -63,6 +63,12 @@ module.exports = [
   },
 
   {
+    method: 'GET',
+    path: '/account.json',
+    handler: 'UserController.showAccount'
+  },
+
+  {
     method: 'POST',
     path: '/api/v2/user',
     handler: 'UserController.create'

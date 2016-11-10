@@ -678,5 +678,9 @@ module.exports = class UserController extends Controller{
       })
   }
 
+  showAccount (request, reply) {
+    reply(request.params.currentUser)
+  }
+
 }
 

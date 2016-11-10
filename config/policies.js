@@ -25,7 +25,8 @@ module.exports = {
     checkout: ['AuthPolicy.isAuthenticated'],
     verifyEmail: [ ],
     resetPassword: [ ],
-    claimEmail: [ 'AuthPolicy.isAuthenticated']
+    claimEmail: [ 'AuthPolicy.isAuthenticated'],
+    showAccount: [ 'AuthPolicy.isAuthenticated']
   },
 
   ListController: ['AuthPolicy.isAuthenticated'],
