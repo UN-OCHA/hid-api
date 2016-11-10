@@ -154,6 +154,10 @@ module.exports = class AuthController extends Controller{
             if (err || !client || !client.id) {
               return done('An error occurred while processing the request. Please try logging in again.')
             }
+            // Verify redirect uri
+            if (client.redirectUri != redirect) {
+              return done('Wrong redirect URI')
+            }
             return done(null, client, client.redirectUri)
           });
         });
