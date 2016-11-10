@@ -83,6 +83,16 @@ module.exports = class User extends Model {
           return index
         },
 
+        hasAuthorizedClient: function (clientId) {
+          var out = false
+          for (var i = 0, len = this.authorizedClients.length; i < len; i++) {
+            if (this.authorizedClients[i].id == clientId) {
+              out = true
+            }
+          }
+          return out
+        },
+
         toJSON: function () {
           const user = this.toObject()
           delete user.password
@@ -340,6 +350,10 @@ module.exports = class User extends Model {
         default: +new Date() + 7*24*60*60*1000,
         readonly: true
       },
+      lastLogin: {
+        type: Date,
+        readonly: true
+      },
       createdBy: {
         type: Schema.ObjectId,
         ref: 'User',
@@ -352,7 +366,11 @@ module.exports = class User extends Model {
       lists: [ checkInSchema ],
       operations: [ checkInSchema ],
       bundles: [ checkInSchema ],
-      disasters: [ checkInSchema ]
+      disasters: [ checkInSchema ],
+      authorizedClients: [{
+        type: Schema.ObjectId,
+        ref: 'Client'
+      }]
     };
   }
 

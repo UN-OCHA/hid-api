@@ -119,7 +119,10 @@ module.exports = class AuthController extends Controller{
     // If the user is authenticated, then check whether the user has confirmed
     // authorization for this client/scope combination.
     var that = this
-    User.findOne({_id: cookie.userId}, function (err, user) {
+    User
+      .findOne({_id: cookie.userId})
+      .populate('authorizedClients')
+      .exec(function (err, user) {
       var clientId = request.query.client_id,
         scope = request.query.scope;
 
@@ -127,13 +130,11 @@ module.exports = class AuthController extends Controller{
         that.log.warn('An error occurred in /oauth/authorize while trying to fetch the user record for ' + cookie.userId + ' who is an active session.');
         return reply(Boom.badImplementation('An error occurred while processing request. Please try logging in again.'))
       }
-      else if (user && user.authorized_services && user.authorized_services.hasOwnProperty(clientId) && user.authorized_services[clientId].indexOf(scope) !== -1) {
+      else if (user && user.authorizedClients && user.hasAuthorizedClient(clientId)) {
         // The user has confirmed authorization for this client/scope.
         // Proceed with issuing an auth code (see POST /oauth/authorize).
-        return oauth.authCodeGrant(function (_req, verify) {
-          log.info({'type': 'authorize:success', 'message': 'User ' + _req.session.userId + ' has already authorized access to client ' + clientId + '. Continuing auth process.'});
-          verify(null, true, _req.session.userId);
-        })(req, res, next);
+        request.auth.credentials = user
+        oauth.decision(request, reply)
       }
       else {
         request.auth.credentials = user
@@ -144,9 +145,6 @@ module.exports = class AuthController extends Controller{
             return reply.view('authorize', {
               user: user,
               client: req.oauth2.client,
-              /*redirect_uri: request.query.redirect_uri,
-              response_type: request.query.response_type || 'code',
-              scope: request.query.scope || '',*/
               transactionID: req.oauth2.transactionID
               //csrf: req.csrfToken()
             });
@@ -165,6 +163,7 @@ module.exports = class AuthController extends Controller{
 
   authorizeOauth2 (request, reply) {
     const User = this.app.orm.User
+    const Client = this.app.orm.Client
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize']
     const cookie = request.yar.get('session')
     if (!cookie.userId) {
@@ -183,7 +182,18 @@ module.exports = class AuthController extends Controller{
         return reply(Boom.badRequest('Could not find user'))
       }
       request.auth.credentials = user
-      oauth.decision(request, reply)
+      // Save authorized client if user allowed
+      const clientId = request.yar.authorize[request.payload.transaction_id].client
+      if (!request.payload.cancel && !user.hasAuthorizedClient(clientId)) {
+        user.authorizedClients.push(request.yar.authorize[request.payload.transaction_id].client)
+        user.markModified('authorizedClients')
+        user.save(function (err) {
+          oauth.decision(request, reply)
+        })
+      }
+      else {
+        oauth.decision(request, reply)
+      }
     })
   }
 
