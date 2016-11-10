@@ -135,7 +135,7 @@ module.exports = class AuthController extends Controller{
         oauth.authorize(request, reply, function (req, res) {
           if (!request.response || (request.response && !request.response.isBoom)) {
             if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
-              request.payload.transaction_id = req.oauth2.transactionID
+              request.payload = {transaction_id: req.oauth2.transactionID }
               oauth.decision(request, reply)
             }
             else {
