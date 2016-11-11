@@ -27,9 +27,16 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale || 'en'
     };
+    var reset_url = app_verify_url
+    if (app_verify_url.indexOf('?') != -1) {
+      reset_url += '&hash=' + user.generateHash(user.email)
+    }
+    else {
+      reset_url += '?hash=' + user.generateHash(user.email)
+    }
     var context = {
       name: user.name,
-      reset_url: app_verify_url + '/' + user.generateHash(user.email)
+      reset_url: reset_url
     };
     this.send(mailOptions, 'register', context, callback);
   }

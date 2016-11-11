@@ -9,7 +9,7 @@ const Boom = require('boom')
  */
 module.exports = class AuthController extends Controller{
 
-  _loginHelper (request, reply, next) {
+  _loginHelper (request, reply) {
     var email = request.payload.email
     var password = request.payload.password
 
@@ -38,7 +38,7 @@ module.exports = class AuthController extends Controller{
             return reply(Boom.unauthorized('invalid email or password'));
           }
           else {
-            return next(user);
+            return reply(user);
           }
         })
     }
@@ -48,11 +48,16 @@ module.exports = class AuthController extends Controller{
    */
   authenticate (request, reply) {
     var that = this
-    this._loginHelper(request, reply, function (user) {
-      return reply({
-        user: user,
-        token: that.app.services.JwtService.issue({id: user._id })
-      });
+    this._loginHelper(request, function (result) {
+      if (!result.isBoom) {
+        return reply({
+          user: result,
+          token: that.app.services.JwtService.issue({id: user._id })
+        });
+      }
+      else {
+        return reply(result)
+      }
     });
   }
 
@@ -61,39 +66,50 @@ module.exports = class AuthController extends Controller{
    */
   login (request, reply) {
     var that = this
-    this._loginHelper(request, reply, function (user) {
-      // Redirect to /oauth/authorize
-      request.yar.set('session', { userId: user._id })
-      var redirect = request.payload.redirect || '/oauth/authorize';
-      redirect += "?client_id=" + request.payload.client_id;
-      redirect += "&redirect_uri=" + request.payload.redirect_uri;
-      redirect += "&response_type=" + request.payload.response_type;
-      redirect += "&scope=" + request.payload.scope;
+    this._loginHelper(request, function (result) {
+      if (!result.isBoom) {
+        // Redirect to /oauth/authorize
+        request.yar.set('session', { userId: result._id })
+        var redirect = request.payload.redirect || '/oauth/authorize';
+        redirect += "?client_id=" + request.payload.client_id;
+        redirect += "&redirect_uri=" + request.payload.redirect_uri;
+        redirect += "&response_type=" + request.payload.response_type;
+        redirect += "&scope=" + request.payload.scope;
 
-      if (typeof request.payload.response_type == 'undefined' || typeof request.payload.scope == 'undefined') {
-        //that.log.warn({type: 'authenticate:error', body: req.body, cookies: req.cookies, header: req.headers, query: req.query},
-        //  'Undefined response_type or scope');
+        if (typeof request.payload.response_type == 'undefined' || typeof request.payload.scope == 'undefined') {
+          //that.log.warn({type: 'authenticate:error', body: req.body, cookies: req.cookies, header: req.headers, query: req.query},
+          //  'Undefined response_type or scope');
+        }
+
+        // Record the successful authentication date.
+        // This facilitates troubleshooting, e.g., 10 account floods, no successes since last year.
+        /*currentUser.login_last = Date.now();
+        currentUser.save(function(err, item) {
+          if (err || !item) {
+            log.warn({ type: 'account:error', data: item, err: err },
+              'Error occurred trying to update user account ' + item.user_id + ' with login success timestamp.'
+            );
+          }
+          else {
+            log.info({ type: 'account:success', data: item },
+              'User account updated with login access timestamp for ID ' + item.user_id + '.'
+            );
+          }
+        });*/
+
+        reply.redirect(redirect);
+        that.log.info('Authentication successful for ' + request.payload.email + '. Redirecting to ' + redirect)
       }
-
-      // Record the successful authentication date.
-      // This facilitates troubleshooting, e.g., 10 account floods, no successes since last year.
-      /*currentUser.login_last = Date.now();
-      currentUser.save(function(err, item) {
-        if (err || !item) {
-          log.warn({ type: 'account:error', data: item, err: err },
-            'Error occurred trying to update user account ' + item.user_id + ' with login success timestamp.'
-          );
-        }
-        else {
-          log.info({ type: 'account:success', data: item },
-            'User account updated with login access timestamp for ID ' + item.user_id + '.'
-          );
-        }
-      });*/
-
-      reply.redirect(redirect);
-      that.log.info('Authentication successful for ' + request.payload.email + '. Redirecting to ' + redirect)
-
+      else {
+        return reply.view('login', {
+          title: 'Log into Humanitarian ID',
+          query: request.payload,
+          alert: {
+            type: 'danger',
+            message: 'We could not log you in. Please check your email/password'
+          }
+        })
+      }
     });
   }
 

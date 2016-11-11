@@ -20,6 +20,30 @@ module.exports = [
     handler: 'ViewController.login'
   },
 
+  {
+    method: 'GET',
+    path: '/register',
+    handler: 'ViewController.register'
+  },
+
+  {
+    method: 'POST',
+    path: '/register',
+    handler: 'ViewController.registerPost'
+  },
+
+  {
+    method: 'GET',
+    path: '/verify',
+    handler: 'ViewController.verify'
+  },
+
+  {
+    method: 'GET',
+    path: '/logout',
+    handler: 'ViewController.logout'
+  },
+
   /**
    * Constrain the DefaultController.info handler to accept only GET requests.
    */
