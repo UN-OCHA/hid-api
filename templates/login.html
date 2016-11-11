@@ -10,7 +10,7 @@
     <input type="email" class="form-control" name="email" id="email" required>
   </div>
   <div class="form-group">
-    <label for="password"><span translate>Password</span> <a href="/password_reset" translate>Forgot your password ?</a></label>
+    <label for="password"><span translate>Password</span> <a href="/password?redirect=<%= query.redirect %>&client_id=<%= query.client_id %>&redirect_uri=<%= query.redirect_uri %>&response_type=<%= query.response_type %>&scope=<%= query.scope %>" translate>Forgot your password ?</a></label>
     <input type="password" class="form-control" name="password" id="password" required>
   </div>
   <input type="hidden" name="redirect" value="<%= query.redirect %>" />

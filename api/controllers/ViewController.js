@@ -86,4 +86,34 @@ module.exports = class ViewController extends Controller {
       })
     }) 
   }
+
+  password (request, reply) {
+    const requestUrl = request.connection.info.protocol + '://' + request.info.host + '/new_password?client_id=' + request.query.client_id + '&redirect_uri=' + request.query.redirect_uri + '&response_type=' + request.query.response_type + '&scope=' + request.query.scope
+    reply.view('password', {
+      requestUrl: requestUrl
+    })
+  }
+
+  passwordPost (request, reply) {
+    const UserController = this.app.controllers.UserController
+    UserController.resetPassword(request, function (result) {
+      var al = {}
+      if (!result.isBoom) {
+        al = {
+          type: 'success',
+          message: 'You should have received an email which will allow you to reset your password.'
+        }
+      }
+      else {
+        al = {
+          type: 'danger',
+          message: 'There was an error resetting your password.'
+        }
+      }
+      return reply.view('login', {
+        alert: al,
+        query: request.query
+      })
+    })
+  }
 }

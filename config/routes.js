@@ -44,6 +44,18 @@ module.exports = [
     handler: 'ViewController.logout'
   },
 
+  {
+    method: 'GET',
+    path: '/password',
+    handler: 'ViewController.password'
+  },
+
+  {
+    method: 'POST',
+    path: '/password',
+    handler: 'ViewController.passwordPost'
+  },
+
   /**
    * Constrain the DefaultController.info handler to accept only GET requests.
    */

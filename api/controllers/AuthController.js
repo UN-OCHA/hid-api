@@ -52,7 +52,7 @@ module.exports = class AuthController extends Controller{
       if (!result.isBoom) {
         return reply({
           user: result,
-          token: that.app.services.JwtService.issue({id: user._id })
+          token: that.app.services.JwtService.issue({id: result._id })
         });
       }
       else {
