@@ -4,6 +4,21 @@ const Controller = require('trails-controller')
 
 module.exports = class ViewController extends Controller {
 
+  _getAlert(result, success, error) {
+    if (!result || !result.isBoom) {
+      return {
+        type: 'success',
+        message: success
+      }
+    }
+    else {
+      return {
+        type: 'danger',
+        message: error
+      }
+    }
+  }
+
   login (request, reply) {
     const session = request.yar.get('session')
     if (session) { // User is already logged in
@@ -41,20 +56,9 @@ module.exports = class ViewController extends Controller {
 
   registerPost (request, reply) {
     const UserController = this.app.controllers.UserController
+    var that = this
     UserController.create(request, function (result) {
-      var al = {}
-      if (!result.isBoom) {
-        al = {
-          type: 'success',
-          message: 'You registered successfully. Please confirm your email address'
-        }
-      }
-      else {
-        al = {
-          type: 'danger',
-          message: 'There was an error registering you.'
-        }
-      }
+      var al = that._getAlert(result, 'You registered successfully. Please confirm your email address', 'There was an error registering you.')
       return reply.view('login', {
         alert: al,
         query: request.query
@@ -66,20 +70,9 @@ module.exports = class ViewController extends Controller {
     const UserController = this.app.controllers.UserController
     if (!request.query.hash) return reply(Boom.badRequest('Missing hash parameter'))
     request.payload = { hash: request.query.hash }
+    var that = this
     UserController.validateEmail(request, function (result) {
-      var al = {}
-      if (!result.isBoom) {
-        al = {
-          type: 'success',
-          message: 'Thank you for confirming your email address. You can now log in'
-        }
-      }
-      else {
-        al = {
-          type: 'danger',
-          message: 'There was an error confirming your email address.'
-        }
-      }
+      var al = that._getAlert(result, 'Thank you for confirming your email address. You can now log in', 'There was an error confirming your email address.')
       return reply.view('login', {
         alert: al,
         query: request.query
@@ -96,23 +89,30 @@ module.exports = class ViewController extends Controller {
 
   passwordPost (request, reply) {
     const UserController = this.app.controllers.UserController
+    var that = this
     UserController.resetPassword(request, function (result) {
-      var al = {}
-      if (!result.isBoom) {
-        al = {
-          type: 'success',
-          message: 'You should have received an email which will allow you to reset your password.'
-        }
-      }
-      else {
-        al = {
-          type: 'danger',
-          message: 'There was an error resetting your password.'
-        }
-      }
+      var al = that._getAlert(result, 'You should have received an email which will allow you to reset your password.', 'There was an error resetting your password.')
       return reply.view('login', {
         alert: al,
         query: request.query
+      })
+    })
+  }
+
+  newPassword (request, reply) {
+    reply.view('new_password', {
+      query: request.query
+    })
+  }
+
+  newPasswordPost (request, reply) {
+    const UserController = this.app.controllers.UserController
+    var that = this
+    UserController.resetPassword(request, function (result) {
+      var al = that._getAlert(result, 'Your password was successfully reset.', 'There was an error resetting your password.')
+      return reply.view('login', {
+        alert: al,
+        query: request.payload
       })
     })
   }

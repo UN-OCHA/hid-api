@@ -468,8 +468,9 @@ module.exports = class UserController extends Controller{
               record.email_verified = true
               record.expires = new Date(0, 0, 1, 0, 0, 0)
               record.save().then(() => {
-                return reply().code(204)
+                return reply('Password reset successfully')
               })
+              .catch(err => { return reply(Boom.badImplementation(err.message)) })
             }
             else {
               return reply(Boom.badRequest(valid))

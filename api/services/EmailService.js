@@ -12,6 +12,18 @@ const Transporter = Nodemailer.createTransport('smtp://' + process.env.SMTP_USER
  */
 module.exports = class EmailService extends Service {
 
+  // Helper function to add hash to a link
+  _addHash(url, hash) {
+    var out = url
+    if (url.indexOf('?') != -1) {
+      out += '&hash=' + hash
+    }
+    else {
+      out += '?hash=' + hash
+    }
+    return out
+  }
+
   // Send an email
   send (options, template, context, callback) {
     var templateDir = TemplateDir + template
@@ -27,13 +39,7 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale || 'en'
     };
-    var reset_url = app_verify_url
-    if (app_verify_url.indexOf('?') != -1) {
-      reset_url += '&hash=' + user.generateHash(user.email)
-    }
-    else {
-      reset_url += '?hash=' + user.generateHash(user.email)
-    }
+    var reset_url = this._addHash(app_verify_url, user.generateHash(user.email))
     var context = {
       name: user.name,
       reset_url: reset_url
@@ -46,10 +52,11 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale || 'en'
     };
+    var reset_url = this._addHash(app_verify_url, user.generateHash(user.email))
     var context = {
       user: user,
       admin: admin,
-      reset_url: app_verify_url + '/' + user.generateHash(user.email)
+      reset_url: reset_url
     };
     this.send(mailOptions, 'register_orphan', context, callback);
   }
@@ -59,9 +66,10 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale || 'en'
     };
+    var reset_url = this._addHash(app_verify_url, user.generateHash(user.email))
     var context = {
       user: user,
-      reset_url: app_verify_url + '/' + user.generateHash(user.email)
+      reset_url: reset_url
     };
     this.send(mailOptions, 'register_kiosk', context, callback);
   }
@@ -83,9 +91,10 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale
     };
+    var reset_url = this._addHash(app_reset_url, user.generateHash(user.email))
     var context = {
       name: user.name,
-      reset_url: app_reset_url + '/' + user.generateHash(user.email)
+      reset_url: reset_url
     };
     this.send(mailOptions, 'reset_password', context, callback);
   }
@@ -95,9 +104,10 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale
     };
+    var reset_url = this._addHash(app_reset_url, user.generateHash(user.email))
     var context = {
       name: user.name,
-      reset_url: app_reset_url + '/' + user.generateHash(user.email)
+      reset_url: reset_url
     };
     this.send(mailOptions, 'claim', context, callback);
   }
@@ -107,9 +117,10 @@ module.exports = class EmailService extends Service {
       to: email,
       locale: user.locale
     };
+    var reset_url = this._addHash(app_validation_url, user.generateHash(email))
     var context = {
       user: user,
-      reset_url: app_validation_url + '/' + user.generateHash(email)
+      reset_url: reset_url
     };
     this.send(mailOptions, 'email_validation', context, callback);
   }

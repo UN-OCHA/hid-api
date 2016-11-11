@@ -39,7 +39,7 @@ module.exports = {
       register: require('crumb'),
       options: {
         skip: function (request, reply) {
-          const paths = ['/', '/login', '/oauth/authorize', '/register', '/verify', '/password']
+          const paths = ['/', '/login', '/oauth/authorize', '/register', '/verify', '/password', '/new_password']
           if (paths.indexOf(request.path) == -1) {
             return true;
           }

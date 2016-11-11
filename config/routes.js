@@ -56,6 +56,18 @@ module.exports = [
     handler: 'ViewController.passwordPost'
   },
 
+  {
+    method: 'GET',
+    path: '/new_password',
+    handler: 'ViewController.newPassword'
+  },
+
+  {
+    method: 'POST',
+    path: '/new_password',
+    handler: 'ViewController.newPasswordPost'
+  },
+
   /**
    * Constrain the DefaultController.info handler to accept only GET requests.
    */
