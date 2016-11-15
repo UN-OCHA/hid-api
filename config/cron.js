@@ -4,7 +4,7 @@ const async = require('async')
 
 module.exports = {
   jobs: {
-    deleteExpired: {
+    deleteExpiredUsers: {
       schedule: '*/60 * * * *',
       onTick: function (app) {
         const User = app.orm['user']
@@ -16,6 +16,14 @@ module.exports = {
         app.log.info('Done deleting expired users')
       },
       start: true
+    },
+    deleteExpiredTokens: {
+      schedule: '*/10 * * * *',
+      onTick: function (app) {
+        const OauthToken = app.orm.OauthToken
+        var now = Date.now()
+        OauthToken.remove({expires: {$lt: now }})
+      }
     },
     // Import lists from Humanitarianresponse
     importLists: {

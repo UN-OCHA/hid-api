@@ -9,7 +9,7 @@ const Boom = require('boom');
  */
 module.exports = class AuthPolicy extends Policy {
 
-  isAuthenticated(request, reply) {
+  isAuthenticated (request, reply) {
     const OauthToken = this.app.orm['OauthToken']
     // If we are creating a user and we are not authenticated, allow it
     if (request.path == '/api/v2/user' && request.method == 'post' && !request.headers.authorization && !request.params.token) {
@@ -69,6 +69,15 @@ module.exports = class AuthPolicy extends Policy {
         });
       }
     });
+  }
+
+  isAdmin (request, reply) {
+    this.isAuthenticated(request, function (err) {
+      if (err && err.isBoom) return reply(err)
+      if (!request.params.currentUser) return reply(Boom.unauthorized('Current user was not set'))
+      if (!request.params.currentUser.is_admin) return reply(Boom.forbidden('You need to be an admin'))
+      reply()
+    })
   }
 
 

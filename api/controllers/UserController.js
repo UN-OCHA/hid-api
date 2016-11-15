@@ -380,7 +380,7 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('[UserController] Verifying email ')
 
-    if (!request.payload.hash) return reply(Boom.badRequest())
+    if (!request.payload.hash && !request.params.email) return reply(Boom.badRequest())
     // TODO: make sure current user can do this
 
     if (request.payload.hash) {

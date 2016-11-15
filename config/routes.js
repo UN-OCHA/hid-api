@@ -235,5 +235,29 @@ module.exports = [
     method: 'DELETE',
     path: '/api/v2/list/{id?}',
     handler: 'ListController.destroy'
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v2/client',
+    handler: 'ClientController.create'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/client/{id?}',
+    handler: 'ClientController.find'
+  },
+
+  {
+    method: [ 'PUT', 'PATCH' ],
+    path: '/api/v2/client/{id?}',
+    handler: 'ClientController.update'
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/client/{id?}',
+    handler: 'ClientController.destroy'
   }
 ]
