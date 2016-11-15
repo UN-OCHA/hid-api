@@ -39,12 +39,12 @@ module.exports = class User extends Model {
       },
       methods: {
         sanitize: function () {
-          this.sanitizeServices()
+          this.sanitizeClients()
         },
-        sanitizeServices: function () {
-          if (this.authorizedServices && this.authorizedServices.length) {
-            for (var i = 0, len = this.authorizedServices.length; i < len; i++) {
-              delete this.authorizedServices[i].secret
+        sanitizeClients: function () {
+          if (this.authorizedClients && this.authorizedClients.length) {
+            for (var i = 0, len = this.authorizedClients.length; i < len; i++) {
+              delete this.authorizedClients[i].secret
             }
           }
         },

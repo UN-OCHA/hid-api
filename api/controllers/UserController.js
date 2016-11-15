@@ -5,7 +5,7 @@ const Boom = require('boom')
 const Bcrypt = require('bcryptjs')
 const fs = require('fs')
 const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters']
-const userPopulate = "favoriteLists operations.list disasters.list bundles.list organization.list organizations.list authorizedServices"
+const userPopulate = "favoriteLists operations.list disasters.list bundles.list organization.list organizations.list authorizedClients"
 
 /**
  * @module UserController
