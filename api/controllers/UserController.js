@@ -5,7 +5,7 @@ const Boom = require('boom')
 const Bcrypt = require('bcryptjs')
 const fs = require('fs')
 const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters']
-const userPopulate = "favoriteLists operations.list disasters.list bundles.list organization.list organizations.list"
+const userPopulate = "favoriteLists operations.list disasters.list bundles.list organization.list organizations.list authorizedServices"
 
 /**
  * @module UserController
@@ -168,6 +168,16 @@ module.exports = class UserController extends Controller{
           .then(result => {
             if (!result) return Boom.notFound()
 
+            if (request.params.id) {
+              result.sanitize()
+            }
+            else {
+              if (result.length) {
+                for (var i = 0, len = result.length; i < len; i++) {
+                  result[i].sanitize()
+                }
+              }
+            }
             return result
           })
           .catch(function (err) { that.log.debug(err); })
