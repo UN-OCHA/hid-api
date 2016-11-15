@@ -38,7 +38,8 @@ module.exports = class AuthController extends Controller{
             return reply(Boom.unauthorized('invalid email or password'));
           }
           else {
-            return reply(user);
+            user.sanitize()
+            return reply(user)
           }
         })
     }
@@ -141,6 +142,7 @@ module.exports = class AuthController extends Controller{
         return reply(Boom.badImplementation('An error occurred while processing request. Please try logging in again.'))
       }
       else {
+        user.sanitize()
         request.auth.credentials = user
         oauth.authorize(request, reply, function (req, res) {
           if (!request.response || (request.response && !request.response.isBoom)) {
@@ -195,6 +197,7 @@ module.exports = class AuthController extends Controller{
         that.log.warn('Could not find user with ID ' + cookie.userId)
         return reply(Boom.badRequest('Could not find user'))
       }
+      user.sanitize()
       request.auth.credentials = user
       // Save authorized client if user allowed
       const clientId = request.yar.authorize[request.payload.transaction_id].client

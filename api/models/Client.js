@@ -9,15 +9,6 @@ const Model = require('trails-model')
 module.exports = class Client extends Model {
 
   static config () {
-    return {
-      methods: {
-        toJSON: function () {
-          const client = this.toObject()
-          delete client.secret
-          return client
-        }
-      }
-    }
   }
 
   static schema () {

@@ -38,6 +38,16 @@ module.exports = class User extends Model {
         }
       },
       methods: {
+        sanitize: function () {
+          this.sanitizeServices()
+        },
+        sanitizeServices: function () {
+          if (this.authorizedServices && this.authorizedServices.length) {
+            for (var i = 0, len = this.authorizedServices.length; i < len; i++) {
+              delete this.authorizedServices[i].secret
+            }
+          }
+        },
         validPassword: function (password)  {
           return Bcrypt.compareSync(password, this.password)
         },
