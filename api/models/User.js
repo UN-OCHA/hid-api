@@ -153,9 +153,14 @@ module.exports = class User extends Model {
         validate: {
           validator: function (v) {
             if (v != '') {
-              const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
-              const phone = phoneUtil.parse(v);
-              return phoneUtil.isValidNumber(phone);
+              try {
+                const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
+                const phone = phoneUtil.parse(v);
+                return phoneUtil.isValidNumber(phone);
+              }
+              catch (e) {
+                return false
+              }
             }
             else {
               return true;
@@ -284,9 +289,13 @@ module.exports = class User extends Model {
         validate: {
           validator: function (v) {
             if (v != '') {
-              const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
-              const phone = phoneUtil.parse(v);
-              return phoneUtil.isValidNumber(phone);
+              try {
+                const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
+                const phone = phoneUtil.parse(v);
+                return phoneUtil.isValidNumber(phone);
+              } catch (e) {
+                return false
+              }
             }
             else {
               return true;
