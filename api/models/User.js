@@ -43,8 +43,14 @@ module.exports = class User extends Model {
         },
         sanitizeClients: function () {
           if (this.authorizedClients && this.authorizedClients.length) {
+            var sanitized = [] 
             for (var i = 0, len = this.authorizedClients.length; i < len; i++) {
-              delete this.authorizedClients[i].secret
+              if (this.authorizedClients[i].secret) {
+                sanitized.push({id: this.authorizedClients[i].id, name: this.authorizedClients[i].name })
+              }
+              else {
+                sanitized.push(this.authorizedClients[i])
+              }
             }
           }
         },
