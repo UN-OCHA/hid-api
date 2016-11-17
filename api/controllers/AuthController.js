@@ -229,6 +229,35 @@ module.exports = class AuthController extends Controller{
       })
   }
 
+  openIdConfiguration (request, reply) {
+    var root = process.env.ROOT_URL
+    var out = {
+      issuer: root,
+      authorization_endpoint: root + "/oauth/authorize",
+      token_endpoint: root + "/oauth/access_token",
+      jwks_uri: root + "/oauth/jwks",
+      response_types_supported: ["code", "code id_token", "id_token", "token id_token"],
+      subject_types_supported: ["public", "pairwise"],
+      id_token_signing_alg_values_supported: ["RS256"]
+    }
+    reply(out)
+  }
 
+  jwks (request, reply) {
+    var out = {
+      keys: [
+        {
+          "kid": "e35e07a9-34b6-4c4f-a67d-0caaf7713ca8",
+          "kty": "RSA",
+          "use": "sig",
+          "alg": "RS256",
+          "exp": 1502366340423,
+          "n": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzbKGejFFtnaVlbmoGyW0tlyjK490jorA5uVHqzJfLwIBFx2iQQNYdM1LI8Jf31JzjtDYfbSkircaubt9BCJjgZ0tmBf4QT48zSGlCQFGPNlVgCTvBS72ZnGejHV24sW1wkHd9Ymp8jSlLQaco4IYqzbfNu1nUBx6wE9LvXsZnoeDDCXROHlRh78YTj0KoRrRYufRkJC4WzGMFIoAUw0mFQgY2EPqHJN8TxyLUl58/yv6jZZg74cJMU9wdVAiEWHybxcEMHQ+6jk0GWDC4MyKyZZIr/J3SgooxQchJ2uFg6rzI35gcF4XJM/zLcQx/UYaoLp6+Q1UJsjMtafgBJrdNwIDAQAB",
+          "e": "AQAB"
+        }
+      ]
+    }
+    reply (out)
+  }
 }
 

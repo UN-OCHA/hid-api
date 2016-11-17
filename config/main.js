@@ -32,15 +32,6 @@ module.exports = {
   paths: {
     root: path.resolve(__dirname, '..'),
     temp: path.resolve(__dirname, '..', '.tmp'),
-    www: [
-      {
-        path: path.resolve(__dirname, '..', 'pictures'),
-        humanUrl: '/pictures'
-      },
-      {
-        path: path.resolve(__dirname, '..', 'static'),
-        humanUrl: '/static'
-      }
-    ]
+    www: path.resolve(__dirname, '..', 'pictures')
   }
 }

@@ -81,6 +81,18 @@ module.exports = [
    * Default authentication path.
    */
   {
+    method: 'GET',
+    path: '/.well-known/openid-configuration',
+    handler: 'AuthController.openIdConfiguration'
+  },
+
+  {
+    method: 'GET',
+    path: '/oauth/jwks',
+    handler: 'AuthController.jwks'
+  },
+
+  {
     method: 'POST',
     path: '/api/v2/jsonwebtoken',
     handler: 'AuthController.authenticate'
