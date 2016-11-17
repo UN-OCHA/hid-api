@@ -59,6 +59,10 @@ module.exports = {
     const oauth2orize_ext = require('oauth2orize-openid')
     const Client = this.orm.Client
     const OauthToken = this.orm.OauthToken
+    const crypto = require('crypto')
+    const base64url = require('base64url')
+
+    var that = this
     // Register supported OpenID Connect 1.0 grant types.
 
     // id_token grant type.
@@ -135,7 +139,8 @@ module.exports = {
             return done(null, false);
           }
           var expires = new Date();
-          expires.setSeconds(expires.getSeconds() + 3600);
+          var now = expires.getSeconds();
+          expires.setSeconds(now + 3600);
           async.auto({
             // Create refresh token
             refreshToken: function (callback) {
@@ -171,6 +176,21 @@ module.exports = {
                 });
               });
             },
+            idToken: function (callback) {
+              var out = {}
+              var id_token = {
+                iss: process.env.ROOT_URL || (oauth.req.protocol + '://' + oauth.req.headers.host),
+                sub: ocode.user._id,
+                aud: client.id,
+                exp: expires,
+                iat: now
+              }
+              /*var hbuf = crypto.createHmac('sha256', client.secret).update(oauth.accessToken).digest();
+              out.ht_hash = base64url(hbuf.toString('ascii', 0, hbuf.length/2));
+              out.token = jwt.encode(id_token, client.secret);*/
+              out.token = that.services.JwtService.issue(id_token)
+              callback(null, out)
+            },
             // Delete code token
             deleteCode: function (callback) {
               OauthToken.remove({type: 'code', token: code}, function (err) {
@@ -180,7 +200,7 @@ module.exports = {
             }
           }, function (err, results) {
             if (err) return done(err)
-            done(null, results.accessToken.token, results.refreshToken.token, {expires_in: 3600})
+            done(null, results.accessToken.token, results.refreshToken.token, {expires_in: 3600, id_token: results.idToken.token })
           }
         );
       });

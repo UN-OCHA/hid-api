@@ -16,6 +16,7 @@
   ],
   "dependencies": {
     "async": "^2.1.2",
+    "base64url": "^2.0.0",
     "bcryptjs": "^2.3.0",
     "crumb": "^6.0.3",
     "crypto": "0.0.3",
