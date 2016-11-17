@@ -56,8 +56,37 @@ module.exports = {
   onPluginsLoaded: function (err) {
     const async = require('async')
     const oauth = this.packs.hapi.server.plugins['hapi-oauth2orize'];
+    const oauth2orize_ext = require('oauth2orize-openid')
     const Client = this.orm.Client
     const OauthToken = this.orm.OauthToken
+    // Register supported OpenID Connect 1.0 grant types.
+
+    // id_token grant type.
+    oauth.grant(oauth2orize_ext.grant.idToken(function(client, user, done){
+      var id_token = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOWdkazcifQ.ewogImlzcyI6ICJodHRwOi8vc2VydmVyLmV4YW1wbGUuY29tIiwKICJzdWIiOiAiMjQ4Mjg5NzYxMDAxIiwKICJhdWQiOiAiczZCaGRSa3F0MyIsCiAibm9uY2UiOiAibi0wUzZfV3pBMk1qIiwKICJleHAiOiAxMzExMjgxOTcwLAogImlhdCI6IDEzMTEyODA5NzAKfQ.ggW8hZ1EuVLuxNuuIJKX_V8a_OMXzR0EHR9R6jgdqrOOF4daGU96Sr_P6qJp6IcmD3HP99Obi1PRs-cwh3LO-p146waJ8IhehcwL7F09JdijmBqkvPeB2T9CJNqeGpe-gccMg4vfKjkM8FcGvnzZUN4_KSP0aAp1tOJ1zZwgjxqGByKHiOtX7TpdQyHE5lcMiKPXfEIQILVq0pc_E2DzL7emopWoaoZTF_m0_N0YzFC6g6EJbOEoRoSK5hoDalrcvRYLSrQAZZKflyuVCyixEoV9GfNQC3_osjzw2PAithfubEEBLuVVk4XUVrWOLrLl0nx7RkKU8NXNHq-rvKMzqg";
+      // Do your lookup/token generation.
+      // ... id_token =
+
+      done(null, id_token);
+    }));
+
+    // 'id_token token' grant type.
+    oauth.grant(oauth2orize_ext.grant.idTokenToken(
+      function(client, user, done){
+        var token = "SlAV32hkKG";
+        // Do your lookup/token generation.
+        // ... token =
+
+        done(null, token);
+      },
+      function(client, user, req, done){
+        var id_token = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOWdkazcifQ.ewogImlzcyI6ICJodHRwOi8vc2VydmVyLmV4YW1wbGUuY29tIiwKICJzdWIiOiAiMjQ4Mjg5NzYxMDAxIiwKICJhdWQiOiAiczZCaGRSa3F0MyIsCiAibm9uY2UiOiAibi0wUzZfV3pBMk1qIiwKICJleHAiOiAxMzExMjgxOTcwLAogImlhdCI6IDEzMTEyODA5NzAKfQ.ggW8hZ1EuVLuxNuuIJKX_V8a_OMXzR0EHR9R6jgdqrOOF4daGU96Sr_P6qJp6IcmD3HP99Obi1PRs-cwh3LO-p146waJ8IhehcwL7F09JdijmBqkvPeB2T9CJNqeGpe-gccMg4vfKjkM8FcGvnzZUN4_KSP0aAp1tOJ1zZwgjxqGByKHiOtX7TpdQyHE5lcMiKPXfEIQILVq0pc_E2DzL7emopWoaoZTF_m0_N0YzFC6g6EJbOEoRoSK5hoDalrcvRYLSrQAZZKflyuVCyixEoV9GfNQC3_osjzw2PAithfubEEBLuVVk4XUVrWOLrLl0nx7RkKU8NXNHq-rvKMzqg";
+        // Do your lookup/token generation.
+        // ... id_token =
+        done(null, id_token);
+      }
+    ));
+
     // Implicit Grant Flow
     oauth.grant(oauth.grants.token(function (client, user, ares, done) {
       OauthToken.generate(function (err, token) {
