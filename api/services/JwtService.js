@@ -13,13 +13,14 @@ module.exports = class JwtService extends Service {
   // Generates a token from supplied payload
   issue (payload) {
     var cert = fs.readFileSync('keys/hid.rsa');
+    var options = { algorithm: "RS256" }
+    if (!payload.exp) {
+       options.expiresIn = "3h"
+     }
     return jwt.sign(
       payload,
       cert,
-      {
-        algorithm: "RS256",
-        expiresIn: "3h"
-      }
+      options
     );
   }
 

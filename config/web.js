@@ -182,7 +182,7 @@ module.exports = {
                 iss: process.env.ROOT_URL || (oauth.req.protocol + '://' + oauth.req.headers.host),
                 sub: ocode.user._id,
                 aud: client.id,
-                exp: expires,
+                exp: now + 3600,
                 iat: now
               }
               /*var hbuf = crypto.createHmac('sha256', client.secret).update(oauth.accessToken).digest();
