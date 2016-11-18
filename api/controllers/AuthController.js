@@ -237,7 +237,7 @@ module.exports = class AuthController extends Controller{
       token_endpoint: root + "/oauth/access_token",
       userinfo_endpoint: root + "/account.json",
       jwks_uri: root + "/oauth/jwks",
-      response_types_supported: ["code", "token", "code id_token", "id_token", "token id_token"],
+      response_types_supported: ["code", "token", "id_token", "id_token token"],
       subject_types_supported: ["public"],
       id_token_signing_alg_values_supported: ["RS256"],
       scopes_supported: ["openid", "email", "profile", "phone"],
