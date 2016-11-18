@@ -240,7 +240,7 @@ module.exports = class AuthController extends Controller{
       response_types_supported: ["code", "token", "code id_token", "id_token", "token id_token"],
       subject_types_supported: ["public"],
       id_token_signing_alg_values_supported: ["RS256"],
-      scopes_supported: ["openid", "email", "profile"],
+      scopes_supported: ["openid", "email", "profile", "phone"],
       claims_supported: ["iss", "sub", "aud", "exp", "iat", "name", "given_name", "family_name", "middle_name", "picture", "email", "email_verified", "zoneinfo", "locale", "phone_number", "phone_number_verified", "updated_at"] 
     }
     reply(out)
