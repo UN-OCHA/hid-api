@@ -40,5 +40,18 @@ module.exports = class JwtService extends Service {
     var cert = fs.readFileSync('keys/hid.pkcs1.pub')
     return rsa2jwk(cert, { use: 'sig', kid: 'hid-dev'}, 'public')
   }
+
+  generateIdToken (client, user) {
+    var now = Math.floor(Date.now() / 1000);
+    var id_token = {
+      iss: process.env.ROOT_URL,
+      sub: user._id,
+      aud: client.id,
+      exp: now + 3600,
+      iat: now
+    }
+    return this.issue(id_token)
+  }
+
 }
 

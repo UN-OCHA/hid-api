@@ -13,7 +13,7 @@ module.exports = class OauthToken extends Model {
   static config () {
     return {
       statics: {
-        generate: function (callback) {
+        generate: function (type, client, user, callback) {
           crypto.randomBytes(256, function (ex, buffer) {
             if (ex) return callback(error('server_error'));
 
@@ -22,7 +22,16 @@ module.exports = class OauthToken extends Model {
               .update(buffer)
               .digest('hex');
 
-            callback(false, token);
+            var now = Math.floor(Date.now() / 1000);
+            var ftoken = {
+              type: type,
+              token: token,
+              client: client._id,
+              user: user._id,
+              expires: now + 3600
+            };
+
+            callback(false, ftoken);
           });
         }
       }
