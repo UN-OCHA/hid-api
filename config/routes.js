@@ -123,7 +123,7 @@ module.exports = [
   },
 
   {
-    method: 'GET',
+    method: ['GET', 'POST'],
     path: '/account.json',
     handler: 'UserController.showAccount'
   },
