@@ -14,7 +14,7 @@ module.exports = class JwtService extends Service {
   // Generates a token from supplied payload
   issue (payload) {
     var cert = fs.readFileSync('keys/hid.rsa');
-    var options = { algorithm: "RS256" }
+    var options = { algorithm: "RS256", header: { kid: 'hid-dev'} }
     if (!payload.exp) {
        options.expiresIn = "3h"
      }
@@ -38,7 +38,7 @@ module.exports = class JwtService extends Service {
 
   public2jwk () {
     var cert = fs.readFileSync('keys/hid.pkcs1.pub')
-    return rsa2jwk(cert)
+    return rsa2jwk(cert, { use: 'sig', kid: 'hid-dev'}, 'public')
   }
 }
 

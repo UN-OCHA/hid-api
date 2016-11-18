@@ -138,9 +138,8 @@ module.exports = {
           if (err || !ocode.client._id.equals(client._id) || redirectURI !== ocode.client.redirectUri) {
             return done(null, false);
           }
-          var expires = new Date();
-          var now = expires.getSeconds();
-          expires.setSeconds(now + 3600);
+          var now = Math.floor(Date.now() / 1000);
+          var expires = now + 3600;
           async.auto({
             // Create refresh token
             refreshToken: function (callback) {
