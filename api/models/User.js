@@ -400,6 +400,9 @@ module.exports = class User extends Model {
   }
 
   static onSchema(schema) {
+    schema.virtual('sub').get(function () {
+      return this._id
+    })
     schema.pre('save', function (next) {
       if (this.middle_name) {
         this.name = this.given_name + ' ' + this.middle_name + ' ' + this.family_name
