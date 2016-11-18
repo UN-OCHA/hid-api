@@ -122,7 +122,7 @@ module.exports = class AuthController extends Controller{
     // If the user is not authenticated, redirect to the login page and preserve
     // all relevant query parameters.
     const cookie = request.yar.get('session')
-    if (!cookie.userId) {
+    if (!cookie || (cookie && !cookie.userId)) {
       this.log.info('Get request to /oauth/authorize without session. Redirecting to the login page.');
       return reply.redirect('/?redirect=/oauth/authorize&client_id=' + request.query.client_id + '&redirect_uri=' + request.query.redirect_uri + '&response_type=' + request.query.response_type + '&state=' + request.query.state + '&scope=' + request.query.scope + '#login');
     }
@@ -182,7 +182,7 @@ module.exports = class AuthController extends Controller{
     const Client = this.app.orm.Client
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize']
     const cookie = request.yar.get('session')
-    if (!cookie.userId) {
+    if (!cookie || (cookie && !cookie.userId)) {
       this.log.info('Got request to /oauth/authorize without session. Redirecting to the login page.');
       return reply.redirect('/?redirect=/oauth/authorize&client_id=' + request.query.client_id + '&redirect_uri=' + request.query.redirect_uri + '&response_type=' + request.query.response_type + '&state=' + request.query.state + '&scope=' + request.query.scope + '#login');
     }
@@ -244,17 +244,10 @@ module.exports = class AuthController extends Controller{
   }
 
   jwks (request, reply) {
+    var key = this.app.services.JwtService.public2jwk()
     var out = {
       keys: [
-        {
-          "kid": "e35e07a9-34b6-4c4f-a67d-0caaf7713ca8",
-          "kty": "RSA",
-          "use": "sig",
-          "alg": "RS256",
-          "exp": 1502366340423,
-          "n": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzbKGejFFtnaVlbmoGyW0tlyjK490jorA5uVHqzJfLwIBFx2iQQNYdM1LI8Jf31JzjtDYfbSkircaubt9BCJjgZ0tmBf4QT48zSGlCQFGPNlVgCTvBS72ZnGejHV24sW1wkHd9Ymp8jSlLQaco4IYqzbfNu1nUBx6wE9LvXsZnoeDDCXROHlRh78YTj0KoRrRYufRkJC4WzGMFIoAUw0mFQgY2EPqHJN8TxyLUl58/yv6jZZg74cJMU9wdVAiEWHybxcEMHQ+6jk0GWDC4MyKyZZIr/J3SgooxQchJ2uFg6rzI35gcF4XJM/zLcQx/UYaoLp6+Q1UJsjMtafgBJrdNwIDAQAB",
-          "e": "AQAB"
-        }
+        key
       ]
     }
     reply (out)

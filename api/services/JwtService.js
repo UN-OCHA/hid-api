@@ -3,6 +3,7 @@
 const Service = require('trails-service')
 const jwt = require('jsonwebtoken')
 const fs = require('fs')
+const rsa2jwk = require('rsa-pem-to-jwk')
 
 /**
  * @module JwtService
@@ -33,6 +34,11 @@ module.exports = class JwtService extends Service {
       {}, // No Option, for more see https://github.com/auth0/node-jsonwebtoken#jwtverifytoken-secretorpublickey-options-callback
       callback //Pass errors or decoded token to callback
     );
+  }
+
+  public2jwk () {
+    var cert = fs.readFileSync('keys/hid.pkcs1.pub')
+    return rsa2jwk(cert)
   }
 }
 
