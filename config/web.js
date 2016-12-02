@@ -65,6 +65,7 @@ module.exports = {
     var that = this
     // Register supported OpenID Connect 1.0 grant types.
 
+    oauth.grant(oauth2orize_ext.extensions());
     // id_token grant type.
     oauth.grant(oauth2orize_ext.grant.idToken(function(client, user, done){
       var out = that.services.JwtService.generateIdToken(client, user)
