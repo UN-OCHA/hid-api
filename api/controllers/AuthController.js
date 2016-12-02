@@ -119,6 +119,9 @@ module.exports = class AuthController extends Controller{
     const Client = this.app.orm.Client
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
 
+    // Check response_type
+    if (!request.query.response_type) return reply(Boom.badRequest('Missing response_type'))
+
     // If the user is not authenticated, redirect to the login page and preserve
     // all relevant query parameters.
     const cookie = request.yar.get('session')
@@ -182,6 +185,7 @@ module.exports = class AuthController extends Controller{
     const Client = this.app.orm.Client
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize']
     const cookie = request.yar.get('session')
+
     if (!cookie || (cookie && !cookie.userId)) {
       this.log.info('Got request to /oauth/authorize without session. Redirecting to the login page.');
       return reply.redirect('/?redirect=/oauth/authorize&client_id=' + request.query.client_id + '&redirect_uri=' + request.query.redirect_uri + '&response_type=' + request.query.response_type + '&state=' + request.query.state + '&scope=' + request.query.scope + '#login');
