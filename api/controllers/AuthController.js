@@ -248,6 +248,7 @@ module.exports = class AuthController extends Controller{
 
   jwks (request, reply) {
     var key = this.app.services.JwtService.public2jwk()
+    key.alg = "RS256";
     var out = {
       keys: [
         key
