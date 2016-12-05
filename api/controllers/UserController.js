@@ -189,9 +189,15 @@ module.exports = class UserController extends Controller{
   _updateQuery (request, options) {
     const Model = this.app.orm['user']
     return Model
-      .update({ _id: request.params.id }, request.payload, {runValidators: true})
+      .update({ _id: request.params.id }, request.payload)
       .exec()
-      .then(() => Model.findOne({ _id: request.params.id }).populate(options.populate).exec())
+      .then(() => { 
+        Model
+          .findOne({ _id: request.params.id })
+          .populate(options.populate)
+          .then((user) => { return user; })
+          .catch(err => { return Boom.badRequest(err.message) });
+      })
       .catch(err => { return Boom.badRequest(err.message) })
   }
 
@@ -230,7 +236,8 @@ module.exports = class UserController extends Controller{
             else {
               return reply(that._updateQuery(request, options))
             }
-          });
+          })
+          .catch(err => { return Boom.badRequest(err.message); });
       }
       else {
         reply(this._updateQuery(request, options))
@@ -319,7 +326,7 @@ module.exports = class UserController extends Controller{
               .save()
               .catch(err => { return reply(Boom.badImplementation(err.toString())) })
               .then((record2) => {
-              return reply(record2)
+                record2.populate(userPopulate, (err, user) => { if(!err) return reply(user) });
             })
         })
       })
@@ -342,6 +349,7 @@ module.exports = class UserController extends Controller{
     var that = this
     Model
       .findOne({ _id: userId })
+      .populate(userPopulate)
       .then(record => {
         if (childAttribute != 'organization') {
           record[childAttribute] = record[childAttribute].filter(function (elt, index) {
@@ -679,7 +687,7 @@ module.exports = class UserController extends Controller{
           }
         }
         if (index == -1) return reply(Boom.badRequest('Phone does not exist'))
-        record.phone_number = record.phone_numbers[index].type
+        record.phone_number = record.phone_numbers[index].number
         record.phone_number_type = record.phone_numbers[index].type
         record.save().then(() => {
           return reply(record)
