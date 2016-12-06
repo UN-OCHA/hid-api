@@ -189,7 +189,7 @@ module.exports = class UserController extends Controller{
   _updateQuery (request, options) {
     const Model = this.app.orm['user']
     return Model
-      .update({ _id: request.params.id }, request.payload)
+      .update({ _id: request.params.id }, request.payload, {runValidators: true})
       .exec()
       .then(() => { 
         Model
