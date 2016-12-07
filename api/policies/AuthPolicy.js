@@ -83,6 +83,15 @@ module.exports = class AuthPolicy extends Policy {
     })
   }
 
+  isAdminOrCurrent (request, reply) {
+    this.isAuthenticated(request, function (err) {
+      if (err && err.isBoom) return reply(err)
+      if (!request.params.currentUser) return reply(Boom.unauthorized('Current user was not set'))
+      if (!request.params.currentUser.is_admin && request.params.currentUser.id != request.params.id) return reply(Boom.unauthorized('You need to be an admin or the current user'))
+      reply()
+    })
+  }
+
 
 }
 

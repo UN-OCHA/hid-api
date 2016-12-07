@@ -142,14 +142,20 @@ module.exports = [
 
   {
     method: [ 'PUT', 'PATCH' ],
-    path: '/api/v2/user/{id?}',
+    path: '/api/v2/user/{id}',
     handler: 'UserController.update'
   },
 
   {
     method: 'DELETE',
-    path: '/api/v2/user/{id?}',
+    path: '/api/v2/user/{id}',
     handler: 'UserController.destroy'
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v2/user/{id}/notification',
+    handler: 'UserController.notify'
   },
 
   {

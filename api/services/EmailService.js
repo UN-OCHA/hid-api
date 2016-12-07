@@ -125,6 +125,13 @@ module.exports = class EmailService extends Service {
     this.send(mailOptions, 'email_validation', context, callback);
   }
 
+  sendNotification(not, cb) {
+    var mailOptions = {
+      to: not.user.email,
+      locale: not.user.locale
+    };
+    this.send(mailOptions, not.type, not, cb);
+  }
 
 }
 

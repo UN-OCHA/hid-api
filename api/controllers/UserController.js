@@ -255,13 +255,7 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('[UserController] (destroy) model = user, query =', request.query)
 
-    if (request.params.id) {
-      FootprintService.destroy('listuser', {user: request.params.id}, options)
-      reply(FootprintService.destroy('user', request.params.id, options))
-    }
-    else {
-      reply(FootprintService.destroy('user', criteria, options))
-    }
+    reply(FootprintService.destroy('user', request.params.id, options))
   }
 
   checkin (request, reply) {
@@ -327,6 +321,10 @@ module.exports = class UserController extends Controller{
               .catch(err => { return reply(Boom.badImplementation(err.toString())) })
               .then((record2) => {
                 record2.populate(userPopulate, (err, user) => { if(!err) return reply(user) });
+                // Notify user if needed
+                if (request.params.currentUser.id != userId) {
+                  that.app.services.NotificationService.send({type: 'admin_checkin', createdBy: request.params.currentUser, user: record2, params: { list: list }}, () => { })
+                }
             })
         })
       })
@@ -351,20 +349,30 @@ module.exports = class UserController extends Controller{
       .findOne({ _id: userId })
       .populate(userPopulate)
       .then(record => {
+        var list = {}
         if (childAttribute != 'organization') {
           record[childAttribute] = record[childAttribute].filter(function (elt, index) {
-            return !elt._id.equals(checkInId);
+            if (elt._id.equals(checkInId)) {
+              list = elt.list
+            }
+            return !elt._id.equals(checkInId)
           });
         }
         else {
-          record.organization = {};
+          list = record.organization.list
+          record.organization = {}
         }
 
         record.save().then(() => {
-          return reply(record)
+          reply(record)
+          // Send notification if needed
+          if (request.params.currentUser.id != userId) {
+            that.app.services.NotificationService.send({type: 'admin_checkout', createdBy: request.params.currentUser, user: record, params: { list: list }}, () => { });
+          }
         })
+        .catch(err => { return reply(Boom.badImplementation()) })
       })
-      .catch(err => { return reply(Boom.badImplementation(err.toString())) })
+      .catch(err => { return reply(Boom.badImplementation()) })
   }
 
   setPrimaryEmail (request, reply) {
@@ -374,7 +382,6 @@ module.exports = class UserController extends Controller{
     this.log.debug('[UserController] Setting primary email')
 
     if (!request.payload.email) return reply(Boom.badRequest())
-    // TODO: make sure user can set primary email
 
     Model
       .findOne({ _id: request.params.id})
@@ -521,8 +528,6 @@ module.exports = class UserController extends Controller{
     const Model = this.app.orm['user']
     const userId = request.params.id
 
-    // TODO: make sure current user can do this
-
     var data = request.payload;
     if (data.file) {
       Model
@@ -561,8 +566,6 @@ module.exports = class UserController extends Controller{
     this.log.debug('[UserController] adding email')
     if (!app_validation_url || !request.payload.email) return reply(Boom.badRequest())
 
-    // TODO: make sure current user can do this
-
     // Make sure email added is unique 
     var that = this
     Model
@@ -594,7 +597,6 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('[UserController] dropping email')
     if (!request.params.email) return reply(Boom.badRequest())
-    // TODO: make sure current user can do this
 
     var that = this
     Model
@@ -619,8 +621,6 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('[UserController] adding phone number')
 
-    // TODO: make sure current user can do this
-
     var that = this
     Model
       .findOne({_id: userId})
@@ -641,8 +641,6 @@ module.exports = class UserController extends Controller{
     const phoneId = request.params.pid
 
     this.log.debug('[UserController] dropping phone number')
-
-    // TODO: make sure current user can do this
 
     var that = this
     Model
@@ -673,8 +671,6 @@ module.exports = class UserController extends Controller{
     this.log.debug('[UserController] Setting primary phone number')
 
     if (!request.payload.phone) return reply(Boom.badRequest())
-    // TODO: make sure user can set primary phone number
-
     Model
       .findOne({ _id: request.params.id})
       .then(record => {
@@ -698,6 +694,28 @@ module.exports = class UserController extends Controller{
 
   showAccount (request, reply) {
     reply(request.params.currentUser)
+  }
+
+  notify (request, reply) {
+    const Model = this.app.orm['user']
+
+    this.log.debug('[UserController] Notifying user')
+
+    var that = this
+    Model
+      .findOne({ _id: request.params.id})
+      .then(record => {
+        if (!record) return reply(Boom.notFound())
+
+        var notPayload = {
+          type: 'contact_needs_update',
+          createdBy: request.params.currentUser,
+          user: record
+        };
+        that.app.services.NotificationService.send(notPayload, function (out) {
+          return reply(out)
+        })
+      })
   }
 
 }

@@ -19,16 +19,24 @@ module.exports = {
   ClientController: ['AuthPolicy.isAdmin'],
 
   UserController: {
+    showAccount: [ 'AuthPolicy.isAuthenticated'],
     create: [ 'AuthPolicy.isAuthenticated' ],
     find: ['AuthPolicy.isAuthenticated'],
-    update: ['AuthPolicy.isAuthenticated'],
-    destroy: ['AuthPolicy.isAuthenticated'],
-    checkin: ['AuthPolicy.isAuthenticated'],
-    checkout: ['AuthPolicy.isAuthenticated'],
-    verifyEmail: [ ],
+    update: ['AuthPolicy.isAdminOrCurrent'],
+    destroy: ['AuthPolicy.isAdminOrCurrent'],
+    notify: ['AuthPolicy.isAuthenticated'],
+    checkin: ['AuthPolicy.isAdminOrCurrent'],
+    checkout: ['AuthPolicy.isAdminOrCurrent'],
     resetPassword: [ ],
-    claimEmail: [ 'AuthPolicy.isAuthenticated'],
-    showAccount: [ 'AuthPolicy.isAuthenticated']
+    claimEmail: [ 'AuthPolicy.isAdminOrCurrent'],
+    updatePicture: [ 'AuthPolicy.isAdminOrCurrent' ],
+    addEmail: [ 'AuthPolicy.isAdminOrCurrent' ],
+    setPrimaryEmail: [ 'AuthPolicy.isAdminOrCurrent' ],
+    validateEmail: [ ],
+    dropEmail: [ 'AuthPolicy.isAdminOrCurrent' ],
+    addPhone: [ 'AuthPolicy.isAdminOrCurrent' ],
+    dropPhone: [ 'AuthPolicy.isAdminOrCurrent' ],
+    setPrimaryPhone: ['AuthPolicy.isAdminOrCurrent' ]
   },
 
   ListController: ['AuthPolicy.isAuthenticated'],
