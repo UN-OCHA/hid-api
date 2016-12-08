@@ -3,6 +3,7 @@
 const Controller = require('trails-controller')
 const Boom = require('boom')
 
+
 /**
  * @module ListController
  * @description Generated Trails.js Controller.
@@ -86,12 +87,10 @@ module.exports = class ListController extends Controller{
     this.log.debug('[ListController] (update) model = list, criteria =', request.query, request.params.id,
       ', values = ', request.payload)
 
-    if (request.params.id) {
-      reply(FootprintService.update('list', request.params.id, request.payload, options))
-    }
-    else {
-      reply(FootprintService.update('list', criteria, request.payload, options))
-    }
+    var that = this
+    var query = FootprintService.update('list', request.params.id, request.payload, options)
+    query.catch((err) => { console.log(err); that.log.error(err) })
+    reply(query)
   }
 
 

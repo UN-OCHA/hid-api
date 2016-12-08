@@ -245,13 +245,13 @@ module.exports = [
 
   {
     method: [ 'PUT', 'PATCH' ],
-    path: '/api/v2/list/{id?}',
+    path: '/api/v2/list/{id}',
     handler: 'ListController.update'
   },
 
   {
     method: 'DELETE',
-    path: '/api/v2/list/{id?}',
+    path: '/api/v2/list/{id}',
     handler: 'ListController.destroy'
   },
 
@@ -269,13 +269,13 @@ module.exports = [
 
   {
     method: [ 'PUT', 'PATCH' ],
-    path: '/api/v2/client/{id?}',
+    path: '/api/v2/client/{id}',
     handler: 'ClientController.update'
   },
 
   {
     method: 'DELETE',
-    path: '/api/v2/client/{id?}',
+    path: '/api/v2/client/{id}',
     handler: 'ClientController.destroy'
   }
 ]

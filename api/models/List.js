@@ -10,6 +10,11 @@ const Schema = require('mongoose').Schema
 module.exports = class List extends Model {
 
   static config () {
+    return {
+      schema: {
+        timestamps: true
+      }
+    }
   }
 
   static schema () {
@@ -88,13 +93,8 @@ module.exports = class List extends Model {
       else {
         this.name = this.label
       }
+      next();
     });
-    /*schema.post('remove', function (next) {
-      orm['listuser'].find({list: this._id}).remove(function (err) {
-        console.log('removed listusers');
-        next ();
-      });
-    });*/
   }
 
 }

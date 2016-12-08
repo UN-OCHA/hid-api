@@ -151,7 +151,7 @@ module.exports = class UserController extends Controller{
       delete criteria['country'];
     }
 
-    this.log.debug('[FootprintController] (find) model = user, criteria =', request.query, request.params.id,
+    this.log.debug('[UserController] (find) criteria =', request.query, request.params.id,
       'options =', options)
 
     if (request.params.id) {
