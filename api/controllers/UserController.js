@@ -255,7 +255,16 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('[UserController] (destroy) model = user, query =', request.query)
 
-    reply(FootprintService.destroy('user', request.params.id, options))
+    var that = this
+    var query = FootprintService.destroy('user', request.params.id, options)
+    reply(query)
+    query
+      .then((doc) => { 
+        // Send notification if user is being deleted by an admin
+        if (request.params.currentUser.id != doc.id) {
+          that.app.services.NotificationService.send({type: 'admin_delete', createdBy: request.params.currentUser, user: doc}, () => { });
+        }
+      })
   }
 
   checkin (request, reply) {
