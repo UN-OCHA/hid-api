@@ -2,7 +2,7 @@
 
 const Controller = require('trails-controller')
 const Boom = require('boom')
-
+const _ = require('lodash')
 
 /**
  * @module ListController
@@ -77,10 +77,26 @@ module.exports = class ListController extends Controller{
     }
   }
 
+  _notifyManagers(uids, type, request) {
+    const User = this.app.orm['user']
+    var that = this
+    User
+      .find({_id: {$in: uids}})
+      .exec()
+      .then((users) => {
+        for (var i = 0, len = users.length; i < len; i++) {
+          that.app.services.NotificationService.send({type: type, user: users[i], createdBy: request.params.currentUser, params: { list: request.payload } }, () => {})
+        }
+      })
+      .catch((err) => { that.log.error(err) })
+  }
+
   update (request, reply) {
     const FootprintService = this.app.services.FootprintService
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query)
     const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query)
+    const Model = this.app.orm['list']
+    const User = this.app.orm['user']
 
     if (!options.populate) options.populate = "owner managers"
 
@@ -88,9 +104,21 @@ module.exports = class ListController extends Controller{
       ', values = ', request.payload)
 
     var that = this
-    var query = FootprintService.update('list', request.params.id, request.payload, options)
-    query.catch((err) => { console.log(err); that.log.error(err) })
-    reply(query)
+    Model
+      .findOneAndUpdate({_id: request.params.id}, request.payload, options)
+      .exec()
+      .then((doc) => {
+        var diffAdded = _.difference(request.payload.managers, doc.managers)
+        var diffRemoved = _.difference(doc.managers, request.payload.managers)
+        if (diffAdded.length) {
+          that._notifyManagers(diffAdded, 'added_list_manager', request)
+        }
+        if (diffRemoved.length) {
+          that._notifyManagers(diffRemoved, 'removed_list_manager', request)
+        }
+        return reply(request.payload)
+      })
+      .catch((err) => { that.log.error(err) })
   }
 
 

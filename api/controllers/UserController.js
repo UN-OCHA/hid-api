@@ -191,7 +191,7 @@ module.exports = class UserController extends Controller{
     return Model
       .update({ _id: request.params.id }, request.payload, {runValidators: true})
       .exec()
-      .then(() => { 
+      .then(() => {
         Model
           .findOne({ _id: request.params.id })
           .populate(options.populate)
@@ -259,7 +259,7 @@ module.exports = class UserController extends Controller{
     var query = FootprintService.destroy('user', request.params.id, options)
     reply(query)
     query
-      .then((doc) => { 
+      .then((doc) => {
         // Send notification if user is being deleted by an admin
         if (request.params.currentUser.id != doc.id) {
           that.app.services.NotificationService.send({type: 'admin_delete', createdBy: request.params.currentUser, user: doc}, () => { });
@@ -292,50 +292,65 @@ module.exports = class UserController extends Controller{
       .catch(err => { return reply(Boom.badImplementation(err.toString())) })
       .then((list) => {
         // Check that the list added corresponds to the right attribute
-        if (childAttribute != list.type + 's' && childAttribute != list.type) 
-          return reply(Boom.badRequest('Wrong list type'))
-        
+        if (childAttribute != list.type + 's' && childAttribute != list.type)
+          throw new Error('Wrong list type')
+
         //Set the proper pending attribute depending on list type
         if (list.joinability == 'public' || list.joinability == 'private')
           payload.pending = false
 
-        Model
+        return Model
           .findOne({ _id: userId })
-          .catch(err => { return reply(Boom.badImplementation(err.toString())) })
           .then((record) => {
             if (!record)
-              return reply(Boom.notFound())
+              throw new Error('User not found')
+              //return reply(Boom.notFound())
+            return {list: list, user: record}
+          })
+      })
+      .then((result) => {
+        var record = result.user
+        if (childAttribute != 'organization') {
+          if (!record[childAttribute])
+            record[childAttribute] = []
 
-            if (childAttribute != 'organization') {
-              if (!record[childAttribute])
-                record[childAttribute] = []
-
-              // Make sure user is not already checked in this list
-              for (var i = 0, len = record[childAttribute].length; i < len; i++) {
-                if (record[childAttribute][i].list.equals(list._id)) {
-                  return reply(Boom.badRequest('User is already checked in'));
-                }
-              }
-
-              // TODO: make sure user is allowed to join this list
-
-              record[childAttribute].push(payload)
+          // Make sure user is not already checked in this list
+          for (var i = 0, len = record[childAttribute].length; i < len; i++) {
+            if (record[childAttribute][i].list.equals(list._id)) {
+              throw new Error('User is already checked in')
             }
-            else {
-              record.organization = payload;
-            }
+          }
 
-            record
-              .save()
-              .catch(err => { return reply(Boom.badImplementation(err.toString())) })
-              .then((record2) => {
-                record2.populate(userPopulate, (err, user) => { if(!err) return reply(user) });
-                // Notify user if needed
-                if (request.params.currentUser.id != userId) {
-                  that.app.services.NotificationService.send({type: 'admin_checkin', createdBy: request.params.currentUser, user: record2, params: { list: list }}, () => { })
-                }
-            })
+          // TODO: make sure user is allowed to join this list
+
+          record[childAttribute].push(payload)
+        }
+        else {
+          record.organization = payload;
+        }
+        return record
+          .save()
+          .then((record2) => {
+            return {list: result.list, user: record2}
         })
+      })
+      .then((result) => {
+        var list = result.list, user = result.user
+        // Populate user and notify checked in user if needed
+        user.populate(userPopulate, (err, user) => { if(!err) reply(user) });
+        // Notify user if needed
+        if (request.params.currentUser.id != userId) {
+          that.app.services.NotificationService.send({type: 'admin_checkin', createdBy: request.params.currentUser, user: user, params: { list: list }}, () => { })
+        }
+        return result
+      })
+      .then((result) => {
+        /* TODO
+        // Notify list owner and managers of the new checkin if needed
+        var list = result.list
+        if (list.joinability != 'public' && list.joinability != 'private') {
+          that.app.services.NotificationService.sendMultiple({type: 'checkin', users: list.managers, params: { list: list }}, () => { })
+        }*/
       })
   }
 
@@ -575,7 +590,7 @@ module.exports = class UserController extends Controller{
     this.log.debug('[UserController] adding email')
     if (!app_validation_url || !request.payload.email) return reply(Boom.badRequest())
 
-    // Make sure email added is unique 
+    // Make sure email added is unique
     var that = this
     Model
       .findOne({'emails.email': request.payload.email})
@@ -728,4 +743,3 @@ module.exports = class UserController extends Controller{
   }
 
 }
-
