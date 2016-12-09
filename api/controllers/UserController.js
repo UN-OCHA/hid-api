@@ -51,6 +51,15 @@ module.exports = class UserController extends Controller{
     }
   }
 
+  _errorHandler (err, reply) {
+    if (err.isBoom) {
+      return reply(err)
+    }
+    else {
+      return reply(Boom.badImplementation(err.toString()))
+    }
+  }
+
   create (request, reply) {
     const FootprintService = this.app.services.FootprintService
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query)
@@ -289,11 +298,11 @@ module.exports = class UserController extends Controller{
 
     List
       .findOne({ _id: payload.list })
-      .catch(err => { return reply(Boom.badImplementation(err.toString())) })
+      .catch(err => { that._errorHandler(err, reply) })
       .then((list) => {
         // Check that the list added corresponds to the right attribute
         if (childAttribute != list.type + 's' && childAttribute != list.type)
-          throw new Error('Wrong list type')
+          throw new Boom.badRequest('Wrong list type')
 
         //Set the proper pending attribute depending on list type
         if (list.joinability == 'public' || list.joinability == 'private')
@@ -303,7 +312,7 @@ module.exports = class UserController extends Controller{
           .findOne({ _id: userId })
           .then((record) => {
             if (!record)
-              throw new Error('User not found')
+              throw new Boom.badRequest('User not found')
               //return reply(Boom.notFound())
             return {list: list, user: record}
           })
@@ -317,7 +326,7 @@ module.exports = class UserController extends Controller{
           // Make sure user is not already checked in this list
           for (var i = 0, len = record[childAttribute].length; i < len; i++) {
             if (record[childAttribute][i].list.equals(list._id)) {
-              throw new Error('User is already checked in')
+              throw new Boom.badRequest('User is already checked in')
             }
           }
 
@@ -366,12 +375,13 @@ module.exports = class UserController extends Controller{
       'options =', options)
 
      if (childAttributes.indexOf(childAttribute) === -1)
-      return reply(Boom.notFound())
+      return this._errorHandler(Boom.notFound(), reply)
 
     var that = this
     Model
       .findOne({ _id: userId })
       .populate(userPopulate)
+      .catch(err => that._errorHandler(err, reply))
       .then(record => {
         var list = {}
         if (childAttribute != 'organization') {
@@ -387,16 +397,18 @@ module.exports = class UserController extends Controller{
           record.organization = {}
         }
 
-        record.save().then(() => {
-          reply(record)
-          // Send notification if needed
-          if (request.params.currentUser.id != userId) {
-            that.app.services.NotificationService.send({type: 'admin_checkout', createdBy: request.params.currentUser, user: record, params: { list: list }}, () => { });
-          }
+        return record.save().then(() => {
+          return {list: list, user: record}
         })
-        .catch(err => { return reply(Boom.badImplementation()) })
       })
-      .catch(err => { return reply(Boom.badImplementation()) })
+      .then(result => {
+        var user = result.user, list = result.list
+        reply(user)
+        // Send notification if needed
+        if (request.params.currentUser.id != userId) {
+          that.app.services.NotificationService.send({type: 'admin_checkout', createdBy: request.params.currentUser, user: user, params: { list: list }}, () => { });
+        }
+      })
   }
 
   setPrimaryEmail (request, reply) {
@@ -498,7 +510,7 @@ module.exports = class UserController extends Controller{
       Model
         .findOne({email: request.payload.email})
         .then(record => {
-          if (!record) return reply(Boom.badRequest('Email could not be found'))
+          if (!record) return that._errorHandler(Boom.badRequest('Email could not be found'), reply)
           that.app.services.EmailService.sendResetPassword(record, app_reset_url, function (merr, info) {
             return reply('Password reset email sent successfully').code(202)
           })
