@@ -1,11 +1,11 @@
-'use strict'
+'use strict';
 
-const Controller = require('trails-controller')
-const Boom = require('boom')
-const Bcrypt = require('bcryptjs')
-const fs = require('fs')
-const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters']
-const userPopulate = "favoriteLists operations.list disasters.list bundles.list organization.list organizations.list authorizedClients"
+const Controller = require('trails-controller');
+const Boom = require('boom');
+const Bcrypt = require('bcryptjs');
+const fs = require('fs');
+const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters'];
+const userPopulate = 'favoriteLists operations.list disasters.list bundles.list organization.list organizations.list authorizedClients';
 
 /**
  * @module UserController
@@ -14,79 +14,81 @@ const userPopulate = "favoriteLists operations.list disasters.list bundles.list 
 module.exports = class UserController extends Controller{
 
   _getAdminOnlyAttributes () {
-    return this._getSchemaAttributes('adminOnlyAttributes', 'adminOnly')
+    return this._getSchemaAttributes('adminOnlyAttributes', 'adminOnly');
   }
 
   _getReadonlyAttributes () {
-    return this._getSchemaAttributes('readonlyAttributes', 'readonly')
+    return this._getSchemaAttributes('readonlyAttributes', 'readonly');
   }
 
   _getSchemaAttributes (variableName, attributeName) {
-    if (!this[variableName] || this[variableName].length == 0) {
-      const Model = this.app.orm['user']
-      this[variableName] = []
-      var that = this
+    if (!this[variableName] || this[variableName].length === 0) {
+      const Model = this.app.orm.user;
+      this[variableName] = [];
+      var that = this;
       Model.schema.eachPath(function (path, options) {
         if (options.options[attributeName]) {
-          that[variableName].push(path)
+          that[variableName].push(path);
         }
-      })
+      });
     }
-    return this[variableName]
+    return this[variableName];
   }
 
   _removeForbiddenAttributes (request) {
-    var forbiddenAttributes = []
+    var forbiddenAttributes = [];
     if (!request.params.currentUser || !request.params.currentUser.is_admin) {
-      forbiddenAttributes = childAttributes.concat(this._getReadonlyAttributes(), this._getAdminOnlyAttributes())
+      forbiddenAttributes = childAttributes.concat(this._getReadonlyAttributes(), this._getAdminOnlyAttributes());
     }
     else {
-      forbiddenAttributes = childAttributes.concat(this._getReadonlyAttributes())
+      forbiddenAttributes = childAttributes.concat(this._getReadonlyAttributes());
     }
     // Do not allow forbiddenAttributes to be updated directly
     for (var i = 0, len = forbiddenAttributes.length; i < len; i++) {
       if (request.payload[forbiddenAttributes[i]]) {
-        delete request.payload[forbiddenAttributes[i]]
+        delete request.payload[forbiddenAttributes[i]];
       }
     }
   }
 
   _errorHandler (err, reply) {
     if (err.isBoom) {
-      return reply(err)
+      return reply(err);
     }
     else {
-      return reply(Boom.badImplementation(err.toString()))
+      return reply(Boom.badImplementation(err.toString()));
     }
   }
 
   create (request, reply) {
-    const FootprintService = this.app.services.FootprintService
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query)
-    const Model = this.app.orm['user']
+    const FootprintService = this.app.services.FootprintService;
+    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
+    const Model = this.app.orm.user;
 
-    this.log.debug('[UserController] (create) payload =', request.payload, 'options =', options)
+    this.log.debug('[UserController] (create) payload =', request.payload, 'options =', options);
 
     if (request.payload.password && request.payload.confirm_password) {
-      request.payload.password = Model.hashPassword(request.payload.password)
+      request.payload.password = Model.hashPassword(request.payload.password);
     }
     else {
       // Set a random password
       // TODO: check that the password is random and long enough
-      request.payload.password = Model.hashPassword(Math.random().toString(36).slice(2))
+      request.payload.password = Model.hashPassword(Math.random().toString(36).slice(2));
     }
 
-    if (!request.payload.app_verify_url) return reply(Boom.badRequest('Missing app_verify_url'))
-    var app_verify_url = request.payload.app_verify_url
-    delete request.payload.app_verify_url
+    if (!request.payload.app_verify_url) {
+      return reply(Boom.badRequest('Missing app_verify_url'));
+    }
+    var app_verify_url = request.payload.app_verify_url;
+    delete request.payload.app_verify_url;
 
-    var registration_type = ''
+    var registration_type = '';
     if (request.payload.registration_type) {
-      registration_type = request.payload.registration_type
-      delete request.payload.registration_type
+      registration_type = request.payload.registration_type;
+      delete request.payload.registration_type;
     }
 
-    this._removeForbiddenAttributes(request)
+    this._removeForbiddenAttributes(request);
 
     // Makes sure only admins or anonymous users can create users
     if (request.params.currentUser && !request.params.currentUser.is_admin) return reply(Boom.forbidden('You need to be an administrator'))
