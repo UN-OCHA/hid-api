@@ -147,4 +147,16 @@ module.exports = class EmailService extends Service {
     this.send(mailOptions, 'reminder_verify', context, callback);
   }
 
+  sendReminderUpdate (user, callback) {
+    var mailOptions = {
+      to: user.email,
+      locale: user.locale
+    };
+    var context = {
+      user: user,
+      userUrl: process.env.APP_URL + '/user/' + user._id
+    };
+    this.send(mailOptions, 'reminder_update', context, callback);
+  }
+
 };

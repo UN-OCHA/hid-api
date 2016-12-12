@@ -137,6 +137,23 @@ module.exports = class User extends Model {
           return false;
         },
 
+        // Whether we should send an update reminder (sent out after a contact hasn't been updated for 6 months)
+        shouldSendReminderUpdate: function () {
+          var d = new Date();
+          var revisedOffset = d.valueOf();
+          revisedOffset = d.valueOf() - this.updatedAt.valueOf();
+          if (revisedOffset < 183 * 24 * 3600 * 1000) { // if not revised during 6 months
+            return false;
+          }
+          if (this.remindedUpdate) {
+            var remindedOffset = d.valueOf() - this.remindedUpdate.valueOf();
+            if (remindedOffset < 183 * 24 * 3600 * 1000) {
+              return false;
+            }
+          }
+          return true;
+        },
+
         toJSON: function () {
           const user = this.toObject();
           delete user.password;
@@ -244,15 +261,22 @@ module.exports = class User extends Model {
         default: false,
         readonly: true
       },
+      // Last time the user was reminded to verify his account
       remindedVerify: {
         type: Date,
         readonly: true
       },
+      // How many times the user was reminded to verify his account
       timesRemindedVerify: {
         type: Number,
         default: 0,
         readonly: true
       },
+      // Last time the user was reminded to update his account details
+      remindedUpdate: {
+        type: Date,
+        readonly: true
+      }
       // TODO: find a way to set this as readonly
       emails: [emailSchema],
       password: {

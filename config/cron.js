@@ -27,6 +27,12 @@ module.exports = {
       schedule: '*/60 * * * *',
       onTick: sendReminderVerifyEmails,
       start: true
+    },
+    // Send a reminder to people who haven't updated their profile in the last 6 months
+    sendReminderUpdateEmails: {
+      schedule: '*/60 * * * *',
+      onTick: sendReminderUpdateEmails,
+      start: true
     }
   }
 };
@@ -219,6 +225,39 @@ var sendReminderVerifyEmails = function (app) {
           }
         });
       }
+    }
+  });
+
+  stream.on('close', function () {
+    cb();
+  });
+};
+
+var sendReminderUpdateEmails = function (app) {
+  app.log.info('Sending reminder update emails to contacts');
+  const d = new Date(),
+    sixMonthsAgo = d.valueOf() - 183 * 24 * 3600 * 1000,
+    User = app.orm.User,
+    EmailService = app.services.EmailService;
+
+  var stream = User.find({
+    'updatedAt': { $lt: sixMonthsAgo }
+  }).stream();
+
+  stream.on('data', function(user) {
+    const that = this,
+      now = new Date();
+    if (user.shouldSendReminderUpdate()) {
+      EmailService.sendReminderUpdate(user, function (err) {
+        if (err) {
+          app.log.error(err);
+        }
+        else {
+          user.remindedUpdate = now;
+          user.save();
+        }
+        that.resume();
+      });
     }
   });
 
