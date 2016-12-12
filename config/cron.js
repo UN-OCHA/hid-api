@@ -30,10 +30,36 @@ module.exports = {
       schedule: '*/60 * * * *', // Run every 10 minutes
       onTick: function (app) {
         const List = app.orm['list']
+        const User = app.orm['user']
+        const NotificationService = app.services.NotificationService
         const listTypes = ['operation', 'bundle', 'disaster', 'organization']
+        const now = Math.floor(Date.now() / 1000)
         //const Cache = app.services.CacheService.getCaches(['local-cache'])
         var hasNextPage = false, pageNumber = 1, path = '';
 
+        // Notify users of a new disaster
+        var _notifyNewDisaster = function (list) {
+          var operation = {}
+          for (var i = 0, len = list.metadata.operation.length; i < len; i++) {
+            operation = list.metadata.operation[i]
+            List
+              .findOne({remote_id: operation.id})
+              .then((list) => {
+                if (!list) throw new Error('List not found')
+                return User
+                  .find({'operations.list': list._id})
+                  .then((users) => { return {list: list, users: users} })
+              })
+              .then((results) => {
+                const list = results.list, users = results.users
+                notification = {type: 'new_disaster', params: {list: list}}
+                NotificationService.sendMultiple(users, notification, () => { })
+              })
+              .catch((err) => {})
+          }
+        }
+
+        // Create a list based on the item pulled from hrinfo
         var _createList = function (listType, item, cb) {
           var tmpList = {}, visibility = '', label = '', acronym = '';
           if ((listType == 'operation' && item.status != 'inactive') || listType != 'operation') {
@@ -60,7 +86,13 @@ module.exports = {
                   metadata: item
                 };
                 List.create(tmpList, function (err, li) {
-                  if (err) app.log.info(err)
+                  if (err) {
+                    app.log.error(err)
+                    return cb(err)
+                  }
+                  if (li.type == 'disaster') {
+                    _notifyNewDisaster(li)
+                  }
                   cb();
                 });
               }
@@ -104,8 +136,10 @@ module.exports = {
                         parsed = JSON.parse(body);
                         hasNextPage = parsed.next ? true: false;
                         async.eachSeries(parsed.data, function (item, cb) {
-                          // TODO: do not add disasters more than 2 years old
-                          _createList(listType, item, cb);
+                          // Do not add disasters more than 2 years old
+                          if (listType != 'disaster' || (listType == 'disaster' && now - item.created < 2 * 365 * 24 * 3600)) {
+                            _createList(listType, item, cb);
+                          }
                         }, function (err) {
                           setTimeout(function() {
                             app.log.info('Done loading page ' + pageNumber + ' for ' + listType);
