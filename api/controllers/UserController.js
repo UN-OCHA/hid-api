@@ -334,16 +334,18 @@ module.exports = class UserController extends Controller{
 
         that.log.debug('Looking for user with id ' + userId);
         return Model
-          .findOne({ _id: userId })
+          .findOne({ '_id': userId })
           .then((record) => {
             if (!record) {
               throw new Boom.badRequest('User not found');
             }
             return {list: list, user: record};
-          });
+          })
+          .catch(err => { that._errorHandler(err, reply); });
       })
       .then((result) => {
-        var record = result.user;
+        var record = result.user,
+          list = result.list;
         if (childAttribute !== 'organization') {
           if (!record[childAttribute]) {
             record[childAttribute] = [];
