@@ -174,30 +174,37 @@ module.exports = class UserController extends Controller{
     }
     count = FootprintService.count('user', criteria);
 
-    count.then(number => {
-      reply(
-        response
-          .then(result => {
-            if (!result) {
-              return Boom.notFound();
-            }
+    var that = this;
+    count
+      .then(number => {
+        reply(
+          response
+            .then(result => {
+              if (!result) {
+                return Boom.notFound();
+              }
 
-            if (request.params.id) {
-              result.sanitize();
-            }
-            else {
-              if (result.length) {
-                for (var i = 0, len = result.length; i < len; i++) {
-                  result[i].sanitize();
+              if (request.params.id) {
+                result.sanitize();
+              }
+              else {
+                if (result.length) {
+                  for (var i = 0, len = result.length; i < len; i++) {
+                    result[i].sanitize();
+                  }
                 }
               }
-            }
-            return result;
-          })
-          .catch(function (err) { that.log.debug(err); })
+              return result;
+            })
+            .catch((err) => {
+              that._errorHandler(err);
+            })
         )
         .header('X-Total-Count', number);
-    });
+      })
+      .catch((err) => {
+        that._errorHandler(err);
+      });
   }
 
   _updateQuery (request, options) {
