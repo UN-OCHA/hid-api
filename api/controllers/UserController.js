@@ -52,6 +52,7 @@ module.exports = class UserController extends Controller{
   }
 
   _errorHandler (err, reply) {
+    this.log.error(err);
     if (err.isBoom) {
       return reply(err);
     }
@@ -196,7 +197,7 @@ module.exports = class UserController extends Controller{
           .catch(function (err) { that.log.debug(err); })
         )
         .header('X-Total-Count', number);
-    })
+    });
   }
 
   _updateQuery (request, options) {
@@ -325,6 +326,7 @@ module.exports = class UserController extends Controller{
           payload.pending = true;
         }
 
+        that.log.debug('Looking for user with id ' + userId);
         return Model
           .findOne({ _id: userId })
           .then((record) => {
@@ -355,6 +357,7 @@ module.exports = class UserController extends Controller{
         else {
           record.organization = payload;
         }
+        that.log.debug('Saving new checkin');
         return record
           .save()
           .then((record2) => {
@@ -362,6 +365,7 @@ module.exports = class UserController extends Controller{
         });
       })
       .then((result) => {
+        that.log.debug('Populating user');
         var list = result.list, user = result.user;
         // Populate user and notify checked in user if needed
         user.populate(userPopulate, (err, user) => {
