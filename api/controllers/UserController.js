@@ -132,18 +132,18 @@ module.exports = class UserController extends Controller{
   }
 
   find (request, reply) {
-    const FootprintService = this.app.services.FootprintService
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query)
-    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query)
-    let response, count
+    const FootprintService = this.app.services.FootprintService;
+    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
+    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
+    let response, count;
 
     if (!options.populate) {
       options.populate = userPopulate;
     }
 
-    if (criteria["organizations.list"]) {
-      criteria.$or = [{"organizations.list": criteria["organizations.list"]}, {"organization.list": criteria["organizations.list"]}];
-      delete criteria["organizations.list"];
+    if (criteria['organizations.list']) {
+      criteria.$or = [{'organizations.list': criteria['organizations.list']}, {'organization.list': criteria['organizations.list']}];
+      delete criteria['organizations.list'];
     }
 
     // Hide unconfirmed users
@@ -153,52 +153,54 @@ module.exports = class UserController extends Controller{
       criteria['roles.id'] = parseInt(criteria['roles.id']);
     }
 
-    if (criteria['name']) {
-      criteria['name'] = new RegExp(criteria['name'], "i")
+    if (criteria.name) {
+      criteria.name = new RegExp(criteria.name, 'i');
     }
 
-    if (criteria['country']) {
-      criteria['location.country.id'] = criteria['country'];
-      delete criteria['country'];
+    if (criteria.country) {
+      criteria['location.country.id'] = criteria.country;
+      delete criteria.country;
     }
 
     this.log.debug('[UserController] (find) criteria =', request.query, request.params.id,
-      'options =', options)
+      'options =', options);
 
     if (request.params.id) {
-      response = FootprintService.find('user', request.params.id, options)
+      response = FootprintService.find('user', request.params.id, options);
     }
     else {
-      response = FootprintService.find('user', criteria, options)
+      response = FootprintService.find('user', criteria, options);
     }
-    count = FootprintService.count('user', criteria)
+    count = FootprintService.count('user', criteria);
 
     count.then(number => {
       reply(
         response
           .then(result => {
-            if (!result) return Boom.notFound()
+            if (!result) {
+              return Boom.notFound();
+            }
 
             if (request.params.id) {
-              result.sanitize()
+              result.sanitize();
             }
             else {
               if (result.length) {
                 for (var i = 0, len = result.length; i < len; i++) {
-                  result[i].sanitize()
+                  result[i].sanitize();
                 }
               }
             }
-            return result
+            return result;
           })
           .catch(function (err) { that.log.debug(err); })
         )
-        .header('X-Total-Count', number)
+        .header('X-Total-Count', number);
     })
   }
 
   _updateQuery (request, options) {
-    const Model = this.app.orm['user']
+    const Model = this.app.orm.user;
     return Model
       .update({ _id: request.params.id }, request.payload, {runValidators: true})
       .exec()
@@ -207,26 +209,30 @@ module.exports = class UserController extends Controller{
           .findOne({ _id: request.params.id })
           .populate(options.populate)
           .then((user) => { return user; })
-          .catch(err => { return Boom.badRequest(err.message) });
+          .catch(err => { return Boom.badRequest(err.message); });
       })
-      .catch(err => { return Boom.badRequest(err.message) })
+      .catch(err => { return Boom.badRequest(err.message); });
   }
 
   update (request, reply) {
-    const FootprintService = this.app.services.FootprintService
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query)
-    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query)
-    const Model = this.app.orm['user']
+    const FootprintService = this.app.services.FootprintService;
+    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
+    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
+    const Model = this.app.orm.user;
 
-    if (!options.populate) options.populate = userPopulate
+    if (!options.populate) {
+      options.populate = userPopulate;
+    }
 
     this.log.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
-      ', values = ', request.payload)
+      ', values = ', request.payload);
 
-    this._removeForbiddenAttributes(request)
-    if (request.payload.password) delete request.payload.password
+    this._removeForbiddenAttributes(request);
+    if (request.payload.password) {
+      delete request.payload.password;
+    }
 
-    var that = this
+    var that = this;
     if (request.params.id) {
       if ((request.payload.old_password && request.payload.new_password) || request.payload.verified) {
         // Check old password
@@ -234,107 +240,117 @@ module.exports = class UserController extends Controller{
           .findOne({_id: request.params.id})
           .then((user) => {
             // If verifying user, set verified_by
-            if (request.payload.verified && !user.verified) request.payload.verified_by = request.params.currentUser._id
+            if (request.payload.verified && !user.verified) {
+              request.payload.verified_by = request.params.currentUser._id
+            }
             if (request.payload.old_password) {
               if (user.validPassword(request.payload.old_password)) {
-                request.payload.password = Model.hashPassword(request.payload.new_password)
-                return reply(that._updateQuery(request, options))
+                request.payload.password = Model.hashPassword(request.payload.new_password);
+                return reply(that._updateQuery(request, options));
               }
               else {
-                return reply(Boom.badRequest('The old password is wrong'))
+                return reply(Boom.badRequest('The old password is wrong'));
               }
             }
             else {
-              return reply(that._updateQuery(request, options))
+              return reply(that._updateQuery(request, options));
             }
           })
           .catch(err => { return Boom.badRequest(err.message); });
       }
       else {
-        reply(this._updateQuery(request, options))
+        reply(this._updateQuery(request, options));
       }
     }
     else {
-      reply(Boom.badRequest())
+      reply(Boom.badRequest());
     }
   }
 
   destroy (request, reply) {
-    const FootprintService = this.app.services.FootprintService
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query)
-    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query)
+    const FootprintService = this.app.services.FootprintService;
+    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
+    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
 
-    this.log.debug('[UserController] (destroy) model = user, query =', request.query)
+    this.log.debug('[UserController] (destroy) model = user, query =', request.query);
 
-    var that = this
-    var query = FootprintService.destroy('user', request.params.id, options)
-    reply(query)
+    var that = this;
+    var query = FootprintService.destroy('user', request.params.id, options);
+    reply(query);
     query
       .then((doc) => {
         // Send notification if user is being deleted by an admin
-        if (request.params.currentUser.id != doc.id) {
+        if (request.params.currentUser.id !== doc.id) {
           that.app.services.NotificationService.send({type: 'admin_delete', createdBy: request.params.currentUser, user: doc}, () => { });
         }
-      })
+      });
   }
 
   checkin (request, reply) {
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query)
-    const userId = request.params.id
-    const childAttribute = request.params.childAttribute
-    const payload = request.payload
-    const Model = this.app.orm['user']
-    const List = this.app.orm['list']
+    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
+    const userId = request.params.id;
+    const childAttribute = request.params.childAttribute;
+    const payload = request.payload;
+    const Model = this.app.orm.user;
+    const List = this.app.orm.list;
 
     this.log.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload,
-      'options =', options)
+      'options =', options);
 
-    if (childAttributes.indexOf(childAttribute) === -1)
-      return reply(Boom.notFound())
+    if (childAttributes.indexOf(childAttribute) === -1) {
+      return reply(Boom.notFound());
+    }
 
     // Make sure there is a list in the payload
-    if (!payload.list)
-      return reply(Boom.badRequest('Missing list attribute'))
+    if (!payload.list) {
+      return reply(Boom.badRequest('Missing list attribute'));
+    }
 
-    var that = this
+    const that = this;
 
     List
-      .findOne({ _id: payload.list })
-      .catch(err => { that._errorHandler(err, reply) })
+      .findOne({ '_id': payload.list })
+      .catch(err => { that._errorHandler(err, reply); })
       .then((list) => {
         // Check that the list added corresponds to the right attribute
-        if (childAttribute != list.type + 's' && childAttribute != list.type)
-          throw new Boom.badRequest('Wrong list type')
+        if (childAttribute !== list.type + 's' && childAttribute !== list.type) {
+          throw new Boom.badRequest('Wrong list type');
+        }
 
         //Set the proper pending attribute depending on list type
-        if (list.joinability == 'public' || list.joinability == 'private')
-          payload.pending = false
+        if (list.joinability === 'public' || list.joinability === 'private') {
+          payload.pending = false;
+        }
+        else {
+          payload.pending = true;
+        }
 
         return Model
           .findOne({ _id: userId })
           .then((record) => {
-            if (!record)
-              throw new Boom.badRequest('User not found')
-              //return reply(Boom.notFound())
-            return {list: list, user: record}
-          })
+            if (!record) {
+              throw new Boom.badRequest('User not found');
+            }
+            return {list: list, user: record};
+          });
       })
       .then((result) => {
-        var record = result.user
-        if (childAttribute != 'organization') {
-          if (!record[childAttribute])
-            record[childAttribute] = []
+        var record = result.user;
+        if (childAttribute !== 'organization') {
+          if (!record[childAttribute]) {
+            record[childAttribute] = [];
+          }
 
           // Make sure user is not already checked in this list
           for (var i = 0, len = record[childAttribute].length; i < len; i++) {
             if (record[childAttribute][i].list.equals(list._id)) {
-              throw new Boom.badRequest('User is already checked in')
+              throw new Boom.badRequest('User is already checked in');
             }
           }
 
           // TODO: make sure user is allowed to join this list
 
-          record[childAttribute].push(payload)
+          record[childAttribute].push(payload);
         }
         else {
           record.organization = payload;
@@ -342,103 +358,138 @@ module.exports = class UserController extends Controller{
         return record
           .save()
           .then((record2) => {
-            return {list: result.list, user: record2}
-        })
+            return {list: result.list, user: record2};
+        });
       })
       .then((result) => {
-        var list = result.list, user = result.user
+        var list = result.list, user = result.user;
         // Populate user and notify checked in user if needed
-        user.populate(userPopulate, (err, user) => { if(!err) reply(user) });
+        user.populate(userPopulate, (err, user) => {
+          if(!err) {
+            reply(user);
+          }
+        });
         // Notify user if needed
-        if (request.params.currentUser.id != userId) {
-          that.app.services.NotificationService.send({type: 'admin_checkin', createdBy: request.params.currentUser, user: user, params: { list: list }}, () => { })
+        if (request.params.currentUser.id !== userId) {
+          that.log.debug('Checked in by a different user');
+          that.app.services.NotificationService.send({
+            type: 'admin_checkin',
+            createdBy: request.params.currentUser,
+            user: user,
+            params: { list: list }
+          }, () => { });
         }
-        return result
+        return result;
       })
       .then((result) => {
-        /* TODO
         // Notify list owner and managers of the new checkin if needed
-        var list = result.list
-        if (list.joinability != 'public' && list.joinability != 'private') {
-          that.app.services.NotificationService.sendMultiple({type: 'checkin', users: list.managers, params: { list: list }}, () => { })
-        }*/
-      })
+        var list = result.list,
+          user = result.user;
+        if (payload.pending) {
+          that.log.debug('Notifying list owners and manager of the new checkin');
+          that.app.services.NotificationService.sendMultiple(list.managers, {
+            type: 'pending_checkin',
+            params: { list: list, user: user }
+          }, () => { });
+        }
+      });
   }
 
   checkout (request, reply) {
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query)
-    const userId = request.params.id
-    const childAttribute = request.params.childAttribute
-    const checkInId = request.params.checkInId
-    const payload = request.payload
-    const Model = this.app.orm['user']
+    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
+    const userId = request.params.id;
+    const childAttribute = request.params.childAttribute;
+    const checkInId = request.params.checkInId;
+    const payload = request.payload;
+    const Model = this.app.orm.user;
 
     this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,
-      'options =', options)
+      'options =', options);
 
-     if (childAttributes.indexOf(childAttribute) === -1)
-      return this._errorHandler(Boom.notFound(), reply)
+    if (childAttributes.indexOf(childAttribute) === -1) {
+      return this._errorHandler(Boom.notFound(), reply);
+    }
 
-    var that = this
+    var that = this;
     Model
       .findOne({ _id: userId })
       .populate(userPopulate)
       .catch(err => that._errorHandler(err, reply))
       .then(record => {
-        var list = {}
-        if (childAttribute != 'organization') {
+        var list = {};
+        if (childAttribute !== 'organization') {
           record[childAttribute] = record[childAttribute].filter(function (elt, index) {
             if (elt._id.equals(checkInId)) {
-              list = elt.list
+              list = elt.list;
             }
-            return !elt._id.equals(checkInId)
+            return !elt._id.equals(checkInId);
           });
         }
         else {
-          list = record.organization.list
-          record.organization = {}
+          list = record.organization.list;
+          record.organization = {};
         }
 
-        return record.save().then(() => {
-          return {list: list, user: record}
-        })
+        return record
+          .save()
+          .then(() => {
+            return {list: list, user: record};
+          });
       })
       .then(result => {
-        var user = result.user, list = result.list
-        reply(user)
+        var user = result.user,
+          list = result.list;
+        reply(user);
         // Send notification if needed
-        if (request.params.currentUser.id != userId) {
-          that.app.services.NotificationService.send({type: 'admin_checkout', createdBy: request.params.currentUser, user: user, params: { list: list }}, () => { });
+        if (request.params.currentUser.id !== userId) {
+          that.app.services.NotificationService.send({
+            type: 'admin_checkout',
+            createdBy: request.params.currentUser,
+            user: user,
+            params: { list: list }
+          }, () => { });
         }
-      })
+      });
   }
 
   setPrimaryEmail (request, reply) {
-    const Model = this.app.orm['user']
-    const email = request.payload.email
+    const Model = this.app.orm.user;
+    const email = request.payload.email;
 
-    this.log.debug('[UserController] Setting primary email')
+    this.log.debug('[UserController] Setting primary email');
 
-    if (!request.payload.email) return reply(Boom.badRequest())
+    if (!request.payload.email) {
+      return reply(Boom.badRequest());
+    }
 
     Model
       .findOne({ _id: request.params.id})
       .then(record => {
-        if (!record) return reply(Boom.notFound())
+        if (!record) {
+          return reply(Boom.notFound());
+        }
         // Make sure email is validated
-        var index = record.emailIndex(email)
-        if (index == -1) return reply(Boom.badRequest('Email does not exist'))
-        if (!record.emails[index].validated) return reply(Boom.badRequest('Email has not been validated. You need to validate it first.'))
-        record.email = email
-        record.save().then(() => {
-          return reply(record)
-        })
-        .catch(err => { return reply(Boom.badImplementation(err.message)) })
-      })
+        var index = record.emailIndex(email);
+        if (index === -1) {
+          return reply(Boom.badRequest('Email does not exist'));
+        }
+        if (!record.emails[index].validated) {
+          return reply(Boom.badRequest('Email has not been validated. You need to validate it first.'));
+        }
+        record.email = email;
+        record
+          .save()
+          .then(() => {
+            return reply(record);
+          })
+          .catch(err => {
+            return reply(Boom.badImplementation(err.message));
+          });
+      });
   }
 
   validateEmail (request, reply) {
-    const Model = this.app.orm['user']
+    const Model = this.app.orm.user;
     var parts = {}, email = ''
 
     this.log.debug('[UserController] Verifying email ')
