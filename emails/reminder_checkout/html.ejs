@@ -1,0 +1,12 @@
+<p>Dear <%= user.name %>,</p>
+
+<p>You are checked into the following lists, with the following departure dates specified:</p>
+<ul>
+  <% for (var i = 0; i < params.checkins.length; i++) { %>
+  <li><%= params.checkins.list.name %> : <%= params.checkins.list.checkoutDate %></li>
+  <% } %>
+</ul>
+
+<p>If you would like to stay in these lists, please update your departure dates. Otherwise, you will be automatically checked out in 14 days.</p>
+
+<% include ../includes/footer_en %>

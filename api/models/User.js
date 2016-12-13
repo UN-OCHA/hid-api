@@ -5,6 +5,7 @@ const Schema = require('mongoose').Schema;
 const Bcrypt = require('bcryptjs');
 const Libphonenumber = require('google-libphonenumber');
 const Http = require('http');
+const listTypes = ['operation', 'bundle', 'disaster', 'organization'];
 
 /**
  * @module User
@@ -154,6 +155,26 @@ module.exports = class User extends Model {
           return true;
         },
 
+        // Whether we should send a reminder checkout email to a contact
+        shouldSendReminderCheckout: function() {
+          var checkins = [],
+            now = Date.now();
+          for (var i = 0, len = listTypes.length; i < len; i++) {
+            var listType = listTypes[i];
+            for (var j = 0, jlen = this[listType].length; j < jlen; j++) {
+              var tmpCheckin = this[listType][j];
+              if (!tmpCheckin.checkoutDate || (tmpCheckin.remindedCheckout && tmpCheckin.remindedCheckout === true)) {
+                continue;
+              }
+              var dep = new Date(tmpCheckin.checkoutDate);
+              if (now.valueOf() - dep.valueOf() > 48 * 3600 * 1000) {
+                checkins.push(tmpCheckin);
+              }
+            }
+          }
+          return checkins;
+        },
+
         toJSON: function () {
           const user = this.toObject();
           delete user.password;
@@ -173,6 +194,14 @@ module.exports = class User extends Model {
       pending: {
         type: Boolean,
         default: true
+      },
+      remindedCheckout: {
+        type: Boolean,
+        default: true
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
       }
     });
 

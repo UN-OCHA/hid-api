@@ -33,6 +33,12 @@ module.exports = {
       schedule: '*/60 * * * *',
       onTick: sendReminderUpdateEmails,
       start: true
+    },
+    // Send a reminder to checkout to people who are 2 days past their checkout date
+    sendReminderCheckoutEmails: {
+      schedule: '*/60 * * * *',
+      onTick: sendReminderCheckoutEmails,
+      start: true
     }
   }
 };
@@ -245,6 +251,7 @@ var sendReminderUpdateEmails = function (app) {
   }).stream();
 
   stream.on('data', function(user) {
+    this.pause();
     const that = this,
       now = new Date();
     if (user.shouldSendReminderUpdate()) {
@@ -259,6 +266,32 @@ var sendReminderUpdateEmails = function (app) {
         that.resume();
       });
     }
+  });
+
+  stream.on('close', function () {
+    cb();
+  });
+};
+
+var sendReminderCheckoutEmails = function(app) {
+  app.log.info('Sending reminder checkout emails to contacts');
+  const User = app.orm.user;
+  var stream = User.find({'email_verified': true }).stream();
+
+  stream.on('data', function(user) {
+    this.pause();
+    var checkins = user.shouldSendReminderCheckout();
+    if (checkins.length) {
+      EmailService.sendReminderCheckout(user, checkins, (err) => {
+        if (err) {
+          app.log.error(err);
+        }
+        else {
+          // TODO: set checkins remindedCheckout to TRUE
+        }
+      });
+    }
+    this.resume();
   });
 
   stream.on('close', function () {

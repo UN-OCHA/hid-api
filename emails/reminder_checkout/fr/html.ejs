@@ -1,0 +1,12 @@
+<p>Bonjour <%= user.name %>,</p>
+
+<p>Vous êtes inscrit dans les listes suivantes, et avez spécifié les dates de départ suivantes:</p>
+<ul>
+  <% for (var i = 0; i < params.checkins.length; i++) { %>
+  <li><%= params.checkins.list.name %> : <%= params.checkins.list.checkoutDate %></li>
+  <% } %>
+</ul>
+
+<p>Si vous voulez rester dans ces listes, veuillez mettre à jour vos dates de départ. Sinon, vous serez automatiquement enlevés de ces listes dans 14 jours.</p>
+
+<% include ../../includes/footer_fr %>
