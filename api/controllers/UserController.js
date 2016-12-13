@@ -166,6 +166,8 @@ module.exports = class UserController extends Controller{
     this.log.debug('[UserController] (find) criteria =', request.query, request.params.id,
       'options =', options);
 
+    this.log.debug(criteria);
+
     if (request.params.id) {
       response = FootprintService.find('user', request.params.id, options);
     }
