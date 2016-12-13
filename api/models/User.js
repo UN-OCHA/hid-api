@@ -276,7 +276,7 @@ module.exports = class User extends Model {
       remindedUpdate: {
         type: Date,
         readonly: true
-      }
+      },
       // TODO: find a way to set this as readonly
       emails: [emailSchema],
       password: {
