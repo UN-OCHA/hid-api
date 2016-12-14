@@ -1,12 +1,9 @@
 <p>Dear <%= user.name %>,</p>
 
-<p>You are checked into the following lists, with the following departure dates specified:</p>
-<ul>
-  <% for (var i = 0; i < params.checkins.length; i++) { %>
-  <li><%= params.checkins.list.name %> : <%= params.checkins.list.checkoutDate %></li>
-  <% } %>
-</ul>
+<p>We have noticed that you are still checked into <%= params.list.name %>, but have specified a departure date of <%= params.listUser.checkoutDate %>. That was more than 2 days ago.</p>
 
-<p>If you would like to stay in these lists, please update your departure dates. Otherwise, you will be automatically checked out in 14 days.</p>
+<p>If you are no longer in <%= params.list.name %>, please check out. Otherwise, kindly update your profile with a new departure date.</p>
+
+<p>If no action is taken, you will be automatically checked out of <%= params.list.name %> in the next 12 days.</p>
 
 <% include ../includes/footer_en %>

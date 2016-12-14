@@ -158,47 +158,6 @@ module.exports = class User extends Model {
           return true;
         },
 
-        // Whether we should send a reminder checkout email to a user
-        shouldSendReminderCheckout: function() {
-          var checkins = [],
-            now = Date.now();
-          for (var i = 0, len = listTypes.length; i < len; i++) {
-            var listType = listTypes[i];
-            for (var j = 0, jlen = this[listType].length; j < jlen; j++) {
-              var tmpCheckin = this[listType][j];
-              if (!tmpCheckin.checkoutDate || (tmpCheckin.remindedCheckout && tmpCheckin.remindedCheckout === true)) {
-                continue;
-              }
-              var dep = new Date(tmpCheckin.checkoutDate);
-              if (now.valueOf() - dep.valueOf() > 48 * 3600 * 1000) {
-                checkins.push(tmpCheckin);
-              }
-            }
-          }
-          return checkins;
-        },
-
-        // Whether we should do an automated checkout of a user
-        // Users are checked out automatically 14 days after their expected departure date
-        shouldDoAutomatedCheckout: function() {
-          var checkins = [],
-            now = Date.now();
-          for (var i = 0, len = listTypes.length; i < len; i++) {
-            var listType = listTypes[i];
-            for (var j = 0, jlen = this[listType].length; j < jlen; j++) {
-              var tmpCheckin = this[listType][j];
-              if (!tmpCheckin.checkoutDate || !tmpCheckin.remindedCheckout) {
-                continue;
-              }
-              var dep = new Date(tmpCheckin.checkoutDate);
-              if (now.valueOf() - dep.valueOf() > 14 * 24 * 3600 * 1000) {
-                checkins.push(tmpCheckin);
-              }
-            }
-          }
-          return checkins;
-        },
-
         toJSON: function () {
           const user = this.toObject();
           delete user.password;

@@ -1,12 +1,9 @@
 <p>Bonjour <%= user.name %>,</p>
 
-<p>Vous êtes inscrit dans les listes suivantes, et avez spécifié les dates de départ suivantes:</p>
-<ul>
-  <% for (var i = 0; i < params.checkins.length; i++) { %>
-  <li><%= params.checkins.list.name %> : <%= params.checkins.list.checkoutDate %></li>
-  <% } %>
-</ul>
+<p>Nous avons remarqué que vous êtes toujours inscrit sur la liste de contacts <%= params.list.name %>, mais avez spécifié une date de départ au <%= params.listUser.checkoutDate %>, soit il y a plus de 2 jours.</p>
 
-<p>Si vous voulez rester dans ces listes, veuillez mettre à jour vos dates de départ. Sinon, vous serez automatiquement enlevés de ces listes dans 14 jours.</p>
+<p>Si vous n'êtes plus en/au <%= params.list.name %>, veuillez vous désinscrire. Sinon, merci de mettre à jour votre profil avec une nouvelle date de départ.</p>
+
+<p>Si vous ne faites rien, vous serez automatiquement désinscrit de la liste de contacts en/au <%= params.list.name %> dans 12 jours.</p>
 
 <% include ../../includes/footer_fr %>

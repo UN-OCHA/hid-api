@@ -275,49 +275,23 @@ var sendReminderUpdateEmails = function (app) {
 
 var sendReminderCheckoutEmails = function(app) {
   app.log.info('Sending reminder checkout emails to contacts');
-  const User = app.orm.user,
-    listTypes = app.services.ListService.getUserListAttributes();
-  var stream = User.find({'email_verified': true }).stream();
+  const ListUser = app.orm.ListUser;
+  var stream = ListUser
+    .find({'remindedCheckout': false, 'user.email_verified': true })
+    .populate('user list')
+    .stream();
 
-  stream.on('data', function(user) {
-    this.pause();
-    var checkins = user.shouldSendReminderCheckout(),
-      userModified = false;
-    if (checkins.length) {
-      EmailService.sendReminderCheckout(user, checkins, (err) => {
-        if (err) {
-          app.log.error(err);
-        }
-        else {
-          // Set checkins remindedCheckout to TRUE
-          var i,j,k;
-          for (i = 0; i < listTypes.length; i++) {
-            var tmpCheckins = user[listTypes[i]];
-            if (tmpCheckins.length) {
-              for (j = 0; j < tmpCheckins.length; j++) {
-                var tmpCheckin = tmpCheckins[j];
-                for (k = 0; k < checkins.length; k++) {
-                  if (tmpCheckin._id === checkins[k]._id) {
-                    tmpCheckin.remindedCheckout = true;
-                    userModified = true;
-                  }
-                }
-              }
-            }
-            else {
-              for (k = 0; k < checkins.length; k++) {
-                if (tmpCheckins._id === checkins[k]._id) {
-                  tmpCheckins.remindedCheckout = true;
-                  userModified = true;
-                }
-              }
-            }
-            user.save();
-          }
-        }
+  stream.on('data', function(lu) {
+    let that = this;
+    if (lu.shouldSendReminderCheckout()) {
+      this.pause();
+      notification = {type: 'reminder_checkout', user: lu.user, params: {listUser: lu, list: lu.list}};
+      NotificationService.send(notification, () => {
+        lu.remindedCheckout = true;
+        lu.save();
+        that.resume();
       });
     }
-    this.resume();
   });
 
   stream.on('close', function () {
@@ -326,11 +300,34 @@ var sendReminderCheckoutEmails = function(app) {
 };
 
 var doAutomatedCheckout = function (app) {
-  console.log('INFO: running automated checkouts');
-  var stream = Contact.find({ 'type': 'local', 'status': true, 'remindedCheckout': true}).stream();
+  app.log.info('Running automated checkouts');
+  const User = app.orm.user,
+    listTypes = app.services.ListService.getUserListAttributes(),
+    NotificationService = app.services.NotificationService;
+  var stream = User.find({}).stream();
 
-  stream.on('data', function (contact) {
-    if (contact.shouldDoAutomatedCheckout()) {
+  stream.on('data', function (user) {
+    this.pause();
+    var checkins = user.shouldDoAutomatedCheckout();
+    if (checkins.length) {
+      notification = {type: 'automated_checkout', params: {checkins: checkins}};
+      NotificationService.send(user, notification, () => {
+        var i,j,k;
+        for (i = 0; i < listTypes.length; i++) {
+          var tmpCheckins = user[listTypes[i]];
+          if (tmpCheckins.length) {
+            for (j = 0; j < tmpCheckins.length; j++) {
+              var tmpCheckin = tmpCheckins[j];
+              for (k = 0; k < checkins.length; k++) {
+                if (tmpCheckin._id === checkins[k]._id) {
+                  tmpCheckin.remindedCheckout = true;
+                  userModified = true;
+                }
+              }
+            }
+          }
+        }
+      });
       var remindedCheckoutDate = new Date(contact.remindedCheckoutDate);
       var dateOptions = { day: "numeric", month: "long", year: "numeric" };
       var mailOptions = {
