@@ -39,6 +39,12 @@ module.exports = {
       schedule: '*/60 * * * *',
       onTick: sendReminderCheckoutEmails,
       start: true
+    },
+    // Do the automated to checkout to people who are 14 days past their checkout date
+    doAutomatedCheckout: {
+      schedule: '*/60 * * * *',
+      onTick: doAutomatedCheckout,
+      start: true
     }
   }
 };
@@ -299,54 +305,22 @@ var sendReminderCheckoutEmails = function(app) {
   });
 };
 
-var doAutomatedCheckout = function (app) {
+var doAutomatedCheckout = function(app) {
   app.log.info('Running automated checkouts');
-  const User = app.orm.user,
-    listTypes = app.services.ListService.getUserListAttributes(),
-    NotificationService = app.services.NotificationService;
-  var stream = User.find({}).stream();
+  const ListUser = app.orm.ListUser;
+  var stream = ListUser
+    .find({'remindedCheckout': true, 'user.email_verified': true })
+    .populate('user list')
+    .stream();
 
-  stream.on('data', function (user) {
-    this.pause();
-    var checkins = user.shouldDoAutomatedCheckout();
-    if (checkins.length) {
-      notification = {type: 'automated_checkout', params: {checkins: checkins}};
-      NotificationService.send(user, notification, () => {
-        var i,j,k;
-        for (i = 0; i < listTypes.length; i++) {
-          var tmpCheckins = user[listTypes[i]];
-          if (tmpCheckins.length) {
-            for (j = 0; j < tmpCheckins.length; j++) {
-              var tmpCheckin = tmpCheckins[j];
-              for (k = 0; k < checkins.length; k++) {
-                if (tmpCheckin._id === checkins[k]._id) {
-                  tmpCheckin.remindedCheckout = true;
-                  userModified = true;
-                }
-              }
-            }
-          }
-        }
-      });
-      var remindedCheckoutDate = new Date(contact.remindedCheckoutDate);
-      var dateOptions = { day: "numeric", month: "long", year: "numeric" };
-      var mailOptions = {
-        to: contact.mainEmail(false),
-        subject: 'Automated checkout',
-        firstName: contact.nameGiven,
-        location: contact.location,
-        remindedCheckoutDate: remindedCheckoutDate.toLocaleDateString('en', dateOptions),
-        remindedCheckoutDateFR: remindedCheckoutDate.toLocaleDateString('fr', dateOptions),
-        checkinLink: process.env.APP_BASE_URL + '/#/contact/' + contact._id + '/checkin'
-      };
-      contact.checkout(function(err) {
-        if (!err) {
-          mail.sendTemplate('automated_checkout', mailOptions, function (err, info) {
-            if (!err) {
-              console.log('INFO: sent automated checkout email to ' + contact.mainEmail());
-            }
-          });
-        }
+  stream.on('data', function(lu) {
+    let that = this;
+    if (lu.shouldDoAutomatedCheckout()) {
+      this.pause();
+      notification = {type: 'automated_checkout', user: lu.user, params: {listUser: lu, list: lu.list}};
+      NotificationService.send(notification, () => {
+        lu.remove();
+        that.resume();
       });
     }
   });

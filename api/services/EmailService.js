@@ -159,16 +159,4 @@ module.exports = class EmailService extends Service {
     this.send(mailOptions, 'reminder_update', context, callback);
   }
 
-  sendReminderCheckout (user, checkins, callback) {
-    var mailOptions = {
-      to: user.email,
-      locale: user.locale
-    };
-    var context = {
-      user: user,
-      checkins: checkins
-    };
-    this.send(mailOptions, 'reminder_checkin', context, callback);
-  }
-
 };
