@@ -276,7 +276,7 @@ var sendReminderUpdateEmails = function (app) {
 var sendReminderCheckoutEmails = function(app) {
   app.log.info('Sending reminder checkout emails to contacts');
   const User = app.orm.user,
-    listTypes = app.services.ListService.getListTypes();
+    listTypes = app.services.ListService.getUserListAttributes();
   var stream = User.find({'email_verified': true }).stream();
 
   stream.on('data', function(user) {
@@ -290,13 +290,24 @@ var sendReminderCheckoutEmails = function(app) {
         }
         else {
           // Set checkins remindedCheckout to TRUE
-          for (var i = 0; i < listTypes.length; i++) {
+          var i,j,k;
+          for (i = 0; i < listTypes.length; i++) {
             var tmpCheckins = user[listTypes[i]];
-            for (var j = 0; j < tmpCheckins.length; j++) {
-              var tmpCheckin = tmpCheckins[j];
-              for (var k = 0; k < checkins.length; k++) {
-                if (tmpCheckin._id === checkins[k]._id) {
-                  tmpCheckin.remindedCheckout = true;
+            if (tmpCheckins.length) {
+              for (j = 0; j < tmpCheckins.length; j++) {
+                var tmpCheckin = tmpCheckins[j];
+                for (k = 0; k < checkins.length; k++) {
+                  if (tmpCheckin._id === checkins[k]._id) {
+                    tmpCheckin.remindedCheckout = true;
+                    userModified = true;
+                  }
+                }
+              }
+            }
+            else {
+              for (k = 0; k < checkins.length; k++) {
+                if (tmpCheckins._id === checkins[k]._id) {
+                  tmpCheckins.remindedCheckout = true;
                   userModified = true;
                 }
               }

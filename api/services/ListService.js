@@ -15,4 +15,8 @@ module.exports = class ListService extends Service {
   getListTypes() {
     return ['list', 'organization', 'operation', 'bundle', 'disaster'];
   }
+
+  getUserListAttributes() {
+    return ['lists', 'organizations', 'organization', 'operations', 'bundles', 'disasters'];
+  }
 };
