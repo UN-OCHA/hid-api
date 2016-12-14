@@ -5,7 +5,10 @@ const Schema = require('mongoose').Schema;
 const Bcrypt = require('bcryptjs');
 const Libphonenumber = require('google-libphonenumber');
 const Http = require('http');
+const async = require('async');
+const deepPopulate = require('mongoose-deep-populate')(require('mongoose'));
 const listTypes = ['operation', 'bundle', 'disaster', 'organization'];
+const userPopulate = 'favoriteLists operations.list disasters.list bundles.list organization.list organizations.list authorizedClients';
 
 /**
  * @module User
@@ -138,7 +141,7 @@ module.exports = class User extends Model {
           return false;
         },
 
-        // Whether we should send an update reminder (sent out after a contact hasn't been updated for 6 months)
+        // Whether we should send an update reminder (sent out after a user hasn't been updated for 6 months)
         shouldSendReminderUpdate: function () {
           var d = new Date();
           var revisedOffset = d.valueOf();
@@ -155,7 +158,7 @@ module.exports = class User extends Model {
           return true;
         },
 
-        // Whether we should send a reminder checkout email to a contact
+        // Whether we should send a reminder checkout email to a user
         shouldSendReminderCheckout: function() {
           var checkins = [],
             now = Date.now();
@@ -175,6 +178,27 @@ module.exports = class User extends Model {
           return checkins;
         },
 
+        // Whether we should do an automated checkout of a user
+        // Users are checked out automatically 14 days after their expected departure date
+        shouldDoAutomatedCheckout: function() {
+          var checkins = [],
+            now = Date.now();
+          for (var i = 0, len = listTypes.length; i < len; i++) {
+            var listType = listTypes[i];
+            for (var j = 0, jlen = this[listType].length; j < jlen; j++) {
+              var tmpCheckin = this[listType][j];
+              if (!tmpCheckin.checkoutDate || !tmpCheckin.remindedCheckout) {
+                continue;
+              }
+              var dep = new Date(tmpCheckin.checkoutDate);
+              if (now.valueOf() - dep.valueOf() > 14 * 24 * 3600 * 1000) {
+                checkins.push(tmpCheckin);
+              }
+            }
+          }
+          return checkins;
+        },
+
         toJSON: function () {
           const user = this.toObject();
           delete user.password;
@@ -185,25 +209,6 @@ module.exports = class User extends Model {
   }
 
   static schema () {
-    const checkInSchema = new Schema({
-      list: {
-        type: Schema.ObjectId,
-        ref: 'List'
-      },
-      checkoutDate: Date,
-      pending: {
-        type: Boolean,
-        default: true
-      },
-      remindedCheckout: {
-        type: Boolean,
-        default: true
-      },
-      createdAt: {
-        type: Date,
-        default: Date.now
-      }
-    });
 
     const emailSchema = new Schema({
       type: {
@@ -382,8 +387,14 @@ module.exports = class User extends Model {
         enum: ['en', 'fr']
       },
       // TODO :make sure it's a valid organization
-      organization: checkInSchema,
-      organizations: [ checkInSchema ],
+      organization: {
+        type: Schema.ObjectId,
+        ref: 'ListUser'
+      },
+      organizations: [{
+        type: Schema.ObjectId,
+        ref: 'ListUser'
+      }],
       // Verify valid phone number with libphonenumber and reformat if needed
       phone_number: {
         type: String,
@@ -483,10 +494,22 @@ module.exports = class User extends Model {
         type: Schema.ObjectId,
         ref: 'List'
       }],
-      lists: [ checkInSchema ],
-      operations: [ checkInSchema ],
-      bundles: [ checkInSchema ],
-      disasters: [ checkInSchema ],
+      lists: [{
+        type: Schema.ObjectId,
+        ref: 'ListUser'
+      }],
+      operations: [{
+        type: Schema.ObjectId,
+        ref: 'ListUser'
+      }],
+      bundles: [{
+        type: Schema.ObjectId,
+        ref: 'ListUser'
+      }],
+      disasters: [{
+        type: Schema.ObjectId,
+        ref: 'ListUser'
+      }],
       authorizedClients: [{
         type: Schema.ObjectId,
         ref: 'Client'
@@ -495,6 +518,7 @@ module.exports = class User extends Model {
   }
 
   static onSchema(schema) {
+    schema.plugin(deepPopulate, {});
     schema.virtual('sub').get(function () {
       return this._id;
     });
@@ -530,6 +554,28 @@ module.exports = class User extends Model {
           name = user.given_name + ' ' + user.family_name
         }
         that.findOneAndUpdate({name: name});
+        next();
+      });
+    });
+    // Populate lists
+    schema.post('findOne', function (result, next) {
+      let that = this;
+      result
+        .deepPopulate(userPopulate)
+        .then(user => {
+          next();
+        })
+        .catch(err => that.log.error(err));
+    });
+    schema.post('find', function (results, next) {
+      let that = this;
+      async.eachOf(results, function (result, key, cb) {
+        results[key]
+          .deepPopulate(userPopulate)
+          .then((r) => {
+            cb();
+          });
+      }, function (err) {
         next();
       });
     });

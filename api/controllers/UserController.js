@@ -5,7 +5,6 @@ const Boom = require('boom');
 const Bcrypt = require('bcryptjs');
 const fs = require('fs');
 const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters'];
-const userPopulate = 'favoriteLists operations.list disasters.list bundles.list organization.list organizations.list authorizedClients';
 
 /**
  * @module UserController
@@ -135,16 +134,15 @@ module.exports = class UserController extends Controller{
   find (request, reply) {
     const FootprintService = this.app.services.FootprintService;
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
-    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
-    let response, count;
+    let criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
+    const ListUser = this.app.orm.ListUser;
+    let list = false;
 
-    if (!options.populate) {
-      options.populate = userPopulate;
-    }
-
-    if (criteria['organizations.list']) {
-      criteria.$or = [{'organizations.list': criteria['organizations.list']}, {'organization.list': criteria['organizations.list']}];
-      delete criteria['organizations.list'];
+    for (var i = 0; i < childAttributes.length; i++) {
+      if (criteria[childAttributes[i] + '.list']) {
+        list = criteria[childAttributes[i] + '.list'];
+        delete criteria[childAttributes[i] + '.list'];
+      }
     }
 
     // Hide unconfirmed users
@@ -166,44 +164,70 @@ module.exports = class UserController extends Controller{
     this.log.debug('[UserController] (find) criteria =', request.query, request.params.id,
       'options =', options);
 
-    this.log.debug(criteria);
+    let that = this;
 
-    if (request.params.id) {
-      response = FootprintService.find('user', request.params.id, options);
+    if (request.params.id || !list) {
+      if (request.params.id) {
+        criteria = request.params.id;
+      }
+      FootprintService
+        .find('user', criteria, options)
+        .then((results) => {
+          that.log.debug('Counting results');
+          return FootprintService
+            .count('user', criteria)
+            .then((number) => {
+              return {results: results, number: number};
+            });
+        })
+        .then((results) => {
+          if (!results.results) {
+            return reply(Boom.notFound());
+          }
+          if (request.params.id) {
+            results.results.sanitize();
+          }
+          else {
+            for (var i = 0, len = results.results.length; i < len; i++) {
+              results.results[i].sanitize();
+            }
+          }
+          return reply(results.results).header('X-Total-Count', results.number);
+        })
+        .catch((err) => { that._errorHandler(err, reply); });
     }
     else {
-      response = FootprintService.find('user', criteria, options);
+      ListUser
+        .find({list: list})
+        .then((lus) => {
+          var users = [];
+          for (var i = 0; i < lus.length; i++) {
+            users.push(lus[i].user);
+          }
+          criteria._id = {$in: users};
+        })
+        .then(() => {
+          return FootprintService.find('user', criteria, options);
+        })
+        .then((results) => {
+          that.log.debug('Counting results');
+          return FootprintService
+            .count('user', criteria)
+            .then((number) => {
+              return {results: results, number: number};
+            });
+        })
+        .then((results) => {
+          if (!results.results) {
+            return reply(Boom.notFound());
+          }
+          for (var i = 0, len = results.results.length; i < len; i++) {
+            results.results[i].sanitize();
+          }
+          return reply(results.results).header('X-Total-Count', results.number);
+        })
+        .catch(err => { that._errorHandler(err, reply); });
     }
-    count = FootprintService.count('user', criteria);
-
-    var that = this;
-    count
-      .then(number => {
-        response
-          .then(result => {
-            if (!result) {
-              return Boom.notFound();
-            }
-
-            if (request.params.id) {
-              result.sanitize();
-            }
-            else {
-              if (result.length) {
-                for (var i = 0, len = result.length; i < len; i++) {
-                  result[i].sanitize();
-                }
-              }
-            }
-            return reply(result).header('X-Total-Count', number);
-          })
-          .catch((err) => {
-            that._errorHandler(err, reply);
-          });
-      })
-      .catch((err) => {
-        that._errorHandler(err, reply);
-      });
   }
 
   _updateQuery (request, options) {
@@ -214,7 +238,6 @@ module.exports = class UserController extends Controller{
       .then(() => {
         Model
           .findOne({ _id: request.params.id })
-          .populate(options.populate)
           .then((user) => { return user; })
           .catch(err => { return Boom.badRequest(err.message); });
       })
@@ -226,10 +249,6 @@ module.exports = class UserController extends Controller{
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
     const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
     const Model = this.app.orm.user;
-
-    if (!options.populate) {
-      options.populate = userPopulate;
-    }
 
     this.log.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
       ', values = ', request.payload);
@@ -299,7 +318,8 @@ module.exports = class UserController extends Controller{
     const childAttribute = request.params.childAttribute;
     const payload = request.payload;
     const Model = this.app.orm.user;
-    const List = this.app.orm.list;
+    const List = this.app.orm.list,
+      ListUser = this.app.orm.ListUser;
 
     this.log.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload,
       'options =', options);
@@ -317,7 +337,6 @@ module.exports = class UserController extends Controller{
 
     List
       .findOne({ '_id': payload.list })
-      .catch(err => { that._errorHandler(err, reply); })
       .then((list) => {
         // Check that the list added corresponds to the right attribute
         if (childAttribute !== list.type + 's' && childAttribute !== list.type) {
@@ -340,10 +359,20 @@ module.exports = class UserController extends Controller{
               throw new Boom.badRequest('User not found');
             }
             return {list: list, user: record};
-          })
-          .catch(err => { that._errorHandler(err, reply); });
+          });
       })
       .then((result) => {
+        // TODO: make sure user is allowed to join this list
+        that.log.debug('Saving new checkin');
+        payload.user = result.user._id;
+        return ListUser
+          .create(payload)
+          .then((lu) => {
+            return {list: result.list, user: result.user, listUser: lu};
+          });
+      })
+      .then((result) => {
+        that.log.debug('Setting the listUser to the correct attribute');
         var record = result.user,
           list = result.list;
         if (childAttribute !== 'organization') {
@@ -358,29 +387,25 @@ module.exports = class UserController extends Controller{
             }
           }
 
-          // TODO: make sure user is allowed to join this list
-
-          record[childAttribute].push(payload);
+          record[childAttribute].push(result.listUser);
         }
         else {
-          record.organization = payload;
+          record.organization = result.listUser;
         }
-        that.log.debug('Saving new checkin');
-        return record
-          .save()
-          .then((record2) => {
-            return {list: result.list, user: record2};
-        });
+        return {list: result.list, user: record, listUser: result.listUser};
       })
       .then((result) => {
-        that.log.debug('Populating user');
-        var list = result.list, user = result.user;
-        // Populate user and notify checked in user if needed
-        user.populate(userPopulate, (err, user) => {
-          if(!err) {
-            reply(user);
-          }
-        });
+        that.log.debug('Saving user');
+        var user = result.user;
+        return user
+          .save()
+          .then(() => {
+            that.log.debug('Done saving user');
+            return result;
+          });
+      })
+      .then((result) => {
+        reply(result.user);
         // Notify user if needed
         if (request.params.currentUser.id !== userId) {
           that.log.debug('Checked in by a different user');
@@ -404,7 +429,8 @@ module.exports = class UserController extends Controller{
             params: { list: list, user: user }
           }, () => { });
         }
-      });
+      })
+      .catch(err => { that._errorHandler(err, reply); });
   }
 
   checkout (request, reply) {
@@ -414,6 +440,8 @@ module.exports = class UserController extends Controller{
     const checkInId = request.params.checkInId;
     const payload = request.payload;
     const Model = this.app.orm.user;
+    const FootprintService = this.app.services.FootprintService;
+    const List = this.app.orm.List;
 
     this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,
       'options =', options);
@@ -423,45 +451,35 @@ module.exports = class UserController extends Controller{
     }
 
     var that = this;
-    Model
-      .findOne({ _id: userId })
-      .populate(userPopulate)
-      .catch(err => that._errorHandler(err, reply))
-      .then(record => {
-        var list = {};
-        if (childAttribute !== 'organization') {
-          record[childAttribute] = record[childAttribute].filter(function (elt, index) {
-            if (elt._id.equals(checkInId)) {
-              list = elt.list;
-            }
-            return !elt._id.equals(checkInId);
-          });
-        }
-        else {
-          list = record.organization.list;
-          record.organization = {};
-        }
-
-        return record
-          .save()
-          .then(() => {
-            return {list: list, user: record};
+    var query = FootprintService.destroy('ListUser', checkInId, options);
+    query
+      .then((lu) => {
+        return Model
+          .findOne({_id: userId})
+          .then((user) => {
+            return {listId: lu.list, user: user};
           });
       })
-      .then(result => {
-        var user = result.user,
-          list = result.list;
-        reply(user);
+      .then((result) => {
+        return List
+          .findOne({_id: result.listId})
+          .then((list) => {
+            return {list: list, user: result.user};
+          });
+      })
+      .then((result) => {
+        reply(result.user);
         // Send notification if needed
         if (request.params.currentUser.id !== userId) {
           that.app.services.NotificationService.send({
             type: 'admin_checkout',
             createdBy: request.params.currentUser,
-            user: user,
-            params: { list: list }
+            user: result.user,
+            params: { list: result.list }
           }, () => { });
         }
-      });
+      })
+      .catch(err => { that._errorHandler(err, reply); });
   }
 
   setPrimaryEmail (request, reply) {

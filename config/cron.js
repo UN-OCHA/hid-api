@@ -324,3 +324,37 @@ var sendReminderCheckoutEmails = function(app) {
     cb();
   });
 };
+
+var doAutomatedCheckout = function (app) {
+  console.log('INFO: running automated checkouts');
+  var stream = Contact.find({ 'type': 'local', 'status': true, 'remindedCheckout': true}).stream();
+
+  stream.on('data', function (contact) {
+    if (contact.shouldDoAutomatedCheckout()) {
+      var remindedCheckoutDate = new Date(contact.remindedCheckoutDate);
+      var dateOptions = { day: "numeric", month: "long", year: "numeric" };
+      var mailOptions = {
+        to: contact.mainEmail(false),
+        subject: 'Automated checkout',
+        firstName: contact.nameGiven,
+        location: contact.location,
+        remindedCheckoutDate: remindedCheckoutDate.toLocaleDateString('en', dateOptions),
+        remindedCheckoutDateFR: remindedCheckoutDate.toLocaleDateString('fr', dateOptions),
+        checkinLink: process.env.APP_BASE_URL + '/#/contact/' + contact._id + '/checkin'
+      };
+      contact.checkout(function(err) {
+        if (!err) {
+          mail.sendTemplate('automated_checkout', mailOptions, function (err, info) {
+            if (!err) {
+              console.log('INFO: sent automated checkout email to ' + contact.mainEmail());
+            }
+          });
+        }
+      });
+    }
+  });
+
+  stream.on('close', function () {
+    cb();
+  });
+};
