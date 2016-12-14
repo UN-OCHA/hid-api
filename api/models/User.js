@@ -560,6 +560,9 @@ module.exports = class User extends Model {
     // Populate lists
     schema.post('findOne', function (result, next) {
       let that = this;
+      if (!result) {
+        return next();
+      }
       result
         .deepPopulate(userPopulate)
         .then(user => {
