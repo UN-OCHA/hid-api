@@ -275,19 +275,34 @@ var sendReminderUpdateEmails = function (app) {
 
 var sendReminderCheckoutEmails = function(app) {
   app.log.info('Sending reminder checkout emails to contacts');
-  const User = app.orm.user;
+  const User = app.orm.user,
+    listTypes = app.services.ListService.getListTypes();
   var stream = User.find({'email_verified': true }).stream();
 
   stream.on('data', function(user) {
     this.pause();
-    var checkins = user.shouldSendReminderCheckout();
+    var checkins = user.shouldSendReminderCheckout(),
+      userModified = false;
     if (checkins.length) {
       EmailService.sendReminderCheckout(user, checkins, (err) => {
         if (err) {
           app.log.error(err);
         }
         else {
-          // TODO: set checkins remindedCheckout to TRUE
+          // Set checkins remindedCheckout to TRUE
+          for (var i = 0; i < listTypes.length; i++) {
+            var tmpCheckins = user[listTypes[i]];
+            for (var j = 0; j < tmpCheckins.length; j++) {
+              var tmpCheckin = tmpCheckins[j];
+              for (var k = 0; k < checkins.length; k++) {
+                if (tmpCheckin._id === checkins[k]._id) {
+                  tmpCheckin.remindedCheckout = true;
+                  userModified = true;
+                }
+              }
+            }
+            user.save();
+          }
         }
       });
     }

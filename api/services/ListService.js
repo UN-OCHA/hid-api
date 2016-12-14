@@ -1,6 +1,6 @@
-'use strict'
+'use strict';
 
-const Service = require('trails-service')
+const Service = require('trails-service');
 
 /**
  * @module ListService
@@ -9,7 +9,10 @@ const Service = require('trails-service')
 module.exports = class ListService extends Service {
 
   findById(id) {
-    return this.orm.List.findOne({'_id': id}).exec()
+    return this.orm.List.findOne({'_id': id}).exec();
   }
-}
 
+  getListTypes() {
+    return ['list', 'organization', 'operation', 'bundle', 'disaster'];
+  }
+};

@@ -5,9 +5,9 @@
  * @see http://trailsjs.io/doc/config/main
  */
 
-'use strict'
+'use strict';
 
-const path = require('path')
+const path = require('path');
 
 module.exports = {
 
@@ -19,8 +19,8 @@ module.exports = {
     require('trailpack-core'),
     //require('trailpack-repl'),
     require('trailpack-router'),
-    require('trailpack-hapi'), 
-    require('trailpack-mongoose'), 
+    require('trailpack-hapi'),
+    require('trailpack-mongoose'),
     require('trailpack-footprints'),
     require('trailpack-cron'),
     require('trailpack-cache')
@@ -34,4 +34,4 @@ module.exports = {
     temp: path.resolve(__dirname, '..', '.tmp'),
     www: path.resolve(__dirname, '..', 'pictures')
   }
-}
+};
