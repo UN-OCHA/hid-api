@@ -1,3 +1,4 @@
+'use strict';
 // config/cron.js
 const https = require('https');
 const async = require('async');
