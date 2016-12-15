@@ -40,6 +40,25 @@ module.exports = class ListUser extends Model {
             return true;
           }
           return false;
+        },
+
+        // Whether we should send a reminder checkin email
+        shouldSendReminderCheckin: function(cb) {
+          var d = new Date(),
+            createdAt = new Date(this.createdAt),
+            offset = d.valueOf() - createdAt.valueOf();
+
+          if (this.remindedCheckin || offset < 48 * 3600 * 1000 || offset > 72 * 3600 * 1000) {
+            return cb(false);
+          }
+
+          this
+            .populate('user list', function (err, lu) {
+              if (lu.list.type !== 'operation') {
+                return cb(false);
+              }
+              return cb(true);
+            });
         }
       }
     };
@@ -62,7 +81,11 @@ module.exports = class ListUser extends Model {
       },
       remindedCheckout: {
         type: Boolean,
-        default: true
+        default: false
+      },
+      remindedCheckin: {
+        type: Boolean,
+        default: false
       }
     };
   }

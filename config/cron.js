@@ -141,7 +141,7 @@ var importLists = function (app) {
                     }, 1000);
                   });
                 } catch (e) {
-                  app.log.info('Error parsing hrinfo API: ' + e);
+                  app.log.error('Error parsing hrinfo API: ' + e);
                 }
               });
             });
@@ -270,6 +270,35 @@ var doAutomatedCheckout = function(app) {
   });
 };
 
+var sendReminderCheckinEmails = function(app) {
+  app.log.info('Sending reminder checkin emails to contacts');
+  const ListUser = app.orm.ListUser,
+    NotificationService = app.services.NotificationService;
+  var stream = ListUser.find({'remindedCheckin': false, 'list.type': 'operation' }).populate('user list').stream();
+
+  stream.on('data', function(lu) {
+    this.pause();
+    var that = this;
+    lu.shouldSendReminderCheckin(function (send) {
+      if (send) {
+        var hasLocalPhoneNumber = lu.user.hasLocalPhoneNumber(lu.list.metadata.country.pcode);
+        lu.user.isInCountry(lu.list.metadata.country.pcode, function (err, inCountry) {
+          var notification = {
+            type: 'reminder_checkin',
+            user: lu.user,
+            params: {listUser: lu, list: lu.list, hasLocalPhoneNumber: hasLocalPhoneNumber, inCountry: inCountry}
+          };
+          NotificationService.send(notification, () => {
+            lu.remindedCheckin = true;
+            lu.save();
+            that.resume();
+          });
+        });
+      }
+    });
+  });
+};
+
 module.exports = {
   jobs: {
     // Delete expired users
@@ -312,6 +341,12 @@ module.exports = {
     doAutomatedCheckout: {
       schedule: '*/60 * * * *',
       onTick: doAutomatedCheckout,
+      start: true
+    },
+    // Reminder emails sent out 48 hours after checkin to remind people to add a local phone number if they didn't do so
+    sendReminderCheckinEmails: {
+      schedule: '*/60 * * * *',
+      onTick: sendReminderCheckinEmails,
       start: true
     }
   }

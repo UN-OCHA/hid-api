@@ -244,6 +244,7 @@ module.exports = class UserController extends Controller{
       .then((user) => {
         if (request.params.currentUser._id !== user._id) {
           // Notify user of the edit
+          // TODO: add list of actions performed by the administrator
           var notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
           NotificationService.send(notification, () => {});
         }

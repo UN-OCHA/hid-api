@@ -5,6 +5,7 @@ const Schema = require('mongoose').Schema;
 const Bcrypt = require('bcryptjs');
 const Libphonenumber = require('google-libphonenumber');
 const Http = require('http');
+const https = require('https');
 const async = require('async');
 const deepPopulate = require('mongoose-deep-populate')(require('mongoose'));
 const listTypes = ['operation', 'bundle', 'disaster', 'organization'];
@@ -156,6 +157,58 @@ module.exports = class User extends Model {
             }
           }
           return true;
+        },
+
+        hasLocalPhoneNumber: function (iso2) {
+          var found = false,
+            that = this;
+          this.phone_numbers.forEach(function (item) {
+            const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
+            try {
+              var phoneNumber = phoneUtil.parse(item.number);
+              var regionCode = phoneUtil.getRegionCodeForNumber(phoneNumber);
+              if (regionCode.toUpperCase() === iso2) {
+                found = true;
+              }
+            }
+            catch (err) {
+              // Invalid phone number
+              that.log.error(err);
+            }
+          });
+          return found;
+        },
+
+        // Whether the contact is in country or not
+        isInCountry: function (pcode, callback) {
+          var hrinfoId = this.location.country.id.replace('hrinfo_loc_', '');
+          var path = '/api/v1.0/locations/' + hrinfoId,
+            that = this;
+          https.get({
+            host: 'www.humanitarianresponse.info',
+            port: 443,
+            path: path
+          }, function (response) {
+            var body = '';
+            response.on('data', function (d) {
+              body += d;
+            });
+            response.on('end', function() {
+              var parsed = {};
+              try {
+                parsed = JSON.parse(body);
+                if (parsed.data[0].pcode === pcode) {
+                  return callback(null, true);
+                }
+                else {
+                  return callback(null, false);
+                }
+              } catch (e) {
+                that.log.info('Error parsing hrinfo API: ' + e);
+                return callback(e);
+              }
+            });
+          });
         },
 
         toJSON: function () {
