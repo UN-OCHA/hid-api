@@ -142,7 +142,8 @@ module.exports = class EmailService extends Service {
       locale: user.locale
     };
     var context = {
-      user: user
+      user: user,
+      verifyLink: this._addHash(process.env.APP_URL, user.generateHash(user.email))
     };
     this.send(mailOptions, 'reminder_verify', context, callback);
   }

@@ -528,65 +528,70 @@ module.exports = class UserController extends Controller{
 
   validateEmail (request, reply) {
     const Model = this.app.orm.user;
-    var parts = {}, email = ''
+    var parts = {}, email = '';
 
-    this.log.debug('[UserController] Verifying email ')
+    this.log.debug('[UserController] Verifying email ');
 
-    if (!request.payload.hash && !request.params.email) return reply(Boom.badRequest())
+    if (!request.payload.hash && !request.params.email) {
+      return reply(Boom.badRequest());
+    }
+
     // TODO: make sure current user can do this
 
     if (request.payload.hash) {
-      parts = Model.explodeHash(request.payload.hash)
-      email = parts.email
+      parts = Model.explodeHash(request.payload.hash);
+      email = parts.email;
     }
     else {
-      email = request.params.email
+      email = request.params.email;
     }
 
     var that = this;
     Model
       .findOne({ 'emails.email': email })
       .then(record => {
-        if (!record) return reply(Boom.notFound())
+        if (!record) {
+          return reply(Boom.notFound());
+        }
         if (request.payload.hash) {
           // Verify hash
-          var valid = record.validHash(request.payload.hash)
+          var valid = record.validHash(request.payload.hash);
           if (valid === true) {
             // Verify user email
-            if (record.email == parts.email) {
-              record.email_verified = true
-              record.expires = new Date(0, 0, 1, 0, 0, 0)
-              record.emails[0].validated = true
-              record.emails.set(0, record.emails[0])
+            if (record.email === parts.email) {
+              record.email_verified = true;
+              record.expires = new Date(0, 0, 1, 0, 0, 0);
+              record.emails[0].validated = true;
+              record.emails.set(0, record.emails[0]);
               record.save().then(() => {
                 that.app.services.EmailService.sendPostRegister(record, function (merr, info) {
                   return reply(record);
                 });
               })
-              .catch(err => { return reply(Boom.badImplementation(err.toString())) })
+              .catch(err => { return reply(Boom.badImplementation(err.toString())); });
             }
             else {
               for (var i = 0, len = record.emails.length; i < len; i++) {
-                if (record.emails[i].email == parts.email) {
-                  record.emails[i].validated = true
-                  record.emails.set(i, record.emails[i])
+                if (record.emails[i].email === parts.email) {
+                  record.emails[i].validated = true;
+                  record.emails.set(i, record.emails[i]);
                 }
               }
               record.save().then((r) => {
-                return reply(r)
+                return reply(r);
               })
-              .catch(err => { return reply(Boom.badImplementation(err.toString())) })
+              .catch(err => { return reply(Boom.badImplementation(err.toString())); });
             }
           }
           else {
-            return reply(Boom.badRequest(valid))
+            return reply(Boom.badRequest(valid));
           }
         }
         else {
           // Send validation email again
-          const app_validation_url = request.payload.app_validation_url
+          const app_validation_url = request.payload.app_validation_url;
           that.app.services.EmailService.sendValidationEmail(record, email, app_validation_url, function (err, info) {
-            return reply('Validation email sent successfully').code(202)
+            return reply('Validation email sent successfully').code(202);
           })
         }
       })
