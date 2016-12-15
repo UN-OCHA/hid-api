@@ -1,6 +1,6 @@
 <p>Dear <%= user.name %>,</p>
 
-<p><%= createdBy.name %> has noticed that some of your contact details on your profile on Humanitarian ID may need to be updated.</p>
+<p><a href="<%= createdBy.getAppUrl() %>"><%= createdBy.name %></a> has noticed that some of your contact details on your profile on Humanitarian ID may need to be updated.</p>
 
 <p>We suggest that you review your details to ensure that everything is up-to-date including your job title, organzation, group membership, phone number(s), email address(-es), and so on.</p>
 

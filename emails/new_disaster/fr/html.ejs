@@ -1,6 +1,6 @@
 <p>Bonjour <%= user.name %>,</p>
 
-<p>Une alerte pour la catastrophe <%= params.list.name %> a été lancée. Si vous répondez à cette catastrophe, veuillez y faire un checkin. Faire un checkin dans cette catastrophe vous
+<p>Une alerte pour la catastrophe <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a> a été lancée. Si vous répondez à cette catastrophe, veuillez y faire un checkin. Faire un checkin dans cette catastrophe vous
 permettra d'aider les autres humanitaires à prendre contact avec vous.</p>
 
 <% include ../../includes/footer_fr %>

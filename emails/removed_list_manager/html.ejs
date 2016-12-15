@@ -1,8 +1,7 @@
 <p>Dear <%= user.name %>,</p>
 
-<p><%= createdBy.name %> removed your manager permissions from the list <%= params.list.name %> on Humanitarian ID.</p>
+<p><a href="<%= createdBy.getAppUrl() %>"><%= createdBy.name %></a> removed your manager permissions from the list <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a> on Humanitarian ID.</p>
 
-<p>If you think this is a mistake, please contact <%= createdBy.name %></p>
+<p>If you think this is a mistake, please contact <a href="<%= createdBy.getAppUrl() %>"><%= createdBy.name %></a></p>
 
 <% include ../includes/footer_en %>
-

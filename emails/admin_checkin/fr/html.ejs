@@ -1,6 +1,5 @@
 <p>Bonjour <%= user.name %>,</p>
 
-<p><%= createdBy.name %> vous a ajouté à la liste de contacts humanitaires <%= params.list.name %> sur Humanitarian ID - un système de gestion de contact pour la communauté humanitaire. Pour mettre à jour ou ajouter plus de détails et vous connecter avec d'autres humanitaires, veuillez vous connecter sur <a href="https://humanitarian.id">humanitarian.id</a>.</p>
+<p><a href="<%= createdBy.getAppUrl() %>"><%= createdBy.name %></a> vous a ajouté à la liste de contacts humanitaires <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a> sur Humanitarian ID - un système de gestion de contact pour la communauté humanitaire. Pour mettre à jour ou ajouter plus de détails et vous connecter avec d'autres humanitaires, veuillez vous connecter sur <a href="https://humanitarian.id">humanitarian.id</a>.</p>
 
 <% include ../../includes/footer_fr %>
-

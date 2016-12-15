@@ -1,7 +1,7 @@
 <p>Bonjour <%= user.name %>,</p>
 
-<p>Comme indiqué dans notre précédent email envoyé il y a 12 jours, vous avez maintenant été automatiquement désinscrit de la liste de contacts en/au <%= params.list.name %>, car cela fait plus de 14 jours que la date de départ est dépassée.</p>
+<p>Comme indiqué dans notre précédent email envoyé il y a 12 jours, vous avez maintenant été automatiquement désinscrit de la liste de contacts en/au <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a>, car cela fait plus de 14 jours que la date de départ est dépassée.</p>
 
-<p>Si vous continuez à répondre à l'urgence en/au <%= params.list.name %>, vous devrez vous réinscrire.</p>
+<p>Si vous continuez à répondre à l'urgence en/au <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a>, vous devrez vous réinscrire.</p>
 
 <% include ../../includes/footer_fr %>

@@ -1,1 +1,1 @@
-<%= params.user.name %> voudrait s'inscrire à la liste <%= params.list.name %>.
+<a href="<%= params.user.getAppUrl() %>"><%= params.user.name %></a> voudrait s'inscrire à la liste <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a>.

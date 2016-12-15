@@ -1,9 +1,9 @@
 <p>Bonjour <%= user.name %>,</p>
 
-<p>Nous avons remarqué que vous êtes toujours inscrit sur la liste de contacts <%= params.list.name %>, mais avez spécifié une date de départ au <%= params.listUser.checkoutDate %>, soit il y a plus de 2 jours.</p>
+<p>Nous avons remarqué que vous êtes toujours inscrit sur la liste de contacts <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a>, mais avez spécifié une date de départ au <%= params.listUser.checkoutDate %>, soit il y a plus de 2 jours.</p>
 
-<p>Si vous n'êtes plus en/au <%= params.list.name %>, veuillez vous désinscrire. Sinon, merci de mettre à jour votre profil avec une nouvelle date de départ.</p>
+<p>Si vous n'êtes plus en/au <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a>, veuillez vous désinscrire. Sinon, merci de mettre à jour votre profil avec une nouvelle date de départ.</p>
 
-<p>Si vous ne faites rien, vous serez automatiquement désinscrit de la liste de contacts en/au <%= params.list.name %> dans 12 jours.</p>
+<p>Si vous ne faites rien, vous serez automatiquement désinscrit de la liste de contacts en/au <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a> dans 12 jours.</p>
 
 <% include ../../includes/footer_fr %>

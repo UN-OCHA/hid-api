@@ -1,5 +1,5 @@
 <p>Dear <%= user.name %>,</p>
 
-<p>A disaster alert for <%= params.list.name %> has occurred. If you are responding to that disaster, please consider checking into it. Checking in this disaster will help others to find your contact details in that specific disaster response. </p>
+<p>A disaster alert for <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a> has occurred. If you are responding to that disaster, please consider checking into it. Checking in this disaster will help others to find your contact details in that specific disaster response. </p>
 
 <% include ../includes/footer_en %>

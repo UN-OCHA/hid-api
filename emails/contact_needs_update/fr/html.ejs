@@ -1,6 +1,6 @@
 <p>Bonjour <%= user.name %>,</p>
 
-<p><%= createdBy.name %> a remarqué que vos informations de contact de votre profil sur Humanitarian ID ne sont plus à jour.</p>
+<p><a href="<%= createdBy.getAppUrl() %>"><%= createdBy.name %></a> a remarqué que vos informations de contact de votre profil sur Humanitarian ID ne sont plus à jour.</p>
 
 <p>Nous vous proposons de vérifier que vos informations de contact (votre titre, organisation, abonnement à un groupe, numéro(s) de téléphone(s), adresses e-mails, etc) sont bien à jour.</p>
 
@@ -11,4 +11,3 @@
 <p>Si ce courriel ne vous concerne pas, n’hésitez pas à nous contacter à info@humanitarian.id.</p>
 
 <% include ../../includes/footer_fr %>
-

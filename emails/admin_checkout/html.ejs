@@ -1,8 +1,7 @@
 <p>Dear <%= user.name %>,</p>
 
-<p><%= createdBy.name %> checked you out of <%= params.list.name %>.</p>
+<p><a href="<%= createdBy.getAppUrl() %>"><%= createdBy.name %></a> checked you out of <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a>.</p>
 
 <p>If you feel that this action was not correct, simply log into your Humanitarian ID account and check back in.</p>
 
 <% include ../includes/footer_en %>
-

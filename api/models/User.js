@@ -46,6 +46,9 @@ module.exports = class User extends Model {
         sanitize: function () {
           this.sanitizeClients();
         },
+        getAppUrl: function () {
+          return process.env.APP_URL + '/users/' + this._id;
+        },
         sanitizeClients: function () {
           if (this.authorizedClients && this.authorizedClients.length) {
             var sanitized = [];

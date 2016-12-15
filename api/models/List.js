@@ -1,7 +1,7 @@
-'use strict'
+'use strict';
 
-const Model = require('trails-model')
-const Schema = require('mongoose').Schema
+const Model = require('trails-model');
+const Schema = require('mongoose').Schema;
 
 /**
  * @module List
@@ -13,8 +13,13 @@ module.exports = class List extends Model {
     return {
       schema: {
         timestamps: true
+      },
+      methods: {
+        getAppUrl: function () {
+          return process.env.APP_URL + '/lists/' + this._id;
+        }
       }
-    }
+    };
   }
 
   static schema () {
@@ -72,29 +77,29 @@ module.exports = class List extends Model {
       metadata: {
         type: Schema.Types.Mixed
       }
-    }
+    };
   }
 
   static onSchema(schema) {
     // TODO: remove all checkins from users in this list
     schema.pre('save', function (next) {
       if (this.acronym) {
-        this.name = this.label + ' (' + this.acronym + ')'
+        this.name = this.label + ' (' + this.acronym + ')';
       }
       else {
-        this.name = this.label
+        this.name = this.label;
       }
       next ();
     });
     schema.pre('update', function (next) {
       if (this.acronym) {
-        this.name = this.label + ' (' + this.acronym + ')'
+        this.name = this.label + ' (' + this.acronym + ')';
       }
       else {
-        this.name = this.label
+        this.name = this.label;
       }
       next();
     });
   }
 
-}
+};
