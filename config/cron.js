@@ -3,53 +3,6 @@
 const https = require('https');
 const async = require('async');
 
-module.exports = {
-  jobs: {
-    // Delete expired users
-    deleteExpiredUsers: {
-      schedule: '*/60 * * * *',
-      onTick: deleteExpiredUsers,
-      start: true
-    },
-    // Delete expired oauth tokens
-    deleteExpiredTokens: {
-      schedule: '*/10 * * * *',
-      onTick: deleteExpiredTokens,
-      start: true
-    },
-    // Import lists from Humanitarianresponse
-    importLists: {
-      schedule: '*/60 * * * *', // Run every 10 minutes
-      onTick: importLists,
-      start: true
-    },
-    // Remind users to verify their email
-    sendReminderVerifyEmails: {
-      schedule: '*/60 * * * *',
-      onTick: sendReminderVerifyEmails,
-      start: true
-    },
-    // Send a reminder to people who haven't updated their profile in the last 6 months
-    sendReminderUpdateEmails: {
-      schedule: '*/60 * * * *',
-      onTick: sendReminderUpdateEmails,
-      start: true
-    },
-    // Send a reminder to checkout to people who are 2 days past their checkout date
-    sendReminderCheckoutEmails: {
-      schedule: '*/60 * * * *',
-      onTick: sendReminderCheckoutEmails,
-      start: true
-    },
-    // Do the automated to checkout to people who are 14 days past their checkout date
-    doAutomatedCheckout: {
-      schedule: '*/60 * * * *',
-      onTick: doAutomatedCheckout,
-      start: true
-    }
-  }
-};
-
 var deleteExpiredUsers = function (app) {
   const User = app.orm.user;
   var now = Date.now();
@@ -91,7 +44,7 @@ var importLists = function (app) {
         })
         .then((results) => {
           const list = results.list, users = results.users;
-          notification = {type: 'new_disaster', params: {list: list}};
+          var notification = {type: 'new_disaster', params: {list: list}};
           NotificationService.sendMultiple(users, notification, () => { });
         })
         .catch((err) => {});
@@ -240,10 +193,6 @@ var sendReminderVerifyEmails = function (app) {
       }
     }
   });
-
-  stream.on('close', function () {
-    cb();
-  });
 };
 
 var sendReminderUpdateEmails = function (app) {
@@ -274,15 +223,12 @@ var sendReminderUpdateEmails = function (app) {
       });
     }
   });
-
-  stream.on('close', function () {
-    cb();
-  });
 };
 
 var sendReminderCheckoutEmails = function(app) {
   app.log.info('Sending reminder checkout emails to contacts');
-  const ListUser = app.orm.ListUser;
+  const ListUser = app.orm.ListUser,
+    NotificationService = app.services.NotificationService;
   var stream = ListUser
     .find({'remindedCheckout': false, 'user.email_verified': true })
     .populate('user list')
@@ -292,7 +238,7 @@ var sendReminderCheckoutEmails = function(app) {
     let that = this;
     if (lu.shouldSendReminderCheckout()) {
       this.pause();
-      notification = {type: 'reminder_checkout', user: lu.user, params: {listUser: lu, list: lu.list}};
+      var notification = {type: 'reminder_checkout', user: lu.user, params: {listUser: lu, list: lu.list}};
       NotificationService.send(notification, () => {
         lu.remindedCheckout = true;
         lu.save();
@@ -300,15 +246,12 @@ var sendReminderCheckoutEmails = function(app) {
       });
     }
   });
-
-  stream.on('close', function () {
-    cb();
-  });
 };
 
 var doAutomatedCheckout = function(app) {
   app.log.info('Running automated checkouts');
-  const ListUser = app.orm.ListUser;
+  const ListUser = app.orm.ListUser,
+    NotificationService = app.services.NotificationService;
   var stream = ListUser
     .find({'remindedCheckout': true, 'user.email_verified': true })
     .populate('user list')
@@ -318,15 +261,58 @@ var doAutomatedCheckout = function(app) {
     let that = this;
     if (lu.shouldDoAutomatedCheckout()) {
       this.pause();
-      notification = {type: 'automated_checkout', user: lu.user, params: {listUser: lu, list: lu.list}};
+      var notification = {type: 'automated_checkout', user: lu.user, params: {listUser: lu, list: lu.list}};
       NotificationService.send(notification, () => {
         lu.remove();
         that.resume();
       });
     }
   });
+};
 
-  stream.on('close', function () {
-    cb();
-  });
+module.exports = {
+  jobs: {
+    // Delete expired users
+    deleteExpiredUsers: {
+      schedule: '*/60 * * * *',
+      onTick: deleteExpiredUsers,
+      start: true
+    },
+    // Delete expired oauth tokens
+    deleteExpiredTokens: {
+      schedule: '*/10 * * * *',
+      onTick: deleteExpiredTokens,
+      start: true
+    },
+    // Import lists from Humanitarianresponse
+    importLists: {
+      schedule: '*/60 * * * *', // Run every 60 minutes
+      onTick: importLists,
+      start: true
+    },
+    // Remind users to verify their email
+    sendReminderVerifyEmails: {
+      schedule: '*/60 * * * *',
+      onTick: sendReminderVerifyEmails,
+      start: true
+    },
+    // Send a reminder to people who haven't updated their profile in the last 6 months
+    sendReminderUpdateEmails: {
+      schedule: '*/60 * * * *',
+      onTick: sendReminderUpdateEmails,
+      start: true
+    },
+    // Send a reminder to checkout to people who are 2 days past their checkout date
+    sendReminderCheckoutEmails: {
+      schedule: '*/60 * * * *',
+      onTick: sendReminderCheckoutEmails,
+      start: true
+    },
+    // Do the automated to checkout to people who are 14 days past their checkout date
+    doAutomatedCheckout: {
+      schedule: '*/60 * * * *',
+      onTick: doAutomatedCheckout,
+      start: true
+    }
+  }
 };

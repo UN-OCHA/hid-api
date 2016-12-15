@@ -231,15 +231,23 @@ module.exports = class UserController extends Controller{
   }
 
   _updateQuery (request, options) {
-    const Model = this.app.orm.user;
+    const Model = this.app.orm.user,
+      NotificationService = this.app.services.NotificationService;
     return Model
       .update({ _id: request.params.id }, request.payload, {runValidators: true})
       .exec()
       .then(() => {
         Model
           .findOne({ _id: request.params.id })
-          .then((user) => { return user; })
-          .catch(err => { return Boom.badRequest(err.message); });
+          .then((user) => { return user; });
+      })
+      .then((user) => {
+        if (request.params.currentUser._id !== user._id) {
+          // Notify user of the edit
+          var notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
+          NotificationService.send(notification, () => {});
+        }
+        return user;
       })
       .catch(err => { return Boom.badRequest(err.message); });
   }
@@ -259,37 +267,35 @@ module.exports = class UserController extends Controller{
     }
 
     var that = this;
-    if (request.params.id) {
-      if ((request.payload.old_password && request.payload.new_password) || request.payload.verified) {
-        // Check old password
-        Model
-          .findOne({_id: request.params.id})
-          .then((user) => {
-            // If verifying user, set verified_by
-            if (request.payload.verified && !user.verified) {
-              request.payload.verified_by = request.params.currentUser._id
-            }
-            if (request.payload.old_password) {
-              if (user.validPassword(request.payload.old_password)) {
-                request.payload.password = Model.hashPassword(request.payload.new_password);
-                return reply(that._updateQuery(request, options));
-              }
-              else {
-                return reply(Boom.badRequest('The old password is wrong'));
-              }
-            }
-            else {
+    if ((request.payload.old_password && request.payload.new_password) || request.payload.verified) {
+      // Check old password
+      Model
+        .findOne({_id: request.params.id})
+        .then((user) => {
+          if (!user) {
+            return reply(Boom.notFound());
+          }
+          // If verifying user, set verified_by
+          if (request.payload.verified && !user.verified) {
+            request.payload.verified_by = request.params.currentUser._id
+          }
+          if (request.payload.old_password) {
+            if (user.validPassword(request.payload.old_password)) {
+              request.payload.password = Model.hashPassword(request.payload.new_password);
               return reply(that._updateQuery(request, options));
             }
-          })
-          .catch(err => { return Boom.badRequest(err.message); });
-      }
-      else {
-        reply(this._updateQuery(request, options));
-      }
+            else {
+              return reply(Boom.badRequest('The old password is wrong'));
+            }
+          }
+          else {
+            return reply(that._updateQuery(request, options));
+          }
+        })
+        .catch(err => { _that.errorHandler(err, reply); });
     }
     else {
-      reply(Boom.badRequest());
+      reply(this._updateQuery(request, options));
     }
   }
 
