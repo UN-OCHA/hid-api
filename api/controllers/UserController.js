@@ -237,7 +237,7 @@ module.exports = class UserController extends Controller{
       .update({ _id: request.params.id }, request.payload, {runValidators: true})
       .exec()
       .then(() => {
-        Model
+        return Model
           .findOne({ _id: request.params.id })
           .then((user) => { return user; });
       })
@@ -268,6 +268,7 @@ module.exports = class UserController extends Controller{
 
     var that = this;
     if ((request.payload.old_password && request.payload.new_password) || request.payload.verified) {
+      this.log.debug('Updating user password or user is verified');
       // Check old password
       Model
         .findOne({_id: request.params.id})
