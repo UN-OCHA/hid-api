@@ -332,7 +332,7 @@ module.exports = class UserController extends Controller{
     this.log.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload,
       'options =', options);
 
-    if (childAttributes.indexOf(childAttribute) === -1) {
+    if (childAttributes.indexOf(childAttribute) === -1 || childAttribute === 'organization') {
       return reply(Boom.notFound());
     }
 
@@ -409,7 +409,12 @@ module.exports = class UserController extends Controller{
           .save()
           .then(() => {
             that.log.debug('Done saving user');
-            return result;
+            return Model
+              .findOne({_id: user._id})
+              .then((user2) => {
+                result.user = user2;
+                return result;
+              });
           });
       })
       .then((result) => {
@@ -421,7 +426,7 @@ module.exports = class UserController extends Controller{
             type: 'admin_checkin',
             createdBy: request.params.currentUser,
             user: user,
-            params: { list: list }
+            params: { list: result.list }
           }, () => { });
         }
         return result;
@@ -797,10 +802,11 @@ module.exports = class UserController extends Controller{
   }
 
   setPrimaryPhone (request, reply) {
-    const Model = this.app.orm['user']
-    const phone = request.payload.phone
+    const Model = this.app.orm.user;
+    const phone = request.payload.phone;
+    let that = this;
 
-    this.log.debug('[UserController] Setting primary phone number')
+    this.log.debug('[UserController] Setting primary phone number');
 
     if (!request.payload.phone) return reply(Boom.badRequest())
     Model
@@ -820,8 +826,43 @@ module.exports = class UserController extends Controller{
         record.save().then(() => {
           return reply(record)
         })
-        .catch(err => { return reply(Boom.badImplementation(err.message)) })
+        .catch(err => { that._errorHandler(err, reply); })
       })
+  }
+
+  setPrimaryOrganization (request, reply) {
+    const User = this.app.orm.user,
+      ListUser = this.app.orm.ListUser;
+    let that = this;
+    ListUser
+      .findOne({ _id: request.payload._id})
+      .populate('list user')
+      .then(record => {
+        if (!record || record.list.type !== 'organization' || !record.user._id.equals(request.params.id)) {
+          return reply(Boom.badRequest());
+        }
+        // Make sure listUser is part of organizations
+        var index = -1;
+        for (var i = 0; i < record.user.organizations.length; i++) {
+          if (record.user.organizations[i]._id.toString() === request.payload._id) {
+            index = i;
+          }
+        }
+        if (index === -1) {
+          return reply(Boom.badRequest('Organization should be part of user organizations'));
+        }
+        record.user.organization = record._id;
+        record.user.save().then(() => {
+          // Return a populated user
+          User
+            .findOne({_id: record.user._id})
+            .then((user) => {
+              return reply(user);
+            });
+        });
+      })
+      .catch (err => { that._errorHandler(err, reply); });
+
   }
 
   showAccount (request, reply) {

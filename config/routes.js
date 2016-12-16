@@ -238,6 +238,12 @@ module.exports = [
   },
 
   {
+    method: 'PUT',
+    path: '/api/v2/user/{id}/organization',
+    handler: 'UserController.setPrimaryOrganization'
+  },
+
+  {
     method: 'GET',
     path: '/api/v2/list/{id?}',
     handler: 'ListController.find'

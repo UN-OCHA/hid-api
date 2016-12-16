@@ -10,7 +10,7 @@
  * @see http://trailsjs.io/doc/config/policies
  */
 
-'use strict'
+'use strict';
 
 module.exports = {
 
@@ -36,7 +36,8 @@ module.exports = {
     dropEmail: [ 'AuthPolicy.isAdminOrCurrent' ],
     addPhone: [ 'AuthPolicy.isAdminOrCurrent' ],
     dropPhone: [ 'AuthPolicy.isAdminOrCurrent' ],
-    setPrimaryPhone: ['AuthPolicy.isAdminOrCurrent' ]
+    setPrimaryPhone: ['AuthPolicy.isAdminOrCurrent' ],
+    setPrimaryOrganization: ['AuthPolicy.isAdminOrCurrent']
   },
 
   ListController: ['AuthPolicy.isAuthenticated'],
@@ -45,4 +46,4 @@ module.exports = {
     info: [ ]
   }
 
-}
+};
