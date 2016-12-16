@@ -304,49 +304,49 @@ module.exports = {
   jobs: {
     // Delete expired users
     deleteExpiredUsers: {
-      schedule: '*/60 * * * *',
+      schedule: '1 * * * *',
       onTick: deleteExpiredUsers,
       start: true
     },
     // Delete expired oauth tokens
     deleteExpiredTokens: {
-      schedule: '*/10 * * * *',
+      schedule: '1 * * * *',
       onTick: deleteExpiredTokens,
       start: true
     },
     // Import lists from Humanitarianresponse
     importLists: {
-      schedule: '*/60 * * * *', // Run every 60 minutes
+      schedule: '1 * * * *', // Run every 60 minutes
       onTick: importLists,
       start: true
     },
     // Remind users to verify their email
     sendReminderVerifyEmails: {
-      schedule: '*/60 * * * *',
+      schedule: '1 * * * *',
       onTick: sendReminderVerifyEmails,
       start: true
     },
     // Send a reminder to people who haven't updated their profile in the last 6 months
     sendReminderUpdateEmails: {
-      schedule: '*/60 * * * *',
+      schedule: '1 * * * *',
       onTick: sendReminderUpdateEmails,
       start: true
     },
     // Send a reminder to checkout to people who are 2 days past their checkout date
     sendReminderCheckoutEmails: {
-      schedule: '*/60 * * * *',
+      schedule: '1 * * * *',
       onTick: sendReminderCheckoutEmails,
       start: true
     },
     // Do the automated to checkout to people who are 14 days past their checkout date
     doAutomatedCheckout: {
-      schedule: '*/60 * * * *',
+      schedule: '1 * * * *',
       onTick: doAutomatedCheckout,
       start: true
     },
     // Reminder emails sent out 48 hours after checkin to remind people to add a local phone number if they didn't do so
     sendReminderCheckinEmails: {
-      schedule: '*/60 * * * *',
+      schedule: '1 * * * *',
       onTick: sendReminderCheckinEmails,
       start: true
     }
