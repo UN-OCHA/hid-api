@@ -58,7 +58,7 @@ var importLists = function (app) {
       List.findOne({type: listType, remote_id: item.id}, function (err, list) {
         if (!list) {
           visibility = 'all';
-          if (item.hid_access && item.hid_access == 'closed') {
+          if (item.hid_access && item.hid_access === 'closed') {
             visibility = 'verified';
           }
           label = item.label;
@@ -77,6 +77,7 @@ var importLists = function (app) {
             remote_id: item.id,
             metadata: item
           };
+          app.log.debug('Creating list of type ' + listType + ': ' + label);
           List.create(tmpList, function (err, li) {
             if (err) {
               app.log.error(err);
