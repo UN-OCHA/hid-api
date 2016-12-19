@@ -51,13 +51,7 @@ module.exports = class UserController extends Controller{
   }
 
   _errorHandler (err, reply) {
-    this.log.error(err);
-    if (err.isBoom) {
-      return reply(err);
-    }
-    else {
-      return reply(Boom.badImplementation(err.toString()));
-    }
+    return this.app.services.ErrorService.handle(err, reply);
   }
 
   create (request, reply) {

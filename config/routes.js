@@ -244,6 +244,12 @@ module.exports = [
   },
 
   {
+    method: 'POST',
+    path: '/api/v2/list',
+    handler: 'ListController.create'
+  },
+
+  {
     method: 'GET',
     path: '/api/v2/list/{id?}',
     handler: 'ListController.find'

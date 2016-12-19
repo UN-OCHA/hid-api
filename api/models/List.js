@@ -60,7 +60,8 @@ module.exports = class List extends Model {
 
       // TODO: make sure it can not be set through the API
       remote_id: {
-        type: Number
+        type: Number,
+        readonly: true
       },
 
       owner: {
@@ -76,6 +77,12 @@ module.exports = class List extends Model {
       // TODO: make sure it can not be set through the API
       metadata: {
         type: Schema.Types.Mixed
+      },
+
+      deleted: {
+        type: Boolean,
+        default: false,
+        readonly: true
       }
     };
   }
