@@ -40,6 +40,8 @@ module.exports = {
     setPrimaryOrganization: ['AuthPolicy.isAdminOrCurrent']
   },
 
+  NotificationController: ['AuthPolicy.isAuthenticated'],
+
   ListController: ['AuthPolicy.isAuthenticated'],
 
   DefaultController: {

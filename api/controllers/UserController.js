@@ -419,6 +419,14 @@ module.exports = class UserController extends Controller{
       })
       .then((result) => {
         reply(result.user);
+        that.app.services.NotificationService.notifyMultiple(result.list.managers, {
+          type: 'checkin',
+          createdBy: result.user,
+          params: { list: result.list }
+        });
+        return result;
+      })
+      .then((result) => {
         // Notify user if needed
         if (request.params.currentUser.id !== userId) {
           that.log.debug('Checked in by a different user');

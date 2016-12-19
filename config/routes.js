@@ -7,7 +7,7 @@
  * @see http://trailsjs.io/doc/config/routes.js
  */
 
-'use strict'
+'use strict';
 
 module.exports = [
 
@@ -283,5 +283,11 @@ module.exports = [
     method: 'DELETE',
     path: '/api/v2/client/{id}',
     handler: 'ClientController.destroy'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/notification/{id?}',
+    handler: 'NotificationController.find'
   }
-]
+];

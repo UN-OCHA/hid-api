@@ -1,8 +1,8 @@
-'use strict'
+'use strict';
 
-const Controller = require('trails-controller')
-const Boom = require('boom')
-const _ = require('lodash')
+const Controller = require('trails-controller');
+const Boom = require('boom');
+const _ = require('lodash');
 
 /**
  * @module ListController
@@ -11,25 +11,34 @@ const _ = require('lodash')
 module.exports = class ListController extends Controller{
 
   find (request, reply) {
-    const FootprintService = this.app.services.FootprintService
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query)
-    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query)
-    let response, count
+    const FootprintService = this.app.services.FootprintService;
+    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
+    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
+    let response, count;
 
-    if (!options.populate) options.populate = "owner managers"
+    if (!options.populate) {
+      options.populate = 'owner managers';
+    }
 
-    if (!options.sort) options.sort = "name"
+    if (!options.sort) {
+      options.sort = 'name';
+    }
 
     // Search with contains when searching in name or full_name
-    if (criteria['name']) criteria['name'] = new RegExp(criteria['name'], "i")
-    if (criteria['label']) criteria['label'] = new RegExp(criteria['label'], "i")
+    if (criteria.name) {
+      criteria.name = new RegExp(criteria.name, 'i');
+    }
+    if (criteria.label) {
+      criteria.label = new RegExp(criteria.label, 'i');
+    }
 
-    this.log.debug('[ListController] (find) model = list, criteria =', request.query, request.params.id,
-      'options =', options)
+    this.log.debug('[ListController] (find) model = list, criteria =', request.query, request.params.id, 'options =', options);
 
     var findCallback = function (result) {
-      if (!result) return Boom.notFound()
-      return result
+      if (!result) {
+        return Boom.notFound();
+      }
+      return result;
     };
 
     // List visiblity
@@ -44,9 +53,9 @@ module.exports = class ListController extends Controller{
             return elt._id == currentUser._id;
           });
 
-          if (result.visibility == "all" || 
-             currentUser.is_admin || 
-             (result.visibility == "verified" && currentUser.verified) || 
+          if (result.visibility == "all" ||
+             currentUser.is_admin ||
+             (result.visibility == "verified" && currentUser.verified) ||
              (result.visibility == "me" && (result.owner._id == currentUser._id || isManager.length > 0)) ) {
                console.log('returning result');
                return result;
@@ -139,4 +148,3 @@ module.exports = class ListController extends Controller{
   }
 
 }
-
