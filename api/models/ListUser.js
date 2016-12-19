@@ -86,6 +86,10 @@ module.exports = class ListUser extends Model {
       remindedCheckin: {
         type: Boolean,
         default: false
+      },
+      deleted: {
+        type: Boolean,
+        default: false
       }
     };
   }

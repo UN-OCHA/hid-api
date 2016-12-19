@@ -146,7 +146,9 @@ module.exports = class UserController extends Controller{
     }
 
     // Hide unconfirmed users
-    if (request.params.currentUser && !request.params.currentUser.is_admin) criteria['email_verified'] = true
+    if (request.params.currentUser && !request.params.currentUser.is_admin) {
+      criteria.email_verified = true;
+    }
 
     if (criteria['roles.id']) {
       criteria['roles.id'] = parseInt(criteria['roles.id']);
@@ -198,7 +200,7 @@ module.exports = class UserController extends Controller{
     }
     else {
       ListUser
-        .find({list: list})
+        .find({list: list, deleted: false})
         .then((lus) => {
           var users = [];
           for (var i = 0; i < lus.length; i++) {
@@ -464,6 +466,7 @@ module.exports = class UserController extends Controller{
     const Model = this.app.orm.user;
     const FootprintService = this.app.services.FootprintService;
     const List = this.app.orm.List;
+    const ListUser = this.app.orm.ListUser;
 
     this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,
       'options =', options);
@@ -473,20 +476,36 @@ module.exports = class UserController extends Controller{
     }
 
     var that = this;
-    var query = FootprintService.destroy('ListUser', checkInId, options);
-    query
-      .then((lu) => {
-        return Model
-          .findOne({_id: userId})
-          .then((user) => {
-            return {listId: lu.list, user: user};
+    var query = ListUser
+      .findOne({ _id: checkInId })
+      .populate('list user')
+      .then(record => {
+        if (!record) {
+          throw new Error(Boom.notFound());
+        }
+        // Set deleted to true
+        record.deleted = true;
+        return record
+          .save()
+          .then(() => {
+            return record;
           });
       })
       .then((result) => {
-        return List
-          .findOne({_id: result.listId})
-          .then((list) => {
-            return {list: list, user: result.user};
+        var listType = result.list.type,
+          user = result.user,
+          found = false;
+        for (var i = 0; i < user[listType + 's'].length; i++) {
+          if (user[listType + 's'][i]._id.toString() === checkInId) {
+            found = i;
+          }
+        }
+        // Remove reference to checkin
+        user[listType + 's'].splice(found, 1);
+        return user
+          .save()
+          .then(() => {
+            return result;
           });
       })
       .then((result) => {
