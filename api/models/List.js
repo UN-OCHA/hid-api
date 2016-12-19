@@ -58,7 +58,6 @@ module.exports = class List extends Model {
         required: [true, 'Joinability is required']
       },
 
-      // TODO: make sure it can not be set through the API
       remote_id: {
         type: Number,
         readonly: true
@@ -74,9 +73,9 @@ module.exports = class List extends Model {
         ref: 'User'
       }],
 
-      // TODO: make sure it can not be set through the API
       metadata: {
-        type: Schema.Types.Mixed
+        type: Schema.Types.Mixed,
+        readonly: true
       },
 
       deleted: {
@@ -88,7 +87,6 @@ module.exports = class List extends Model {
   }
 
   static onSchema(schema) {
-    // TODO: remove all checkins from users in this list
     schema.pre('save', function (next) {
       if (this.acronym) {
         this.name = this.label + ' (' + this.acronym + ')';

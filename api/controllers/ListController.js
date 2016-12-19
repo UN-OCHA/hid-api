@@ -185,7 +185,9 @@ module.exports = class ListController extends Controller{
         }
         return reply(request.payload);
       })
-      .catch((err) => { that.app.services.ErrorService.handle(err, reply); });
+      .catch((err) => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
   }
 
 
@@ -211,6 +213,7 @@ module.exports = class ListController extends Controller{
       })
       .then((record) => {
         reply(record);
+        // TODO: remove all checkins from users in this list
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, reply);

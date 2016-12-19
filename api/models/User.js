@@ -528,7 +528,11 @@ module.exports = class User extends Model {
       authorizedClients: [{
         type: Schema.ObjectId,
         ref: 'Client'
-      }]
+      }],
+      deleted: {
+        type: Boolean,
+        default: false
+      }
     };
   }
 

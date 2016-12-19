@@ -85,43 +85,53 @@ module.exports = class UserController extends Controller{
     this._removeForbiddenAttributes(request);
 
     // Makes sure only admins or anonymous users can create users
-    if (request.params.currentUser && !request.params.currentUser.is_admin) return reply(Boom.forbidden('You need to be an administrator'))
-
-    if (request.params.currentUser) request.payload.createdBy = request.params.currentUser._id
-    // If an orphan is being created, do not expire
-    if (request.params.currentUser && registration_type == '') request.payload.expires = new Date(0, 0, 1, 0, 0, 0)
-
-    if (request.payload.email) {
-      request.payload.emails = new Array()
-      request.payload.emails.push({type: 'Work', email: request.payload.email, validated: false})
+    if (request.params.currentUser && !request.params.currentUser.is_admin) {
+      return reply(Boom.forbidden('You need to be an administrator'));
     }
 
-    var that = this
-    Model.create(request.payload, function (err, user) {
-      if (!user) return reply(Boom.badRequest(err.message))
-      if (user.email) {
-        if (!request.params.currentUser) {
-          that.app.services.EmailService.sendRegister(user, app_verify_url, function (merr, info) {
-            return reply(user);
-          });
+    if (request.params.currentUser) {
+      request.payload.createdBy = request.params.currentUser._id;
+    }
+    // If an orphan is being created, do not expire
+    if (request.params.currentUser && registration_type == '') {
+      request.payload.expires = new Date(0, 0, 1, 0, 0, 0);
+    }
+
+    if (request.payload.email) {
+      request.payload.emails = [];
+      request.payload.emails.push({type: 'Work', email: request.payload.email, validated: false});
+    }
+
+    var that = this;
+    // TODO: if user can not be created because it already exists as deleted, reactivate the account
+    Model
+      .create(request.payload, function (err, user) {
+        if (!user) {
+          return reply(Boom.badRequest(err.message));
         }
-        else {
-          // An admin is creating an orphan user or Kiosk registration
-          if (registration_type == 'kiosk') {
-            that.app.services.EmailService.sendRegisterKiosk(user, app_verify_url, function (merr, info) {
-              return reply(user)
-            });
-          }
-          else {
-            that.app.services.EmailService.sendRegisterOrphan(user, request.params.currentUser, app_verify_url, function (merr, info) {
+        if (user.email) {
+          if (!request.params.currentUser) {
+            that.app.services.EmailService.sendRegister(user, app_verify_url, function (merr, info) {
               return reply(user);
             });
           }
+          else {
+            // An admin is creating an orphan user or Kiosk registration
+            if (registration_type == 'kiosk') {
+              that.app.services.EmailService.sendRegisterKiosk(user, app_verify_url, function (merr, info) {
+                return reply(user)
+              });
+            }
+            else {
+              that.app.services.EmailService.sendRegisterOrphan(user, request.params.currentUser, app_verify_url, function (merr, info) {
+                return reply(user);
+              });
+            }
+          }
         }
-      }
-      else {
-        return reply(user);
-      }
+        else {
+          return reply(user);
+        }
     });
   }
 
@@ -156,6 +166,8 @@ module.exports = class UserController extends Controller{
       criteria['location.country.id'] = criteria.country;
       delete criteria.country;
     }
+
+    criteria.deleted = {$in: [false, null]};
 
     this.log.debug('[UserController] (find) criteria =', request.query, request.params.id,
       'options =', options);
@@ -298,21 +310,36 @@ module.exports = class UserController extends Controller{
   }
 
   destroy (request, reply) {
-    const FootprintService = this.app.services.FootprintService;
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
-    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
-
     this.log.debug('[UserController] (destroy) model = user, query =', request.query);
 
     var that = this;
-    var query = FootprintService.destroy('user', request.params.id, options);
-    reply(query);
-    query
+
+    User
+      .findOne({ _id: request.params.id })
+      .then(record => {
+        if (!record) {
+          throw new Error(Boom.notFound());
+        }
+        // Set deleted to true
+        record.deleted = true;
+        return record
+          .save()
+          .then(() => {
+            return record;
+          });
+      })
+      .then((record) => {
+        reply(record);
+        // TODO: set deleted to true for all checkins of this user
+      })
       .then((doc) => {
         // Send notification if user is being deleted by an admin
         if (request.params.currentUser.id !== doc.id) {
           that.app.services.NotificationService.send({type: 'admin_delete', createdBy: request.params.currentUser, user: doc}, () => { });
         }
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, reply);
       });
   }
 
