@@ -419,6 +419,7 @@ module.exports = class UserController extends Controller{
       })
       .then((result) => {
         reply(result.user);
+        // Notify list managers of the checkin
         that.app.services.NotificationService.notifyMultiple(result.list.managers, {
           type: 'checkin',
           createdBy: result.user,
@@ -499,6 +500,16 @@ module.exports = class UserController extends Controller{
             params: { list: result.list }
           }, () => { });
         }
+        return result;
+      })
+      .then((result) => {
+        // Notify list managers of the checkin
+        that.app.services.NotificationService.notifyMultiple(result.list.managers, {
+          type: 'checkout',
+          createdBy: result.user,
+          params: { list: result.list }
+        });
+        return result;
       })
       .catch(err => { that._errorHandler(err, reply); });
   }
