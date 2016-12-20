@@ -310,6 +310,8 @@ module.exports = class UserController extends Controller{
   }
 
   destroy (request, reply) {
+    const User = this.app.orm.User,
+      ListUser = this.app.orm.ListUser;
     this.log.debug('[UserController] (destroy) model = user, query =', request.query);
 
     var that = this;
@@ -319,6 +321,14 @@ module.exports = class UserController extends Controller{
       .then(record => {
         if (!record) {
           throw new Error(Boom.notFound());
+        }
+        for (var j = 0; j < childAttributes.length; j++) {
+          if (childAttributes[j] === 'organization') {
+            record.organization = null;
+          }
+          else {
+            record[childAttributes[j]] = [];
+          }
         }
         // Set deleted to true
         record.deleted = true;
@@ -330,7 +340,20 @@ module.exports = class UserController extends Controller{
       })
       .then((record) => {
         reply(record);
-        // TODO: set deleted to true for all checkins of this user
+        // Remove all checkins from this user
+        ListUser
+          .find({user: request.params.id})
+          .populate('list user')
+          .then((lus) => {
+            var listType = '',
+              lu = {};
+            for (var i = 0; i < lus.length; i++) {
+              // Set listuser to deleted
+              lu.deleted = true;
+              lu.save();
+            }
+            return record;
+          });
       })
       .then((doc) => {
         // Send notification if user is being deleted by an admin

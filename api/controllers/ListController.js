@@ -59,6 +59,7 @@ module.exports = class ListController extends Controller{
     const FootprintService = this.app.services.FootprintService;
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
     const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
+    const List = this.app.orm.List;
     let response, count;
 
     if (!options.populate) {
@@ -94,8 +95,8 @@ module.exports = class ListController extends Controller{
       that = this;
 
     if (request.params.id) {
-      FootprintService
-        .find('list', {_id: request.params.id, deleted: criteria.deleted }, options)
+      List
+        .findOne({_id: request.params.id, deleted: criteria.deleted })
         .then(result => {
           if (!result) {
             throw Boom.notFound();
@@ -192,7 +193,8 @@ module.exports = class ListController extends Controller{
 
 
   destroy (request, reply) {
-    const List = this.app.orm.List;
+    const List = this.app.orm.List,
+      ListUser = this.app.orm.ListUser;
 
     this.log.debug('[ListController] (destroy) model = list, query =', request.query);
     let that = this;
@@ -213,7 +215,30 @@ module.exports = class ListController extends Controller{
       })
       .then((record) => {
         reply(record);
-        // TODO: remove all checkins from users in this list
+        // Remove all checkins from users in this list
+        ListUser
+          .find({list: request.params.id})
+          .populate('list user')
+          .then((lus) => {
+            var listType = '',
+              lu = {};
+            for (var i = 0; i < lus.length; i++) {
+              lu = lus[i];
+              listType = lu.list.type;
+              // Remove references in users
+              lu.user[listType + 's'] = lu.user[listType + 's'].filter(function (obj) {
+                return obj._id.toString() !== lu._id.toString();
+              });
+              if (listType === 'organization' && lu.user.organization._id.toString() === lu._id.toString()) {
+                lu.user.organization = {};
+              }
+              lu.user.save();
+              // Set listuser to deleted
+              lu.deleted = true;
+              console.log(lu);
+              lu.save();
+            }
+          });
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, reply);
