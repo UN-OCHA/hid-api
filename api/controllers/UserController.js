@@ -54,12 +54,15 @@ module.exports = class UserController extends Controller{
     return this.app.services.ErrorService.handle(err, reply);
   }
 
-  create (request, reply) {
-    const FootprintService = this.app.services.FootprintService;
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
-    const Model = this.app.orm.user;
+  _createHelper(request, reply) {
+    const Model = this.app.orm.User;
 
-    this.log.debug('[UserController] (create) payload =', request.payload, 'options =', options);
+    this.log.debug('Preparing request for user creation');
+
+    if (request.payload.email) {
+      request.payload.emails = [];
+      request.payload.emails.push({type: 'Work', email: request.payload.email, validated: false});
+    }
 
     if (request.payload.password && request.payload.confirm_password) {
       request.payload.password = Model.hashPassword(request.payload.password);
@@ -70,60 +73,49 @@ module.exports = class UserController extends Controller{
       request.payload.password = Model.hashPassword(Math.random().toString(36).slice(2));
     }
 
-    if (!request.payload.app_verify_url) {
-      return reply(Boom.badRequest('Missing app_verify_url'));
-    }
-    var app_verify_url = request.payload.app_verify_url;
+    var appVerifyUrl = request.payload.app_verify_url;
     delete request.payload.app_verify_url;
 
-    var registration_type = '';
+    var registrationType = '';
     if (request.payload.registration_type) {
-      registration_type = request.payload.registration_type;
+      registrationType = request.payload.registration_type;
       delete request.payload.registration_type;
     }
 
     this._removeForbiddenAttributes(request);
 
-    // Makes sure only admins or anonymous users can create users
-    if (request.params.currentUser && !request.params.currentUser.is_admin) {
-      return reply(Boom.forbidden('You need to be an administrator'));
-    }
-
     if (request.params.currentUser) {
       request.payload.createdBy = request.params.currentUser._id;
     }
     // If an orphan is being created, do not expire
-    if (request.params.currentUser && registration_type == '') {
+    if (request.params.currentUser && registrationType === '') {
       request.payload.expires = new Date(0, 0, 1, 0, 0, 0);
     }
 
-    if (request.payload.email) {
-      request.payload.emails = [];
-      request.payload.emails.push({type: 'Work', email: request.payload.email, validated: false});
-    }
-
     var that = this;
-    // TODO: if user can not be created because it already exists as deleted, reactivate the account
     Model
-      .create(request.payload, function (err, user) {
+      .create(request.payload)
+      .then((user) => {
         if (!user) {
-          return reply(Boom.badRequest(err.message));
+          throw Boom.badRequest();
         }
+        that.log.debug('User successfully created');
+
         if (user.email) {
           if (!request.params.currentUser) {
-            that.app.services.EmailService.sendRegister(user, app_verify_url, function (merr, info) {
+            that.app.services.EmailService.sendRegister(user, appVerifyUrl, function (merr, info) {
               return reply(user);
             });
           }
           else {
             // An admin is creating an orphan user or Kiosk registration
-            if (registration_type == 'kiosk') {
-              that.app.services.EmailService.sendRegisterKiosk(user, app_verify_url, function (merr, info) {
-                return reply(user)
+            if (registrationType === 'kiosk') {
+              that.app.services.EmailService.sendRegisterKiosk(user, appVerifyUrl, function (merr, info) {
+                return reply(user);
               });
             }
             else {
-              that.app.services.EmailService.sendRegisterOrphan(user, request.params.currentUser, app_verify_url, function (merr, info) {
+              that.app.services.EmailService.sendRegisterOrphan(user, request.params.currentUser, appVerifyUrl, function (merr, info) {
                 return reply(user);
               });
             }
@@ -132,7 +124,57 @@ module.exports = class UserController extends Controller{
         else {
           return reply(user);
         }
-    });
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
+  }
+
+  create (request, reply) {
+    const FootprintService = this.app.services.FootprintService;
+    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
+    const Model = this.app.orm.user;
+
+    this.log.debug('[UserController] (create) payload =', request.payload, 'options =', options);
+
+    // Makes sure only admins or anonymous users can create users
+    if (request.params.currentUser && !request.params.currentUser.is_admin) {
+      return reply(Boom.forbidden('You need to be an administrator'));
+    }
+
+    if (!request.payload.app_verify_url) {
+      return reply(Boom.badRequest('Missing app_verify_url'));
+    }
+
+    var that = this;
+    if (request.payload.email) {
+      Model
+        .findOne({'emails.email': request.payload.email})
+        .then((record) => {
+          if (!record) {
+            // Create user
+            that._createHelper(request, reply);
+          }
+          else {
+            // Unverify user, reactivate account and return it
+            record.email_verified = false;
+            record.deleted = false;
+            record.save().then(() => {
+              var appVerifyUrl = request.payload.app_verify_url;
+              that.app.services.EmailService.sendRegister(record, appVerifyUrl, function (merr, info) {
+                return reply(record);
+              });
+            });
+          }
+        })
+        .catch(err => {
+          that.app.services.ErrorService.handle(err, reply);
+        });
+    }
+    else {
+      // Create user
+      that._createHelper(request, reply);
+    }
   }
 
   find (request, reply) {
