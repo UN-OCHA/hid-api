@@ -295,5 +295,11 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/notification/{id?}',
     handler: 'NotificationController.find'
+  },
+
+  {
+    method: 'PUT',
+    path: '/api/v2/notification/{id}',
+    handler: 'NotificationController.read'
   }
 ];

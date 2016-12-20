@@ -10,27 +10,39 @@ const Boom = require('boom');
 module.exports = class NotificationController extends Controller{
 
   find (request, reply) {
-    request.params.model = 'notification';
-    const FootprintService = this.app.services.FootprintService;
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
-    let criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
+    const Notification = this.app.orm.Notification;
     let that = this;
 
-    if (criteria.lastPull) {
-      criteria.createdAt = {$gt: criteria.lastPull};
-      delete criteria.lastPull;
-    }
-
-    this.log.debug('[NotificationController] (find) criteria = ', criteria);
-
-    FootprintService
-      .find('notification', criteria, options)
+    Notification
+      .find({ user: request.params.currentUser.id, read: false})
       .then((results) => {
         reply (results);
       })
       .catch(err => {
-        that.log.error(err);
-        reply (Boom.badImplementation());
+        that.app.services.ErrorService.handle(err, reply);
+      });
+  }
+
+  update (request, reply) {
+    const Notification = this.app.orm.Notification;
+    let that = this;
+
+    Notification
+      .findOne({_id: request.params.id})
+      .then((record) => {
+        if (!record) {
+          throw Boom.notFound();
+        }
+        if (record.user !== request.params.currentUser.id) {
+          throw Boom.forbidden();
+        }
+        record.read = request.payload.read;
+        record.save().then(() => {
+          return reply(record);
+        });
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, reply);
       });
   }
 
