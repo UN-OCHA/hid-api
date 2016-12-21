@@ -177,6 +177,14 @@ module.exports = class UserController extends Controller{
     }
   }
 
+  _txtExport (users) {
+    var out = '';
+    for (var i = 0; i < users.length; i++) {
+      out += users[i].name + ' <' + users[i].email + '>,';
+    }
+    return out;
+  }
+
   _csvExport (users) {
     var out = 'Given Name,Family Name,Job Title,Organization,Groups,Country,Admin Area,Phone,Skype,Email,URI,Notes\n',
       org = '',
@@ -247,14 +255,13 @@ module.exports = class UserController extends Controller{
 
     criteria.deleted = {$in: [false, null]};
 
-    this.log.debug('[UserController] (find) criteria =', criteria, 'options =', options);
-
     let that = this;
 
     if (request.params.id || !list) {
       if (request.params.id) {
         criteria = request.params.id;
       }
+      this.log.debug('[UserController] (find) criteria =', criteria, 'options =', options);
       FootprintService
         .find('user', criteria, options)
         .then((results) => {
@@ -281,8 +288,14 @@ module.exports = class UserController extends Controller{
             return reply(results.results).header('X-Total-Count', results.number);
           }
           else {
-            return reply(that._csvExport(results.results))
-              .type('text/csv');
+            if (request.params.extension === 'csv') {
+              return reply(that._csvExport(results.results))
+                .type('text/csv');
+            }
+            else if (request.params.extension === 'txt') {
+              return reply(that._txtExport(results.results))
+                .type('text/plain');
+            }
           }
         })
         .catch((err) => { that._errorHandler(err, reply); });
@@ -298,6 +311,7 @@ module.exports = class UserController extends Controller{
           criteria._id = {$in: users};
         })
         .then(() => {
+          that.log.debug('[UserController] (find) criteria =', criteria, 'options =', options);
           return FootprintService.find('user', criteria, options);
         })
         .then((results) => {
@@ -319,8 +333,14 @@ module.exports = class UserController extends Controller{
             return reply(results.results).header('X-Total-Count', results.number);
           }
           else {
-            return reply(that._csvExport(results.results))
-              .type('text/csv');
+            if (request.params.extension === 'csv') {
+              return reply(that._csvExport(results.results))
+                .type('text/csv');
+            }
+            else if (request.params.extension === 'txt') {
+              return reply(that._txtExport(results.results))
+                .type('text/plain');
+            }
           }
         })
         .catch(err => { that._errorHandler(err, reply); });
