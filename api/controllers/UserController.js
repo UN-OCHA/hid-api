@@ -177,6 +177,42 @@ module.exports = class UserController extends Controller{
     }
   }
 
+  _csvExport (users) {
+    var out = 'Given Name,Family Name,Job Title,Organization,Groups,Country,Admin Area,Phone,Skype,Email,URI,Notes\n',
+      org = '',
+      country = '',
+      jobTitle = '',
+      phoneNumber = '',
+      status = '';
+    for (var i = 0; i < users.length; i++) {
+      org = '';
+      country = '';
+      jobTitle = users[i].job_title || ' ';
+      phoneNumber = users[i].phone_number || ' ';
+      status = users[i].status || ' ';
+      if (users[i].organization && users[i].organization.list) {
+        org = users[i].organization.list.name;
+      }
+      if (users[i].location && users[i].location.country) {
+        country = users[i].location.country.name;
+      }
+      out = out +
+        '"' + users[i].given_name + '",' +
+        '"' + users[i].family_name + '",' +
+        '"' + jobTitle + '",' +
+        '"' + org + '",' +
+        '"' + ' ' + '",' +
+        '"' + country + '",' +
+        '"' + ' ' + '",' +
+        '"' + phoneNumber + '",' +
+        '"' + ' ' + '",' +
+        '"' + users[i].email + '",' +
+        '"' + ' ' + '",' +
+        '"' + status + '"\n';
+    }
+    return out;
+  }
+
   find (request, reply) {
     const FootprintService = this.app.services.FootprintService;
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
@@ -211,8 +247,7 @@ module.exports = class UserController extends Controller{
 
     criteria.deleted = {$in: [false, null]};
 
-    this.log.debug('[UserController] (find) criteria =', request.query, request.params.id,
-      'options =', options);
+    this.log.debug('[UserController] (find) criteria =', criteria, 'options =', options);
 
     let that = this;
 
@@ -242,13 +277,19 @@ module.exports = class UserController extends Controller{
               results.results[i].sanitize();
             }
           }
-          return reply(results.results).header('X-Total-Count', results.number);
+          if (!request.params.extension) {
+            return reply(results.results).header('X-Total-Count', results.number);
+          }
+          else {
+            return reply(that._csvExport(results.results))
+              .type('text/csv');
+          }
         })
         .catch((err) => { that._errorHandler(err, reply); });
     }
     else {
       ListUser
-        .find({list: list, deleted: false})
+        .find({list: list, deleted: criteria.deleted})
         .then((lus) => {
           var users = [];
           for (var i = 0; i < lus.length; i++) {
@@ -274,7 +315,13 @@ module.exports = class UserController extends Controller{
           for (var i = 0, len = results.results.length; i < len; i++) {
             results.results[i].sanitize();
           }
-          return reply(results.results).header('X-Total-Count', results.number);
+          if (!request.params.extension) {
+            return reply(results.results).header('X-Total-Count', results.number);
+          }
+          else {
+            return reply(that._csvExport(results.results))
+              .type('text/csv');
+          }
         })
         .catch(err => { that._errorHandler(err, reply); });
     }

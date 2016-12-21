@@ -141,6 +141,12 @@ module.exports = [
   },
 
   {
+    method: 'GET',
+    path: '/api/v2/user.{extension}',
+    handler: 'UserController.find'
+  },
+
+  {
     method: [ 'PUT', 'PATCH' ],
     path: '/api/v2/user/{id}',
     handler: 'UserController.update'
