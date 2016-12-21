@@ -33,6 +33,11 @@ module.exports = class AuthController extends Controller{
             return reply(Boom.unauthorized('Please verify your email address'));
           }
 
+          if (user.deleted) {
+            that.log.info('Attempt to login from a deleted user');
+            return reply(Boom.unauthorized('invalid email or password'));
+          }
+
           if (!user.validPassword(password)) {
             that.log.info("Wrong password");
             return reply(Boom.unauthorized('invalid email or password'));
@@ -190,7 +195,7 @@ module.exports = class AuthController extends Controller{
       this.log.info('Got request to /oauth/authorize without session. Redirecting to the login page.');
       return reply.redirect('/?redirect=/oauth/authorize&client_id=' + request.query.client_id + '&redirect_uri=' + request.query.redirect_uri + '&response_type=' + request.query.response_type + '&state=' + request.query.state + '&scope=' + request.query.scope + '#login');
     }
-    
+
     var that = this
     User.findOne({_id: cookie.userId}, function (err, user) {
       if (err) {
@@ -245,7 +250,7 @@ module.exports = class AuthController extends Controller{
       subject_types_supported: ["public"],
       id_token_signing_alg_values_supported: ["RS256"],
       scopes_supported: ["openid", "email", "profile", "phone"],
-      claims_supported: ["iss", "sub", "aud", "exp", "iat", "name", "given_name", "family_name", "middle_name", "picture", "email", "email_verified", "zoneinfo", "locale", "phone_number", "phone_number_verified", "updated_at"] 
+      claims_supported: ["iss", "sub", "aud", "exp", "iat", "name", "given_name", "family_name", "middle_name", "picture", "email", "email_verified", "zoneinfo", "locale", "phone_number", "phone_number_verified", "updated_at"]
     }
     reply(out)
   }
@@ -261,4 +266,3 @@ module.exports = class AuthController extends Controller{
     reply (out)
   }
 }
-

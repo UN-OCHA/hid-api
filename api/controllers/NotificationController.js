@@ -10,11 +10,17 @@ const Boom = require('boom');
 module.exports = class NotificationController extends Controller{
 
   find (request, reply) {
+    const FootprintService = this.app.services.FootprintService;
     const Notification = this.app.orm.Notification;
+    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
+    let criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
     let that = this;
 
-    Notification
-      .find({ user: request.params.currentUser.id, read: false})
+    // Force to display notifications of current user
+    criteria.user = request.params.currentUser.id;
+
+    FootprintService
+      .find('notification', criteria, options)
       .then((results) => {
         reply (results);
       })
@@ -33,7 +39,7 @@ module.exports = class NotificationController extends Controller{
         if (!record) {
           throw Boom.notFound();
         }
-        if (record.user !== request.params.currentUser.id) {
+        if (record.user.toString() !== request.params.currentUser.id) {
           throw Boom.forbidden();
         }
         record.read = request.payload.read;
