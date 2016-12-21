@@ -186,15 +186,19 @@ module.exports = class UserController extends Controller{
   }
 
   _csvExport (users) {
-    var out = 'Given Name,Family Name,Job Title,Organization,Groups,Country,Admin Area,Phone,Skype,Email,URI,Notes\n',
+    var out = 'Given Name,Family Name,Job Title,Organization,Groups,Country,Admin Area,Phone,Skype,Email,Notes\n',
       org = '',
       country = '',
+      region = '',
       jobTitle = '',
       phoneNumber = '',
+      skype = '',
       status = '';
     for (var i = 0; i < users.length; i++) {
       org = '';
       country = '';
+      region = '';
+      skype = '';
       jobTitle = users[i].job_title || ' ';
       phoneNumber = users[i].phone_number || ' ';
       status = users[i].status || ' ';
@@ -204,6 +208,16 @@ module.exports = class UserController extends Controller{
       if (users[i].location && users[i].location.country) {
         country = users[i].location.country.name;
       }
+      if (users[i].location && users[i].location.region) {
+        region = users[i].location.region.name;
+      }
+      if (users[i].voips.length) {
+        for (var j = 0; j < users[i].voips.length; j++) {
+          if (users[i].voips[j].type === 'Skype') {
+            skype = users[i].voips[j].username;
+          }
+        }
+      }
       out = out +
         '"' + users[i].given_name + '",' +
         '"' + users[i].family_name + '",' +
@@ -211,11 +225,10 @@ module.exports = class UserController extends Controller{
         '"' + org + '",' +
         '"' + ' ' + '",' +
         '"' + country + '",' +
-        '"' + ' ' + '",' +
+        '"' + region + '",' +
         '"' + phoneNumber + '",' +
-        '"' + ' ' + '",' +
+        '"' + skype + '",' +
         '"' + users[i].email + '",' +
-        '"' + ' ' + '",' +
         '"' + status + '"\n';
     }
     return out;
