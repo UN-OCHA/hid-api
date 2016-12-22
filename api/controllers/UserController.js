@@ -6,6 +6,8 @@ const Bcrypt = require('bcryptjs');
 const fs = require('fs');
 const ejs = require('ejs');
 const moment = require('moment');
+const async = require('async');
+const _ = require('lodash');
 const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters'];
 
 /**
@@ -301,11 +303,11 @@ module.exports = class UserController extends Controller{
     let criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
     const ListUser = this.app.orm.ListUser,
       List = this.app.orm.List;
-    let list = false;
+    let lists = [];
 
     for (var i = 0; i < childAttributes.length; i++) {
       if (criteria[childAttributes[i] + '.list']) {
-        list = criteria[childAttributes[i] + '.list'];
+        lists.push(criteria[childAttributes[i] + '.list']);
         delete criteria[childAttributes[i] + '.list'];
       }
     }
@@ -333,7 +335,7 @@ module.exports = class UserController extends Controller{
 
     let that = this;
 
-    if (request.params.id || !list) {
+    if (request.params.id || !lists.length) {
       if (request.params.id) {
         criteria = request.params.id;
       }
@@ -383,67 +385,80 @@ module.exports = class UserController extends Controller{
         .catch((err) => { that._errorHandler(err, reply); });
     }
     else {
-      ListUser
-        .find({list: list, deleted: criteria.deleted})
-        .then((lus) => {
-          var users = [];
-          for (var i = 0; i < lus.length; i++) {
-            users.push(lus[i].user);
-          }
-          criteria._id = {$in: users};
-        })
-        .then(() => {
-          that.log.debug('[UserController] (find) criteria =', criteria, 'options =', options);
-          return FootprintService.find('user', criteria, options);
-        })
-        .then((results) => {
-          that.log.debug('Counting results');
-          return FootprintService
-            .count('user', criteria)
-            .then((number) => {
-              return {results: results, number: number};
-            });
-        })
-        .then((results) => {
-          that.log.debug('Retrieving list data');
-          return List
-            .findOne({_id: list})
-            .then((list) => {
-              results.list = list;
-              return results;
-            });
-        })
-        .then((results) => {
-          if (!results.results) {
-            return reply(Boom.notFound());
-          }
-          for (var i = 0, len = results.results.length; i < len; i++) {
-            results.results[i].sanitize();
-          }
-          if (!request.params.extension) {
-            return reply(results.results).header('X-Total-Count', results.number);
-          }
-          else {
-            if (request.params.extension === 'csv') {
-              return reply(that._csvExport(results.results))
-                .type('text/csv');
+      let users = [];
+      async.each(lists, function (list, next) {
+        ListUser
+          .find({list: list, deleted: criteria.deleted})
+          .then((lus) => {
+            var tmpUsers = [];
+            for (var i = 0; i < lus.length; i++) {
+              tmpUsers.push(lus[i].user);
             }
-            else if (request.params.extension === 'txt') {
-              return reply(that._txtExport(results.results))
-                .type('text/plain');
-            }
-            else if (request.params.extension === 'pdf') {
-              that._pdfExport(results, request, function (err, str) {
-                if (err) {
-                  throw err;
-                }
-                reply(str)
-                  .type('text/html');
+            users.push(tmpUsers);
+            next();
+          });
+      }, function (err) {
+        if (err) {
+          return that._errorHandler(err, reply);
+        }
+        users.push(String);
+        var finalUsers = _.intersectionBy.apply(null, users);
+        if (!finalUsers.length) {
+          return reply(finalUsers).header('X-Total-Count', 0);
+        }
+        criteria._id = { $in: finalUsers};
+        that.log.debug('[UserController] (find) criteria =', criteria, 'options =', options);
+        FootprintService
+          .find('user', criteria, options)
+          .then((results) => {
+            that.log.debug('Counting results');
+            return FootprintService
+              .count('user', criteria)
+              .then((number) => {
+                return {results: results, number: number};
               });
+          })
+          /*.then((results) => {
+            that.log.debug('Retrieving list data');
+            return List
+              .findOne({_id: list})
+              .then((list) => {
+                results.list = list;
+                return results;
+              });
+          })*/
+          .then((results) => {
+            if (!results.results) {
+              return reply(Boom.notFound());
             }
-          }
-        })
-        .catch(err => { that._errorHandler(err, reply); });
+            for (var i = 0, len = results.results.length; i < len; i++) {
+              results.results[i].sanitize();
+            }
+            if (!request.params.extension) {
+              return reply(results.results).header('X-Total-Count', results.number);
+            }
+            else {
+              if (request.params.extension === 'csv') {
+                return reply(that._csvExport(results.results))
+                  .type('text/csv');
+              }
+              else if (request.params.extension === 'txt') {
+                return reply(that._txtExport(results.results))
+                  .type('text/plain');
+              }
+              else if (request.params.extension === 'pdf') {
+                that._pdfExport(results, request, function (err, str) {
+                  if (err) {
+                    throw err;
+                  }
+                  reply(str)
+                    .type('text/html');
+                });
+              }
+            }
+          })
+          .catch(err => { that._errorHandler(err, reply); });
+        });
     }
   }
 
