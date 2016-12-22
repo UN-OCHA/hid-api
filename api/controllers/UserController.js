@@ -4,6 +4,8 @@ const Controller = require('trails-controller');
 const Boom = require('boom');
 const Bcrypt = require('bcryptjs');
 const fs = require('fs');
+const ejs = require('ejs');
+const moment = require('moment');
 const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters'];
 
 /**
@@ -177,6 +179,65 @@ module.exports = class UserController extends Controller{
     }
   }
 
+  _pdfExport (data, req, callback) {
+    var filters = [];
+    if (req.query.hasOwnProperty('name') && req.query.name.length) {
+      filters.push(req.query.name);
+    }
+    /*  _.each(query, function (val, key) {
+        if (['address.country', 'address.administrative_area', 'address.locality', 'bundle', 'office.name', 'organization.name', 'protectedBundles'].indexOf(key) !== -1) {
+          filters.push(query[key]);
+        }
+        else if (key == 'protectedRoles') {
+          var prIndex = _.findIndex(protectedRolesData, function (item) {
+            return (item.id == val);
+          });
+          filters.push(protectedRolesData[prIndex].name);
+        }
+      });
+      if (req.query.hasOwnProperty('organization.org_type_remote_id') && req.query['organization.org_type_remote_id']) {
+        var orgTypeId = req.query['organization.org_type_remote_id'],
+          orgType = _.find(orgTypesData, function (item) {
+            return (item.id === orgTypeId);
+          });
+        if (orgType && orgType.name) {
+          filters.push(orgType.name);
+        }
+      }
+      if (req.query.hasOwnProperty('disasters.remote_id') && req.query['disasters.remote_id']) {
+        var disasterId = req.query['disasters.remote_id'];
+        if (disastersData && disastersData.hasOwnProperty(disasterId) && disastersData[disasterId].name) {
+          filters.push(disastersData[disasterId].name);
+        }
+      }
+      if (req.query.hasOwnProperty('role') && req.query.role) {
+        var role = _.find(rolesData, function (item) {
+          return (item.id === req.query.role);
+        });
+        if (role && role.name) {
+          filters.push(role.name);
+        }
+      }
+      if (req.query.hasOwnProperty('keyContact') && req.query.keyContact) {
+        filters.push('Key Contact');
+      }
+      if (req.query.hasOwnProperty('verified') && req.query.verified) {
+        filters.push('Verified User');
+      }
+      if (req.query.hasOwnProperty('localContacts') && req.query.localContacts && req.query.localContacts !== 'false') {
+        if (req.query.hasOwnProperty('globalContacts') && req.query.globalContacts && req.query.globalContacts !== 'false') {
+          filters.push('Global & Local Contacts');
+        }
+        else {
+          filters.push('Only Local Contacts');
+        }
+      }*/
+
+    data.dateGenerated = moment().format('LL');
+    data.filters = filters;
+    ejs.renderFile('templates/pdf/printList.html', data, {}, callback);
+  }
+
   _txtExport (users) {
     var out = '';
     for (var i = 0; i < users.length; i++) {
@@ -238,7 +299,8 @@ module.exports = class UserController extends Controller{
     const FootprintService = this.app.services.FootprintService;
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
     let criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
-    const ListUser = this.app.orm.ListUser;
+    const ListUser = this.app.orm.ListUser,
+      List = this.app.orm.List;
     let list = false;
 
     for (var i = 0; i < childAttributes.length; i++) {
@@ -258,6 +320,7 @@ module.exports = class UserController extends Controller{
     }
 
     if (criteria.name) {
+      criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
       criteria.name = new RegExp(criteria.name, 'i');
     }
 
@@ -309,6 +372,12 @@ module.exports = class UserController extends Controller{
               return reply(that._txtExport(results.results))
                 .type('text/plain');
             }
+            else if (request.params.extension === 'pdf') {
+              that._pdfExport(results.results, request, function (err, str) {
+                reply(str)
+                  .type('text/html');
+              });
+            }
           }
         })
         .catch((err) => { that._errorHandler(err, reply); });
@@ -336,6 +405,15 @@ module.exports = class UserController extends Controller{
             });
         })
         .then((results) => {
+          that.log.debug('Retrieving list data');
+          return List
+            .findOne({_id: list})
+            .then((list) => {
+              results.list = list;
+              return results;
+            });
+        })
+        .then((results) => {
           if (!results.results) {
             return reply(Boom.notFound());
           }
@@ -353,6 +431,15 @@ module.exports = class UserController extends Controller{
             else if (request.params.extension === 'txt') {
               return reply(that._txtExport(results.results))
                 .type('text/plain');
+            }
+            else if (request.params.extension === 'pdf') {
+              that._pdfExport(results, request, function (err, str) {
+                if (err) {
+                  throw err;
+                }
+                reply(str)
+                  .type('text/html');
+              });
             }
           }
         })
@@ -876,7 +963,7 @@ module.exports = class UserController extends Controller{
         .then(record => {
           if (!record) return reply(Boom.notFound())
           var ext = data.file.hapi.filename.split('.').pop();
-          var path = __dirname + "/../../pictures/" + userId + '.' + ext;
+          var path = __dirname + "/../../assets/pictures/" + userId + '.' + ext;
           var file = fs.createWriteStream(path);
 
           file.on('error', function (err) {
@@ -886,7 +973,7 @@ module.exports = class UserController extends Controller{
           data.file.pipe(file);
 
           data.file.on('end', function (err) {
-            record.picture = process.env.ROOT_URL + "/pictures/" + userId + "." + ext;
+            record.picture = process.env.ROOT_URL + "/assets/pictures/" + userId + "." + ext;
             record.save().then(() => {
               return reply(record)
             })

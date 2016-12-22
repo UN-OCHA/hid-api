@@ -72,9 +72,11 @@ module.exports = class ListController extends Controller{
 
     // Search with contains when searching in name or label
     if (criteria.name) {
+      criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
       criteria.name = new RegExp(criteria.name, 'i');
     }
     if (criteria.label) {
+      criteria.label = criteria.label.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
       criteria.label = new RegExp(criteria.label, 'i');
     }
 

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title translate="">Humanitarian ID</title>
+<base href="{{appBaseUrl}}/index.html">
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noto+Serif:400,700,400italic|Open+Sans:700,400">
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800">
+<link rel="stylesheet" href="/css/app.min.css">
+<link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
+</head>
+<body ng-app="contactsId" class="break960 ng-animate print pdf">
+  <div id="contactsid-app-view-wrapper">
+    <div id="contactsid-app" class="contactsid-app">
+<div id="contactsid-app-view" class="container ng-scope" ng-view=""><div class="page-list print pdf meeting meeting-compact ng-scope">
+  <div class="row masthead">
+    <div class="col-xs-12">
+      <!-- ngIf: !supported -->
+
+      <h2 class="heading-contact-list">
+        <span class="location">Meeting Attendance</span><br/>
+        <small class="ng-binding">{{dateGenerated}}</small></br>
+      </h2>
+
+      <div class="logo pull-right">
+        <img src="{{appBaseUrl}}/images/hid-logo-print.png" width="420" height="66" />
+      </div>
+    </div>
+  </div>
+
+  <div class="row main">
+    {{#if filters}}
+    <div class="col-xs-12 filters-param-list-wrapper ng-hide" ng-show="filtersParams.length">
+      <div class="filters-param-list">
+        <div class="filters-param-label" translate=""><span class="ng-scope">Filter Criteria</span></div>
+        {{#each filters}}
+          <div class="filters-param">{{this}}</div>
+        {{/each}}
+      </div>
+    </div>
+    {{/if}}
+    <div class="active-contacts col-xs-12">
+      <table class="table table-striped" cg-busy="contactsPromise" style="position: relative;">
+        <thead>
+          <tr>
+            <th class="col-xs-2" translate=""><span class="ng-scope">Name</span></th>
+            <th class="col-xs-2" translate=""><span class="ng-scope">Organization</span></th>
+            <th class="col-xs-2" translate=""><span class="ng-scope">Job Title</span></th>
+            <th class="col-xs-2" translate=""><span class="ng-scope">Phone</span></th>
+            <th class="col-xs-2" translate=""><span class="ng-scope">Email</span></th>
+            <th class="col-xs-2" translate=""><span class="ng-scope">Signature</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each contacts}}
+            <tr class="profile-item ng-scope">
+              <td class="title-cell col-xs-2"><div class="avoid ng-binding">{{nameGiven}}<br><span class="name-family ng-binding">{{nameFamily}}</span></div></td>
+              <td class="col-xs-1"><div class="avoid ng-binding">{{org_name}}</div></td>
+              <td class="col-xs-2"><div class="avoid ng-binding">{{jobtitle}}</div></td>
+              <td class="col-xs-2">
+                {{#each phone}}
+                  <div>
+                    {{number~}}
+                    {{~#unless @last}},{{/unless}}
+                  </div>
+                {{/each}}
+              </td>
+              <td class="col-xs-2">
+                {{#each email}}
+                  <div>
+                    <a href="mailto:{{address}}">{{address}}</a>
+                    {{~#unless @last}},{{/unless}}
+                  </div>
+                {{/each}}
+              </td>
+              <td class="col-xs-3">
+              </td>
+            </tr>
+          {{/each}}
+          {{#each emptyLines}}
+            <tr class="profile-item ng-scope">
+              <td class="title-cell col-xs-2">&nbsp;<br />&nbsp;</td>
+              <td class="col-xs-1">&nbsp;<br />&nbsp;</td>
+              <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+              <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+              <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+              <td class="col-xs-3">&nbsp;<br />&nbsp;</td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div id="print-footer">
+    <div class="message"><span translate=""><span class="ng-scope">Powered by</span></span> <span class="title-humanitarian">Humanitarian</span> <span class="title-id">Id</span> - <span translate=""><span class="ng-scope">to update your information, check in to</span></span> <a href="http://humanitarian.id">http://humanitarian.id</a><br>
+    </div>
+  </div>
+</div>
+</div>
+    </div>
+  </div>
+
+</body>
+</html>

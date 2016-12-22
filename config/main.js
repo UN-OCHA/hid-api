@@ -31,6 +31,6 @@ module.exports = {
   paths: {
     root: path.resolve(__dirname, '..'),
     temp: path.resolve(__dirname, '..', '.tmp'),
-    www: path.resolve(__dirname, '..', 'pictures')
+    www: path.resolve(__dirname, '..', 'assets')
   }
 };
