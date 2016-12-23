@@ -52,6 +52,7 @@ module.exports = class ListController extends Controller{
     request.params.model = 'list';
     const FootprintController = this.app.controllers.FootprintController;
     this._removeForbiddenAttributes(request);
+    request.payload.owner = request.params.currentUser._id;
     FootprintController.create(request, reply);
   }
 
@@ -107,9 +108,10 @@ module.exports = class ListController extends Controller{
           var isManager = false;
           if (result.managers) {
             isManager = result.managers.filter(function (elt) {
-              return elt._id === currentUser._id;
+              return elt._id.toString() === currentUser._id.toString();
             });
           }
+          return reply(result);
 
           if (result.visibility === 'all' ||
              currentUser.is_admin ||
