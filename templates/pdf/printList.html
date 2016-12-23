@@ -58,11 +58,11 @@
           <% results.forEach(function (user) { %>
             <tr class="profile-item ng-scope">
               <td class="title-cell"><div class="avoid ng-binding"><%= user.name %></div></td>
-              <td><div class="avoid ng-binding"><%= user.organization.list.name %></div></td>
+              <td><div class="avoid ng-binding"><% if (user.organization.list) { %><%= user.organization.list.name %><% } %></div></td>
               <td><div class="avoid ng-binding"><%= user.job_title %></div></td>
               <td><%= user.phone_number %></td>
               <td><%= user.email %></td>
-              <td><%= user.location.country.name %> <%= user.location.region.name %></td>
+              <td><% if (user.location.country) { %><%= user.location.country.name %><% } %> <% if (user.location.region) { %><%= user.location.region.name %><% } %></td>
             </tr>
           <% }); %>
         </tbody>
