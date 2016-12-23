@@ -220,7 +220,14 @@ module.exports = class UserController extends Controller{
 
     data.dateGenerated = moment().format('LL');
     data.filters = filters;
-    ejs.renderFile('templates/pdf/printList.html', data, {}, callback);
+    var template = 'templates/pdf/printList.html';
+    if (req.query.hasOwnProperty('format') && req.query.format === 'meeting-compact') {
+      template = 'templates/pdf/printMeetingCompact.html';
+    }
+    if (req.query.hasOwnProperty('format') && req.query.format === 'meeting-comfortable') {
+      template = 'templates/pdf/printMeetingComfortable.html';
+    }
+    ejs.renderFile(template, data, {}, callback);
   }
 
   _txtExport (users) {
