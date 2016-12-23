@@ -181,7 +181,7 @@ module.exports = class UserController extends Controller{
     }
   }
 
-  _pdfExport (data, req, callback) {
+  _pdfExport (data, req, format, callback) {
     var filters = [];
     if (req.query.hasOwnProperty('name') && req.query.name.length) {
       filters.push(req.query.name);
@@ -221,10 +221,10 @@ module.exports = class UserController extends Controller{
     data.dateGenerated = moment().format('LL');
     data.filters = filters;
     var template = 'templates/pdf/printList.html';
-    if (req.query.hasOwnProperty('format') && req.query.format === 'meeting-compact') {
+    if (format === 'meeting-compact') {
       template = 'templates/pdf/printMeetingCompact.html';
     }
-    if (req.query.hasOwnProperty('format') && req.query.format === 'meeting-comfortable') {
+    else if (format === 'meeting-comfortable') {
       template = 'templates/pdf/printMeetingComfortable.html';
     }
     ejs.renderFile(template, data, {}, callback);
@@ -323,6 +323,12 @@ module.exports = class UserController extends Controller{
 
     criteria.deleted = {$in: [false, null]};
 
+    var pdfFormat = '';
+    if (criteria.format) {
+      pdfFormat = criteria.format;
+      delete criteria.format;
+    }
+
     let that = this;
 
     if (request.params.id || !lists.length) {
@@ -365,7 +371,7 @@ module.exports = class UserController extends Controller{
                 .type('text/plain');
             }
             else if (request.params.extension === 'pdf') {
-              that._pdfExport(results.results, request, function (err, str) {
+              that._pdfExport(results.results, request, pdfFormat, function (err, str) {
                 reply(str)
                   .type('text/html');
               });
@@ -437,7 +443,7 @@ module.exports = class UserController extends Controller{
                   .type('text/plain');
               }
               else if (request.params.extension === 'pdf') {
-                that._pdfExport(results, request, function (err, str) {
+                that._pdfExport(results, request, pdfFormat, function (err, str) {
                   if (err) {
                     throw err;
                   }
