@@ -186,6 +186,17 @@ module.exports = class UserController extends Controller{
     if (req.query.hasOwnProperty('name') && req.query.name.length) {
       filters.push(req.query.name);
     }
+    if (req.query.hasOwnProperty('verified') && req.query.verified) {
+      filters.push('Verified User');
+    }
+    if (req.query.hasOwnProperty('is_admin') && req.query.is_admin) {
+      filters.push('Administrator');
+    }
+    data.lists.forEach(function (list) {
+      filters.push(list.name);
+    });
+    // TODO: missing roles
+    // TODO: missing location country
     /*  _.each(query, function (val, key) {
         if (['address.country', 'address.administrative_area', 'address.locality', 'bundle', 'office.name', 'organization.name', 'protectedBundles'].indexOf(key) !== -1) {
           filters.push(query[key]);
@@ -197,21 +208,6 @@ module.exports = class UserController extends Controller{
           filters.push(protectedRolesData[prIndex].name);
         }
       });
-      if (req.query.hasOwnProperty('organization.org_type_remote_id') && req.query['organization.org_type_remote_id']) {
-        var orgTypeId = req.query['organization.org_type_remote_id'],
-          orgType = _.find(orgTypesData, function (item) {
-            return (item.id === orgTypeId);
-          });
-        if (orgType && orgType.name) {
-          filters.push(orgType.name);
-        }
-      }
-      if (req.query.hasOwnProperty('disasters.remote_id') && req.query['disasters.remote_id']) {
-        var disasterId = req.query['disasters.remote_id'];
-        if (disastersData && disastersData.hasOwnProperty(disasterId) && disastersData[disasterId].name) {
-          filters.push(disastersData[disasterId].name);
-        }
-      }
       if (req.query.hasOwnProperty('role') && req.query.role) {
         var role = _.find(rolesData, function (item) {
           return (item.id === req.query.role);
@@ -220,20 +216,7 @@ module.exports = class UserController extends Controller{
           filters.push(role.name);
         }
       }
-      if (req.query.hasOwnProperty('keyContact') && req.query.keyContact) {
-        filters.push('Key Contact');
-      }
-      if (req.query.hasOwnProperty('verified') && req.query.verified) {
-        filters.push('Verified User');
-      }
-      if (req.query.hasOwnProperty('localContacts') && req.query.localContacts && req.query.localContacts !== 'false') {
-        if (req.query.hasOwnProperty('globalContacts') && req.query.globalContacts && req.query.globalContacts !== 'false') {
-          filters.push('Global & Local Contacts');
-        }
-        else {
-          filters.push('Only Local Contacts');
-        }
-      }*/
+      */
 
     data.dateGenerated = moment().format('LL');
     data.filters = filters;
@@ -418,15 +401,15 @@ module.exports = class UserController extends Controller{
                 return {results: results, number: number};
               });
           })
-          /*.then((results) => {
+          .then((results) => {
             that.log.debug('Retrieving list data');
             return List
-              .findOne({_id: list})
-              .then((list) => {
-                results.list = list;
+              .find({_id: { $in: lists } })
+              .then((lists) => {
+                results.lists = lists;
                 return results;
               });
-          })*/
+          })
           .then((results) => {
             if (!results.results) {
               return reply(Boom.notFound());

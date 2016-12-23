@@ -22,7 +22,15 @@ module.exports = class NotificationController extends Controller{
     FootprintService
       .find('notification', criteria, options)
       .then((results) => {
-        reply (results);
+        that.log.debug('Counting results');
+        return FootprintService
+          .count('notification', criteria)
+          .then((number) => {
+            return {results: results, number: number};
+          });
+      })
+      .then((results) => {
+        return reply(results.results).header('X-Total-Count', results.number);
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, reply);
