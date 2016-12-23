@@ -100,6 +100,7 @@ module.exports = class ListController extends Controller{
     if (request.params.id) {
       List
         .findOne({_id: request.params.id, deleted: criteria.deleted })
+        .populate(options.populate)
         .then(result => {
           if (!result) {
             throw Boom.notFound();

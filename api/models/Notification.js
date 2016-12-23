@@ -54,16 +54,21 @@ module.exports = class Notification extends Model {
   static onSchema(schema) {
 
     schema.pre('save', function(next) {
-      var templateDir = TemplateDir + this.type;
-      var template = new NotificationTemplate(templateDir);
-      var that = this;
-      template.render({createdBy: that.createdBy, user: that.user, params: that.params}, function(err, result) {
-        if (err) {
-          return next(err);
-        }
-        that.text = result.html;
+      if (!this.text) {
+        var templateDir = TemplateDir + this.type;
+        var template = new NotificationTemplate(templateDir);
+        var that = this;
+        template.render({createdBy: that.createdBy, user: that.user, params: that.params}, function(err, result) {
+          if (err) {
+            return next(err);
+          }
+          that.text = result.html;
+          next();
+        });
+      }
+      else {
         next();
-      });
+      }
     });
   }
 
