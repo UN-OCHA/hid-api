@@ -417,7 +417,8 @@ module.exports = class UserController extends Controller{
           else {
             if (request.params.extension === 'csv') {
               return reply(that._csvExport(results.results))
-                .type('text/csv');
+                .type('text/csv')
+                .header('Content-Disposition', 'attachment; filename="Humanitarian ID Contacts ' + moment().format('YYYYMMDD') + '.csv"');
             }
             else if (request.params.extension === 'txt') {
               return reply(that._txtExport(results.results))
@@ -431,7 +432,8 @@ module.exports = class UserController extends Controller{
                 else {
                   reply(buffer)
                     .type('application/pdf')
-                    .bytes(bytes);
+                    .bytes(bytes)
+                    .header('Content-Disposition', 'attachment; filename="Humanitarian ID Contacts ' + moment().format('YYYYMMDD') + '.pdf"');
                 }
               });
             }
@@ -495,7 +497,8 @@ module.exports = class UserController extends Controller{
             else {
               if (request.params.extension === 'csv') {
                 return reply(that._csvExport(results.results))
-                  .type('text/csv');
+                  .type('text/csv')
+                  .header('Content-Disposition', 'attachment; filename="Humanitarian ID Contacts ' + moment().format('YYYYMMDD') + '.csv"');
               }
               else if (request.params.extension === 'txt') {
                 return reply(that._txtExport(results.results))
@@ -509,7 +512,8 @@ module.exports = class UserController extends Controller{
                   else {
                     reply(buffer)
                       .type('application/pdf')
-                      .bytes(bytes);
+                      .bytes(bytes)
+                      .header('Content-Disposition', 'attachment; filename="Humanitarian ID Contacts ' + moment().format('YYYYMMDD') + '.pdf"');
                   }
                 });
               }
