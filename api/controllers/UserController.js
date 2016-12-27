@@ -4,7 +4,9 @@ const Controller = require('trails-controller');
 const Boom = require('boom');
 const Bcrypt = require('bcryptjs');
 const fs = require('fs');
+const qs = require('qs');
 const ejs = require('ejs');
+const http = require('http');
 const moment = require('moment');
 const async = require('async');
 const _ = require('lodash');
@@ -227,7 +229,60 @@ module.exports = class UserController extends Controller{
     else if (format === 'meeting-comfortable') {
       template = 'templates/pdf/printMeetingComfortable.html';
     }
-    ejs.renderFile(template, data, {}, callback);
+    var that = this;
+    ejs.renderFile(template, data, {}, function (err, str) {
+      var postData = qs.stringify({
+          'html' : str
+        }),
+        options = {
+          hostname: process.env.WKHTMLTOPDF_HOST,
+          port: process.env.WKHTMLTOPDF_PORT || 80,
+          path: '/htmltopdf',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Length': postData.length
+          }
+        },
+        clientReq;
+
+      // Send the HTML to the wkhtmltopdf service to generate a PDF, and
+      // return the output.
+      clientReq = http.request(options, function(clientRes) {
+        if (clientRes && clientRes.statusCode === 200) {
+          clientRes.setEncoding('binary');
+
+          console.log(clientRes.headers);
+
+          var pdfSize = parseInt(clientRes.headers['content-length']),
+            pdfBuffer = new Buffer(pdfSize),
+            bytes = 0;
+
+          clientRes.on('data', function(chunk) {
+            pdfBuffer.write(chunk, bytes, 'binary');
+            bytes += chunk.length;
+          });
+
+          clientRes.on('end', function() {
+            callback(null, pdfBuffer, bytes);
+          });
+        }
+        else {
+          callback('An error occurred while generating PDF');
+        }
+      });
+
+      // Handle errors with the HTTP request.
+      clientReq.on('error', function(e) {
+        callback('An error occurred while generating PDF');
+      });
+
+      // Write post data containing the rendered HTML.
+      clientReq.write(postData);
+      clientReq.end();
+
+
+    });
   }
 
   _txtExport (users) {
@@ -371,9 +426,13 @@ module.exports = class UserController extends Controller{
                 .type('text/plain');
             }
             else if (request.params.extension === 'pdf') {
-              that._pdfExport(results.results, request, pdfFormat, function (err, str) {
-                reply(str)
-                  .type('text/html');
+              that._pdfExport(results.results, request, pdfFormat, function (err, buffer, bytes) {
+                if (err) {
+                  throw err;
+                }
+                reply(buffer)
+                  .type('application/pdf')
+                  .bytes(bytes);
               });
             }
           }
@@ -443,12 +502,13 @@ module.exports = class UserController extends Controller{
                   .type('text/plain');
               }
               else if (request.params.extension === 'pdf') {
-                that._pdfExport(results, request, pdfFormat, function (err, str) {
+                that._pdfExport(results, request, pdfFormat, function (err, buffer, bytes) {
                   if (err) {
                     throw err;
                   }
-                  reply(str)
-                    .type('text/html');
+                  reply(buffer)
+                    .type('application/pdf')
+                    .bytes(bytes);
                 });
               }
             }
