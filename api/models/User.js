@@ -9,7 +9,7 @@ const https = require('https');
 const async = require('async');
 const deepPopulate = require('mongoose-deep-populate')(require('mongoose'));
 const listTypes = ['operation', 'bundle', 'disaster', 'organization'];
-const userPopulate = 'favoriteLists operations.list disasters.list bundles.list organization.list organizations.list lists.list authorizedClients';
+const userPopulate = 'favoriteLists operations.list disasters.list bundles.list organization.list organizations.list lists.list authorizedClients verified_by';
 
 /**
  * @module User
