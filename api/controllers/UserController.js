@@ -252,8 +252,6 @@ module.exports = class UserController extends Controller{
         if (clientRes && clientRes.statusCode === 200) {
           clientRes.setEncoding('binary');
 
-          console.log(clientRes.headers);
-
           var pdfSize = parseInt(clientRes.headers['content-length']),
             pdfBuffer = new Buffer(pdfSize),
             bytes = 0;
@@ -430,9 +428,11 @@ module.exports = class UserController extends Controller{
                 if (err) {
                   throw err;
                 }
-                reply(buffer)
-                  .type('application/pdf')
-                  .bytes(bytes);
+                else {
+                  reply(buffer)
+                    .type('application/pdf')
+                    .bytes(bytes);
+                }
               });
             }
           }
@@ -506,9 +506,11 @@ module.exports = class UserController extends Controller{
                   if (err) {
                     throw err;
                   }
-                  reply(buffer)
-                    .type('application/pdf')
-                    .bytes(bytes);
+                  else {
+                    reply(buffer)
+                      .type('application/pdf')
+                      .bytes(bytes);
+                  }
                 });
               }
             }
