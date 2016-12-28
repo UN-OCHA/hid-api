@@ -1201,6 +1201,9 @@ module.exports = class UserController extends Controller{
   setPrimaryOrganization (request, reply) {
     const User = this.app.orm.user,
       ListUser = this.app.orm.ListUser;
+    if (!request.payload._id) {
+      return reply(Boom.badRequest('Missing listUser id'));
+    }
     let that = this;
     ListUser
       .findOne({ _id: request.payload._id})
