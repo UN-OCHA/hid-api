@@ -18,6 +18,8 @@ module.exports = {
 
   ClientController: ['AuthPolicy.isAdmin'],
 
+  ServiceController: ['AuthPolicy.isAuthenticated'],
+
   UserController: {
     showAccount: [ 'AuthPolicy.isAuthenticated'],
     create: [ 'AuthPolicy.isAuthenticated' ],

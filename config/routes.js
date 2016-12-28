@@ -307,5 +307,29 @@ module.exports = [
     method: [ 'PUT', 'PATCH' ],
     path: '/api/v2/notification/{id}',
     handler: 'NotificationController.update'
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v2/service',
+    handler: 'ServiceController.create'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/service/{id?}',
+    handler: 'ServiceController.find'
+  },
+
+  {
+    method: [ 'PUT', 'PATCH' ],
+    path: '/api/v2/service/{id}',
+    handler: 'ServiceController.update'
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/service/{id}',
+    handler: 'ServiceController.destroy'
   }
 ];
