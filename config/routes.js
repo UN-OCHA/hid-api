@@ -322,6 +322,12 @@ module.exports = [
   },
 
   {
+    method: 'GET',
+    path: '/api/v2/service/mailchimp/lists',
+    handler: 'ServiceController.mailchimpLists'
+  },
+
+  {
     method: [ 'PUT', 'PATCH' ],
     path: '/api/v2/service/{id}',
     handler: 'ServiceController.update'
