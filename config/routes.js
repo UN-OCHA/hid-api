@@ -251,6 +251,12 @@ module.exports = [
 
   {
     method: 'POST',
+    path: '/api/v2/user/{id}/subscriptions',
+    handler: 'ServiceController.subscribe'
+  },
+
+  {
+    method: 'POST',
     path: '/api/v2/list',
     handler: 'ListController.create'
   },

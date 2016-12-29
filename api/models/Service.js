@@ -2,6 +2,7 @@
 
 const Model = require('trails-model');
 const Schema = require('mongoose').Schema;
+const Mailchimp = require('mailchimp-api-v3');
 
 /**
  * @module Service
@@ -13,6 +14,24 @@ module.exports = class Service extends Model {
     return {
       schema: {
         timestamps: true
+      },
+      methods: {
+        subscribe: function (user) {
+          if (this.type === 'mailchimp') {
+            return this.subscribeMailchimp(user);
+          }
+        },
+
+        subscribeMailchimp: function (user) {
+          var mc = new Mailchimp(this.mailchimp.apiKey);
+          return mc.post({
+            path: '/lists/' + this.mailchimp.list.id + '/members'
+          }, {
+            status: 'subscribed',
+            email_address: user.email,
+            merge_fields: {'FNAME': user.given_name, 'LNAME': user.family_name}
+          });
+        }
       }
     };
   }

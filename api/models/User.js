@@ -121,6 +121,16 @@ module.exports = class User extends Model {
           return out;
         },
 
+        isSubscribed: function (serviceId) {
+          var out = false;
+          for (var i = 0; i < this.subscriptions.length; i++) {
+            if (this.subscriptions[i]._id.toString() === serviceId) {
+              out = true;
+            }
+          }
+          return out;
+        },
+
         // Whether we should send a reminder to verify email to user
         // Reminder emails are sent out 2, 4, 7 and 30 days after registration
         shouldSendReminderVerify: function() {
@@ -528,6 +538,10 @@ module.exports = class User extends Model {
       authorizedClients: [{
         type: Schema.ObjectId,
         ref: 'Client'
+      }],
+      subscriptions: [{
+        type: Schema.ObjectId,
+        ref: 'Service'
       }],
       deleted: {
         type: Boolean,

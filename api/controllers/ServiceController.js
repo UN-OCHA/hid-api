@@ -3,6 +3,7 @@
 const Controller = require('trails-controller');
 const Boom = require('boom');
 const Mailchimp = require('mailchimp-api-v3');
+const async = require('async');
 
 /**
  * @module ServiceController
@@ -27,12 +28,14 @@ module.exports = class ServiceController extends Controller{
   }
 
   update (request, reply) {
+    // TODO: make sure user is owner of the service or admin
     request.params.model = 'service';
     const FootprintController = this.app.controllers.FootprintController;
     FootprintController.update(request, reply);
   }
 
   destroy (request, reply) {
+    // TODO: make sure user is owner of the service or admin
     request.params.model = 'service';
     const FootprintController = this.app.controllers.FootprintController;
     FootprintController.destroy(request, reply);
@@ -60,5 +63,57 @@ module.exports = class ServiceController extends Controller{
     else {
       reply(Boom.badRequest('missing Mailchimp API Key'));
     }
+  }
+
+  // Subscribe a user to a service
+  subscribe (request, reply) {
+    const User = this.app.orm.User;
+    const Service = this.app.orm.Service;
+
+    let that = this;
+    User
+      .findOne({'_id': request.params.id})
+      .then((user) => {
+        if (!user) {
+          throw Boom.notFound();
+        }
+        else {
+          if (user.isSubscribed(request.payload.service)) {
+            throw Boom.badRequest('User is already subscribed');
+          }
+          else {
+            return user;
+          }
+        }
+      })
+      .then((user) => {
+        return Service
+          .findOne({'_id': request.payload.service, deleted: false})
+          .then((service) => {
+            if (!service) {
+              throw Boom.badRequest();
+            }
+            else {
+              return {user: user, service: service};
+            }
+          });
+      })
+      .then((results) => {
+        let user = results.user, service = results.service;
+        return service.subscribe(results.user)
+          .then((output) => {
+            if (output.statusCode === '200') {
+              user.subscriptions.push(service);
+              user.save();
+              return reply(user);
+            }
+            else {
+              throw new Error(output);
+            }
+          });
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
   }
 };

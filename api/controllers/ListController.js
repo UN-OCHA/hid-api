@@ -240,7 +240,6 @@ module.exports = class ListController extends Controller{
               lu.user.save();
               // Set listuser to deleted
               lu.deleted = true;
-              console.log(lu);
               lu.save();
             }
           });
