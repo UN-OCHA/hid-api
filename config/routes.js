@@ -340,6 +340,18 @@ module.exports = [
   },
 
   {
+    method: 'GET',
+    path: '/api/v2/service/google/groups',
+    handler: 'ServiceController.googleGroups'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/servicecredentials',
+    handler: 'ServiceCredentialsController.find'
+  },
+
+  {
     method: [ 'PUT', 'PATCH' ],
     path: '/api/v2/service/{id}',
     handler: 'ServiceController.update'

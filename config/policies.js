@@ -20,6 +20,8 @@ module.exports = {
 
   ServiceController: ['AuthPolicy.isAuthenticated'],
 
+  ServiceCredentialsController: ['AuthPolicy.isAuthenticated'],
+
   UserController: {
     showAccount: [ 'AuthPolicy.isAuthenticated'],
     create: [ 'AuthPolicy.isAuthenticated' ],

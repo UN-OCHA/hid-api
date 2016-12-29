@@ -4,6 +4,8 @@ const Model = require('trails-model');
 const Schema = require('mongoose').Schema;
 const Mailchimp = require('mailchimp-api-v3');
 const crypto = require('crypto');
+const google = require('googleapis');
+const GoogleAuth = require('google-auth-library');
 
 /**
  * @module Service
@@ -16,10 +18,24 @@ module.exports = class Service extends Model {
       schema: {
         timestamps: true
       },
+      statics: {
+        googleGroupsAuthorize: function (credentials, cb) {
+          var clientSecret = credentials.secrets.installed.client_secret;
+          var clientId = credentials.secrets.installed.client_id;
+          var redirectUrl = credentials.secrets.installed.redirect_uris[0];
+          var auth = new GoogleAuth();
+          var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
+          oauth2Client.credentials = credentials.token;
+          cb(oauth2Client);
+        }
+      },
       methods: {
-        subscribe: function (user) {
+        subscribe: function (user, creds) {
           if (this.type === 'mailchimp') {
             return this.subscribeMailchimp(user);
+          }
+          else if (this.type === 'googlegroup') {
+            return this.subscribeGoogleGroup(user, creds);
           }
         },
 
@@ -45,6 +61,19 @@ module.exports = class Service extends Model {
           var hash = crypto.createHash('md5').update(user.email.toLowerCase()).digest('hex');
           return mc.delete({
             path: '/lists/' + this.mailchimp.list.id + '/members/' + hash
+          });
+        },
+
+        subscribeGoogleGroup: function (user, creds, cb) {
+          let that = this;
+          // Subscribe email to google group
+          this.googleGroupsAuthorize(creds.googlegroup, function (auth) {
+            var gservice = google.admin('directory_v1');
+            gservice.members.insert({
+              auth: auth,
+              groupKey: that.googlegroup.group.id,
+              resource: { 'email': user.email, 'role': 'MEMBER' }
+            }, cb);
           });
         }
       }

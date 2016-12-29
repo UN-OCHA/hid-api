@@ -4,6 +4,7 @@ const Controller = require('trails-controller');
 const Boom = require('boom');
 const Mailchimp = require('mailchimp-api-v3');
 const async = require('async');
+const google = require('googleapis');
 
 /**
  * @module ServiceController
@@ -65,10 +66,44 @@ module.exports = class ServiceController extends Controller{
     }
   }
 
+  // Get google groups from a domain
+  googleGroups(request, reply) {
+    const ServiceCredentials = this.app.orm.ServiceCredentials;
+    const Service = this.app.orm.Service;
+    let that = this;
+    // Find service credentials associated to domain
+    ServiceCredentials
+      .findOne({ type: 'googlegroup', 'googlegroup.domain': request.query.domain})
+      .then((creds) => {
+        if (!creds) {
+          throw Boom.badRequest();
+        }
+        Service.googleGroupsAuthorize(creds.googlegroup, function (auth) {
+          var service = google.admin('directory_v1');
+          service.groups.list({
+            auth: auth,
+            customer: 'my_customer',
+            maxResults: 200
+          }, function (err, response) {
+            if (err) {
+              throw err;
+            }
+            var groups = response.groups;
+            return reply(groups);
+          });
+        });
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
+  }
+
+
   // Subscribe a user to a service
   subscribe (request, reply) {
     const User = this.app.orm.User;
     const Service = this.app.orm.Service;
+    const ServiceCredentials = this.app.orm.ServiceCredentials;
 
     let that = this,
      user = {},
@@ -100,20 +135,53 @@ module.exports = class ServiceController extends Controller{
             }
           });
       })
+      .then((result) => {
+        user = result.user;
+        service = result.service;
+        if (service.type === 'googlegroup') {
+          return ServiceCredentials
+            .findOne({type: 'googlegroup', 'googlegroup.domain': service.googlegroup.domain})
+            .then((creds) => {
+              if (!creds) {
+                throw new Error('Could not find service credentials');
+              }
+              result.creds = creds;
+              return result;
+            });
+        }
+        else {
+          result.creds = null;
+          return result;
+        }
+      })
       .then((results) => {
         user = results.user;
         service = results.service;
-        return service.subscribe(results.user)
-          .then((output) => {
-            if (output.statusCode === 200) {
+        if (service.type === 'mailchimp') {
+          return service.subscribeMailchimp(results.user)
+            .then((output) => {
+              if (output.statusCode === 200) {
+                user.subscriptions.push(service);
+                user.save();
+                return reply(user);
+              }
+              else {
+                throw new Error(output);
+              }
+            });
+        }
+        else {
+          service.subscribeGoogleGroup(results.user, results.creds, function (err, response) {
+            if (err) {
+              throw err;
+            }
+            else {
               user.subscriptions.push(service);
               user.save();
               return reply(user);
             }
-            else {
-              throw new Error(output);
-            }
           });
+        }
       })
       .catch(err => {
         if (err.title === 'Member Exists') {
