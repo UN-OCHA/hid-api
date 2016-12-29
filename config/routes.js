@@ -256,6 +256,12 @@ module.exports = [
   },
 
   {
+    method: 'DELETE',
+    path: '/api/v2/user/{userId}/subscriptions/{serviceId}',
+    handler: 'ServiceController.unsubscribe'
+  },
+
+  {
     method: 'POST',
     path: '/api/v2/list',
     handler: 'ListController.create'

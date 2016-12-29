@@ -9,7 +9,7 @@ const https = require('https');
 const async = require('async');
 const deepPopulate = require('mongoose-deep-populate')(require('mongoose'));
 const listTypes = ['operation', 'bundle', 'disaster', 'organization'];
-const userPopulate = 'favoriteLists operations.list disasters.list bundles.list organization.list organizations.list lists.list authorizedClients verified_by';
+const userPopulate = 'favoriteLists operations.list disasters.list bundles.list organization.list organizations.list lists.list authorizedClients verified_by subscriptions';
 
 /**
  * @module User
@@ -121,14 +121,14 @@ module.exports = class User extends Model {
           return out;
         },
 
-        isSubscribed: function (serviceId) {
-          var out = false;
+        subscriptionsIndex: function (serviceId) {
+          var index = -1;
           for (var i = 0; i < this.subscriptions.length; i++) {
             if (this.subscriptions[i]._id.toString() === serviceId) {
-              out = true;
+              index = i;
             }
           }
-          return out;
+          return index;
         },
 
         // Whether we should send a reminder to verify email to user

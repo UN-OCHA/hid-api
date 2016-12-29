@@ -3,6 +3,7 @@
 const Model = require('trails-model');
 const Schema = require('mongoose').Schema;
 const Mailchimp = require('mailchimp-api-v3');
+const crypto = require('crypto');
 
 /**
  * @module Service
@@ -22,6 +23,12 @@ module.exports = class Service extends Model {
           }
         },
 
+        unsubscribe: function (user) {
+          if (this.type === 'mailchimp') {
+            return this.unsubscribeMailchimp(user);
+          }
+        },
+
         subscribeMailchimp: function (user) {
           var mc = new Mailchimp(this.mailchimp.apiKey);
           return mc.post({
@@ -30,6 +37,14 @@ module.exports = class Service extends Model {
             status: 'subscribed',
             email_address: user.email,
             merge_fields: {'FNAME': user.given_name, 'LNAME': user.family_name}
+          });
+        },
+
+        unsubscribeMailchimp: function (user) {
+          var mc = new Mailchimp(this.mailchimp.apiKey);
+          var hash = crypto.createHash('md5').update(user.email.toLowerCase()).digest('hex');
+          return mc.delete({
+            path: '/lists/' + this.mailchimp.list.id + '/members/' + hash
           });
         }
       }

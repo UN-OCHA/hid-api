@@ -70,7 +70,9 @@ module.exports = class ServiceController extends Controller{
     const User = this.app.orm.User;
     const Service = this.app.orm.Service;
 
-    let that = this;
+    let that = this,
+     user = {},
+     service = {};
     User
       .findOne({'_id': request.params.id})
       .then((user) => {
@@ -78,7 +80,7 @@ module.exports = class ServiceController extends Controller{
           throw Boom.notFound();
         }
         else {
-          if (user.isSubscribed(request.payload.service)) {
+          if (user.subscriptionsIndex(request.payload.service) !== -1) {
             throw Boom.badRequest('User is already subscribed');
           }
           else {
@@ -99,11 +101,60 @@ module.exports = class ServiceController extends Controller{
           });
       })
       .then((results) => {
-        let user = results.user, service = results.service;
+        user = results.user;
+        service = results.service;
         return service.subscribe(results.user)
           .then((output) => {
-            if (output.statusCode === '200') {
+            if (output.statusCode === 200) {
               user.subscriptions.push(service);
+              user.save();
+              return reply(user);
+            }
+            else {
+              throw new Error(output);
+            }
+          });
+      })
+      .catch(err => {
+        if (err.title === 'Member Exists') {
+          // Member already exists in mailchimp
+          user.subscriptions.push(service);
+          user.save();
+          return reply(user);
+        }
+        else {
+          that.app.services.ErrorService.handle(err, reply);
+        }
+      });
+  }
+
+  unsubscribe (request, reply) {
+    const User = this.app.orm.User;
+    const Service = this.app.orm.Service;
+
+    let that = this;
+    User
+      .findOne({'_id': request.params.userId})
+      .then((user) => {
+        if (!user) {
+          throw Boom.notFound();
+        }
+        else {
+          if (user.subscriptionsIndex(request.params.serviceId) === -1) {
+            throw Boom.notFound();
+          }
+          else {
+            return user;
+          }
+        }
+      })
+      .then((user) => {
+        var index = user.subscriptionsIndex(request.params.serviceId);
+        var service = user.subscriptions[index];
+        return service.unsubscribe(user)
+          .then((output) => {
+            if (output.statusCode === 204) {
+              user.subscriptions.splice(index, 1);
               user.save();
               return reply(user);
             }
