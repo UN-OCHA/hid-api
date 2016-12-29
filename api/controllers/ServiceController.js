@@ -12,12 +12,16 @@ module.exports = class ServiceController extends Controller{
 
   create (request, reply) {
     request.params.model = 'service';
+    request.payload.owner = request.params.currentUser._id;
     const FootprintController = this.app.controllers.FootprintController;
     FootprintController.create(request, reply);
   }
 
   find (request, reply) {
     request.params.model = 'service';
+    if (!request.params.currentUser.is_admin) {
+      request.query.$or = [{'hidden': false}, {'owner': request.params.currentUser._id}];
+    }
     const FootprintController = this.app.controllers.FootprintController;
     FootprintController.find(request, reply);
   }
