@@ -14,20 +14,21 @@ const GoogleAuth = require('google-auth-library');
 module.exports = class Service extends Model {
 
   static config () {
+    var googleGroupsAuthorize = function (credentials, cb) {
+      var clientSecret = credentials.secrets.installed.client_secret;
+      var clientId = credentials.secrets.installed.client_id;
+      var redirectUrl = credentials.secrets.installed.redirect_uris[0];
+      var auth = new GoogleAuth();
+      var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
+      oauth2Client.credentials = credentials.token;
+      cb(oauth2Client);
+    };
     return {
       schema: {
         timestamps: true
       },
       statics: {
-        googleGroupsAuthorize: function (credentials, cb) {
-          var clientSecret = credentials.secrets.installed.client_secret;
-          var clientId = credentials.secrets.installed.client_id;
-          var redirectUrl = credentials.secrets.installed.redirect_uris[0];
-          var auth = new GoogleAuth();
-          var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
-          oauth2Client.credentials = credentials.token;
-          cb(oauth2Client);
-        }
+        googleGroupsAuthorize: googleGroupsAuthorize
       },
       methods: {
         subscribe: function (user, creds) {
@@ -67,7 +68,7 @@ module.exports = class Service extends Model {
         subscribeGoogleGroup: function (user, creds, cb) {
           let that = this;
           // Subscribe email to google group
-          this.googleGroupsAuthorize(creds.googlegroup, function (auth) {
+          googleGroupsAuthorize(creds.googlegroup, function (auth) {
             var gservice = google.admin('directory_v1');
             gservice.members.insert({
               auth: auth,
