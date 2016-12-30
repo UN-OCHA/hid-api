@@ -76,6 +76,18 @@ module.exports = class Service extends Model {
               resource: { 'email': user.email, 'role': 'MEMBER' }
             }, cb);
           });
+        },
+
+        unsubscribeGoogleGroup: function (user, creds, cb) {
+          let that = this;
+          googleGroupsAuthorize(creds.googlegroup, function (auth) {
+            var gservice = google.admin('directory_v1');
+            gservice.members.delete({
+              auth: auth,
+              groupKey: that.googlegroup.group.id,
+              memberKey: user.email
+            }, cb);
+          });
         }
       }
     };

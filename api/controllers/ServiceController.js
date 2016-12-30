@@ -199,6 +199,7 @@ module.exports = class ServiceController extends Controller{
   unsubscribe (request, reply) {
     const User = this.app.orm.User;
     const Service = this.app.orm.Service;
+    const ServiceCredentials = this.app.orm.ServiceCredentials;
 
     let that = this;
     User
@@ -219,17 +220,49 @@ module.exports = class ServiceController extends Controller{
       .then((user) => {
         var index = user.subscriptionsIndex(request.params.serviceId);
         var service = user.subscriptions[index];
-        return service.unsubscribe(user)
-          .then((output) => {
-            if (output.statusCode === 204) {
+        if (service.type === 'googlegroup') {
+          return ServiceCredentials
+            .findOne({type: 'googlegroup', 'googlegroup.domain': service.googlegroup.domain})
+            .then((creds) => {
+              if (!creds) {
+                throw new Error('Could not find service credentials');
+              }
+              return {user: user, creds: creds};
+            });
+        }
+        else {
+          return {user: user, creds: null};
+        }
+      })
+      .then((result) => {
+        var user = result.user;
+        var index = user.subscriptionsIndex(request.params.serviceId);
+        var service = user.subscriptions[index];
+        if (service.type === 'mailchimp') {
+          return service.unsubscribeMailchimp(user)
+            .then((output) => {
+              if (output.statusCode === 204) {
+                user.subscriptions.splice(index, 1);
+                user.save();
+                return reply(user);
+              }
+              else {
+                throw new Error(output);
+              }
+            });
+        }
+        else if (service.type === 'googlegroup') {
+          service.unsubscribeGoogleGroup(user, result.creds, function (err, response) {
+            if (err) {
+              throw err;
+            }
+            else {
               user.subscriptions.splice(index, 1);
               user.save();
               return reply(user);
             }
-            else {
-              throw new Error(output);
-            }
           });
+        }
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, reply);
