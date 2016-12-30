@@ -13,6 +13,14 @@ module.exports = class ServiceCredentials extends Model {
     return {
       schema: {
         timestamps: true
+      },
+      methods: {
+        toJSON: function () {
+          const creds = this.toObject();
+          delete creds.googlegroup.secrets;
+          delete creds.googlegroup.token;
+          return creds;
+        }
       }
     };
   }

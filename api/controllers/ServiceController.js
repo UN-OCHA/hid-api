@@ -20,12 +20,53 @@ module.exports = class ServiceController extends Controller{
   }
 
   find (request, reply) {
-    request.params.model = 'service';
+    const FootprintService = this.app.services.FootprintService;
+    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
+    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
+    const Service = this.app.orm.Service;
+
     if (!request.params.currentUser.is_admin) {
-      request.query.$or = [{'hidden': false}, {'owner': request.params.currentUser._id}];
+      criteria.$or = [{'hidden': false}, {'owner': request.params.currentUser._id}];
     }
-    const FootprintController = this.app.controllers.FootprintController;
-    FootprintController.find(request, reply);
+
+    // Do not show deleted lists
+    criteria.deleted = {$in: [false, null]};
+
+    let that = this;
+
+    if (request.params.id) {
+      criteria._id = request.params.id;
+      Service
+        .findOne(criteria)
+        .then(result => {
+          if (!result) {
+            throw Boom.notFound();
+          }
+
+          result.sanitize(request.params.currentUser);
+          return reply(result);
+        })
+        .catch(err => { that.app.services.ErrorService.handle(err, reply); });
+    }
+    else {
+      let response = FootprintService.find('service', criteria, options);
+      let count = FootprintService.count('service', criteria);
+      count.then(number => {
+        response
+          .then(results => {
+            if (!results) {
+              return Boom.notFound();
+            }
+            for (var i = 0; i < results.length; i++) {
+              results[i].sanitize(request.params.currentUser);
+            }
+            return reply(results).header('X-Total-Count', number);
+          })
+          .catch(err => {
+            that.app.services.ErrorService.handle(err, reply);
+          });
+      });
+    }
   }
 
   update (request, reply) {

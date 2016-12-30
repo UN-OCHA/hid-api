@@ -31,20 +31,6 @@ module.exports = class Service extends Model {
         googleGroupsAuthorize: googleGroupsAuthorize
       },
       methods: {
-        subscribe: function (user, creds) {
-          if (this.type === 'mailchimp') {
-            return this.subscribeMailchimp(user);
-          }
-          else if (this.type === 'googlegroup') {
-            return this.subscribeGoogleGroup(user, creds);
-          }
-        },
-
-        unsubscribe: function (user) {
-          if (this.type === 'mailchimp') {
-            return this.unsubscribeMailchimp(user);
-          }
-        },
 
         subscribeMailchimp: function (user) {
           var mc = new Mailchimp(this.mailchimp.apiKey);
@@ -88,6 +74,12 @@ module.exports = class Service extends Model {
               memberKey: user.email
             }, cb);
           });
+        },
+
+        sanitize: function (user) {
+          if (this.type === 'mailchimp' && !user.is_admin && user.id !== this.owner) {
+            this.mailchimp.apiKey = '';
+          }
         }
       }
     };
