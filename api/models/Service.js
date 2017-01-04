@@ -5,7 +5,9 @@ const Schema = require('mongoose').Schema;
 const Mailchimp = require('mailchimp-api-v3');
 const crypto = require('crypto');
 const google = require('googleapis');
+const deepPopulate = require('mongoose-deep-populate')(require('mongoose'));
 const GoogleAuth = require('google-auth-library');
+const async = require('async');
 
 /**
  * @module Service
@@ -118,6 +120,10 @@ module.exports = class Service extends Model {
         type: Schema.ObjectId,
         ref: 'User'
       },
+      owners: [{
+        type: Schema.ObjectId,
+        ref: 'User'
+      }],
       type: {
         type: String,
         enum: ['mailchimp', 'googlegroup'],
@@ -140,8 +146,40 @@ module.exports = class Service extends Model {
         default: false
       },
       mailchimp: mailchimpSchema,
-      googlegroup: googlegroupSchema
-
+      googlegroup: googlegroupSchema,
+      lists: [{
+        type: Schema.ObjectId,
+        ref: 'List'
+      }]
     };
+  }
+
+  static onSchema (schema) {
+    schema.plugin(deepPopulate, {});
+    // Populate lists
+    schema.post('findOne', function (result, next) {
+      let that = this;
+      if (!result) {
+        return next();
+      }
+      result
+        .deepPopulate('lists owners')
+        .then(service => {
+          next();
+        })
+        .catch(err => that.log.error(err));
+    });
+    schema.post('find', function (results, next) {
+      let that = this;
+      async.eachOf(results, function (result, key, cb) {
+        results[key]
+          .deepPopulate('lists owners')
+          .then((r) => {
+            cb();
+          });
+      }, function (err) {
+        next();
+      });
+    });
   }
 };
