@@ -2,7 +2,7 @@
 
 const Policy = require('trails-policy');
 const Boom = require('boom');
-const Schema = require('mongoose').Schema;
+const Types = require('mongoose').Types;
 
 /**
  * @module AuthPolicy
@@ -64,7 +64,7 @@ module.exports = class AuthPolicy extends Policy {
       }
       else {
         request.params.token = jtoken; // This is the decrypted token or the payload you provided
-        that.app.orm.User.findOne({_id: Schema.ObjectId(jtoken.id)}, function (err, user) {
+        that.app.orm.User.findOne({_id: Types.ObjectId(jtoken.id)}, function (err, user) {
           if (!err && user) {
             request.params.currentUser = user;
             reply();
