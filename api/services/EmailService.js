@@ -1,6 +1,6 @@
 'use strict';
 
-const Service = require('trails-service');
+const Service = require('trails/service');
 const Nodemailer = require('nodemailer');
 const EmailTemplate = require('email-templates').EmailTemplate;
 const TemplateDir = require('path').join(__dirname, '../../emails/');

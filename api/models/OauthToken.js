@@ -1,6 +1,6 @@
 'use strict'
 
-const Model = require('trails-model')
+const Model = require('trails/model')
 const crypto = require('crypto')
 const Schema = require('mongoose').Schema
 
@@ -64,4 +64,3 @@ module.exports = class OauthToken extends Model {
     }
   }
 }
-

@@ -1,6 +1,6 @@
 'use strict';
 
-const Model = require('trails-model');
+const Model = require('trails/model');
 const Schema = require('mongoose').Schema;
 const NotificationTemplate = require('email-templates').EmailTemplate;
 const TemplateDir = require('path').join(__dirname, '../../notifications/');

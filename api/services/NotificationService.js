@@ -1,6 +1,6 @@
 'use strict';
 
-const Service = require('trails-service');
+const Service = require('trails/service');
 const Boom = require('boom');
 const _ = require('lodash');
 const async = require('async');

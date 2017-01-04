@@ -1,6 +1,6 @@
 'use strict';
 
-const Controller = require('trails-controller');
+const Controller = require('trails/controller');
 const Boom = require('boom');
 const Bcrypt = require('bcryptjs');
 const fs = require('fs');

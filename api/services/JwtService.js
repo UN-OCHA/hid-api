@@ -1,6 +1,6 @@
 'use strict'
 
-const Service = require('trails-service')
+const Service = require('trails/service')
 const jwt = require('jsonwebtoken')
 const fs = require('fs')
 const rsa2jwk = require('rsa-pem-to-jwk')
@@ -54,4 +54,3 @@ module.exports = class JwtService extends Service {
   }
 
 }
-

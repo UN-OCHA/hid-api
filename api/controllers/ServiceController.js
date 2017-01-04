@@ -1,6 +1,6 @@
 'use strict';
 
-const Controller = require('trails-controller');
+const Controller = require('trails/controller');
 const Boom = require('boom');
 const Mailchimp = require('mailchimp-api-v3');
 const async = require('async');

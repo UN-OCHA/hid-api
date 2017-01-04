@@ -1,6 +1,6 @@
 'use strict';
 
-const Model = require('trails-model');
+const Model = require('trails/model');
 const Schema = require('mongoose').Schema;
 const Mailchimp = require('mailchimp-api-v3');
 const crypto = require('crypto');
