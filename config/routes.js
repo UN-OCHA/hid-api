@@ -120,9 +120,7 @@ module.exports = [
     method: ['GET', 'POST'],
     path: '/oauth/access_token',
     handler: 'AuthController.accessTokenOauth2'
-  }
-];
-var test = [
+  },
 
   {
     method: ['GET', 'POST'],
@@ -146,7 +144,9 @@ var test = [
     method: 'GET',
     path: '/api/v2/user.{extension}',
     handler: 'UserController.find'
-  },
+  }
+];
+var test = [
 
   {
     method: [ 'PUT', 'PATCH' ],
