@@ -144,9 +144,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/user.{extension}',
     handler: 'UserController.find'
-  }
-];
-var test = [
+  },
 
   {
     method: [ 'PUT', 'PATCH' ],

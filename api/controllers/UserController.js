@@ -465,7 +465,8 @@ module.exports = class UserController extends Controller{
         }
         criteria._id = { $in: finalUsers};
         that.log.debug('[UserController] (find) criteria =', criteria, 'options =', options);
-        FootprintService
+        return reply(Boom.notFound());
+        /*FootprintService
           .find('user', criteria, options)
           .then((results) => {
             that.log.debug('Counting results');
@@ -520,7 +521,7 @@ module.exports = class UserController extends Controller{
             }
           })
           .catch(err => { that._errorHandler(err, reply); });
-        });
+        });*/
     }
   }
 
