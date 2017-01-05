@@ -466,6 +466,7 @@ module.exports = class UserController extends Controller{
         criteria._id = { $in: finalUsers};
         that.log.debug('[UserController] (find) criteria =', criteria, 'options =', options);
         return reply(Boom.notFound());
+      });
         /*FootprintService
           .find('user', criteria, options)
           .then((results) => {
