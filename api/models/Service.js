@@ -78,8 +78,18 @@ module.exports = class Service extends Model {
           });
         },
 
+        ownersIndex: function (user) {
+          var index = -1;
+          for (var i = 0; i < this.owners.length; i++) {
+            if (this.owners[i].id === user.id) {
+              index = i;
+            }
+          }
+          return index;
+        },
+
         sanitize: function (user) {
-          if (this.type === 'mailchimp' && !user.is_admin && user.id !== this.owner) {
+          if (this.type === 'mailchimp' && !user.is_admin && user.id !== this.owner && this.ownersIndex(user) === -1) {
             this.mailchimp.apiKey = '';
           }
         }

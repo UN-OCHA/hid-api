@@ -107,5 +107,38 @@ module.exports = class AuthPolicy extends Policy {
     });
   }
 
+  isAdminOrServiceOwner (request, reply) {
+    var that = this;
+    this.isAuthenticated(request, function (err) {
+      if (err && err.isBoom) {
+        return reply (err);
+      }
+      if (!request.params.currentUser) {
+        return reply(Boom.unauthorized('Current user was not set'));
+      }
+      if (request.params.currentUser.is_admin) {
+        return reply();
+      }
+      that.app.orm.Service
+        .findOne({_id: request.params.id})
+        .then((srv) => {
+          if (!srv) {
+            throw Boom.notFound();
+          }
+          console.log(srv);
+          //if (request.params.currentUser.id === srv.owner.id || srv.ownersIndex(request.params.currentUser) !== -1) {
+          if (srv.ownersIndex(request.params.currentUser) !== -1) {
+            return reply();
+          }
+          else {
+            throw Boom.forbidden();
+          }
+        })
+        .catch(err => {
+          that.app.services.ErrorService.handle(err, reply);
+        });
+    });
+  }
+
 
 };

@@ -18,7 +18,12 @@ module.exports = {
 
   ClientController: ['AuthPolicy.isAdmin'],
 
-  ServiceController: ['AuthPolicy.isAuthenticated'],
+  ServiceController: {
+    create: ['AuthPolicy.isAuthenticated'],
+    find: ['AuthPolicy.isAuthenticated'],
+    update: ['AuthPolicy.isAdminOrServiceOwner'],
+    destroy: ['AuthPolicy.isAdminOrServiceOwner']
+  },
 
   ServiceCredentialsController: ['AuthPolicy.isAuthenticated'],
 

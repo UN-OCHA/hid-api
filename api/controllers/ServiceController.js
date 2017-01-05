@@ -26,7 +26,7 @@ module.exports = class ServiceController extends Controller{
     const Service = this.app.orm.Service;
 
     if (!request.params.currentUser.is_admin) {
-      criteria.$or = [{'hidden': false}, {'owner': request.params.currentUser._id}];
+      criteria.$or = [{'hidden': false}, {'owner': request.params.currentUser._id}, {'owners': request.params.currentUser._id}];
     }
 
     // Do not show deleted lists
