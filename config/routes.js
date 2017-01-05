@@ -9,8 +9,7 @@
 
 'use strict';
 
-module.exports = [];
-var test = [
+module.exports = [
 
   /**
    * Render the login view
@@ -121,7 +120,9 @@ var test = [
     method: ['GET', 'POST'],
     path: '/oauth/access_token',
     handler: 'AuthController.accessTokenOauth2'
-  },
+  }
+];
+var test = [
 
   {
     method: ['GET', 'POST'],
