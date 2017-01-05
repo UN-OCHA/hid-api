@@ -604,7 +604,7 @@ module.exports = class User extends Model {
         .catch(err => that.log.error(err));
     });
     schema.post('find', function (results, next) {
-      let that = this;
+      /*let that = this;
       async.eachOf(results, function (result, key, cb) {
         results[key]
           .deepPopulate(userPopulate)
@@ -613,7 +613,8 @@ module.exports = class User extends Model {
           });
       }, function (err) {
         next();
-      });
+      });*/
+      next();
     });
   }
 };
