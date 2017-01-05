@@ -212,7 +212,7 @@ module.exports = class ServiceController extends Controller{
             });
         }
         else {
-          service.subscribeGoogleGroup(results.user, results.creds, function (err, response) {
+          return service.subscribeGoogleGroup(results.user, results.creds, function (err, response) {
             if (err) {
               throw err;
             }
@@ -222,6 +222,14 @@ module.exports = class ServiceController extends Controller{
               return reply(user);
             }
           });
+        }
+      })
+      .then (() => {
+        // Send notification to user that he was subscribed to a service
+        if (user.id !== request.params.currentUser.id) {
+          const NotificationService = that.app.services.NotificationService;
+          var notification = {type: 'service_subscription', user: user, createdBy: request.params.currentUser, params: { service: service}};
+          NotificationService.send(notification, () => {});
         }
       })
       .catch(err => {
@@ -244,7 +252,7 @@ module.exports = class ServiceController extends Controller{
 
     let that = this;
     User
-      .findOne({'_id': request.params.userId})
+      .findOne({'_id': request.params.id})
       .then((user) => {
         if (!user) {
           throw Boom.notFound();

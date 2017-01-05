@@ -22,7 +22,11 @@ module.exports = {
     create: ['AuthPolicy.isAuthenticated'],
     find: ['AuthPolicy.isAuthenticated'],
     update: ['AuthPolicy.isAdminOrServiceOwner'],
-    destroy: ['AuthPolicy.isAdminOrServiceOwner']
+    destroy: ['AuthPolicy.isAdminOrServiceOwner'],
+    mailchimpLists: ['AuthPolicy.isAuthenticated'],
+    googleGroups: ['AuthPolicy.isAuthenticated'],
+    subscribe: ['AuthPolicy.isAdminOrCurrent'],
+    unsubscribe: ['AuthPolicy.isAdminOrCurrent']
   },
 
   ServiceCredentialsController: ['AuthPolicy.isAuthenticated'],

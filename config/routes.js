@@ -257,7 +257,7 @@ module.exports = [
 
   {
     method: 'DELETE',
-    path: '/api/v2/user/{userId}/subscriptions/{serviceId}',
+    path: '/api/v2/user/{id}/subscriptions/{serviceId}',
     handler: 'ServiceController.unsubscribe'
   },
 
