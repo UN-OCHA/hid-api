@@ -9,7 +9,8 @@
 
 'use strict';
 
-module.exports = [
+module.exports = [];
+var test = [
 
   /**
    * Render the login view
