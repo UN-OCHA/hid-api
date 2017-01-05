@@ -237,7 +237,12 @@ module.exports = class ServiceController extends Controller{
           // Member already exists in mailchimp
           user.subscriptions.push(service);
           user.save();
-          return reply(user);
+          reply(user);
+          if (user.id !== request.params.currentUser.id) {
+            const NotificationService = that.app.services.NotificationService;
+            var notification = {type: 'service_subscription', user: user, createdBy: request.params.currentUser, params: { service: service}};
+            NotificationService.send(notification, () => {});
+          }
         }
         else {
           that.app.services.ErrorService.handle(err, reply);
@@ -250,7 +255,9 @@ module.exports = class ServiceController extends Controller{
     const Service = this.app.orm.Service;
     const ServiceCredentials = this.app.orm.ServiceCredentials;
 
-    let that = this;
+    let that = this,
+      user = {},
+      service = {};
     User
       .findOne({'_id': request.params.id})
       .then((user) => {
@@ -268,7 +275,7 @@ module.exports = class ServiceController extends Controller{
       })
       .then((user) => {
         var index = user.subscriptionsIndex(request.params.serviceId);
-        var service = user.subscriptions[index];
+        service = user.subscriptions[index];
         if (service.type === 'googlegroup') {
           return ServiceCredentials
             .findOne({type: 'googlegroup', 'googlegroup.domain': service.googlegroup.domain})
@@ -284,9 +291,8 @@ module.exports = class ServiceController extends Controller{
         }
       })
       .then((result) => {
-        var user = result.user;
+        user = result.user;
         var index = user.subscriptionsIndex(request.params.serviceId);
-        var service = user.subscriptions[index];
         if (service.type === 'mailchimp') {
           return service.unsubscribeMailchimp(user)
             .then((output) => {
@@ -311,6 +317,14 @@ module.exports = class ServiceController extends Controller{
               return reply(user);
             }
           });
+        }
+      })
+      .then (() => {
+        // Send notification to user that he was subscribed to a service
+        if (user.id !== request.params.currentUser.id) {
+          const NotificationService = that.app.services.NotificationService;
+          var notification = {type: 'service_unsubscription', user: user, createdBy: request.params.currentUser, params: { service: service}};
+          NotificationService.send(notification, () => {});
         }
       })
       .catch(err => {

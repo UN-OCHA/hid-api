@@ -1,0 +1,7 @@
+<p>Dear <%= user.name %>,</p>
+
+<p><%= createdBy.name %> has just removed you from the subscription service "<%= params.service.name %>" on Humanitarian ID.</p>
+
+<p>Please contact <%= user.name %> if you wish to be subscribed to "<%= params.service.name %>" again.</p>
+
+<% include ../includes/footer_en %>
