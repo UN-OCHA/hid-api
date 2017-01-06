@@ -17,7 +17,7 @@ const userPopulate1 = [
   {path: 'organizations'},
   {path: 'lists'},
   {path: 'authorizedClients'},
-  {path: 'verified_by', select: 'name'},
+  //{path: 'verified_by', select: 'name'},
   {path: 'subscriptions'}
 ];
 const userPopulate2= [
