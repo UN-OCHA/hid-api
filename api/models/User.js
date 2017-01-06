@@ -9,7 +9,18 @@ const https = require('https');
 const async = require('async');
 const deepPopulate = require('mongoose-deep-populate')(require('mongoose'));
 const listTypes = ['operation', 'bundle', 'disaster', 'organization'];
-const userPopulate = 'favoriteLists operations.list disasters.list bundles.list organization.list organizations.list lists.list authorizedClients verified_by subscriptions';
+/*const userPopulate = [
+  {path: 'favoriteLists'},
+  {path: 'operations.list', select: 'name'},
+  {path: 'disasters.list', select: 'name'},
+  {path: 'bundles.list', select: 'name'},
+  {path: 'organization.list', select: 'name'},
+  {path: 'lists.list'},
+  {path: 'authorizedClients'},
+  //{path: 'verified_by'},
+  {path: 'subscriptions'}
+];*/
+const userPopulate = 'favoriteLists operations.list disasters.list bundles.list organization.list organizations.list lists.list authorizedClients subscriptions';
 
 /**
  * @module User
@@ -604,7 +615,7 @@ module.exports = class User extends Model {
         .catch(err => that.log.error(err));
     });
     schema.post('find', function (results, next) {
-      /*let that = this;
+      let that = this;
       async.eachOf(results, function (result, key, cb) {
         results[key]
           .deepPopulate(userPopulate)
@@ -613,8 +624,7 @@ module.exports = class User extends Model {
           });
       }, function (err) {
         next();
-      });*/
-      next();
+      });
     });
   }
 };
