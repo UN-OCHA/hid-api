@@ -7,20 +7,26 @@ const Libphonenumber = require('google-libphonenumber');
 const Http = require('http');
 const https = require('https');
 const async = require('async');
-const deepPopulate = require('mongoose-deep-populate')(require('mongoose'));
 const listTypes = ['operation', 'bundle', 'disaster', 'organization'];
-/*const userPopulate = [
+const userPopulate1 = [
   {path: 'favoriteLists'},
-  {path: 'operations.list', select: 'name'},
-  {path: 'disasters.list', select: 'name'},
-  {path: 'bundles.list', select: 'name'},
-  {path: 'organization.list', select: 'name'},
-  {path: 'lists.list'},
+  {path: 'operations'},
+  {path: 'disasters'},
+  {path: 'bundles'},
+  {path: 'organization'},
+  {path: 'organizations'},
+  {path: 'lists'},
   {path: 'authorizedClients'},
-  //{path: 'verified_by'},
+  {path: 'verified_by', select: 'name'},
   {path: 'subscriptions'}
-];*/
-const userPopulate = 'favoriteLists operations.list disasters.list bundles.list organization.list organizations.list lists.list authorizedClients subscriptions';
+];
+const userPopulate2= [
+  {path: 'operations.list', model: 'List'},
+  {path: 'disasters.list', model: 'List'},
+  {path: 'bundles.list', model: 'List'},
+  {path: 'organizations.list', model: 'List'},
+  {path: 'lists.list', model: 'List'}
+];
 
 /**
  * @module User
@@ -562,7 +568,6 @@ module.exports = class User extends Model {
   }
 
   static onSchema(schema) {
-    schema.plugin(deepPopulate, {});
     schema.virtual('sub').get(function () {
       return this._id;
     });
@@ -608,9 +613,15 @@ module.exports = class User extends Model {
         return next();
       }
       result
-        .deepPopulate(userPopulate)
+        .populate(userPopulate1)
+        .execPopulate()
         .then(user => {
-          next();
+          user
+            .populate(userPopulate2)
+            .execPopulate()
+            .then((user2) => {
+              next();
+            });
         })
         .catch(err => that.log.error(err));
     });
@@ -618,9 +629,15 @@ module.exports = class User extends Model {
       let that = this;
       async.eachOf(results, function (result, key, cb) {
         results[key]
-          .deepPopulate(userPopulate)
+          .populate(userPopulate1)
+          .execPopulate()
           .then((r) => {
-            cb();
+            r
+              .populate(userPopulate2)
+              .execPopulate()
+              .then((r2) => {
+                cb();
+              });
           });
       }, function (err) {
         next();
