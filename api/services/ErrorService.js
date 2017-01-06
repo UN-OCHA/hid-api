@@ -2,6 +2,9 @@
 
 const Service = require('trails/service');
 const Boom = require('boom');
+const Nodemailer = require('nodemailer');
+const TransporterUrl = 'smtp://' + process.env.SMTP_USER + ':' + process.env.SMTP_PASS + '@' + process.env.SMTP_HOST + ':' + process.env.SMTP_PORT;
+const Transporter = Nodemailer.createTransport(TransporterUrl);
 
 /**
  * @module ErrorService
@@ -14,7 +17,13 @@ module.exports = class ErrorService extends Service {
       return reply(err);
     }
     else {
-      return reply(Boom.badImplementation(err.toString()));
+      reply(Boom.badImplementation(err.toString()));
+      var mailOptions={
+         to : 'guillaume@viguierjust.com',
+         subject : 'HID Fatal Error',
+         text : err.toString()
+      };
+      Transporter.sendMail(mailOptions);
     }
   }
 };
