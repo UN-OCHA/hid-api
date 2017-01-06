@@ -5,7 +5,6 @@ const Schema = require('mongoose').Schema;
 const Mailchimp = require('mailchimp-api-v3');
 const crypto = require('crypto');
 const google = require('googleapis');
-const deepPopulate = require('mongoose-deep-populate')(require('mongoose'));
 const GoogleAuth = require('google-auth-library');
 const async = require('async');
 
@@ -165,7 +164,6 @@ module.exports = class Service extends Model {
   }
 
   static onSchema (schema) {
-    schema.plugin(deepPopulate, {});
     // Populate lists
     schema.post('findOne', function (result, next) {
       let that = this;
@@ -173,7 +171,8 @@ module.exports = class Service extends Model {
         return next();
       }
       result
-        .deepPopulate('lists owners')
+        .populate('lists owners')
+        .execPopulate()
         .then(service => {
           next();
         })
@@ -183,7 +182,8 @@ module.exports = class Service extends Model {
       let that = this;
       async.eachOf(results, function (result, key, cb) {
         results[key]
-          .deepPopulate('lists owners')
+          .populate('lists owners')
+          .execPopulate()
           .then((r) => {
             cb();
           });
