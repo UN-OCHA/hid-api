@@ -32,6 +32,10 @@ module.exports = class ServiceController extends Controller{
     // Do not show deleted lists
     criteria.deleted = {$in: [false, null]};
 
+    if (criteria.lists) {
+      criteria.lists = {$in: criteria.lists.split(',')};
+    }
+
     let that = this;
 
     if (request.params.id) {
