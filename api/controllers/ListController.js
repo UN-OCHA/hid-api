@@ -127,17 +127,6 @@ module.exports = class ListController extends Controller{
         .catch(err => { that.app.services.ErrorService.handle(err, reply); });
     }
     else {
-      if (!currentUser.is_admin) {
-        criteria.$or = [
-          {visibility: 'all'},
-          {owner: currentUser._id},
-          {managers: currentUser._id},
-        ];
-        if (currentUser.verified) {
-          criteria.$or.push({visibility: 'verified'});
-        }
-      }
-
       response = FootprintService.find('list', criteria, options);
       count = FootprintService.count('list', criteria);
       count.then(number => {
