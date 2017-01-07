@@ -41,23 +41,32 @@ module.exports = class NotificationController extends Controller{
     const Notification = this.app.orm.Notification;
     let that = this;
 
-    Notification
-      .findOne({_id: request.params.id})
-      .then((record) => {
-        if (!record) {
-          throw Boom.notFound();
-        }
-        if (record.user.toString() !== request.params.currentUser.id) {
-          throw Boom.forbidden();
-        }
-        record.read = request.payload.read;
-        record.save().then(() => {
-          return reply(record);
+    if (request.params.id) {
+      Notification
+        .findOne({_id: request.params.id})
+        .then((record) => {
+          if (!record) {
+            throw Boom.notFound();
+          }
+          if (record.user.toString() !== request.params.currentUser.id) {
+            throw Boom.forbidden();
+          }
+          record.read = request.payload.read;
+          record.save().then(() => {
+            return reply(record);
+          });
+        })
+        .catch(err => {
+          that.app.services.ErrorService.handle(err, reply);
         });
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
-      });
+    }
+    else {
+      Notification
+        .update({user: request.params.currentUser.id}, { read: true }, { multi: true})
+        .then(() => {
+          return reply();
+        });
+    }
   }
 
 };

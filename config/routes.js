@@ -317,7 +317,7 @@ module.exports = [
 
   {
     method: [ 'PUT', 'PATCH' ],
-    path: '/api/v2/notification/{id}',
+    path: '/api/v2/notification/{id?}',
     handler: 'NotificationController.update'
   },
 
