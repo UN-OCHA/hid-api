@@ -348,11 +348,11 @@ module.exports = class UserController extends Controller{
     let criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
     const ListUser = this.app.orm.ListUser,
       List = this.app.orm.List;
-    let lists = [];
+    let lists = [], listIds = [];
 
     for (var i = 0; i < childAttributes.length; i++) {
       if (criteria[childAttributes[i] + '.list']) {
-        lists.push(criteria[childAttributes[i] + '.list']);
+        listIds.push(criteria[childAttributes[i] + '.list']);
         delete criteria[childAttributes[i] + '.list'];
       }
     }
@@ -445,91 +445,95 @@ module.exports = class UserController extends Controller{
     }
     else {
       let users = [];
-      async.each(lists, function (list, next) {
-        list.isVisibleTo(request.params.currentUser, ListUser, function (out) {
-          if (out === true) {
-            ListUser
-              .find({list: list, deleted: criteria.deleted})
-              .then((lus) => {
-                var tmpUsers = [];
-                for (var i = 0; i < lus.length; i++) {
-                  tmpUsers.push(lus[i].user);
-                }
-                users.push(tmpUsers);
+      List
+        .find({_id: {$in: listIds}})
+        .then((lists) => {
+          async.each(lists, function (list, next) {
+            list.isVisibleTo(request.params.currentUser, ListUser, function (out) {
+              if (out === true) {
+                ListUser
+                  .find({list: list, deleted: criteria.deleted})
+                  .then((lus) => {
+                    var tmpUsers = [];
+                    for (var i = 0; i < lus.length; i++) {
+                      tmpUsers.push(lus[i].user);
+                    }
+                    users.push(tmpUsers);
+                    next();
+                  });
+              }
+              else {
                 next();
-              });
-          }
-          else {
-            next();
-          }
-        });
-      }, function (err) {
-        if (err) {
-          return that._errorHandler(err, reply);
-        }
-        users.push(String);
-        var finalUsers = _.intersectionBy.apply(null, users);
-        if (!finalUsers.length) {
-          return reply(finalUsers).header('X-Total-Count', 0);
-        }
-        criteria._id = { $in: finalUsers};
-        that.log.debug('[UserController] (find) criteria =', criteria, 'options =', options);
-        FootprintService
-          .find('user', criteria, options)
-          .then((results) => {
-            that.log.debug('Counting results');
-            return FootprintService
-              .count('user', criteria)
-              .then((number) => {
-                return {results: results, number: number};
-              });
-          })
-          .then((results) => {
-            that.log.debug('Retrieving list data');
-            return List
-              .find({_id: { $in: lists } })
-              .then((lists) => {
-                results.lists = lists;
-                return results;
-              });
-          })
-          .then((results) => {
-            if (!results.results) {
-              return reply(Boom.notFound());
-            }
-            for (var i = 0, len = results.results.length; i < len; i++) {
-              results.results[i].sanitize();
-            }
-            if (!request.params.extension) {
-              return reply(results.results).header('X-Total-Count', results.number);
-            }
-            else {
-              if (request.params.extension === 'csv') {
-                return reply(that._csvExport(results.results))
-                  .type('text/csv')
-                  .header('Content-Disposition', 'attachment; filename="Humanitarian ID Contacts ' + moment().format('YYYYMMDD') + '.csv"');
               }
-              else if (request.params.extension === 'txt') {
-                return reply(that._txtExport(results.results))
-                  .type('text/plain');
-              }
-              else if (request.params.extension === 'pdf') {
-                that._pdfExport(results, request, pdfFormat, function (err, buffer, bytes) {
-                  if (err) {
-                    throw err;
+            });
+          }, function (err) {
+            if (err) {
+              return that._errorHandler(err, reply);
+            }
+            users.push(String);
+            var finalUsers = _.intersectionBy.apply(null, users);
+            if (!finalUsers.length) {
+              return reply(finalUsers).header('X-Total-Count', 0);
+            }
+            criteria._id = { $in: finalUsers};
+            that.log.debug('[UserController] (find) criteria =', criteria, 'options =', options);
+            FootprintService
+              .find('user', criteria, options)
+              .then((results) => {
+                that.log.debug('Counting results');
+                return FootprintService
+                  .count('user', criteria)
+                  .then((number) => {
+                    return {results: results, number: number};
+                  });
+              })
+              .then((results) => {
+                that.log.debug('Retrieving list data');
+                return List
+                  .find({_id: { $in: lists } })
+                  .then((lists) => {
+                    results.lists = lists;
+                    return results;
+                  });
+              })
+              .then((results) => {
+                if (!results.results) {
+                  return reply(Boom.notFound());
+                }
+                for (var i = 0, len = results.results.length; i < len; i++) {
+                  results.results[i].sanitize();
+                }
+                if (!request.params.extension) {
+                  return reply(results.results).header('X-Total-Count', results.number);
+                }
+                else {
+                  if (request.params.extension === 'csv') {
+                    return reply(that._csvExport(results.results))
+                      .type('text/csv')
+                      .header('Content-Disposition', 'attachment; filename="Humanitarian ID Contacts ' + moment().format('YYYYMMDD') + '.csv"');
                   }
-                  else {
-                    reply(buffer)
-                      .type('application/pdf')
-                      .bytes(bytes)
-                      .header('Content-Disposition', 'attachment; filename="Humanitarian ID Contacts ' + moment().format('YYYYMMDD') + '.pdf"');
+                  else if (request.params.extension === 'txt') {
+                    return reply(that._txtExport(results.results))
+                      .type('text/plain');
                   }
-                });
-              }
-            }
-          })
-          .catch(err => { that._errorHandler(err, reply); });
-        });
+                  else if (request.params.extension === 'pdf') {
+                    that._pdfExport(results, request, pdfFormat, function (err, buffer, bytes) {
+                      if (err) {
+                        throw err;
+                      }
+                      else {
+                        reply(buffer)
+                          .type('application/pdf')
+                          .bytes(bytes)
+                          .header('Content-Disposition', 'attachment; filename="Humanitarian ID Contacts ' + moment().format('YYYYMMDD') + '.pdf"');
+                      }
+                    });
+                  }
+                }
+              })
+              .catch(err => { that._errorHandler(err, reply); });
+            });
+          });
     }
   }
 
