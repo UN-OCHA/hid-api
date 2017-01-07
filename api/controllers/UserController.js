@@ -194,8 +194,10 @@ module.exports = class UserController extends Controller{
     if (req.query.hasOwnProperty('is_admin') && req.query.is_admin) {
       filters.push('Administrator');
     }
-    data.lists.forEach(function (list) {
-      filters.push(list.name);
+    data.lists.forEach(function (list, index) {
+      if (index > 0) {
+        filters.push(list.name);
+      }
     });
     // TODO: missing roles
     // TODO: missing location country
