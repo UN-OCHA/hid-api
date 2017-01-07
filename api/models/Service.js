@@ -162,34 +162,4 @@ module.exports = class Service extends Model {
       }]
     };
   }
-
-  static onSchema (schema) {
-    // Populate lists
-    schema.post('findOne', function (result, next) {
-      let that = this;
-      if (!result) {
-        return next();
-      }
-      result
-        .populate('lists owners')
-        .execPopulate()
-        .then(service => {
-          next();
-        })
-        .catch(err => that.log.error(err));
-    });
-    schema.post('find', function (results, next) {
-      let that = this;
-      async.eachOf(results, function (result, key, cb) {
-        results[key]
-          .populate('lists owners')
-          .execPopulate()
-          .then((r) => {
-            cb();
-          });
-      }, function (err) {
-        next();
-      });
-    });
-  }
 };

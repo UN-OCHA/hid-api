@@ -29,6 +29,10 @@ module.exports = class ServiceController extends Controller{
       criteria.$or = [{'hidden': false}, {'owner': request.params.currentUser._id}, {'owners': request.params.currentUser._id}];
     }
 
+    if (!options.populate) {
+      options.populate = 'lists owners owner';
+    }
+
     // Do not show deleted lists
     criteria.deleted = {$in: [false, null]};
 
@@ -42,6 +46,7 @@ module.exports = class ServiceController extends Controller{
       criteria._id = request.params.id;
       Service
         .findOne(criteria)
+        .populate(options.populate)
         .then(result => {
           if (!result) {
             throw Boom.notFound();
