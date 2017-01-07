@@ -17,6 +17,19 @@ module.exports = class List extends Model {
       methods: {
         getAppUrl: function () {
           return process.env.APP_URL + '/lists/' + this._id;
+        },
+        isVisibleTo: function (user) {
+          // TODO: add visibility === 'inlist'
+          if (user.is_admin ||
+            this.visibility === 'all' ||
+            (this.visibility === 'verified' && user.verified) ||
+            this.owner === user.id ||
+            this.managers.indexOf(user.id) !== -1) {
+            return true;
+          }
+          else {
+            return false;
+          }
         }
       }
     };
