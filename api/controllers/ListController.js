@@ -108,9 +108,10 @@ module.exports = class ListController extends Controller{
             throw Boom.notFound();
           }
 
-          result.isVisibleTo(request.params.currentUser, ListUser, function (out) {
-            result.visible = out;
-            return reply(result);
+          result.isVisibleTo(request.params.currentUser, ListUser, function (visible) {
+            var out = result.toJSON();
+            out.visible = visible;
+            return reply(out);
           });
         })
         .catch(err => { that.app.services.ErrorService.handle(err, reply); });
@@ -126,13 +127,16 @@ module.exports = class ListController extends Controller{
             });
         })
         .then((result) => {
+          var out = [], tmp = {};
           async.each(result.result, function (list, next) {
-            list.isVisibleTo(request.params.currentUser, ListUser, function (out) {
-              list.visible = out;
+            list.isVisibleTo(request.params.currentUser, ListUser, function (visible) {
+              tmp = list.toJSON();
+              tmp.visible = visible;
+              out.push(tmp);
               next();
             });
           }, function (err) {
-            return reply(result.result).header('X-Total-Count', result.number);
+            return reply(out).header('X-Total-Count', result.number);
           });
         })
         .catch((err) => {
