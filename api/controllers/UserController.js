@@ -386,7 +386,7 @@ module.exports = class UserController extends Controller{
 
     let that = this;
 
-    if (request.params.id || !lists.length) {
+    if (request.params.id || !listIds.length) {
       if (request.params.id) {
         criteria = request.params.id;
       }

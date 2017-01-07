@@ -3,6 +3,7 @@
 const Controller = require('trails/controller');
 const Boom = require('boom');
 const _ = require('lodash');
+const async = require('async');
 
 /**
  * @module ListController
@@ -61,6 +62,7 @@ module.exports = class ListController extends Controller{
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
     const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
     const List = this.app.orm.List;
+    const ListUser = this.app.orm.ListUser;
     let response, count;
 
     if (!options.populate) {
@@ -106,32 +108,36 @@ module.exports = class ListController extends Controller{
             throw Boom.notFound();
           }
 
-          var isManager = false;
-          if (result.managers) {
-            isManager = result.managers.filter(function (elt) {
-              return elt._id.toString() === currentUser._id.toString();
-            });
-          }
-          return reply(result);
-
-          if (result.visibility === 'all' ||
-             currentUser.is_admin ||
-             (result.visibility === 'verified' && currentUser.verified) ||
-             (result.visibility === 'me' && (result.owner._id === currentUser._id || isManager.length > 0)) ) {
-               return reply(result);
-           }
-           else {
-             throw Boom.forbidden();
-           }
+          result.isVisibleTo(request.params.currentUser, ListUser, function (out) {
+            result.visible = out;
+            return reply(result);
+          });
         })
         .catch(err => { that.app.services.ErrorService.handle(err, reply); });
     }
     else {
       response = FootprintService.find('list', criteria, options);
       count = FootprintService.count('list', criteria);
-      count.then(number => {
-        reply(response.then(findCallback)).header('X-Total-Count', number);
-      });
+      response
+        .then((result) => {
+          return count
+            .then((number) => {
+              return {result: result, number: number};
+            });
+        })
+        .then((result) => {
+          async.each(result.result, function (list, next) {
+            list.isVisibleTo(request.params.currentUser, ListUser, function (out) {
+              list.visible = out;
+              next();
+            });
+          }, function (err) {
+            return reply(result.result).header('X-Total-Count', result.number);
+          });
+        })
+        .catch((err) => {
+          that.app.services.ErrorService.handle(err, reply);
+        });
     }
   }
 
