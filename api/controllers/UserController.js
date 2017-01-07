@@ -446,21 +446,23 @@ module.exports = class UserController extends Controller{
     else {
       let users = [];
       async.each(lists, function (list, next) {
-        if (list.isVisibleTo(request.params.currentUser)) {
-          ListUser
-            .find({list: list, deleted: criteria.deleted})
-            .then((lus) => {
-              var tmpUsers = [];
-              for (var i = 0; i < lus.length; i++) {
-                tmpUsers.push(lus[i].user);
-              }
-              users.push(tmpUsers);
-              next();
-            });
-        }
-        else {
-          next();
-        }
+        list.isVisibleTo(request.params.currentUser, ListUser, function (out) {
+          if (out === true) {
+            ListUser
+              .find({list: list, deleted: criteria.deleted})
+              .then((lus) => {
+                var tmpUsers = [];
+                for (var i = 0; i < lus.length; i++) {
+                  tmpUsers.push(lus[i].user);
+                }
+                users.push(tmpUsers);
+                next();
+              });
+          }
+          else {
+            next();
+          }
+        });
       }, function (err) {
         if (err) {
           return that._errorHandler(err, reply);

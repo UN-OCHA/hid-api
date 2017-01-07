@@ -18,17 +18,31 @@ module.exports = class List extends Model {
         getAppUrl: function () {
           return process.env.APP_URL + '/lists/' + this._id;
         },
-        isVisibleTo: function (user) {
-          // TODO: add visibility === 'inlist'
+        isVisibleTo: function (user, ListUser, cb) {
           if (user.is_admin ||
             this.visibility === 'all' ||
             (this.visibility === 'verified' && user.verified) ||
             this.owner === user.id ||
             this.managers.indexOf(user.id) !== -1) {
-            return true;
+            return cb(true);
           }
           else {
-            return false;
+            if (this.visibility === 'inlist') {
+              // Is user in list ?
+              ListUser
+                .findOne({user: user._id, list: this._id})
+                .then((lu) => {
+                  if (lu) {
+                    return cb(true);
+                  }
+                  else {
+                    return cb(false);
+                  }
+                });
+            }
+            else {
+              return cb(false);
+            }
           }
         }
       }
