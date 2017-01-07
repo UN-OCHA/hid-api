@@ -1,7 +1,7 @@
-'use strict'
+'use strict';
 
 const Controller = require('trails/controller');
-const Boom = require('boom')
+const Boom = require('boom');
 
 /**
  * @module AuthController
@@ -10,8 +10,8 @@ const Boom = require('boom')
 module.exports = class AuthController extends Controller{
 
   _loginHelper (request, reply) {
-    var email = request.payload.email
-    var password = request.payload.password
+    var email = request.payload.email;
+    var password = request.payload.password;
 
     if (!email || !password) {
       reply(Boom.unauthorized('email and password required'));
@@ -21,7 +21,6 @@ module.exports = class AuthController extends Controller{
       var app = this.app;
       var query = this.app.orm.User.where({ email: email });
       query
-        .populate("favoriteLists operations.list organizations.list organization.list bundles.list lists.list")
         .findOne(function (err, user) {
           if (!user) {
             that.log.info('Could not find user');
@@ -39,14 +38,14 @@ module.exports = class AuthController extends Controller{
           }
 
           if (!user.validPassword(password)) {
-            that.log.info("Wrong password");
+            that.log.info('Wrong password');
             return reply(Boom.unauthorized('invalid email or password'));
           }
           else {
-            user.sanitize()
-            return reply(user)
+            user.sanitize();
+            return reply(user);
           }
-        })
+        });
     }
   }
   /**
@@ -140,7 +139,6 @@ module.exports = class AuthController extends Controller{
     var that = this
     User
       .findOne({_id: cookie.userId})
-      .populate('authorizedClients')
       .exec(function (err, user) {
       var clientId = request.query.client_id,
         scope = request.query.scope;
