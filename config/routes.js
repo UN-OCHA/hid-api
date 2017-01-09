@@ -167,13 +167,19 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/user/{id}/{childAttribute}',
-    handler: 'UserController.checkin'
+    handler: 'ListUserController.checkin'
+  },
+
+  {
+    method: ['PUT', 'PATCH'],
+    path: '/api/v2/user/{id}/{childAttribute}/{checkInId}',
+    handler: 'ListUserController.update'
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}/{childAttribute}/{checkInId}',
-    handler: 'UserController.checkout'
+    handler: 'ListUserController.checkout'
   },
 
   {

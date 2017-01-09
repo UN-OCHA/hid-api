@@ -43,8 +43,6 @@ module.exports = {
     update: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate'],
     destroy: ['AuthPolicy.isAuthenticated', 'UserPolicy.canDestroy'],
     notify: ['AuthPolicy.isAuthenticated'],
-    checkin: ['AuthPolicy.isAuthenticated', 'UserPolicy.canCheckin'],
-    checkout: ['AuthPolicy.isAuthenticated', 'UserPolicy.canCheckout'],
     resetPassword: [ ],
     claimEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canClaim'],
     updatePicture: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],
@@ -56,6 +54,12 @@ module.exports = {
     dropPhone: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],
     setPrimaryPhone: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],
     setPrimaryOrganization: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate']
+  },
+
+  ListUserController: {
+    checkin: ['AuthPolicy.isAuthenticated', 'UserPolicy.canCheckin'],
+    checkout: ['AuthPolicy.isAuthenticated', 'UserPolicy.canCheckout'],
+    update: ['AuthPolicy.isAuthenticated']
   },
 
   NotificationController: {
