@@ -362,7 +362,7 @@ module.exports = class User extends Model {
       verified: {
         type: Boolean,
         default: false,
-        adminOnly: true
+        managerOnly: true
       },
       verified_by: {
         type: Schema.ObjectId,
@@ -473,7 +473,7 @@ module.exports = class User extends Model {
       // TODO: Verifies that roles belong to hrinfo functional roles
       roles: {
         type: Array,
-        adminOnly: true,
+        managerOnly: true,
         validate: {
           validator: function (v) {
             if (v.length) {

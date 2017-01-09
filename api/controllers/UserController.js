@@ -22,6 +22,10 @@ module.exports = class UserController extends Controller{
     return this._getSchemaAttributes('adminOnlyAttributes', 'adminOnly');
   }
 
+  _getManagerOnlyAttributes () {
+    return this._getSchemaAttributes('managerOnlyAttributes', 'managerOnly');
+  }
+
   _getReadonlyAttributes () {
     return this._getSchemaAttributes('readonlyAttributes', 'readonly');
   }
@@ -42,11 +46,12 @@ module.exports = class UserController extends Controller{
 
   _removeForbiddenAttributes (request) {
     var forbiddenAttributes = [];
+    forbiddenAttributes = childAttributes.concat(this._getReadonlyAttributes());
     if (!request.params.currentUser || !request.params.currentUser.is_admin) {
-      forbiddenAttributes = childAttributes.concat(this._getReadonlyAttributes(), this._getAdminOnlyAttributes());
+      forbiddenAttributes = forbiddenAttributes.concat(this._getAdminOnlyAttributes());
     }
-    else {
-      forbiddenAttributes = childAttributes.concat(this._getReadonlyAttributes());
+    if (!request.params.currentUser || (!request.params.currentUser.is_admin && !request.params.currentUser.isManager)) {
+      forbiddenAttributes = forbiddenAttributes.concat(this._getManagerOnlyAttributes());
     }
     // Do not allow forbiddenAttributes to be updated directly
     for (var i = 0, len = forbiddenAttributes.length; i < len; i++) {
@@ -90,11 +95,10 @@ module.exports = class UserController extends Controller{
 
     this._removeForbiddenAttributes(request);
 
-    if (request.params.currentUser) {
-      request.payload.createdBy = request.params.currentUser._id;
-    }
-    // If an orphan is being created, do not expire
     if (request.params.currentUser && registrationType === '') {
+      // Creating an orphan user
+      request.payload.createdBy = request.params.currentUser._id;
+      // If an orphan is being created, do not expire
       request.payload.expires = new Date(0, 0, 1, 0, 0, 0);
     }
 
@@ -178,7 +182,7 @@ module.exports = class UserController extends Controller{
         });
     }
     else {
-      // Create user
+      // Create ghost user
       that._createHelper(request, reply);
     }
   }

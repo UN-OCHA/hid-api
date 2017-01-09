@@ -78,67 +78,12 @@ module.exports = class AuthPolicy extends Policy {
   }
 
   isAdmin (request, reply) {
-    this.isAuthenticated(request, function (err) {
-      if (err && err.isBoom) {
-        return reply(err);
-      }
-      if (!request.params.currentUser) {
-        return reply(Boom.unauthorized('Current user was not set'));
-      }
-      if (!request.params.currentUser.is_admin) {
-        return reply(Boom.forbidden('You need to be an admin'));
-      }
-      reply()
-    });
+    if (!request.params.currentUser.is_admin) {
+      return reply(Boom.forbidden('You need to be an admin'));
+    }
+    reply();
   }
 
-  isAdminOrCurrent (request, reply) {
-    this.isAuthenticated(request, function (err) {
-      if (err && err.isBoom) {
-        return reply(err);
-      }
-      if (!request.params.currentUser) {
-        return reply(Boom.unauthorized('Current user was not set'));
-      }
-      if (!request.params.currentUser.is_admin && request.params.currentUser.id != request.params.id) {
-        return reply(Boom.unauthorized('You need to be an admin or the current user'));
-      }
-      reply();
-    });
-  }
-
-  isAdminOrServiceOwner (request, reply) {
-    var that = this;
-    this.isAuthenticated(request, function (err) {
-      if (err && err.isBoom) {
-        return reply (err);
-      }
-      if (!request.params.currentUser) {
-        return reply(Boom.unauthorized('Current user was not set'));
-      }
-      if (request.params.currentUser.is_admin) {
-        return reply();
-      }
-      that.app.orm.Service
-        .findOne({_id: request.params.id})
-        .then((srv) => {
-          if (!srv) {
-            throw Boom.notFound();
-          }
-          console.log(srv);
-          //if (request.params.currentUser.id === srv.owner.id || srv.ownersIndex(request.params.currentUser) !== -1) {
-          if (srv.ownersIndex(request.params.currentUser) !== -1) {
-            return reply();
-          }
-          else {
-            throw Boom.forbidden();
-          }
-        })
-        .catch(err => {
-          that.app.services.ErrorService.handle(err, reply);
-        });
-    });
-  }
 
 
 };

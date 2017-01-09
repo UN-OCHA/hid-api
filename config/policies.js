@@ -14,48 +14,61 @@
 
 module.exports = {
 
-  FootprintController: ['AuthPolicy.isAuthenticated'],
-
-  ClientController: ['AuthPolicy.isAdmin'],
+  ClientController: {
+    create: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
+    find: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
+    update: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
+    destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin']
+  },
 
   ServiceController: {
     create: ['AuthPolicy.isAuthenticated'],
     find: ['AuthPolicy.isAuthenticated'],
-    update: ['AuthPolicy.isAdminOrServiceOwner'],
-    destroy: ['AuthPolicy.isAdminOrServiceOwner'],
+    update: ['AuthPolicy.isAuthenticated', 'ServicePolicy.canUpdate'],
+    destroy: ['AuthPolicy.isAuthenticated', 'ServicePolicy.canDestroy'],
     mailchimpLists: ['AuthPolicy.isAuthenticated'],
     googleGroups: ['AuthPolicy.isAuthenticated'],
-    subscribe: ['AuthPolicy.isAdminOrCurrent'],
-    unsubscribe: ['AuthPolicy.isAdminOrCurrent']
+    subscribe: ['AuthPolicy.isAuthenticated', 'ServicePolicy.canSubscribe'],
+    unsubscribe: ['AuthPolicy.isAuthenticated', 'ServicePolicy.canUnsubscribe']
   },
 
-  ServiceCredentialsController: ['AuthPolicy.isAuthenticated'],
+  ServiceCredentialsController: {
+    find: ['AuthPolicy.isAuthenticated']
+  },
 
   UserController: {
     showAccount: [ 'AuthPolicy.isAuthenticated'],
-    create: [ 'AuthPolicy.isAuthenticated' ],
+    create: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canCreate' ],
     find: ['AuthPolicy.isAuthenticated'],
-    update: ['AuthPolicy.isAdminOrCurrent'],
-    destroy: ['AuthPolicy.isAdminOrCurrent'],
+    update: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate'],
+    destroy: ['AuthPolicy.isAuthenticated', 'UserPolicy.canDestroy'],
     notify: ['AuthPolicy.isAuthenticated'],
-    checkin: ['AuthPolicy.isAdminOrCurrent'],
-    checkout: ['AuthPolicy.isAdminOrCurrent'],
+    checkin: ['AuthPolicy.isAuthenticated', 'UserPolicy.canCheckin'],
+    checkout: ['AuthPolicy.isAuthenticated', 'UserPolicy.canCheckout'],
     resetPassword: [ ],
-    claimEmail: [ 'AuthPolicy.isAdminOrCurrent'],
-    updatePicture: [ 'AuthPolicy.isAdminOrCurrent' ],
-    addEmail: [ 'AuthPolicy.isAdminOrCurrent' ],
-    setPrimaryEmail: [ 'AuthPolicy.isAdminOrCurrent' ],
+    claimEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canClaim'],
+    updatePicture: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],
+    addEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],
+    setPrimaryEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],
     validateEmail: [ ],
-    dropEmail: [ 'AuthPolicy.isAdminOrCurrent' ],
-    addPhone: [ 'AuthPolicy.isAdminOrCurrent' ],
-    dropPhone: [ 'AuthPolicy.isAdminOrCurrent' ],
-    setPrimaryPhone: ['AuthPolicy.isAdminOrCurrent' ],
-    setPrimaryOrganization: ['AuthPolicy.isAdminOrCurrent']
+    dropEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],
+    addPhone: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],
+    dropPhone: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],
+    setPrimaryPhone: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],
+    setPrimaryOrganization: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate']
   },
 
-  NotificationController: ['AuthPolicy.isAuthenticated'],
+  NotificationController: {
+    find: ['AuthPolicy.isAuthenticated'],
+    update: ['AuthPolicy.isAuthenticated']
+  },
 
-  ListController: ['AuthPolicy.isAuthenticated'],
+  ListController: {
+    create: ['AuthPolicy.isAuthenticated'],
+    find: ['AuthPolicy.isAuthenticated'],
+    update: ['AuthPolicy.isAuthenticated'],
+    destroy: ['AuthPolicy.isAuthenticated']
+  },
 
   DefaultController: {
     info: [ ]
