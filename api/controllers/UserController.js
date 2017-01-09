@@ -444,15 +444,20 @@ module.exports = class UserController extends Controller{
         .catch((err) => { that._errorHandler(err, reply); });
     }
     else {
-      let users = [];
+      let users = [], luCriteria = {};
       List
         .find({_id: {$in: listIds}})
         .then((lists) => {
           async.each(lists, function (list, next) {
             list.isVisibleTo(request.params.currentUser, ListUser, function (out) {
               if (out === true) {
+                luCriteria.list = list;
+                luCriteria.deleted = false;
+                if (!list.isOwner(request.params.currentUser)) {
+                  luCriteria.pending = false;
+                }
                 ListUser
-                  .find({list: list, deleted: criteria.deleted})
+                  .find(luCriteria)
                   .then((lus) => {
                     var tmpUsers = [];
                     for (var i = 0; i < lus.length; i++) {

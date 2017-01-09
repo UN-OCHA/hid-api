@@ -44,6 +44,16 @@ module.exports = class List extends Model {
               return cb(false);
             }
           }
+        },
+        isOwner: function (user) {
+          if (user.is_admin ||
+            this.owner === user.id ||
+            this.managers.indexOf(user.id) !== -1) {
+              return true;
+          }
+          else {
+            return false;
+          }
         }
       }
     };
