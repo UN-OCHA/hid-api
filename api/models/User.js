@@ -508,6 +508,11 @@ module.exports = class User extends Model {
         default: false,
         adminOnly: true
       },
+      isManager: {
+        type: Boolean,
+        default: false,
+        adminOnly: true
+      },
       is_orphan: {
         type: Boolean,
         default: false,
