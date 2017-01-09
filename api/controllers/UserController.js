@@ -715,6 +715,23 @@ module.exports = class UserController extends Controller{
           });
       })
       .then((result) => {
+        let record = result.user,
+          list = result.list;
+        if (childAttribute !== 'organization') {
+          if (!record[childAttribute]) {
+            record[childAttribute] = [];
+          }
+
+          // Make sure user is not already checked in this list
+          for (var i = 0, len = record[childAttribute].length; i < len; i++) {
+            if (record[childAttribute][i].list.equals(list._id)) {
+              throw new Boom.badRequest('User is already checked in');
+            }
+          }
+        }
+        return result;
+      })
+      .then((result) => {
         // TODO: make sure user is allowed to join this list
         that.log.debug('Saving new checkin');
         payload.user = result.user._id;
@@ -731,13 +748,6 @@ module.exports = class UserController extends Controller{
         if (childAttribute !== 'organization') {
           if (!record[childAttribute]) {
             record[childAttribute] = [];
-          }
-
-          // Make sure user is not already checked in this list
-          for (var i = 0, len = record[childAttribute].length; i < len; i++) {
-            if (record[childAttribute][i].list.equals(list._id)) {
-              throw new Boom.badRequest('User is already checked in');
-            }
           }
 
           record[childAttribute].push(result.listUser);
