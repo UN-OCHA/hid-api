@@ -27,27 +27,29 @@ var importLists = function (app) {
 
   // Notify users of a new disaster
   var _notifyNewDisaster = function (list) {
-    var operation = {};
-    for (var i = 0, len = list.metadata.operation.length; i < len; i++) {
-      operation = list.metadata.operation[i];
-      List
-        .findOne({remote_id: operation.id})
-        .then((list) => {
-          if (!list) {
-            throw new Error('List not found');
-          }
-          return User
-            .find({'operations.list': list._id})
-            .then((users) => {
-              return {list: list, users: users};
-            });
-        })
-        .then((results) => {
-          const list = results.list, users = results.users;
-          var notification = {type: 'new_disaster', params: {list: list}};
-          NotificationService.sendMultiple(users, notification, () => { });
-        })
-        .catch((err) => {});
+    if (list.metadata.operation && list.metadata.operation.length) {
+      var operation = {};
+      for (var i = 0, len = list.metadata.operation.length; i < len; i++) {
+        operation = list.metadata.operation[i];
+        List
+          .findOne({remote_id: operation.id})
+          .then((list) => {
+            if (!list) {
+              throw new Error('List not found');
+            }
+            return User
+              .find({'operations.list': list._id})
+              .then((users) => {
+                return {list: list, users: users};
+              });
+          })
+          .then((results) => {
+            const list = results.list, users = results.users;
+            var notification = {type: 'new_disaster', params: {list: list}};
+            NotificationService.sendMultiple(users, notification, () => { });
+          })
+          .catch((err) => {});
+      }
     }
   };
 
@@ -134,6 +136,9 @@ var importLists = function (app) {
                     // Do not add disasters more than 2 years old
                     if (listType !== 'disaster' || (listType === 'disaster' && now - item.created < 2 * 365 * 24 * 3600)) {
                       _createList(listType, item, cb);
+                    }
+                    else {
+                      cb();
                     }
                   }, function (err) {
                     setTimeout(function() {
