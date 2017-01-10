@@ -37,14 +37,6 @@ module.exports = class UserPolicy extends Policy {
     reply();
   }
 
-  canCheckin (request, reply) {
-    this.canUpdate(request, reply);
-  }
-
-  canCheckout(request, reply) {
-    this.canUpdate(request, reply);
-  }
-
   canClaim (request, reply) {
     this.canUpdate(request, reply);
   }

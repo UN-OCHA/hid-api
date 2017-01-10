@@ -57,9 +57,9 @@ module.exports = {
   },
 
   ListUserController: {
-    checkin: ['AuthPolicy.isAuthenticated', 'UserPolicy.canCheckin'],
-    checkout: ['AuthPolicy.isAuthenticated', 'UserPolicy.canCheckout'],
-    update: ['AuthPolicy.isAuthenticated']
+    checkin: ['AuthPolicy.isAuthenticated', 'ListUserPolicy.canCheckin'],
+    checkout: ['AuthPolicy.isAuthenticated', 'ListUserPolicy.canCheckout'],
+    update: ['AuthPolicy.isAuthenticated', 'ListUserPolicy.canUpdate']
   },
 
   NotificationController: {
