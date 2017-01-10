@@ -165,10 +165,15 @@ module.exports = class ListUserController extends Controller{
 
     var that = this;
     ListUser
-      .findOneAndUpdate({_id: request.params.checkInId}, request.payload, options)
+      .update({ _id: request.params.checkInId }, request.payload)
       .exec()
-      .then((doc) => {
-        return reply(doc);
+      .then(() => {
+        return ListUser
+          .findOne({ _id: request.params.checkInId })
+          .exec()
+          .then((lu) => {
+            return reply(lu);
+          });
       })
       .catch((err) => {
         that.app.services.ErrorService.handle(err, reply);
