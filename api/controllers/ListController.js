@@ -54,6 +54,10 @@ module.exports = class ListController extends Controller{
     const FootprintController = this.app.controllers.FootprintController;
     this._removeForbiddenAttributes(request);
     request.payload.owner = request.params.currentUser._id;
+    if (!request.payload.managers) {
+      request.payload.managers = [];
+    }
+    request.payload.managers.push(request.params.currentUser._id);
     FootprintController.create(request, reply);
   }
 
