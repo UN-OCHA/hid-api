@@ -26,11 +26,11 @@ module.exports = class ServiceController extends Controller{
     const Service = this.app.orm.Service;
 
     if (!request.params.currentUser.is_admin) {
-      criteria.$or = [{'hidden': false}, {'owner': request.params.currentUser._id}, {'owners': request.params.currentUser._id}];
+      criteria.$or = [{'hidden': false}, {'owner': request.params.currentUser._id}, {'managers': request.params.currentUser._id}];
     }
 
     if (!options.populate) {
-      options.populate = 'lists owners owner';
+      options.populate = 'lists managers owner';
     }
 
     // Do not show deleted lists

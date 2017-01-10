@@ -19,7 +19,7 @@ module.exports = class ServicePolicy extends Policy {
         if (!srv) {
           throw Boom.notFound();
         }
-        if (srv.ownersIndex(request.params.currentUser) !== -1) {
+        if (srv.managersIndex(request.params.currentUser) !== -1) {
           return reply();
         }
         else {
