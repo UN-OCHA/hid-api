@@ -168,7 +168,7 @@ module.exports = class ListUserController extends Controller{
       .findOneAndUpdate({_id: request.params.checkInId}, request.payload, options)
       .exec()
       .then((doc) => {
-        return reply(request.payload);
+        return reply(doc);
       })
       .catch((err) => {
         that.app.services.ErrorService.handle(err, reply);
