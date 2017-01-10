@@ -12,6 +12,7 @@ module.exports = class ListUserPolicy extends Policy {
     if (!request.params.currentUser.is_admin && !request.params.currentUser.isManager && request.params.currentUser.id !== request.params.id) {
       return reply(Boom.unauthorized('You need to be an admin or a manager or the current user'));
     }
+    // TODO: if current user make sure he/she can check in this list
     reply();
   }
 

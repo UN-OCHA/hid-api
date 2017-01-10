@@ -77,7 +77,6 @@ module.exports = class ListUserController extends Controller{
         return result;
       })
       .then((result) => {
-        // TODO: make sure user is allowed to join this list
         that.log.debug('Saving new checkin');
         payload.user = result.user._id;
         return ListUser
