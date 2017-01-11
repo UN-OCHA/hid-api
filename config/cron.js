@@ -114,7 +114,7 @@ var importLists = function (app) {
           // Parse while there are pages
           async.doWhilst(function (nextPage) {
             path = '/api/v1.0/' + listType + 's?page=' + pageNumber + '&filter[created][value]=' + lastPull + '&filter[created][operator]=>';
-            if (listType === 'organization') {
+            if (listType === 'organization' || listType === 'functional_role') {
               path = '/api/v1.0/' + listType + 's?page=' + pageNumber;
             }
             https.get({
