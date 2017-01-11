@@ -222,13 +222,13 @@ module.exports = class ServiceController extends Controller{
         }
         else {
           return service.subscribeGoogleGroup(results.user, results.creds, function (err, response) {
-            if (err) {
-              throw new Error(err);
-            }
-            else {
+            if (!err || (err && err.code === 409)) {
               user.subscriptions.push(service);
               user.save();
               return reply(user);
+            }
+            else {
+              that.app.services.ErrorService.handle(err, reply);
             }
           });
         }
