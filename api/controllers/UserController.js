@@ -10,7 +10,7 @@ const http = require('http');
 const moment = require('moment');
 const async = require('async');
 const _ = require('lodash');
-const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'roles'];
+const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles'];
 
 /**
  * @module UserController
@@ -364,10 +364,6 @@ module.exports = class UserController extends Controller{
     // Hide unconfirmed users
     if (request.params.currentUser && !request.params.currentUser.is_admin) {
       criteria.email_verified = true;
-    }
-
-    if (criteria['roles.id']) {
-      criteria['roles.id'] = parseInt(criteria['roles.id']);
     }
 
     if (criteria.name) {

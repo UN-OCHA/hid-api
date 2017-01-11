@@ -2,7 +2,7 @@
 
 const Controller = require('trails/controller');
 const Boom = require('boom');
-const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'roles'];
+const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles'];
 
 /**
  * @module ListUserController
@@ -37,15 +37,8 @@ module.exports = class ListUserController extends Controller{
       .findOne({ '_id': payload.list })
       .then((list) => {
         // Check that the list added corresponds to the right attribute
-        if (childAttribute === 'roles') {
-          if (list.type !== 'functional_role') {
-            throw Boom.badRequest('Wrong list type');
-          }
-        }
-        else {
-          if (childAttribute !== list.type + 's' && childAttribute !== list.type) {
-            throw Boom.badRequest('Wrong list type');
-          }
+        if (childAttribute !== list.type + 's' && childAttribute !== list.type) {
+          throw Boom.badRequest('Wrong list type');
         }
 
         //Set the proper pending attribute depending on list type
@@ -226,9 +219,6 @@ module.exports = class ListUserController extends Controller{
         var listType = result.list.type,
           user = result.user,
           found = false;
-        if (listType === 'functional_role') {
-          listType = 'role';
-        }
         for (var i = 0; i < user[listType + 's'].length; i++) {
           if (user[listType + 's'][i]._id.toString() === checkInId) {
             found = i;

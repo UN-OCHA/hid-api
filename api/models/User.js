@@ -19,7 +19,7 @@ const userPopulate1 = [
   {path: 'authorizedClients'},
   {path: 'verified_by', select: 'name'},
   {path: 'subscriptions'},
-  {path: 'roles'}
+  {path: 'functional_roles'}
 ];
 const userPopulate2= [
   {path: 'operations.list', model: 'List'},
@@ -27,7 +27,7 @@ const userPopulate2= [
   {path: 'bundles.list', model: 'List'},
   {path: 'organizations.list', model: 'List'},
   {path: 'lists.list', model: 'List'},
-  {path: 'roles.list', model: 'List'}
+  {path: 'functional_roles.list', model: 'List'}
 ];
 
 /**
@@ -472,7 +472,7 @@ module.exports = class User extends Model {
       job_titles: {
         type: Array
       },
-      roles: [{
+      functional_roles: [{
         type: Schema.ObjectId,
         ref: 'ListUser'
       }],
