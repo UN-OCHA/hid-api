@@ -470,28 +470,10 @@ module.exports = class User extends Model {
       job_titles: {
         type: Array
       },
-      // TODO: Verifies that roles belong to hrinfo functional roles
-      roles: {
-        type: Array,
-        managerOnly: true,
-        validate: {
-          validator: function (v) {
-            if (v.length) {
-              var out = true;
-              for (var i = 0, len = v.length; i < len; i++) {
-                if (!v[i].id || !v[i].label || !v[i].self) {
-                  out = false;
-                }
-              }
-              return out;
-            }
-            else {
-              return true;
-            }
-          },
-          message: 'Invalid role found'
-        }
-      },
+      roles: [{
+        type: Schema.ObjectId,
+        ref: 'ListUser'
+      }],
       status: {
         type: String
       },
