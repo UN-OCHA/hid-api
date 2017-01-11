@@ -20,7 +20,7 @@ var importLists = function (app) {
   const List = app.orm.list;
   const User = app.orm.user;
   const NotificationService = app.services.NotificationService;
-  const listTypes = ['operation', 'bundle', 'disaster', 'organization'];
+  const listTypes = ['operation', 'bundle', 'disaster', 'organization', 'functional_role'];
   const now = Math.floor(Date.now() / 1000);
   //const Cache = app.services.CacheService.getCaches(['local-cache'])
   var hasNextPage = false, pageNumber = 1, path = '';

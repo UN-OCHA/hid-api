@@ -79,7 +79,7 @@ module.exports = class List extends Model {
 
       type: {
         type: String,
-        enum: ['operation', 'bundle', 'disaster', 'list', 'organization'],
+        enum: ['operation', 'bundle', 'disaster', 'list', 'organization', 'functional_role'],
         required: [true, 'Type is required']
       },
 
