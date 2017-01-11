@@ -579,6 +579,11 @@ module.exports = class UserController extends Controller{
       delete request.payload.password;
     }
 
+    // Make sure user is verified if he is an admin or a manager
+    if (request.payload.is_admin || request.payload.isManager) {
+      request.payload.verified = true;
+    }
+
     var that = this;
     if ((request.payload.old_password && request.payload.new_password) || request.payload.verified) {
       this.log.debug('Updating user password or user is verified');
