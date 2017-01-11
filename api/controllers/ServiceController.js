@@ -242,7 +242,7 @@ module.exports = class ServiceController extends Controller{
         }
       })
       .catch(err => {
-        if (err.title === 'Member Exists') {
+        if (err.title && err.title === 'Member Exists') {
           // Member already exists in mailchimp
           user.subscriptions.push(service);
           user.save();
