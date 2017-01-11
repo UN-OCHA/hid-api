@@ -18,14 +18,16 @@ const userPopulate1 = [
   {path: 'lists'},
   {path: 'authorizedClients'},
   {path: 'verified_by', select: 'name'},
-  {path: 'subscriptions'}
+  {path: 'subscriptions'},
+  {path: 'roles'}
 ];
 const userPopulate2= [
   {path: 'operations.list', model: 'List'},
   {path: 'disasters.list', model: 'List'},
   {path: 'bundles.list', model: 'List'},
   {path: 'organizations.list', model: 'List'},
-  {path: 'lists.list', model: 'List'}
+  {path: 'lists.list', model: 'List'},
+  {path: 'roles.list', model: 'List'}
 ];
 
 /**

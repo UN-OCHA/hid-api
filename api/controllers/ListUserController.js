@@ -37,8 +37,15 @@ module.exports = class ListUserController extends Controller{
       .findOne({ '_id': payload.list })
       .then((list) => {
         // Check that the list added corresponds to the right attribute
-        if (childAttribute !== list.type + 's' && childAttribute !== list.type) {
-          throw new Boom.badRequest('Wrong list type');
+        if (childAttribute === 'roles') {
+          if (list.type !== 'functional_role') {
+            throw Boom.badRequest('Wrong list type');
+          }
+        }
+        else {
+          if (childAttribute !== list.type + 's' && childAttribute !== list.type) {
+            throw Boom.badRequest('Wrong list type');
+          }
         }
 
         //Set the proper pending attribute depending on list type
@@ -54,7 +61,7 @@ module.exports = class ListUserController extends Controller{
           .findOne({ '_id': userId })
           .then((record) => {
             if (!record) {
-              throw new Boom.badRequest('User not found');
+              throw Boom.badRequest('User not found');
             }
             return {list: list, user: record};
           });
@@ -70,7 +77,7 @@ module.exports = class ListUserController extends Controller{
           // Make sure user is not already checked in this list
           for (var i = 0, len = record[childAttribute].length; i < len; i++) {
             if (record[childAttribute][i].list.equals(list._id)) {
-              throw new Boom.badRequest('User is already checked in');
+              throw Boom.badRequest('User is already checked in');
             }
           }
         }
@@ -151,7 +158,9 @@ module.exports = class ListUserController extends Controller{
           }, () => { });
         }
       })
-      .catch(err => { that._errorHandler(err, reply); });
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
   }
 
   update (request, reply) {
@@ -194,7 +203,7 @@ module.exports = class ListUserController extends Controller{
       'options =', options);
 
     if (childAttributes.indexOf(childAttribute) === -1) {
-      return this._errorHandler(Boom.notFound(), reply);
+      return reply(Boom.notFound());
     }
 
     var that = this;
@@ -203,7 +212,7 @@ module.exports = class ListUserController extends Controller{
       .populate('list user')
       .then(record => {
         if (!record) {
-          throw new Error(Boom.notFound());
+          throw Boom.notFound();
         }
         // Set deleted to true
         record.deleted = true;
@@ -217,6 +226,9 @@ module.exports = class ListUserController extends Controller{
         var listType = result.list.type,
           user = result.user,
           found = false;
+        if (listType === 'functional_role') {
+          listType = 'role';
+        }
         for (var i = 0; i < user[listType + 's'].length; i++) {
           if (user[listType + 's'][i]._id.toString() === checkInId) {
             found = i;
@@ -252,7 +264,7 @@ module.exports = class ListUserController extends Controller{
         });
         return result;
       })
-      .catch(err => { that._errorHandler(err, reply); });
+      .catch(err => { that.app.services.ErrorService.handle(err, reply); });
   }
 
 };
