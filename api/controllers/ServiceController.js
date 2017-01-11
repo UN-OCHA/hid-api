@@ -223,7 +223,7 @@ module.exports = class ServiceController extends Controller{
         else {
           return service.subscribeGoogleGroup(results.user, results.creds, function (err, response) {
             if (err) {
-              throw err;
+              throw new Error(err);
             }
             else {
               user.subscriptions.push(service);
