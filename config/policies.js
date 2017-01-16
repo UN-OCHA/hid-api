@@ -68,10 +68,10 @@ module.exports = {
   },
 
   ListController: {
-    create: ['AuthPolicy.isAuthenticated'],
+    create: ['AuthPolicy.isAuthenticated', 'ListPolicy.canCreate'],
     find: ['AuthPolicy.isAuthenticated'],
-    update: ['AuthPolicy.isAuthenticated'],
-    destroy: ['AuthPolicy.isAuthenticated']
+    update: ['AuthPolicy.isAuthenticated', 'ListPolicy.canUpdate'],
+    destroy: ['AuthPolicy.isAuthenticated', 'ListPolicy.canDestroy']
   },
 
   DefaultController: {

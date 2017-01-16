@@ -9,15 +9,47 @@ const Boom = require('boom');
  */
 module.exports = class ListUserPolicy extends Policy {
   canCheckin (request, reply) {
-    if (!request.params.currentUser.is_admin && !request.params.currentUser.isManager && request.params.currentUser.id !== request.params.id) {
-      return reply(Boom.unauthorized('You need to be an admin or a manager or the current user'));
+    const ListUser = this.app.orm.ListUser;
+    if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
+      return reply();
     }
-    // TODO: if current user make sure he/she can check in this list
-    reply();
+    let that = this;
+    ListUser
+      .findOne({_id: request.params.checkInId})
+      .populate('list user')
+      .then((lu) => {
+        if (lu.list.isOwner(request.params.currentUser) || lu.list.joinability !== 'private') {
+          return reply();
+        }
+        else {
+          return reply(Boom.unauthorized('You are not authorized to do this'));
+        }
+      })
+      .catch((err) => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
   }
 
   canCheckout(request, reply) {
-    this.canCheckin(request, reply);
+    const ListUser = this.app.orm.ListUser;
+    if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
+      return reply();
+    }
+    let that = this;
+    ListUser
+      .findOne({_id: request.params.checkInId})
+      .populate('list user')
+      .then((lu) => {
+        if (lu.list.isOwner(request.params.currentUser) || request.params.currentUser.id === request.params.id) {
+          return reply();
+        }
+        else {
+          return reply(Boom.unauthorized('You are not authorized to do this'));
+        }
+      })
+      .catch((err) => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
   }
 
   canUpdate (request, reply) {

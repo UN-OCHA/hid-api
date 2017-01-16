@@ -17,14 +17,49 @@ module.exports = class ListPolicy extends Policy {
 
   canUpdate (request, reply) {
     const List = this.app.orm.List;
-    /*if (!request.params.currentUser.is_admin && !request.params.currentUser.isManager && request.params.currentUser.id !== request.params.id) {
-      return reply(Boom.unauthorized('You need to be an admin or a manager or the current user'));
-    }
-    // TODO: if current user make sure he/she can check in this list
-    reply();*/
+    let that = this;
+    List
+      .findOne({_id: request.params.id})
+      .populate('owner managers')
+      .then((list) => {
+        if (request.payload.type && request.payload.type !== list.type) {
+          return reply(Boom.unauthorized('You are not allowed to modify the list type'));
+        }
+
+        if (request.params.currentUser.is_admin || request.params.currentUser.isManager || list.isOwner(request.params.currentUser)) {
+          return reply();
+        }
+        else {
+          return reply(Boom.unauthorized('You are not allowed to update this list'));
+        }
+
+      })
+      .catch((err) => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
   }
 
   canDestroy (request, reply) {
+    if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
+      return reply();
+    }
+    const List = this.app.orm.List;
+    let that = this;
+    List
+      .findOne({_id: request.params.id})
+      .populate('owner managers')
+      .then((list) => {
+        if (list.isOwner(request.params.currentUser)) {
+          return reply();
+        }
+        else {
+          return reply(Boom.unauthorized('You are not allowed to delete this list'));
+        }
+
+      })
+      .catch((err) => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
 
   }
-};
+}
