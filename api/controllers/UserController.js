@@ -845,6 +845,8 @@ module.exports = class UserController extends Controller{
     const Model = this.app.orm['user']
     const userId = request.params.id
 
+    this.log.debug('[UserController] Updating picture ');
+
     var data = request.payload;
     if (data.file) {
       Model
