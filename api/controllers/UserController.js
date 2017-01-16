@@ -357,7 +357,7 @@ module.exports = class UserController extends Controller{
     }
 
     // Hide unconfirmed users
-    if (request.params.currentUser && !request.params.currentUser.is_admin) {
+    if (request.params.currentUser && !request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
       criteria.email_verified = true;
     }
 

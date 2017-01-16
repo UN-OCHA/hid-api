@@ -174,6 +174,7 @@ module.exports = class ListUserController extends Controller{
           .exec()
           .then((lu) => {
             return reply(lu);
+            // TODO: add a notification to inform user that his checkin is not pending anymore
           });
       })
       .catch((err) => {
