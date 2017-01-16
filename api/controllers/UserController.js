@@ -147,11 +147,6 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('[UserController] (create) payload =', request.payload, 'options =', options);
 
-    // Makes sure only admins or anonymous users can create users
-    if (request.params.currentUser && !request.params.currentUser.is_admin) {
-      return reply(Boom.forbidden('You need to be an administrator'));
-    }
-
     if (!request.payload.app_verify_url) {
       return reply(Boom.badRequest('Missing app_verify_url'));
     }
