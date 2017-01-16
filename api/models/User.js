@@ -26,6 +26,7 @@ const userPopulate2= [
   {path: 'disasters.list', model: 'List'},
   {path: 'bundles.list', model: 'List'},
   {path: 'organizations.list', model: 'List'},
+  {path: 'organization.list', model: 'List'},
   {path: 'lists.list', model: 'List'},
   {path: 'functional_roles.list', model: 'List'}
 ];
