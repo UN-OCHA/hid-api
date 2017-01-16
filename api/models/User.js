@@ -265,6 +265,7 @@ module.exports = class User extends Model {
         lowercase: true,
         trim: true,
         unique: true,
+        sparse: true,
         match: /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/
       },
       validated: {
