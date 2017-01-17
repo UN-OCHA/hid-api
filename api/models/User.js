@@ -277,7 +277,7 @@ module.exports = class User extends Model {
     const phoneSchema = new Schema({
       type: {
         type: String,
-        enum: ['Landline', 'Mobile']
+        enum: ['Landline', 'Mobile', 'Satellite']
       },
       number: {
         type: String,
