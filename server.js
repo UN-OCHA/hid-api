@@ -10,6 +10,10 @@ const app = require('./');
 const TrailsApp = require('trails');
 const server = new TrailsApp(app);
 
+if (process.env.NEW_RELIC_APP_NAME) {
+  require('newrelic');
+}
+
 server
   .start()
   .catch(err => {
