@@ -2,6 +2,7 @@
 
 const Controller = require('trails/controller');
 const Boom = require('boom');
+const _ = require('lodash');
 const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles'];
 
 /**
@@ -157,28 +158,33 @@ module.exports = class ListUserController extends Controller{
   }
 
   update (request, reply) {
-    const FootprintService = this.app.services.FootprintService;
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
-    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
     const ListUser = this.app.orm.ListUser;
+    const NotificationService = this.app.services.NotificationService;
 
     this.log.debug('[ListUserController] (update) model = list, criteria =', request.query, request.params.checkInId, ', values = ', request.payload);
 
     var that = this;
     ListUser
-      .update({ _id: request.params.checkInId }, request.payload)
-      .exec()
-      .then(() => {
+      .findOne({_id: request.params.checkInId})
+      .populate('list user')
+      .then((lu) => {
+        console.log(lu);
+        if (!lu) {
+          return reply(Boom.notFound());
+        }
         return ListUser
-          .findOne({ _id: request.params.checkInId })
+          .update({_id: request.params.checkInId}, request.payload)
           .exec()
-          .then((lu) => {
-            return reply(lu);
-            // TODO: add a notification to inform user that his checkin is not pending anymore
+          .then(() => {
+            let out = _.cloneDeep(lu);
+            _.assign(out, request.payload);
+            reply(out);
+            if (lu.pending === true && request.payload.pending === false) {
+              // Send a notification to inform user that his checkin is not pending anymore
+              var notification = {type: 'approved_checkin', user: lu.user, createdBy: request.params.currentUser, params: { list: lu.list}};
+              NotificationService.send(notification, () => {});
+            }
           });
-      })
-      .catch((err) => {
-        that.app.services.ErrorService.handle(err, reply);
       });
   }
 

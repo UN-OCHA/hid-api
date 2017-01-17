@@ -9,16 +9,18 @@ const Boom = require('boom');
  */
 module.exports = class ListUserPolicy extends Policy {
   canCheckin (request, reply) {
-    const ListUser = this.app.orm.ListUser;
+    const List = this.app.orm.List;
     if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
       return reply();
     }
     let that = this;
-    ListUser
-      .findOne({_id: request.params.checkInId})
-      .populate('list user')
-      .then((lu) => {
-        if (lu.list.isOwner(request.params.currentUser) || lu.list.joinability !== 'private') {
+    List
+      .findOne({_id: request.payload.list})
+      .then((list) => {
+        if (!list) {
+          return reply(Boom.badRequest('List not found'));
+        }
+        if (list.isOwner(request.params.currentUser) || list.joinability !== 'private') {
           return reply();
         }
         else {
