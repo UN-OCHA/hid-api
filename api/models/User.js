@@ -63,8 +63,11 @@ module.exports = class User extends Model {
         }
       },
       methods: {
-        sanitize: function () {
+        sanitize: function (user) {
           this.sanitizeClients();
+          if ((this.is_orphan || this.is_ghost) && !user.verified) {
+            // TODO: sanitize ghost or orphan
+          }
         },
         getAppUrl: function () {
           return process.env.APP_URL + '/users/' + this._id;

@@ -356,9 +356,9 @@ module.exports = class UserController extends Controller{
       }
     }
 
-    // Hide unconfirmed users
+    // Hide unconfirmed users which are not orphans
     if (request.params.currentUser && !request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
-      criteria.email_verified = true;
+      criteria.$or = [{'email_verified': true}, {'is_orphan': true}, {'is_ghost': true}];
     }
 
     if (criteria.name) {
@@ -401,11 +401,11 @@ module.exports = class UserController extends Controller{
             return reply(Boom.notFound());
           }
           if (request.params.id) {
-            results.results.sanitize();
+            results.results.sanitize(request.params.currentUser);
           }
           else {
             for (var i = 0, len = results.results.length; i < len; i++) {
-              results.results[i].sanitize();
+              results.results[i].sanitize(request.params.currentUser);
             }
           }
           if (!request.params.extension) {
@@ -501,7 +501,7 @@ module.exports = class UserController extends Controller{
                   return reply(Boom.notFound());
                 }
                 for (var i = 0, len = results.results.length; i < len; i++) {
-                  results.results[i].sanitize();
+                  results.results[i].sanitize(request.params.currentUser);
                 }
                 if (!request.params.extension) {
                   return reply(results.results).header('X-Total-Count', results.number);
