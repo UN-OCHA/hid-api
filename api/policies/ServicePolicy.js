@@ -15,11 +15,12 @@ module.exports = class ServicePolicy extends Policy {
     var that = this;
     this.app.orm.Service
       .findOne({_id: request.params.id})
+      .populate('lists owner managers')
       .then((srv) => {
         if (!srv) {
           throw Boom.notFound();
         }
-        if (srv.managersIndex(request.params.currentUser) !== -1) {
+        if (srv.managersIndex(request.params.currentUser) !== -1 || srv.owner.id === request.params.currentUser.id) {
           return reply();
         }
         else {
