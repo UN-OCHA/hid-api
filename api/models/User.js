@@ -280,7 +280,7 @@ module.exports = class User extends Model {
     const phoneSchema = new Schema({
       type: {
         type: String,
-        enum: ['Landline', 'Mobile', 'Satellite']
+        enum: ['Landline', 'Mobile', 'Fax', 'Satellite']
       },
       number: {
         type: String,
@@ -391,7 +391,7 @@ module.exports = class User extends Model {
         validate: {
           validator: function (v) {
             if (v.length) {
-              var out = true, types = ['Skype', 'Google'];
+              var out = true, types = ['Skype', 'Google', 'Facebook', 'Yahoo'];
               for (var i = 0, len = v.length; i < len; i++) {
                 if (!v[i].username || !v[i].type || (v[i].type && types.indexOf(v[i].type) === -1)) {
                   out = false;
@@ -468,7 +468,7 @@ module.exports = class User extends Model {
       },
       phone_number_type: {
         type: String,
-        enum: ['Mobile', 'Landline'],
+        enum: ['Mobile', 'Landline', 'Fax', 'Satellite'],
       },
       // TODO: find a way to set this as readonly
       phone_numbers: [phoneSchema],

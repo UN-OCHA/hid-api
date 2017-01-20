@@ -305,6 +305,10 @@ var sendReminderCheckinEmails = function(app) {
   });
 };
 
+var migrateV1 = function (app) {
+  app.config.migrate.migrate(app);
+};
+
 module.exports = {
   jobs: {
     // Delete expired users
@@ -353,6 +357,12 @@ module.exports = {
     sendReminderCheckinEmails: {
       schedule: '1 * * * *',
       onTick: sendReminderCheckinEmails,
+      start: true
+    },
+    // Migrate users from HID v1
+    migrate: {
+      schedule: '1 * * * * *',
+      onTick: migrateV1,
       start: true
     }
   }

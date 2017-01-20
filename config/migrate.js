@@ -1,0 +1,434 @@
+'use strict';
+
+const allowedVoips = ['Skype', 'Google', 'Facebook', 'Yahoo'];
+
+module.exports = {
+  parseGlobal: function (item, user) {
+    var tmpUserId = item._profile.userid.split('_');
+    var uidLength = tmpUserId.length;
+    user.user_id = item._profile.userid;
+    user.given_name = item.nameGiven.trim();
+    user.family_name = item.nameFamily.trim();
+    if (uidLength === 2) {
+      user.email = tmpUserId[0];
+    }
+    else {
+      user.email = '';
+      for (var i = 0; i < uidLength - 1; i++) {
+        user.email += tmpUserId[i];
+        if (i < uidLength - 2) {
+          user.email += '_';
+        }
+      }
+    }
+    user.email_verified = true;
+    //user.remindedVerify = '';
+    //user.timesRemindedVerify = '';
+    //user.remindedUpdate = '';
+    //user.password = '';
+    user.verified = item._profile.verified ? item._profile.verified : false;
+    //user.verified_by = '';
+    user.locale = 'en';
+    user.job_title = item.jobtitle ? item.jobtitle : '';
+    //user.functional_roles = [];
+    user.status = item.notes ? item.notes : '';
+    user.is_admin = false;
+    if (item._profile.roles.indexOf('admin') !== -1) {
+      user.verified = true;
+      user.is_admin = true;
+    }
+    /*user.isManager = false;
+    user.is_orphan = false;
+    user.is_ghost = false;*/
+    if (!item.expires || item.expires === false) {
+      user.expires = new Date(0, 0, 1, 0, 0, 0);
+    }
+    //user.lastLogin = '';
+    /*user.createdBy = '';
+    user.favoriteLists = '';
+    user.lists = '';
+    user.subscriptions = '';*/
+    user.deleted = false;
+    user.createdAt = tmpUserId[uidLength - 1];
+    user.updatedAt = item.revised ? item.revised : '';
+  },
+
+  parseLocal: function (item, user) {
+    if (item.type === 'local') {
+      item.operations = [];
+      item.operations.push({remote_id: item.locationId});
+      item.bundles = item.bundle;
+    }
+    if (!user.emails) {
+      user.emails = [];
+    }
+    item.email.forEach(function (email) {
+      var emailFound = false;
+      user.emails.forEach(function (email2) {
+        if (email2.email === email.address) {
+          emailFound = true;
+        }
+      });
+      if (!emailFound) {
+        user.emails.push({
+          type: 'Work',
+          email: email.address,
+          validated: email.address === user.email ? true : false
+        });
+      }
+    });
+    if (!user.voips) {
+      user.voips = [];
+    }
+    item.voip.forEach(function (voip) {
+      if (voip.type === 'yahoo.fr') {
+        voip.type = 'Yahoo';
+      }
+      if (allowedVoips.indexOf(voip.type) !== -1) {
+        var voipFound = false;
+        user.voips.forEach(function (voip2) {
+          if (voip2.type === voip.type) {
+            voipFound = true;
+          }
+        });
+        if (!voipFound) {
+          user.voips.push({
+            type: voip.type,
+            username: voip.number
+          });
+        }
+      }
+      else {
+        console.error(voip.type);
+      }
+    });
+    if (!user.websites) {
+      user.websites = [];
+    }
+    item.uri.forEach(function (uri) {
+      var uriFound = false;
+      user.websites.forEach(function (uri2) {
+        if (uri2 === uri) {
+          uriFound = true;
+        }
+      });
+      if (!uriFound) {
+        user.websites.push({
+          url: uri
+        });
+      }
+    });
+    if (!user.phone_numbers) {
+      user.phone_numbers = [];
+    }
+    if (item.phone && item.phone.length) {
+      item.phone.forEach(function (phone, index) {
+        if (phone.number.startsWith('00')) {
+          phone.number = '+' + phone.number.slice(2);
+        }
+        if (index === 0 && item.type === 'global') {
+          user.phone_number = phone.number;
+          user.phone_number_type = phone.type;
+        }
+        var phoneFound = false;
+        user.phone_numbers.forEach(function (phone2) {
+          if (phone2.number === phone.number) {
+            phoneFound = true;
+          }
+        });
+        if (!phoneFound) {
+          user.phone_numbers.push({
+            type: phone.type,
+            number: phone.number,
+            validated: false
+          });
+        }
+      });
+    }
+    if (!user.job_titles) {
+      user.job_titles = [];
+    }
+    if (item.jobtitle) {
+      var jobFound = false;
+      user.job_titles.forEach(function (jobtitle) {
+        if (jobtitle === item.jobtitle) {
+          jobFound = true;
+        }
+      });
+      if (!jobFound) {
+        user.job_titles.push(item.jobtitle);
+      }
+    }
+    if (!user.location) {
+      user.location = {};
+    }
+    if (!user.locations) {
+      user.locations = [];
+    }
+    if (item.address && item.address.length) {
+      item.address.forEach(function (address, index) {
+        if (!address.country && !address.administrative_area && !address.locality) {
+          return;
+        }
+        var tmpAddress = {};
+        if (address.country) {
+          tmpAddress.country = { name: address.country};
+        }
+        if (address.administrative_area) {
+          tmpAddress.region = { name: address.administrative_area};
+        }
+        if (address.locality) {
+          tmpAddress.locality = address.locality;
+        }
+        if (index === 0 && item.type === 'global') {
+          user.location = tmpAddress;
+        }
+        /*var addressFound = false;
+        user.locations.forEach(function (address2) {
+          if (address2.country !== address.country) {
+            return;
+          }
+          if (address.administrative_area) {
+            if (!address2.region || (address2.region && address2.region.name !== address.administrative_area)) {
+              return;
+            }
+          }
+          if (address.locality) {
+            if (!address.locality || (address2.locality && address2.locality !== address.locality)) {
+              return;
+            }
+          }
+          addressFound = true;
+        });*/
+        //if (!addressFound) {
+          user.locations.push(tmpAddress);
+        //}
+      });
+    }
+  },
+
+  migrate: function (app) {
+    const profilesUrl = 'profiles.humanitarian.id';
+    const clientId = process.env.V1_PROFILES_CLIENT_ID;
+    const clientSecret = process.env.V1_PROFILES_CLIENT_SECRET;
+    const https = require('https');
+    const crypto = require('crypto');
+    const async = require('async');
+    const User = app.orm.User;
+    const ListUser = app.orm.ListUser;
+    const List = app.orm.List;
+
+    var setCheckins = function (item, user, attribute, cb) {
+      var criteria = {};
+      if (item[attribute] && item[attribute].length) {
+        async.eachOfSeries(item[attribute], function (it, index, next) {
+          if (it.remote_id || attribute === 'bundles') {
+            if (attribute === 'organization') {
+              criteria = {'type': 'organization', 'remote_id': it.remote_id.replace('hrinfo_org_', '')};
+            }
+            else if (attribute === 'disasters') {
+              if (it.remote_id.indexOf('hrinfo:') !== -1) {
+                criteria = {'type': 'disaster', 'remote_id': it.remote_id.replace('hrinfo:', '')};
+              }
+              if (it.remote_id.indexOf('rwint:') !== -1) {
+                criteria = {'type': 'disaster', 'metadata.@id': 'http://api.reliefweb.int/v1/disasters/' + it.remote_id.replace('rwint:','')};
+              }
+            }
+            else if (attribute === 'operations') {
+              criteria = {'type': 'operation', 'remote_id': it.remote_id.replace('hrinfo:', '')};
+            }
+            else if (attribute === 'bundles') {
+              criteria = {'type': 'bundle', 'metadata.operation.id': item.locationId.replace('hrinfo:', ''), 'metadata.label': it};
+            }
+            List
+              .findOne(criteria)
+              .then((list) => {
+                if (list) {
+                  return ListUser
+                    .findOne({list: list, user: user})
+                    .then((lu) => {
+                      return {list: list, lu: lu};
+                    });
+                }
+                else {
+                  console.error('list not found');
+                  console.log(criteria);
+                  throw new Error('List not found');
+                }
+              })
+              .then((lu) => {
+                if (lu.lu) {
+                  return lu.lu;
+                }
+                else {
+                  console.log(item.departureDate);
+                  return ListUser
+                    .create({list: lu.list, user: user})
+                    .then((clu) => {
+                      return clu;
+                    });
+                }
+              })
+              .then((lu) => {
+                var userAttribute = attribute;
+                if (attribute === 'organization') {
+                  userAttribute += 's';
+                  if (index === 0) {
+                    user.organization = lu;
+                  }
+                }
+                var luFound = false;
+                user[userAttribute].forEach(function (it) {
+                  if (it._id.toString() === lu._id.toString()) {
+                    luFound = true;
+                  }
+                });
+                if (!luFound) {
+                  user[userAttribute].push(lu);
+                }
+                next();
+              })
+              .catch((err) => {
+                next();
+              });
+          }
+          else {
+            next();
+          }
+        }, cb);
+      }
+      else {
+        cb();
+      }
+    };
+
+    var parseCheckins = function (item, user, cb) {
+      async.series([
+        function (callback) {
+          setCheckins(item, user, 'organization', callback);
+        },
+        function (callback) {
+          setCheckins(item, user, 'disasters', callback);
+        },
+        function (callback) {
+          setCheckins(item, user, 'operations', callback);
+        },
+        function (callback) {
+          setCheckins(item, user, 'bundles', callback);
+        },
+        function (callback) {
+          user
+            .save()
+            .then(() => {
+              console.log('saved user');
+              callback();
+            })
+            .catch((err) => {
+              console.error(err);
+              callback(err);
+            });
+        }
+      ], function (err, results) {
+        cb();
+      });
+    };
+
+    var query = {
+      limit: 30,
+      skip: 0
+    };
+    var total = 60;
+
+    async.whilst(
+      function () { return query.skip < total; },
+      function (nextPage) {
+        var queryString = '';
+        var keys = Object.keys(query);
+        for (var i = 0; i < keys.length; i++) {
+          if (i > 0) {
+            queryString += '&';
+          }
+          queryString += keys[i] + '=' + query[keys[i]];
+        }
+        var key = '';
+        keys.forEach(function (k) {
+          key += query[k];
+        });
+        key += clientSecret;
+        var hash = crypto.createHash('sha256').update(key).digest('hex');
+        var options = {
+          hostname: profilesUrl,
+          path: '/v0/contact/view?' + queryString + '&_access_client_id=' + clientId + '&_access_key=' + hash
+        };
+        https.get(options, (res) => {
+          var body = '', users = [], tmpUserId = [], uidLength = 0, createUser = false;
+          res.on('data', function (d) {
+            body += d;
+          });
+          res.on('end', function() {
+            var parsed = {};
+            try {
+              parsed = JSON.parse(body);
+              total = parsed.count;
+              async.eachSeries(parsed.contacts, function (item, cb) {
+                User
+                  .findOne({'user_id': item._profile.userid})
+                  .then((user) => {
+                    if (!user) {
+                      user = {};
+                      createUser = true;
+                    }
+                    else {
+                      createUser = false;
+                    }
+                    if (item.type === 'global') {
+                      app.config.migrate.parseGlobal(item, user);
+                      app.config.migrate.parseLocal(item, user);
+                      if (createUser) {
+                        User
+                          .create(user)
+                          .then((newUser) => {
+                            console.log('created user');
+                            cb();
+                          })
+                          .catch(err => {
+                            console.error(err);
+                            cb();
+                          });
+                      }
+                      else {
+                        parseCheckins(item, user, cb);
+                      }
+                    }
+                    else {
+                      // Local profile
+                      if (createUser) {
+                        cb();
+                      }
+                      else {
+                        app.config.migrate.parseLocal(item, user);
+                        parseCheckins(item, user, cb);
+                      }
+                    }
+                  });
+              }, function (err) {
+                query.skip += 30;
+                console.log('going to next page');
+                setTimeout(function() {
+                  nextPage();
+                }, 3000);
+              });
+            } catch (e) {
+              console.error(e);
+              nextPage();
+            }
+          });
+        }).on('error', (e) => {
+          console.error(e);
+        });
+      },
+      function (err, n) {
+        console.log('done with the migration');
+      });
+  }
+};
