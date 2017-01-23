@@ -25,7 +25,6 @@ module.exports = {
     //user.remindedVerify = '';
     //user.timesRemindedVerify = '';
     //user.remindedUpdate = '';
-    //user.password = '';
     user.verified = item._profile.verified ? item._profile.verified : false;
     //user.verified_by = '';
     user.locale = 'en';
@@ -63,6 +62,9 @@ module.exports = {
       user.emails = [];
     }
     item.email.forEach(function (email) {
+      if (email.address === 'abosman@unicef.org') {
+        console.log(user.user_id);
+      }
       var emailFound = false;
       user.emails.forEach(function (email2) {
         if (email2.email === email.address) {
@@ -108,7 +110,7 @@ module.exports = {
     item.uri.forEach(function (uri) {
       var uriFound = false;
       user.websites.forEach(function (uri2) {
-        if (uri2 === uri) {
+        if (uri2.url === uri) {
           uriFound = true;
         }
       });
@@ -123,6 +125,9 @@ module.exports = {
     }
     if (item.phone && item.phone.length) {
       item.phone.forEach(function (phone, index) {
+        if (!phone.number || !phone.type) {
+          return;
+        }
         if (phone.number.startsWith('00')) {
           phone.number = '+' + phone.number.slice(2);
         }
@@ -183,26 +188,23 @@ module.exports = {
         if (index === 0 && item.type === 'global') {
           user.location = tmpAddress;
         }
-        /*var addressFound = false;
+        var addressFound = false;
         user.locations.forEach(function (address2) {
-          if (address2.country !== address.country) {
-            return;
+          var country = '', country2 = '', region = '', region2 = '', locality = '', locality2 = '';
+          country = address.country ? address.country : '';
+          country2 = address2.country ? address2.country.name : '';
+          region = address.administrative_area ? address.administrative_area : '';
+          region2 = address2.region ? address2.region.name : '';
+          locality = address.locality ? address.locality : '';
+          locality2 = address2.locality ? address2.locality : '';
+
+          if (country == country2 && region === region2 && locality === locality2) {
+            addressFound = true;
           }
-          if (address.administrative_area) {
-            if (!address2.region || (address2.region && address2.region.name !== address.administrative_area)) {
-              return;
-            }
-          }
-          if (address.locality) {
-            if (!address.locality || (address2.locality && address2.locality !== address.locality)) {
-              return;
-            }
-          }
-          addressFound = true;
-        });*/
-        //if (!addressFound) {
+        });
+        if (!addressFound) {
           user.locations.push(tmpAddress);
-        //}
+        }
       });
     }
   },
@@ -329,6 +331,7 @@ module.exports = {
             });
         }
       ], function (err, results) {
+        console.log('done parsing checkins');
         cb();
       });
     };
@@ -382,6 +385,9 @@ module.exports = {
                       createUser = false;
                     }
                     if (item.type === 'global') {
+                      if (!user.password) {
+                        user.password = User.hashPassword(Math.random().toString(36).slice(2));
+                      }
                       app.config.migrate.parseGlobal(item, user);
                       app.config.migrate.parseLocal(item, user);
                       if (createUser) {
@@ -410,6 +416,9 @@ module.exports = {
                         parseCheckins(item, user, cb);
                       }
                     }
+                  })
+                  .catch((err) => {
+                    console.error(err);
                   });
               }, function (err) {
                 query.skip += 30;

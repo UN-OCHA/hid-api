@@ -89,7 +89,12 @@ module.exports = class User extends Model {
           }
         },
         validPassword: function (password)  {
-          return Bcrypt.compareSync(password, this.password);
+          if (!this.password) {
+            return false;
+          }
+          else {
+            return Bcrypt.compareSync(password, this.password);
+          }
         },
 
         generateHash: function (email) {

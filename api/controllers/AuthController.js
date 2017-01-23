@@ -10,6 +10,7 @@ const Boom = require('boom');
 module.exports = class AuthController extends Controller{
 
   _loginHelper (request, reply) {
+    const User = this.app.orm.User;
     var email = request.payload.email;
     var password = request.payload.password;
 
@@ -19,9 +20,9 @@ module.exports = class AuthController extends Controller{
     else {
       var that = this;
       var app = this.app;
-      var query = this.app.orm.User.where({ email: email });
-      query
-        .findOne(function (err, user) {
+      User
+        .findOne({email: email})
+        .then((user) => {
           if (!user) {
             that.log.info('Could not find user');
             return reply(Boom.unauthorized('invalid email or password'));
@@ -45,6 +46,9 @@ module.exports = class AuthController extends Controller{
             user.sanitize();
             return reply(user);
           }
+        })
+        .catch((err) => {
+          that.app.services.ErrorService.handle(err, reply);
         });
     }
   }

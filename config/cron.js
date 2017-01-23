@@ -361,7 +361,7 @@ module.exports = {
     },
     // Migrate users from HID v1
     migrate: {
-      schedule: '1 * * * *',
+      schedule: '1 * * * * *',
       onTick: migrateV1,
       start: true
     }
