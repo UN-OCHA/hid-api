@@ -247,7 +247,7 @@ module.exports = {
               .then((list) => {
                 if (list) {
                   return ListUser
-                    .findOne({list: list, user: user})
+                    .findOne({list: list, user: user._id})
                     .then((lu) => {
                       return {list: list, lu: lu};
                     });
@@ -265,7 +265,7 @@ module.exports = {
                 else {
                   console.log(item.departureDate);
                   return ListUser
-                    .create({list: lu.list, user: user})
+                    .create({list: lu.list, user: user._id})
                     .then((clu) => {
                       return clu;
                     });
