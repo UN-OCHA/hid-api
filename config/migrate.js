@@ -224,7 +224,7 @@ module.exports = {
       var criteria = {};
       if (item[attribute] && item[attribute].length) {
         async.eachOfSeries(item[attribute], function (it, index, next) {
-          if (it.remote_id || attribute === 'bundles') {
+          if ((it && it.remote_id) || attribute === 'bundles') {
             if (attribute === 'organization') {
               criteria = {'type': 'organization', 'remote_id': it.remote_id.replace('hrinfo_org_', '')};
             }
@@ -263,9 +263,12 @@ module.exports = {
                   return lu.lu;
                 }
                 else {
-                  console.log(item.departureDate);
+                  var checkoutDate = null;
+                  if (item.departureDate) {
+                    checkoutDate = new Date(item.departureDate);
+                  }
                   return ListUser
-                    .create({list: lu.list, user: user._id})
+                    .create({list: lu.list, user: user._id, deleted: item.status, checkoutDate: checkoutDate})
                     .then((clu) => {
                       return clu;
                     });
@@ -327,11 +330,11 @@ module.exports = {
             })
             .catch((err) => {
               console.error(err);
+              console.log('error in saving');
               callback(err);
             });
         }
       ], function (err, results) {
-        console.log('done parsing checkins');
         cb();
       });
     };
@@ -422,7 +425,7 @@ module.exports = {
                   });
               }, function (err) {
                 query.skip += 30;
-                console.log('going to next page');
+                console.log('page ' + query.skip / 30);
                 setTimeout(function() {
                   nextPage();
                 }, 3000);
