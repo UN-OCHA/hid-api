@@ -10,19 +10,35 @@ module.exports = {
     user.user_id = item._profile.userid;
     user.given_name = item.nameGiven.trim();
     user.family_name = item.nameFamily.trim();
-    if (uidLength === 2) {
-      user.email = tmpUserId[0];
-    }
-    else {
+    if (uidLength === 1) {
       user.email = '';
-      for (var i = 0; i < uidLength - 1; i++) {
-        user.email += tmpUserId[i];
-        if (i < uidLength - 2) {
-          user.email += '_';
-        }
+      user.email_verified = false;
+      if (!item._profile.firstUpdate) {
+        user.is_ghost = true;
+        user.is_orphan = false;
       }
     }
-    user.email_verified = true;
+    else {
+      if (uidLength === 2) {
+        user.email = tmpUserId[0];
+      }
+      else {
+        user.email = '';
+        for (var i = 0; i < uidLength - 1; i++) {
+          user.email += tmpUserId[i];
+          if (i < uidLength - 2) {
+            user.email += '_';
+          }
+        }
+      }
+      user.email_verified = true;
+      user.is_orphan = false;
+      user.is_ghost = false;
+      if (!item._profile.firstUpdate) {
+        user.is_orphan = true;
+        user.email_verified = false;
+      }
+    }
     //user.remindedVerify = '';
     //user.timesRemindedVerify = '';
     //user.remindedUpdate = '';
@@ -36,9 +52,14 @@ module.exports = {
       user.verified = true;
       user.is_admin = true;
     }
-    /*user.isManager = false;
-    user.is_orphan = false;
-    user.is_ghost = false;*/
+    user.isManager = false;
+    if (item._profile.roles && item._profile.roles.length) {
+      item._profile.roles.forEach(function (role) {
+        if (role.indexOf('manager') !== -1) {
+          user.isManager = true;
+        }
+      });
+    }
     if (!item.expires || item.expires === false) {
       user.expires = new Date(0, 0, 1, 0, 0, 0);
     }
