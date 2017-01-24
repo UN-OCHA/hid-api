@@ -1,6 +1,12 @@
 'use strict';
 
 const _ = require('lodash');
+const https = require('https');
+const crypto = require('crypto');
+const async = require('async');
+const profilesUrl = 'profiles.humanitarian.id';
+const clientId = process.env.V1_PROFILES_CLIENT_ID;
+const clientSecret = process.env.V1_PROFILES_CLIENT_SECRET;
 const allowedVoips = ['Skype', 'Google', 'Facebook', 'Yahoo'];
 
 module.exports = {
@@ -231,12 +237,6 @@ module.exports = {
   },
 
   migrate: function (app) {
-    const profilesUrl = 'profiles.humanitarian.id';
-    const clientId = process.env.V1_PROFILES_CLIENT_ID;
-    const clientSecret = process.env.V1_PROFILES_CLIENT_SECRET;
-    const https = require('https');
-    const crypto = require('crypto');
-    const async = require('async');
     const User = app.orm.User;
     const ListUser = app.orm.ListUser;
     const List = app.orm.List;
@@ -496,7 +496,114 @@ module.exports = {
         });
       },
       function (err, n) {
-        console.log('done with the migration');
+        console.log('done with users migration');
+      });
+  },
+
+  migrateLists: function (app) {
+    console.log('migrating lists');
+    const User = app.orm.User;
+    const ListUser = app.orm.ListUser;
+    const List = app.orm.List;
+
+    var query = {
+      limit: 30,
+      skip: 0
+    };
+    var total = 60;
+
+    async.whilst(
+      function () { return query.skip < total; },
+      function (nextPage) {
+        var queryString = '';
+        var keys = Object.keys(query);
+        for (var i = 0; i < keys.length; i++) {
+          if (i > 0) {
+            queryString += '&';
+          }
+          queryString += keys[i] + '=' + query[keys[i]];
+        }
+        var key = '';
+        keys.forEach(function (k) {
+          key += query[k];
+        });
+        key += clientSecret;
+        var hash = crypto.createHash('sha256').update(key).digest('hex');
+        var options = {
+          hostname: profilesUrl,
+          path: '/v0.1/lists?' + queryString + '&_access_client_id=' + clientId + '&_access_key=' + hash
+        };
+        https.get(options, (res) => {
+          var body = '', createList = false;
+          res.on('data', function (d) {
+            body += d;
+          });
+          res.on('end', function() {
+            var parsed = {};
+            try {
+              parsed = JSON.parse(body);
+              total = res.headers['x-total-count'];
+              async.eachSeries(parsed, function (item, cb) {
+                List
+                  .findOne({'legacyId': item._id})
+                  .then((list) => {
+                    if (!list) {
+                      list = {};
+                      createList = true;
+                    }
+                    else {
+                      createList = false;
+                    }
+                    var privacy = item.privacy ? item.privacy : 'all';
+                    if (privacy === 'some') {
+                      privacy = 'inlist';
+                    }
+                    list.legacyId = item._id;
+                    list.label = item.name;
+                    list.type = 'list';
+                    list.visibility = privacy;
+                    list.joinability = 'public';
+
+                    if (createList) {
+                      console.log('creating list');
+                      return List
+                        .create(list)
+                        .then((newList) => {
+                          console.log('created list');
+                          cb();
+                        });
+                    }
+                    else {
+                      return list
+                        .save()
+                        .then(() => {
+                          console.log('saved list');
+                          cb();
+                        });
+                    }
+                  })
+                  .catch((err) => {
+                    console.error(err);
+                    cb();
+                  });
+              }, function (err) {
+                query.skip += 30;
+                console.log('page ' + query.skip / 30);
+                setTimeout(function() {
+                  nextPage();
+                }, 3000);
+              });
+            } catch (e) {
+              console.error(e);
+              nextPage();
+            }
+          });
+        }).on('error', (e) => {
+          console.error(e);
+        });
+      },
+      function (err, n) {
+        console.log('done with lists migration');
       });
   }
 };

@@ -100,6 +100,11 @@ module.exports = class List extends Model {
         readonly: true
       },
 
+      legacyId: {
+        type: String,
+        readonly: true
+      },
+
       owner: {
         type: Schema.ObjectId,
         ref: 'User'

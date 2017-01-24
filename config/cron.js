@@ -309,6 +309,10 @@ var migrateV1 = function (app) {
   app.config.migrate.migrate(app);
 };
 
+var migrateListsV1 = function (app) {
+  app.config.migrate.migrateLists(app);
+};
+
 module.exports = {
   jobs: {
     // Delete expired users
@@ -363,6 +367,11 @@ module.exports = {
     migrate: {
       schedule: '1 * * * *',
       onTick: migrateV1,
+      start: true
+    },
+    migrateLists: {
+      schedule: '1 * * * *',
+      onTick: migrateListsV1,
       start: true
     }
   }
