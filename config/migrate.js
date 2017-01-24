@@ -1,5 +1,6 @@
 'use strict';
 
+const _ = require('lodash');
 const allowedVoips = ['Skype', 'Google', 'Facebook', 'Yahoo'];
 
 module.exports = {
@@ -56,15 +57,13 @@ module.exports = {
     if (item.type === 'local') {
       item.operations = [];
       item.operations.push({remote_id: item.locationId});
-      item.bundles = item.bundle;
+      item.bundles = _.concat(item.bundle, item.protectedBundles);
     }
+    item.functional_roles = item.protectedRoles;
     if (!user.emails) {
       user.emails = [];
     }
     item.email.forEach(function (email) {
-      if (email.address === 'abosman@unicef.org') {
-        console.log(user.user_id);
-      }
       var emailFound = false;
       user.emails.forEach(function (email2) {
         if (email2.email === email.address) {
@@ -242,6 +241,9 @@ module.exports = {
             else if (attribute === 'bundles') {
               criteria = {'type': 'bundle', 'metadata.operation.id': item.locationId.replace('hrinfo:', ''), 'metadata.label': it};
             }
+            else if (attribute === 'functional_roles') {
+              criteria = {'type': 'functional_role', 'remote_id': it};
+            }
             List
               .findOne(criteria)
               .then((list) => {
@@ -320,6 +322,9 @@ module.exports = {
         },
         function (callback) {
           setCheckins(item, user, 'bundles', callback);
+        },
+        function (callback) {
+          setCheckins(item, user, 'functional_roles', callback);
         },
         function (callback) {
           user
