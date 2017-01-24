@@ -320,6 +320,11 @@ module.exports = class User extends Model {
         type: String,
         readonly: true
       },
+      // Legacy ID data, added during the migration
+      legacyId: {
+        type: String,
+        readonly: true
+      },
       given_name: {
         type: String,
         trim: true,

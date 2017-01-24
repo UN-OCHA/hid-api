@@ -8,6 +8,7 @@ module.exports = {
     var tmpUserId = item._profile.userid.split('_');
     var uidLength = tmpUserId.length;
     user.user_id = item._profile.userid;
+    user.legacyId = item._profile._id;
     user.given_name = item.nameGiven.trim();
     user.family_name = item.nameFamily.trim();
     if (uidLength === 1) {
@@ -240,6 +241,26 @@ module.exports = {
     const ListUser = app.orm.ListUser;
     const List = app.orm.List;
 
+    var setVerifiedBy = function (item, user, cb) {
+      if (item.verified && item.verifiedById) {
+        User
+          .findOne({legacyId: item.verifiedById})
+          .then((verifier) => {
+            if (verifier) {
+              user.verified_by = verifier._id;
+            }
+            cb();
+          })
+          .catch((err) => {
+            console.error(err);
+            cb();
+          });
+      }
+      else {
+        cb();
+      }
+    };
+
     var setCheckins = function (item, user, attribute, cb) {
       var criteria = {};
       if (item[attribute] && item[attribute].length) {
@@ -294,7 +315,7 @@ module.exports = {
                     checkoutDate = new Date(item.departureDate);
                   }
                   return ListUser
-                    .create({list: lu.list, user: user._id, deleted: item.status, checkoutDate: checkoutDate})
+                    .create({list: lu.list, user: user._id, deleted: item.status, checkoutDate: checkoutDate, pending: false})
                     .then((clu) => {
                       return clu;
                     });
@@ -352,6 +373,9 @@ module.exports = {
         },
         function (callback) {
           setCheckins(item, user, 'offices', callback);
+        },
+        function (callback) {
+          setVerifiedBy(item, user, callback);
         },
         function (callback) {
           user
