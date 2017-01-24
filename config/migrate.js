@@ -30,7 +30,6 @@ module.exports = {
     //user.verified_by = '';
     user.locale = 'en';
     user.job_title = item.jobtitle ? item.jobtitle : '';
-    //user.functional_roles = [];
     user.status = item.notes ? item.notes : '';
     user.is_admin = false;
     if (item._profile.roles.indexOf('admin') !== -1) {
@@ -58,6 +57,7 @@ module.exports = {
       item.operations = [];
       item.operations.push({remote_id: item.locationId});
       item.bundles = _.concat(item.bundle, item.protectedBundles);
+      item.offices = item.office;
     }
     item.functional_roles = item.protectedRoles;
     if (!user.emails) {
@@ -244,6 +244,9 @@ module.exports = {
             else if (attribute === 'functional_roles') {
               criteria = {'type': 'functional_role', 'remote_id': it};
             }
+            else if (attribute === 'offices') {
+              criteria = {type: 'office', 'remote_id': it.remote_id.replace('hrinfo_off_', '')};
+            }
             List
               .findOne(criteria)
               .then((list) => {
@@ -325,6 +328,9 @@ module.exports = {
         },
         function (callback) {
           setCheckins(item, user, 'functional_roles', callback);
+        },
+        function (callback) {
+          setCheckins(item, user, 'offices', callback);
         },
         function (callback) {
           user

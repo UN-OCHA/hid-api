@@ -552,6 +552,10 @@ module.exports = class User extends Model {
         type: Schema.ObjectId,
         ref: 'ListUser'
       }],
+      offices: [{
+        type: Schema.ObjectId,
+        ref: 'ListUser'
+      }],
       authorizedClients: [{
         type: Schema.ObjectId,
         ref: 'Client'
