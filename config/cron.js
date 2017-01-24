@@ -20,7 +20,7 @@ var importLists = function (app) {
   const List = app.orm.list;
   const User = app.orm.user;
   const NotificationService = app.services.NotificationService;
-  const listTypes = ['operation', 'bundle', 'disaster', 'organization', 'functional_role'];
+  const listTypes = ['operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
   const now = Math.floor(Date.now() / 1000);
   //const Cache = app.services.CacheService.getCaches(['local-cache'])
   var hasNextPage = false, pageNumber = 1, path = '';
@@ -64,7 +64,7 @@ var importLists = function (app) {
             visibility = 'verified';
           }
           label = item.label;
-          if (listType === 'bundle') {
+          if (listType === 'bundle' || listType === 'office') {
             label = item.operation[0].label + ': ' + item.label;
           }
           if (listType === 'organization' && item.acronym) {
@@ -114,7 +114,7 @@ var importLists = function (app) {
           // Parse while there are pages
           async.doWhilst(function (nextPage) {
             path = '/api/v1.0/' + listType + 's?page=' + pageNumber + '&filter[created][value]=' + lastPull + '&filter[created][operator]=>';
-            if (listType === 'organization' || listType === 'functional_role') {
+            if (listType === 'organization') {
               path = '/api/v1.0/' + listType + 's?page=' + pageNumber;
             }
             https.get({
