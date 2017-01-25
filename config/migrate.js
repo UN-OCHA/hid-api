@@ -50,7 +50,6 @@ module.exports = {
     //user.timesRemindedVerify = '';
     //user.remindedUpdate = '';
     user.verified = item._profile.verified ? item._profile.verified : false;
-    //user.verified_by = '';
     user.locale = 'en';
     user.job_title = item.jobtitle ? item.jobtitle : '';
     user.status = item.notes ? item.notes : '';
@@ -73,7 +72,6 @@ module.exports = {
     //user.lastLogin = '';
     /*user.createdBy = '';
     user.favoriteLists = '';
-    user.lists = '';
     user.subscriptions = '';*/
     user.deleted = false;
     user.createdAt = tmpUserId[uidLength - 1];
@@ -556,7 +554,7 @@ module.exports = {
                     }
                     var privacy = item.privacy ? item.privacy : 'all';
                     if (privacy === 'some') {
-                      privacy = 'inlist';
+                      privacy = 'me';
                     }
                     list.legacyId = item._id;
                     list.label = item.name;
@@ -565,7 +563,6 @@ module.exports = {
                     list.joinability = 'public';
 
                     if (createList) {
-                      console.log('creating list');
                       return List
                         .create(list)
                         .then((newList) => {
@@ -574,12 +571,70 @@ module.exports = {
                         });
                     }
                     else {
-                      return list
-                        .save()
-                        .then(() => {
-                          console.log('saved list');
-                          cb();
-                        });
+                      async.series([
+                        function (callback) {
+                          User
+                            .findOne({'user_id': item.userid})
+                            .then((owner) => {
+                              if (owner) {
+                                list.owner = owner._id;
+                              }
+                              callback();
+                            });
+                        },
+                        function (callback) {
+                          User
+                            .find({'legacyId': {$in: item.contacts}})
+                            .then((contacts) => {
+                              async.eachSeries(contacts, function (contact, next) {
+                                ListUser
+                                  .findOne({list: list, user: contact._id})
+                                  .then((lu) => {
+                                    if (!lu) {
+                                      ListUser
+                                        .create({list: list, user: contact._id, deleted: false, checkoutDate: null, pending: false})
+                                        .then((clu) => {
+                                          next();
+                                        });
+                                    }
+                                    else {
+                                      next();
+                                    }
+                                  });
+                              }, function (err) {
+                                callback();
+                              });
+                            });
+                        },
+                        function (callback) {
+                          if (!list.managers) {
+                            list.managers = [];
+                          }
+                          User
+                            .find({'legacyId': {$in: item.editors}})
+                            .then((editors) => {
+                              editors.forEach(function (editor) {
+                                var editorFound = false;
+                                list.managers.forEach(function (manager) {
+                                  if (manager === editor._id) {
+                                    editorFound = true;
+                                  }
+                                });
+                                if (!editorFound) {
+                                  list.managers.push(editor._id);
+                                }
+                              });
+                              callback();
+                            });
+                        }
+                      ], function (err, results) {
+                        return list
+                          .save()
+                          .then(() => {
+                            console.log('saved list' + list.label);
+                            cb();
+                          });
+                      });
                     }
                   })
                   .catch((err) => {
