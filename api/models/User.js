@@ -401,7 +401,7 @@ module.exports = class User extends Model {
         validate: {
           validator: function (v) {
             if (v.length) {
-              var out = true, types = ['Skype', 'Google', 'Facebook', 'Yahoo'];
+              var out = true, types = ['Skype', 'Google', 'Facebook', 'Yahoo', 'Twitter'];
               for (var i = 0, len = v.length; i < len; i++) {
                 if (!v[i].username || !v[i].type || (v[i].type && types.indexOf(v[i].type) === -1)) {
                   out = false;

@@ -4,10 +4,12 @@ const _ = require('lodash');
 const https = require('https');
 const crypto = require('crypto');
 const async = require('async');
+const Libphonenumber = require('google-libphonenumber');
 const profilesUrl = 'profiles.humanitarian.id';
 const clientId = process.env.V1_PROFILES_CLIENT_ID;
 const clientSecret = process.env.V1_PROFILES_CLIENT_SECRET;
-const allowedVoips = ['Skype', 'Google', 'Facebook', 'Yahoo'];
+const allowedVoips = ['Skype', 'Google', 'Facebook', 'Yahoo', 'Twitter'];
+const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
 
 module.exports = {
   parseGlobal: function (item, user) {
@@ -79,6 +81,17 @@ module.exports = {
   },
 
   parseLocal: function (item, user) {
+    var isValidPhoneNumber = function (number) {
+      try {
+        const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
+        const phone = phoneUtil.parse(number);
+        return phoneUtil.isValidNumber(phone);
+      }
+      catch (e) {
+        return false;
+      }
+    };
+
     if (item.type === 'local') {
       item.operations = [];
       item.operations.push({remote_id: item.locationId});
@@ -139,7 +152,7 @@ module.exports = {
           uriFound = true;
         }
       });
-      if (!uriFound) {
+      if (!uriFound && urlRegex.test(uri)) {
         user.websites.push({
           url: uri
         });
@@ -156,22 +169,24 @@ module.exports = {
         if (phone.number.startsWith('00')) {
           phone.number = '+' + phone.number.slice(2);
         }
-        if (index === 0 && item.type === 'global') {
-          user.phone_number = phone.number;
-          user.phone_number_type = phone.type;
-        }
-        var phoneFound = false;
-        user.phone_numbers.forEach(function (phone2) {
-          if (phone2.number === phone.number) {
-            phoneFound = true;
+        if (isValidPhoneNumber(phone.number)) {
+          if (index === 0 && item.type === 'global') {
+            user.phone_number = phone.number;
+            user.phone_number_type = phone.type;
           }
-        });
-        if (!phoneFound) {
-          user.phone_numbers.push({
-            type: phone.type,
-            number: phone.number,
-            validated: false
+          var phoneFound = false;
+          user.phone_numbers.forEach(function (phone2) {
+            if (phone2.number === phone.number) {
+              phoneFound = true;
+            }
           });
+          if (!phoneFound) {
+            user.phone_numbers.push({
+              type: phone.type,
+              number: phone.number,
+              validated: false
+            });
+          }
         }
       });
     }
@@ -379,7 +394,6 @@ module.exports = {
           user
             .save()
             .then(() => {
-              console.log('saved user');
               callback();
             })
             .catch((err) => {
@@ -451,7 +465,6 @@ module.exports = {
                         User
                           .create(user)
                           .then((newUser) => {
-                            console.log('created user');
                             cb();
                           })
                           .catch(err => {
