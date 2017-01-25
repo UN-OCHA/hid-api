@@ -125,6 +125,10 @@ module.exports = class Service extends Model {
       description: {
         type: String
       },
+      legacyId: {
+        type: String,
+        readonly: true
+      },
       owner: {
         type: Schema.ObjectId,
         ref: 'User'

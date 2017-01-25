@@ -89,6 +89,12 @@ module.exports = [
     handler: 'DefaultController.migrateLists'
   },
 
+  {
+    method: 'GET',
+    path: '/api/v2/migrate/services',
+    handler: 'DefaultController.migrateServices'
+  },
+
   /**
    * Default authentication path.
    */

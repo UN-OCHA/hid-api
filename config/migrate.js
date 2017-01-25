@@ -99,6 +99,7 @@ module.exports = {
       item.offices = item.office;
     }
     item.functional_roles = item.protectedRoles;
+    user.legacyId = item._profile._id;
     if (!user.emails) {
       user.emails = [];
     }
@@ -672,6 +673,113 @@ module.exports = {
       },
       function (err, n) {
         console.log('done with lists migration');
+      });
+  },
+
+  migrateServices: function (app) {
+    console.log('migrating services');
+    const User = app.orm.User;
+    const ListUser = app.orm.ListUser;
+    const List = app.orm.List;
+    const Service = app.orm.Service;
+
+    var query = {
+      limit: 30,
+      skip: 0
+    };
+    var total = 60;
+
+    async.whilst(
+      function () { return query.skip < total; },
+      function (nextPage) {
+        var queryString = '';
+        var keys = Object.keys(query);
+        for (var i = 0; i < keys.length; i++) {
+          if (i > 0) {
+            queryString += '&';
+          }
+          queryString += keys[i] + '=' + query[keys[i]];
+        }
+        var key = '';
+        keys.forEach(function (k) {
+          key += query[k];
+        });
+        key += clientSecret;
+        var hash = crypto.createHash('sha256').update(key).digest('hex');
+        var options = {
+          hostname: profilesUrl,
+          path: '/v0.1/services?' + queryString + '&_access_client_id=' + clientId + '&_access_key=' + hash
+        };
+        https.get(options, (res) => {
+          var body = '', createSrv = false;
+          res.on('data', function (d) {
+            body += d;
+          });
+          res.on('end', function() {
+            var parsed = {};
+            try {
+              parsed = JSON.parse(body);
+              total = res.headers['x-total-count'];
+              async.eachSeries(parsed, function (item, cb) {
+                Service
+                  .findOne({'legacyId': item._id})
+                  .then((srv) => {
+                    if (!srv) {
+                      srv = {};
+                      createSrv = true;
+                    }
+                    else {
+                      createSrv = false;
+                    }
+                    var privacy = item.privacy ? item.privacy : 'all';
+                    if (privacy === 'some') {
+                      privacy = 'me';
+                    }
+                    srv.legacyId = item._id;
+                    srv.name = item.name;
+                    srv.description = '';
+                    srv.hidden = item.hidden;
+                    srv.type = item.type;
+
+                    if (createSrv) {
+                      return Service
+                        .create(srv)
+                        .then((newSrv) => {
+                          console.log('created service');
+                          cb();
+                        });
+                    }
+                    else {
+                      return srv
+                        .save()
+                        .then(() => {
+                          console.log('saved service' + srv.name);
+                          cb();
+                        });
+                    }
+                  })
+                  .catch((err) => {
+                    console.error(err);
+                    cb();
+                  });
+              }, function (err) {
+                query.skip += 30;
+                console.log('page ' + query.skip / 30);
+                setTimeout(function() {
+                  nextPage();
+                }, 3000);
+              });
+            } catch (e) {
+              console.error(e);
+              nextPage();
+            }
+          });
+        }).on('error', (e) => {
+          console.error(e);
+        });
+      },
+      function (err, n) {
+        console.log('done with services migration');
       });
   }
 };
