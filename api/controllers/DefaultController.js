@@ -17,4 +17,14 @@ module.exports = class DefaultController extends Controller {
   info (request, reply) {
     reply(this.app.services.DefaultService.getApplicationInfo());
   }
+
+  migrateUsers (request, reply) {
+    reply();
+    this.app.config.migrate.migrate(this.app);
+  }
+
+  migrateLists (request, reply) {
+    reply();
+    this.app.config.migrate.migrateLists(this.app);
+  }
 };

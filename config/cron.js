@@ -362,17 +362,6 @@ module.exports = {
       schedule: '1 * * * *',
       onTick: sendReminderCheckinEmails,
       start: true
-    },
-    // Migrate users from HID v1
-    migrate: {
-      schedule: '1 * * * *',
-      onTick: migrateV1,
-      start: true
-    },
-    migrateLists: {
-      schedule: '1 * * * *',
-      onTick: migrateListsV1,
-      start: true
     }
   }
 };

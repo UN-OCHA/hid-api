@@ -77,6 +77,18 @@ module.exports = [
     handler: 'DefaultController.info'
   },
 
+  {
+    method: 'GET',
+    path: '/api/v2/migrate/users',
+    handler: 'DefaultController.migrateUsers'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/migrate/lists',
+    handler: 'DefaultController.migrateLists'
+  },
+
   /**
    * Default authentication path.
    */
