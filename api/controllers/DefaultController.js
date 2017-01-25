@@ -32,4 +32,9 @@ module.exports = class DefaultController extends Controller {
     reply();
     this.app.config.migrate.migrateServices(this.app);
   }
+
+  importLists (request, reply) {
+    reply();
+    this.app.config.cron.importLists(this.app);
+  }
 };

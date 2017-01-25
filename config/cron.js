@@ -329,6 +329,7 @@ var sendReminderCheckinEmails = function(app) {
 };
 
 module.exports = {
+  importLists: importLists,
   jobs: {
     // Delete expired users
     deleteExpiredUsers: {
@@ -343,11 +344,11 @@ module.exports = {
       start: true
     },
     // Import lists from Humanitarianresponse
-    importLists: {
+    /*importLists: {
       schedule: '1 * * * *', // Run every 60 minutes
       onTick: importLists,
       start: true
-    },
+    },*/
     // Remind users to verify their email
     sendReminderVerifyEmails: {
       schedule: '1 * * * *',
