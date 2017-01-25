@@ -53,6 +53,19 @@ var importLists = function (app) {
     }
   };
 
+  var _createListHelper = function (list, cb) {
+    List.create(list, function (err, li) {
+      if (err) {
+        app.log.error(err);
+        return cb(err);
+      }
+      if (li.type === 'disaster') {
+        _notifyNewDisaster(li);
+      }
+      cb();
+    });
+  };
+
   // Create a list based on the item pulled from hrinfo
   var _createList = function (listType, item, cb) {
     var tmpList = {}, visibility = '', label = '', acronym = '';
@@ -80,16 +93,26 @@ var importLists = function (app) {
             metadata: item
           };
           app.log.debug('Creating list of type ' + listType + ': ' + label);
-          List.create(tmpList, function (err, li) {
-            if (err) {
-              app.log.error(err);
-              return cb(err);
-            }
-            if (li.type === 'disaster') {
-              _notifyNewDisaster(li);
-            }
-            cb();
-          });
+          if (listType === 'bundle') {
+            List
+              .findOne({type: 'operation', remote_id: item.operation[0].id})
+              .then((op) => {
+                if (op) {
+                  if (op.metadata.hid_access) {
+                    if (op.metadata.hid_access === 'open') {
+                      tmpList.visibility = 'all';
+                    }
+                    else if (op.metadata.hid_access === 'closed') {
+                      tmpList.visibility = 'verified';
+                    }
+                  }
+                }
+                _createListHelper(tmpList, cb);
+              });
+          }
+          else {
+            _createListHelper(tmpList, cb);
+          }
         }
         else {
           cb();
@@ -303,14 +326,6 @@ var sendReminderCheckinEmails = function(app) {
       }
     });
   });
-};
-
-var migrateV1 = function (app) {
-  app.config.migrate.migrate(app);
-};
-
-var migrateListsV1 = function (app) {
-  app.config.migrate.migrateLists(app);
 };
 
 module.exports = {
