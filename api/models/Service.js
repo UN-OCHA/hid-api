@@ -33,26 +33,28 @@ module.exports = class Service extends Model {
       },
       methods: {
 
-        subscribeMailchimp: function (user) {
+        subscribeMailchimp: function (user, email) {
           var mc = new Mailchimp(this.mailchimp.apiKey);
           return mc.post({
             path: '/lists/' + this.mailchimp.list.id + '/members'
           }, {
             status: 'subscribed',
-            email_address: user.email,
+            email_address: email,
             merge_fields: {'FNAME': user.given_name, 'LNAME': user.family_name}
           });
         },
 
         unsubscribeMailchimp: function (user) {
+          var index = user.subscriptionsIndex(this._id);
+          var email = user.subscriptions[index].email;
           var mc = new Mailchimp(this.mailchimp.apiKey);
-          var hash = crypto.createHash('md5').update(user.email.toLowerCase()).digest('hex');
+          var hash = crypto.createHash('md5').update(email.toLowerCase()).digest('hex');
           return mc.delete({
             path: '/lists/' + this.mailchimp.list.id + '/members/' + hash
           });
         },
 
-        subscribeGoogleGroup: function (user, creds, cb) {
+        subscribeGoogleGroup: function (user, email, creds, cb) {
           let that = this;
           // Subscribe email to google group
           googleGroupsAuthorize(creds.googlegroup, function (auth) {
@@ -60,19 +62,21 @@ module.exports = class Service extends Model {
             gservice.members.insert({
               auth: auth,
               groupKey: that.googlegroup.group.id,
-              resource: { 'email': user.email, 'role': 'MEMBER' }
+              resource: { 'email': email, 'role': 'MEMBER' }
             }, cb);
           });
         },
 
         unsubscribeGoogleGroup: function (user, creds, cb) {
+          var index = user.subscriptionsIndex(this._id);
+          var email = user.subscriptions[index].email;
           let that = this;
           googleGroupsAuthorize(creds.googlegroup, function (auth) {
             var gservice = google.admin('directory_v1');
             gservice.members.delete({
               auth: auth,
               groupKey: that.googlegroup.group.id,
-              memberKey: user.email
+              memberKey: email
             }, cb);
           });
         },

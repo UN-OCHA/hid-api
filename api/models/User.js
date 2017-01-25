@@ -28,7 +28,8 @@ const userPopulate2= [
   {path: 'organizations.list', model: 'List'},
   {path: 'organization.list', model: 'List'},
   {path: 'lists.list', model: 'List'},
-  {path: 'functional_roles.list', model: 'List'}
+  {path: 'functional_roles.list', model: 'List'},
+  {path: 'subscriptions.service', model: 'Service'}
 ];
 
 /**
@@ -152,7 +153,7 @@ module.exports = class User extends Model {
         subscriptionsIndex: function (serviceId) {
           var index = -1;
           for (var i = 0; i < this.subscriptions.length; i++) {
-            if (this.subscriptions[i]._id.toString() === serviceId) {
+            if (this.subscriptions[i].service._id.toString() === serviceId) {
               index = i;
             }
           }
@@ -311,6 +312,19 @@ module.exports = class User extends Model {
       validated: {
         type: Boolean,
         default: false
+      }
+    });
+
+    const subscriptionSchema = new Schema({
+      email: {
+        type: String,
+        lowercase: true,
+        trim: true,
+        match: /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/
+      },
+      service: {
+        type: Schema.ObjectId,
+        ref: 'Service'
       }
     });
 
@@ -565,10 +579,7 @@ module.exports = class User extends Model {
         type: Schema.ObjectId,
         ref: 'Client'
       }],
-      subscriptions: [{
-        type: Schema.ObjectId,
-        ref: 'Service'
-      }],
+      subscriptions: [subscriptionSchema],
       deleted: {
         type: Boolean,
         default: false

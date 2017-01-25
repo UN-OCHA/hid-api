@@ -168,6 +168,9 @@ module.exports = class ServiceController extends Controller{
           if (user.subscriptionsIndex(request.payload.service) !== -1) {
             throw Boom.badRequest('User is already subscribed');
           }
+          if (user.emailsIndex(request.payload.email) === -1) {
+            throw Boom.badRequest('Wrong email');
+          }
           else {
             return user;
           }
@@ -208,10 +211,10 @@ module.exports = class ServiceController extends Controller{
         user = results.user;
         service = results.service;
         if (service.type === 'mailchimp') {
-          return service.subscribeMailchimp(results.user)
+          return service.subscribeMailchimp(results.user, request.payload.email)
             .then((output) => {
               if (output.statusCode === 200) {
-                user.subscriptions.push(service);
+                user.subscriptions.push({email: request.payload.email, service: service});
                 user.save();
                 return reply(user);
               }
@@ -221,9 +224,9 @@ module.exports = class ServiceController extends Controller{
             });
         }
         else {
-          return service.subscribeGoogleGroup(results.user, results.creds, function (err, response) {
+          return service.subscribeGoogleGroup(results.user, request.payload.email, results.creds, function (err, response) {
             if (!err || (err && err.code === 409)) {
-              user.subscriptions.push(service);
+              user.subscriptions.push({email: request.payload.email, service: service});
               user.save();
               return reply(user);
             }

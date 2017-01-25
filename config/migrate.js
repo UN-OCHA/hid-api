@@ -254,6 +254,7 @@ module.exports = {
     const User = app.orm.User;
     const ListUser = app.orm.ListUser;
     const List = app.orm.List;
+    const Service = app.orm.Service;
 
     var setVerifiedBy = function (item, user, cb) {
       if (item.verified && item.verifiedById) {
@@ -390,6 +391,30 @@ module.exports = {
         },
         function (callback) {
           setVerifiedBy(item, user, callback);
+        },
+        function (callback) {
+          if (!user.subscriptions) {
+            user.subscriptions = [];
+          }
+          if (item.subscriptions && item.subscriptions.length) {
+            async.eachSeries(item.subscriptions, function (sub, next) {
+              Service
+                .findOne({'legacyId': sub.service})
+                .then((srv) => {
+                  if (srv) {
+                    if (user.subscriptionsIndex(srv._id) === -1) {
+                      user.subscriptions.push({email: sub.email, service: srv._id});
+                    }
+                  }
+                  next();
+                });
+            }, function (err, results) {
+              callback();
+            });
+          }
+          else {
+            callback();
+          }
         },
         function (callback) {
           user
