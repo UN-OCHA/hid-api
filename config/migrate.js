@@ -329,7 +329,7 @@ module.exports = {
                     checkoutDate = new Date(item.departureDate);
                   }
                   return ListUser
-                    .create({list: lu.list, user: user._id, deleted: item.status, checkoutDate: checkoutDate, pending: false})
+                    .create({list: lu.list, user: user._id, deleted: !item.status, checkoutDate: checkoutDate, pending: false})
                     .then((clu) => {
                       return clu;
                     });
@@ -517,6 +517,7 @@ module.exports = {
     const User = app.orm.User;
     const ListUser = app.orm.ListUser;
     const List = app.orm.List;
+    const Service = app.orm.Service;
 
     var query = {
       limit: 30,
@@ -640,6 +641,36 @@ module.exports = {
                               });
                               callback();
                             });
+                        },
+                        function (callback) {
+                          if (item.services && item.services.length) {
+                            async.eachSeries(item.services, function (srvId, next) {
+                              Service
+                                .findOne({'legacyId': srvId})
+                                .then((service) => {
+                                  if (service) {
+                                    var srvFound = false;
+                                    if (list.services && list.services.length) {
+                                      list.services.forEach(function (listSrv) {
+                                        if (listSrv === service._id) {
+                                          srvFound = true;
+                                        }
+                                      });
+                                    }
+                                    if (!srvFound) {
+                                      service.lists.push(list._id);
+                                      service.save();
+                                    }
+                                  }
+                                  next();
+                                });
+                              }, function (err, results) {
+                                callback();
+                              });
+                          }
+                          else {
+                            callback();
+                          }
                         }
                       ], function (err, results) {
                         return list
@@ -731,15 +762,31 @@ module.exports = {
                     else {
                       createSrv = false;
                     }
-                    var privacy = item.privacy ? item.privacy : 'all';
-                    if (privacy === 'some') {
-                      privacy = 'me';
-                    }
                     srv.legacyId = item._id;
                     srv.name = item.name;
                     srv.description = '';
                     srv.hidden = item.hidden;
                     srv.type = item.type;
+                    srv.deleted = !item.status;
+
+                    if (srv.type === 'mailchimp') {
+                      srv.mailchimp = {
+                        apiKey: item.mc_api_key,
+                        list: {
+                          id: item.mc_list.id,
+                          name: item.mc_list.name
+                        }
+                      };
+                    }
+                    else if (srv.type === 'googlegroup') {
+                      srv.googlegroup = {
+                        domain: item.googlegroup.domain,
+                        group: {
+                          id: item.googlegroup.group.id,
+                          name: item.googlegroup.group.name
+                        }
+                      };
+                    }
 
                     if (createSrv) {
                       return Service
@@ -750,12 +797,45 @@ module.exports = {
                         });
                     }
                     else {
-                      return srv
-                        .save()
-                        .then(() => {
-                          console.log('saved service' + srv.name);
-                          cb();
-                        });
+                      async.series([
+                        function (callback) {
+                          User
+                            .findOne({'user_id': item.userid})
+                            .then((owner) => {
+                              if (owner) {
+                                srv.owner = owner._id;
+                              }
+                              callback();
+                            });
+                        },
+                        function (callback) {
+                          User
+                            .find({'legacyId': {$in: item.owners}})
+                            .then((managers) => {
+                                managers.forEach(function (manager) {
+                                  var managerFound = false;
+                                  srv.managers.forEach(function (srvManager) {
+                                    if (srvManager === manager._id) {
+                                      managerFound = true;
+                                    }
+                                  });
+                                  if (!managerFound) {
+                                    srv.managers.push(manager._id);
+                                  }
+                                });
+                                callback();
+                              }, function (err) {
+                                callback();
+                              });
+                        }
+                      ], function (err, results) {
+                        return srv
+                          .save()
+                          .then(() => {
+                            console.log('saved service ' + srv.name);
+                            cb();
+                          });
+                      });
                     }
                   })
                   .catch((err) => {
