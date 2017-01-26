@@ -17,8 +17,12 @@ module.exports = {
     var uidLength = tmpUserId.length;
     user.user_id = item._profile.userid;
     user.legacyId = item._profile._id;
-    user.given_name = item.nameGiven.trim();
-    user.family_name = item.nameFamily.trim();
+    if (item.type === 'global' || (item.type === 'local' && !user.given_name)) {
+      user.given_name = item.nameGiven.trim();
+    }
+    if (item.type === 'global' || (item.type === 'local' && !user.family_name)) {
+      user.family_name = item.nameFamily.trim();
+    }
     if (uidLength === 1) {
       user.email = '';
       user.email_verified = false;
@@ -53,8 +57,12 @@ module.exports = {
     //user.remindedUpdate = '';
     user.verified = item._profile.verified ? item._profile.verified : false;
     user.locale = 'en';
-    user.job_title = item.jobtitle ? item.jobtitle : '';
-    user.status = item.notes ? item.notes : '';
+    if (item.type === 'global' || (item.type === 'local' && !user.job_title && item.status)) {
+      user.job_title = item.jobtitle ? item.jobtitle : '';
+    }
+    if (item.type === 'global' || (item.type === 'local' && !user.status && item.status)) {
+      user.status = item.notes ? item.notes : '';
+    }
     user.is_admin = false;
     if (item._profile.roles.indexOf('admin') !== -1) {
       user.verified = true;
@@ -103,150 +111,152 @@ module.exports = {
     if (!user.emails) {
       user.emails = [];
     }
-    item.email.forEach(function (email) {
-      var emailFound = false;
-      user.emails.forEach(function (email2) {
-        if (email2.email === email.address) {
-          emailFound = true;
-        }
-      });
-      if (!emailFound) {
-        user.emails.push({
-          type: 'Work',
-          email: email.address,
-          validated: email.address === user.email ? true : false
-        });
-      }
-    });
-    if (!user.voips) {
-      user.voips = [];
-    }
-    item.voip.forEach(function (voip) {
-      if (voip.type === 'yahoo.fr') {
-        voip.type = 'Yahoo';
-      }
-      if (allowedVoips.indexOf(voip.type) !== -1) {
-        var voipFound = false;
-        user.voips.forEach(function (voip2) {
-          if (voip2.type === voip.type) {
-            voipFound = true;
+    if (item.status) {
+      item.email.forEach(function (email) {
+        var emailFound = false;
+        user.emails.forEach(function (email2) {
+          if (email2.email === email.address) {
+            emailFound = true;
           }
         });
-        if (!voipFound) {
-          user.voips.push({
-            type: voip.type,
-            username: voip.number
+        if (!emailFound) {
+          user.emails.push({
+            type: 'Work',
+            email: email.address,
+            validated: email.address === user.email ? true : false
           });
         }
-      }
-      else {
-        console.error(voip.type);
-      }
-    });
-    if (!user.websites) {
-      user.websites = [];
-    }
-    item.uri.forEach(function (uri) {
-      var uriFound = false;
-      user.websites.forEach(function (uri2) {
-        if (uri2.url === uri) {
-          uriFound = true;
-        }
       });
-      if (!uriFound && urlRegex.test(uri)) {
-        user.websites.push({
-          url: uri
-        });
+      if (!user.voips) {
+        user.voips = [];
       }
-    });
-    if (!user.phone_numbers) {
-      user.phone_numbers = [];
-    }
-    if (item.phone && item.phone.length) {
-      item.phone.forEach(function (phone, index) {
-        if (!phone.number || !phone.type) {
-          return;
+      item.voip.forEach(function (voip) {
+        if (voip.type === 'yahoo.fr') {
+          voip.type = 'Yahoo';
         }
-        if (phone.number.startsWith('00')) {
-          phone.number = '+' + phone.number.slice(2);
-        }
-        if (isValidPhoneNumber(phone.number)) {
-          if (index === 0 && item.type === 'global') {
-            user.phone_number = phone.number;
-            user.phone_number_type = phone.type;
-          }
-          var phoneFound = false;
-          user.phone_numbers.forEach(function (phone2) {
-            if (phone2.number === phone.number) {
-              phoneFound = true;
+        if (allowedVoips.indexOf(voip.type) !== -1) {
+          var voipFound = false;
+          user.voips.forEach(function (voip2) {
+            if (voip2.type === voip.type) {
+              voipFound = true;
             }
           });
-          if (!phoneFound) {
-            user.phone_numbers.push({
-              type: phone.type,
-              number: phone.number,
-              validated: false
+          if (!voipFound) {
+            user.voips.push({
+              type: voip.type,
+              username: voip.number
             });
           }
         }
-      });
-    }
-    if (!user.job_titles) {
-      user.job_titles = [];
-    }
-    if (item.jobtitle) {
-      var jobFound = false;
-      user.job_titles.forEach(function (jobtitle) {
-        if (jobtitle === item.jobtitle) {
-          jobFound = true;
+        else {
+          console.error(voip.type);
         }
       });
-      if (!jobFound) {
-        user.job_titles.push(item.jobtitle);
+      if (!user.websites) {
+        user.websites = [];
       }
-    }
-    if (!user.location) {
-      user.location = {};
-    }
-    if (!user.locations) {
-      user.locations = [];
-    }
-    if (item.address && item.address.length) {
-      item.address.forEach(function (address, index) {
-        if (!address.country && !address.administrative_area && !address.locality) {
-          return;
-        }
-        var tmpAddress = {};
-        if (address.country) {
-          tmpAddress.country = { name: address.country};
-        }
-        if (address.administrative_area) {
-          tmpAddress.region = { name: address.administrative_area};
-        }
-        if (address.locality) {
-          tmpAddress.locality = address.locality;
-        }
-        if (index === 0 && item.type === 'global') {
-          user.location = tmpAddress;
-        }
-        var addressFound = false;
-        user.locations.forEach(function (address2) {
-          var country = '', country2 = '', region = '', region2 = '', locality = '', locality2 = '';
-          country = address.country ? address.country : '';
-          country2 = address2.country ? address2.country.name : '';
-          region = address.administrative_area ? address.administrative_area : '';
-          region2 = address2.region ? address2.region.name : '';
-          locality = address.locality ? address.locality : '';
-          locality2 = address2.locality ? address2.locality : '';
-
-          if (country == country2 && region === region2 && locality === locality2) {
-            addressFound = true;
+      item.uri.forEach(function (uri) {
+        var uriFound = false;
+        user.websites.forEach(function (uri2) {
+          if (uri2.url === uri) {
+            uriFound = true;
           }
         });
-        if (!addressFound) {
-          user.locations.push(tmpAddress);
+        if (!uriFound && urlRegex.test(uri)) {
+          user.websites.push({
+            url: uri
+          });
         }
       });
+      if (!user.phone_numbers) {
+        user.phone_numbers = [];
+      }
+      if (item.phone && item.phone.length) {
+        item.phone.forEach(function (phone, index) {
+          if (!phone.number || !phone.type) {
+            return;
+          }
+          if (phone.number.startsWith('00')) {
+            phone.number = '+' + phone.number.slice(2);
+          }
+          if (isValidPhoneNumber(phone.number)) {
+            if (index === 0 && item.type === 'global') {
+              user.phone_number = phone.number;
+              user.phone_number_type = phone.type;
+            }
+            var phoneFound = false;
+            user.phone_numbers.forEach(function (phone2) {
+              if (phone2.number === phone.number) {
+                phoneFound = true;
+              }
+            });
+            if (!phoneFound) {
+              user.phone_numbers.push({
+                type: phone.type,
+                number: phone.number,
+                validated: false
+              });
+            }
+          }
+        });
+      }
+      if (!user.job_titles) {
+        user.job_titles = [];
+      }
+      if (item.jobtitle) {
+        var jobFound = false;
+        user.job_titles.forEach(function (jobtitle) {
+          if (jobtitle === item.jobtitle) {
+            jobFound = true;
+          }
+        });
+        if (!jobFound) {
+          user.job_titles.push(item.jobtitle);
+        }
+      }
+      if (!user.location) {
+        user.location = {};
+      }
+      if (!user.locations) {
+        user.locations = [];
+      }
+      if (item.address && item.address.length) {
+        item.address.forEach(function (address, index) {
+          if (!address.country && !address.administrative_area && !address.locality) {
+            return;
+          }
+          var tmpAddress = {};
+          if (address.country) {
+            tmpAddress.country = { name: address.country};
+          }
+          if (address.administrative_area) {
+            tmpAddress.region = { name: address.administrative_area};
+          }
+          if (address.locality) {
+            tmpAddress.locality = address.locality;
+          }
+          if (index === 0 && item.type === 'global') {
+            user.location = tmpAddress;
+          }
+          var addressFound = false;
+          user.locations.forEach(function (address2) {
+            var country = '', country2 = '', region = '', region2 = '', locality = '', locality2 = '';
+            country = address.country ? address.country : '';
+            country2 = address2.country ? address2.country.name : '';
+            region = address.administrative_area ? address.administrative_area : '';
+            region2 = address2.region ? address2.region.name : '';
+            locality = address.locality ? address.locality : '';
+            locality2 = address2.locality ? address2.locality : '';
+
+            if (country == country2 && region === region2 && locality === locality2) {
+              addressFound = true;
+            }
+          });
+          if (!addressFound) {
+            user.locations.push(tmpAddress);
+          }
+        });
+      }
     }
   },
 
@@ -508,6 +518,7 @@ module.exports = {
                         cb();
                       }
                       else {
+                        app.config.migrate.parseGlobal(item, user);
                         app.config.migrate.parseLocal(item, user);
                         parseCheckins(item, user, cb);
                       }
@@ -627,6 +638,7 @@ module.exports = {
                             .find({'legacyId': {$in: item.contacts}})
                             .then((contacts) => {
                               async.eachSeries(contacts, function (contact, next) {
+                                console.log(contact._id);
                                 ListUser
                                   .findOne({list: list, user: contact._id})
                                   .then((lu) => {
@@ -634,6 +646,7 @@ module.exports = {
                                       ListUser
                                         .create({list: list, user: contact._id, deleted: false, checkoutDate: null, pending: false})
                                         .then((clu) => {
+                                          console.log('created ccl membership');
                                           next();
                                         });
                                     }
