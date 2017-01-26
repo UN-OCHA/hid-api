@@ -10,16 +10,16 @@ const async = require('async');
 const listTypes = ['operation', 'bundle', 'disaster', 'organization'];
 const userPopulate1 = [
   {path: 'favoriteLists'},
-  {path: 'operations'},
-  {path: 'disasters'},
-  {path: 'bundles'},
+  {path: 'operations', match: {deleted: false}},
+  {path: 'disasters', match: {deleted: false}},
+  {path: 'bundles', match: {deleted: false}},
   {path: 'organization'},
-  {path: 'organizations'},
-  {path: 'lists'},
+  {path: 'organizations', match: {deleted: false}},
+  {path: 'lists', match: {deleted: false}},
   {path: 'authorizedClients'},
   {path: 'verified_by', select: 'name'},
   {path: 'subscriptions'},
-  {path: 'functional_roles'}
+  {path: 'functional_roles', match: {deleted: false}}
 ];
 const userPopulate2= [
   {path: 'operations.list', model: 'List'},
