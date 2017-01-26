@@ -385,7 +385,7 @@ module.exports = class UserController extends Controller{
       if (request.params.id) {
         criteria = request.params.id;
       }
-      this.log.debug('[UserController] (find) criteria =', criteria, 'options =', options);
+      this.log.debug('[UserController] (find)');
       FootprintService
         .find('user', criteria, options)
         .then((results) => {
@@ -476,7 +476,7 @@ module.exports = class UserController extends Controller{
               return reply(finalUsers).header('X-Total-Count', 0);
             }
             criteria._id = { $in: finalUsers};
-            that.log.debug('[UserController] (find) criteria =', criteria, 'options =', options);
+            that.log.debug('[UserController] (find) ');
             FootprintService
               .find('user', criteria, options)
               .then((results) => {

@@ -68,8 +68,8 @@ var importLists = function (app) {
 
   // Create a list based on the item pulled from hrinfo
   var _createList = function (listType, item, cb) {
-    var tmpList = {}, visibility = '', label = '', acronym = '';
-    if ((listType === 'operation' && item.status !== 'inactive') || listType !== 'operation') {
+    var tmpList = {}, visibility = '', label = '', acronym = '', inactiveOps = [2782,2785,2791,38230];
+    if ((listType === 'operation' && (item.status !== 'inactive' || inactiveOps.indexOf(item.id) !== -1)) || listType !== 'operation') {
       List.findOne({type: listType, remote_id: item.id}, function (err, list) {
         if (!list) {
           visibility = 'all';
@@ -137,7 +137,7 @@ var importLists = function (app) {
           // Parse while there are pages
           async.doWhilst(function (nextPage) {
             path = '/api/v1.0/' + listType + 's?page=' + pageNumber + '&filter[created][value]=' + lastPull + '&filter[created][operator]=>';
-            if (listType === 'organization') {
+            if (listType === 'organization' || listType === 'functional_role') {
               path = '/api/v1.0/' + listType + 's?page=' + pageNumber;
             }
             https.get({

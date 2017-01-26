@@ -382,7 +382,12 @@ module.exports = {
     var parseCheckins = function (item, user, cb) {
       async.series([
         function (callback) {
-          setCheckins(item, user, 'organization', callback);
+          if (item.status) {
+            setCheckins(item, user, 'organization', callback);
+          }
+          else {
+            callback();
+          }
         },
         function (callback) {
           setCheckins(item, user, 'disasters', callback);
@@ -394,10 +399,20 @@ module.exports = {
           setCheckins(item, user, 'bundles', callback);
         },
         function (callback) {
-          setCheckins(item, user, 'functional_roles', callback);
+          if (item.status) {
+            setCheckins(item, user, 'functional_roles', callback);
+          }
+          else {
+            callback();
+          }
         },
         function (callback) {
-          setCheckins(item, user, 'offices', callback);
+          if (item.status) {
+            setCheckins(item, user, 'offices', callback);
+          }
+          else {
+            callback();
+          }
         },
         function (callback) {
           setVerifiedBy(item, user, callback);
@@ -406,8 +421,8 @@ module.exports = {
           if (!user.subscriptions) {
             user.subscriptions = [];
           }
-          if (item.subscriptions && item.subscriptions.length) {
-            async.eachSeries(item.subscriptions, function (sub, next) {
+          if (item._profile.subscriptions && item._profile.subscriptions.length) {
+            async.eachSeries(item._profile.subscriptions, function (sub, next) {
               Service
                 .findOne({'legacyId': sub.service})
                 .then((srv) => {
@@ -417,6 +432,9 @@ module.exports = {
                     }
                   }
                   next();
+                })
+                .catch((err) => {
+                  console.error(err);
                 });
             }, function (err, results) {
               callback();
@@ -491,37 +509,24 @@ module.exports = {
                     else {
                       createUser = false;
                     }
-                    if (item.type === 'global') {
-                      if (!user.password) {
-                        user.password = User.hashPassword(Math.random().toString(36).slice(2));
-                      }
-                      app.config.migrate.parseGlobal(item, user);
-                      app.config.migrate.parseLocal(item, user);
-                      if (createUser) {
-                        User
-                          .create(user)
-                          .then((newUser) => {
-                            cb();
-                          })
-                          .catch(err => {
-                            console.error(err);
-                            cb();
-                          });
-                      }
-                      else {
-                        parseCheckins(item, user, cb);
-                      }
+                    if (!user.password) {
+                      user.password = User.hashPassword(Math.random().toString(36).slice(2));
+                    }
+                    app.config.migrate.parseGlobal(item, user);
+                    app.config.migrate.parseLocal(item, user);
+                    if (createUser) {
+                      User
+                        .create(user)
+                        .then((newUser) => {
+                          parseCheckins(item, newUser, cb);
+                        })
+                        .catch(err => {
+                          console.error(err);
+                          cb();
+                        });
                     }
                     else {
-                      // Local profile
-                      if (createUser) {
-                        cb();
-                      }
-                      else {
-                        app.config.migrate.parseGlobal(item, user);
-                        app.config.migrate.parseLocal(item, user);
-                        parseCheckins(item, user, cb);
-                      }
+                      parseCheckins(item, user, cb);
                     }
                   })
                   .catch((err) => {
