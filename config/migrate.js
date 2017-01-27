@@ -696,10 +696,30 @@ module.exports = {
                                               .create({list: list, user: user._id, deleted: false, checkoutDate: null, pending: false})
                                               .then((clu) => {
                                                 console.log('created ccl membership');
+                                                var luFound = false;
+                                                user.lists.forEach(function (it) {
+                                                  if (it._id.toString() === lu._id.toString()) {
+                                                    luFound = true;
+                                                  }
+                                                });
+                                                if (!luFound) {
+                                                  user.lists.push(lu);
+                                                  user.save();
+                                                }
                                                 next();
                                               });
                                           }
                                           else {
+                                            var luFound = false;
+                                            user.lists.forEach(function (it) {
+                                              if (it._id.toString() === lu._id.toString()) {
+                                                luFound = true;
+                                              }
+                                            });
+                                            if (!luFound) {
+                                              user.lists.push(lu);
+                                              user.save();
+                                            }
                                             next();
                                           }
                                         });
