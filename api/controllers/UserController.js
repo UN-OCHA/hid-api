@@ -11,6 +11,29 @@ const moment = require('moment');
 const async = require('async');
 const _ = require('lodash');
 const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles'];
+const userPopulate1 = [
+  {path: 'favoriteLists'},
+  {path: 'operations', match: {deleted: false}, select: '_id list'},
+  {path: 'disasters', match: {deleted: false}, select: '_id list'},
+  {path: 'bundles', match: {deleted: false}, select: '_id list'},
+  {path: 'organization', select: '_id list'},
+  {path: 'organizations', match: {deleted: false}, select: '_id list'},
+  {path: 'lists', match: {deleted: false}, select: '_id list'},
+  {path: 'authorizedClients'},
+  {path: 'verified_by', select: 'name'},
+  {path: 'subscriptions'},
+  {path: 'functional_roles', match: {deleted: false}, select: '_id list'}
+];
+const userPopulate2= [
+  {path: 'operations.list', model: 'List', select: '_id name'},
+  {path: 'disasters.list', model: 'List', select: '_id name'},
+  {path: 'bundles.list', model: 'List', select: '_id name'},
+  {path: 'organizations.list', model: 'List', select: '_id name'},
+  {path: 'organization.list', model: 'List', select: '_id name'},
+  {path: 'lists.list', model: 'List', select: '_id name'},
+  {path: 'functional_roles.list', model: 'List', select: '_id name'},
+  {path: 'subscriptions.service', model: 'Service'}
+];
 
 /**
  * @module UserController
@@ -366,10 +389,10 @@ module.exports = class UserController extends Controller{
           {path: 'bundles.list', model: 'List', select: 'name _id'}
         ];
         return User
-          .populate(results.results, pop1)
+          .populate(results.results, userPopulate1)
           .then((users) => {
             return User
-              .populate(users, pop2)
+              .populate(users, userPopulate2)
               .then((users2) => {
                 return {results: users2, number: results.number};
               });
