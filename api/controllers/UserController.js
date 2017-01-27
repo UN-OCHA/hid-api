@@ -341,7 +341,7 @@ module.exports = class UserController extends Controller{
     return out;
   }
 
-  _findHelper(request, criteria, options) {
+  _findHelper(request, reply, criteria, options) {
     const FootprintService = this.app.services.FootprintService;
     const User = this.app.orm.User;
     let that = this;
@@ -472,7 +472,7 @@ module.exports = class UserController extends Controller{
           });
       }
       else {
-        this._findHelper(request, criteria, options);
+        this._findHelper(request, reply, criteria, options);
       }
     }
     else {
@@ -513,7 +513,7 @@ module.exports = class UserController extends Controller{
               return reply(finalUsers).header('X-Total-Count', 0);
             }
             criteria._id = { $in: finalUsers};
-            that._findHelper(request, criteria, options);
+            that._findHelper(request, reply, criteria, options);
           });
         });
     }
