@@ -116,8 +116,9 @@ module.exports = class ListUserController extends Controller{
                 return result;
               });
           });*/
-          reply(result.user);
-          return result;
+            reply(result.user);
+            return result;
+          });
       })
       .then((result) => {
         // Notify list managers of the checkin
