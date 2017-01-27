@@ -560,6 +560,47 @@ module.exports = {
     const List = app.orm.List;
     const Service = app.orm.Service;
 
+    var getProfileId = function (contactId, cb) {
+      var query = {
+        contactId: contactId
+      };
+      var queryString = '';
+      var keys = Object.keys(query);
+      for (var i = 0; i < keys.length; i++) {
+        if (i > 0) {
+          queryString += '&';
+        }
+        queryString += keys[i] + '=' + query[keys[i]];
+      }
+      var key = '';
+      keys.forEach(function (k) {
+        key += query[k];
+      });
+      key += clientSecret;
+      var hash = crypto.createHash('sha256').update(key).digest('hex');
+      var options = {
+        hostname: profilesUrl,
+        path: '/v0/profile/view?' + queryString + '&_access_client_id=' + clientId + '&_access_key=' + hash
+      };
+      https.get(options, (res) => {
+        var body = '';
+        res.on('data', function (d) {
+          body += d;
+        });
+        res.on('end', function() {
+          var parsed = {};
+          try {
+            parsed = JSON.parse(body);
+            cb(parsed.profile._id);
+          }
+          catch (err) {
+            console.error(err);
+            cb();
+          }
+        });
+      });
+    };
+
     var query = {
       limit: 30,
       skip: 0
@@ -639,31 +680,41 @@ module.exports = {
                             });
                         },
                         function (callback) {
-                          console.log(item.contacts);
-                          User
-                            .find({'legacyId': {$in: item.contacts}})
-                            .then((contacts) => {
-                              async.eachSeries(contacts, function (contact, next) {
-                                console.log(contact._id);
-                                ListUser
-                                  .findOne({list: list, user: contact._id})
-                                  .then((lu) => {
-                                    if (!lu) {
+                          async.eachSeries(item.contacts, function (contactId, next) {
+                            getProfileId(contactId, function (pid) {
+                              if (pid) {
+                                User
+                                  .find({'legacyId': pid})
+                                  .then((user) => {
+                                    if (user) {
                                       ListUser
-                                        .create({list: list, user: contact._id, deleted: false, checkoutDate: null, pending: false})
-                                        .then((clu) => {
-                                          console.log('created ccl membership');
-                                          next();
+                                        .findOne({list: list, user: user._id})
+                                        .then((lu) => {
+                                          if (!lu) {
+                                            ListUser
+                                              .create({list: list, user: user._id, deleted: false, checkoutDate: null, pending: false})
+                                              .then((clu) => {
+                                                console.log('created ccl membership');
+                                                next();
+                                              });
+                                          }
+                                          else {
+                                            next();
+                                          }
                                         });
-                                    }
-                                    else {
-                                      next();
-                                    }
-                                  });
-                              }, function (err) {
-                                callback();
+                                      }
+                                      else {
+                                        next();
+                                      }
+                                    });
+                                }
+                                else {
+                                  next();
+                                }
                               });
-                            });
+                          }, function (err) {
+                            callback();
+                          });
                         },
                         function (callback) {
                           if (!list.managers) {
