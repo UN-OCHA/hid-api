@@ -346,7 +346,8 @@ module.exports = class UserController extends Controller{
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
     let criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
     const ListUser = this.app.orm.ListUser,
-      List = this.app.orm.List;
+      List = this.app.orm.List,
+      User = this.app.orm.User;
     let lists = [], listIds = [];
 
     for (var i = 0; i < childAttributes.length; i++) {
@@ -394,6 +395,25 @@ module.exports = class UserController extends Controller{
             .count('user', criteria)
             .then((number) => {
               return {results: results, number: number};
+            });
+        })
+        .then((results) => {
+          var pop1 = [
+            {path: 'organization', select: 'list'},
+            {path: 'bundles', match: {deleted: false}, select: 'list'}
+          ];
+          var pop2 = [
+            {path: 'organization.list', model: 'List', select: 'name _id'},
+            {path: 'bundles.list', model: 'List', select: 'name _id'}
+          ];
+          return User
+            .populate(results.results, pop1)
+            .then((users) => {
+              return User
+                .populate(users, pop2)
+                .then((users2) => {
+                  return {results: users2, number: number};
+                });
             });
         })
         .then((results) => {
