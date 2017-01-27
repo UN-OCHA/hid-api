@@ -34,7 +34,12 @@ module.exports = class EmailService extends Service {
     var templateSender = Transporter.templateSender(new EmailTemplate(templateDir), {
       from: 'info@humanitarian.id'
     });
-    templateSender(options, context, callback);
+    if (options.to) {
+      templateSender(options, context, callback);
+    }
+    else {
+      callback();
+    }
   }
 
   sendRegister (user, appVerifyUrl, callback) {

@@ -108,7 +108,7 @@ module.exports = class ServiceController extends Controller{
         });
       }
       catch (err) {
-        that.app.services.ErrorService.handle(err, reply);
+        reply(Boom.badRequest('Invalid API key'));
       }
     }
     else {
