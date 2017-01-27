@@ -685,41 +685,38 @@ module.exports = {
                             getProfileId(contactId, function (pid) {
                               if (pid) {
                                 User
-                                  .find({'legacyId': pid})
+                                  .findOne({'legacyId': pid})
                                   .then((user) => {
                                     if (user) {
                                       ListUser
                                         .findOne({list: list, user: user._id})
                                         .then((lu) => {
                                           if (!lu) {
-                                            ListUser
+                                            return ListUser
                                               .create({list: list, user: user._id, deleted: false, checkoutDate: null, pending: false})
                                               .then((clu) => {
                                                 console.log('created ccl membership');
-                                                var luFound = false;
-                                                user.lists.forEach(function (it) {
-                                                  if (it._id.toString() === lu._id.toString()) {
-                                                    luFound = true;
-                                                  }
-                                                });
-                                                if (!luFound) {
-                                                  user.lists.push(lu);
-                                                  user.save();
-                                                }
-                                                next();
+                                                return clu;
                                               });
                                           }
                                           else {
-                                            var luFound = false;
-                                            user.lists.forEach(function (it) {
-                                              if (it._id.toString() === lu._id.toString()) {
-                                                luFound = true;
-                                              }
-                                            });
-                                            if (!luFound) {
-                                              user.lists.push(lu);
-                                              user.save();
+                                            return lu;
+                                          }
+                                        })
+                                        .then((lu) => {
+                                          var luFound = false;
+                                          user.lists.forEach(function (it) {
+                                            if (it._id.toString() === lu._id.toString()) {
+                                              luFound = true;
                                             }
+                                          });
+                                          if (!luFound) {
+                                            user.lists.push(lu);
+                                            user.save(function (err) {
+                                              next();
+                                            });
+                                          }
+                                          else {
                                             next();
                                           }
                                         });
@@ -727,6 +724,9 @@ module.exports = {
                                       else {
                                         next();
                                       }
+                                    })
+                                    .catch((err) => {
+                                      console.error(err);
                                     });
                                 }
                                 else {
