@@ -627,7 +627,7 @@ module.exports = class User extends Model {
       });
     });
     // Populate lists
-    schema.post('findOne', function (result, next) {
+    /*schema.post('findOne', function (result, next) {
       let that = this;
       if (!result) {
         return next();
@@ -662,6 +662,6 @@ module.exports = class User extends Model {
       }, function (err) {
         next();
       });
-    });
+    });*/
   }
 };

@@ -591,7 +591,9 @@ module.exports = {
           var parsed = {};
           try {
             parsed = JSON.parse(body);
-            cb(parsed.profile._id);
+            setTimeout(function() {
+              cb(parsed.profile._id);
+            }, 3000);
           }
           catch (err) {
             console.log(body);
