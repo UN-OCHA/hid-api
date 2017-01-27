@@ -372,7 +372,6 @@ module.exports = class UserController extends Controller{
     FootprintService
       .find('user', criteria, options)
       .then((results) => {
-        that.log.debug('Counting results');
         return FootprintService
           .count('user', criteria)
           .then((number) => {

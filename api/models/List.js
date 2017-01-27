@@ -19,11 +19,9 @@ module.exports = class List extends Model {
           return process.env.APP_URL + '/lists/' + this._id;
         },
         isVisibleTo: function (user, ListUser, cb) {
-          if (user.is_admin ||
+          if (this.isOwner(user) ||
             this.visibility === 'all' ||
-            (this.visibility === 'verified' && user.verified) ||
-            this.owner === user.id ||
-            this.managers.indexOf(user.id) !== -1) {
+            (this.visibility === 'verified' && user.verified)) {
             return cb(true);
           }
           else {
@@ -48,12 +46,28 @@ module.exports = class List extends Model {
         isOwner: function (user) {
           if (user.is_admin ||
             this.owner === user.id ||
-            this.managers.indexOf(user.id) !== -1) {
+            this.isManager(user)) {
               return true;
           }
           else {
             return false;
           }
+        },
+        isManager: function (user) {
+          var managerFound = false;
+          this.managers.forEach(function (manager) {
+            if (typeof manager === 'object') {
+              if (manager.id === user.id) {
+                managerFound = true;
+              }
+            }
+            else {
+              if (manager === user.id) {
+                managerFound = true;
+              }
+            }
+          });
+          return managerFound;
         }
       }
     };

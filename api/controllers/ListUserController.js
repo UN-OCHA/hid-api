@@ -108,17 +108,18 @@ module.exports = class ListUserController extends Controller{
         return user
           .save()
           .then(() => {
-            that.log.debug('Done saving user');
+            /*that.log.debug('Done saving user');
             return Model
               .findOne({_id: user._id})
               .then((user2) => {
                 result.user = user2;
                 return result;
               });
-          });
+          });*/
+          reply(result.user);
+          return result;
       })
       .then((result) => {
-        reply(result.user);
         // Notify list managers of the checkin
         that.app.services.NotificationService.notifyMultiple(result.list.managers, {
           type: 'checkin',

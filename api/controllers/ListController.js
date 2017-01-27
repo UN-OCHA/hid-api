@@ -69,10 +69,6 @@ module.exports = class ListController extends Controller{
     const ListUser = this.app.orm.ListUser;
     let response, count;
 
-    if (!options.populate) {
-      options.populate = 'owner managers';
-    }
-
     if (!options.sort) {
       options.sort = 'name';
     }
@@ -104,6 +100,9 @@ module.exports = class ListController extends Controller{
       that = this;
 
     if (request.params.id) {
+      if (!options.populate) {
+        options.populate = 'owner managers';
+      }
       List
         .findOne({_id: request.params.id, deleted: criteria.deleted })
         .populate(options.populate)
@@ -121,6 +120,9 @@ module.exports = class ListController extends Controller{
         .catch(err => { that.app.services.ErrorService.handle(err, reply); });
     }
     else {
+      if (!options.populate) {
+        options.populate = 'owner';
+      }
       response = FootprintService.find('list', criteria, options);
       count = FootprintService.count('list', criteria);
       response
