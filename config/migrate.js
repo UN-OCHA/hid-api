@@ -639,6 +639,7 @@ module.exports = {
                             });
                         },
                         function (callback) {
+                          console.log(item.contacts);
                           User
                             .find({'legacyId': {$in: item.contacts}})
                             .then((contacts) => {
