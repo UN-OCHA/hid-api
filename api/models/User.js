@@ -580,6 +580,9 @@ module.exports = class User extends Model {
         ref: 'Client'
       }],
       subscriptions: [subscriptionSchema],
+      appMetadata: {
+        type: Schema.Mixed
+      },
       deleted: {
         type: Boolean,
         default: false
