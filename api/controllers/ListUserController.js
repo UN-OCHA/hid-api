@@ -227,7 +227,7 @@ module.exports = class ListUserController extends Controller{
           user = result.user,
           found = false;
         for (var i = 0; i < user[listType + 's'].length; i++) {
-          if (user[listType + 's'][i]._id.toString() === checkInId) {
+          if (user[listType + 's'][i] === checkInId) {
             found = i;
           }
         }
