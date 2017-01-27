@@ -594,6 +594,7 @@ module.exports = {
             cb(parsed.profile._id);
           }
           catch (err) {
+            console.log(body);
             console.error(err);
             cb();
           }
