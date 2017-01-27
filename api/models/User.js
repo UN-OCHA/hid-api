@@ -627,7 +627,7 @@ module.exports = class User extends Model {
       });
     });
     // Populate lists
-    /*schema.post('findOne', function (result, next) {
+    schema.post('findOne', function (result, next) {
       let that = this;
       if (!result) {
         return next();
@@ -649,11 +649,17 @@ module.exports = class User extends Model {
       let that = this;
       async.eachOf(results, function (result, key, cb) {
         results[key]
-          .populate(userPopulate1)
+          .populate([
+            {path: 'organization', select: 'list'},
+            {path: 'bundles', match: {deleted: false}, select: 'list'}
+          ])
           .execPopulate()
           .then((r) => {
             r
-              .populate(userPopulate2)
+              .populate([
+                {path: 'organization.list', model: 'List', select: 'name _id'},
+                {path: 'bundles.list', model: 'List', select: 'name _id'}
+              ])
               .execPopulate()
               .then((r2) => {
                 cb();
@@ -662,6 +668,6 @@ module.exports = class User extends Model {
       }, function (err) {
         next();
       });
-    });*/
+    });
   }
 };
