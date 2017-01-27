@@ -581,7 +581,7 @@ module.exports = class User extends Model {
       }],
       subscriptions: [subscriptionSchema],
       appMetadata: {
-        type: Schema.Mixed
+        type: Schema.Types.Mixed
       },
       deleted: {
         type: Boolean,
