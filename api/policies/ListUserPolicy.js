@@ -33,15 +33,19 @@ module.exports = class ListUserPolicy extends Policy {
   }
 
   canCheckout(request, reply) {
-    const ListUser = this.app.orm.ListUser;
+    const User = this.app.orm.User;
+    const childAttribute = request.params.childAttribute;
+    const checkInId = request.params.checkInId;
     if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
       return reply();
     }
+    const populate = childAttribute + '.list';
     let that = this;
-    ListUser
-      .findOne({_id: request.params.checkInId})
-      .populate('list user')
-      .then((lu) => {
+    User
+      .findOne({_id: request.params.id})
+      .populate(populate)
+      .then((user) => {
+        var lu = user[childAttribute].id(checkInId);
         if (lu.list.isOwner(request.params.currentUser) || request.params.currentUser.id === request.params.id) {
           return reply();
         }
@@ -55,12 +59,17 @@ module.exports = class ListUserPolicy extends Policy {
   }
 
   canUpdate (request, reply) {
-    const ListUser = this.app.orm.ListUser;
+    const User = this.app.orm.User;
+    const childAttribute = request.params.childAttribute;
+    const checkInId = request.params.checkInId;
+
+    const populate = childAttribute + '.list';
     let that = this;
-    ListUser
-      .findOne({_id: request.params.checkInId})
-      .populate('list user')
-      .then((lu) => {
+    User
+      .findOne({_id: request.params.id})
+      .populate(populate)
+      .then((user) => {
+        var lu = user[childAttribute].id(checkInId);
         if (lu.pending === true && request.payload.pending === false) {
           // User is being approved: allow only administrators, list managers and list owners to do this
           if (!lu.list.isOwner(request.params.currentUser)) {

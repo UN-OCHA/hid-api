@@ -315,6 +315,31 @@ module.exports = class User extends Model {
       }
     });
 
+    const listUserSchema = new Schema({
+      list: {
+        type: Schema.ObjectId,
+        ref: 'List'
+      },
+      name: { type: String},
+      checkoutDate: Date,
+      pending: {
+        type: Boolean,
+        default: true
+      },
+      remindedCheckout: {
+        type: Boolean,
+        default: false
+      },
+      remindedCheckin: {
+        type: Boolean,
+        default: false
+      },
+      deleted: {
+        type: Boolean,
+        default: false
+      }
+    });
+
     const subscriptionSchema = new Schema({
       email: {
         type: String,
@@ -461,14 +486,8 @@ module.exports = class User extends Model {
         enum: ['en', 'fr']
       },
       // TODO :make sure it's a valid organization
-      organization: {
-        type: Schema.ObjectId,
-        ref: 'ListUser'
-      },
-      organizations: [{
-        type: Schema.ObjectId,
-        ref: 'ListUser'
-      }],
+      organization: listUserSchema,
+      organizations: [listUserSchema],
       // Verify valid phone number with libphonenumber and reformat if needed
       phone_number: {
         type: String,
@@ -502,10 +521,7 @@ module.exports = class User extends Model {
       job_titles: {
         type: Array
       },
-      functional_roles: [{
-        type: Schema.ObjectId,
-        ref: 'ListUser'
-      }],
+      functional_roles: [listUserSchema],
       status: {
         type: String
       },
@@ -555,26 +571,11 @@ module.exports = class User extends Model {
         type: Schema.ObjectId,
         ref: 'List'
       }],
-      lists: [{
-        type: Schema.ObjectId,
-        ref: 'ListUser'
-      }],
-      operations: [{
-        type: Schema.ObjectId,
-        ref: 'ListUser'
-      }],
-      bundles: [{
-        type: Schema.ObjectId,
-        ref: 'ListUser'
-      }],
-      disasters: [{
-        type: Schema.ObjectId,
-        ref: 'ListUser'
-      }],
-      offices: [{
-        type: Schema.ObjectId,
-        ref: 'ListUser'
-      }],
+      lists: [listUserSchema],
+      operations: [listUserSchema],
+      bundles: [listUserSchema],
+      disasters: [listUserSchema],
+      offices: [listUserSchema],
       authorizedClients: [{
         type: Schema.ObjectId,
         ref: 'Client'

@@ -50,6 +50,8 @@ module.exports = class ListUserController extends Controller{
           payload.pending = true;
         }
 
+        payload.name = list.name;
+
         that.log.debug('Looking for user with id ' + userId);
         return Model
           .findOne({ '_id': userId })
@@ -78,15 +80,6 @@ module.exports = class ListUserController extends Controller{
         return result;
       })
       .then((result) => {
-        that.log.debug('Saving new checkin');
-        payload.user = result.user._id;
-        return ListUser
-          .create(payload)
-          .then((lu) => {
-            return {list: result.list, user: result.user, listUser: lu};
-          });
-      })
-      .then((result) => {
         that.log.debug('Setting the listUser to the correct attribute');
         var record = result.user,
           list = result.list;
@@ -95,12 +88,12 @@ module.exports = class ListUserController extends Controller{
             record[childAttribute] = [];
           }
 
-          record[childAttribute].push(result.listUser);
+          record[childAttribute].push(payload);
         }
         else {
-          record.organization = result.listUser;
+          record.organization = payload;
         }
-        return {list: result.list, user: record, listUser: result.listUser};
+        return {list: result.list, user: record};
       })
       .then((result) => {
         that.log.debug('Saving user');
@@ -108,14 +101,6 @@ module.exports = class ListUserController extends Controller{
         return user
           .save()
           .then(() => {
-            /*that.log.debug('Done saving user');
-            return Model
-              .findOne({_id: user._id})
-              .then((user2) => {
-                result.user = user2;
-                return result;
-              });
-          });*/
             reply(result.user);
             return result;
           });
@@ -196,7 +181,7 @@ module.exports = class ListUserController extends Controller{
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
     const payload = request.payload;
-    const Model = this.app.orm.user;
+    const User = this.app.orm.user;
     const FootprintService = this.app.services.FootprintService;
     const List = this.app.orm.List;
     const ListUser = this.app.orm.ListUser;
@@ -207,38 +192,23 @@ module.exports = class ListUserController extends Controller{
     if (childAttributes.indexOf(childAttribute) === -1) {
       return reply(Boom.notFound());
     }
+    const populate = childAttribute + '.list';
 
     var that = this;
-    var query = ListUser
-      .findOne({ _id: checkInId })
-      .populate('list user')
+    User
+      .findOne({ _id: request.params.id })
+      .populate(populate)
       .then(record => {
         if (!record) {
           throw Boom.notFound();
         }
+        var lu = record[childAttribute].id(checkInId);
         // Set deleted to true
-        record.deleted = true;
+        lu.deleted = true;
         return record
           .save()
-          .then(() => {
-            return record;
-          });
-      })
-      .then((result) => {
-        var listType = result.list.type,
-          user = result.user,
-          found = false;
-        for (var i = 0; i < user[listType + 's'].length; i++) {
-          if (user[listType + 's'][i] === checkInId) {
-            found = i;
-          }
-        }
-        // Remove reference to checkin
-        user[listType + 's'].splice(found, 1);
-        return user
-          .save()
-          .then(() => {
-            return result;
+          .then((user) => {
+            return {user: user, listuser: lu};
           });
       })
       .then((result) => {
@@ -249,17 +219,17 @@ module.exports = class ListUserController extends Controller{
             type: 'admin_checkout',
             createdBy: request.params.currentUser,
             user: result.user,
-            params: { list: result.list }
+            params: { list: result.listuser }
           }, () => { });
         }
         return result;
       })
       .then((result) => {
         // Notify list managers of the checkin
-        that.app.services.NotificationService.notifyMultiple(result.list.managers, {
+        that.app.services.NotificationService.notifyMultiple(result.listuser.list.managers, {
           type: 'checkout',
           createdBy: result.user,
-          params: { list: result.list }
+          params: { list: result.listuser }
         });
         return result;
       })
