@@ -379,7 +379,7 @@ module.exports = class UserController extends Controller{
           });
       })
       .then((results) => {
-        /*var pop1 = [
+        var pop1 = [
           {path: 'organization', select: 'list'},
           {path: 'bundles', match: {deleted: false}, select: 'list'}
         ];
@@ -390,14 +390,12 @@ module.exports = class UserController extends Controller{
         return User
           .populate(results.results, userPopulate1)
           .then((users) => {
-            return {results: users, number: results.number};
             return User
               .populate(users, userPopulate2)
               .then((users2) => {
                 return {results: users2, number: results.number};
               });
-          });*/
-        return results;
+          });
       })
       .then((results) => {
         if (!results.results) {
