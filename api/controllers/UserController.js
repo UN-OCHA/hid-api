@@ -395,8 +395,8 @@ module.exports = class UserController extends Controller{
               .populate(users, userPopulate2)
               .then((users2) => {
                 return {results: users2, number: results.number};
-              });
-          });*/
+              });*/
+          });
       })
       .then((results) => {
         if (!results.results) {
