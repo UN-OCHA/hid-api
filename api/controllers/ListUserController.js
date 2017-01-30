@@ -17,8 +17,7 @@ module.exports = class ListUserController extends Controller{
     const childAttribute = request.params.childAttribute;
     const payload = request.payload;
     const Model = this.app.orm.user;
-    const List = this.app.orm.list,
-      ListUser = this.app.orm.ListUser;
+    const List = this.app.orm.list;
 
     this.log.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload,
       'options =', options);
@@ -50,6 +49,10 @@ module.exports = class ListUserController extends Controller{
           payload.pending = true;
         }
 
+        payload.name = list.name;
+        payload.acronym = list.acronym;
+        payload.visibility = list.visibility;
+
         that.log.debug('Looking for user with id ' + userId);
         return Model
           .findOne({ '_id': userId })
@@ -78,15 +81,6 @@ module.exports = class ListUserController extends Controller{
         return result;
       })
       .then((result) => {
-        that.log.debug('Saving new checkin');
-        payload.user = result.user._id;
-        return ListUser
-          .create(payload)
-          .then((lu) => {
-            return {list: result.list, user: result.user, listUser: lu};
-          });
-      })
-      .then((result) => {
         that.log.debug('Setting the listUser to the correct attribute');
         var record = result.user,
           list = result.list;
@@ -95,12 +89,12 @@ module.exports = class ListUserController extends Controller{
             record[childAttribute] = [];
           }
 
-          record[childAttribute].push(result.listUser);
+          record[childAttribute].push(payload);
         }
         else {
-          record.organization = result.listUser;
+          record.organization = payload;
         }
-        return {list: result.list, user: record, listUser: result.listUser};
+        return {list: result.list, user: record};
       })
       .then((result) => {
         that.log.debug('Saving user');
@@ -108,14 +102,6 @@ module.exports = class ListUserController extends Controller{
         return user
           .save()
           .then(() => {
-            /*that.log.debug('Done saving user');
-            return Model
-              .findOne({_id: user._id})
-              .then((user2) => {
-                result.user = user2;
-                return result;
-              });
-          });*/
             reply(result.user);
             return result;
           });
@@ -160,34 +146,52 @@ module.exports = class ListUserController extends Controller{
   }
 
   update (request, reply) {
-    const ListUser = this.app.orm.ListUser;
+    const User = this.app.orm.User;
     const NotificationService = this.app.services.NotificationService;
+    const childAttribute = request.params.childAttribute;
+    const checkInId = request.params.checkInId;
+
 
     this.log.debug('[ListUserController] (update) model = list, criteria =', request.query, request.params.checkInId, ', values = ', request.payload);
 
+    const populate = childAttribute + '.list';
+
+    // Make sure list specific attributes can not be set through update
+    if (request.payload.list) {
+      delete request.payload.list;
+    }
+    if (request.payload.name) {
+      delete request.payload.name;
+    }
+    if (request.payload.acronym) {
+      delete request.payload.acronym;
+    }
+    if (request.payload.visibility) {
+      delete request.payload.visibility;
+    }
+
     var that = this;
-    ListUser
-      .findOne({_id: request.params.checkInId})
-      .populate('list user')
-      .then((lu) => {
-        console.log(lu);
-        if (!lu) {
-          return reply(Boom.notFound());
+    User
+      .findOne({ _id: request.params.id })
+      .populate(populate)
+      .then(record => {
+        if (!record) {
+          throw Boom.notFound();
         }
-        return ListUser
-          .update({_id: request.params.checkInId}, request.payload)
-          .exec()
-          .then(() => {
-            let out = _.cloneDeep(lu);
-            _.assign(out, request.payload);
-            reply(out);
+        var lu = record[childAttribute].id(checkInId);
+        let list = _.cloneDeep(lu.list);
+        _.assign(lu, request.payload);
+        return record
+          .save()
+          .then((user) => {
             if (lu.pending === true && request.payload.pending === false) {
               // Send a notification to inform user that his checkin is not pending anymore
-              var notification = {type: 'approved_checkin', user: lu.user, createdBy: request.params.currentUser, params: { list: lu.list}};
+              var notification = {type: 'approved_checkin', user: user, createdBy: request.params.currentUser, params: { list: list}};
               NotificationService.send(notification, () => {});
             }
           });
-      });
+      })
+      .catch(err => { that.app.services.ErrorService.handle(err, reply); });
   }
 
   checkout (request, reply) {
@@ -196,10 +200,9 @@ module.exports = class ListUserController extends Controller{
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
     const payload = request.payload;
-    const Model = this.app.orm.user;
+    const User = this.app.orm.user;
     const FootprintService = this.app.services.FootprintService;
     const List = this.app.orm.List;
-    const ListUser = this.app.orm.ListUser;
 
     this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,
       'options =', options);
@@ -207,38 +210,23 @@ module.exports = class ListUserController extends Controller{
     if (childAttributes.indexOf(childAttribute) === -1) {
       return reply(Boom.notFound());
     }
+    const populate = childAttribute + '.list';
 
     var that = this;
-    var query = ListUser
-      .findOne({ _id: checkInId })
-      .populate('list user')
+    User
+      .findOne({ _id: request.params.id })
+      .populate(populate)
       .then(record => {
         if (!record) {
           throw Boom.notFound();
         }
+        var lu = record[childAttribute].id(checkInId);
         // Set deleted to true
-        record.deleted = true;
+        lu.deleted = true;
         return record
           .save()
-          .then(() => {
-            return record;
-          });
-      })
-      .then((result) => {
-        var listType = result.list.type,
-          user = result.user,
-          found = false;
-        for (var i = 0; i < user[listType + 's'].length; i++) {
-          if (user[listType + 's'][i] === checkInId) {
-            found = i;
-          }
-        }
-        // Remove reference to checkin
-        user[listType + 's'].splice(found, 1);
-        return user
-          .save()
-          .then(() => {
-            return result;
+          .then((user) => {
+            return {user: user, listuser: lu};
           });
       })
       .then((result) => {
@@ -249,17 +237,17 @@ module.exports = class ListUserController extends Controller{
             type: 'admin_checkout',
             createdBy: request.params.currentUser,
             user: result.user,
-            params: { list: result.list }
+            params: { list: result.listuser.list }
           }, () => { });
         }
         return result;
       })
       .then((result) => {
         // Notify list managers of the checkin
-        that.app.services.NotificationService.notifyMultiple(result.list.managers, {
+        that.app.services.NotificationService.notifyMultiple(result.listuser.list.managers, {
           type: 'checkout',
           createdBy: result.user,
-          params: { list: result.list }
+          params: { list: result.listuser.list }
         });
         return result;
       })

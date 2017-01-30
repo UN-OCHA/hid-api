@@ -262,7 +262,6 @@ module.exports = {
 
   migrate: function (app) {
     const User = app.orm.User;
-    const ListUser = app.orm.ListUser;
     const List = app.orm.List;
     const Service = app.orm.Service;
 
@@ -317,37 +316,18 @@ module.exports = {
             List
               .findOne(criteria)
               .then((list) => {
-                if (list) {
-                  return ListUser
-                    .findOne({list: list, user: user._id})
-                    .then((lu) => {
-                      return {list: list, lu: lu};
-                    });
-                }
-                else {
+                if (!list) {
                   console.error('list not found');
                   console.log(criteria);
                   throw new Error('List not found');
                 }
-              })
-              .then((lu) => {
-                if (lu.lu) {
-                  return lu.lu;
-                }
                 else {
-                  var checkoutDate = null;
-                  if (item.departureDate) {
-                    checkoutDate = new Date(item.departureDate);
-                  }
-                  return ListUser
-                    .create({list: lu.list, user: user._id, deleted: !item.status, checkoutDate: checkoutDate, pending: false})
-                    .then((clu) => {
-                      return clu;
-                    });
+                  return list;
                 }
               })
-              .then((lu) => {
+              .then((list) => {
                 var userAttribute = attribute;
+                var lu = {list: list._id, name: list.name, acronym: list.acronym, visibility: list.visibility, deleted: !item.status, checkoutDate: checkoutDate, pending: false};
                 if (attribute === 'organization') {
                   userAttribute += 's';
                   if (index === 0) {
@@ -356,11 +336,15 @@ module.exports = {
                 }
                 var luFound = false;
                 user[userAttribute].forEach(function (it) {
-                  if (it._id.toString() === lu._id.toString()) {
+                  if (it.list.toString() === list._id.toString()) {
                     luFound = true;
                   }
                 });
                 if (!luFound) {
+                  var checkoutDate = null;
+                  if (item.departureDate) {
+                    checkoutDate = new Date(item.departureDate);
+                  }
                   user[userAttribute].push(lu);
                 }
                 next();
@@ -556,7 +540,6 @@ module.exports = {
   migrateLists: function (app) {
     console.log('migrating lists');
     const User = app.orm.User;
-    const ListUser = app.orm.ListUser;
     const List = app.orm.List;
     const Service = app.orm.Service;
 
@@ -690,51 +673,35 @@ module.exports = {
                                   .findOne({'legacyId': pid})
                                   .then((user) => {
                                     if (user) {
-                                      ListUser
-                                        .findOne({list: list, user: user._id})
-                                        .then((lu) => {
-                                          if (!lu) {
-                                            return ListUser
-                                              .create({list: list, user: user._id, deleted: false, checkoutDate: null, pending: false})
-                                              .then((clu) => {
-                                                console.log('created ccl membership');
-                                                return clu;
-                                              });
-                                          }
-                                          else {
-                                            return lu;
-                                          }
-                                        })
-                                        .then((lu) => {
-                                          var luFound = false;
-                                          user.lists.forEach(function (it) {
-                                            if (it._id.toString() === lu._id.toString()) {
-                                              luFound = true;
-                                            }
-                                          });
-                                          if (!luFound) {
-                                            user.lists.push(lu);
-                                            user.save(function (err) {
-                                              next();
-                                            });
-                                          }
-                                          else {
-                                            next();
-                                          }
+                                      var luFound = false;
+                                      var lu = {list: list._id, name: list.name, acronym: list.acronym, visibility: list.visibility, deleted: false, checkoutDate: null, pending: false};
+                                      user.lists.forEach(function (it) {
+                                        if (it.list.toString() === list._id.toString()) {
+                                          luFound = true;
+                                        }
+                                      });
+                                      if (!luFound) {
+                                        user.lists.push(lu);
+                                        user.save(function (err) {
+                                          next();
                                         });
                                       }
                                       else {
                                         next();
                                       }
-                                    })
-                                    .catch((err) => {
-                                      console.error(err);
-                                    });
-                                }
-                                else {
-                                  next();
-                                }
-                              });
+                                    }
+                                    else {
+                                      next();
+                                    }
+                                  })
+                                  .catch((err) => {
+                                    console.error(err);
+                                  });
+                              }
+                              else {
+                                next();
+                              }
+                            });
                           }, function (err) {
                             callback();
                           });
@@ -828,7 +795,6 @@ module.exports = {
   migrateServices: function (app) {
     console.log('migrating services');
     const User = app.orm.User;
-    const ListUser = app.orm.ListUser;
     const List = app.orm.List;
     const Service = app.orm.Service;
 

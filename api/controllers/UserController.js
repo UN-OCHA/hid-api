@@ -379,25 +379,6 @@ module.exports = class UserController extends Controller{
           });
       })
       .then((results) => {
-        var pop1 = [
-          {path: 'organization', select: 'list'},
-          {path: 'bundles', match: {deleted: false}, select: 'list'}
-        ];
-        var pop2 = [
-          {path: 'organization.list', model: 'List', select: 'name _id'},
-          {path: 'bundles.list', model: 'List', select: 'name _id'}
-        ];
-        return User
-          .populate(results.results, userPopulate1)
-          .then((users) => {
-            return User
-              .populate(users, userPopulate2)
-              .then((users2) => {
-                return {results: users2, number: results.number};
-              });
-          });
-      })
-      .then((results) => {
         if (!results.results) {
           return reply(Boom.notFound());
         }
@@ -442,14 +423,6 @@ module.exports = class UserController extends Controller{
     const ListUser = this.app.orm.ListUser,
       List = this.app.orm.List,
       User = this.app.orm.User;
-    let lists = [], listIds = [];
-
-    for (var i = 0; i < childAttributes.length; i++) {
-      if (criteria[childAttributes[i] + '.list']) {
-        listIds.push(criteria[childAttributes[i] + '.list']);
-        delete criteria[childAttributes[i] + '.list'];
-      }
-    }
 
     // Hide unconfirmed users which are not orphans
     if (request.params.currentUser && !request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
@@ -476,68 +449,51 @@ module.exports = class UserController extends Controller{
 
     let that = this;
 
-    if (request.params.id || !listIds.length) {
-      if (request.params.id) {
-        User
-          .findOne({_id: request.params.id})
-          .then((user) => {
-            if (!user) {
-              return reply(Boom.notFound());
-            }
-            else {
-              user.sanitize(request.params.currentUser);
-              return reply(user);
-            }
+    if (request.params.id) {
+      User
+        .findOne({_id: request.params.id})
+        .then((user) => {
+          if (!user) {
+            return reply(Boom.notFound());
+          }
+          else {
+            user.sanitize(request.params.currentUser);
+            return reply(user);
+          }
+        })
+        .catch((err) => {
+          that._errorHandler(err, reply);
+        });
+    }
+    else {
+      var listIds = [];
+      for (var i = 0; i < childAttributes.length; i++) {
+        if (criteria[childAttributes[i] + '.list']) {
+          listIds.push(criteria[childAttributes[i] + '.list']);
+          criteria[childAttributes[i]] = {$elemMatch: {list: criteria[childAttributes[i] + '.list'], deleted: false}};
+        }
+      }
+      if (!listIds.length) {
+        this._findHelper(request, reply, criteria, options);
+      }
+      else {
+        List
+          .find({_id: { $in: listIds}})
+          .then((lists) => {
+            lists.forEach(function (list) {
+              if (!list.isOwner(request.params.currentUser)) {
+                criteria[list.type].$elemMatch.pending = false;
+              }
+            });
+            return lists;
           })
-          .catch((err) => {
+          .then((lists) => {
+            that._findHelper(request, reply, criteria, options);
+          })
+          .catch(err => {
             that._errorHandler(err, reply);
           });
       }
-      else {
-        this._findHelper(request, reply, criteria, options);
-      }
-    }
-    else {
-      let users = [], luCriteria = {};
-      List
-        .find({_id: {$in: listIds}})
-        .then((lists) => {
-          async.each(lists, function (list, next) {
-            list.isVisibleTo(request.params.currentUser, ListUser, function (out) {
-              if (out === true) {
-                luCriteria.list = list;
-                luCriteria.deleted = false;
-                if (!list.isOwner(request.params.currentUser)) {
-                  luCriteria.pending = false;
-                }
-                ListUser
-                  .find(luCriteria)
-                  .then((lus) => {
-                    var tmpUsers = [];
-                    for (var i = 0; i < lus.length; i++) {
-                      tmpUsers.push(lus[i].user);
-                    }
-                    users.push(tmpUsers);
-                    next();
-                  });
-              }
-              else {
-                next();
-              }
-            });
-          }, function (err) {
-            if (err) {
-              return that._errorHandler(err, reply);
-            }
-            users.push(String);
-            var finalUsers = _.intersectionBy.apply(null, users);
-            if (!finalUsers.length) {
-              return reply(finalUsers).header('X-Total-Count', 0);
-            }
-            criteria._id = { $in: finalUsers};
-            that._findHelper(request, reply, criteria, options);
-          });
-        });
     }
   }
 
