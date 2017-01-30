@@ -321,6 +321,11 @@ module.exports = class User extends Model {
         ref: 'List'
       },
       name: { type: String},
+      acronym: { type: String},
+      visibility: {
+        type: String,
+        enum: ['me', 'inlist', 'all', 'verified'],
+      },
       checkoutDate: Date,
       pending: {
         type: Boolean,
@@ -602,17 +607,21 @@ module.exports = class User extends Model {
       else {
         this.name = this.given_name + ' ' + this.family_name;
       }
-      if (!this.email) {
-        this.is_ghost = true;
+      if (!this.hasOwnProperty('is_ghost')) {
+        if (!this.email) {
+          this.is_ghost = true;
+        }
+        else {
+          this.is_ghost = false;
+        }
       }
-      else {
-        this.is_ghost = false;
-      }
-      if (this.createdBy && !this.email_verified && this.email) {
-        this.is_orphan = true;
-      }
-      else {
-        this.is_orphan = false;
+      if (!this.hasOwnProperty('is_orphan')) {
+        if (this.createdBy && !this.email_verified && this.email) {
+          this.is_orphan = true;
+        }
+        else {
+          this.is_orphan = false;
+        }
       }
       next ();
     });

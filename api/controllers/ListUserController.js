@@ -17,8 +17,7 @@ module.exports = class ListUserController extends Controller{
     const childAttribute = request.params.childAttribute;
     const payload = request.payload;
     const Model = this.app.orm.user;
-    const List = this.app.orm.list,
-      ListUser = this.app.orm.ListUser;
+    const List = this.app.orm.list;
 
     this.log.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload,
       'options =', options);
@@ -51,6 +50,8 @@ module.exports = class ListUserController extends Controller{
         }
 
         payload.name = list.name;
+        payload.acronym = list.acronym;
+        payload.visibility = list.visibility;
 
         that.log.debug('Looking for user with id ' + userId);
         return Model
@@ -145,34 +146,52 @@ module.exports = class ListUserController extends Controller{
   }
 
   update (request, reply) {
-    const ListUser = this.app.orm.ListUser;
+    const User = this.app.orm.User;
     const NotificationService = this.app.services.NotificationService;
+    const childAttribute = request.params.childAttribute;
+    const checkInId = request.params.checkInId;
+
 
     this.log.debug('[ListUserController] (update) model = list, criteria =', request.query, request.params.checkInId, ', values = ', request.payload);
 
+    const populate = childAttribute + '.list';
+
+    // Make sure list specific attributes can not be set through update
+    if (request.payload.list) {
+      delete request.payload.list;
+    }
+    if (request.payload.name) {
+      delete request.payload.name;
+    }
+    if (request.payload.acronym) {
+      delete request.payload.acronym;
+    }
+    if (request.payload.visibility) {
+      delete request.payload.visibility;
+    }
+
     var that = this;
-    ListUser
-      .findOne({_id: request.params.checkInId})
-      .populate('list user')
-      .then((lu) => {
-        console.log(lu);
-        if (!lu) {
-          return reply(Boom.notFound());
+    User
+      .findOne({ _id: request.params.id })
+      .populate(populate)
+      .then(record => {
+        if (!record) {
+          throw Boom.notFound();
         }
-        return ListUser
-          .update({_id: request.params.checkInId}, request.payload)
-          .exec()
-          .then(() => {
-            let out = _.cloneDeep(lu);
-            _.assign(out, request.payload);
-            reply(out);
+        var lu = record[childAttribute].id(checkInId);
+        let list = _.cloneDeep(lu.list);
+        _.assign(lu, request.payload);
+        return record
+          .save()
+          .then((user) => {
             if (lu.pending === true && request.payload.pending === false) {
               // Send a notification to inform user that his checkin is not pending anymore
-              var notification = {type: 'approved_checkin', user: lu.user, createdBy: request.params.currentUser, params: { list: lu.list}};
+              var notification = {type: 'approved_checkin', user: user, createdBy: request.params.currentUser, params: { list: list}};
               NotificationService.send(notification, () => {});
             }
           });
-      });
+      })
+      .catch(err => { that.app.services.ErrorService.handle(err, reply); });
   }
 
   checkout (request, reply) {
@@ -184,7 +203,6 @@ module.exports = class ListUserController extends Controller{
     const User = this.app.orm.user;
     const FootprintService = this.app.services.FootprintService;
     const List = this.app.orm.List;
-    const ListUser = this.app.orm.ListUser;
 
     this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,
       'options =', options);
@@ -219,7 +237,7 @@ module.exports = class ListUserController extends Controller{
             type: 'admin_checkout',
             createdBy: request.params.currentUser,
             user: result.user,
-            params: { list: result.listuser }
+            params: { list: result.listuser.list }
           }, () => { });
         }
         return result;
@@ -229,7 +247,7 @@ module.exports = class ListUserController extends Controller{
         that.app.services.NotificationService.notifyMultiple(result.listuser.list.managers, {
           type: 'checkout',
           createdBy: result.user,
-          params: { list: result.listuser }
+          params: { list: result.listuser.list }
         });
         return result;
       })

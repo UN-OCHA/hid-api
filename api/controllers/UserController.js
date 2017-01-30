@@ -441,12 +441,6 @@ module.exports = class UserController extends Controller{
 
     criteria.deleted = {$in: [false, null]};
 
-    for (var i = 0; i < childAttributes.length; i++) {
-      if (criteria[childAttributes[i] + '.list']) {
-        criteria[childAttributes[i]] = {$elemMatch: {list: criteria[childAttributes[i] + '.list'], deleted: false}};
-      }
-    }
-
     var pdfFormat = '';
     if (criteria.format) {
       pdfFormat = criteria.format;
@@ -472,7 +466,34 @@ module.exports = class UserController extends Controller{
         });
     }
     else {
-      this._findHelper(request, reply, criteria, options);
+      var listIds = [];
+      for (var i = 0; i < childAttributes.length; i++) {
+        if (criteria[childAttributes[i] + '.list']) {
+          listIds.push(criteria[childAttributes[i] + '.list']);
+          criteria[childAttributes[i]] = {$elemMatch: {list: criteria[childAttributes[i] + '.list'], deleted: false}};
+        }
+      }
+      if (!listIds.length) {
+        this._findHelper(request, reply, criteria, options);
+      }
+      else {
+        List
+          .find({_id: { $in: listIds}})
+          .then((lists) => {
+            lists.forEach(function (list) {
+              if (!list.isOwner(request.params.currentUser)) {
+                criteria[list.type].$elemMatch.pending = false;
+              }
+            });
+            return lists;
+          })
+          .then((lists) => {
+            that._findHelper(request, reply, criteria, options);
+          })
+          .catch(err => {
+            that._errorHandler(err, reply);
+          });
+      }
     }
   }
 
