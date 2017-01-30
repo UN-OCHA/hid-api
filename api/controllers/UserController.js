@@ -388,14 +388,15 @@ module.exports = class UserController extends Controller{
           {path: 'bundles.list', model: 'List', select: 'name _id'}
         ];
         return User
-          .populate(results.results, userPopulate1)
+          //.populate(results.results, userPopulate1)
           .then((users) => {
-            return User
+            return {results: users, number: results.number};
+            /*return User
               .populate(users, userPopulate2)
               .then((users2) => {
                 return {results: users2, number: results.number};
               });
-          });
+          });*/
       })
       .then((results) => {
         if (!results.results) {
