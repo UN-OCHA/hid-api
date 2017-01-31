@@ -482,7 +482,7 @@ module.exports = class UserController extends Controller{
           .then((lists) => {
             lists.forEach(function (list) {
               if (!list.isOwner(request.params.currentUser)) {
-                criteria[list.type + 's'].$elemMatch.pending = false;
+                criteria[list.type].$elemMatch.pending = false;
               }
             });
             return lists;
