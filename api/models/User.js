@@ -256,6 +256,13 @@ module.exports = class User extends Model {
         toJSON: function () {
           const user = this.toObject();
           delete user.password;
+          listTypes.forEach(function (attr) {
+            for (var i = 0; i < user[attr + 's'].length; i++) {
+              if (user[attr + 's'][i].deleted) {
+                delete user[attr + 's'][i];
+              }
+            }
+          });
           return user;
         }
       }
