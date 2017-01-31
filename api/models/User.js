@@ -257,10 +257,14 @@ module.exports = class User extends Model {
           const user = this.toObject();
           delete user.password;
           listTypes.forEach(function (attr) {
+            var indexes = [];
             for (var i = 0; i < user[attr + 's'].length; i++) {
               if (user[attr + 's'][i].deleted) {
-                user[attr + 's'].splice(i, 1);
+                indexes.push(i);
               }
+            }
+            for (var j = 0; j < indexes.length; j++) {
+              user[attr + 's'].splice(indexes[j], 1);
             }
           });
           return user;
