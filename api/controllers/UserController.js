@@ -13,26 +13,8 @@ const _ = require('lodash');
 const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles'];
 const userPopulate1 = [
   {path: 'favoriteLists'},
-  {path: 'operations', match: {deleted: false}, select: '_id list'},
-  {path: 'disasters', match: {deleted: false}, select: '_id list'},
-  {path: 'bundles', match: {deleted: false}, select: '_id list'},
-  {path: 'organization', select: '_id list'},
-  {path: 'organizations', match: {deleted: false}, select: '_id list'},
-  {path: 'lists', match: {deleted: false}, select: '_id list'},
-  {path: 'authorizedClients'},
-  {path: 'verified_by', select: 'name'},
-  {path: 'subscriptions'},
-  {path: 'functional_roles', match: {deleted: false}, select: '_id list'}
-];
-const userPopulate2= [
-  {path: 'operations.list', model: 'List', select: '_id name'},
-  {path: 'disasters.list', model: 'List', select: '_id name'},
-  {path: 'bundles.list', model: 'List', select: '_id name'},
-  {path: 'organizations.list', model: 'List', select: '_id name'},
-  {path: 'organization.list', model: 'List', select: '_id name'},
-  {path: 'lists.list', model: 'List', select: '_id name'},
-  {path: 'functional_roles.list', model: 'List', select: '_id name'},
-  {path: 'subscriptions.service', model: 'Service'}
+  {path: 'verified_by', select: '_id name'},
+  {path: 'subscriptions'}
 ];
 
 /**
@@ -420,8 +402,7 @@ module.exports = class UserController extends Controller{
     const FootprintService = this.app.services.FootprintService;
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
     let criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
-    const ListUser = this.app.orm.ListUser,
-      List = this.app.orm.List,
+    const List = this.app.orm.List,
       User = this.app.orm.User;
 
     // Hide unconfirmed users which are not orphans
@@ -452,6 +433,7 @@ module.exports = class UserController extends Controller{
     if (request.params.id) {
       User
         .findOne({_id: request.params.id})
+        .populate(userPopulate1)
         .then((user) => {
           if (!user) {
             return reply(Boom.notFound());
@@ -574,8 +556,7 @@ module.exports = class UserController extends Controller{
   }
 
   destroy (request, reply) {
-    const User = this.app.orm.User,
-      ListUser = this.app.orm.ListUser;
+    const User = this.app.orm.User;
     this.log.debug('[UserController] (destroy) model = user, query =', request.query);
 
     var that = this;
@@ -604,20 +585,7 @@ module.exports = class UserController extends Controller{
       })
       .then((record) => {
         reply(record);
-        // Remove all checkins from this user
-        ListUser
-          .find({user: request.params.id})
-          .populate('list user')
-          .then((lus) => {
-            var listType = '',
-              lu = {};
-            for (var i = 0; i < lus.length; i++) {
-              // Set listuser to deleted
-              lu.deleted = true;
-              lu.save();
-            }
-            return record;
-          });
+        return record;
       })
       .then((doc) => {
         // Send notification if user is being deleted by an admin
@@ -968,37 +936,24 @@ module.exports = class UserController extends Controller{
   }
 
   setPrimaryOrganization (request, reply) {
-    const User = this.app.orm.user,
-      ListUser = this.app.orm.ListUser;
+    const User = this.app.orm.user;
     if (!request.payload._id) {
       return reply(Boom.badRequest('Missing listUser id'));
     }
     let that = this;
-    ListUser
-      .findOne({ _id: request.payload._id})
-      .populate('list user')
-      .then(record => {
-        if (!record || record.list.type !== 'organization' || !record.user._id.equals(request.params.id)) {
-          return reply(Boom.badRequest());
+    User
+      .findOne({_id: request.params.id})
+      .then(user => {
+        if (!user) {
+          return reply(Boom.notFound());
         }
-        // Make sure listUser is part of organizations
-        var index = -1;
-        for (var i = 0; i < record.user.organizations.length; i++) {
-          if (record.user.organizations[i]._id.toString() === request.payload._id) {
-            index = i;
-          }
-        }
-        if (index === -1) {
+        var checkin = user.organizations.id(request.payload._id);
+        if (!checkin) {
           return reply(Boom.badRequest('Organization should be part of user organizations'));
         }
-        record.user.organization = record._id;
-        record.user.save().then(() => {
-          // Return a populated user
-          User
-            .findOne({_id: record.user._id})
-            .then((user) => {
-              return reply(user);
-            });
+        user.organization = checkin;
+        user.save().then(() => {
+          return reply(user);
         });
       })
       .catch (err => { that._errorHandler(err, reply); });
