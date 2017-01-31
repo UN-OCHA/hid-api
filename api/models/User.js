@@ -607,6 +607,7 @@ module.exports = class User extends Model {
       else {
         this.name = this.given_name + ' ' + this.family_name;
       }
+      /* TODO :reactivate after migration
       if (!this.hasOwnProperty('is_ghost')) {
         if (!this.email) {
           this.is_ghost = true;
@@ -622,7 +623,7 @@ module.exports = class User extends Model {
         else {
           this.is_orphan = false;
         }
-      }
+      }*/
       next ();
     });
     schema.pre('update', function (next) {

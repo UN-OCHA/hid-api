@@ -335,8 +335,9 @@ module.exports = {
                   }
                 }
                 var luFound = false;
-                user[userAttribute].forEach(function (it) {
-                  if (it.list.toString() === list._id.toString()) {
+                user[userAttribute].forEach(function (it2) {
+                  var itId = it2.list._id ? it2.list._id : it2.list;
+                  if (itId.toString() === list._id.toString()) {
                     luFound = true;
                   }
                 });
