@@ -17,10 +17,10 @@ module.exports = {
     var uidLength = tmpUserId.length;
     user.user_id = item._profile.userid;
     user.legacyId = item._profile._id;
-    if (item.type === 'global' || (item.type === 'local' && !user.given_name && item.status)) {
+    if (item.type === 'global' || (item.type === 'local' && !user.given_name)) {
       user.given_name = item.nameGiven.trim();
     }
-    if (item.type === 'global' || (item.type === 'local' && !user.family_name && item.status)) {
+    if (item.type === 'global' || (item.type === 'local' && !user.family_name)) {
       user.family_name = item.nameFamily.trim();
     }
     if (uidLength === 1) {
