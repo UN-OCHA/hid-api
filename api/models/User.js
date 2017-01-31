@@ -259,7 +259,7 @@ module.exports = class User extends Model {
           listTypes.forEach(function (attr) {
             for (var i = 0; i < user[attr + 's'].length; i++) {
               if (user[attr + 's'][i].deleted) {
-                delete user[attr + 's'][i];
+                user[attr + 's'].splice(i, 1);
               }
             }
           });
