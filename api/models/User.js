@@ -7,6 +7,7 @@ const Libphonenumber = require('google-libphonenumber');
 const Http = require('http');
 const https = require('https');
 const async = require('async');
+const _ = require('lodash');
 const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role'];
 const userPopulate1 = [
   {path: 'favoriteLists'},
@@ -257,15 +258,9 @@ module.exports = class User extends Model {
           const user = this.toObject();
           delete user.password;
           listTypes.forEach(function (attr) {
-            var indexes = [];
-            for (var i = 0; i < user[attr + 's'].length; i++) {
-              if (user[attr + 's'][i].deleted) {
-                indexes.push(i);
-              }
-            }
-            for (var j = 0; j < indexes.length; j++) {
-              user[attr + 's'].splice(indexes[j] + 1, 1);
-            }
+            _.remove(user[attr + 's'], function (checkin) {
+              return checkin.deleted;
+            });
           });
           return user;
         }
