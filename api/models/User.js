@@ -7,7 +7,7 @@ const Libphonenumber = require('google-libphonenumber');
 const Http = require('http');
 const https = require('https');
 const async = require('async');
-const listTypes = ['operation', 'bundle', 'disaster', 'organization'];
+const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role'];
 const userPopulate1 = [
   {path: 'favoriteLists'},
   {path: 'operations', match: {deleted: false}},
@@ -640,48 +640,5 @@ module.exports = class User extends Model {
         next();
       });
     });
-    // Populate lists
-    schema.post('findOne', function (result, next) {
-      let that = this;
-      if (!result) {
-        return next();
-      }
-      result
-        .populate(userPopulate1)
-        .execPopulate()
-        .then(user => {
-          user
-            .populate(userPopulate2)
-            .execPopulate()
-            .then((user2) => {
-              next();
-            });
-        })
-        .catch(err => that.log.error(err));
-    });
-    /*schema.post('find', function (results, next) {
-      let that = this;
-      async.eachOf(results, function (result, key, cb) {
-        results[key]
-          .populate([
-            {path: 'organization', select: 'list'},
-            {path: 'bundles', match: {deleted: false}, select: 'list'}
-          ])
-          .execPopulate()
-          .then((r) => {
-            r
-              .populate([
-                {path: 'organization.list', model: 'List', select: 'name _id'},
-                {path: 'bundles.list', model: 'List', select: 'name _id'}
-              ])
-              .execPopulate()
-              .then((r2) => {
-                cb();
-              });
-          });
-      }, function (err) {
-        next();
-      });
-    });*/
   }
 };
