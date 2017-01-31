@@ -119,7 +119,7 @@ module.exports = {
             emailFound = true;
           }
         });
-        if (!emailFound) {
+        if (!emailFound && /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/.test(email.address)) {
           user.emails.push({
             type: 'Work',
             email: email.address,
@@ -481,48 +481,57 @@ module.exports = {
             var parsed = {};
             try {
               parsed = JSON.parse(body);
-              total = parsed.count;
-              async.eachSeries(parsed.contacts, function (item, cb) {
-                User
-                  .findOne({'user_id': item._profile.userid})
-                  .then((user) => {
-                    if (!user) {
-                      user = {};
-                      createUser = true;
-                    }
-                    else {
-                      createUser = false;
-                    }
-                    if (!user.password) {
-                      user.password = User.hashPassword(Math.random().toString(36).slice(2));
-                    }
-                    app.config.migrate.parseGlobal(item, user);
-                    app.config.migrate.parseLocal(item, user);
-                    if (createUser) {
-                      User
-                        .create(user)
-                        .then((newUser) => {
-                          parseCheckins(item, newUser, cb);
-                        })
-                        .catch(err => {
-                          console.error(err);
-                          cb();
-                        });
-                    }
-                    else {
-                      parseCheckins(item, user, cb);
-                    }
-                  })
-                  .catch((err) => {
-                    console.error(err);
-                  });
-              }, function (err) {
-                query.skip += 30;
+              if (parsed.count) {
+                total = parsed.count;
+                async.eachSeries(parsed.contacts, function (item, cb) {
+                  User
+                    .findOne({'user_id': item._profile.userid})
+                    .then((user) => {
+                      if (!user) {
+                        user = {};
+                        createUser = true;
+                      }
+                      else {
+                        createUser = false;
+                      }
+                      if (!user.password) {
+                        user.password = User.hashPassword(Math.random().toString(36).slice(2));
+                      }
+                      app.config.migrate.parseGlobal(item, user);
+                      app.config.migrate.parseLocal(item, user);
+                      if (createUser) {
+                        User
+                          .create(user)
+                          .then((newUser) => {
+                            parseCheckins(item, newUser, cb);
+                          })
+                          .catch(err => {
+                            console.error(err);
+                            cb();
+                          });
+                      }
+                      else {
+                        parseCheckins(item, user, cb);
+                      }
+                    })
+                    .catch((err) => {
+                      console.error(err);
+                    });
+                }, function (err) {
+                  query.skip += 30;
+                  console.log('page ' + query.skip / 30);
+                  setTimeout(function() {
+                    nextPage();
+                  }, 3000);
+                });
+              }
+              else {
+                console.log('issue with total');
                 console.log('page ' + query.skip / 30);
                 setTimeout(function() {
                   nextPage();
                 }, 3000);
-              });
+              }
             } catch (e) {
               console.error(e);
               nextPage();

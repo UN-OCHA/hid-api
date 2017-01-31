@@ -51,7 +51,7 @@
   },
   "scripts": {
     "test": "eslint . && mocha",
-    "start": "nodemon ./server.js"
+    "start": "node ./server.js"
   },
   "engines": {
     "node": ">= 4.0.0"
@@ -59,6 +59,6 @@
   "eslintConfig": {
     "extends": "trails"
   },
-  "repository": "guillaumev/hid-api",
+  "repository": "un-ocha/hid-api",
   "license": "MIT"
 }
