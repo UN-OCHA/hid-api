@@ -17,10 +17,10 @@ module.exports = {
     var uidLength = tmpUserId.length;
     user.user_id = item._profile.userid;
     user.legacyId = item._profile._id;
-    if (item.type === 'global' || (item.type === 'local' && !user.given_name)) {
+    if (item.type === 'global' || (item.type === 'local' && !user.given_name && item.status)) {
       user.given_name = item.nameGiven.trim();
     }
-    if (item.type === 'global' || (item.type === 'local' && !user.family_name)) {
+    if (item.type === 'global' || (item.type === 'local' && !user.family_name && item.status)) {
       user.family_name = item.nameFamily.trim();
     }
     if (uidLength === 1) {
@@ -473,6 +473,7 @@ module.exports = {
           hostname: profilesUrl,
           path: '/v0/contact/view?' + queryString + '&_access_client_id=' + clientId + '&_access_key=' + hash
         };
+        console.log(query.skip);
         https.get(options, (res) => {
           var body = '', users = [], tmpUserId = [], uidLength = 0, createUser = false;
           res.on('data', function (d) {
