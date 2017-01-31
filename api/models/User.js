@@ -264,7 +264,7 @@ module.exports = class User extends Model {
               }
             }
             for (var j = 0; j < indexes.length; j++) {
-              user[attr + 's'].splice(indexes[j], 1);
+              user[attr + 's'].splice(indexes[j] + 1, 1);
             }
           });
           return user;
