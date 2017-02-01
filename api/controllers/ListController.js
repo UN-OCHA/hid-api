@@ -101,7 +101,7 @@ module.exports = class ListController extends Controller{
 
     if (request.params.id) {
       if (!options.populate) {
-        options.populate = 'owner managers';
+        options.populate = [{path: 'owner', select: '_id name'}, {path: 'managers', select: '_id name'}];
       }
       List
         .findOne({_id: request.params.id, deleted: criteria.deleted })
@@ -121,7 +121,7 @@ module.exports = class ListController extends Controller{
     }
     else {
       if (!options.populate) {
-        options.populate = 'owner';
+        options.populate = {path: 'owner', select: '_id name'};
       }
       response = FootprintService.find('list', criteria, options);
       count = FootprintService.count('list', criteria);
@@ -186,8 +186,20 @@ module.exports = class ListController extends Controller{
       .findOneAndUpdate({_id: request.params.id}, request.payload, options)
       .exec()
       .then((doc) => {
-        var diffAdded = _.difference(request.payload.managers, doc.managers);
-        var diffRemoved = _.difference(doc.managers, request.payload.managers);
+        var payloadManagers = [];
+        if (request.payload.managers) {
+          request.payload.managers.forEach(function (man) {
+            payloadManagers.push(man._id.toString());
+          });
+        }
+        var listManagers = [];
+        if (doc.managers) {
+          doc.managers.forEach(function (man) {
+            listManagers.push(man._id.toString());
+          });
+        }
+        var diffAdded = _.difference(payloadManagers, listManagers);
+        var diffRemoved = _.difference(listManagers, payloadManagers);
         if (diffAdded.length) {
           that._notifyManagers(diffAdded, 'added_list_manager', request);
         }
