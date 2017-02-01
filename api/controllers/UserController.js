@@ -237,55 +237,58 @@ module.exports = class UserController extends Controller{
     }
     var that = this;
     ejs.renderFile(template, data, {}, function (err, str) {
-      var postData = qs.stringify({
-          'html' : str
-        }),
-        options = {
-          hostname: process.env.WKHTMLTOPDF_HOST,
-          port: process.env.WKHTMLTOPDF_PORT || 80,
-          path: '/htmltopdf',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Content-Length': postData.length
+      if (err) {
+        callback(err);
+      }
+      else {
+        var postData = qs.stringify({
+            'html' : str
+          }),
+          options = {
+            hostname: process.env.WKHTMLTOPDF_HOST,
+            port: process.env.WKHTMLTOPDF_PORT || 80,
+            path: '/htmltopdf',
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Content-Length': postData.length
+            }
+          },
+          clientReq;
+
+        // Send the HTML to the wkhtmltopdf service to generate a PDF, and
+        // return the output.
+        clientReq = http.request(options, function(clientRes) {
+          if (clientRes && clientRes.statusCode === 200) {
+            clientRes.setEncoding('binary');
+
+            var pdfSize = parseInt(clientRes.headers['content-length']),
+              pdfBuffer = new Buffer(pdfSize),
+              bytes = 0;
+
+            clientRes.on('data', function(chunk) {
+              pdfBuffer.write(chunk, bytes, 'binary');
+              bytes += chunk.length;
+            });
+
+            clientRes.on('end', function() {
+              callback(null, pdfBuffer, bytes);
+            });
           }
-        },
-        clientReq;
+          else {
+            callback('An error occurred while generating PDF');
+          }
+        });
 
-      // Send the HTML to the wkhtmltopdf service to generate a PDF, and
-      // return the output.
-      clientReq = http.request(options, function(clientRes) {
-        if (clientRes && clientRes.statusCode === 200) {
-          clientRes.setEncoding('binary');
-
-          var pdfSize = parseInt(clientRes.headers['content-length']),
-            pdfBuffer = new Buffer(pdfSize),
-            bytes = 0;
-
-          clientRes.on('data', function(chunk) {
-            pdfBuffer.write(chunk, bytes, 'binary');
-            bytes += chunk.length;
-          });
-
-          clientRes.on('end', function() {
-            callback(null, pdfBuffer, bytes);
-          });
-        }
-        else {
+        // Handle errors with the HTTP request.
+        clientReq.on('error', function(e) {
           callback('An error occurred while generating PDF');
-        }
-      });
+        });
 
-      // Handle errors with the HTTP request.
-      clientReq.on('error', function(e) {
-        callback('An error occurred while generating PDF');
-      });
-
-      // Write post data containing the rendered HTML.
-      clientReq.write(postData);
-      clientReq.end();
-
-
+        // Write post data containing the rendered HTML.
+        clientReq.write(postData);
+        clientReq.end();
+      }
     });
   }
 

@@ -62,7 +62,7 @@
               <td><div class="avoid ng-binding"><%= user.job_title %></div></td>
               <td><%= user.phone_number %></td>
               <td><%= user.email %></td>
-              <td><% if (user.location.country) { %><%= user.location.country.name %><% } %> <% if (user.location.region) { %><%= user.location.region.name %><% } %></td>
+              <td><% if (user.location && user.location.country) { %><%= user.location.country.name %><% } %> <% if (user.location && user.location.region) { %><%= user.location.region.name %><% } %></td>
             </tr>
           <% }); %>
         </tbody>
