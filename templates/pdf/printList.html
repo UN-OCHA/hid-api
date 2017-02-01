@@ -20,7 +20,7 @@
       <!-- ngIf: !supported -->
 
       <h2 class="heading-contact-list">
-        <span class="location"><%= lists[0].name %></span><br/>
+        <% if (lists[0]) { %><span class="location"><%= lists[0].name %></span><br/><% } %>
         <small class="ng-binding"><%= dateGenerated %></small></br>
         <small><%= number %> Contacts</small>
       </h2>
