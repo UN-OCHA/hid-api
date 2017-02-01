@@ -289,7 +289,7 @@ module.exports = {
       var criteria = {};
       if (item[attribute] && item[attribute].length) {
         async.eachOfSeries(item[attribute], function (it, index, next) {
-          if ((it && it.remote_id) || attribute === 'bundles') {
+          if ((it && it.remote_id) || attribute === 'bundles' || attribute === 'functional_roles') {
             if (attribute === 'organization') {
               criteria = {'type': 'organization', 'remote_id': it.remote_id.replace('hrinfo_org_', '')};
             }
@@ -327,7 +327,7 @@ module.exports = {
               })
               .then((list) => {
                 var userAttribute = attribute;
-                var lu = {list: list._id, name: list.name, acronym: list.acronym, visibility: list.visibility, deleted: !item.status, checkoutDate: checkoutDate, pending: false};
+                var lu = {list: list._id, name: list.name, acronym: list.acronym, visibility: list.visibility, deleted: !item.status, pending: false};
                 if (attribute === 'organization') {
                   userAttribute += 's';
                   if (index === 0) {
@@ -346,6 +346,7 @@ module.exports = {
                   if (item.departureDate) {
                     checkoutDate = new Date(item.departureDate);
                   }
+                  lu.checkoutDate = checkoutDate;
                   user[userAttribute].push(lu);
                 }
                 next();

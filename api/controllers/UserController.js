@@ -349,6 +349,12 @@ module.exports = class UserController extends Controller{
   _findHelper(request, reply, criteria, options) {
     const FootprintService = this.app.services.FootprintService;
     const User = this.app.orm.User;
+    var pdfFormat = '';
+    if (criteria.format) {
+      pdfFormat = criteria.format;
+      delete criteria.format;
+    }
+    
     let that = this;
     this.log.debug('[UserController] (find)');
     FootprintService
@@ -421,12 +427,6 @@ module.exports = class UserController extends Controller{
     }
 
     criteria.deleted = {$in: [false, null]};
-
-    var pdfFormat = '';
-    if (criteria.format) {
-      pdfFormat = criteria.format;
-      delete criteria.format;
-    }
 
     let that = this;
 

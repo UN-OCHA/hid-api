@@ -9,29 +9,6 @@ const https = require('https');
 const async = require('async');
 const _ = require('lodash');
 const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role'];
-const userPopulate1 = [
-  {path: 'favoriteLists'},
-  {path: 'operations', match: {deleted: false}},
-  {path: 'disasters', match: {deleted: false}},
-  {path: 'bundles', match: {deleted: false}},
-  {path: 'organization'},
-  {path: 'organizations', match: {deleted: false}},
-  {path: 'lists', match: {deleted: false}},
-  {path: 'authorizedClients'},
-  {path: 'verified_by', select: 'name'},
-  {path: 'subscriptions'},
-  {path: 'functional_roles', match: {deleted: false}}
-];
-const userPopulate2= [
-  {path: 'operations.list', model: 'List'},
-  {path: 'disasters.list', model: 'List'},
-  {path: 'bundles.list', model: 'List'},
-  {path: 'organizations.list', model: 'List'},
-  {path: 'organization.list', model: 'List'},
-  {path: 'lists.list', model: 'List'},
-  {path: 'functional_roles.list', model: 'List'},
-  {path: 'subscriptions.service', model: 'Service'}
-];
 
 /**
  * @module User
@@ -154,7 +131,7 @@ module.exports = class User extends Model {
         subscriptionsIndex: function (serviceId) {
           var index = -1;
           for (var i = 0; i < this.subscriptions.length; i++) {
-            if ((this.subscriptions[i].service._id && this.subscriptions[i].service._id.toString() === serviceId) || this.subscriptions[i].service === serviceId) {
+            if ((this.subscriptions[i].service._id && this.subscriptions[i].service._id === serviceId) || this.subscriptions[i].service === serviceId) {
               index = i;
             }
           }
