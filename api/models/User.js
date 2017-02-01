@@ -45,7 +45,13 @@ module.exports = class User extends Model {
         sanitize: function (user) {
           this.sanitizeClients();
           if ((this.is_orphan || this.is_ghost) && !user.verified) {
-            // TODO: sanitize ghost or orphan
+            // HID-1261 sanitize ghost or orphan
+            const allowedProps = ['given_name', 'family_name', 'name', '_id', 'legacyId', 'user_id'];
+            for (var prop in this) {
+              if (allowedProps.indexOf(prop) === -1) {
+                this[prop] = null;
+              }
+            }
           }
         },
         getAppUrl: function () {
