@@ -47,7 +47,7 @@ module.exports = class User extends Model {
           if ((this.is_orphan || this.is_ghost) && !user.verified) {
             // HID-1261 sanitize ghost or orphan
             const allowedProps = ['given_name', 'family_name', 'name', '_id', 'legacyId', 'user_id', 'is_orphan', 'is_ghost', 'verified'];
-            for (var prop in this) {
+            for (var prop in this.schema.paths) {
               if (allowedProps.indexOf(prop) === -1) {
                 this[prop] = null;
               }
