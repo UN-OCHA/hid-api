@@ -73,7 +73,7 @@ module.exports = class ListUserController extends Controller{
 
           // Make sure user is not already checked in this list
           for (var i = 0, len = record[childAttribute].length; i < len; i++) {
-            if (record[childAttribute][i].list.equals(list._id)) {
+            if (record[childAttribute][i].list.equals(list._id) && record[childAttribute][i].deleted === false) {
               throw Boom.badRequest('User is already checked in');
             }
           }
