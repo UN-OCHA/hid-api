@@ -123,7 +123,7 @@ module.exports = {
           user.emails.push({
             type: 'Work',
             email: email.address,
-            validated: email.address === user.email ? true : false
+            validated: email.address === user.email && user.email_verified ? true : false
           });
         }
       });

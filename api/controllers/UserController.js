@@ -303,6 +303,7 @@ module.exports = class UserController extends Controller{
   _csvExport (users) {
     var out = 'Given Name,Family Name,Job Title,Organization,Groups,Country,Admin Area,Phone,Skype,Email,Notes\n',
       org = '',
+      bundles = '',
       country = '',
       region = '',
       jobTitle = '',
