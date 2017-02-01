@@ -324,7 +324,7 @@ module.exports = class UserController extends Controller{
       }
       if (users[i].bundles && users[i].bundles.length) {
         users[i].bundles.forEach(function (bundle) {
-          bundles += bundle + ';';
+          bundles += bundle.name + ';';
         });
       }
       if (users[i].location && users[i].location.country) {
