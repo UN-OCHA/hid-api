@@ -57,7 +57,7 @@
           <% results.forEach(function (user) { %>
             <tr class="profile-item ng-scope">
               <td class="title-cell col-xs-2"><div class="avoid ng-binding"><%= user.name %></div></td>
-              <td class="col-xs-1"><div class="avoid ng-binding"><% if (user.organization && user.organization.list) { %><%= user.organization.list.name %><% } %></div></td>
+              <td class="col-xs-1"><div class="avoid ng-binding"><% if (user.organization && user.organization.list) { %><%= user.organization.name %><% } %></div></td>
               <td class="col-xs-2"><div class="avoid ng-binding"><%= user.job_title %></div></td>
               <td class="col-xs-2"><%= user.phone_number %></td>
               <td class="col-xs-2"><%= user.email %></td>

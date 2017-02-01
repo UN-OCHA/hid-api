@@ -346,7 +346,7 @@ module.exports = class UserController extends Controller{
     return out;
   }
 
-  _findHelper(request, reply, criteria, options) {
+  _findHelper(request, reply, criteria, options, lists) {
     const FootprintService = this.app.services.FootprintService;
     const User = this.app.orm.User;
     var pdfFormat = '';
@@ -354,7 +354,7 @@ module.exports = class UserController extends Controller{
       pdfFormat = criteria.format;
       delete criteria.format;
     }
-    
+
     let that = this;
     this.log.debug('[UserController] (find)');
     FootprintService
@@ -387,7 +387,8 @@ module.exports = class UserController extends Controller{
               .type('text/plain');
           }
           else if (request.params.extension === 'pdf') {
-            that._pdfExport(results.results, request, pdfFormat, function (err, buffer, bytes) {
+            results.lists = lists;
+            that._pdfExport(results, request, pdfFormat, function (err, buffer, bytes) {
               if (err) {
                 throw err;
               }
@@ -456,7 +457,7 @@ module.exports = class UserController extends Controller{
         }
       }
       if (!listIds.length) {
-        this._findHelper(request, reply, criteria, options);
+        this._findHelper(request, reply, criteria, options, listIds);
       }
       else {
         List
@@ -470,7 +471,7 @@ module.exports = class UserController extends Controller{
             return lists;
           })
           .then((lists) => {
-            that._findHelper(request, reply, criteria, options);
+            that._findHelper(request, reply, criteria, options, lists);
           })
           .catch(err => {
             that._errorHandler(err, reply);
@@ -937,8 +938,11 @@ module.exports = class UserController extends Controller{
 
   setPrimaryOrganization (request, reply) {
     const User = this.app.orm.user;
-    if (!request.payload._id) {
+    if (!request.payload) {
       return reply(Boom.badRequest('Missing listUser id'));
+    }
+    if (!request.payload._id) {
+      return reply(Boom.badRequesty('Missing listUser id'));
     }
     let that = this;
     User
