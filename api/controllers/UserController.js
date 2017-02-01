@@ -311,6 +311,7 @@ module.exports = class UserController extends Controller{
       status = '';
     for (var i = 0; i < users.length; i++) {
       org = '';
+      bundles = '';
       country = '';
       region = '';
       skype = '';
@@ -318,7 +319,12 @@ module.exports = class UserController extends Controller{
       phoneNumber = users[i].phone_number || ' ';
       status = users[i].status || ' ';
       if (users[i].organization && users[i].organization.list) {
-        org = users[i].organization.list.name;
+        org = users[i].organization.name;
+      }
+      if (users[i].bundles && users[i].bundles.length) {
+        users[i].bundles.forEach(function (bundle) {
+          bundles += bundle + ';';
+        });
       }
       if (users[i].location && users[i].location.country) {
         country = users[i].location.country.name;
@@ -338,7 +344,7 @@ module.exports = class UserController extends Controller{
         '"' + users[i].family_name + '",' +
         '"' + jobTitle + '",' +
         '"' + org + '",' +
-        '"' + ' ' + '",' +
+        '"' + bundles + '",' +
         '"' + country + '",' +
         '"' + region + '",' +
         '"' + phoneNumber + '",' +
