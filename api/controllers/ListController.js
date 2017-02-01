@@ -151,7 +151,7 @@ module.exports = class ListController extends Controller{
     }
   }
 
-  _notifyManagers(uids, type, request) {
+  _notifyManagers(uids, type, request, list) {
     const User = this.app.orm.user;
     var that = this;
     User
@@ -160,7 +160,7 @@ module.exports = class ListController extends Controller{
       .then((users) => {
         for (var i = 0, len = users.length; i < len; i++) {
           that.app.services.NotificationService
-            .send({type: type, user: users[i], createdBy: request.params.currentUser, params: { list: request.payload } }, () => {});
+            .send({type: type, user: users[i], createdBy: request.params.currentUser, params: { list: list } }, () => {});
         }
       })
       .catch((err) => { that.log.error(err); });
@@ -206,10 +206,10 @@ module.exports = class ListController extends Controller{
         var diffAdded = _.difference(payloadManagers, listManagers);
         var diffRemoved = _.difference(listManagers, payloadManagers);
         if (diffAdded.length) {
-          that._notifyManagers(diffAdded, 'added_list_manager', request);
+          that._notifyManagers(diffAdded, 'added_list_manager', request, doc);
         }
         if (diffRemoved.length) {
-          that._notifyManagers(diffRemoved, 'removed_list_manager', request);
+          that._notifyManagers(diffRemoved, 'removed_list_manager', request, doc);
         }
         return reply(request.payload);
       })
