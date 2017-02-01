@@ -189,7 +189,12 @@ module.exports = class ListController extends Controller{
         var payloadManagers = [];
         if (request.payload.managers) {
           request.payload.managers.forEach(function (man) {
-            payloadManagers.push(man._id.toString());
+            if (man._id) {
+              payloadManagers.push(man._id.toString());
+            }
+            else {
+              payloadManagers.push(man);
+            }
           });
         }
         var listManagers = [];
