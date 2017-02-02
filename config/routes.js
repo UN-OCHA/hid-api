@@ -97,6 +97,12 @@ module.exports = [
 
   {
     method: 'GET',
+    path: '/api/v2/migrate/auth',
+    handler: 'DefaultController.migrateAuth'
+  },
+
+  {
+    method: 'GET',
     path: '/api/v2/import/lists',
     handler: 'DefaultController.importLists'
   },

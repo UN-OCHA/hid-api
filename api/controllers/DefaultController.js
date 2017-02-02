@@ -23,6 +23,11 @@ module.exports = class DefaultController extends Controller {
     this.app.config.migrate.migrate(this.app);
   }
 
+  migrateAuth (request, reply) {
+    reply();
+    this.app.config.migrate.migrateAuth(this.app);
+  }
+
   migrateLists (request, reply) {
     reply();
     this.app.config.migrate.migrateLists(this.app);

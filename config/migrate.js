@@ -6,8 +6,11 @@ const crypto = require('crypto');
 const async = require('async');
 const Libphonenumber = require('google-libphonenumber');
 const profilesUrl = 'profiles.humanitarian.id';
+const authUrl = 'auth.humanitarian.id';
 const clientId = process.env.V1_PROFILES_CLIENT_ID;
 const clientSecret = process.env.V1_PROFILES_CLIENT_SECRET;
+const authClientId = process.env.V1_AUTH_CLIENT_ID;
+const authClientSecret = process.env.V1_AUTH_CLIENT_SECRET;
 const allowedVoips = ['Skype', 'Google', 'Facebook', 'Yahoo', 'Twitter'];
 const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
 
@@ -555,6 +558,122 @@ module.exports = {
       },
       function (err, n) {
         console.log('done with users migration');
+      });
+  },
+
+  migrateAuth: function (app) {
+    const User = app.orm.User;
+
+    var query = {
+      limit: 100,
+      offset: 0
+    };
+    var total = 150;
+
+    async.whilst(
+      function () { return query.offset < total; },
+      function (nextPage) {
+        var queryString = '';
+        var keys = Object.keys(query);
+        for (var i = 0; i < keys.length; i++) {
+          if (i > 0) {
+            queryString += '&';
+          }
+          queryString += keys[i] + '=' + query[keys[i]];
+        }
+        var key = '';
+        keys.forEach(function (k) {
+          key += query[k];
+        });
+        key += authClientSecret;
+        var hash = crypto.createHash('sha256').update(key).digest('hex');
+        var options = {
+          hostname: authUrl,
+          path: '/api/users?' + queryString + '&client_key=' + authClientId + '&access_key=' + hash
+        };
+        https.get(options, (res) => {
+          var body = '', users = [], tmpUserId = [], uidLength = 0, createUser = false;
+          res.on('data', function (d) {
+            body += d;
+          });
+          res.on('end', function() {
+            var parsed = {};
+            try {
+              parsed = JSON.parse(body);
+              if (parsed.count) {
+                total = parsed.count;
+                async.eachSeries(parsed.data, function (item, cb) {
+                  if (item.active) {
+                    User
+                      .findOne({'user_id': item.user_id})
+                      .then((user) => {
+                        if (!user) {
+                          var tmpUser = {
+                            given_name: item.name_given,
+                            family_name: item.name_family,
+                            email: item.email,
+                            email_verified: true,
+                            user_id: item.user_id,
+                            expires: new Date(0, 0, 1, 0, 0, 0),
+                            deleted: false,
+                            emails: []
+                          };
+                          tmpUser.emails.push({
+                            type: 'Work',
+                            email: item.email,
+                            validated: true
+                          });
+                          if (item.email_recovery) {
+                            tmpUser.emails.push({
+                              type: 'Work',
+                              email: item.email_recovery,
+                              validated: true
+                            });
+                          }
+                          User
+                            .create(tmpUser)
+                            .then((newUser) => {
+                              cb();
+                            })
+                            .catch(err => {
+                              console.error(err);
+                              cb();
+                            });
+                        }
+                        else {
+                          cb();
+                        }
+                      })
+                      .catch((err) => {
+                        console.error(err);
+                      });
+                    }
+                  }, function (err) {
+                    query.offset += 100;
+                    console.log('page ' + query.offset / 100);
+                    setTimeout(function() {
+                      nextPage();
+                    }, 3000);
+                  });
+                }
+                else {
+                  console.log('issue with total');
+                  console.log('page ' + query.offset / 100);
+                  setTimeout(function() {
+                    nextPage();
+                  }, 3000);
+                }
+            } catch (e) {
+              console.error(e);
+              nextPage();
+            }
+          });
+        }).on('error', (e) => {
+          console.error(e);
+        });
+      },
+      function (err, n) {
+        console.log('done with auth migration');
       });
   },
 
