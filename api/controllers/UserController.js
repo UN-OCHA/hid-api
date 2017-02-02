@@ -105,6 +105,12 @@ module.exports = class UserController extends Controller{
       request.payload.createdBy = request.params.currentUser._id;
       // If an orphan is being created, do not expire
       request.payload.expires = new Date(0, 0, 1, 0, 0, 0);
+      if (request.payload.email) {
+        request.payload.is_orphan = true;
+      }
+      else {
+        request.payload.is_ghost = true;
+      }
     }
 
     var that = this;

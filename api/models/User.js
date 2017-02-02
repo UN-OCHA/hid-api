@@ -597,23 +597,6 @@ module.exports = class User extends Model {
       else {
         this.name = this.given_name + ' ' + this.family_name;
       }
-      /* TODO :reactivate after migration
-      if (!this.hasOwnProperty('is_ghost')) {
-        if (!this.email) {
-          this.is_ghost = true;
-        }
-        else {
-          this.is_ghost = false;
-        }
-      }
-      if (!this.hasOwnProperty('is_orphan')) {
-        if (this.createdBy && !this.email_verified && this.email) {
-          this.is_orphan = true;
-        }
-        else {
-          this.is_orphan = false;
-        }
-      }*/
       next ();
     });
     schema.pre('update', function (next) {
