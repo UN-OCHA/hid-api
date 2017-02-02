@@ -379,8 +379,8 @@ module.exports = class UserController extends Controller{
     }
     query
       .then((results) => {
-        return FootprintService
-          .count('user', criteria)
+        return User
+          .count(criteria)
           .then((number) => {
             return {results: results, number: number};
           });
@@ -473,6 +473,7 @@ module.exports = class UserController extends Controller{
         if (criteria[childAttributes[i] + '.list']) {
           listIds.push(criteria[childAttributes[i] + '.list']);
           criteria[childAttributes[i]] = {$elemMatch: {list: criteria[childAttributes[i] + '.list'], deleted: false}};
+          delete criteria[childAttributes[i] + '.list'];
         }
       }
       if (!listIds.length) {
