@@ -14,7 +14,7 @@ const childAttributes = ['lists', 'organization', 'organizations', 'operations',
 const userPopulate1 = [
   {path: 'favoriteLists'},
   {path: 'verified_by', select: '_id name'},
-  {path: 'subscriptions'}
+  {path: 'subscriptions.service', select: '_id name'}
 ];
 
 /**
