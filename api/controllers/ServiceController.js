@@ -168,7 +168,7 @@ module.exports = class ServiceController extends Controller{
           if (user.subscriptionsIndex(request.payload.service) !== -1) {
             throw Boom.badRequest('User is already subscribed');
           }
-          if (user.emailsIndex(request.payload.email) === -1) {
+          if (user.emailIndex(request.payload.email) === -1) {
             throw Boom.badRequest('Wrong email');
           }
           else {
