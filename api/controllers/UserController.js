@@ -366,9 +366,18 @@ module.exports = class UserController extends Controller{
     }
 
     let that = this;
-    this.log.debug('[UserController] (find)');
-    FootprintService
-      .find('user', criteria, options)
+    this.log.debug('[UserController] (find) criteria = ', criteria, ' options = ', options);
+    let query = User.find(criteria);
+    if (options.limit) {
+      query.limit(parseInt(options.limit));
+    }
+    if (options.offset) {
+      query.skip(parseInt(options.offset));
+    }
+    if (options.sort) {
+      query.sort(options.sort);
+    }
+    query
       .then((results) => {
         return FootprintService
           .count('user', criteria)
