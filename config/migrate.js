@@ -447,6 +447,8 @@ module.exports = {
       });
     };
 
+    // HID-1310 do not migrate orphans from Haiti, Ecuador and Nepal
+    const noOperations = [85,78,17026];
     var query = {
       limit: 30,
       skip: 0
@@ -487,46 +489,53 @@ module.exports = {
               if (parsed.count) {
                 total = parsed.count;
                 async.eachSeries(parsed.contacts, function (item, cb) {
-                  User
-                    .findOne({'user_id': item._profile.userid})
-                    .then((user) => {
-                      if (!user) {
-                        user = {};
-                        createUser = true;
-                      }
-                      else {
-                        createUser = false;
-                      }
-                      if (!user.password) {
-                        user.password = User.hashPassword(Math.random().toString(36).slice(2));
-                      }
-                      app.config.migrate.parseGlobal(item, user);
-                      app.config.migrate.parseLocal(item, user);
-                      if (createUser) {
-                        User
-                          .create(user)
-                          .then((newUser) => {
-                            parseCheckins(item, newUser, cb);
-                          })
-                          .catch(err => {
-                            console.error(err);
-                            cb();
-                          });
-                      }
-                      else {
-                        parseCheckins(item, user, cb);
-                      }
-                    })
-                    .catch((err) => {
-                      console.error(err);
-                    });
-                }, function (err) {
-                  query.skip += 30;
-                  console.log('page ' + query.skip / 30);
-                  setTimeout(function() {
-                    nextPage();
-                  }, 3000);
-                });
+
+                  // HID-1310 do not migrate orphans from Haiti Ecuador and Nepal
+                  if (item.type === 'local' && !item._profile.firstUpdate && noOperations.indexOf(item.localityId.replace('hrinfo:', '')) !== -1) {
+                    cb();
+                  }
+                  else {
+                    User
+                      .findOne({'user_id': item._profile.userid})
+                      .then((user) => {
+                        if (!user) {
+                          user = {};
+                          createUser = true;
+                        }
+                        else {
+                          createUser = false;
+                        }
+                        if (!user.password) {
+                          user.password = User.hashPassword(Math.random().toString(36).slice(2));
+                        }
+                        app.config.migrate.parseGlobal(item, user);
+                        app.config.migrate.parseLocal(item, user);
+                        if (createUser) {
+                          User
+                            .create(user)
+                            .then((newUser) => {
+                              parseCheckins(item, newUser, cb);
+                            })
+                            .catch(err => {
+                              console.error(err);
+                              cb();
+                            });
+                        }
+                        else {
+                          parseCheckins(item, user, cb);
+                        }
+                      })
+                      .catch((err) => {
+                        console.error(err);
+                      });
+                    }
+                  }, function (err) {
+                    query.skip += 30;
+                    console.log('page ' + query.skip / 30);
+                    setTimeout(function() {
+                      nextPage();
+                    }, 3000);
+                  });
               }
               else {
                 console.log('issue with total');
