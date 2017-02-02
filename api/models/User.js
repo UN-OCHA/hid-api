@@ -135,9 +135,10 @@ module.exports = class User extends Model {
         },
 
         subscriptionsIndex: function (serviceId) {
+          var id = serviceId.toString();
           var index = -1;
           for (var i = 0; i < this.subscriptions.length; i++) {
-            if ((this.subscriptions[i].service._id && this.subscriptions[i].service._id === serviceId) || this.subscriptions[i].service === serviceId) {
+            if ((this.subscriptions[i].service._id && this.subscriptions[i].service._id.toString() === id) || this.subscriptions[i].service.toString() === id) {
               index = i;
             }
           }

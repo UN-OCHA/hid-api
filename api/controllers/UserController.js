@@ -357,7 +357,6 @@ module.exports = class UserController extends Controller{
   }
 
   _findHelper(request, reply, criteria, options, lists) {
-    const FootprintService = this.app.services.FootprintService;
     const User = this.app.orm.User;
     var pdfFormat = '';
     if (criteria.format) {
