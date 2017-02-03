@@ -66,7 +66,6 @@ module.exports = class ListController extends Controller{
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
     const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
     const List = this.app.orm.List;
-    const ListUser = this.app.orm.ListUser;
     let response, count;
 
     if (!options.sort) {
@@ -111,11 +110,9 @@ module.exports = class ListController extends Controller{
             throw Boom.notFound();
           }
 
-          result.isVisibleTo(request.params.currentUser, ListUser, function (visible) {
-            var out = result.toJSON();
-            out.visible = visible;
-            return reply(out);
-          });
+          var out = result.toJSON();
+          out.visible = result.isVisibleTo(request.params.currentUser);
+          return reply(out);
         })
         .catch(err => { that.app.services.ErrorService.handle(err, reply); });
     }
@@ -134,16 +131,12 @@ module.exports = class ListController extends Controller{
         })
         .then((result) => {
           var out = [], tmp = {};
-          async.each(result.result, function (list, next) {
-            list.isVisibleTo(request.params.currentUser, ListUser, function (visible) {
-              tmp = list.toJSON();
-              tmp.visible = visible;
-              out.push(tmp);
-              next();
-            });
-          }, function (err) {
-            return reply(out).header('X-Total-Count', result.number);
+          result.result.forEach(function (list) {
+            tmp = list.toJSON();
+            tmp.visible = list.isVisibleTo(request.params.currentUser);
+            out.push(tmp);
           });
+          return reply(out).header('X-Total-Count', result.number);
         })
         .catch((err) => {
           that.app.services.ErrorService.handle(err, reply);
@@ -220,8 +213,8 @@ module.exports = class ListController extends Controller{
 
 
   destroy (request, reply) {
-    const List = this.app.orm.List,
-      ListUser = this.app.orm.ListUser;
+    const List = this.app.orm.List;
+    const User = this.app.orm.User;
 
     this.log.debug('[ListController] (destroy) model = list, query =', request.query);
     let that = this;
@@ -243,26 +236,19 @@ module.exports = class ListController extends Controller{
       .then((record) => {
         reply(record);
         // Remove all checkins from users in this list
-        ListUser
-          .find({list: request.params.id})
-          .populate('list user')
-          .then((lus) => {
-            var listType = '',
-              lu = {};
-            for (var i = 0; i < lus.length; i++) {
-              lu = lus[i];
-              listType = lu.list.type;
-              // Remove references in users
-              lu.user[listType + 's'] = lu.user[listType + 's'].filter(function (obj) {
-                return obj._id.toString() !== lu._id.toString();
-              });
-              if (listType === 'organization' && lu.user.organization._id.toString() === lu._id.toString()) {
-                lu.user.organization = {};
+        var criteria = {};
+        criteria[record.type + 's.list'] = record._id.toString();
+        return User
+          .find(criteria)
+          .then(users => {
+            for (var i = 0; i < users.length; i++) {
+              var user = users[i];
+              for (var j = 0; j < user[record.type + 's'].length; j++) {
+                if (user[record.type + 's'][j].list === record._id) {
+                  user[record.type + 's'][j].deleted = true;
+                }
               }
-              lu.user.save();
-              // Set listuser to deleted
-              lu.deleted = true;
-              lu.save();
+              user.save();
             }
           });
       })
