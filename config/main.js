@@ -20,7 +20,7 @@ module.exports = {
     require('trailpack-router'),
     require('trailpack-hapi'),
     require('trailpack-mongoose'),
-    //require('trailpack-cron'),
+    require('trailpack-cron'),
     require('trailpack-cache')
   ],
 
