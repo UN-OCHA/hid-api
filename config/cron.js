@@ -2,6 +2,7 @@
 // config/cron.js
 const https = require('https');
 const async = require('async');
+const _ = require('lodash');
 
 var deleteExpiredUsers = function (app) {
   const User = app.orm.user;
@@ -66,58 +67,96 @@ var importLists = function (app) {
     });
   };
 
+  var _parseList = function (listType, item, cb) {
+    var visibility = '', label = '', acronym = '', tmpList = {};
+    visibility = 'all';
+    if (item.hid_access && item.hid_access === 'closed') {
+      visibility = 'verified';
+    }
+    label = item.label;
+    if (listType === 'bundle' || listType === 'office') {
+      label = item.operation[0].label + ': ' + item.label;
+    }
+    if (listType === 'organization' && item.acronym) {
+      acronym = item.acronym;
+    }
+    tmpList = {
+      label: label,
+      acronym: acronym,
+      type: listType,
+      visibility: visibility,
+      joinability: 'public',
+      remote_id: item.id,
+      metadata: item
+    };
+    app.log.debug('Creating list of type ' + listType + ': ' + label);
+    if (listType === 'bundle') {
+      List
+        .findOne({type: 'operation', remote_id: item.operation[0].id})
+        .then((op) => {
+          if (op) {
+            if (op.metadata.hid_access) {
+              if (op.metadata.hid_access === 'open') {
+                tmpList.visibility = 'all';
+              }
+              else if (op.metadata.hid_access === 'closed') {
+                tmpList.visibility = 'verified';
+              }
+            }
+          }
+          cb(tmpList);
+        });
+    }
+    else {
+      cb(tmpList);
+    }
+  };
+
   // Create a list based on the item pulled from hrinfo
   var _createList = function (listType, item, cb) {
     var tmpList = {}, visibility = '', label = '', acronym = '', inactiveOps = [2782,2785,2791,38230];
     if ((listType === 'operation' && (item.status !== 'inactive' || inactiveOps.indexOf(item.id) !== -1)) || listType !== 'operation') {
       List.findOne({type: listType, remote_id: item.id}, function (err, list) {
         if (!list) {
-          visibility = 'all';
-          if (item.hid_access && item.hid_access === 'closed') {
-            visibility = 'verified';
-          }
-          label = item.label;
-          if (listType === 'bundle' || listType === 'office') {
-            label = item.operation[0].label + ': ' + item.label;
-          }
-          if (listType === 'organization' && item.acronym) {
-            acronym = item.acronym;
-          }
-          tmpList = {
-            label: label,
-            acronym: acronym,
-            type: listType,
-            visibility: visibility,
-            joinability: 'public',
-            remote_id: item.id,
-            metadata: item
-          };
-          app.log.debug('Creating list of type ' + listType + ': ' + label);
-          if (listType === 'bundle') {
-            List
-              .findOne({type: 'operation', remote_id: item.operation[0].id})
-              .then((op) => {
-                if (op) {
-                  if (op.metadata.hid_access) {
-                    if (op.metadata.hid_access === 'open') {
-                      tmpList.visibility = 'all';
-                    }
-                    else if (op.metadata.hid_access === 'closed') {
-                      tmpList.visibility = 'verified';
-                    }
-                  }
-                }
-                _createListHelper(tmpList, cb);
-              });
-          }
-          else {
-            _createListHelper(tmpList, cb);
-          }
+          _parseList(listType, item, function (newList) {
+            _createListHelper(newList, cb);
+          });
         }
         else {
-          cb();
-        }
-      });
+          _parseList(listType, item, function (newList) {
+            var updateUsers = false;
+            if (newList.name !== list.name || newList.visibility !== list.visibility) {
+              updateUsers = true;
+            }
+            _.merge(list, newList);
+            list.save().then(function (list) {
+              if (updateUsers) {
+                var criteria = {};
+                criteria[list.type + 's.list'] = list._id.toString();
+                User
+                  .find(criteria)
+                  .then(users => {
+                    for (var i = 0; i < users.length; i++) {
+                      var user = users[i];
+                      for (var j = 0; j < user[list.type + 's'].length; j++) {
+                        if (user[list.type + 's'][j].list === list._id) {
+                          user[list.type + 's'][j].acronym = list.acronym;
+                          user[list.type + 's'][j].name = list.name;
+                          user[list.type + 's'][j].visibility = list.visibility;
+                        }
+                      }
+                      user.save();
+                    }
+                    cb();
+                  });
+                }
+                else {
+                  cb();
+                }
+              });
+            });
+          }
+        });
     }
     else {
       cb();

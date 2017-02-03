@@ -178,7 +178,7 @@ module.exports = class ListController extends Controller{
     Model
       .findOneAndUpdate({_id: request.params.id}, request.payload, options)
       .exec()
-      .then((doc) => {
+      .then((list) => {
         var payloadManagers = [];
         if (request.payload.managers) {
           request.payload.managers.forEach(function (man) {
@@ -191,20 +191,42 @@ module.exports = class ListController extends Controller{
           });
         }
         var listManagers = [];
-        if (doc.managers) {
-          doc.managers.forEach(function (man) {
+        if (list.managers) {
+          list.managers.forEach(function (man) {
             listManagers.push(man._id.toString());
           });
         }
         var diffAdded = _.difference(payloadManagers, listManagers);
         var diffRemoved = _.difference(listManagers, payloadManagers);
         if (diffAdded.length) {
-          that._notifyManagers(diffAdded, 'added_list_manager', request, doc);
+          that._notifyManagers(diffAdded, 'added_list_manager', request, list);
         }
         if (diffRemoved.length) {
-          that._notifyManagers(diffRemoved, 'removed_list_manager', request, doc);
+          that._notifyManagers(diffRemoved, 'removed_list_manager', request, list);
         }
-        return reply(request.payload);
+        reply(request.payload);
+        return list;
+      })
+      .then(list => {
+        if ((request.payload.name && request.payload.name !== list.name) || (request.payload.visibility && request.payload.visibility !== list.visibility)) {
+          // Update users
+          var criteria = {};
+          criteria[list.type + 's.list'] = list._id.toString();
+          return User
+            .find(criteria)
+            .then(users => {
+              for (var i = 0; i < users.length; i++) {
+                var user = users[i];
+                for (var j = 0; j < user[list.type + 's'].length; j++) {
+                  if (user[list.type + 's'][j].list === list._id) {
+                    user[list.type + 's'][j].name = request.payload.name ? request.payload.name : list.name;
+                    user[list.type + 's'][j].visibility = request.payload.visibility ? request.payload.visibility : list.visibility;
+                  }
+                }
+                user.save();
+              }
+            });
+        }
       })
       .catch((err) => {
         that.app.services.ErrorService.handle(err, reply);
