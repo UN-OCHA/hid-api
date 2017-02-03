@@ -91,7 +91,7 @@ module.exports = {
     user.updatedAt = item.revised ? item.revised : '';
   },
 
-  parseLocal: function (item, user) {
+  parseLocal: function (item, user, countries) {
     var isValidPhoneNumber = function (number) {
       try {
         const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
@@ -231,6 +231,11 @@ module.exports = {
           var tmpAddress = {};
           if (address.country) {
             tmpAddress.country = { name: address.country};
+            for (var i = 0; i < countries.length; i++) {
+              if (address.country === countries[i].name) {
+                tmpAddress.country.id = countries[i].id;
+              }
+            }
           }
           if (address.administrative_area) {
             tmpAddress.region = { name: address.administrative_area};
@@ -267,6 +272,38 @@ module.exports = {
     const User = app.orm.User;
     const List = app.orm.List;
     const Service = app.orm.Service;
+
+    var countries = [];
+
+    var getCountries = function (cb) {
+      var options = {
+        hostname: 'www.humanitarianresponse.info',
+        path: '/hid/locations/countries'
+      };
+      https.get(options, (res) => {
+        var body = '';
+        res.on('data', function (d) {
+          body += d;
+        });
+        res.on('end', function() {
+          try {
+            var parsed = JSON.parse(body);
+            var keys = Object.keys(parsed);
+            var vals = Object.values(parsed);
+            for (var i = 0; i < keys.length; i++) {
+              countries.push({
+                id: keys[i],
+                name: vals[i]
+              });
+            }
+            cb();
+          }
+          catch (e) {
+            console.error(e);
+          }
+        });
+      });
+    };
 
     var setVerifiedBy = function (item, user, cb) {
       if (item.verified && item.verifiedById) {
@@ -458,106 +495,108 @@ module.exports = {
     };
     var total = 60;
 
-    async.whilst(
-      function () { return query.skip < total; },
-      function (nextPage) {
-        var queryString = '';
-        var keys = Object.keys(query);
-        for (var i = 0; i < keys.length; i++) {
-          if (i > 0) {
-            queryString += '&';
-          }
-          queryString += keys[i] + '=' + query[keys[i]];
-        }
-        var key = '';
-        keys.forEach(function (k) {
-          key += query[k];
-        });
-        key += clientSecret;
-        var hash = crypto.createHash('sha256').update(key).digest('hex');
-        var options = {
-          hostname: profilesUrl,
-          path: '/v0/contact/view?' + queryString + '&_access_client_id=' + clientId + '&_access_key=' + hash
-        };
-        console.log(query.skip);
-        https.get(options, (res) => {
-          var body = '', users = [], tmpUserId = [], uidLength = 0, createUser = false;
-          res.on('data', function (d) {
-            body += d;
-          });
-          res.on('end', function() {
-            var parsed = {};
-            try {
-              parsed = JSON.parse(body);
-              if (parsed.count) {
-                total = parsed.count;
-                async.eachSeries(parsed.contacts, function (item, cb) {
-
-                  // HID-1310 do not migrate orphans from Haiti Ecuador and Nepal
-                  if (item.type === 'local' && !item._profile.firstUpdate && noOperations.indexOf(item.localityId.replace('hrinfo:', '')) !== -1) {
-                    cb();
-                  }
-                  else {
-                    User
-                      .findOne({'user_id': item._profile.userid})
-                      .then((user) => {
-                        if (!user) {
-                          user = {};
-                          createUser = true;
-                        }
-                        else {
-                          createUser = false;
-                        }
-                        if (!user.password) {
-                          user.password = User.hashPassword(Math.random().toString(36).slice(2));
-                        }
-                        app.config.migrate.parseGlobal(item, user);
-                        app.config.migrate.parseLocal(item, user);
-                        if (createUser) {
-                          User
-                            .create(user)
-                            .then((newUser) => {
-                              parseCheckins(item, newUser, cb);
-                            })
-                            .catch(err => {
-                              console.error(err);
-                              cb();
-                            });
-                        }
-                        else {
-                          parseCheckins(item, user, cb);
-                        }
-                      })
-                      .catch((err) => {
-                        console.error(err);
-                      });
-                    }
-                  }, function (err) {
-                    query.skip += 30;
-                    console.log('page ' + query.skip / 30);
-                    setTimeout(function() {
-                      nextPage();
-                    }, 3000);
-                  });
-              }
-              else {
-                console.log('issue with total');
-                console.log('page ' + query.skip / 30);
-                setTimeout(function() {
-                  nextPage();
-                }, 3000);
-              }
-            } catch (e) {
-              console.error(e);
-              nextPage();
+    getCountries(function () {
+      async.whilst(
+        function () { return query.skip < total; },
+        function (nextPage) {
+          var queryString = '';
+          var keys = Object.keys(query);
+          for (var i = 0; i < keys.length; i++) {
+            if (i > 0) {
+              queryString += '&';
             }
+            queryString += keys[i] + '=' + query[keys[i]];
+          }
+          var key = '';
+          keys.forEach(function (k) {
+            key += query[k];
           });
-        }).on('error', (e) => {
-          console.error(e);
+          key += clientSecret;
+          var hash = crypto.createHash('sha256').update(key).digest('hex');
+          var options = {
+            hostname: profilesUrl,
+            path: '/v0/contact/view?' + queryString + '&_access_client_id=' + clientId + '&_access_key=' + hash
+          };
+          console.log(query.skip);
+          https.get(options, (res) => {
+            var body = '', users = [], tmpUserId = [], uidLength = 0, createUser = false;
+            res.on('data', function (d) {
+              body += d;
+            });
+            res.on('end', function() {
+              var parsed = {};
+              try {
+                parsed = JSON.parse(body);
+                if (parsed.count) {
+                  total = parsed.count;
+                  async.eachSeries(parsed.contacts, function (item, cb) {
+
+                    // HID-1310 do not migrate orphans from Haiti Ecuador and Nepal
+                    if (item.type === 'local' && !item._profile.firstUpdate && noOperations.indexOf(item.localityId.replace('hrinfo:', '')) !== -1) {
+                      cb();
+                    }
+                    else {
+                      User
+                        .findOne({'user_id': item._profile.userid})
+                        .then((user) => {
+                          if (!user) {
+                            user = {};
+                            createUser = true;
+                          }
+                          else {
+                            createUser = false;
+                          }
+                          if (!user.password) {
+                            user.password = User.hashPassword(Math.random().toString(36).slice(2));
+                          }
+                          app.config.migrate.parseGlobal(item, user);
+                          app.config.migrate.parseLocal(item, user, countries);
+                          if (createUser) {
+                            User
+                              .create(user)
+                              .then((newUser) => {
+                                parseCheckins(item, newUser, cb);
+                              })
+                              .catch(err => {
+                                console.error(err);
+                                cb();
+                              });
+                          }
+                          else {
+                            parseCheckins(item, user, cb);
+                          }
+                        })
+                        .catch((err) => {
+                          console.error(err);
+                        });
+                      }
+                    }, function (err) {
+                      query.skip += 30;
+                      console.log('page ' + query.skip / 30);
+                      setTimeout(function() {
+                        nextPage();
+                      }, 3000);
+                    });
+                }
+                else {
+                  console.log('issue with total');
+                  console.log('page ' + query.skip / 30);
+                  setTimeout(function() {
+                    nextPage();
+                  }, 3000);
+                }
+              } catch (e) {
+                console.error(e);
+                nextPage();
+              }
+            });
+          }).on('error', (e) => {
+            console.error(e);
+          });
+        },
+        function (err, n) {
+          console.log('done with users migration');
         });
-      },
-      function (err, n) {
-        console.log('done with users migration');
       });
   },
 
