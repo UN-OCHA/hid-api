@@ -2,6 +2,7 @@
 
 const Model = require('trails/model');
 const Schema = require('mongoose').Schema;
+const languages = ['en', 'fr', 'es'];
 
 /**
  * @module List
@@ -65,16 +66,39 @@ module.exports = class List extends Model {
             }
           });
           return managerFound;
+        },
+        languageIndex: function (attr, language) {
+          var index = -1;
+          if (this[attr] && this[attr].length) {
+            for (var i = 0; i < this[attr].length; i++) {
+              if (this[attr][i].language === language) {
+                index = i;
+              }
+            }
+          }
+          return index;
         }
       }
     };
   }
 
   static schema () {
+    const translationSchema = new Schema({
+      language: {
+        type: String,
+        enum: ['en', 'fr', 'es']
+      },
+      text: {
+        type: String
+      }
+    });
+
     return {
       name: {
         type: String
       },
+
+      names: [translationSchema],
 
       // Acronym for organizations
       acronym: {
@@ -82,11 +106,15 @@ module.exports = class List extends Model {
         trim: true
       },
 
+      acronyms: [translationSchema],
+
       label: {
         type: String,
         trim: true,
         required: [true, 'Label is required']
       },
+
+      labels: [translationSchema],
 
       type: {
         type: String,
@@ -147,6 +175,27 @@ module.exports = class List extends Model {
       else {
         this.name = this.label;
       }
+      var that = this;
+      languages.forEach(function (lang) {
+        var labelIndex = that.languageIndex('labels', lang);
+        var nameIndex = that.languageIndex('names', lang);
+        var acronymIndex = that.languageIndex('acronyms', lang);
+        var name = '';
+        if (labelIndex !== -1) {
+          if (acronymIndex !== -1 && that.acronyms[acronymIndex].text !== '') {
+            name = that.labels[labelIndex].text + ' (' + that.acronyms[acronymIndex].text + ')';
+          }
+          else {
+            name = that.labels[labelIndex].text;
+          }
+          if (nameIndex !== -1) {
+            that.names[nameIndex].text = name;
+          }
+          else {
+            that.names.push({language: lang, text: name});
+          }
+        }
+      });
       next ();
     });
     schema.pre('update', function (next) {
@@ -156,6 +205,27 @@ module.exports = class List extends Model {
       else {
         this.name = this.label;
       }
+      var that = this;
+      languages.forEach(function (lang) {
+        var labelIndex = that.languageIndex('labels', lang);
+        var nameIndex = that.languageIndex('names', lang);
+        var acronymIndex = that.languageIndex('acronyms', lang);
+        var name = '';
+        if (labelIndex !== -1) {
+          if (acronymIndex !== -1 && that.acronyms[acronymIndex].text !== '') {
+            name = that.labels[labelIndex].text + ' (' + that.acronyms[acronymIndex].text + ')';
+          }
+          else {
+            name = that.labels[labelIndex].text;
+          }
+          if (nameIndex !== -1) {
+            that.names[nameIndex].text = name;
+          }
+          else {
+            that.names.push({language: lang, text: name});
+          }
+        }
+      });
       next();
     });
   }
