@@ -3,6 +3,7 @@
 const https = require('https');
 const async = require('async');
 const _ = require('lodash');
+const listAttributes = ['lists', 'operations', 'bundles', 'disasters', 'organizations', 'functional_roles'];
 
 var deleteExpiredUsers = function (app) {
   const User = app.orm.user;
@@ -295,75 +296,124 @@ var sendReminderUpdateEmails = function (app) {
 
 var sendReminderCheckoutEmails = function(app) {
   app.log.info('Sending reminder checkout emails to contacts');
-  const ListUser = app.orm.ListUser,
+  const User = app.orm.User,
     NotificationService = app.services.NotificationService;
-  var stream = ListUser
-    .find({'remindedCheckout': false, 'user.email_verified': true })
-    .populate('user list')
-    .stream();
+  var populate = '';
+  var criteria = {};
+  criteria.email_verified = true;
+  criteria.$or = [];
+  listAttributes.forEach(function (attr) {
+    var remindedAttr = attr + '.remindedCheckout';
+    criteria.$or.push({remindedAttr: false});
+    populate += ' ' + attr + '.list';
+  });
 
-  stream.on('data', function(lu) {
+  var stream = User
+    .find(criteria)
+    .populate(populate)
+    .cursor();
+
+  stream.on('data', function(user) {
     let that = this;
-    if (lu.shouldSendReminderCheckout()) {
-      this.pause();
-      var notification = {type: 'reminder_checkout', user: lu.user, params: {listUser: lu, list: lu.list}};
-      NotificationService.send(notification, () => {
-        lu.remindedCheckout = true;
-        lu.save();
-        that.resume();
-      });
-    }
+    let now = Date.now();
+    listAttributes.forEach(function (attr) {
+      for (var i = 0; i < user[attr].length; i++) {
+        var lu = user[attr][i];
+        if (this.checkoutDate && this.remindedCheckout === false) {
+          var dep = new Date(this.checkoutDate);
+          if (now.valueOf() - dep.valueOf() > 48 * 3600 * 1000) {
+            that.pause();
+            var notification = {type: 'reminder_checkout', user: user, params: {listUser: lu, list: lu.list}};
+            NotificationService.send(notification, () => {
+              lu.remindedCheckout = true;
+              user.save();
+              that.resume();
+            });
+          }
+        }
+      }
+    });
   });
 };
 
 var doAutomatedCheckout = function(app) {
   app.log.info('Running automated checkouts');
-  const ListUser = app.orm.ListUser,
+  const User = app.orm.User,
     NotificationService = app.services.NotificationService;
-  var stream = ListUser
-    .find({'remindedCheckout': true, 'user.email_verified': true })
-    .populate('user list')
-    .stream();
 
-  stream.on('data', function(lu) {
+  var populate = '';
+  var criteria = {};
+  criteria.email_verified = true;
+  criteria.$or = [];
+  listAttributes.forEach(function (attr) {
+    var remindedAttr = attr + '.remindedCheckout';
+    criteria.$or.push({remindedAttr: true});
+    populate += ' ' + attr + '.list';
+  });
+
+  var stream = User
+    .find(criteria)
+    .populate(populate)
+    .cursor();
+
+  stream.on('data', function(user) {
     let that = this;
-    if (lu.shouldDoAutomatedCheckout()) {
-      this.pause();
-      var notification = {type: 'automated_checkout', user: lu.user, params: {listUser: lu, list: lu.list}};
-      NotificationService.send(notification, () => {
-        lu.remove();
-        that.resume();
-      });
-    }
+    let now = Date.now();
+    listAttributes.forEach(function (attr) {
+      for (var i = 0; i < user[attr].length; i++) {
+        var lu = user[attr][i];
+        if (this.checkoutDate && this.remindedCheckout === true) {
+          var dep = new Date(this.checkoutDate);
+          if (now.valueOf() - dep.valueOf() > 14 * 24 * 3600 * 1000) {
+            that.pause();
+            var notification = {type: 'automated_checkout', user: user, params: {listUser: lu, list: lu.list}};
+            NotificationService.send(notification, () => {
+              lu.deleted = true;
+              user.save();
+              that.resume();
+            });
+          }
+        }
+      }
+    });
   });
 };
 
 var sendReminderCheckinEmails = function(app) {
   app.log.info('Sending reminder checkin emails to contacts');
-  const ListUser = app.orm.ListUser,
+  const User = app.orm.User,
     NotificationService = app.services.NotificationService;
-  var stream = ListUser.find({'remindedCheckin': false, 'list.type': 'operation' }).populate('user list').stream();
 
-  stream.on('data', function(lu) {
+  var stream = User
+    .find({'operations.remindedCheckin': false })
+    .populate('operations.list')
+    .cursor();
+
+  stream.on('data', function(user) {
     this.pause();
     var that = this;
-    lu.shouldSendReminderCheckin(function (send) {
-      if (send) {
-        var hasLocalPhoneNumber = lu.user.hasLocalPhoneNumber(lu.list.metadata.country.pcode);
-        lu.user.isInCountry(lu.list.metadata.country.pcode, function (err, inCountry) {
+    for (var i = 0; i < user.operations.length; i++) {
+      var lu = user.operations[i];
+      var d = new Date(),
+        createdAt = new Date(lu.createdAt),
+        offset = d.valueOf() - lu.valueOf();
+
+      if (!lu.remindedCheckin && offset > 48 * 3600 * 1000 && offset < 72 * 3600 * 1000) {
+        var hasLocalPhoneNumber = user.hasLocalPhoneNumber(lu.list.metadata.country.pcode);
+        user.isInCountry(lu.list.metadata.country.pcode, function (err, inCountry) {
           var notification = {
             type: 'reminder_checkin',
-            user: lu.user,
+            user: user,
             params: {listUser: lu, list: lu.list, hasLocalPhoneNumber: hasLocalPhoneNumber, inCountry: inCountry}
           };
           NotificationService.send(notification, () => {
             lu.remindedCheckin = true;
-            lu.save();
-            that.resume();
+            user.save();
           });
         });
       }
-    });
+    }
+    that.resume();
   });
 };
 
