@@ -238,6 +238,51 @@ module.exports = class User extends Model {
           });
         },
 
+        translateCheckin: function (checkin, language) {
+          var name = '', nameEn = '', acronym = '', acronymEn = '';
+          checkin.names.forEach(function (nameLn) {
+            if (nameLn.language === language) {
+              name = nameLn.text;
+            }
+            if (nameLn.language === 'en') {
+              nameEn = nameLn.text;
+            }
+          });
+          checkin.acronyms.forEach(function (acroLn) {
+            if (acroLn.language === language) {
+              acronym = acroLn.text;
+            }
+            if (acroLn.language === 'en') {
+              acronymEn = acroLn.text;
+            }
+          });
+          if (name !== '') {
+            checkin.name = name;
+          }
+          else {
+            checkin.name = nameEn;
+          }
+          if (acronym !== '') {
+            checkin.acronym = acronym;
+          }
+          else {
+            checkin.acronym = acronymEn;
+          }
+        },
+
+        translateListNames: function (language) {
+          listTypes.forEach(function (listType) {
+            if (this[listType + 's'] && this[listType + 's'].length) {
+              this[listType + 's'].forEach(function (checkin) {
+                this.translateCheckin(checkin, language);
+              });
+            }
+          });
+          if (this.organization) {
+            this.translateCheckin(this.organization, language);
+          }
+        },
+
         toJSON: function () {
           const user = this.toObject();
           delete user.password;
