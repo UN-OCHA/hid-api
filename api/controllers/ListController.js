@@ -62,7 +62,6 @@ module.exports = class ListController extends Controller{
   }
 
   find (request, reply) {
-    const FootprintService = this.app.services.FootprintService;
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
     const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
     const List = this.app.orm.List;
@@ -117,16 +116,23 @@ module.exports = class ListController extends Controller{
         .catch(err => { that.app.services.ErrorService.handle(err, reply); });
     }
     else {
-      if (!options.populate) {
-        options.populate = {path: 'owner', select: '_id name'};
+      let query = List.find(criteria);
+      if (options.limit) {
+        query.limit(parseInt(options.limit));
       }
-      response = FootprintService.find('list', criteria, options);
-      count = FootprintService.count('list', criteria);
-      response
-        .then((result) => {
-          return count
+      if (options.offset) {
+        query.skip(parseInt(options.offset));
+      }
+      if (options.sort) {
+        query.sort(options.sort);
+      }
+      query.populate([{path: 'owner', select: '_id name'}]);
+      query
+        .then((results) => {
+          return List
+            .count(criteria)
             .then((number) => {
-              return {result: result, number: number};
+              return {result: results, number: number};
             });
         })
         .then((result) => {
