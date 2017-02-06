@@ -183,8 +183,10 @@ var importLists = function (app) {
                       var user = users[i];
                       for (var j = 0; j < user[list.type + 's'].length; j++) {
                         if (user[list.type + 's'][j].list === list._id) {
-                          user[list.type + 's'][j].acronym = list.acronym;
                           user[list.type + 's'][j].name = list.name;
+                          user[list.type + 's'][j].names = list.names;
+                          user[list.type + 's'][j].acronym = list.acronym;
+                          user[list.type + 's'][j].acronyms = list.acronyms;
                           user[list.type + 's'][j].visibility = list.visibility;
                         }
                       }

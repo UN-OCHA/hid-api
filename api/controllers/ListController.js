@@ -73,8 +73,10 @@ module.exports = class ListController extends Controller{
 
     // Search with contains when searching in name or label
     if (criteria.name) {
-      criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
-      criteria.name = new RegExp(criteria.name, 'i');
+      var name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
+      name = new RegExp(name, 'i');
+      criteria['names.text'] = name;
+      delete criteria.name;
     }
     if (criteria.label) {
       criteria.label = criteria.label.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
@@ -214,25 +216,33 @@ module.exports = class ListController extends Controller{
         return list;
       })
       .then(list => {
-        if ((request.payload.name && request.payload.name !== list.name) || (request.payload.visibility && request.payload.visibility !== list.visibility)) {
-          // Update users
-          var criteria = {};
-          criteria[list.type + 's.list'] = list._id.toString();
-          return User
-            .find(criteria)
-            .then(users => {
-              for (var i = 0; i < users.length; i++) {
-                var user = users[i];
-                for (var j = 0; j < user[list.type + 's'].length; j++) {
-                  if (user[list.type + 's'][j].list === list._id) {
-                    user[list.type + 's'][j].name = request.payload.name ? request.payload.name : list.name;
-                    user[list.type + 's'][j].visibility = request.payload.visibility ? request.payload.visibility : list.visibility;
-                  }
+        return Model
+          .find({_id: request.params.id})
+          .then(newlist => {
+            return newlist;
+          });
+      })
+      .then(list => {
+        // Update users
+        var criteria = {};
+        criteria[list.type + 's.list'] = list._id.toString();
+        return User
+          .find(criteria)
+          .then(users => {
+            for (var i = 0; i < users.length; i++) {
+              var user = users[i];
+              for (var j = 0; j < user[list.type + 's'].length; j++) {
+                if (user[list.type + 's'][j].list === list._id) {
+                  user[list.type + 's'][j].name = list.name;
+                  user[list.type + 's'][j].names = list.names;
+                  user[list.type + 's'][j].acronym = list.acronym;
+                  user[list.type + 's'][j].acronyms = list.acronyms;
+                  user[list.type + 's'][j].visibility = list.visibility;
                 }
-                user.save();
               }
-            });
-        }
+              user.save();
+            }
+          });
       })
       .catch((err) => {
         that.app.services.ErrorService.handle(err, reply);

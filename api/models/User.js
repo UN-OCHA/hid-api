@@ -305,13 +305,25 @@ module.exports = class User extends Model {
       }
     });
 
+    const translationSchema = new Schema({
+      language: {
+        type: String,
+        enum: ['en', 'fr', 'es']
+      },
+      text: {
+        type: String
+      }
+    });
+
     const listUserSchema = new Schema({
       list: {
         type: Schema.ObjectId,
         ref: 'List'
       },
       name: { type: String},
+      names: [translationSchema],
       acronym: { type: String},
+      acronyms: [translationSchema],
       visibility: {
         type: String,
         enum: ['me', 'inlist', 'all', 'verified'],
