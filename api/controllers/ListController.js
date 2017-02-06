@@ -118,7 +118,7 @@ module.exports = class ListController extends Controller{
     }
     else {
       if (!options.populate) {
-        options.populate = {path: 'owner', select: '_id name'};
+        options.populate = [{path: 'owner', select: '_id name'}];
       }
       response = FootprintService.find('list', criteria, options);
       count = FootprintService.count('list', criteria);
