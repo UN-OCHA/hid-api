@@ -62,7 +62,6 @@ module.exports = class ListController extends Controller{
   }
 
   find (request, reply) {
-    const FootprintService = this.app.services.FootprintService;
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
     const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
     const List = this.app.orm.List;
