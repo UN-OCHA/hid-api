@@ -77,6 +77,13 @@ module.exports = class List extends Model {
             }
           }
           return index;
+        },
+        translatedAttribute: function (attr, language) {
+          var index = this.languageIndex(attr, language);
+          if (index === -1) {
+            index = this.languageIndex(attr, 'en');
+          }
+          return this[attr][index].text;
         }
       }
     };

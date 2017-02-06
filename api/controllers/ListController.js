@@ -4,6 +4,7 @@ const Controller = require('trails/controller');
 const Boom = require('boom');
 const _ = require('lodash');
 const async = require('async');
+const acceptLanguage = require('accept-language');
 
 /**
  * @module ListController
@@ -62,6 +63,7 @@ module.exports = class ListController extends Controller{
   }
 
   find (request, reply) {
+    const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
     const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
     const List = this.app.orm.List;
@@ -112,6 +114,8 @@ module.exports = class ListController extends Controller{
           }
 
           var out = result.toJSON();
+          out.name = result.translatedAttribute('names', reqLanguage);
+          out.acronym = result.translatedAttribute('acronyms', reqLanguage);
           out.visible = result.isVisibleTo(request.params.currentUser);
           return reply(out);
         })
@@ -142,6 +146,8 @@ module.exports = class ListController extends Controller{
           result.result.forEach(function (list) {
             tmp = list.toJSON();
             tmp.visible = list.isVisibleTo(request.params.currentUser);
+            tmp.name = list.translatedAttribute('names', reqLanguage);
+            tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
             out.push(tmp);
           });
           return reply(out).header('X-Total-Count', result.number);
