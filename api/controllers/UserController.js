@@ -1015,4 +1015,105 @@ module.exports = class UserController extends Controller{
       })
   }
 
+  addConnection (request, reply) {
+    const User = this.app.orm.User;
+
+    this.log.debug('[UserController] Adding connection');
+
+    let that = this;
+
+    User
+      .findOne({_id: request.params.id})
+      .then(user => {
+        if (!user) {
+          return reply(Boom.notFound());
+        }
+
+        if (!user.connections) {
+          user.connections = [];
+        }
+        if (user.connectionsIndex(request.params.currentUser) !== -1) {
+          return reply(Boom.badRequest('User is already a connection'));
+        }
+
+        user.connections.push({pending: true, user: request.params.currentUser._id});
+
+        user
+          .save()
+          .then(() => {
+            reply(user);
+
+            var notification = {
+              type: 'connection_request',
+              createdBy: request.params.currentUser,
+              user: user
+            };
+            that.app.services.NotificationService.notify(notification);
+          });
+      })
+      .catch(err => {
+        that._errorHandler(err, reply);
+      });
+  }
+
+  updateConnection (request, reply) {
+    const User = this.app.orm.User;
+
+    this.log.debug('[UserController] Updating connection');
+
+    let that = this;
+
+    User
+      .findOne({_id: request.params.id})
+      .populate({path: 'connections', select: '_id name'})
+      .then(user => {
+        if (!user) {
+          return reply(Boom.notFound());
+        }
+        var connection = user.connections.id(request.params.cid);
+        connection.pending = false;
+        user
+          .save()
+          .then(() => {
+            reply(user);
+
+            var notification = {
+              type: 'connection_approved',
+              createdBy: request.params.currentUser,
+              user: connection.user
+            };
+            that.app.services.NotificationService.notify(notification);
+          });
+      })
+      .catch(err => {
+        that._errorHandler(err, reply);
+      });
+  }
+
+  deleteConnection (request, reply) {
+    const User = this.app.orm.User;
+
+    this.log.debug('[UserController] Deleting connection');
+
+    let that = this;
+
+    User
+      .findOne({_id: request.params.id})
+      .then(user => {
+        if (!user) {
+          return reply(Boom.notFound());
+        }
+        user.connections.id(request.params.cid).remove();
+        user
+          .save()
+          .then(() => {
+            reply(user);
+
+            // TODO: send the notification
+          });
+      })
+      .catch(err => {
+        that._errorHandler(err, reply);
+      });
+  }
 }

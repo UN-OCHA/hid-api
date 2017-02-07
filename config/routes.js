@@ -287,6 +287,24 @@ module.exports = [
 
   {
     method: 'POST',
+    path: '/api/v2/user/{id}/connections',
+    handler: 'UserController.addConnection'
+  },
+
+  {
+    method: 'PUT',
+    path: '/api/v2/user/{id}/connections/{cid}',
+    handler: 'UserController.updateConnection'
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/user/{id}/connections/{cid}',
+    handler: 'UserController.deleteConnection'
+  },
+
+  {
+    method: 'POST',
     path: '/api/v2/user/{id}/subscriptions',
     handler: 'ServiceController.subscribe'
   },

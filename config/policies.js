@@ -53,7 +53,10 @@ module.exports = {
     addPhone: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],
     dropPhone: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],
     setPrimaryPhone: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],
-    setPrimaryOrganization: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate']
+    setPrimaryOrganization: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate'],
+    addConnection: ['AuthPolicy.isAuthenticated'],
+    updateConnection: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate'],
+    deleteConnection: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate']
   },
 
   ListUserController: {
