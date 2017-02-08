@@ -184,6 +184,7 @@ module.exports = class ListUserController extends Controller{
         return record
           .save()
           .then((user) => {
+            reply(user);
             if (lu.pending === true && request.payload.pending === false) {
               // Send a notification to inform user that his checkin is not pending anymore
               var notification = {type: 'approved_checkin', user: user, createdBy: request.params.currentUser, params: { list: list}};
