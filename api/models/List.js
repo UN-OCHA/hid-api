@@ -42,11 +42,13 @@ module.exports = class List extends Model {
         },
         isOwner: function (user) {
           var ownerId = '';
-          if (this.owner && this.owner._id) {
-            ownerId = this.owner._id.toString();
-          }
-          else {
-            ownerId = this.owner.toString();
+          if (this.owner) {
+            if (this.owner._id) {
+              ownerId = this.owner._id.toString();
+            }
+            else {
+              ownerId = this.owner.toString();
+            }
           }
           if (user.is_admin ||
             ownerId === user._id.toString() ||
