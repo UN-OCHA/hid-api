@@ -44,7 +44,7 @@ module.exports = class User extends Model {
       methods: {
         sanitize: function (user) {
           this.sanitizeClients();
-          if (this._id.toString() !== user._id.toString()) {
+          if (this._id.toString() !== user._id.toString() && !user.is_admin) {
             if ((this.is_orphan || this.is_ghost) && !user.verified) {
               // HID-1261 sanitize ghost or orphan
               const allowedProps = ['given_name', 'family_name', 'name', '_id', 'legacyId', 'user_id', 'is_orphan', 'is_ghost', 'verified', 'emailsVisibility', 'phonesVisibility', 'locationsVisibility'];
