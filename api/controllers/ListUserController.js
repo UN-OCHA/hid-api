@@ -42,7 +42,7 @@ module.exports = class ListUserController extends Controller{
         }
 
         //Set the proper pending attribute depending on list type
-        if (list.joinability === 'public' || list.joinability === 'private') {
+        if (list.joinability === 'public' || list.joinability === 'private' || list.isOwner(request.params.currentUser)) {
           payload.pending = false;
         }
         else {

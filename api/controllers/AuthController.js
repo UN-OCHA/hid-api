@@ -46,7 +46,7 @@ module.exports = class AuthController extends Controller{
             return reply(Boom.unauthorized('invalid email or password'));
           }
           else {
-            user.sanitize();
+            user.sanitize(user);
             return reply(user);
           }
         })
