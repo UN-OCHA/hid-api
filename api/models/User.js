@@ -53,27 +53,29 @@ module.exports = class User extends Model {
               }
             }
           }
-          if (this.emailsVisibility !== 'anyone') {
-            if ((this.emailsVisibility === 'verified' && !user.verified) ||
-                (this.emailsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
-              this.email = null;
-              this.emails = [];
+          if (user) {
+            if (this.emailsVisibility !== 'anyone') {
+              if ((this.emailsVisibility === 'verified' && !user.verified) ||
+                  (this.emailsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
+                this.email = null;
+                this.emails = [];
+              }
             }
-          }
 
-          if (this.phonesVisibility !== 'anyone') {
-            if ((this.phonesVisibility === 'verified' && !user.verified) ||
-                (this.phonesVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
-              this.phone_number = null;
-              this.phone_numbers = [];
+            if (this.phonesVisibility !== 'anyone') {
+              if ((this.phonesVisibility === 'verified' && !user.verified) ||
+                  (this.phonesVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
+                this.phone_number = null;
+                this.phone_numbers = [];
+              }
             }
-          }
 
-          if (this.locationsVisibility !== 'anyone') {
-            if ((this.locationsVisibility === 'verified' && !user.verified) ||
-                (this.locationsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
-              this.location = null;
-              this.locations = [];
+            if (this.locationsVisibility !== 'anyone') {
+              if ((this.locationsVisibility === 'verified' && !user.verified) ||
+                  (this.locationsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
+                this.location = null;
+                this.locations = [];
+              }
             }
           }
         },

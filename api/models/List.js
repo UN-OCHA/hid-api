@@ -42,7 +42,7 @@ module.exports = class List extends Model {
         },
         isOwner: function (user) {
           var ownerId = '';
-          if (this.owner._id) {
+          if (this.owner && this.owner._id) {
             ownerId = this.owner._id.toString();
           }
           else {
