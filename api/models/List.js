@@ -42,7 +42,7 @@ module.exports = class List extends Model {
         },
         isOwner: function (user) {
           if (user.is_admin ||
-            this.owner === user.id ||
+            this.owner.toString() === user._id.toString() ||
             this.isManager(user)) {
               return true;
           }
@@ -53,13 +53,11 @@ module.exports = class List extends Model {
         isManager: function (user) {
           var managerFound = false;
           this.managers.forEach(function (manager) {
-            if (typeof manager === 'object') {
-              if (manager.id === user.id) {
-                managerFound = true;
-              }
+            if (typeof manager === 'object' && manager.id && manager.id === user.id) {
+              managerFound = true;
             }
             else {
-              if (manager === user.id) {
+              if (manager.toString() === user._id.toString()) {
                 managerFound = true;
               }
             }
