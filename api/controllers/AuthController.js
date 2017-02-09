@@ -152,11 +152,11 @@ module.exports = class AuthController extends Controller{
 
       if (err) {
         that.log.warn('An error occurred in /oauth/authorize while trying to fetch the user record for ' + cookie.userId + ' who is an active session.');
-        return reply(Boom.badImplementation('An error occurred while processing request. Please try logging in again.'))
+        return reply(Boom.badImplementation('An error occurred while processing request. Please try logging in again.'));
       }
       else {
-        user.sanitize()
-        request.auth.credentials = user
+        user.sanitize(user);
+        request.auth.credentials = user;
         oauth.authorize(request, reply, function (req, res) {
           if (!request.response || (request.response && !request.response.isBoom)) {
             if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
