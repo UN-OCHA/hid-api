@@ -204,50 +204,54 @@ module.exports = class AuthController extends Controller{
     var that = this
     User.findOne({_id: cookie.userId}, function (err, user) {
       if (err) {
-        that.log.warn('An error occurred in /oauth/authorize while trying to fetch the user record for ' + cookie.userId + ' who is an active session.')
-        return reply(Boom.badImplementation('An error occurred while processing request. Please try logging in again.'))
+        that.log.warn('An error occurred in /oauth/authorize while trying to fetch the user record for ' + cookie.userId + ' who is an active session.');
+        return reply(Boom.badImplementation('An error occurred while processing request. Please try logging in again.'));
       }
       if (!user) {
-        that.log.warn('Could not find user with ID ' + cookie.userId)
-        return reply(Boom.badRequest('Could not find user'))
+        that.log.warn('Could not find user with ID ' + cookie.userId);
+        return reply(Boom.badRequest('Could not find user'));
       }
-      user.sanitize()
-      request.auth.credentials = user
+      user.sanitize(user);
+      request.auth.credentials = user;
       // Save authorized client if user allowed
-      const clientId = request.yar.authorize[request.payload.transaction_id].client
+      const clientId = request.yar.authorize[request.payload.transaction_id].client;
       if (!request.payload.cancel && !user.hasAuthorizedClient(clientId)) {
-        user.authorizedClients.push(request.yar.authorize[request.payload.transaction_id].client)
-        user.markModified('authorizedClients')
+        user.authorizedClients.push(request.yar.authorize[request.payload.transaction_id].client);
+        user.markModified('authorizedClients');
         user.save(function (err) {
-          oauth.decision(request, reply)
-        })
+          oauth.decision(request, reply);
+        });
       }
       else {
-        oauth.decision(request, reply)
+        oauth.decision(request, reply);
       }
-    })
+    });
   }
 
   accessTokenOauth2 (request, reply) {
-    const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize']
-    const OauthToken = this.app.orm.OauthToken
-    const code = request.payload.code
-    if (!code) return reply(Boom.badRequest('Missing authorization code'))
+    const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
+    const OauthToken = this.app.orm.OauthToken;
+    const code = request.payload.code;
+    if (!code) {
+      return reply(Boom.badRequest('Missing authorization code'));
+    }
     OauthToken
       .findOne({token: code, type: 'code'})
       .populate('client user')
       .exec(function (err, ocode) {
-        if (err) return reply(Boom.badRequest('Wrong authorization code'))
-        request.auth.credentials = ocode.client
-        oauth.token(request, reply)
-      })
+        if (err) {
+          return reply(Boom.badRequest('Wrong authorization code'));
+        }
+        request.auth.credentials = ocode.client;
+        oauth.token(request, reply);
+      });
   }
 
   openIdConfiguration (request, reply) {
-    var root = process.env.ROOT_URL
+    var root = process.env.ROOT_URL;
     var out = {
       issuer: root,
-      authorization_endpoint: root + "/oauth/authorize",
+      authorization_endpoint: root + '/oauth/authorize',
       token_endpoint: root + "/oauth/access_token",
       userinfo_endpoint: root + "/account.json",
       jwks_uri: root + "/oauth/jwks",
