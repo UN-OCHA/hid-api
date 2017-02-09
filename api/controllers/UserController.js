@@ -15,7 +15,7 @@ const userPopulate1 = [
   {path: 'favoriteLists'},
   {path: 'verified_by', select: '_id name'},
   {path: 'subscriptions.service', select: '_id name'},
-  {path: 'connections', select: '_id name'}
+  {path: 'connections.user', select: '_id name'}
 ];
 
 /**
