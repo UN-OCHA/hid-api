@@ -26,11 +26,9 @@ definitions:
     properties:
       email:
         type: string
-        required: true
       password:
         type: string
         format: password
-        required: true
   User:
     type: object
     properties:
