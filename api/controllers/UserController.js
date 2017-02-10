@@ -1109,7 +1109,7 @@ module.exports = class UserController extends Controller{
                 // Send notification
                 var notification = {
                   type: 'connection_approved',
-                  createdBy: user,
+                  createdBy: result.user,
                   user: cuser
                 };
                 that.app.services.NotificationService.send(notification, function () {
