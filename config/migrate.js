@@ -532,7 +532,7 @@ module.exports = {
                   async.eachSeries(parsed.contacts, function (item, cb) {
 
                     // HID-1310 do not migrate orphans from Haiti Ecuador and Nepal
-                    if ((item.type === 'local' && !item._profile.firstUpdate && noOperations.indexOf(item.localityId.replace('hrinfo:', '')) !== -1)
+                    if ((item.type === 'local' && !item._profile.firstUpdate && noOperations.indexOf(item.locationId.replace('hrinfo:', '')) !== -1)
                     || (item.type === 'local' && !item._profile.firstUpdate && !item.status)) {
                       cb();
                     }
