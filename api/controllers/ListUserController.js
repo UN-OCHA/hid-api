@@ -3,7 +3,7 @@
 const Controller = require('trails/controller');
 const Boom = require('boom');
 const _ = require('lodash');
-const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles'];
+const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles', 'offices'];
 
 /**
  * @module ListUserController

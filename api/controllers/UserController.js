@@ -10,7 +10,7 @@ const http = require('http');
 const moment = require('moment');
 const async = require('async');
 const _ = require('lodash');
-const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles'];
+const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles', 'offices'];
 const userPopulate1 = [
   {path: 'favoriteLists'},
   {path: 'verified_by', select: '_id name'},
