@@ -1092,7 +1092,7 @@ module.exports = class UserController extends Controller{
       })
       .then(result => {
         User
-          .findOne({_id: result.connection.user.id})
+          .findOne({_id: result.connection.user._id})
           .then(cuser => {
             // Create connection with current user
             var cindex = cuser.connectionsIndex(result.user._id);
