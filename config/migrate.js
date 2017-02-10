@@ -289,7 +289,7 @@ module.exports = {
           try {
             var parsed = JSON.parse(body);
             var keys = Object.keys(parsed);
-            var vals = Object.values(parsed);
+            var vals = _.values(parsed);
             for (var i = 0; i < keys.length; i++) {
               countries.push({
                 id: keys[i],
