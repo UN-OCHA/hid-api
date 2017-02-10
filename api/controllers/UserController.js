@@ -1049,7 +1049,7 @@ module.exports = class UserController extends Controller{
               createdBy: request.params.currentUser,
               user: user
             };
-            that.app.services.NotificationService.notify(notification);
+            that.app.services.NotificationService.send(notification);
           });
       })
       .catch(err => {
@@ -1105,7 +1105,7 @@ module.exports = class UserController extends Controller{
               createdBy: users.currentUser,
               user: users.user
             };
-            that.app.services.NotificationService.notify(notification);
+            that.app.services.NotificationService.send(notification);
           })
       })
       .catch(err => {
