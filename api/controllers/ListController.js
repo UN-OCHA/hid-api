@@ -4,6 +4,7 @@ const Controller = require('trails/controller');
 const Boom = require('boom');
 const _ = require('lodash');
 const async = require('async');
+const acceptLanguage = require('accept-language');
 
 /**
  * @module ListController
@@ -62,6 +63,7 @@ module.exports = class ListController extends Controller{
   }
 
   find (request, reply) {
+    const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
     const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
     const List = this.app.orm.List;
@@ -73,8 +75,10 @@ module.exports = class ListController extends Controller{
 
     // Search with contains when searching in name or label
     if (criteria.name) {
-      criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
-      criteria.name = new RegExp(criteria.name, 'i');
+      var name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
+      name = new RegExp(name, 'i');
+      criteria['names.text'] = name;
+      delete criteria.name;
     }
     if (criteria.label) {
       criteria.label = criteria.label.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
@@ -110,6 +114,8 @@ module.exports = class ListController extends Controller{
           }
 
           var out = result.toJSON();
+          out.name = result.translatedAttribute('names', reqLanguage);
+          out.acronym = result.translatedAttribute('acronyms', reqLanguage);
           out.visible = result.isVisibleTo(request.params.currentUser);
           return reply(out);
         })
@@ -140,6 +146,8 @@ module.exports = class ListController extends Controller{
           result.result.forEach(function (list) {
             tmp = list.toJSON();
             tmp.visible = list.isVisibleTo(request.params.currentUser);
+            tmp.name = list.translatedAttribute('names', reqLanguage);
+            tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
             out.push(tmp);
           });
           return reply(out).header('X-Total-Count', result.number);
@@ -214,25 +222,33 @@ module.exports = class ListController extends Controller{
         return list;
       })
       .then(list => {
-        if ((request.payload.name && request.payload.name !== list.name) || (request.payload.visibility && request.payload.visibility !== list.visibility)) {
-          // Update users
-          var criteria = {};
-          criteria[list.type + 's.list'] = list._id.toString();
-          return User
-            .find(criteria)
-            .then(users => {
-              for (var i = 0; i < users.length; i++) {
-                var user = users[i];
-                for (var j = 0; j < user[list.type + 's'].length; j++) {
-                  if (user[list.type + 's'][j].list === list._id) {
-                    user[list.type + 's'][j].name = request.payload.name ? request.payload.name : list.name;
-                    user[list.type + 's'][j].visibility = request.payload.visibility ? request.payload.visibility : list.visibility;
-                  }
+        return Model
+          .find({_id: request.params.id})
+          .then(newlist => {
+            return newlist;
+          });
+      })
+      .then(list => {
+        // Update users
+        var criteria = {};
+        criteria[list.type + 's.list'] = list._id.toString();
+        return User
+          .find(criteria)
+          .then(users => {
+            for (var i = 0; i < users.length; i++) {
+              var user = users[i];
+              for (var j = 0; j < user[list.type + 's'].length; j++) {
+                if (user[list.type + 's'][j].list === list._id) {
+                  user[list.type + 's'][j].name = list.name;
+                  user[list.type + 's'][j].names = list.names;
+                  user[list.type + 's'][j].acronym = list.acronym;
+                  user[list.type + 's'][j].acronyms = list.acronyms;
+                  user[list.type + 's'][j].visibility = list.visibility;
                 }
-                user.save();
               }
-            });
-        }
+              user.save();
+            }
+          });
       })
       .catch((err) => {
         that.app.services.ErrorService.handle(err, reply);

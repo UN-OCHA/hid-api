@@ -24,6 +24,7 @@ var importLists = function (app) {
   const NotificationService = app.services.NotificationService;
   const listTypes = ['operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
   const now = Math.floor(Date.now() / 1000);
+  const languages = ['en', 'fr', 'es'];
   //const Cache = app.services.CacheService.getCaches(['local-cache'])
   var hasNextPage = false, pageNumber = 1, path = '';
 
@@ -68,7 +69,7 @@ var importLists = function (app) {
     });
   };
 
-  var _parseList = function (listType, item, cb) {
+  var _parseList = function (listType, language, item, cb) {
     var visibility = '', label = '', acronym = '', tmpList = {};
     visibility = 'all';
     if (item.hid_access && item.hid_access === 'closed') {
@@ -95,6 +96,7 @@ var importLists = function (app) {
       remote_id: item.id,
       metadata: item
     };
+
     app.log.debug('Creating list of type ' + listType + ': ' + label);
     if (listType === 'bundle') {
       List
@@ -118,21 +120,61 @@ var importLists = function (app) {
     }
   };
 
+  var _parseListLanguage = function (list, label, acronym, language) {
+    var labelFound = false;
+    if (list.labels && list.labels.length) {
+      for (var i = 0; i < list.labels.length; i++) {
+        if (list.labels[i].language === language) {
+          labelFound = true;
+          list.labels[i].text = label;
+        }
+      }
+    }
+    else {
+      list.labels = [];
+    }
+    if (!labelFound) {
+      list.labels.push({language: language, text: label});
+    }
+
+    var acronymFound = false;
+    if (list.acronyms && list.acronyms.length) {
+      for (var j = 0; j < list.acronyms.length; j++) {
+        if (list.acronyms[j].language === language) {
+          acronymFound = true;
+          list.acronyms[j].text = acronym;
+        }
+      }
+    }
+    else {
+      list.acronyms = [];
+    }
+    if (!acronymFound) {
+      list.acronyms.push({language: language, text: acronym});
+    }
+  };
+
   // Create a list based on the item pulled from hrinfo
-  var _createList = function (listType, item, cb) {
+  var _createList = function (listType, language, item, cb) {
     var tmpList = {}, visibility = '', label = '', acronym = '', inactiveOps = [2782,2785,2791,38230];
     if ((listType === 'operation' && (item.status !== 'inactive' || inactiveOps.indexOf(item.id) !== -1)) || listType !== 'operation') {
       List.findOne({type: listType, remote_id: item.id}, function (err, list) {
         if (!list) {
-          _parseList(listType, item, function (newList) {
+          _parseList(listType, language, item, function (newList) {
+            _parseListLanguage(newList, newList.label, newList.acronym, language);
             _createListHelper(newList, cb);
           });
         }
         else {
-          _parseList(listType, item, function (newList) {
+          _parseList(listType, language, item, function (newList) {
             var updateUsers = false;
             if (newList.name !== list.name || newList.visibility !== list.visibility) {
               updateUsers = true;
+            }
+            _parseListLanguage(list, newList.label, newList.acronym, language);
+            if (language !== 'en') {
+              delete newList.label;
+              delete newList.acronym;
             }
             _.merge(list, newList);
             list.save().then(function (list) {
@@ -146,8 +188,10 @@ var importLists = function (app) {
                       var user = users[i];
                       for (var j = 0; j < user[list.type + 's'].length; j++) {
                         if (user[list.type + 's'][j].list === list._id) {
-                          user[list.type + 's'][j].acronym = list.acronym;
                           user[list.type + 's'][j].name = list.name;
+                          user[list.type + 's'][j].names = list.names;
+                          user[list.type + 's'][j].acronym = list.acronym;
+                          user[list.type + 's'][j].acronyms = list.acronyms;
                           user[list.type + 's'][j].visibility = list.visibility;
                         }
                       }
@@ -176,64 +220,69 @@ var importLists = function (app) {
       if (!lastPull) {
         lastPull = 0;
       }
-      // For each list type
-      async.eachSeries(listTypes,
-        function(listType, nextType) {
-          // Parse while there are pages
-          async.doWhilst(function (nextPage) {
-            path = '/api/v1.0/' + listType + 's?page=' + pageNumber + '&filter[created][value]=' + lastPull + '&filter[created][operator]=>';
-            if (listType === 'organization' || listType === 'functional_role') {
-              path = '/api/v1.0/' + listType + 's?page=' + pageNumber;
-            }
-            https.get({
-              host: 'www.humanitarianresponse.info',
-              port: 443,
-              path: path
-            }, function (response) {
-              pageNumber++;
-              var body = '';
-              response.on('data', function (d) {
-                body += d;
+      async.eachSeries(languages, function (language, nextLanguage) {
+        // For each list type
+        async.eachSeries(listTypes,
+          function(listType, nextType) {
+            // Parse while there are pages
+            async.doWhilst(function (nextPage) {
+              path = '/' + language + '/api/v1.0/' + listType + 's?page=' + pageNumber + '&filter[created][value]=' + lastPull + '&filter[created][operator]=>';
+              if (listType === 'organization' || listType === 'functional_role') {
+                path = '/' + language + '/api/v1.0/' + listType + 's?page=' + pageNumber;
+              }
+              https.get({
+                host: 'www.humanitarianresponse.info',
+                port: 443,
+                path: path
+              }, function (response) {
+                pageNumber++;
+                var body = '';
+                response.on('data', function (d) {
+                  body += d;
+                });
+                response.on('end', function() {
+                  var parsed = {};
+                  try {
+                    parsed = JSON.parse(body);
+                    hasNextPage = parsed.next ? true: false;
+                    async.eachSeries(parsed.data, function (item, cb) {
+                      // Do not add disasters more than 2 years old
+                      if (listType !== 'disaster' || (listType === 'disaster' && now - item.created < 2 * 365 * 24 * 3600)) {
+                        _createList(listType, language, item, cb);
+                      }
+                      else {
+                        cb();
+                      }
+                    }, function (err) {
+                      setTimeout(function() {
+                        app.log.info('Done loading page ' + pageNumber + ' for ' + listType);
+                        nextPage();
+                      }, 1000);
+                    });
+                  } catch (e) {
+                    app.log.error('Error parsing hrinfo API: ' + e);
+                  }
+                });
               });
-              response.on('end', function() {
-                var parsed = {};
-                try {
-                  parsed = JSON.parse(body);
-                  hasNextPage = parsed.next ? true: false;
-                  async.eachSeries(parsed.data, function (item, cb) {
-                    // Do not add disasters more than 2 years old
-                    if (listType !== 'disaster' || (listType === 'disaster' && now - item.created < 2 * 365 * 24 * 3600)) {
-                      _createList(listType, item, cb);
-                    }
-                    else {
-                      cb();
-                    }
-                  }, function (err) {
-                    setTimeout(function() {
-                      app.log.info('Done loading page ' + pageNumber + ' for ' + listType);
-                      nextPage();
-                    }, 1000);
-                  });
-                } catch (e) {
-                  app.log.error('Error parsing hrinfo API: ' + e);
-                }
-              });
-            });
-        }, function () {
-          return hasNextPage;
-        }, function (err, results) {
-          pageNumber = 1;
-          app.log.info('Done processing all ' + listType + 's');
-          nextType();
+          }, function () {
+            return hasNextPage;
+          }, function (err, results) {
+            pageNumber = 1;
+            app.log.info('Done processing all ' + listType + 's');
+            nextType();
+          });
+        }, function (err) {
+          var currentTime = Math.round(Date.now() / 1000);
+          // Keep item in cache 12 minutes (720 seconds)
+          app.log.info(currentTime);
+          /*mongoCache.set('lastPull', currentTime, {ttl: 720}, function (err) {
+            app.log.info(err);
+          });*/
+          app.log.info('Done processing all list types for ' + language);
+          nextLanguage();
         });
       }, function (err) {
-        var currentTime = Math.round(Date.now() / 1000);
-        // Keep item in cache 12 minutes (720 seconds)
-        app.log.info(currentTime);
-        /*mongoCache.set('lastPull', currentTime, {ttl: 720}, function (err) {
-          app.log.info(err);
-        });*/
-        app.log.info('Done processing all list types');
+        app.log.info('Done importing lists');
       });
     //});
   //});

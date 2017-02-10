@@ -2,6 +2,7 @@
 
 const Policy = require('trails/policy');
 const Boom = require('boom');
+const acceptLanguage = require('accept-language');
 
 /**
  * @module AuthPolicy
@@ -10,6 +11,7 @@ const Boom = require('boom');
 module.exports = class AuthPolicy extends Policy {
 
   isAuthenticated (request, reply) {
+    acceptLanguage.languages(['en', 'fr', 'es']);
     const OauthToken = this.app.orm.OauthToken;
     // If we are creating a user and we are not authenticated, allow it
     if (request.path == '/api/v2/user' && request.method == 'post' && !request.headers.authorization && !request.params.token) {

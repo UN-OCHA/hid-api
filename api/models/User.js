@@ -277,6 +277,51 @@ module.exports = class User extends Model {
           });
         },
 
+        translateCheckin: function (checkin, language) {
+          var name = '', nameEn = '', acronym = '', acronymEn = '';
+          checkin.names.forEach(function (nameLn) {
+            if (nameLn.language === language) {
+              name = nameLn.text;
+            }
+            if (nameLn.language === 'en') {
+              nameEn = nameLn.text;
+            }
+          });
+          checkin.acronyms.forEach(function (acroLn) {
+            if (acroLn.language === language) {
+              acronym = acroLn.text;
+            }
+            if (acroLn.language === 'en') {
+              acronymEn = acroLn.text;
+            }
+          });
+          if (name !== '') {
+            checkin.name = name;
+          }
+          else {
+            checkin.name = nameEn;
+          }
+          if (acronym !== '') {
+            checkin.acronym = acronym;
+          }
+          else {
+            checkin.acronym = acronymEn;
+          }
+        },
+
+        translateListNames: function (language) {
+          listTypes.forEach(function (listType) {
+            if (this[listType + 's'] && this[listType + 's'].length) {
+              this[listType + 's'].forEach(function (checkin) {
+                this.translateCheckin(checkin, language);
+              });
+            }
+          });
+          if (this.organization) {
+            this.translateCheckin(this.organization, language);
+          }
+        },
+
         toJSON: function () {
           const user = this.toObject();
           delete user.password;
@@ -346,6 +391,16 @@ module.exports = class User extends Model {
       }
     });
 
+    const translationSchema = new Schema({
+      language: {
+        type: String,
+        enum: ['en', 'fr', 'es']
+      },
+      text: {
+        type: String
+      }
+    });
+
     const connectionSchema = new Schema({
       pending: {
         type: Boolean,
@@ -367,7 +422,9 @@ module.exports = class User extends Model {
         ref: 'List'
       },
       name: { type: String},
+      names: [translationSchema],
       acronym: { type: String},
+      acronyms: [translationSchema],
       visibility: {
         type: String,
         enum: ['me', 'inlist', 'all', 'verified'],

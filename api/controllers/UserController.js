@@ -10,6 +10,7 @@ const http = require('http');
 const moment = require('moment');
 const async = require('async');
 const _ = require('lodash');
+const acceptLanguage = require('accept-language');
 const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles', 'offices'];
 const userPopulate1 = [
   {path: 'favoriteLists'},
@@ -365,6 +366,7 @@ module.exports = class UserController extends Controller{
 
   _findHelper(request, reply, criteria, options, lists) {
     const User = this.app.orm.User;
+    const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
     var pdfFormat = '';
     if (criteria.format) {
       pdfFormat = criteria.format;
@@ -397,6 +399,7 @@ module.exports = class UserController extends Controller{
         }
         for (var i = 0, len = results.results.length; i < len; i++) {
           results.results[i].sanitize(request.params.currentUser);
+          results.results[i].translateListNames(reqLanguage);
         }
         if (!request.params.extension) {
           return reply(results.results).header('X-Total-Count', results.number);
