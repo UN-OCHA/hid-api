@@ -1073,18 +1073,40 @@ module.exports = class UserController extends Controller{
         }
         var connection = user.connections.id(request.params.cid);
         connection.pending = false;
-        user
+        return user
           .save()
           .then(() => {
-            reply(user);
-
+            return user;
+          });
+      })
+      .then(user => {
+        // Create connection with current user
+        return User
+          .findOne({_id: request.params.currentUser.id})
+          .then(cuser => {
+            var cindex = cuser.connectionsIndex(user._id);
+            if (cindex === -1) {
+              cuser.connections.push({pending: false, user: user._id});
+            }
+            else {
+              cuser.connections[cindex].pending = false;
+            }
+            return {currentUser: cuser, user: user};
+          })
+      })
+      .then(users => {
+        users.currentUser
+          .save()
+          .then(() => {
+            reply(users.user);
+            // Send notification
             var notification = {
               type: 'connection_approved',
-              createdBy: request.params.currentUser,
-              user: connection.user
+              createdBy: users.currentUser,
+              user: users.user
             };
             that.app.services.NotificationService.notify(notification);
-          });
+          })
       })
       .catch(err => {
         that._errorHandler(err, reply);
@@ -1109,8 +1131,6 @@ module.exports = class UserController extends Controller{
           .save()
           .then(() => {
             reply(user);
-
-            // TODO: send the notification
           });
       })
       .catch(err => {
