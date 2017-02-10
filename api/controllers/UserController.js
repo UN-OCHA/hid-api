@@ -733,41 +733,48 @@ module.exports = class UserController extends Controller{
   }
 
   resetPassword (request, reply) {
-    const Model = this.app.orm['user']
-    const app_reset_url = request.payload.app_reset_url
+    const Model = this.app.orm.User;
+    const app_reset_url = request.payload.app_reset_url;
 
     if (request.payload.email) {
-      var that = this
+      var that = this;
       Model
         .findOne({email: request.payload.email})
         .then(record => {
-          if (!record) return that._errorHandler(Boom.badRequest('Email could not be found'), reply)
+          if (!record) {
+            return that._errorHandler(Boom.badRequest('Email could not be found'), reply);
+          }
           that.app.services.EmailService.sendResetPassword(record, app_reset_url, function (merr, info) {
-            return reply('Password reset email sent successfully').code(202)
-          })
-        })
+            return reply('Password reset email sent successfully').code(202);
+          });
+        });
     }
     else {
       if (request.payload.hash && request.payload.password) {
-        const parts = Model.explodeHash(request.payload.hash)
+        const parts = Model.explodeHash(request.payload.hash);
         Model
           .findOne({email: parts.email})
           .then(record => {
-            if (!record) return reply(Boom.badRequest('Email could not be found'))
-            var valid = record.validHash(request.payload.hash)
+            if (!record) {
+              return reply(Boom.badRequest('Email could not be found'));
+            }
+            var valid = record.validHash(request.payload.hash);
             if (valid === true) {
-              record.password = Model.hashPassword(request.payload.password)
-              record.email_verified = true
-              record.expires = new Date(0, 0, 1, 0, 0, 0)
+              record.password = Model.hashPassword(request.payload.password);
+              record.email_verified = true;
+              record.expires = new Date(0, 0, 1, 0, 0, 0);
+              record.is_orphan = false;
               record.save().then(() => {
-                return reply('Password reset successfully')
+                return reply('Password reset successfully');
               })
-              .catch(err => { return reply(Boom.badImplementation(err.message)) })
+              .catch(err => {
+                return reply(Boom.badImplementation(err.message));
+              });
             }
             else {
-              return reply(Boom.badRequest(valid))
+              return reply(Boom.badRequest(valid));
             }
-          })
+          });
       }
       else {
         return reply(Boom.badRequest('Wrong arguments'));
@@ -776,15 +783,17 @@ module.exports = class UserController extends Controller{
   }
 
   claimEmail (request, reply) {
-    const Model = this.app.orm['user']
-    const app_reset_url = request.payload.app_reset_url
-    const userId = request.params.id
+    const Model = this.app.orm.User;
+    const app_reset_url = request.payload.app_reset_url;
+    const userId = request.params.id;
 
-    var that = this
+    var that = this;
     Model
       .findOne({_id: userId})
       .then(record => {
-        if (!record) return reply(Boom.notFound())
+        if (!record) {
+          return reply(Boom.notFound());
+        }
         that.app.services.EmailService.sendClaim(record, app_reset_url, function (err, info) {
           return reply('Claim email sent successfully').code(202)
         })
@@ -1049,7 +1058,9 @@ module.exports = class UserController extends Controller{
               createdBy: request.params.currentUser,
               user: user
             };
-            that.app.services.NotificationService.send(notification);
+            that.app.services.NotificationService.send(notification, function () {
+
+            });
           });
       })
       .catch(err => {
@@ -1105,7 +1116,9 @@ module.exports = class UserController extends Controller{
               createdBy: users.currentUser,
               user: users.user
             };
-            that.app.services.NotificationService.send(notification);
+            that.app.services.NotificationService.send(notification, function () {
+
+            });
           })
       })
       .catch(err => {
