@@ -1033,7 +1033,7 @@ module.exports = class UserController extends Controller{
         if (!user.connections) {
           user.connections = [];
         }
-        if (user.connectionsIndex(request.params.currentUser) !== -1) {
+        if (user.connectionsIndex(request.params.currentUser._id) !== -1) {
           return reply(Boom.badRequest('User is already a connection'));
         }
 

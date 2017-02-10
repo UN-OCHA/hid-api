@@ -149,13 +149,13 @@ module.exports = class User extends Model {
           return index;
         },
 
-        connectionsIndex: function (user) {
+        connectionsIndex: function (userId) {
           var index = -1;
           if (this.connections && this.connections.length) {
             for (var i = 0, len = this.connections.length; i < len; i++) {
               if (this.connections[i].pending === false &&
-                ((this.connections[i].user._id && this.connections[i].user._id.toString() === user._id.toString()) ||
-                (!this.connections[i].user._id && this.connections[i].user.toString() === user._id.toString()))) {
+                ((this.connections[i].user._id && this.connections[i].user._id.toString() === userId.toString()) ||
+                (!this.connections[i].user._id && this.connections[i].user.toString() === userId.toString()))) {
                 index = i;
               }
             }
