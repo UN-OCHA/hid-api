@@ -1,0 +1,174 @@
+swagger: '2.0'
+info:
+  title: 'Humanitarian ID v2'
+  description: 'Humanitarian ID v2 API'
+  version: 2.0.0
+  contact:
+    name: 'Guillaume Viguier-Just'
+    email: 'guillaume@viguierjust.com'
+  license:
+    name: ''
+tags:
+  - name: 'user'
+    description: 'User related operations'
+  - name: 'auth'
+    description: 'Authentication related methods'
+host: 'api2.dev.humanitarian.id'
+basePath: '/api/v2'
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+definitions:
+  Auth:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+        format: password
+  User:
+    type: object
+    properties:
+      _id:
+        type: string
+        description: 'User unique ID'
+      deleted:
+        type: boolean
+        description: 'Whether the user is active or not'
+      email:
+        type: string
+        description: 'The user primary email'
+      email_verified:
+        type: string
+        description: 'Whether the user primary email is verified'
+      emailsVisibility:
+        type: string
+        description: 'Who can view this user emails'
+      expires:
+        type: string
+        format: date-time
+        description: 'When this user account expires (set to the past if it does not)'
+      family_name:
+        type: string
+        description: 'The user family name'
+      given_name:
+        type: string
+        description: 'The user given name'
+      id:
+        type: string
+        description: 'Shortcut to the user ID'
+      isManager:
+        type: boolean
+        description: 'Whether the user is a global manager'
+      is_admin:
+        type: boolean
+        description: 'Whether the user is an admin'
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+paths:
+  /user:
+    get:
+      tags:
+        - user
+      description: 'Returns all users the current user has access to'
+      parameters:
+        - name: 'sort'
+          description: 'An attribute to sort by'
+          in: 'query'
+          type: string
+          default: 'name'
+        - name: 'offset'
+          description: 'Number of users to offset'
+          in: 'query'
+          type: integer
+          default: 0
+        - name: 'limit'
+          description: 'Maximum number of users to return'
+          in: 'query'
+          type: integer
+          default: 50
+        - name: 'authorization'
+          in: 'header'
+          description: 'The JWT'
+          required: true
+          type: string
+      responses:
+        '200':
+          description: 'A list of users'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/User'
+          headers:
+            X-Total-Count:
+              description: 'Total number of users'
+              type: integer
+    post:
+      tags:
+        - user
+      summary: 'Create a new user'
+      responses:
+        '200':
+          description: 'User was successfully created'
+          schema:
+            $ref: '#/definitions/User'
+  /user/{userId}:
+    parameters:
+      - name: 'userId'
+        description: 'Id of the user'
+        in: 'path'
+        type: string
+        required: true
+    get:
+      tags:
+        - user
+      description: 'Get the user with userId'
+      responses:
+        '200':
+          description: 'The user object'
+          schema:
+            $ref: '#/definitions/User'
+    put:
+      tags:
+        - user
+      description: 'Update the user'
+      responses:
+        '200':
+          description: 'The updated user object'
+          schema:
+            $ref: '#/definitions/User'
+    delete:
+      tags:
+        - user
+      description: 'Delete the user'
+      responses:
+        '200':
+          description: 'The deleted user'
+          schema:
+            $ref: '#/definitions/User'
+  /jsonwebtoken:
+      post:
+        tags:
+          - auth
+        description: 'Retrieve a jsonwebtoken'
+        parameters:
+          - name: 'body'
+            description: 'User email'
+            in: body
+            required: true
+            schema:
+              $ref: '#/definitions/Auth'
+        responses:
+          '200':
+            description: 'The json web token'
+          '400':
+            description: 'Bad request. Missing email and/or password'
+          '401':
+            description: 'Wrong email and/or password'

@@ -3,7 +3,7 @@
 const Controller = require('trails/controller');
 const Boom = require('boom');
 const _ = require('lodash');
-const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles'];
+const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles', 'offices'];
 
 /**
  * @module ListUserController
@@ -42,7 +42,7 @@ module.exports = class ListUserController extends Controller{
         }
 
         //Set the proper pending attribute depending on list type
-        if (list.joinability === 'public' || list.joinability === 'private') {
+        if (list.joinability === 'public' || list.joinability === 'private' || list.isOwner(request.params.currentUser)) {
           payload.pending = false;
         }
         else {
@@ -184,6 +184,7 @@ module.exports = class ListUserController extends Controller{
         return record
           .save()
           .then((user) => {
+            reply(user);
             if (lu.pending === true && request.payload.pending === false) {
               // Send a notification to inform user that his checkin is not pending anymore
               var notification = {type: 'approved_checkin', user: user, createdBy: request.params.currentUser, params: { list: list}};

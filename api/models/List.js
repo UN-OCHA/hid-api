@@ -42,8 +42,17 @@ module.exports = class List extends Model {
           }
         },
         isOwner: function (user) {
+          var ownerId = '';
+          if (this.owner) {
+            if (this.owner._id) {
+              ownerId = this.owner._id.toString();
+            }
+            else {
+              ownerId = this.owner.toString();
+            }
+          }
           if (user.is_admin ||
-            this.owner === user.id ||
+            ownerId === user._id.toString() ||
             this.isManager(user)) {
               return true;
           }
@@ -54,13 +63,11 @@ module.exports = class List extends Model {
         isManager: function (user) {
           var managerFound = false;
           this.managers.forEach(function (manager) {
-            if (typeof manager === 'object') {
-              if (manager.id === user.id) {
-                managerFound = true;
-              }
+            if (manager.id && manager.id === user.id) {
+              managerFound = true;
             }
             else {
-              if (manager === user.id) {
+              if (manager.toString() === user._id.toString()) {
                 managerFound = true;
               }
             }

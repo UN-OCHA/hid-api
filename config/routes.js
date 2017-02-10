@@ -68,6 +68,16 @@ module.exports = [
     handler: 'ViewController.newPasswordPost'
   },
 
+  {
+    method: 'GET',
+    path: '/docs/{param*}',
+    handler: {
+      directory: {
+        path: 'docs'
+      }
+    }
+  },
+
   /**
    * Constrain the DefaultController.info handler to accept only GET requests.
    */
@@ -283,6 +293,24 @@ module.exports = [
     method: 'PUT',
     path: '/api/v2/user/{id}/organization',
     handler: 'UserController.setPrimaryOrganization'
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v2/user/{id}/connections',
+    handler: 'UserController.addConnection'
+  },
+
+  {
+    method: 'PUT',
+    path: '/api/v2/user/{id}/connections/{cid}',
+    handler: 'UserController.updateConnection'
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/user/{id}/connections/{cid}',
+    handler: 'UserController.deleteConnection'
   },
 
   {

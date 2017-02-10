@@ -77,7 +77,12 @@ var importLists = function (app) {
     }
     label = item.label;
     if (listType === 'bundle' || listType === 'office') {
-      label = item.operation[0].label + ': ' + item.label;
+      if (item.operation[0].label) {
+        label = item.operation[0].label + ': ' + item.label;
+      }
+      else {
+        label = 'Global: ' + item.label;
+      }
     }
     if (listType === 'organization' && item.acronym) {
       acronym = item.acronym;

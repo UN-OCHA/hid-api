@@ -11,11 +11,12 @@ const moment = require('moment');
 const async = require('async');
 const _ = require('lodash');
 const acceptLanguage = require('accept-language');
-const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles'];
+const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles', 'offices'];
 const userPopulate1 = [
   {path: 'favoriteLists'},
   {path: 'verified_by', select: '_id name'},
-  {path: 'subscriptions.service', select: '_id name'}
+  {path: 'subscriptions.service', select: '_id name'},
+  {path: 'connections.user', select: '_id name'}
 ];
 
 /**
@@ -735,41 +736,48 @@ module.exports = class UserController extends Controller{
   }
 
   resetPassword (request, reply) {
-    const Model = this.app.orm['user']
-    const app_reset_url = request.payload.app_reset_url
+    const Model = this.app.orm.User;
+    const app_reset_url = request.payload.app_reset_url;
 
     if (request.payload.email) {
-      var that = this
+      var that = this;
       Model
         .findOne({email: request.payload.email})
         .then(record => {
-          if (!record) return that._errorHandler(Boom.badRequest('Email could not be found'), reply)
+          if (!record) {
+            return that._errorHandler(Boom.badRequest('Email could not be found'), reply);
+          }
           that.app.services.EmailService.sendResetPassword(record, app_reset_url, function (merr, info) {
-            return reply('Password reset email sent successfully').code(202)
-          })
-        })
+            return reply('Password reset email sent successfully').code(202);
+          });
+        });
     }
     else {
       if (request.payload.hash && request.payload.password) {
-        const parts = Model.explodeHash(request.payload.hash)
+        const parts = Model.explodeHash(request.payload.hash);
         Model
           .findOne({email: parts.email})
           .then(record => {
-            if (!record) return reply(Boom.badRequest('Email could not be found'))
-            var valid = record.validHash(request.payload.hash)
+            if (!record) {
+              return reply(Boom.badRequest('Email could not be found'));
+            }
+            var valid = record.validHash(request.payload.hash);
             if (valid === true) {
-              record.password = Model.hashPassword(request.payload.password)
-              record.email_verified = true
-              record.expires = new Date(0, 0, 1, 0, 0, 0)
+              record.password = Model.hashPassword(request.payload.password);
+              record.email_verified = true;
+              record.expires = new Date(0, 0, 1, 0, 0, 0);
+              record.is_orphan = false;
               record.save().then(() => {
-                return reply('Password reset successfully')
+                return reply('Password reset successfully');
               })
-              .catch(err => { return reply(Boom.badImplementation(err.message)) })
+              .catch(err => {
+                return reply(Boom.badImplementation(err.message));
+              });
             }
             else {
-              return reply(Boom.badRequest(valid))
+              return reply(Boom.badRequest(valid));
             }
-          })
+          });
       }
       else {
         return reply(Boom.badRequest('Wrong arguments'));
@@ -778,15 +786,17 @@ module.exports = class UserController extends Controller{
   }
 
   claimEmail (request, reply) {
-    const Model = this.app.orm['user']
-    const app_reset_url = request.payload.app_reset_url
-    const userId = request.params.id
+    const Model = this.app.orm.User;
+    const app_reset_url = request.payload.app_reset_url;
+    const userId = request.params.id;
 
-    var that = this
+    var that = this;
     Model
       .findOne({_id: userId})
       .then(record => {
-        if (!record) return reply(Boom.notFound())
+        if (!record) {
+          return reply(Boom.notFound());
+        }
         that.app.services.EmailService.sendClaim(record, app_reset_url, function (err, info) {
           return reply('Claim email sent successfully').code(202)
         })
@@ -1018,4 +1028,126 @@ module.exports = class UserController extends Controller{
       })
   }
 
+  addConnection (request, reply) {
+    const User = this.app.orm.User;
+
+    this.log.debug('[UserController] Adding connection');
+
+    let that = this;
+
+    User
+      .findOne({_id: request.params.id})
+      .then(user => {
+        if (!user) {
+          return reply(Boom.notFound());
+        }
+
+        if (!user.connections) {
+          user.connections = [];
+        }
+        if (user.connectionsIndex(request.params.currentUser._id) !== -1) {
+          return reply(Boom.badRequest('User is already a connection'));
+        }
+
+        user.connections.push({pending: true, user: request.params.currentUser._id});
+
+        user
+          .save()
+          .then(() => {
+            reply(user);
+
+            var notification = {
+              type: 'connection_request',
+              createdBy: request.params.currentUser,
+              user: user
+            };
+            that.app.services.NotificationService.send(notification, function () {
+
+            });
+          });
+      })
+      .catch(err => {
+        that._errorHandler(err, reply);
+      });
+  }
+
+  updateConnection (request, reply) {
+    const User = this.app.orm.User;
+
+    this.log.debug('[UserController] Updating connection');
+
+    let that = this;
+
+    User
+      .findOne({_id: request.params.id})
+      .populate({path: 'connections', select: '_id name'})
+      .then(user => {
+        if (!user) {
+          return reply(Boom.notFound());
+        }
+        var connection = user.connections.id(request.params.cid);
+        connection.pending = false;
+        return user
+          .save()
+          .then(() => {
+            return {user: user, connection: connection};
+          });
+      })
+      .then(result => {
+        User
+          .findOne({_id: result.connection.user})
+          .then(cuser => {
+            // Create connection with current user
+            var cindex = cuser.connectionsIndex(result.user._id);
+            if (cindex === -1) {
+              cuser.connections.push({pending: false, user: result.user._id});
+            }
+            else {
+              cuser.connections[cindex].pending = false;
+            }
+            cuser
+              .save()
+              .then(() => {
+                reply(result.user);
+                // Send notification
+                var notification = {
+                  type: 'connection_approved',
+                  createdBy: result.user,
+                  user: cuser
+                };
+                that.app.services.NotificationService.send(notification, function () {
+
+                });
+              });
+          });
+      })
+      .catch(err => {
+        that._errorHandler(err, reply);
+      });
+  }
+
+  deleteConnection (request, reply) {
+    const User = this.app.orm.User;
+
+    this.log.debug('[UserController] Deleting connection');
+
+    let that = this;
+
+    User
+      .findOne({_id: request.params.id})
+      .then(user => {
+        if (!user) {
+          return reply(Boom.notFound());
+        }
+        user.connections.id(request.params.cid).remove();
+        user
+          .save()
+          .then(() => {
+            reply(user);
+          });
+      })
+      .catch(err => {
+        that._errorHandler(err, reply);
+      });
+  }
 }

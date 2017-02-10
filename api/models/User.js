@@ -44,12 +44,37 @@ module.exports = class User extends Model {
       methods: {
         sanitize: function (user) {
           this.sanitizeClients();
-          if ((this.is_orphan || this.is_ghost) && !user.verified) {
-            // HID-1261 sanitize ghost or orphan
-            const allowedProps = ['given_name', 'family_name', 'name', '_id', 'legacyId', 'user_id', 'is_orphan', 'is_ghost', 'verified'];
-            for (var prop in this.schema.paths) {
-              if (allowedProps.indexOf(prop) === -1) {
-                this[prop] = null;
+          if (this._id.toString() !== user._id.toString() && !user.is_admin) {
+            if ((this.is_orphan || this.is_ghost) && !user.verified) {
+              // HID-1261 sanitize ghost or orphan
+              const allowedProps = ['given_name', 'family_name', 'name', '_id', 'legacyId', 'user_id', 'is_orphan', 'is_ghost', 'verified', 'emailsVisibility', 'phonesVisibility', 'locationsVisibility'];
+              for (var prop in this.schema.paths) {
+                if (allowedProps.indexOf(prop) === -1) {
+                  this[prop] = null;
+                }
+              }
+            }
+            if (this.emailsVisibility !== 'anyone') {
+              if ((this.emailsVisibility === 'verified' && !user.verified) ||
+                  (this.emailsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
+                this.email = null;
+                this.emails = [];
+              }
+            }
+
+            if (this.phonesVisibility !== 'anyone') {
+              if ((this.phonesVisibility === 'verified' && !user.verified) ||
+                  (this.phonesVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
+                this.phone_number = null;
+                this.phone_numbers = [];
+              }
+            }
+
+            if (this.locationsVisibility !== 'anyone') {
+              if ((this.locationsVisibility === 'verified' && !user.verified) ||
+                  (this.locationsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
+                this.location = null;
+                this.locations = [];
               }
             }
           }
@@ -119,6 +144,20 @@ module.exports = class User extends Model {
           for (var i = 0, len = this.emails.length; i < len; i++) {
             if (this.emails[i].email === email) {
               index = i;
+            }
+          }
+          return index;
+        },
+
+        connectionsIndex: function (userId) {
+          var index = -1;
+          if (this.connections && this.connections.length) {
+            for (var i = 0, len = this.connections.length; i < len; i++) {
+              if (this.connections[i].pending === false &&
+                ((this.connections[i].user._id && this.connections[i].user._id.toString() === userId.toString()) ||
+                (!this.connections[i].user._id && this.connections[i].user.toString() === userId.toString()))) {
+                index = i;
+              }
             }
           }
           return index;
@@ -299,6 +338,8 @@ module.exports = class User extends Model {
 
   static schema () {
 
+    const visibilities = ['anyone', 'verified', 'connections'];
+
     const emailSchema = new Schema({
       type: {
         type: String,
@@ -360,6 +401,21 @@ module.exports = class User extends Model {
       }
     });
 
+    const connectionSchema = new Schema({
+      pending: {
+        type: Boolean,
+        default: true
+      },
+      user: {
+        type: Schema.ObjectId,
+        ref: 'User'
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      }
+    });
+
     const listUserSchema = new Schema({
       list: {
         type: Schema.ObjectId,
@@ -389,6 +445,10 @@ module.exports = class User extends Model {
       deleted: {
         type: Boolean,
         default: false
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
       }
     });
 
@@ -464,6 +524,11 @@ module.exports = class User extends Model {
       },
       // TODO: find a way to set this as readonly
       emails: [emailSchema],
+      emailsVisibility: {
+        type: String,
+        enum: visibilities,
+        default: 'anyone'
+      },
       password: {
         type: String
       },
@@ -567,6 +632,11 @@ module.exports = class User extends Model {
       },
       // TODO: find a way to set this as readonly
       phone_numbers: [phoneSchema],
+      phonesVisibility: {
+        type: String,
+        enum: visibilities,
+        default: 'anyone'
+      },
       job_title: {
         type: String
       },
@@ -583,6 +653,11 @@ module.exports = class User extends Model {
       },
       locations: {
         type: Array
+      },
+      locationsVisibility: {
+        type: String,
+        enum: visibilities,
+        default: 'anyone'
       },
       // Only an admin can set this
       is_admin: {
@@ -633,6 +708,7 @@ module.exports = class User extends Model {
         ref: 'Client'
       }],
       subscriptions: [subscriptionSchema],
+      connections: [connectionSchema],
       appMetadata: {
         type: Schema.Types.Mixed
       },
