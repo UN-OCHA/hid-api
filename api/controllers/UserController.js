@@ -1092,34 +1092,28 @@ module.exports = class UserController extends Controller{
       })
       .then(user => {
         // Create connection with current user
-        return User
-          .findOne({_id: request.params.currentUser.id})
-          .then(cuser => {
-            var cindex = cuser.connectionsIndex(user._id);
-            if (cindex === -1) {
-              cuser.connections.push({pending: false, user: user._id});
-            }
-            else {
-              cuser.connections[cindex].pending = false;
-            }
-            return {currentUser: cuser, user: user};
-          })
-      })
-      .then(users => {
-        users.currentUser
+        var cuser = request.params.currentUser;
+        var cindex = cuser.connectionsIndex(user._id);
+        if (cindex === -1) {
+          cuser.connections.push({pending: false, user: user._id});
+        }
+        else {
+          cuser.connections[cindex].pending = false;
+        }
+        cuser
           .save()
           .then(() => {
-            reply(users.user);
+            reply(user);
             // Send notification
             var notification = {
               type: 'connection_approved',
-              createdBy: users.currentUser,
-              user: users.user
+              createdBy: cuser,
+              user: user
             };
             that.app.services.NotificationService.send(notification, function () {
 
             });
-          })
+          });
       })
       .catch(err => {
         that._errorHandler(err, reply);
