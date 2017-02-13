@@ -821,6 +821,8 @@ module.exports = {
                     }
                     list.legacyId = item._id;
                     list.label = item.name;
+                    list.labels = [];
+                    list.labels.push({text: item.name, language: 'en'});
                     list.type = 'list';
                     list.visibility = privacy;
                     list.joinability = 'public';
