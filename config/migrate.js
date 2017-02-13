@@ -16,44 +16,12 @@ const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b
 
 module.exports = {
   parseGlobal: function (item, user) {
-    var tmpUserId = item._profile.userid.split('_');
-    var uidLength = tmpUserId.length;
-    user.user_id = item._profile.userid;
     user.legacyId = item._profile._id;
-    if (item.type === 'global' || (item.type === 'local' && !user.given_name)) {
-      user.given_name = item.nameGiven.trim();
-    }
-    if (item.type === 'global' || (item.type === 'local' && !user.family_name)) {
-      user.family_name = item.nameFamily.trim();
-    }
-    if (uidLength === 1) {
-      user.email = '';
+    user.is_orphan = false;
+    user.is_ghost = false;
+    if (!item._profile.firstUpdate) {
+      user.is_orphan = true;
       user.email_verified = false;
-      if (!item._profile.firstUpdate) {
-        user.is_ghost = true;
-        user.is_orphan = false;
-      }
-    }
-    else {
-      if (uidLength === 2) {
-        user.email = tmpUserId[0];
-      }
-      else {
-        user.email = '';
-        for (var i = 0; i < uidLength - 1; i++) {
-          user.email += tmpUserId[i];
-          if (i < uidLength - 2) {
-            user.email += '_';
-          }
-        }
-      }
-      user.email_verified = true;
-      user.is_orphan = false;
-      user.is_ghost = false;
-      if (!item._profile.firstUpdate) {
-        user.is_orphan = true;
-        user.email_verified = false;
-      }
     }
     //user.remindedVerify = '';
     //user.timesRemindedVerify = '';
@@ -562,6 +530,39 @@ module.exports = {
                           app.config.migrate.parseGlobal(item, user);
                           app.config.migrate.parseLocal(item, user, countries);
                           if (createUser) {
+                            console.log('Creating user with user ID: ' + item._profile.userid);
+                            var tmpUserId = item._profile.userid.split('_');
+                            var uidLength = tmpUserId.length;
+                            user.user_id = item._profile.userid;
+                            if (item.type === 'global' || (item.type === 'local' && !user.given_name)) {
+                              user.given_name = item.nameGiven.trim();
+                            }
+                            if (item.type === 'global' || (item.type === 'local' && !user.family_name)) {
+                              user.family_name = item.nameFamily.trim();
+                            }
+                            if (uidLength === 1) {
+                              user.email = '';
+                              user.email_verified = false;
+                              if (!item._profile.firstUpdate) {
+                                user.is_ghost = true;
+                                user.is_orphan = false;
+                              }
+                            }
+                            else {
+                              if (uidLength === 2) {
+                                user.email = tmpUserId[0];
+                              }
+                              else {
+                                user.email = '';
+                                for (var i = 0; i < uidLength - 1; i++) {
+                                  user.email += tmpUserId[i];
+                                  if (i < uidLength - 2) {
+                                    user.email += '_';
+                                  }
+                                }
+                              }
+                              user.email_verified = true;
+                            }
                             User
                               .create(user)
                               .then((newUser) => {
@@ -679,6 +680,7 @@ module.exports = {
                               validated: true
                             });
                           }
+                          tmpUser.password = User.hashPassword(Math.random().toString(36).slice(2));
                           User
                             .create(tmpUser)
                             .then((newUser) => {
