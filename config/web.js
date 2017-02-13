@@ -24,7 +24,7 @@ module.exports = {
     },
     path: 'templates'
   },
-  
+
   plugins: [
     {
       register: require('yar'),
@@ -198,7 +198,8 @@ module.exports = {
   options: {
     routes: {
       cors: {
-        additionalExposedHeaders: [ 'X-Total-Count' ]
+        additionalExposedHeaders: [ 'X-Total-Count' ],
+        additionalHeaders: ['Accept-Language']
       }
     }
   }
