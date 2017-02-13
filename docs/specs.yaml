@@ -13,6 +13,8 @@ tags:
     description: 'User related operations'
   - name: 'auth'
     description: 'Authentication related methods'
+  - name: 'list'
+    description: 'List related methods'
 host: 'api2.dev.humanitarian.id'
 basePath: '/api/v2'
 schemes:
@@ -72,12 +74,91 @@ definitions:
       updatedAt:
         type: string
         format: date-time
+  Translation:
+    type: object
+    properties:
+      text:
+        type: string
+      language:
+        type: string
+  List:
+    type: object
+    properties:
+      _id:
+        type: string
+        description: 'List unique ID'
+      name:
+        type: string
+      names:
+        type: array
+        items:
+          $ref: '#/definitions/Translation'
+      acronym:
+        type: string
+      acronyms:
+        type: array
+        description: 'List acronym translations'
+        items:
+          $ref: '#/definitions/Translation'
+      label:
+        type: string
+      labels:
+        type: array
+        description: 'List label translations'
+        items:
+          $ref: '#/definitions/Translation'
+      type:
+        type: string
+        description: 'List type'
+        enum:
+          - 'operation'
+          - 'bundle'
+          - 'disaster'
+          - 'list'
+          - 'organization'
+          - 'functional_role'
+          - 'office'
+      visibility:
+        type: string
+        description: 'Defines who can view a list'
+        enum:
+          - 'me'
+          - 'inlist'
+          - 'all'
+          - 'verified'
+      joinability:
+        type: string
+        description: 'Who can join a list'
+        enum:
+          - 'public'
+          - 'moderated'
+          - 'private'
+      remote_id:
+        type: integer
+        description: 'Id of the list in humanitarianresponse.info'
+      legacyId:
+        type: string
+        description: 'Id of the list in HID v1'
+      owner:
+        type: schema
+        description: 'Creator of the list'
+        $ref: '#/definitions/User'
+      managers:
+        type: array
+        description: 'Managers of the list'
+        items:
+          $ref: '#/definitions/User'
+      metadata:
+        type: object
+        description: 'Metadata of the list pulled from Humanitarianresponse.info'
+      deleted:
+        type: boolean
 paths:
   /user:
     get:
       tags:
         - user
-      description: 'Returns all users the current user has access to'
+      summary: 'Returns all users the current user has access to'
       parameters:
         - name: 'sort'
           description: 'An attribute to sort by'
@@ -129,7 +210,7 @@ paths:
     get:
       tags:
         - user
-      description: 'Get the user with userId'
+      summary: 'Get the user with userId'
       responses:
         '200':
           description: 'The user object'
@@ -138,7 +219,7 @@ paths:
     put:
       tags:
         - user
-      description: 'Update the user'
+      summary: 'Update the user'
       responses:
         '200':
           description: 'The updated user object'
@@ -147,17 +228,89 @@ paths:
     delete:
       tags:
         - user
-      description: 'Delete the user'
+      summary: 'Delete the user'
       responses:
         '200':
           description: 'The deleted user'
           schema:
             $ref: '#/definitions/User'
+  /list:
+    get:
+      tags:
+        - list
+      summary: 'Returns all lists the current user has access to'
+      parameters:
+        - name: 'sort'
+          description: 'An attribute to sort by'
+          in: 'query'
+          type: string
+          default: 'name'
+        - name: 'offset'
+          description: 'Number of lists to offset'
+          in: 'query'
+          type: integer
+          default: 0
+        - name: 'limit'
+          description: 'Maximum number of lists to return'
+          in: 'query'
+          type: integer
+          default: 50
+        - name: 'authorization'
+          in: 'header'
+          description: 'The JWT'
+          required: true
+          type: string
+      responses:
+        '200':
+          description: 'A list of lists'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/List'
+          headers:
+            X-Total-Count:
+              description: 'Total number of lists'
+              type: integer
+  /list/{listId}:
+    parameters:
+      - name: 'listId'
+        description: 'Id of the list'
+        in: 'path'
+        type: string
+        required: true
+    get:
+      tags:
+        - list
+      summary: 'Get the list with listId'
+      responses:
+        '200':
+          description: 'The list object'
+          schema:
+            $ref: '#/definitions/List'
+    put:
+      tags:
+        - list
+      summary: 'Update the list'
+      responses:
+        '200':
+          description: 'The updated list object'
+          schema:
+            $ref: '#/definitions/List'
+    delete:
+      tags:
+        - list
+      summary: 'Delete the list'
+      description: 'Only custom contact lists can be deleted'
+      responses:
+        '200':
+          description: 'The deleted list'
+          schema:
+            $ref: '#/definitions/List'
   /jsonwebtoken:
       post:
         tags:
           - auth
-        description: 'Retrieve a jsonwebtoken'
+        summary: 'Retrieve a jsonwebtoken'
         parameters:
           - name: 'body'
             description: 'User email'

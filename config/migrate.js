@@ -368,6 +368,8 @@ module.exports = {
               .then((list) => {
                 var userAttribute = attribute;
                 var lu = {list: list._id, name: list.name, acronym: list.acronym, visibility: list.visibility, deleted: !item.status, pending: false};
+                lu.names = list.names;
+                lu.acronyms = list.acronyms;
                 if (attribute === 'organization') {
                   userAttribute += 's';
                   if (index === 0) {

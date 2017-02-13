@@ -299,13 +299,17 @@ module.exports = class User extends Model {
             checkin.name = name;
           }
           else {
-            checkin.name = nameEn;
+            if (nameEn !== '') {
+              checkin.name = nameEn;
+            }
           }
           if (acronym !== '') {
             checkin.acronym = acronym;
           }
           else {
-            checkin.acronym = acronymEn;
+            if (acronymEn !== '') {
+              checkin.acronym = acronymEn;
+            }
           }
         },
 
