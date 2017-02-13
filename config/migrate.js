@@ -376,11 +376,12 @@ module.exports = {
                     user.organization = lu;
                   }
                 }
-                var luFound = false;
-                user[userAttribute].forEach(function (it2) {
+                var luFound = false, luIndex = -1;
+                user[userAttribute].forEach(function (it2, index) {
                   var itId = it2.list._id ? it2.list._id : it2.list;
                   if (itId.toString() === list._id.toString()) {
                     luFound = true;
+                    luIndex = index;
                   }
                 });
                 if (!luFound) {
@@ -390,6 +391,12 @@ module.exports = {
                   }
                   lu.checkoutDate = checkoutDate;
                   user[userAttribute].push(lu);
+                }
+                else {
+                  if (luIndex !== -1) {
+                    user[userAttribute][luIndex].names = list.names;
+                    user[userAttribute][luIndex].acronyms = list.acronyms;
+                  }
                 }
                 next();
               })
