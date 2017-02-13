@@ -90,7 +90,13 @@ module.exports = class List extends Model {
           if (index === -1) {
             index = this.languageIndex(attr, 'en');
           }
-          return this[attr][index].text;
+          if (index !== -1) {
+            return this[attr][index].text;
+          }
+          else {
+            var singularAttr = attr.substr(-1);
+            return this[singularAttr];
+          }
         }
       }
     };

@@ -310,10 +310,11 @@ module.exports = class User extends Model {
         },
 
         translateListNames: function (language) {
+          let that = this;
           listTypes.forEach(function (listType) {
-            if (this[listType + 's'] && this[listType + 's'].length) {
-              this[listType + 's'].forEach(function (checkin) {
-                this.translateCheckin(checkin, language);
+            if (that[listType + 's'] && that[listType + 's'].length) {
+              that[listType + 's'].forEach(function (checkin) {
+                that.translateCheckin(checkin, language);
               });
             }
           });
