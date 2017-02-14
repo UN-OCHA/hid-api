@@ -4,6 +4,12 @@ const Controller = require('trails/controller');
 const Boom = require('boom');
 const _ = require('lodash');
 const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles', 'offices'];
+const userPopulate1 = [
+  {path: 'favoriteLists'},
+  {path: 'verified_by', select: '_id name'},
+  {path: 'subscriptions.service', select: '_id name'},
+  {path: 'connections.user', select: '_id name'}
+];
 
 /**
  * @module ListUserController
@@ -56,6 +62,7 @@ module.exports = class ListUserController extends Controller{
         that.log.debug('Looking for user with id ' + userId);
         return Model
           .findOne({ '_id': userId })
+          .populate(userPopulate1)
           .then((record) => {
             if (!record) {
               throw Boom.badRequest('User not found');
@@ -154,7 +161,8 @@ module.exports = class ListUserController extends Controller{
 
     this.log.debug('[ListUserController] (update) model = list, criteria =', request.query, request.params.checkInId, ', values = ', request.payload);
 
-    const populate = childAttribute + '.list';
+    let populate = userPopulate1;
+    populate.push({path: childAttribute + '.list'});
 
     // Make sure list specific attributes can not be set through update
     if (request.payload.list) {
@@ -211,7 +219,9 @@ module.exports = class ListUserController extends Controller{
     if (childAttributes.indexOf(childAttribute) === -1) {
       return reply(Boom.notFound());
     }
-    const populate = childAttribute + '.list';
+
+    let populate = userPopulate1;
+    populate.push(childAttribute + '.list');
 
     var that = this;
     User
