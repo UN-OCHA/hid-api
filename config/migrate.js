@@ -700,6 +700,9 @@ module.exports = {
                         cb();
                       });
                     }
+                    else {
+                      cb();
+                    }
                   }, function (err) {
                     query.offset += 100;
                     console.log('page ' + query.offset / 100);
