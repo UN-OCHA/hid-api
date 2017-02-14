@@ -51,15 +51,22 @@ module.exports = class ListController extends Controller{
   }
 
   create (request, reply) {
-    request.params.model = 'list';
-    const FootprintController = this.app.controllers.FootprintController;
+    const List = this.app.orm.List;
     this._removeForbiddenAttributes(request);
     request.payload.owner = request.params.currentUser._id;
     if (!request.payload.managers) {
       request.payload.managers = [];
     }
     request.payload.managers.push(request.params.currentUser._id);
-    FootprintController.create(request, reply);
+    let that = this;
+    List
+      .create(request.payload)
+      .then((list) => {
+        return reply(list);
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
   }
 
   find (request, reply) {

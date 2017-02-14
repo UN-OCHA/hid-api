@@ -469,7 +469,7 @@ module.exports = {
     // HID-1310 do not migrate orphans from Haiti, Ecuador and Nepal
     const noOperations = [85,78,17026];
     var query = {
-      limit: 30,
+      limit: 50,
       skip: 0
     };
     var total = 60;
@@ -496,7 +496,6 @@ module.exports = {
             hostname: profilesUrl,
             path: '/v0/contact/view?' + queryString + '&_access_client_id=' + clientId + '&_access_key=' + hash
           };
-          console.log(query.skip);
           https.get(options, (res) => {
             var body = '', users = [], tmpUserId = [], uidLength = 0, createUser = false;
             res.on('data', function (d) {
@@ -512,7 +511,7 @@ module.exports = {
 
                     // HID-1310 do not migrate orphans from Haiti Ecuador and Nepal
                     if ((item.type === 'local' && !item._profile.firstUpdate && noOperations.indexOf(item.locationId.replace('hrinfo:', '')) !== -1)
-                    || (item.type === 'local' && !item._profile.firstUpdate && !item.status)) {
+                    || (!item.status)) {
                       cb();
                     }
                     else {
@@ -584,8 +583,8 @@ module.exports = {
                         });
                       }
                     }, function (err) {
-                      query.skip += 30;
-                      console.log('page ' + query.skip / 30);
+                      query.skip += 50;
+                      console.log('page ' + query.skip / 50);
                       setTimeout(function() {
                         nextPage();
                       }, 3000);
@@ -593,7 +592,7 @@ module.exports = {
                 }
                 else {
                   console.log('issue with total');
-                  console.log('page ' + query.skip / 30);
+                  console.log('page ' + query.skip / 50);
                   setTimeout(function() {
                     nextPage();
                   }, 3000);
@@ -655,56 +654,45 @@ module.exports = {
               if (parsed.count) {
                 total = parsed.count;
                 async.eachSeries(parsed.data, function (item, cb) {
-                  if (item.active) {
-                    User
-                      .findOne({'user_id': item.user_id})
-                      .then((user) => {
-                        if (!user) {
-                          var tmpUser = {
-                            given_name: item.name_given,
-                            family_name: item.name_family,
-                            email: item.email,
-                            email_verified: true,
-                            user_id: item.user_id,
-                            expires: new Date(0, 0, 1, 0, 0, 0),
-                            deleted: false,
-                            emails: []
-                          };
-                          tmpUser.emails.push({
-                            type: 'Work',
-                            email: item.email,
-                            validated: true
+                  User
+                    .findOne({'user_id': item.user_id})
+                    .then((user) => {
+                      if (!user) {
+                        var tmpUser = {
+                          given_name: item.name_given,
+                          family_name: item.name_family,
+                          email: item.email,
+                          email_verified: true,
+                          user_id: item.user_id,
+                          expires: new Date(0, 0, 1, 0, 0, 0),
+                          deleted: false,
+                          emails: [],
+                          deleted: item.active
+                        };
+                        tmpUser.emails.push({
+                          type: 'Work',
+                          email: item.email,
+                          validated: true
+                        });
+                        tmpUser.password = User.hashPassword(Math.random().toString(36).slice(2));
+                        User
+                          .create(tmpUser)
+                          .then((newUser) => {
+                            cb();
+                          })
+                          .catch(err => {
+                            console.error(err);
+                            cb();
                           });
-                          if (item.email_recovery) {
-                            tmpUser.emails.push({
-                              type: 'Work',
-                              email: item.email_recovery,
-                              validated: true
-                            });
-                          }
-                          tmpUser.password = User.hashPassword(Math.random().toString(36).slice(2));
-                          User
-                            .create(tmpUser)
-                            .then((newUser) => {
-                              cb();
-                            })
-                            .catch(err => {
-                              console.error(err);
-                              cb();
-                            });
-                        }
-                        else {
-                          cb();
-                        }
-                      })
-                      .catch((err) => {
-                        console.error(err);
+                      }
+                      else {
                         cb();
-                      });
-                    }
-                    else {
+                      }
+                    })
+                    .catch((err) => {
+                      console.error(err);
                       cb();
-                    }
+                    });
                   }, function (err) {
                     query.offset += 100;
                     console.log('page ' + query.offset / 100);
