@@ -17,12 +17,14 @@ module.exports = class ListController extends Controller{
   }
 
   _getReadonlyAttributes () {
-    return this._getSchemaAttributes('readonlyAttributes', 'readonly');
+    var attrs = this._getSchemaAttributes('readonlyAttributes', 'readonly');
+    attrs.push('names');
+    return attrs;
   }
 
   _getSchemaAttributes (variableName, attributeName) {
     if (!this[variableName] || this[variableName].length === 0) {
-      const Model = this.app.orm.user;
+      const Model = this.app.orm.list;
       this[variableName] = [];
       var that = this;
       Model.schema.eachPath(function (path, options) {

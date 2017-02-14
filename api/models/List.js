@@ -115,7 +115,8 @@ module.exports = class List extends Model {
 
     return {
       name: {
-        type: String
+        type: String,
+        readonly: true
       },
 
       names: [translationSchema],
