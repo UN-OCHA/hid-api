@@ -356,7 +356,7 @@ module.exports = class User extends Model {
         trim: true,
         unique: true,
         sparse: true,
-        match: /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/
+        match: /^([\w-\.\+]+@([\w-]+\.)+[\w-]{2,4})?$/
       },
       validated: {
         type: Boolean,
@@ -462,7 +462,7 @@ module.exports = class User extends Model {
         type: String,
         lowercase: true,
         trim: true,
-        match: /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/
+        match: /^([\w-\.\+]+@([\w-]+\.)+[\w-]{2,4})?$/
       },
       service: {
         type: Schema.ObjectId,
@@ -504,7 +504,7 @@ module.exports = class User extends Model {
         trim: true,
         unique: true,
         sparse: true,
-        match: /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/
+        match: /^([\w-\.\+]+@([\w-]+\.)+[\w-]{2,4})?$/
       },
       email_verified: {
         type: Boolean,

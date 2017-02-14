@@ -90,7 +90,7 @@ module.exports = {
             emailFound = true;
           }
         });
-        if (!emailFound && /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/.test(email.address)) {
+        if (!emailFound && /^([\w-\.\+]+@([\w-]+\.)+[\w-]{2,4})?$/.test(email.address)) {
           user.emails.push({
             type: 'Work',
             email: email.address,
@@ -697,6 +697,7 @@ module.exports = {
                       })
                       .catch((err) => {
                         console.error(err);
+                        cb();
                       });
                     }
                   }, function (err) {
