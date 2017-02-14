@@ -199,8 +199,17 @@ module.exports = class ListController extends Controller{
 
     var that = this;
     Model
-      .findOneAndUpdate({_id: request.params.id}, request.payload, options)
-      .exec()
+      .findOne({_id: request.params.id})
+      .then(list => {
+        var oldlist = _.clone(list);
+        _.merge(list, request.payload);
+        return list
+          .save()
+          .then(() => {
+            reply(list);
+            return oldlist;
+          });
+      })
       .then((list) => {
         var payloadManagers = [];
         if (request.payload.managers) {
@@ -227,7 +236,6 @@ module.exports = class ListController extends Controller{
         if (diffRemoved.length) {
           that._notifyManagers(diffRemoved, 'removed_list_manager', request, list);
         }
-        reply(request.payload);
         return list;
       })
       .then(list => {
