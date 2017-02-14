@@ -234,6 +234,24 @@ paths:
           description: 'The deleted user'
           schema:
             $ref: '#/definitions/User'
+  /user/{userId}/notification:
+    post:
+      tags:
+        - user
+      summary: 'Notifies a user that his contact information needs to be updated'
+      responses:
+        '200':
+          description: 'Notification was sent successfully'
+  /user/password:
+    put:
+      tags:
+        - user
+      summary: 'Resets a user password or sends a password reset email'
+      responses:
+        '200':
+          description: 'Password was reset succesfully'
+        '202':
+          description: 'Password reset email was sent successfully'
   /list:
     get:
       tags:

@@ -16,6 +16,8 @@ const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b
 
 module.exports = {
   parseGlobal: function (item, user) {
+    var tmpUserId = item._profile.userid.split('_');
+    var uidLength = tmpUserId.length;
     user.legacyId = item._profile._id;
     user.is_orphan = false;
     user.is_ghost = false;
