@@ -542,7 +542,6 @@ module.exports = {
                               user.family_name = item.nameFamily.trim();
                             }
                             if (uidLength === 1) {
-                              user.email = '';
                               user.email_verified = false;
                               if (!item._profile.firstUpdate) {
                                 user.is_ghost = true;
