@@ -658,6 +658,10 @@ module.exports = {
                     .findOne({'user_id': item.user_id})
                     .then((user) => {
                       if (!user) {
+                        var deleted = false;
+                        if (item.active === 0) {
+                          deleted = true;
+                        }
                         var tmpUser = {
                           given_name: item.name_given,
                           family_name: item.name_family,
@@ -665,9 +669,8 @@ module.exports = {
                           email_verified: true,
                           user_id: item.user_id,
                           expires: new Date(0, 0, 1, 0, 0, 0),
-                          deleted: false,
                           emails: [],
-                          deleted: item.active
+                          deleted: deleted
                         };
                         tmpUser.emails.push({
                           type: 'Work',
