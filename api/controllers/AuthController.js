@@ -22,9 +22,6 @@ module.exports = class AuthController extends Controller{
       var app = this.app;
       User
         .findOne({email: email})
-        .populate([{path: 'favoriteLists'},
-        {path: 'verified_by', select: '_id name'},
-        {path: 'subscriptions.service', select: '_id name'}])
         .then((user) => {
           if (!user) {
             that.log.info('Could not find user');

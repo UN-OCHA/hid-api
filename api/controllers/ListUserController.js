@@ -4,12 +4,6 @@ const Controller = require('trails/controller');
 const Boom = require('boom');
 const _ = require('lodash');
 const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles', 'offices'];
-const userPopulate1 = [
-  {path: 'favoriteLists'},
-  {path: 'verified_by', select: '_id name'},
-  {path: 'subscriptions.service', select: '_id name'},
-  {path: 'connections.user', select: '_id name'}
-];
 
 /**
  * @module ListUserController
@@ -62,7 +56,6 @@ module.exports = class ListUserController extends Controller{
         that.log.debug('Looking for user with id ' + userId);
         return Model
           .findOne({ '_id': userId })
-          .populate(userPopulate1)
           .then((record) => {
             if (!record) {
               throw Boom.badRequest('User not found');
@@ -154,15 +147,13 @@ module.exports = class ListUserController extends Controller{
 
   update (request, reply) {
     const User = this.app.orm.User;
+    const List = this.app.orm.List;
     const NotificationService = this.app.services.NotificationService;
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
 
 
     this.log.debug('[ListUserController] (update) model = list, criteria =', request.query, request.params.checkInId, ', values = ', request.payload);
-
-    let populate = userPopulate1;
-    populate.push({path: childAttribute + '.list'});
 
     // Make sure list specific attributes can not be set through update
     if (request.payload.list) {
@@ -181,24 +172,33 @@ module.exports = class ListUserController extends Controller{
     var that = this;
     User
       .findOne({ _id: request.params.id })
-      .populate(populate)
       .then(record => {
         if (!record) {
           throw Boom.notFound();
         }
         var lu = record[childAttribute].id(checkInId);
-        let list = _.cloneDeep(lu.list);
         _.assign(lu, request.payload);
         return record
           .save()
           .then((user) => {
             reply(user);
-            if (lu.pending === true && request.payload.pending === false) {
-              // Send a notification to inform user that his checkin is not pending anymore
-              var notification = {type: 'approved_checkin', user: user, createdBy: request.params.currentUser, params: { list: list}};
-              NotificationService.send(notification, () => {});
-            }
+            return {user: user, listuser: lu};
           });
+      })
+      .then(result => {
+        return List
+          .findOne({_id: result.listuser.list})
+          .then(list => {
+            return {user: result.user, listuser: result.listuser, list: list};
+          });
+      })
+      .then(result => {
+        let lu = result.listuser;
+        if (lu.pending === true && request.payload.pending === false) {
+          // Send a notification to inform user that his checkin is not pending anymore
+          var notification = {type: 'approved_checkin', user: result.user, createdBy: request.params.currentUser, params: { list: result.list}};
+          NotificationService.send(notification, () => {});
+        }
       })
       .catch(err => { that.app.services.ErrorService.handle(err, reply); });
   }
@@ -220,13 +220,9 @@ module.exports = class ListUserController extends Controller{
       return reply(Boom.notFound());
     }
 
-    let populate = userPopulate1;
-    populate.push(childAttribute + '.list');
-
     var that = this;
     User
       .findOne({ _id: request.params.id })
-      .populate(populate)
       .then(record => {
         if (!record) {
           throw Boom.notFound();
@@ -242,23 +238,30 @@ module.exports = class ListUserController extends Controller{
       })
       .then((result) => {
         reply(result.user);
+        return List
+          .findOne({ _id: result.listuser.list })
+          .then(list => {
+            return {user: result.user, listuser: result.listuser, list: list};
+          });
+      })
+      .then((result) => {
         // Send notification if needed
         if (request.params.currentUser.id !== userId) {
           that.app.services.NotificationService.send({
             type: 'admin_checkout',
             createdBy: request.params.currentUser,
             user: result.user,
-            params: { list: result.listuser.list }
+            params: { list: result.list }
           }, () => { });
         }
         return result;
       })
       .then((result) => {
         // Notify list managers of the checkin
-        that.app.services.NotificationService.notifyMultiple(result.listuser.list.managers, {
+        that.app.services.NotificationService.notifyMultiple(result.list.managers, {
           type: 'checkout',
           createdBy: result.user,
-          params: { list: result.listuser.list }
+          params: { list: result.list }
         });
         return result;
       })

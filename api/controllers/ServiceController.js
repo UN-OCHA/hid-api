@@ -272,7 +272,6 @@ module.exports = class ServiceController extends Controller{
       service = {};
     User
       .findOne({'_id': request.params.id})
-      .populate('subscriptions.service')
       .then((user) => {
         if (!user) {
           throw Boom.notFound();

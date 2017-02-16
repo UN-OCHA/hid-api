@@ -12,12 +12,6 @@ const async = require('async');
 const _ = require('lodash');
 const acceptLanguage = require('accept-language');
 const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles', 'offices'];
-const userPopulate1 = [
-  {path: 'favoriteLists'},
-  {path: 'verified_by', select: '_id name'},
-  {path: 'subscriptions.service', select: '_id name'},
-  {path: 'connections.user', select: '_id name'}
-];
 
 /**
  * @module UserController
@@ -462,7 +456,6 @@ module.exports = class UserController extends Controller{
     if (request.params.id) {
       User
         .findOne({_id: request.params.id})
-        .populate(userPopulate1)
         .then((user) => {
           if (!user) {
             return reply(Boom.notFound());
@@ -1080,7 +1073,6 @@ module.exports = class UserController extends Controller{
 
     User
       .findOne({_id: request.params.id})
-      .populate({path: 'connections', select: '_id name'})
       .then(user => {
         if (!user) {
           return reply(Boom.notFound());

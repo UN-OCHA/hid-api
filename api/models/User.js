@@ -9,6 +9,12 @@ const https = require('https');
 const async = require('async');
 const _ = require('lodash');
 const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role'];
+const userPopulate1 = [
+  {path: 'favoriteLists'},
+  {path: 'verified_by', select: '_id name'},
+  {path: 'subscriptions.service', select: '_id name'},
+  {path: 'connections.user', select: '_id name'}
+];
 
 /**
  * @module User
@@ -751,5 +757,18 @@ module.exports = class User extends Model {
         next();
       });
     });
+    schema.post('findOne', function (result, next) {
+      let that = this;
+      if (!result) {
+        return next();
+      }
+      result
+        .populate(userPopulate1)
+        .execPopulate()
+        .then(user => {
+          return next();
+        })
+        .catch(err => that.log.error(err));
+      });
   }
 };
