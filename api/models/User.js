@@ -333,6 +333,12 @@ module.exports = class User extends Model {
           }
         },
 
+        defaultPopulate: function () {
+          return this
+            .populate(userPopulate1)
+            .execPopulate();
+        },
+
         toJSON: function () {
           const user = this.toObject();
           delete user.password;

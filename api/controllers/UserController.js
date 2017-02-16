@@ -509,13 +509,17 @@ module.exports = class UserController extends Controller{
       .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
       .exec()
       .then((user) => {
-        if (request.params.currentUser._id.toString() !== user._id.toString()) {
-          // Notify user of the edit
-          // TODO: add list of actions performed by the administrator
-          var notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
-          NotificationService.send(notification, () => {});
-        }
-        return user;
+        return user
+          .defaultPopulate()
+          .then(user => {
+            if (request.params.currentUser._id.toString() !== user._id.toString()) {
+              // Notify user of the edit
+              // TODO: add list of actions performed by the administrator
+              var notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
+              NotificationService.send(notification, () => {});
+            }
+            return user;
+          });
       })
       .catch(err => { return Boom.badRequest(err.message); });
   }
