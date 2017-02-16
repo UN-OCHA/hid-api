@@ -21,6 +21,10 @@ module.exports = {
     destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin']
   },
 
+  DuplicateController: {
+    find: ['AuthPolicy.isAuthenticated']
+  },
+
   ServiceController: {
     create: ['AuthPolicy.isAuthenticated'],
     find: ['AuthPolicy.isAuthenticated'],

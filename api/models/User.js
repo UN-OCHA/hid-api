@@ -617,7 +617,8 @@ module.exports = class User extends Model {
       },
       locale: {
         type: String,
-        enum: ['en', 'fr']
+        enum: ['en', 'fr'],
+        default: 'en'
       },
       // TODO :make sure it's a valid organization
       organization: listUserSchema,
