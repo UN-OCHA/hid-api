@@ -506,13 +506,8 @@ module.exports = class UserController extends Controller{
     const Model = this.app.orm.user,
       NotificationService = this.app.services.NotificationService;
     return Model
-      .update({ _id: request.params.id }, request.payload, {runValidators: true})
+      .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
       .exec()
-      .then(() => {
-        return Model
-          .findOne({ _id: request.params.id })
-          .then((user) => { return user; });
-      })
       .then((user) => {
         if (request.params.currentUser._id.toString() !== user._id.toString()) {
           // Notify user of the edit
