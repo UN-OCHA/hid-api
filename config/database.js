@@ -25,7 +25,14 @@ module.exports = {
       // should be 'create' or 'drop'
       migrate: 'create',
       uri: 'mongodb://db:27017/development',
-      options: {}
+      options: {
+        server: {
+          socketOptions: {
+            keepAlive: 300000,
+            connectTimeoutMS: 30000
+          }
+        }
+      }
     },
 
     testing: {
