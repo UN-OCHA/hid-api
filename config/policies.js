@@ -22,7 +22,8 @@ module.exports = {
   },
 
   DuplicateController: {
-    find: ['AuthPolicy.isAuthenticated']
+    find: ['AuthPolicy.isAuthenticated'],
+    delete: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin']
   },
 
   ServiceController: {

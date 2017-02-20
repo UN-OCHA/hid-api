@@ -129,6 +129,12 @@ module.exports = [
     handler: 'DuplicateController.generate'
   },
 
+  {
+    method: 'DELETE',
+    path: '/api/v2/duplicate/{id}',
+    handler: 'DuplicateController.delete'
+  },
+
   /**
    * Default authentication path.
    */

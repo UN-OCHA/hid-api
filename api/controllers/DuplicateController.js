@@ -83,4 +83,21 @@ module.exports = class DuplicateController extends Controller{
       }
     });
   }
+
+  // Delete a duplicated user, and the duplicate associated
+  delete (request, reply) {
+    const User = this.app.orm.User;
+    const Duplicate = this.app.orm.Duplicate;
+    User
+      .remove({_id: request.params.id}, function (err) {
+        Duplicate
+          .find({duplicates: request.params.id})
+          .then((dup) => {
+            if (dup.duplicates.length === 2) {
+              dup.remove();
+            }
+            reply();
+          });
+      });
+  }
 };
