@@ -1,32 +1,37 @@
 <% include header %>
-<h1>Register in Humanitarian ID</h1>
-<form name="register" action="/register" method="POST">
-  <div class="form-group">
-    <label for="email" translate>Email</label>
-    <input type="email" name="email" class="form-control" id="email" placeholder="Your email address" required>
+<div class="container api-page">
+  <div class="row">
+    <div class="col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+      <div class="page-header">
+        <h1 class="page-header__heading">Register in Humanitarian ID</h1>
+        <p class="form-field">Sign up for a Humanitarian ID account. Doing so will give you access to Humanitarian ID as well as a growing number of related humanitarian community sites.</p>
+      </div>
+      <form name="register" action="/register" method="POST">
+        <div class="form-field">
+          <label for="email" translate>Email</label>
+          <input type="email" name="email" id="email" placeholder="Your email address" required>
+        </div>
+        <div class="form-field">
+          <label for="given_name">First Name</label>
+          <input type="text" name="given_name" id="given_name" placeholder="Your first name" required>
+        </div>
+        <div class="form-field">
+          <label for="family_name">Last Name</label>
+          <input type="text" name="family_name" id="family_name" placeholder="Your last name" required>
+        </div>
+        <div class="form-field">
+          <label for="password">Password</label>
+          <input type="password" name="password" id="password" placeholder="" required>
+        </div>
+        <div class="form-field">
+          <label for="confirm_password">Password (confirm)</label>
+          <input type="password" name="confirm_password" id="confirm_password" placeholder="" required>
+        </div>
+        <input type="hidden" name="crumb" value="<%= crumb %>" />
+        <input type="hidden" name="app_verify_url" value="<%= requestUrl %>" />
+        <button type="submit" class="btn-primary">Register</button>
+      </form>
+    </div>
   </div>
-  <div class="form-group">
-    <label for="given_name">First Name</label>
-    <input type="text" name="given_name" class="form-control" id="given_name" placeholder="Your first name" required>
-  </div>
-  <div class="form-group">
-    <label for="middle_name">Middle Name</label>
-    <input type="text" class="form-control" id="middle_name" placeholder="Your middle name">
-  </div>
-  <div class="form-group">
-    <label for="family_name">Last Name</label>
-    <input type="text" name="family_name" class="form-control" id="family_name" placeholder="Your last name" required>
-  </div>
-  <div class="form-group">
-    <label for="password">Password</label>
-    <input type="password" name="password" class="form-control" id="password" placeholder="" required>
-  </div>
-  <div class="form-group">
-    <label for="confirm_password">Password (confirm)</label>
-    <input type="password" name="confirm_password" class="form-control" id="confirm_password" placeholder="" required>
-  </div>
-  <input type="hidden" name="crumb" value="<%= crumb %>" />
-  <input type="hidden" name="app_verify_url" value="<%= requestUrl %>" />
-  <button type="submit" class="btn btn-primary">Register</button>
-</form>
+</div>
 <% include footer %>
