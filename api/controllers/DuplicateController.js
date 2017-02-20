@@ -34,7 +34,7 @@ module.exports = class DuplicateController extends Controller{
           });
       })
       .then((result) => {
-        return reply(result.results).header('X-Total-Count', result.number);
+        return reply(result.result).header('X-Total-Count', result.number);
       })
       .catch((err) => {
         that.app.services.ErrorService.handle(err, reply);
