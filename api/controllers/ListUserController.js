@@ -107,8 +107,14 @@ module.exports = class ListUserController extends Controller{
           });
       })
       .then((result) => {
+        var managers = [];
+        result.list.managers.forEach(function (manager) {
+          if (manager.toString() !== request.params.currentUser._id.toString()) {
+            managers.push(manager);
+          }
+        });
         // Notify list managers of the checkin
-        that.app.services.NotificationService.notifyMultiple(result.list.managers, {
+        that.app.services.NotificationService.notifyMultiple(managers, {
           type: 'checkin',
           createdBy: result.user,
           params: { list: result.list }
