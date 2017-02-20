@@ -16,14 +16,14 @@
     <div id="contactsid-app" class="contactsid-app">
 <div id="contactsid-app-view" class="container ng-scope" ng-view=""><div class="page-list print pdf meeting meeting-comfortable ng-scope">
   <div class="row page-header">
-    <div class="col-sm-8">
+    <div class="col-xs-8">
       <h1 class="page-header__heading">
         <span class="location">Meeting Attendance</span>
         <% if (lists[0]) { %><br><span><%= lists[0].name %></span><% } %>
       </h1>
-      <p><%= dateGenerated %></p>
+      <p><strong><%= dateGenerated %></strong></p>
     </div>
-    <div class="col-sm-4">
+    <div class="col-xs-4">
       <div class="logo">
         <img src="<%= process.env.ROOT_URL + '/assets/img/hid-logo-print.png' %>" width="420" height="66" />
       </div>
@@ -56,9 +56,9 @@
         <tbody>
           <% results.forEach(function (user) { %>
             <tr class="profile-item ng-scope">
-              <td class="title-cell col-xs-2"><div class="avoid ng-binding"><%= user.name %></div></td>
-              <td class="col-xs-1"><div class="avoid ng-binding"><% if (user.organization && user.organization.list) { %><%= user.organization.name %><% } %></div></td>
-              <td class="col-xs-2"><div class="avoid ng-binding"><%= user.job_title %></div></td>
+              <td class="col-xs-2"><%= user.name %></td>
+              <td class="col-xs-2"><% if (user.organization && user.organization.list) { %><%= user.organization.name %><% } %></td>
+              <td class="col-xs-2"><%= user.job_title %></td>
               <td class="col-xs-2"><%= user.phone_number %></td>
               <td class="col-xs-2"><%= user.email %></td>
               <td class="col-xs-3">
@@ -67,48 +67,48 @@
           <% }); %>
           
            <tr class="profile-item ng-scope">
-            <td class="title-cell col-xs-2">&nbsp;<br />&nbsp;</td>
-            <td class="col-xs-1">&nbsp;<br />&nbsp;</td>
             <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
             <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
             <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
-            <td class="col-xs-3">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
           </tr>
 
           <tr class="profile-item ng-scope">
-            <td class="title-cell col-xs-2">&nbsp;<br />&nbsp;</td>
-            <td class="col-xs-1">&nbsp;<br />&nbsp;</td>
             <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
             <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
             <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
-            <td class="col-xs-3">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
           </tr>
 
           <tr class="profile-item ng-scope">
-            <td class="title-cell col-xs-2">&nbsp;<br />&nbsp;</td>
-            <td class="col-xs-1">&nbsp;<br />&nbsp;</td>
             <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
             <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
             <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
-            <td class="col-xs-3">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
           </tr>
 
           <tr class="profile-item ng-scope">
-            <td class="title-cell col-xs-2">&nbsp;<br />&nbsp;</td>
-            <td class="col-xs-1">&nbsp;<br />&nbsp;</td>
             <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
             <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
             <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
-            <td class="col-xs-3">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
           </tr>
 
           <tr class="profile-item ng-scope">
-            <td class="title-cell col-xs-2">&nbsp;<br />&nbsp;</td>
-            <td class="col-xs-1">&nbsp;<br />&nbsp;</td>
             <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
             <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
             <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
-            <td class="col-xs-3">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
           </tr>
         </tbody>
       </table>
