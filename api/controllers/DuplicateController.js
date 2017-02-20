@@ -1,6 +1,7 @@
 'use strict';
 
 const Controller = require('trails/controller');
+const async = require('async');
 
 /**
  * @module DuplicateController
@@ -28,7 +29,7 @@ module.exports = class DuplicateController extends Controller{
       let that = this;
       app.log.info('Looking for duplicates of ' + user.email);
       if (user.emails && user.emails.length) {
-        user.emails.forEach(function (email) {
+        async.eachSeries(user.emails, function (email, callback) {
           User
             .find({'emails.email': email.email})
             .then(users => {
@@ -40,13 +41,15 @@ module.exports = class DuplicateController extends Controller{
                 Duplicate
                   .create(dup)
                   .then((duplicate) => {
-                    that.resume();
+                    callback();
                   });
               }
               else {
-                that.resume();
+                callback();
               }
             });
+        }, function (err) {
+          that.resume();
         });
       }
       else {
