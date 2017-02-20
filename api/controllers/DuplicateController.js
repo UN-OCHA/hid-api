@@ -10,9 +10,35 @@ const async = require('async');
 module.exports = class DuplicateController extends Controller{
   // Find duplicates
   find (request, reply) {
-    request.params.model = 'duplicate';
-    const FootprintController = this.app.controllers.FootprintController;
-    FootprintController.find(request, reply);
+    const Duplicate = this.app.orm.Duplicate;
+    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
+    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
+
+    let that = this;
+    let query = Duplicate.find(criteria);
+    if (options.limit) {
+      query.limit(parseInt(options.limit));
+    }
+    if (options.offset) {
+      query.skip(parseInt(options.offset));
+    }
+    if (options.sort) {
+      query.sort(options.sort);
+    }
+    query
+      .then((results) => {
+        return Duplicate
+          .count(criteria)
+          .then((number) => {
+            return {result: results, number: number};
+          });
+      })
+      .then((result) => {
+        return reply(result.results).header('X-Total-Count', result.number);
+      })
+      .catch((err) => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
   }
 
   // Generate the duplicates
