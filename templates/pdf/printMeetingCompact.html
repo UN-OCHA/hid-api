@@ -20,7 +20,9 @@
       <!-- ngIf: !supported -->
 
       <h2 class="heading-contact-list">
-        <span class="location">Meeting Attendance</span><br/>
+        <span class="location">Meeting Attendance</span>
+        <% if (lists[0]) { %><br><span><%= lists[0].name %></span><% } %>
+        <br/>
         <small class="ng-binding"><%= dateGenerated %></small></br>
       </h2>
 
@@ -65,16 +67,52 @@
               </td>
             </tr>
           <% }); %>
-          <!-- {{#each emptyLines}}
-            <tr class="profile-item ng-scope">
-              <td class="title-cell col-xs-2">&nbsp;<br />&nbsp;</td>
-              <td class="col-xs-1">&nbsp;<br />&nbsp;</td>
-              <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
-              <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
-              <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
-              <td class="col-xs-3">&nbsp;<br />&nbsp;</td>
-            </tr>
-          {{/each}} -->
+          
+          <tr class="profile-item ng-scope">
+            <td class="title-cell col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-1">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-3">&nbsp;<br />&nbsp;</td>
+          </tr>
+
+          <tr class="profile-item ng-scope">
+            <td class="title-cell col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-1">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-3">&nbsp;<br />&nbsp;</td>
+          </tr>
+
+          <tr class="profile-item ng-scope">
+            <td class="title-cell col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-1">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-3">&nbsp;<br />&nbsp;</td>
+          </tr>
+
+          <tr class="profile-item ng-scope">
+            <td class="title-cell col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-1">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-3">&nbsp;<br />&nbsp;</td>
+          </tr>
+
+          <tr class="profile-item ng-scope">
+            <td class="title-cell col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-1">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-2">&nbsp;<br />&nbsp;</td>
+            <td class="col-xs-3">&nbsp;<br />&nbsp;</td>
+          </tr>
+          
         </tbody>
       </table>
     </div>

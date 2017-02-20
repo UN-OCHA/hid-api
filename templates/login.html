@@ -1,26 +1,44 @@
 <% include header %>
+<div class="container api-page">
+  <div class="row">
+    <div class="col-sm-6 offset-sm-3 col-lg-4 offset-lg-4">
+      <div class="page-header">
+        <h1 class="page-header__heading">Log in</h1>
+      </div>
 
-<h1>Log into Humanitarian ID</h1>
-<% if (alert) { %>
-  <div class="alert alert-<%= alert.type %>" role="alert"><%= alert.message %></div>
-<% } %>
-<form method="post" action="/login">
-  <div class="form-group">
-    <label for="email" translate>Email</label>
-    <input type="email" class="form-control" name="email" id="email" required>
-  </div>
-  <div class="form-group">
-    <label for="password"><span translate>Password</span> <a href="/password?redirect=<%= query.redirect %>&client_id=<%= query.client_id %>&redirect_uri=<%= query.redirect_uri %>&response_type=<%= query.response_type %>&scope=<%= query.scope %>" translate>Forgot your password ?</a></label>
-    <input type="password" class="form-control" name="password" id="password" required>
-  </div>
-  <input type="hidden" name="redirect" value="<%= query.redirect %>" />
-  <input type="hidden" name="client_id" value="<%= query.client_id %>" />
-  <input type="hidden" name="redirect_uri" value="<%= query.redirect_uri %>" />
-  <input type="hidden" name="response_type" value="<%= query.response_type %>" />
-  <input type="hidden" name="scope" value="<%= query.scope %>" />
-  <input type="hidden" name="crumb" value="<%= crumb %>" />
-  <button type="submit" class="btn btn-primary">Login</button>
-</form>
-<a href="/register?redirect=<%= query.redirect %>&client_id=<%= query.client_id %>&redirect_uri=<%= query.redirect_uri %>&response_type=<%= query.response_type %>&scope=<%= query.scope %>" class="btn btn-default">Need to register ?</a>
+      <% if (alert) { %>
+        <div class="alert alert-<%= alert.type %>" role="alert"><%= alert.message %></div>
+      <% } %>
 
+      <form method="post" action="/login">
+        <div class="form-field">
+          <label for="email" translate>Email</label>
+          <input type="email" name="email" id="email" placeholder="Your email address" required>
+        </div>
+        <div class="form-field">
+          <label for="password"><span translate>Password</span></label>
+          <input type="password" name="password" id="password" placeholder="Your password" required>
+        </div>
+        <input type="hidden" name="redirect" value="<%= query.redirect %>" />
+        <input type="hidden" name="client_id" value="<%= query.client_id %>" />
+        <input type="hidden" name="redirect_uri" value="<%= query.redirect_uri %>" />
+        <input type="hidden" name="response_type" value="<%= query.response_type %>" />
+        <input type="hidden" name="scope" value="<%= query.scope %>" />
+        <input type="hidden" name="crumb" value="<%= crumb %>" />
+
+        <div class="row form-field">
+          <div class="col-xs-6">
+            <a href="/register?redirect=<%= query.redirect %>&client_id=<%= query.client_id %>&redirect_uri=<%= query.redirect_uri %>&response_type=<%= query.response_type %>&scope=<%= query.scope %>" class="btn-secondary btn-block">Register</a>
+          </div>
+          <div class="col-xs-6">
+            <button type="submit" class="btn-primary btn-block">
+              Login
+            </button>
+          </div>
+        </div>
+      </form>
+      <p><a href="/password?redirect=<%= query.redirect %>&client_id=<%= query.client_id %>&redirect_uri=<%= query.redirect_uri %>&response_type=<%= query.response_type %>&scope=<%= query.scope %>" translate>Forgot your password?</a></p>
+    </div>
+  </div>
+</div>
 <% include footer %>
