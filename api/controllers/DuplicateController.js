@@ -14,8 +14,8 @@ module.exports = class DuplicateController extends Controller{
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
     const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
 
-    let that = this;
-    let query = Duplicate.find(criteria);
+    const that = this;
+    const query = Duplicate.find(criteria);
     if (options.limit) {
       query.limit(parseInt(options.limit));
     }
@@ -47,12 +47,12 @@ module.exports = class DuplicateController extends Controller{
     const User = this.app.orm.User;
     const Duplicate = this.app.orm.Duplicate;
     this.app.log.info('Generating duplicates');
-    var stream = User.find({}).stream();
+    let stream = User.find({}).stream();
 
-    var app = this.app;
+    const app = this.app;
     stream.on('data', function(user) {
       this.pause();
-      let that = this;
+      const that = this;
       app.log.info('Looking for duplicates of ' + user.email);
       if (user.emails && user.emails.length) {
         async.eachSeries(user.emails, function (email, callback) {
@@ -60,7 +60,7 @@ module.exports = class DuplicateController extends Controller{
             .find({'emails.email': email.email})
             .then(users => {
               if (users && users.length > 1) {
-                var dup = {
+                let dup = {
                   user: user,
                   duplicates: users
                 };
@@ -88,7 +88,7 @@ module.exports = class DuplicateController extends Controller{
   delete (request, reply) {
     const User = this.app.orm.User;
     const Duplicate = this.app.orm.Duplicate;
-    let that = this;
+    const that = this;
     User
       .remove({_id: request.params.id}, function (err) {
         Duplicate

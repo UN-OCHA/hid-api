@@ -58,7 +58,11 @@
     "node": ">= 4.0.0"
   },
   "eslintConfig": {
-    "extends": "trails"
+    "extends": "trails",
+    "rules": {
+      "semi": ["error", "always"],
+      "no-underscore-dangle": "off"
+    }
   },
   "repository": "un-ocha/hid-api",
   "license": "MIT"

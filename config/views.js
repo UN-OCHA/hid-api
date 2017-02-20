@@ -5,8 +5,8 @@
  * @see http://trailsjs.io/doc/config/views.js
  */
 
-'use strict'
+'use strict';
 
 module.exports = {
   engine: 'ejs'
-}
+};

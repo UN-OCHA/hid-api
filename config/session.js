@@ -5,7 +5,7 @@
  * @see http://trailsjs.io/doc/config/session.js
  */
 
-'use strict'
+'use strict';
 
 module.exports = {
 
@@ -30,4 +30,4 @@ module.exports = {
     maxAge: 24 * 60 * 60 * 1000
   }
 
-}
+};

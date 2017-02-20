@@ -46,4 +46,4 @@ module.exports = {
     defaultStore: 'local',
     migrate: 'create'
   }
-}
+};

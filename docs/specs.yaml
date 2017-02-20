@@ -242,6 +242,24 @@ paths:
       responses:
         '200':
           description: 'Notification was sent successfully'
+  /user/{userId}/orphan:
+    put:
+      tags:
+        - user
+      summary: 'Sends a claim email to an orphan user'
+      responses:
+        '202':
+          description: 'Claim email sent successfully'
+  /user/{userId}/picture:
+    post:
+      tags:
+        - user
+      summary: 'Updates a user picture'
+      responses:
+        '200':
+          description: 'Picture was updated successfully'
+  /user/{userId}/emails:
+    
   /user/password:
     put:
       tags:

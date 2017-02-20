@@ -5,20 +5,20 @@ const async = require('async');
 const _ = require('lodash');
 const listAttributes = ['lists', 'operations', 'bundles', 'disasters', 'organizations', 'functional_roles'];
 
-var deleteExpiredUsers = function (app) {
+const deleteExpiredUsers = function (app) {
   const User = app.orm.user;
-  var now = Date.now();
-  var start = new Date(2016, 0, 1, 0, 0, 0);
+  const now = Date.now();
+  const start = new Date(2016, 0, 1, 0, 0, 0);
   User.remove({expires: {$gt: start, $lt: now}});
 };
 
-var deleteExpiredTokens = function (app) {
+const deleteExpiredTokens = function (app) {
   const OauthToken = app.orm.OauthToken;
-  var now = Date.now();
+  const now = Date.now();
   OauthToken.remove({expires: {$lt: now }});
 };
 
-var importLists = function (app) {
+const importLists = function (app) {
   const List = app.orm.list;
   const User = app.orm.user;
   const NotificationService = app.services.NotificationService;
@@ -26,13 +26,13 @@ var importLists = function (app) {
   const now = Math.floor(Date.now() / 1000);
   const languages = ['en', 'fr', 'es'];
   //const Cache = app.services.CacheService.getCaches(['local-cache'])
-  var hasNextPage = false, pageNumber = 1, path = '';
+  let hasNextPage = false, pageNumber = 1, path = '';
 
   // Notify users of a new disaster
-  var _notifyNewDisaster = function (list) {
+  const _notifyNewDisaster = function (list) {
     if (list.metadata.operation && list.metadata.operation.length) {
-      var operation = {};
-      for (var i = 0, len = list.metadata.operation.length; i < len; i++) {
+      let operation = {};
+      for (let i = 0, len = list.metadata.operation.length; i < len; i++) {
         operation = list.metadata.operation[i];
         List
           .findOne({remote_id: operation.id})
@@ -48,7 +48,7 @@ var importLists = function (app) {
           })
           .then((results) => {
             const list = results.list, users = results.users;
-            var notification = {type: 'new_disaster', params: {list: list}};
+            const notification = {type: 'new_disaster', params: {list: list}};
             NotificationService.sendMultiple(users, notification, () => { });
           })
           .catch((err) => {});
@@ -56,7 +56,7 @@ var importLists = function (app) {
     }
   };
 
-  var _createListHelper = function (list, cb) {
+  const _createListHelper = function (list, cb) {
     List.create(list, function (err, li) {
       if (err) {
         app.log.error(err);
@@ -69,8 +69,8 @@ var importLists = function (app) {
     });
   };
 
-  var _parseList = function (listType, language, item, cb) {
-    var visibility = '', label = '', acronym = '', tmpList = {};
+  const _parseList = function (listType, language, item, cb) {
+    let visibility = '', label = '', acronym = '', tmpList = {};
     visibility = 'all';
     if (item.hid_access && item.hid_access === 'closed') {
       visibility = 'verified';
@@ -120,10 +120,10 @@ var importLists = function (app) {
     }
   };
 
-  var _parseListLanguage = function (list, label, acronym, language) {
-    var labelFound = false;
+  const _parseListLanguage = function (list, label, acronym, language) {
+    let labelFound = false;
     if (list.labels && list.labels.length) {
-      for (var i = 0; i < list.labels.length; i++) {
+      for (let i = 0; i < list.labels.length; i++) {
         if (list.labels[i].language === language) {
           labelFound = true;
           list.labels[i].text = label;
@@ -137,9 +137,9 @@ var importLists = function (app) {
       list.labels.push({language: language, text: label});
     }
 
-    var acronymFound = false;
+    let acronymFound = false;
     if (list.acronyms && list.acronyms.length) {
-      for (var j = 0; j < list.acronyms.length; j++) {
+      for (let j = 0; j < list.acronyms.length; j++) {
         if (list.acronyms[j].language === language) {
           acronymFound = true;
           list.acronyms[j].text = acronym;
@@ -155,9 +155,9 @@ var importLists = function (app) {
   };
 
   // Create a list based on the item pulled from hrinfo
-  var _createList = function (listType, language, item, cb) {
-    var tmpList = {}, visibility = '', label = '', acronym = '', inactiveOps = [2782,2785,2791,38230];
-    if ((listType === 'operation' && (item.status !== 'inactive' || inactiveOps.indexOf(item.id) !== -1)) || listType !== 'operation') {
+  const _createList = function (listType, language, item, cb) {
+    const inactiveOps = [2782,2785,2791,38230];
+    if ((listType === 'operation' && (item.status !== 'inactive' || inactiveOps.indexOf(item.id) !== -1)) || listType !== 'operation') {
       List.findOne({type: listType, remote_id: item.id}, function (err, list) {
         if (!list) {
           _parseList(listType, language, item, function (newList) {
@@ -167,7 +167,7 @@ var importLists = function (app) {
         }
         else {
           _parseList(listType, language, item, function (newList) {
-            var updateUsers = false;
+            let updateUsers = false;
             if (newList.name !== list.name || newList.visibility !== list.visibility) {
               updateUsers = true;
             }
@@ -179,14 +179,15 @@ var importLists = function (app) {
             _.merge(list, newList);
             list.save().then(function (list) {
               if (updateUsers) {
-                var criteria = {};
+                const criteria = {};
                 criteria[list.type + 's.list'] = list._id.toString();
                 User
                   .find(criteria)
                   .then(users => {
-                    for (var i = 0; i < users.length; i++) {
-                      var user = users[i];
-                      for (var j = 0; j < user[list.type + 's'].length; j++) {
+                    let user = {};
+                    for (let i = 0; i < users.length; i++) {
+                      user = users[i];
+                      for (let j = 0; j < user[list.type + 's'].length; j++) {
                         if (user[list.type + 's'][j].list === list._id) {
                           user[list.type + 's'][j].name = list.name;
                           user[list.type + 's'][j].names = list.names;
@@ -198,22 +199,23 @@ var importLists = function (app) {
                       user.save();
                     }
                     cb();
-                  });
-                }
-                else {
-                  cb();
-                }
-              });
+                  }
+                );
+              }
+              else {
+                cb();
+              }
             });
-          }
-        });
+          });
+        }
+      });
     }
     else {
       cb();
     }
   };
 
-  var lastPull = 0;
+  let lastPull = 0;
   //Cache.then((mongoCache) => {
     //return mongoCache.get('lastPull', function (err, lastPull) {
       //if (err) app.log.info(err)
@@ -236,12 +238,12 @@ var importLists = function (app) {
                 path: path
               }, function (response) {
                 pageNumber++;
-                var body = '';
+                let body = '';
                 response.on('data', function (d) {
                   body += d;
                 });
                 response.on('end', function() {
-                  var parsed = {};
+                  let parsed = {};
                   try {
                     parsed = JSON.parse(body);
                     hasNextPage = parsed.next ? true: false;
@@ -264,15 +266,16 @@ var importLists = function (app) {
                   }
                 });
               });
-          }, function () {
-            return hasNextPage;
-          }, function (err, results) {
-            pageNumber = 1;
-            app.log.info('Done processing all ' + listType + 's');
-            nextType();
-          });
+            }, function () {
+              return hasNextPage;
+            }, function (err, results) {
+              pageNumber = 1;
+              app.log.info('Done processing all ' + listType + 's');
+              nextType();
+            }
+          );
         }, function (err) {
-          var currentTime = Math.round(Date.now() / 1000);
+          const currentTime = Math.round(Date.now() / 1000);
           // Keep item in cache 12 minutes (720 seconds)
           app.log.info(currentTime);
           /*mongoCache.set('lastPull', currentTime, {ttl: 720}, function (err) {
@@ -288,17 +291,17 @@ var importLists = function (app) {
   //});
 };
 
-var sendReminderVerifyEmails = function (app) {
+const sendReminderVerifyEmails = function (app) {
   const User = app.orm.User;
   const EmailService = app.services.EmailService;
   app.log.info('sending reminder emails to verify addresses');
-  var stream = User.find({'email_verified': false}).stream();
+  const stream = User.find({'email_verified': false}).stream();
 
   stream.on('data', function(user) {
     if (user.shouldSendReminderVerify()) {
       this.pause();
 
-      var now = Date.now(), that = this;
+      const now = Date.now(), that = this;
       // Make sure user is not an orphan
       if (!user.createdBy) {
         EmailService.sendReminderVerify(user, function (err) {
@@ -318,14 +321,14 @@ var sendReminderVerifyEmails = function (app) {
   });
 };
 
-var sendReminderUpdateEmails = function (app) {
+const sendReminderUpdateEmails = function (app) {
   app.log.info('Sending reminder update emails to contacts');
   const d = new Date(),
     sixMonthsAgo = d.valueOf() - 183 * 24 * 3600 * 1000,
     User = app.orm.User,
     EmailService = app.services.EmailService;
 
-  var stream = User.find({
+  const stream = User.find({
     'updatedAt': { $lt: sixMonthsAgo }
   }).stream();
 
@@ -348,36 +351,38 @@ var sendReminderUpdateEmails = function (app) {
   });
 };
 
-var sendReminderCheckoutEmails = function(app) {
+const sendReminderCheckoutEmails = function(app) {
   app.log.info('Sending reminder checkout emails to contacts');
   const User = app.orm.User,
     NotificationService = app.services.NotificationService;
-  var populate = '';
-  var criteria = {};
+  let populate = '';
+  const criteria = {};
   criteria.email_verified = true;
   criteria.$or = [];
   listAttributes.forEach(function (attr) {
-    var remindedAttr = attr + '.remindedCheckout';
-    criteria.$or.push({remindedAttr: false});
+    const tmp = {};
+    tmp[attr + '.remindedCheckout'] = false;
+    criteria.$or.push(tmp);
     populate += ' ' + attr + '.list';
   });
 
-  var stream = User
+  const stream = User
     .find(criteria)
     .populate(populate)
-    .cursor();
+    .stream();
 
   stream.on('data', function(user) {
-    let that = this;
-    let now = Date.now();
+    const that = this;
+    const now = Date.now();
     listAttributes.forEach(function (attr) {
-      for (var i = 0; i < user[attr].length; i++) {
-        var lu = user[attr][i];
+      let lu = {};
+      for (let i = 0; i < user[attr].length; i++) {
+        lu = user[attr][i];
         if (this.checkoutDate && this.remindedCheckout === false) {
-          var dep = new Date(this.checkoutDate);
+          const dep = new Date(this.checkoutDate);
           if (now.valueOf() - dep.valueOf() > 48 * 3600 * 1000) {
             that.pause();
-            var notification = {type: 'reminder_checkout', user: user, params: {listUser: lu, list: lu.list}};
+            const notification = {type: 'reminder_checkout', user: user, params: {listUser: lu, list: lu.list}};
             NotificationService.send(notification, () => {
               lu.remindedCheckout = true;
               user.save();
@@ -390,37 +395,39 @@ var sendReminderCheckoutEmails = function(app) {
   });
 };
 
-var doAutomatedCheckout = function(app) {
+const doAutomatedCheckout = function(app) {
   app.log.info('Running automated checkouts');
   const User = app.orm.User,
     NotificationService = app.services.NotificationService;
 
-  var populate = '';
-  var criteria = {};
+  let populate = '';
+  const criteria = {};
   criteria.email_verified = true;
   criteria.$or = [];
   listAttributes.forEach(function (attr) {
-    var remindedAttr = attr + '.remindedCheckout';
-    criteria.$or.push({remindedAttr: true});
+    const tmp = {};
+    tmp[attr + '.remindedCheckout'] = true;
+    criteria.$or.push(tmp);
     populate += ' ' + attr + '.list';
   });
 
-  var stream = User
+  const stream = User
     .find(criteria)
     .populate(populate)
-    .cursor();
+    .stream();
 
   stream.on('data', function(user) {
-    let that = this;
-    let now = Date.now();
+    const that = this;
+    const now = Date.now();
     listAttributes.forEach(function (attr) {
-      for (var i = 0; i < user[attr].length; i++) {
-        var lu = user[attr][i];
+      let lu = {};
+      for (let i = 0; i < user[attr].length; i++) {
+        lu = user[attr][i];
         if (this.checkoutDate && this.remindedCheckout === true) {
-          var dep = new Date(this.checkoutDate);
+          const dep = new Date(this.checkoutDate);
           if (now.valueOf() - dep.valueOf() > 14 * 24 * 3600 * 1000) {
             that.pause();
-            var notification = {type: 'automated_checkout', user: user, params: {listUser: lu, list: lu.list}};
+            const notification = {type: 'automated_checkout', user: user, params: {listUser: lu, list: lu.list}};
             NotificationService.send(notification, () => {
               lu.deleted = true;
               user.save();
@@ -433,29 +440,29 @@ var doAutomatedCheckout = function(app) {
   });
 };
 
-var sendReminderCheckinEmails = function(app) {
+const sendReminderCheckinEmails = function(app) {
   app.log.info('Sending reminder checkin emails to contacts');
   const User = app.orm.User,
     NotificationService = app.services.NotificationService;
 
-  var stream = User
+  const stream = User
     .find({'operations.remindedCheckin': false })
     .populate('operations.list')
-    .cursor();
+    .stream();
 
   stream.on('data', function(user) {
     this.pause();
-    var that = this;
-    for (var i = 0; i < user.operations.length; i++) {
-      var lu = user.operations[i];
-      var d = new Date(),
+    const that = this;
+    for (let i = 0; i < user.operations.length; i++) {
+      let lu = user.operations[i];
+      const d = new Date(),
         createdAt = new Date(lu.createdAt),
         offset = d.valueOf() - lu.valueOf();
 
       if (!lu.remindedCheckin && offset > 48 * 3600 * 1000 && offset < 72 * 3600 * 1000) {
-        var hasLocalPhoneNumber = user.hasLocalPhoneNumber(lu.list.metadata.country.pcode);
+        const hasLocalPhoneNumber = user.hasLocalPhoneNumber(lu.list.metadata.country.pcode);
         user.isInCountry(lu.list.metadata.country.pcode, function (err, inCountry) {
-          var notification = {
+          const notification = {
             type: 'reminder_checkin',
             user: user,
             params: {listUser: lu, list: lu.list, hasLocalPhoneNumber: hasLocalPhoneNumber, inCountry: inCountry}

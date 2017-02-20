@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 module.exports = {
   database: {
@@ -6,4 +6,4 @@ module.exports = {
       defaultStore: 'development'
     }
   }
-}
+};

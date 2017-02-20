@@ -1,10 +1,10 @@
-'use strict'
+'use strict';
 /* global describe, it */
 
-const assert = require('assert')
+const assert = require('assert');
 
 describe('Duplicate Model', () => {
   it('should exist', () => {
-    assert(global.app.api.models['Duplicate'])
-  })
-})
+    assert(global.app.api.models['Duplicate']);
+  });
+});

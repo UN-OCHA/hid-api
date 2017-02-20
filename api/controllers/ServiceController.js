@@ -3,7 +3,6 @@
 const Controller = require('trails/controller');
 const Boom = require('boom');
 const Mailchimp = require('mailchimp-api-v3');
-const async = require('async');
 const google = require('googleapis');
 
 /**
@@ -40,7 +39,7 @@ module.exports = class ServiceController extends Controller{
       criteria.lists = {$in: criteria.lists.split(',')};
     }
 
-    let that = this;
+    const that = this;
 
     if (request.params.id) {
       criteria._id = request.params.id;

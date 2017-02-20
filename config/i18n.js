@@ -10,7 +10,7 @@
  *
  */
 
-'use strict'
+'use strict';
 
 module.exports = {
 
@@ -26,4 +26,4 @@ module.exports = {
     en: require('./locales/en.json')
   }
 
-}
+};

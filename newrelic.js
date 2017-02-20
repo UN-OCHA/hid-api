@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 /**
  * This file includes all of the configuration variables used by the Node.js
@@ -182,7 +182,7 @@ exports.config = {
     /**
      * Specify which methods are logged. Used in conjuction with the audit_log flag
      * If audit_log is enabled and this property is empty, all methods will be logged
-     * Otherwise, if the audit log is enabled, only the methods specified 
+     * Otherwise, if the audit log is enabled, only the methods specified
      * in the filter will be logged
      * Methods include: error_data, metric_data, and analytic_event_data
      *
@@ -506,7 +506,7 @@ exports.config = {
      * @env NEW_RELIC_IPV_PREFERENCE
      */
     ipv_preference: '4'
- },
+  },
 
 
   /**
@@ -542,7 +542,7 @@ exports.config = {
    * slow_sql.max_samples sets the maximum number of slow query samples that
    * will be collected in a single harvest cycle.
    */
-   slow_sql: {
+  slow_sql: {
     enabled: false,
     max_samples: 10
   },
@@ -561,4 +561,4 @@ exports.config = {
     instance_reporting: {enabled: true},
     database_name_reporting: {enabled: true}
   }
-}
+};
