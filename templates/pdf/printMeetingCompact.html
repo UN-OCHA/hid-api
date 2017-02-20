@@ -20,7 +20,9 @@
       <!-- ngIf: !supported -->
 
       <h2 class="heading-contact-list">
-        <span class="location">Meeting Attendance</span></span><% if (lists[0]) { %><span>: <%= lists[0].name %></span><% } %><br/><br/>
+        <span class="location">Meeting Attendance</span>
+        <% if (lists[0]) { %><br><span><%= lists[0].name %></span><% } %>
+        <br/>
         <small class="ng-binding"><%= dateGenerated %></small></br>
       </h2>
 
