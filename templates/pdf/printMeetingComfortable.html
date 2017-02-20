@@ -8,35 +8,33 @@
 <base href="{{appBaseUrl}}/index.html">
 <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Noto+Serif:400,700,400italic|Open+Sans:700,400">
 <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800">
-<link rel="stylesheet" href="https://humanitarian.id/css/app.min.css">
+<link rel="stylesheet" href="<%= process.env.ROOT_URL + 'assets/css/main.css' %>">
 <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
 </head>
 <body ng-app="contactsId" class="break960 ng-animate print pdf">
   <div id="contactsid-app-view-wrapper">
     <div id="contactsid-app" class="contactsid-app">
 <div id="contactsid-app-view" class="container ng-scope" ng-view=""><div class="page-list print pdf meeting meeting-comfortable ng-scope">
-  <div class="row masthead">
-    <div class="col-xs-12">
-      <!-- ngIf: !supported -->
-
-      <h2 class="heading-contact-list">
+  <div class="row page-header">
+    <div class="col-sm-8">
+      <h1 class="page-header__heading">
         <span class="location">Meeting Attendance</span>
         <% if (lists[0]) { %><br><span><%= lists[0].name %></span><% } %>
-        <br/>
-        <small class="ng-binding"><%= dateGenerated %></small></br>
-      </h2>
-
-      <div class="logo pull-right">
+      </h1>
+      <p><%= dateGenerated %></p>
+    </div>
+    <div class="col-sm-4">
+      <div class="logo">
         <img src="<%= process.env.ROOT_URL + '/assets/img/hid-logo-print.png' %>" width="420" height="66" />
       </div>
     </div>
   </div>
 
-  <div class="row main">
+  <div class="row">
     <% if (filters.length) { %>
-    <div class="col-xs-12 filters-param-list-wrapper ng-hide" ng-show="filtersParams.length">
+    <div class="col-xs-12 filters-param-list-wrapper">
       <div class="filters-param-list">
-        <div class="filters-param-label" translate=""><span class="ng-scope">Filter Criteria</span></div>
+        <div class="filters-param-label">Filter Criteria</div>
         <% filters.forEach(function (filter) { %>
           <div class="filters-param"><%= filter %></div>
         <% }); %>
@@ -44,7 +42,7 @@
     </div>
     <% } %>
     <div class="active-contacts col-xs-12">
-      <table class="table table-striped" cg-busy="contactsPromise" style="position: relative;">
+      <table class="table table-striped" cg-busy="contactsPromise">
         <thead>
           <tr>
             <th class="col-xs-2" translate=""><span class="ng-scope">Name</span></th>
@@ -116,7 +114,7 @@
       </table>
     </div>
   </div>
-  <div id="print-footer">
+  <div class="print-footer">
     <div class="message"><span translate=""><span class="ng-scope">Powered by</span></span> <span class="title-humanitarian">Humanitarian</span> <span class="title-id">Id</span> - <span translate=""><span class="ng-scope">to update your information, check in to</span></span> <a href="http://humanitarian.id">http://humanitarian.id</a><br>
     </div>
   </div>
