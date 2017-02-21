@@ -76,6 +76,7 @@ module.exports = class ListController extends Controller{
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
     const List = this.app.orm.List;
+    const User = this.app.orm.User;
     let response, count;
 
     if (!options.sort) {
@@ -142,15 +143,32 @@ module.exports = class ListController extends Controller{
             });
         })
         .then((result) => {
-          var out = [], tmp = {};
-          result.result.forEach(function (list) {
+          const out = [];
+          let tmp = {};
+          const optionsArray = options.split(' ');
+          async.eachSeries(result.result, function (list, next) {
             tmp = list.toJSON();
             tmp.visible = list.isVisibleTo(request.params.currentUser);
             tmp.name = list.translatedAttribute('names', reqLanguage);
             tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
-            out.push(tmp);
+            if (optionsArray.indexOf('count') !== -1) {
+              let ucriteria = [];
+              ucriteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false, pending: false}};
+              User
+                .count(ucriteria)
+                .then((count) => {
+                  tmp.count = count;
+                  out.push(tmp);
+                  next();
+                });
+            }
+            else {
+              out.push(tmp);
+              next();
+            }
+          }, function (err) {
+            reply(out).header('X-Total-Count', result.number);
           });
-          return reply(out).header('X-Total-Count', result.number);
         })
         .catch((err) => {
           that.app.services.ErrorService.handle(err, reply);
