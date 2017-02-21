@@ -77,7 +77,7 @@ module.exports = class ListController extends Controller{
     const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
     const List = this.app.orm.List;
     const User = this.app.orm.User;
-    let response, count;
+    let response;
 
     if (!options.sort) {
       options.sort = 'name';
@@ -155,7 +155,7 @@ module.exports = class ListController extends Controller{
             tmp.name = list.translatedAttribute('names', reqLanguage);
             tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
             if (optionsArray.indexOf('count') !== -1) {
-              let ucriteria = [];
+              let ucriteria = {};
               ucriteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false, pending: false}};
               User
                 .count(ucriteria)
