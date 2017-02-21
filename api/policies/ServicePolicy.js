@@ -12,7 +12,7 @@ module.exports = class ServicePolicy extends Policy {
     if (request.params.currentUser.is_admin) {
       return reply();
     }
-    var that = this;
+    const that = this;
     this.app.orm.Service
       .findOne({_id: request.params.id})
       .populate('lists owner managers')
@@ -20,7 +20,8 @@ module.exports = class ServicePolicy extends Policy {
         if (!srv) {
           throw Boom.notFound();
         }
-        if (srv.managersIndex(request.params.currentUser) !== -1 || srv.owner.id === request.params.currentUser.id) {
+        if (srv.managersIndex(request.params.currentUser) !== -1 ||
+          srv.owner.id === request.params.currentUser.id) {
           return reply();
         }
         else {
@@ -37,7 +38,9 @@ module.exports = class ServicePolicy extends Policy {
   }
 
   canSubscribe (request, reply) {
-    if (!request.params.currentUser.is_admin && !request.params.currentUser.isManager && request.params.currentUser.id !== request.params.id) {
+    if (!request.params.currentUser.is_admin &&
+        !request.params.currentUser.isManager &&
+        request.params.currentUser.id !== request.params.id) {
       return reply(Boom.unauthorized('You need to be an admin or a manager or the current user'));
     }
     reply();

@@ -14,39 +14,47 @@ module.exports = class AuthPolicy extends Policy {
     acceptLanguage.languages(['en', 'fr', 'es']);
     const OauthToken = this.app.orm.OauthToken;
     // If we are creating a user and we are not authenticated, allow it
-    if (request.path == '/api/v2/user' && request.method == 'post' && !request.headers.authorization && !request.params.token) {
+    if (request.path === '/api/v2/user' &&
+      request.method === 'post' &&
+      !request.headers.authorization &&
+      !request.params.token) {
       return reply();
     }
 
-    var token;
+    let token;
 
     if (request.headers && request.headers.authorization) {
-      var parts = request.headers.authorization.split(' ');
-      if (parts.length == 2) {
-        var scheme = parts[0],
+      const parts = request.headers.authorization.split(' ');
+      if (parts.length === 2) {
+        const scheme = parts[0],
           credentials = parts[1];
 
         if (/^Bearer$/i.test(scheme) || /^OAuth$/i.test(scheme)) {
           token = credentials;
         }
-      } else {
+      }
+      else {
         return reply(Boom.unauthorized('Format is Authorization: Bearer [token]'));
       }
-    } else if (request.query.token) {
+    }
+    else if (request.query.token) {
       token = request.query.token;
       // We delete the token from param to not mess with blueprints
       delete request.query.token;
-    } else if (request.query.access_token) {
+    }
+    else if (request.query.access_token) {
       token = request.query.access_token;
       delete request.query.access_token;
-    } else if (request.payload && request.payload.access_token) {
-      token = request.payload.access_token
-      delete request.payload.access_token
-    } else {
+    }
+    else if (request.payload && request.payload.access_token) {
+      token = request.payload.access_token;
+      delete request.payload.access_token;
+    }
+    else {
       return reply(Boom.unauthorized('No Authorization header was found'));
     }
 
-    var that = this;
+    const that = this;
 
     this.app.services.JwtService.verify(token, function (err, jtoken) {
       if (err) {

@@ -10,14 +10,17 @@ const Boom = require('boom');
 module.exports = class ListPolicy extends Policy {
   canCreate (request, reply) {
     if (request.payload.type !== 'list') {
-      return reply(Boom.badRequest('You are not allowed to create lists of a type other than custom contact list'));
+      return reply(
+        Boom.badRequest('You are not allowed to create lists ' +
+        'of a type other than custom contact list')
+      );
     }
     reply();
   }
 
   canUpdate (request, reply) {
     const List = this.app.orm.List;
-    let that = this;
+    const that = this;
     List
       .findOne({_id: request.params.id})
       .populate('owner managers')
@@ -26,7 +29,9 @@ module.exports = class ListPolicy extends Policy {
           return reply(Boom.unauthorized('You are not allowed to modify the list type'));
         }
 
-        if (request.params.currentUser.is_admin || request.params.currentUser.isManager || list.isOwner(request.params.currentUser)) {
+        if (request.params.currentUser.is_admin ||
+          request.params.currentUser.isManager ||
+          list.isOwner(request.params.currentUser)) {
           return reply();
         }
         else {
@@ -44,7 +49,7 @@ module.exports = class ListPolicy extends Policy {
       return reply();
     }
     const List = this.app.orm.List;
-    let that = this;
+    const that = this;
     List
       .findOne({_id: request.params.id})
       .populate('owner managers')
@@ -62,4 +67,4 @@ module.exports = class ListPolicy extends Policy {
       });
 
   }
-}
+};

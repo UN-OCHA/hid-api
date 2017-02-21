@@ -54,7 +54,7 @@ module.exports = class User extends Model {
             if ((this.is_orphan || this.is_ghost) && !user.verified) {
               // HID-1261 sanitize ghost or orphan
               const allowedProps = ['given_name', 'family_name', 'name', '_id', 'legacyId', 'user_id', 'is_orphan', 'is_ghost', 'verified', 'emailsVisibility', 'phonesVisibility', 'locationsVisibility'];
-              for (var prop in this.schema.paths) {
+              for (let prop in this.schema.paths) {
                 if (allowedProps.indexOf(prop) === -1) {
                   this[prop] = null;
                 }
@@ -90,8 +90,8 @@ module.exports = class User extends Model {
         },
         sanitizeClients: function () {
           if (this.authorizedClients && this.authorizedClients.length) {
-            var sanitized = [];
-            for (var i = 0, len = this.authorizedClients.length; i < len; i++) {
+            const sanitized = [];
+            for (let i = 0, len = this.authorizedClients.length; i < len; i++) {
               if (this.authorizedClients[i].secret) {
                 sanitized.push({
                   id: this.authorizedClients[i].id,
@@ -146,8 +146,8 @@ module.exports = class User extends Model {
         },
 
         emailIndex: function (email) {
-          var index = -1;
-          for (var i = 0, len = this.emails.length; i < len; i++) {
+          let index = -1;
+          for (let i = 0, len = this.emails.length; i < len; i++) {
             if (this.emails[i].email === email) {
               index = i;
             }
@@ -156,9 +156,9 @@ module.exports = class User extends Model {
         },
 
         connectionsIndex: function (userId) {
-          var index = -1;
+          let index = -1;
           if (this.connections && this.connections.length) {
-            for (var i = 0, len = this.connections.length; i < len; i++) {
+            for (let i = 0, len = this.connections.length; i < len; i++) {
               if (this.connections[i].pending === false &&
                 ((this.connections[i].user._id && this.connections[i].user._id.toString() === userId.toString()) ||
                 (!this.connections[i].user._id && this.connections[i].user.toString() === userId.toString()))) {
@@ -170,8 +170,8 @@ module.exports = class User extends Model {
         },
 
         hasAuthorizedClient: function (clientId) {
-          var out = false;
-          for (var i = 0, len = this.authorizedClients.length; i < len; i++) {
+          let out = false;
+          for (let i = 0, len = this.authorizedClients.length; i < len; i++) {
             if (this.authorizedClients[i].id === clientId) {
               out = true;
             }
@@ -180,10 +180,11 @@ module.exports = class User extends Model {
         },
 
         subscriptionsIndex: function (serviceId) {
-          var id = serviceId.toString();
-          var index = -1;
-          for (var i = 0; i < this.subscriptions.length; i++) {
-            if ((this.subscriptions[i].service._id && this.subscriptions[i].service._id.toString() === id) || this.subscriptions[i].service.toString() === id) {
+          const id = serviceId.toString();
+          let index = -1;
+          for (let i = 0; i < this.subscriptions.length; i++) {
+            if ((this.subscriptions[i].service._id && this.subscriptions[i].service._id.toString() === id) ||
+              this.subscriptions[i].service.toString() === id) {
               index = i;
             }
           }
@@ -216,14 +217,13 @@ module.exports = class User extends Model {
 
         // Whether we should send an update reminder (sent out after a user hasn't been updated for 6 months)
         shouldSendReminderUpdate: function () {
-          var d = new Date();
-          var revisedOffset = d.valueOf();
-          revisedOffset = d.valueOf() - this.updatedAt.valueOf();
+          const d = new Date();
+          const revisedOffset = d.valueOf() - this.updatedAt.valueOf();
           if (revisedOffset < 183 * 24 * 3600 * 1000) { // if not revised during 6 months
             return false;
           }
           if (this.remindedUpdate) {
-            var remindedOffset = d.valueOf() - this.remindedUpdate.valueOf();
+            const remindedOffset = d.valueOf() - this.remindedUpdate.valueOf();
             if (remindedOffset < 183 * 24 * 3600 * 1000) {
               return false;
             }
@@ -232,13 +232,13 @@ module.exports = class User extends Model {
         },
 
         hasLocalPhoneNumber: function (iso2) {
-          var found = false,
-            that = this;
+          let found = false;
+          const that = this;
           this.phone_numbers.forEach(function (item) {
             const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
             try {
-              var phoneNumber = phoneUtil.parse(item.number);
-              var regionCode = phoneUtil.getRegionCodeForNumber(phoneNumber);
+              const phoneNumber = phoneUtil.parse(item.number);
+              const regionCode = phoneUtil.getRegionCodeForNumber(phoneNumber);
               if (regionCode.toUpperCase() === iso2) {
                 found = true;
               }
@@ -253,20 +253,20 @@ module.exports = class User extends Model {
 
         // Whether the contact is in country or not
         isInCountry: function (pcode, callback) {
-          var hrinfoId = this.location.country.id.replace('hrinfo_loc_', '');
-          var path = '/api/v1.0/locations/' + hrinfoId,
+          const hrinfoId = this.location.country.id.replace('hrinfo_loc_', '');
+          const path = '/api/v1.0/locations/' + hrinfoId,
             that = this;
           https.get({
             host: 'www.humanitarianresponse.info',
             port: 443,
             path: path
           }, function (response) {
-            var body = '';
+            let body = '';
             response.on('data', function (d) {
               body += d;
             });
             response.on('end', function() {
-              var parsed = {};
+              let parsed = {};
               try {
                 parsed = JSON.parse(body);
                 if (parsed.data[0].pcode === pcode) {
@@ -284,7 +284,7 @@ module.exports = class User extends Model {
         },
 
         translateCheckin: function (checkin, language) {
-          var name = '', nameEn = '', acronym = '', acronymEn = '';
+          let name = '', nameEn = '', acronym = '', acronymEn = '';
           checkin.names.forEach(function (nameLn) {
             if (nameLn.language === language) {
               name = nameLn.text;
@@ -574,8 +574,9 @@ module.exports = class User extends Model {
         validate: {
           validator: function (v) {
             if (v.length) {
-              var out = true, types = ['Skype', 'Google', 'Facebook', 'Yahoo', 'Twitter'];
-              for (var i = 0, len = v.length; i < len; i++) {
+              let out = true;
+              const types = ['Skype', 'Google', 'Facebook', 'Yahoo', 'Twitter'];
+              for (let i = 0, len = v.length; i < len; i++) {
                 if (!v[i].username || !v[i].type || (v[i].type && types.indexOf(v[i].type) === -1)) {
                   out = false;
                 }
@@ -595,9 +596,9 @@ module.exports = class User extends Model {
         validate: {
           validator: function (v) {
             if (v.length) {
-              var out = true;
-              var urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
-              for (var i = 0, len = v.length; i < len; i++) {
+              let out = true;
+              const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
+              for (let i = 0, len = v.length; i < len; i++) {
                 if (!urlRegex.test(v[i].url)) {
                   out = false;
                 }
@@ -751,14 +752,14 @@ module.exports = class User extends Model {
       next ();
     });
     schema.pre('update', function (next) {
-      let name, that;
-      that = this;
+      let name;
+      const that = this;
       this.findOne(function (err, user) {
         if (user.middle_name) {
-          name = user.given_name + ' ' + user.middle_name + ' ' + user.family_name
+          name = user.given_name + ' ' + user.middle_name + ' ' + user.family_name;
         }
         else {
-          name = user.given_name + ' ' + user.family_name
+          name = user.given_name + ' ' + user.family_name;
         }
         that.findOneAndUpdate({name: name});
         next();

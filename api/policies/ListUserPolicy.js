@@ -13,7 +13,7 @@ module.exports = class ListUserPolicy extends Policy {
     if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
       return reply();
     }
-    let that = this;
+    const that = this;
     List
       .findOne({_id: request.payload.list})
       .then((list) => {
@@ -40,13 +40,14 @@ module.exports = class ListUserPolicy extends Policy {
       return reply();
     }
     const populate = childAttribute + '.list';
-    let that = this;
+    const that = this;
     User
       .findOne({_id: request.params.id})
       .populate(populate)
       .then((user) => {
-        var lu = user[childAttribute].id(checkInId);
-        if (lu.list.isOwner(request.params.currentUser) || request.params.currentUser.id === request.params.id) {
+        const lu = user[childAttribute].id(checkInId);
+        if (lu.list.isOwner(request.params.currentUser) ||
+          request.params.currentUser.id === request.params.id) {
           return reply();
         }
         else {
@@ -64,12 +65,12 @@ module.exports = class ListUserPolicy extends Policy {
     const checkInId = request.params.checkInId;
 
     const populate = childAttribute + '.list';
-    let that = this;
+    const that = this;
     User
       .findOne({_id: request.params.id})
       .populate(populate)
       .then((user) => {
-        var lu = user[childAttribute].id(checkInId);
+        const lu = user[childAttribute].id(checkInId);
         if (lu.pending === true && request.payload.pending === false) {
           // User is being approved: allow only administrators, list managers and list owners to do this
           if (!lu.list.isOwner(request.params.currentUser)) {
@@ -78,7 +79,9 @@ module.exports = class ListUserPolicy extends Policy {
         }
         else {
           // Other changes are being made; allow only: admins, global managers, list managers, list owners, current user
-          if (!lu.list.isOwner(request.params.currentUser) && !request.params.currentUser.isManager && request.params.currentUser.id !== lu.user.id) {
+          if (!lu.list.isOwner(request.params.currentUser) &&
+            !request.params.currentUser.isManager &&
+            request.params.currentUser.id !== lu.user.id) {
             return reply(Boom.unauthorized('You are not authorized to do this'));
           }
         }

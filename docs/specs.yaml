@@ -234,32 +234,36 @@ paths:
           description: 'The deleted user'
           schema:
             $ref: '#/definitions/User'
-  /user/{userId}/notification:
-    post:
-      tags:
-        - user
-      summary: 'Notifies a user that his contact information needs to be updated'
-      responses:
-        '200':
-          description: 'Notification was sent successfully'
-  /user/{userId}/orphan:
-    put:
-      tags:
-        - user
-      summary: 'Sends a claim email to an orphan user'
-      responses:
-        '202':
-          description: 'Claim email sent successfully'
-  /user/{userId}/picture:
-    post:
-      tags:
-        - user
-      summary: 'Updates a user picture'
-      responses:
-        '200':
-          description: 'Picture was updated successfully'
-  /user/{userId}/emails:
-    
+#  /user/{userId}/notification:
+#    parameters:
+  #     - name: 'userId'
+  #       description: 'Id of the user'
+  #       in: 'path'
+  #       type: string
+  #       required: true
+  #   post:
+  #     tags:
+  #       - user
+  #     summary: 'Notifies a user that his contact information needs to be updated'
+  #     responses:
+  #       '200':
+  #         description: 'Notification was sent successfully'
+  # /user/{userId}/orphan:
+  #   put:
+  #     tags:
+  #       - user
+  #     summary: 'Sends a claim email to an orphan user'
+  #     responses:
+  #       '202':
+  #         description: 'Claim email sent successfully'
+  # /user/{userId}/picture:
+  #   post:
+  #     tags:
+  #       - user
+  #     summary: 'Updates a user picture'
+  #     responses:
+  #       '200':
+  #         description: 'Picture was updated successfully'
   /user/password:
     put:
       tags:

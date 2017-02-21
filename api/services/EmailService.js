@@ -15,7 +15,7 @@ module.exports = class EmailService extends Service {
 
   // Helper function to add hash to a link
   _addHash(url, hash) {
-    var out = url;
+    let out = url;
     if (url.indexOf('?') !== -1) {
       out += '&hash=' + hash;
     }
@@ -27,11 +27,11 @@ module.exports = class EmailService extends Service {
 
   // Send an email
   send (options, template, context, callback) {
-    var templateDir = TemplateDir + template;
+    let templateDir = TemplateDir + template;
     if (options.locale && options.locale !== 'en') {
       templateDir += '/' + options.locale;
     }
-    var templateSender = Transporter.templateSender(new EmailTemplate(templateDir), {
+    const templateSender = Transporter.templateSender(new EmailTemplate(templateDir), {
       from: 'info@humanitarian.id'
     });
     if (options.to) {
@@ -43,12 +43,12 @@ module.exports = class EmailService extends Service {
   }
 
   sendRegister (user, appVerifyUrl, callback) {
-    var mailOptions = {
+    const mailOptions = {
       to: user.email,
       locale: user.locale || 'en'
     };
-    var resetUrl = this._addHash(appVerifyUrl, user.generateHash(user.email));
-    var context = {
+    const resetUrl = this._addHash(appVerifyUrl, user.generateHash(user.email));
+    const context = {
       name: user.name,
       reset_url: resetUrl
     };
@@ -56,12 +56,12 @@ module.exports = class EmailService extends Service {
   }
 
   sendRegisterOrphan(user, admin, appVerifyUrl, callback) {
-    var mailOptions = {
+    const mailOptions = {
       to: user.email,
       locale: user.locale || 'en'
     };
-    var resetUrl = this._addHash(appVerifyUrl, user.generateHash(user.email));
-    var context = {
+    const resetUrl = this._addHash(appVerifyUrl, user.generateHash(user.email));
+    const context = {
       user: user,
       admin: admin,
       reset_url: resetUrl
@@ -70,12 +70,12 @@ module.exports = class EmailService extends Service {
   }
 
   sendRegisterKiosk(user, appVerifyUrl, callback) {
-    var mailOptions = {
+    const mailOptions = {
       to: user.email,
       locale: user.locale || 'en'
     };
-    var resetUrl = this._addHash(appVerifyUrl, user.generateHash(user.email));
-    var context = {
+    const resetUrl = this._addHash(appVerifyUrl, user.generateHash(user.email));
+    const context = {
       user: user,
       reset_url: resetUrl
     };
@@ -83,11 +83,11 @@ module.exports = class EmailService extends Service {
   }
 
   sendPostRegister (user, callback) {
-    var mailOptions = {
+    const mailOptions = {
       to: user.email,
       locale: user.locale
     };
-    var context = {
+    const context = {
       given_name: user.given_name,
       profile_url: process.env.APP_URL + '/users/' + user._id
     };
@@ -95,12 +95,12 @@ module.exports = class EmailService extends Service {
   }
 
   sendResetPassword (user, appResetUrl, callback) {
-    var mailOptions = {
+    const mailOptions = {
       to: user.email,
       locale: user.locale
     };
-    var resetUrl = this._addHash(appResetUrl, user.generateHash(user.email));
-    var context = {
+    const resetUrl = this._addHash(appResetUrl, user.generateHash(user.email));
+    const context = {
       name: user.name,
       reset_url: resetUrl
     };
@@ -108,12 +108,12 @@ module.exports = class EmailService extends Service {
   }
 
   sendClaim (user, appResetUrl, callback) {
-    var mailOptions = {
+    const mailOptions = {
       to: user.email,
       locale: user.locale
     };
-    var resetUrl = this._addHash(appResetUrl, user.generateHash(user.email));
-    var context = {
+    const resetUrl = this._addHash(appResetUrl, user.generateHash(user.email));
+    const context = {
       name: user.name,
       reset_url: resetUrl
     };
@@ -121,12 +121,12 @@ module.exports = class EmailService extends Service {
   }
 
   sendValidationEmail (user, email, appValidationUrl, callback) {
-    var mailOptions = {
+    const mailOptions = {
       to: email,
       locale: user.locale
     };
-    var resetUrl = this._addHash(appValidationUrl, user.generateHash(email));
-    var context = {
+    const resetUrl = this._addHash(appValidationUrl, user.generateHash(email));
+    const context = {
       user: user,
       reset_url: resetUrl
     };
@@ -134,7 +134,7 @@ module.exports = class EmailService extends Service {
   }
 
   sendNotification(not, cb) {
-    var mailOptions = {
+    const mailOptions = {
       to: not.user.email,
       locale: not.user.locale
     };
@@ -142,11 +142,11 @@ module.exports = class EmailService extends Service {
   }
 
   sendReminderVerify (user, callback) {
-    var mailOptions = {
+    const mailOptions = {
       to: user.email,
       locale: user.locale
     };
-    var context = {
+    const context = {
       user: user,
       verifyLink: this._addHash(process.env.APP_URL, user.generateHash(user.email))
     };
@@ -154,11 +154,11 @@ module.exports = class EmailService extends Service {
   }
 
   sendReminderUpdate (user, callback) {
-    var mailOptions = {
+    const mailOptions = {
       to: user.email,
       locale: user.locale
     };
-    var context = {
+    const context = {
       user: user,
       userUrl: process.env.APP_URL + '/user/' + user._id
     };

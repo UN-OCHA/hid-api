@@ -47,7 +47,7 @@ module.exports = class DuplicateController extends Controller{
     const User = this.app.orm.User;
     const Duplicate = this.app.orm.Duplicate;
     this.app.log.info('Generating duplicates');
-    let stream = User.find({}).stream();
+    const stream = User.find({}).stream();
 
     const app = this.app;
     stream.on('data', function(user) {
@@ -60,7 +60,7 @@ module.exports = class DuplicateController extends Controller{
             .find({'emails.email': email.email})
             .then(users => {
               if (users && users.length > 1) {
-                let dup = {
+                const dup = {
                   user: user,
                   duplicates: users
                 };

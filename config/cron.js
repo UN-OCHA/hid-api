@@ -3,7 +3,22 @@
 const https = require('https');
 const async = require('async');
 const _ = require('lodash');
-const listAttributes = ['lists', 'operations', 'bundles', 'disasters', 'organizations', 'functional_roles'];
+const listAttributes = [
+  'lists',
+  'operations',
+  'bundles',
+  'disasters',
+  'organizations',
+  'functional_roles'
+];
+const listTypes = [
+  'operation',
+  'bundle',
+  'disaster',
+  'organization',
+  'functional_role',
+  'office'
+];
 
 const deleteExpiredUsers = function (app) {
   const User = app.orm.user;
@@ -22,7 +37,6 @@ const importLists = function (app) {
   const List = app.orm.list;
   const User = app.orm.user;
   const NotificationService = app.services.NotificationService;
-  const listTypes = ['operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
   const now = Math.floor(Date.now() / 1000);
   const languages = ['en', 'fr', 'es'];
   //const Cache = app.services.CacheService.getCaches(['local-cache'])
@@ -157,7 +171,9 @@ const importLists = function (app) {
   // Create a list based on the item pulled from hrinfo
   const _createList = function (listType, language, item, cb) {
     const inactiveOps = [2782,2785,2791,38230];
-    if ((listType === 'operation' && (item.status !== 'inactive' || inactiveOps.indexOf(item.id) !== -1)) || listType !== 'operation') {
+    if ((listType === 'operation' &&
+      (item.status !== 'inactive' || inactiveOps.indexOf(item.id) !== -1)) ||
+      listType !== 'operation') {
       List.findOne({type: listType, remote_id: item.id}, function (err, list) {
         if (!list) {
           _parseList(listType, language, item, function (newList) {

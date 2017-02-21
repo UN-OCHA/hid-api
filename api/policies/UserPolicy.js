@@ -24,7 +24,9 @@ module.exports = class UserPolicy extends Policy {
   }
 
   canUpdate (request, reply) {
-    if (!request.params.currentUser.is_admin && !request.params.currentUser.isManager && request.params.currentUser.id !== request.params.id) {
+    if (!request.params.currentUser.is_admin &&
+      !request.params.currentUser.isManager &&
+      request.params.currentUser.id !== request.params.id) {
       return reply(Boom.unauthorized('You need to be an admin or a manager or the current user'));
     }
     reply();
@@ -32,19 +34,22 @@ module.exports = class UserPolicy extends Policy {
 
   canDestroy (request, reply) {
     const User = this.app.orm.User;
-    if (request.params.currentUser.is_admin || request.params.currentUser.id === request.params.id) {
+    if (request.params.currentUser.is_admin ||
+      request.params.currentUser.id === request.params.id) {
       return reply();
     }
     else {
-      let that = this;
+      const that = this;
       User
         .findOne({_id: request.params.id})
         .populate('createdBy')
         .then((user) => {
-          if (user.createdBy.id === request.params.currentUser.id && user.email_verified === false && request.params.currentUser.isManager) {
+          if (user.createdBy.id === request.params.currentUser.id &&
+            user.email_verified === false &&
+            request.params.currentUser.isManager) {
             return reply();
           }
-          else {
+          else {
             return reply(Boom.unauthorized('You are not allowed to do this operation'));
           }
         })

@@ -1,9 +1,9 @@
-'use strict'
+'use strict';
 
-const Service = require('trails/service')
-const jwt = require('jsonwebtoken')
-const fs = require('fs')
-const rsa2jwk = require('rsa-pem-to-jwk')
+const Service = require('trails/service');
+const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const rsa2jwk = require('rsa-pem-to-jwk');
 
 /**
  * @module JwtService
@@ -13,11 +13,11 @@ module.exports = class JwtService extends Service {
 
   // Generates a token from supplied payload
   issue (payload) {
-    var cert = fs.readFileSync('keys/hid.rsa');
-    var options = { algorithm: "RS256", header: { kid: 'hid-dev'} }
+    const cert = fs.readFileSync('keys/hid.rsa');
+    const options = { algorithm: 'RS256', header: { kid: 'hid-dev'} };
     if (!payload.exp) {
-       options.expiresIn = "3h"
-     }
+      options.expiresIn = '3h';
+    }
     return jwt.sign(
       payload,
       cert,
@@ -27,7 +27,7 @@ module.exports = class JwtService extends Service {
 
   // Verifies token on a request
   verify (token, callback) {
-    var cert = fs.readFileSync('keys/hid.rsa.pub');
+    const cert = fs.readFileSync('keys/hid.rsa.pub');
     return jwt.verify(
       token, // The token to be verified
       cert, // Same token we used to sign
@@ -37,20 +37,20 @@ module.exports = class JwtService extends Service {
   }
 
   public2jwk () {
-    var cert = fs.readFileSync('keys/hid.pkcs1.pub')
-    return rsa2jwk(cert, { use: 'sig', kid: 'hid-dev'}, 'public')
+    const cert = fs.readFileSync('keys/hid.pkcs1.pub');
+    return rsa2jwk(cert, { use: 'sig', kid: 'hid-dev'}, 'public');
   }
 
   generateIdToken (client, user) {
-    var now = Math.floor(Date.now() / 1000);
-    var id_token = {
+    const now = Math.floor(Date.now() / 1000);
+    const idToken = {
       iss: process.env.ROOT_URL,
       sub: user._id,
       aud: client.id,
       exp: now + 3600,
       iat: now
-    }
-    return this.issue(id_token)
+    };
+    return this.issue(idToken);
   }
 
-}
+};
