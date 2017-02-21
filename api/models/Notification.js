@@ -55,10 +55,14 @@ module.exports = class Notification extends Model {
 
     schema.pre('save', function(next) {
       if (!this.text) {
-        var templateDir = TemplateDir + this.type;
-        var template = new NotificationTemplate(templateDir);
-        var that = this;
-        template.render({createdBy: that.createdBy, user: that.user, params: that.params}, function(err, result) {
+        const templateDir = TemplateDir + this.type;
+        const template = new NotificationTemplate(templateDir);
+        const that = this;
+        template.render({
+          createdBy: that.createdBy,
+          user: that.user,
+          params: that.params
+        }, function(err, result) {
           if (err) {
             return next(err);
           }

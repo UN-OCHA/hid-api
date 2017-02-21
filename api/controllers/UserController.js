@@ -429,8 +429,8 @@ module.exports = class UserController extends Controller{
 
   find (request, reply) {
     const FootprintService = this.app.services.FootprintService;
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
-    let criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
+    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
+    let criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
     const List = this.app.orm.List,
       User = this.app.orm.User;
 
@@ -526,8 +526,8 @@ module.exports = class UserController extends Controller{
 
   update (request, reply) {
     const FootprintService = this.app.services.FootprintService;
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
-    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
+    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
+    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
     const Model = this.app.orm.user;
 
     this.log.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,

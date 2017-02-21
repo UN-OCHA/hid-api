@@ -11,8 +11,8 @@ module.exports = class DuplicateController extends Controller{
   // Find duplicates
   find (request, reply) {
     const Duplicate = this.app.orm.Duplicate;
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
-    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
+    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
+    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
 
     const that = this;
     const query = Duplicate.find(criteria);

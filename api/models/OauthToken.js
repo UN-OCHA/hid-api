@@ -1,8 +1,8 @@
-'use strict'
+'use strict';
 
-const Model = require('trails/model')
-const crypto = require('crypto')
-const Schema = require('mongoose').Schema
+const Model = require('trails/model');
+const crypto = require('crypto');
+const Schema = require('mongoose').Schema;
 
 /**
  * @module OauthToken
@@ -15,15 +15,17 @@ module.exports = class OauthToken extends Model {
       statics: {
         generate: function (type, client, user, callback) {
           crypto.randomBytes(256, function (ex, buffer) {
-            if (ex) return callback(error('server_error'));
+            if (ex) {
+              return callback('server_error');
+            }
 
-            var token = crypto
+            const token = crypto
               .createHash('sha1')
               .update(buffer)
               .digest('hex');
 
-            var now = Math.floor(Date.now() / 1000);
-            var ftoken = {
+            const now = Math.floor(Date.now() / 1000);
+            const ftoken = {
               type: type,
               token: token,
               client: client._id,
@@ -35,7 +37,7 @@ module.exports = class OauthToken extends Model {
           });
         }
       }
-    }
+    };
   }
 
   static schema () {
@@ -61,6 +63,6 @@ module.exports = class OauthToken extends Model {
       expires: {
         type: Date
       }
-    }
+    };
   }
-}
+};

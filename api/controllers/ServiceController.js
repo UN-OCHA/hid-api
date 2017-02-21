@@ -20,8 +20,8 @@ module.exports = class ServiceController extends Controller{
 
   find (request, reply) {
     const FootprintService = this.app.services.FootprintService;
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
-    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
+    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
+    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
     const Service = this.app.orm.Service;
 
     if (!request.params.currentUser.is_admin) {

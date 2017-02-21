@@ -73,8 +73,8 @@ module.exports = class ListController extends Controller{
 
   find (request, reply) {
     const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
-    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
+    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
+    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
     const List = this.app.orm.List;
     let response, count;
 
@@ -184,8 +184,8 @@ module.exports = class ListController extends Controller{
 
   update (request, reply) {
     const FootprintService = this.app.services.FootprintService;
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
-    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query);
+    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
+    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
     const Model = this.app.orm.list;
     const User = this.app.orm.user;
 

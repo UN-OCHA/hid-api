@@ -27,9 +27,9 @@ module.exports = class List extends Model {
           }
           else {
             if (this.visibility === 'inlist') {
-              var out = false;
+              let out = false;
               // Is user in list ?
-              for (var i = 0; i < user[this.type + 's'].length; i++) {
+              for (let i = 0; i < user[this.type + 's'].length; i++) {
                 if (user[this.type + 's'][i].list === this._id) {
                   out = true;
                 }
@@ -42,7 +42,7 @@ module.exports = class List extends Model {
           }
         },
         isOwner: function (user) {
-          var ownerId = '';
+          let ownerId = '';
           if (this.owner) {
             if (this.owner._id) {
               ownerId = this.owner._id.toString();
@@ -54,14 +54,14 @@ module.exports = class List extends Model {
           if (user.is_admin ||
             ownerId === user._id.toString() ||
             this.isManager(user)) {
-              return true;
+            return true;
           }
           else {
             return false;
           }
         },
         isManager: function (user) {
-          var managerFound = false;
+          let managerFound = false;
           this.managers.forEach(function (manager) {
             if (manager.id && manager.id === user.id) {
               managerFound = true;
@@ -75,9 +75,9 @@ module.exports = class List extends Model {
           return managerFound;
         },
         languageIndex: function (attr, language) {
-          var index = -1;
+          let index = -1;
           if (this[attr] && this[attr].length) {
-            for (var i = 0; i < this[attr].length; i++) {
+            for (let i = 0; i < this[attr].length; i++) {
               if (this[attr][i].language === language) {
                 index = i;
               }
@@ -86,7 +86,7 @@ module.exports = class List extends Model {
           return index;
         },
         translatedAttribute: function (attr, language) {
-          var index = this.languageIndex(attr, language);
+          let index = this.languageIndex(attr, language);
           if (index === -1) {
             index = this.languageIndex(attr, 'en');
           }
@@ -94,7 +94,7 @@ module.exports = class List extends Model {
             return this[attr][index].text;
           }
           else {
-            var singularAttr = attr.substr(-1);
+            const singularAttr = attr.substr(-1);
             return this[singularAttr];
           }
         }
@@ -139,7 +139,15 @@ module.exports = class List extends Model {
 
       type: {
         type: String,
-        enum: ['operation', 'bundle', 'disaster', 'list', 'organization', 'functional_role', 'office'],
+        enum: [
+          'operation',
+          'bundle',
+          'disaster',
+          'list',
+          'organization',
+          'functional_role',
+          'office'
+        ],
         required: [true, 'Type is required']
       },
 
@@ -196,12 +204,12 @@ module.exports = class List extends Model {
       else {
         this.name = this.label;
       }
-      var that = this;
+      const that = this;
       languages.forEach(function (lang) {
-        var labelIndex = that.languageIndex('labels', lang);
-        var nameIndex = that.languageIndex('names', lang);
-        var acronymIndex = that.languageIndex('acronyms', lang);
-        var name = '';
+        const labelIndex = that.languageIndex('labels', lang);
+        const nameIndex = that.languageIndex('names', lang);
+        const acronymIndex = that.languageIndex('acronyms', lang);
+        let name = '';
         if (labelIndex !== -1) {
           if (acronymIndex !== -1 && that.acronyms[acronymIndex].text !== '') {
             name = that.labels[labelIndex].text + ' (' + that.acronyms[acronymIndex].text + ')';
@@ -226,12 +234,12 @@ module.exports = class List extends Model {
       else {
         this.name = this.label;
       }
-      var that = this;
+      const that = this;
       languages.forEach(function (lang) {
-        var labelIndex = that.languageIndex('labels', lang);
-        var nameIndex = that.languageIndex('names', lang);
-        var acronymIndex = that.languageIndex('acronyms', lang);
-        var name = '';
+        const labelIndex = that.languageIndex('labels', lang);
+        const nameIndex = that.languageIndex('names', lang);
+        const acronymIndex = that.languageIndex('acronyms', lang);
+        let name = '';
         if (labelIndex !== -1) {
           if (acronymIndex !== -1 && that.acronyms[acronymIndex].text !== '') {
             name = that.labels[labelIndex].text + ' (' + that.acronyms[acronymIndex].text + ')';

@@ -12,7 +12,7 @@ const childAttributes = ['lists', 'organization', 'organizations', 'operations',
 module.exports = class ListUserController extends Controller{
 
   checkin (request, reply) {
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
+    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const userId = request.params.id;
     const childAttribute = request.params.childAttribute;
     const payload = request.payload;
