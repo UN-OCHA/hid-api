@@ -145,7 +145,10 @@ module.exports = class ListController extends Controller{
         .then((result) => {
           const out = [];
           let tmp = {};
-          const optionsArray = options.split(' ');
+          let optionsArray = [];
+          if (options.fields) {
+            optionsArray = options.fields.split(' ');
+          }
           async.eachSeries(result.result, function (list, next) {
             tmp = list.toJSON();
             tmp.visible = list.isVisibleTo(request.params.currentUser);
