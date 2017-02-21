@@ -15,16 +15,7 @@ module.exports = class DuplicateController extends Controller{
     const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
 
     const that = this;
-    const query = Duplicate.find(criteria);
-    if (options.limit) {
-      query.limit(parseInt(options.limit));
-    }
-    if (options.offset) {
-      query.skip(parseInt(options.offset));
-    }
-    if (options.sort) {
-      query.sort(options.sort);
-    }
+    const query = this.app.services.HelperService.find('Duplicate', criteria, options);
     query
       .then((results) => {
         return Duplicate

@@ -175,6 +175,10 @@ paths:
           in: 'query'
           type: integer
           default: 50
+        - name: 'fields'
+          description: 'Fields to be returned (leave empty to return all)'
+          type: string
+          default: ''
         - name: 'authorization'
           in: 'header'
           description: 'The JWT'
@@ -295,6 +299,10 @@ paths:
           in: 'query'
           type: integer
           default: 50
+        - name: 'fields'
+          description: 'Fields to be returned (leave empty to return all)'
+          type: string
+          default: ''
         - name: 'authorization'
           in: 'header'
           description: 'The JWT'

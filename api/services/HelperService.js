@@ -22,4 +22,25 @@ module.exports = class HelperService extends Service {
   getCriteriaFromQuery(query) {
     return _.omit(query, queryOptions);
   }
+
+  find (modelName, criteria, options) {
+    const Model = this.app.orm[modelName];
+    let query = Model.find(criteria);
+    if (options.limit) {
+      query.limit(parseInt(options.limit));
+    }
+    if (options.offset) {
+      query.skip(parseInt(options.offset));
+    }
+    if (options.sort) {
+      query.sort(options.sort);
+    }
+    if (options.populate) {
+      query.populate(options.populate);
+    }
+    if (options.fields) {
+      query.select(options.fields);
+    }
+    return query;
+  }
 };

@@ -369,16 +369,7 @@ module.exports = class UserController extends Controller{
 
     let that = this;
     this.log.debug('[UserController] (find) criteria = ', criteria, ' options = ', options);
-    let query = User.find(criteria);
-    if (options.limit) {
-      query.limit(parseInt(options.limit));
-    }
-    if (options.offset) {
-      query.skip(parseInt(options.offset));
-    }
-    if (options.sort) {
-      query.sort(options.sort);
-    }
+    const query = this.app.services.HelperService.find('User', criteria, options);
     query
       .then((results) => {
         return User

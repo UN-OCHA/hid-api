@@ -131,17 +131,8 @@ module.exports = class ListController extends Controller{
         .catch(err => { that.app.services.ErrorService.handle(err, reply); });
     }
     else {
-      let query = List.find(criteria);
-      if (options.limit) {
-        query.limit(parseInt(options.limit));
-      }
-      if (options.offset) {
-        query.skip(parseInt(options.offset));
-      }
-      if (options.sort) {
-        query.sort(options.sort);
-      }
-      query.populate([{path: 'owner', select: '_id name'}]);
+      options.populate = [{path: 'owner', select: '_id name'}];
+      const query = this.app.services.HelperService.find('List', criteria, options);
       query
         .then((results) => {
           return List
