@@ -62,16 +62,18 @@ module.exports = class List extends Model {
         },
         isManager: function (user) {
           let managerFound = false;
-          this.managers.forEach(function (manager) {
-            if (manager.id && manager.id === user.id) {
-              managerFound = true;
-            }
-            else {
-              if (manager.toString() === user._id.toString()) {
+          if (this.managers && this.managers.length) {
+            this.managers.forEach(function (manager) {
+              if (manager.id && manager.id === user.id) {
                 managerFound = true;
               }
-            }
-          });
+              else {
+                if (manager.toString() === user._id.toString()) {
+                  managerFound = true;
+                }
+              }
+            });
+          }
           return managerFound;
         },
         languageIndex: function (attr, language) {
