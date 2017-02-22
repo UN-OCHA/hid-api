@@ -56,6 +56,8 @@ module.exports = {
     /*user.createdBy = '';
     user.favoriteLists = '';
     user.subscriptions = '';*/
+    // HID-1356 - display only users who already have a profile in the HID app
+    user.appMetadata.hid.login = true;
     user.deleted = false;
     user.createdAt = tmpUserId[uidLength - 1];
     user.updatedAt = item.revised ? item.revised : '';
