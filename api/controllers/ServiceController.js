@@ -264,6 +264,8 @@ module.exports = class ServiceController extends Controller{
     const ServiceCredentials = this.app.orm.ServiceCredentials;
     const NotificationService = this.app.services.NotificationService;
 
+    this.log.debug('[ServiceController] Unsubscribing user ' + request.params.id + ' from ' + request.params.serviceId);
+
     const that = this;
     let user = {}, service = {};
     User

@@ -10,7 +10,7 @@ const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'f
 const userPopulate1 = [
   {path: 'favoriteLists'},
   {path: 'verified_by', select: '_id name'},
-  {path: 'subscriptions.service', select: '_id name'},
+  {path: 'subscriptions.service', select: '_id name type'},
   {path: 'connections.user', select: '_id name'}
 ];
 
