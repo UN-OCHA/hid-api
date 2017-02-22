@@ -20,7 +20,16 @@ module.exports = class HelperService extends Service {
   }
 
   getCriteriaFromQuery(query) {
-    return _.omit(query, queryOptions);
+    let criteria = _.omit(query, queryOptions);
+    for (let i = 0, len = criteria.length; i < len; i++) {
+      if (criteria[i] === 'true') {
+        criteria[i] = true;
+      }
+      if (criteria[i] === false) {
+        criteria[i] = false;
+      }
+    }
+    return criteria;
   }
 
   find (modelName, criteria, options) {
