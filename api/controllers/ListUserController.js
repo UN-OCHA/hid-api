@@ -3,7 +3,6 @@
 const Controller = require('trails/controller');
 const Boom = require('boom');
 const _ = require('lodash');
-const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles', 'offices'];
 
 /**
  * @module ListUserController
@@ -18,6 +17,7 @@ module.exports = class ListUserController extends Controller{
     const payload = request.payload;
     const Model = this.app.orm.user;
     const List = this.app.orm.list;
+    const childAttributes = Model.listAttributes();
 
     this.log.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload,
       'options =', options);
@@ -218,6 +218,7 @@ module.exports = class ListUserController extends Controller{
     const User = this.app.orm.user;
     const FootprintService = this.app.services.FootprintService;
     const List = this.app.orm.List;
+    const childAttributes = User.listAttributes();
 
     this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,
       'options =', options);
@@ -226,14 +227,14 @@ module.exports = class ListUserController extends Controller{
       return reply(Boom.notFound());
     }
 
-    var that = this;
+    const that = this;
     User
       .findOne({ _id: request.params.id })
       .then(record => {
         if (!record) {
           throw Boom.notFound();
         }
-        var lu = record[childAttribute].id(checkInId);
+        const lu = record[childAttribute].id(checkInId);
         // Set deleted to true
         lu.deleted = true;
         return record

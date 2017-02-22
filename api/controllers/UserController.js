@@ -11,7 +11,6 @@ const moment = require('moment');
 const async = require('async');
 const _ = require('lodash');
 const acceptLanguage = require('accept-language');
-const childAttributes = ['lists', 'organization', 'organizations', 'operations', 'bundles', 'disasters', 'functional_roles', 'offices'];
 
 /**
  * @module UserController
@@ -20,6 +19,7 @@ const childAttributes = ['lists', 'organization', 'organizations', 'operations',
 module.exports = class UserController extends Controller{
 
   _removeForbiddenAttributes (request) {
+    const childAttributes = this.app.orm.User.listAttributes();
     let forbiddenAttributes = [];
     forbiddenAttributes = childAttributes.concat(this.app.services.HelperService.getReadonlyAttributes('User'));
     if (!request.params.currentUser || !request.params.currentUser.is_admin) {
@@ -398,6 +398,7 @@ module.exports = class UserController extends Controller{
     let criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
     const List = this.app.orm.List,
       User = this.app.orm.User;
+    const childAttributes = User.listAttributes();
 
     // Hide unconfirmed users which are not orphans
     if (request.params.currentUser && !request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
@@ -435,8 +436,8 @@ module.exports = class UserController extends Controller{
         });
     }
     else {
-      var listIds = [];
-      for (var i = 0; i < childAttributes.length; i++) {
+      const listIds = [];
+      for (let i = 0; i < childAttributes.length; i++) {
         if (criteria[childAttributes[i] + '.list']) {
           listIds.push(criteria[childAttributes[i] + '.list']);
           criteria[childAttributes[i]] = {$elemMatch: {list: criteria[childAttributes[i] + '.list'], deleted: false}};
@@ -544,9 +545,10 @@ module.exports = class UserController extends Controller{
 
   destroy (request, reply) {
     const User = this.app.orm.User;
+    const childAttributes = User.listAttributes();
     this.log.debug('[UserController] (destroy) model = user, query =', request.query);
 
-    var that = this;
+    const that = this;
 
     User
       .findOne({ _id: request.params.id })
@@ -554,7 +556,7 @@ module.exports = class UserController extends Controller{
         if (!record) {
           throw new Error(Boom.notFound());
         }
-        for (var j = 0; j < childAttributes.length; j++) {
+        for (let j = 0; j < childAttributes.length; j++) {
           if (childAttributes[j] === 'organization') {
             record.organization = null;
           }

@@ -13,7 +13,7 @@ const acceptLanguage = require('accept-language');
 module.exports = class ListController extends Controller{
 
   _removeForbiddenAttributes (request) {
-    var forbiddenAttributes = [];
+    let forbiddenAttributes = [];
     if (!request.params.currentUser || !request.params.currentUser.is_admin) {
       forbiddenAttributes = forbiddenAttributes.concat(
         this.app.services.HelperService.getReadonlyAttributes('List', ['names']),
@@ -24,7 +24,7 @@ module.exports = class ListController extends Controller{
       forbiddenAttributes = forbiddenAttributes.concat(this.app.services.HelperService.getReadonlyAttributes('List', ['names']));
     }
     // Do not allow forbiddenAttributes to be updated directly
-    for (var i = 0, len = forbiddenAttributes.length; i < len; i++) {
+    for (let i = 0, len = forbiddenAttributes.length; i < len; i++) {
       if (request.payload[forbiddenAttributes[i]]) {
         delete request.payload[forbiddenAttributes[i]];
       }
@@ -64,7 +64,7 @@ module.exports = class ListController extends Controller{
 
     // Search with contains when searching in name or label
     if (criteria.name) {
-      var name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
+      let name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
       name = new RegExp(name, 'i');
       criteria['names.text'] = name;
       delete criteria.name;
@@ -79,7 +79,7 @@ module.exports = class ListController extends Controller{
 
     this.log.debug('[ListController] (find) model = list, criteria =', request.query, request.params.id, 'options =', options);
 
-    var findCallback = function (result) {
+    const findCallback = function (result) {
       if (!result) {
         return Boom.notFound();
       }
@@ -87,7 +87,7 @@ module.exports = class ListController extends Controller{
     };
 
     // List visiblity
-    var currentUser = request.params.currentUser,
+    const currentUser = request.params.currentUser,
       that = this;
 
     if (request.params.id) {
@@ -102,7 +102,7 @@ module.exports = class ListController extends Controller{
             throw Boom.notFound();
           }
 
-          var out = result.toJSON();
+          const out = result.toJSON();
           out.name = result.translatedAttribute('names', reqLanguage);
           out.acronym = result.translatedAttribute('acronyms', reqLanguage);
           out.visible = result.isVisibleTo(request.params.currentUser);
@@ -160,12 +160,12 @@ module.exports = class ListController extends Controller{
 
   _notifyManagers(uids, type, request, list) {
     const User = this.app.orm.user;
-    var that = this;
+    const that = this;
     User
       .find({_id: {$in: uids}})
       .exec()
       .then((users) => {
-        for (var i = 0, len = users.length; i < len; i++) {
+        for (let i = 0, len = users.length; i < len; i++) {
           that.app.services.NotificationService
             .send({type: type, user: users[i], createdBy: request.params.currentUser, params: { list: list } }, () => {});
         }
@@ -188,11 +188,11 @@ module.exports = class ListController extends Controller{
 
     this.log.debug('[ListController] (update) model = list, criteria =', request.query, request.params.id, ', values = ', request.payload);
 
-    var that = this;
+    const that = this;
     Model
       .findOne({_id: request.params.id})
       .then(list => {
-        var oldlist = _.clone(list);
+        const oldlist = _.clone(list);
         _.merge(list, request.payload);
         return list
           .save()
@@ -202,7 +202,7 @@ module.exports = class ListController extends Controller{
           });
       })
       .then((list) => {
-        var payloadManagers = [];
+        const payloadManagers = [];
         if (request.payload.managers) {
           request.payload.managers.forEach(function (man) {
             if (man._id) {
@@ -213,14 +213,14 @@ module.exports = class ListController extends Controller{
             }
           });
         }
-        var listManagers = [];
+        const listManagers = [];
         if (list.managers) {
           list.managers.forEach(function (man) {
             listManagers.push(man._id.toString());
           });
         }
-        var diffAdded = _.difference(payloadManagers, listManagers);
-        var diffRemoved = _.difference(listManagers, payloadManagers);
+        const diffAdded = _.difference(payloadManagers, listManagers);
+        const diffRemoved = _.difference(listManagers, payloadManagers);
         if (diffAdded.length) {
           that._notifyManagers(diffAdded, 'added_list_manager', request, list);
         }
@@ -238,14 +238,14 @@ module.exports = class ListController extends Controller{
       })
       .then(list => {
         // Update users
-        var criteria = {};
+        const criteria = {};
         criteria[list.type + 's.list'] = list._id.toString();
         return User
           .find(criteria)
           .then(users => {
-            for (var i = 0; i < users.length; i++) {
-              var user = users[i];
-              for (var j = 0; j < user[list.type + 's'].length; j++) {
+            for (let i = 0; i < users.length; i++) {
+              const user = users[i];
+              for (let j = 0; j < user[list.type + 's'].length; j++) {
                 if (user[list.type + 's'][j].list === list._id) {
                   user[list.type + 's'][j].name = list.name;
                   user[list.type + 's'][j].names = list.names;
@@ -288,14 +288,14 @@ module.exports = class ListController extends Controller{
       .then((record) => {
         reply(record);
         // Remove all checkins from users in this list
-        var criteria = {};
+        const criteria = {};
         criteria[record.type + 's.list'] = record._id.toString();
         return User
           .find(criteria)
           .then(users => {
-            for (var i = 0; i < users.length; i++) {
-              var user = users[i];
-              for (var j = 0; j < user[record.type + 's'].length; j++) {
+            for (let i = 0; i < users.length; i++) {
+              const user = users[i];
+              for (let j = 0; j < user[record.type + 's'].length; j++) {
                 if (user[record.type + 's'][j].list === record._id) {
                   user[record.type + 's'][j].deleted = true;
                 }

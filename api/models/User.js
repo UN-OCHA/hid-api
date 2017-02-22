@@ -43,6 +43,18 @@ module.exports = class User extends Model {
             'timestamp': parts[1],
             'hash': new Buffer(parts[2], 'base64').toString('ascii')
           };
+        },
+        listAttributes: function () {
+          return [
+            'lists',
+            'operations',
+            'bundles',
+            'disasters',
+            'organization',
+            'organizations',
+            'functional_roles',
+            'offices'
+          ];
         }
       },
       methods: {
