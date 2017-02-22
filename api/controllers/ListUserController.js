@@ -72,7 +72,7 @@ module.exports = class ListUserController extends Controller{
           }
 
           // Make sure user is not already checked in this list
-          for (var i = 0, len = record[childAttribute].length; i < len; i++) {
+          for (let i = 0, len = record[childAttribute].length; i < len; i++) {
             if (record[childAttribute][i].list.equals(list._id) && record[childAttribute][i].deleted === false) {
               throw Boom.badRequest('User is already checked in');
             }
@@ -82,7 +82,7 @@ module.exports = class ListUserController extends Controller{
       })
       .then((result) => {
         that.log.debug('Setting the listUser to the correct attribute');
-        var record = result.user,
+        const record = result.user,
           list = result.list;
         if (childAttribute !== 'organization') {
           if (!record[childAttribute]) {
@@ -98,8 +98,7 @@ module.exports = class ListUserController extends Controller{
       })
       .then((result) => {
         that.log.debug('Saving user');
-        var user = result.user;
-        return user
+        return result.user
           .save()
           .then(() => {
             reply(result.user);
@@ -107,7 +106,7 @@ module.exports = class ListUserController extends Controller{
           });
       })
       .then((result) => {
-        var managers = [];
+        const managers = [];
         result.list.managers.forEach(function (manager) {
           if (manager.toString() !== request.params.currentUser._id.toString()) {
             managers.push(manager);
@@ -136,7 +135,7 @@ module.exports = class ListUserController extends Controller{
       })
       .then((result) => {
         // Notify list owner and managers of the new checkin if needed
-        var list = result.list,
+        const list = result.list,
           user = result.user;
         if (payload.pending) {
           that.log.debug('Notifying list owners and manager of the new checkin');
@@ -175,14 +174,14 @@ module.exports = class ListUserController extends Controller{
       delete request.payload.visibility;
     }
 
-    var that = this;
+    const that = this;
     User
       .findOne({ _id: request.params.id })
       .then(record => {
         if (!record) {
           throw Boom.notFound();
         }
-        var lu = record[childAttribute].id(checkInId);
+        const lu = record[childAttribute].id(checkInId);
         _.assign(lu, request.payload);
         return record
           .save()
@@ -202,7 +201,7 @@ module.exports = class ListUserController extends Controller{
         let lu = result.listuser;
         if (lu.pending === true && request.payload.pending === false) {
           // Send a notification to inform user that his checkin is not pending anymore
-          var notification = {type: 'approved_checkin', user: result.user, createdBy: request.params.currentUser, params: { list: result.list}};
+          const notification = {type: 'approved_checkin', user: result.user, createdBy: request.params.currentUser, params: { list: result.list}};
           NotificationService.send(notification, () => {});
         }
       })

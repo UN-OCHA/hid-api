@@ -2,14 +2,11 @@
 
 const Controller = require('trails/controller');
 const Boom = require('boom');
-const Bcrypt = require('bcryptjs');
 const fs = require('fs');
 const qs = require('qs');
 const ejs = require('ejs');
 const http = require('http');
 const moment = require('moment');
-const async = require('async');
-const _ = require('lodash');
 const acceptLanguage = require('accept-language');
 
 /**
@@ -46,10 +43,10 @@ module.exports = class UserController extends Controller{
       request.payload.password = Model.hashPassword(Math.random().toString(36).slice(2));
     }
 
-    var appVerifyUrl = request.payload.app_verify_url;
+    const appVerifyUrl = request.payload.app_verify_url;
     delete request.payload.app_verify_url;
 
-    var registrationType = '';
+    let registrationType = '';
     if (request.payload.registration_type) {
       registrationType = request.payload.registration_type;
       delete request.payload.registration_type;
@@ -70,7 +67,7 @@ module.exports = class UserController extends Controller{
       }
     }
 
-    var that = this;
+    const that = this;
     Model
       .create(request.payload)
       .then((user) => {
@@ -109,7 +106,6 @@ module.exports = class UserController extends Controller{
   }
 
   create (request, reply) {
-    const FootprintService = this.app.services.FootprintService;
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
     const Model = this.app.orm.user;
 
@@ -119,7 +115,7 @@ module.exports = class UserController extends Controller{
       return reply(Boom.badRequest('Missing app_verify_url'));
     }
 
-    var that = this;
+    const that = this;
     if (request.payload.email) {
       Model
         .findOne({'emails.email': request.payload.email})
@@ -133,7 +129,7 @@ module.exports = class UserController extends Controller{
             record.email_verified = false;
             record.deleted = false;
             record.save().then(() => {
-              var appVerifyUrl = request.payload.app_verify_url;
+              const appVerifyUrl = request.payload.app_verify_url;
               that.app.services.EmailService.sendRegister(record, appVerifyUrl, function (merr, info) {
                 return reply(record);
               });
@@ -151,7 +147,7 @@ module.exports = class UserController extends Controller{
   }
 
   _pdfExport (data, req, format, callback) {
-    var filters = [];
+    const filters = [];
     if (req.query.hasOwnProperty('name') && req.query.name.length) {
       filters.push(req.query.name);
     }
@@ -191,21 +187,20 @@ module.exports = class UserController extends Controller{
 
     data.dateGenerated = moment().format('LL');
     data.filters = filters;
-    var template = 'templates/pdf/printList.html';
+    let template = 'templates/pdf/printList.html';
     if (format === 'meeting-compact') {
       template = 'templates/pdf/printMeetingCompact.html';
     }
     else if (format === 'meeting-comfortable') {
       template = 'templates/pdf/printMeetingComfortable.html';
     }
-    var that = this;
     ejs.renderFile(template, data, {}, function (err, str) {
       if (err) {
         callback(err);
       }
       else {
-        var postData = qs.stringify({
-            'html' : str
+        const postData = qs.stringify({
+            'html': str
           }),
           options = {
             hostname: process.env.WKHTMLTOPDF_HOST,
@@ -216,8 +211,8 @@ module.exports = class UserController extends Controller{
               'Content-Type': 'application/x-www-form-urlencoded',
               'Content-Length': postData.length
             }
-          },
-          clientReq;
+          };
+        let clientReq;
 
         // Send the HTML to the wkhtmltopdf service to generate a PDF, and
         // return the output.
@@ -225,9 +220,9 @@ module.exports = class UserController extends Controller{
           if (clientRes && clientRes.statusCode === 200) {
             clientRes.setEncoding('binary');
 
-            var pdfSize = parseInt(clientRes.headers['content-length']),
-              pdfBuffer = new Buffer(pdfSize),
-              bytes = 0;
+            const pdfSize = parseInt(clientRes.headers['content-length']),
+              pdfBuffer = new Buffer(pdfSize);
+            let bytes = 0;
 
             clientRes.on('data', function(chunk) {
               pdfBuffer.write(chunk, bytes, 'binary');
@@ -256,15 +251,15 @@ module.exports = class UserController extends Controller{
   }
 
   _txtExport (users) {
-    var out = '';
-    for (var i = 0; i < users.length; i++) {
+    let out = '';
+    for (let i = 0; i < users.length; i++) {
       out += users[i].name + ' <' + users[i].email + '>,';
     }
     return out;
   }
 
   _csvExport (users) {
-    var out = 'Given Name,Family Name,Job Title,Organization,Groups,Country,Admin Area,Phone,Skype,Email,Notes\n',
+    let out = 'Given Name,Family Name,Job Title,Organization,Groups,Country,Admin Area,Phone,Skype,Email,Notes\n',
       org = '',
       bundles = '',
       country = '',
@@ -273,7 +268,7 @@ module.exports = class UserController extends Controller{
       phoneNumber = '',
       skype = '',
       status = '';
-    for (var i = 0; i < users.length; i++) {
+    for (let i = 0; i < users.length; i++) {
       org = '';
       bundles = '';
       country = '';
@@ -297,7 +292,7 @@ module.exports = class UserController extends Controller{
         region = users[i].location.region.name;
       }
       if (users[i].voips.length) {
-        for (var j = 0; j < users[i].voips.length; j++) {
+        for (let j = 0; j < users[i].voips.length; j++) {
           if (users[i].voips[j].type === 'Skype') {
             skype = users[i].voips[j].username;
           }
@@ -322,7 +317,7 @@ module.exports = class UserController extends Controller{
   _findHelper(request, reply, criteria, options, lists) {
     const User = this.app.orm.User;
     const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
-    var pdfFormat = '';
+    let pdfFormat = '';
     if (criteria.format) {
       pdfFormat = criteria.format;
       delete criteria.format;
@@ -343,7 +338,7 @@ module.exports = class UserController extends Controller{
         if (!results.results) {
           return reply(Boom.notFound());
         }
-        for (var i = 0, len = results.results.length; i < len; i++) {
+        for (let i = 0, len = results.results.length; i < len; i++) {
           results.results[i].sanitize(request.params.currentUser);
           results.results[i].translateListNames(reqLanguage);
         }
@@ -468,7 +463,7 @@ module.exports = class UserController extends Controller{
             if (request.params.currentUser._id.toString() !== user._id.toString()) {
               // Notify user of the edit
               // TODO: add list of actions performed by the administrator
-              var notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
+              const notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
               NotificationService.send(notification, () => {});
             }
             return user;
@@ -496,7 +491,7 @@ module.exports = class UserController extends Controller{
       request.payload.verified = true;
     }
 
-    var that = this;
+    const that = this;
     if ((request.payload.old_password && request.payload.new_password) || request.payload.verified) {
       this.log.debug('Updating user password or user is verified');
       // Check old password
@@ -508,7 +503,7 @@ module.exports = class UserController extends Controller{
           }
           // If verifying user, set verified_by
           if (request.payload.verified && !user.verified) {
-            request.payload.verified_by = request.params.currentUser._id
+            request.payload.verified_by = request.params.currentUser._id;
           }
           if (request.payload.old_password) {
             if (user.validPassword(request.payload.old_password)) {
@@ -591,7 +586,7 @@ module.exports = class UserController extends Controller{
           return reply(Boom.notFound());
         }
         // Make sure email is validated
-        var index = record.emailIndex(email);
+        const index = record.emailIndex(email);
         if (index === -1) {
           return reply(Boom.badRequest('Email does not exist'));
         }
@@ -612,7 +607,7 @@ module.exports = class UserController extends Controller{
 
   validateEmail (request, reply) {
     const Model = this.app.orm.user;
-    var parts = {}, email = '';
+    let parts = {}, email = '';
 
     this.log.debug('[UserController] Verifying email ');
 
@@ -630,7 +625,7 @@ module.exports = class UserController extends Controller{
       email = request.params.email;
     }
 
-    var that = this;
+    const that = this;
     Model
       .findOne({ 'emails.email': email })
       .then(record => {
@@ -639,8 +634,7 @@ module.exports = class UserController extends Controller{
         }
         if (request.payload.hash) {
           // Verify hash
-          var valid = record.validHash(request.payload.hash);
-          if (valid === true) {
+          if (record.validHash(request.payload.hash)) {
             // Verify user email
             if (record.email === parts.email) {
               record.email_verified = true;
@@ -655,7 +649,7 @@ module.exports = class UserController extends Controller{
               .catch(err => { return reply(Boom.badImplementation(err.toString())); });
             }
             else {
-              for (var i = 0, len = record.emails.length; i < len; i++) {
+              for (let i = 0, len = record.emails.length; i < len; i++) {
                 if (record.emails[i].email === parts.email) {
                   record.emails[i].validated = true;
                   record.emails.set(i, record.emails[i]);
@@ -673,12 +667,12 @@ module.exports = class UserController extends Controller{
         }
         else {
           // Send validation email again
-          const app_validation_url = request.payload.app_validation_url;
-          that.app.services.EmailService.sendValidationEmail(record, email, app_validation_url, function (err, info) {
+          const appValidationUrl = request.payload.app_validation_url;
+          that.app.services.EmailService.sendValidationEmail(record, email, appValidationUrl, function (err, info) {
             return reply('Validation email sent successfully').code(202);
-          })
+          });
         }
-      })
+      });
   }
 
   resetPassword (request, reply) {
@@ -686,7 +680,7 @@ module.exports = class UserController extends Controller{
     const app_reset_url = request.payload.app_reset_url;
 
     if (request.payload.email) {
-      var that = this;
+      const that = this;
       Model
         .findOne({email: request.payload.email})
         .then(record => {
@@ -707,8 +701,7 @@ module.exports = class UserController extends Controller{
             if (!record) {
               return reply(Boom.badRequest('Email could not be found'));
             }
-            var valid = record.validHash(request.payload.hash);
-            if (valid === true) {
+            if (record.validHash(request.payload.hash)) {
               record.password = Model.hashPassword(request.payload.password);
               record.email_verified = true;
               record.expires = new Date(0, 0, 1, 0, 0, 0);
@@ -736,7 +729,7 @@ module.exports = class UserController extends Controller{
     const app_reset_url = request.payload.app_reset_url;
     const userId = request.params.id;
 
-    var that = this;
+    const that = this;
     Model
       .findOne({_id: userId})
       .then(record => {
@@ -744,151 +737,196 @@ module.exports = class UserController extends Controller{
           return reply(Boom.notFound());
         }
         that.app.services.EmailService.sendClaim(record, app_reset_url, function (err, info) {
-          return reply('Claim email sent successfully').code(202)
-        })
-      })
+          return reply('Claim email sent successfully').code(202);
+        });
+      });
   }
 
   updatePicture (request, reply) {
-    const Model = this.app.orm['user']
-    const userId = request.params.id
+    const Model = this.app.orm.User;
+    const userId = request.params.id;
 
     this.log.debug('[UserController] Updating picture ');
 
-    var data = request.payload;
+    const data = request.payload;
     if (data.file) {
       Model
         .findOne({_id: userId})
         .then(record => {
-          if (!record) return reply(Boom.notFound())
-          var ext = data.file.hapi.filename.split('.').pop();
-          var path = __dirname + "/../../assets/pictures/" + userId + '.' + ext;
-          var file = fs.createWriteStream(path);
+          if (!record) {
+            return reply(Boom.notFound());
+          }
+          const ext = data.file.hapi.filename.split('.').pop();
+          const path = __dirname + '/../../assets/pictures/' + userId + '.' + ext;
+          const file = fs.createWriteStream(path);
 
           file.on('error', function (err) {
-            reply(Boom.badImplementation(err))
+            reply(Boom.badImplementation(err));
           });
 
           data.file.pipe(file);
 
           data.file.on('end', function (err) {
-            record.picture = process.env.ROOT_URL + "/assets/pictures/" + userId + "." + ext;
+            record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + ext;
             record.save().then(() => {
-              return reply(record)
+              return reply(record);
             })
-            .catch(err => { return reply(Boom.badImplementation(err.toString())) })
-          })
-        })
+            .catch(err => {
+              return reply(Boom.badImplementation(err.toString()));
+            });
+          });
+        }
+      );
     }
     else {
-      return reply(Boom.badRequest('No file found'))
+      return reply(Boom.badRequest('No file found'));
     }
   }
 
   addEmail (request, reply) {
-    const Model = this.app.orm['user']
-    const app_validation_url = request.payload.app_validation_url
-    const userId = request.params.id
+    const Model = this.app.orm.User;
+    const appValidationUrl = request.payload.app_validation_url;
+    const userId = request.params.id;
 
-    this.log.debug('[UserController] adding email')
-    if (!app_validation_url || !request.payload.email) return reply(Boom.badRequest())
+    this.log.debug('[UserController] adding email');
+    if (!appValidationUrl || !request.payload.email) {
+      return reply(Boom.badRequest());
+    }
 
     // Make sure email added is unique
-    var that = this
+    const that = this;
     Model
       .findOne({'emails.email': request.payload.email})
       .then(erecord => {
-        if (erecord) return reply(Boom.badRequest('Email is not unique'))
+        if (erecord) {
+          return reply(Boom.badRequest('Email is not unique'));
+        }
         Model
           .findOne({_id: userId})
           .then(record => {
-            if (!record) return reply(Boom.notFound())
-            var email = request.payload.email
-            if (record.emailIndex(email) != -1) return reply(Boom.badRequest('Email already exists'))
+            if (!record) {
+              return reply(Boom.notFound());
+            }
+            const email = request.payload.email;
+            if (record.emailIndex(email) !== -1) {
+              return reply(Boom.badRequest('Email already exists'));
+            }
             // Send confirmation email
-            that.app.services.EmailService.sendValidationEmail(record, email, app_validation_url, function (err, info) {
-              var data = { email: email, type: request.payload.type, validated: false };
+            that.app.services.EmailService.sendValidationEmail(record, email, appValidationUrl, function (err, info) {
+              const data = { email: email, type: request.payload.type, validated: false };
               record.emails.push(data);
               record.save().then(() => {
-                return reply(record)
+                return reply(record);
               })
-              .catch(err => { return reply(Boom.badImplementation(err.toString())) })
-            })
-          })
-      })
+              .catch(err => {
+                return reply(Boom.badImplementation(err.toString()));
+              });
+            });
+          }
+        );
+      }
+    );
   }
 
   dropEmail (request, reply) {
-    const Model = this.app.orm['user']
-    const userId = request.params.id
+    const Model = this.app.orm.User;
+    const userId = request.params.id;
 
-    this.log.debug('[UserController] dropping email')
-    if (!request.params.email) return reply(Boom.badRequest())
+    this.log.debug('[UserController] dropping email');
+    if (!request.params.email) {
+      return reply(Boom.badRequest());
+    }
 
-    var that = this
+    const that = this;
     Model
       .findOne({_id: userId})
       .then(record => {
-        if (!record) return reply(Boom.notFound())
-        var email = request.params.email
-        if (email == record.email) return reply(Boom.badRequest('You can not remove the primary email'))
-        var index = record.emailIndex(email)
-        if (index == -1) return reply(Boom.badRequest('Email does not exist'))
-        record.emails.splice(index, 1)
+        if (!record) {
+          return reply(Boom.notFound());
+        }
+        const email = request.params.email;
+        if (email === record.email) {
+          return reply(Boom.badRequest('You can not remove the primary email'));
+        }
+        const index = record.emailIndex(email);
+        if (index === -1) {
+          return reply(Boom.badRequest('Email does not exist'));
+        }
+        record.emails.splice(index, 1);
         record.save().then(() => {
-          return reply(record)
+          return reply(record);
         })
-        .catch(err => { return reply(Boom.badImplementation(err.toString())) })
-      })
+        .catch(err => {
+          return reply(Boom.badImplementation(err.toString()));
+        });
+      }
+    );
   }
 
   addPhone (request, reply) {
-    const Model = this.app.orm['user']
-    const userId = request.params.id
+    const Model = this.app.orm.User;
+    const userId = request.params.id;
 
-    this.log.debug('[UserController] adding phone number')
+    this.log.debug('[UserController] adding phone number');
 
-    var that = this
+    const that = this;
     Model
       .findOne({_id: userId})
       .then(record => {
-        if (!record) return reply(Boom.notFound())
-        var data = { number: request.payload.number, type: request.payload.type };
+        if (!record) {
+          return reply(Boom.notFound());
+        }
+        const data = { number: request.payload.number, type: request.payload.type };
         record.phone_numbers.push(data);
         record.save().then(() => {
-          return reply(record)
+          return reply(record);
         })
-        .catch(err => { return reply(Boom.badImplementation(err.toString())) })
-      })
+        .catch(err => {
+          return reply(Boom.badImplementation(err.toString()));
+        });
+      }
+    );
   }
 
   dropPhone (request, reply) {
-    const Model = this.app.orm['user']
-    const userId = request.params.id
-    const phoneId = request.params.pid
+    const Model = this.app.orm.User;
+    const userId = request.params.id;
+    const phoneId = request.params.pid;
 
-    this.log.debug('[UserController] dropping phone number')
+    this.log.debug('[UserController] dropping phone number');
 
-    var that = this
+    const that = this;
     Model
       .findOne({_id: userId})
       .then(record => {
-        if (!record) return reply(Boom.notFound())
-        var index = -1
-        for (var i = 0, len = record.phone_numbers.length; i < len; i++) {
-          if (record.phone_numbers[i]._id == phoneId) {
-            index = i
+        if (!record) {
+          return reply(Boom.notFound());
+        }
+        let index = -1;
+        for (let i = 0, len = record.phone_numbers.length; i < len; i++) {
+          if (record.phone_numbers[i]._id === phoneId) {
+            index = i;
           }
         }
-        if (index == -1) return reply(Boom.notFound())
+        if (index === -1) {
+          return reply(Boom.notFound());
+        }
         // Do not allow deletion of primary phone number
-        if (record.phone_numbers[index].number == record.phone_number) return reply(Boom.badRequest('Can not remove primary phone number'))
-        record.phone_numbers.splice(index, 1)
-        record.save().then(() => {
-          return reply(record)
-        })
-        .catch(err => { return reply(Boom.badImplementation(err.toString())) })
-      })
+        if (record.phone_numbers[index].number === record.phone_number) {
+          return reply(Boom.badRequest('Can not remove primary phone number'));
+        }
+        record.phone_numbers.splice(index, 1);
+        record
+          .save()
+          .then(() => {
+            return reply(record);
+          })
+          .catch(err => {
+            return reply(Boom.badImplementation(err.toString()));
+          }
+        );
+      }
+    );
   }
 
   setPrimaryPhone (request, reply) {
@@ -898,26 +936,38 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('[UserController] Setting primary phone number');
 
-    if (!request.payload.phone) return reply(Boom.badRequest())
+    if (!request.payload.phone) {
+      return reply(Boom.badRequest());
+    }
     Model
       .findOne({ _id: request.params.id})
       .then(record => {
-        if (!record) return reply(Boom.notFound())
+        if (!record) {
+          return reply(Boom.notFound());
+        }
         // Make sure phone is part of phone_numbers
-        var index = -1
-        for (var i = 0, len = record.phone_numbers.length; i < len; i++) {
-          if (record.phone_numbers[i].number == phone) {
-            index = i
+        let index = -1;
+        for (let i = 0, len = record.phone_numbers.length; i < len; i++) {
+          if (record.phone_numbers[i].number === phone) {
+            index = i;
           }
         }
-        if (index == -1) return reply(Boom.badRequest('Phone does not exist'))
-        record.phone_number = record.phone_numbers[index].number
-        record.phone_number_type = record.phone_numbers[index].type
-        record.save().then(() => {
-          return reply(record)
-        })
-        .catch(err => { that._errorHandler(err, reply); })
-      })
+        if (index === -1) {
+          return reply(Boom.badRequest('Phone does not exist'));
+        }
+        record.phone_number = record.phone_numbers[index].number;
+        record.phone_number_type = record.phone_numbers[index].type;
+        record
+          .save()
+          .then(() => {
+            return reply(record);
+          })
+          .catch(err => {
+            that._errorHandler(err, reply);
+          }
+        );
+      }
+    );
   }
 
   setPrimaryOrganization (request, reply) {
@@ -935,7 +985,7 @@ module.exports = class UserController extends Controller{
         if (!user) {
           return reply(Boom.notFound());
         }
-        var checkin = user.organizations.id(request.payload._id);
+        const checkin = user.organizations.id(request.payload._id);
         if (!checkin) {
           return reply(Boom.badRequest('Organization should be part of user organizations'));
         }
@@ -949,29 +999,32 @@ module.exports = class UserController extends Controller{
   }
 
   showAccount (request, reply) {
-    reply(request.params.currentUser)
+    reply(request.params.currentUser);
   }
 
   notify (request, reply) {
-    const Model = this.app.orm['user']
+    const Model = this.app.orm.User;
 
-    this.log.debug('[UserController] Notifying user')
+    this.log.debug('[UserController] Notifying user');
 
-    var that = this
+    const that = this;
     Model
       .findOne({ _id: request.params.id})
       .then(record => {
-        if (!record) return reply(Boom.notFound())
+        if (!record) {
+          return reply(Boom.notFound());
+        }
 
-        var notPayload = {
+        const notPayload = {
           type: 'contact_needs_update',
           createdBy: request.params.currentUser,
           user: record
         };
         that.app.services.NotificationService.send(notPayload, function (out) {
-          return reply(out)
-        })
-      })
+          return reply(out);
+        });
+      }
+    );
   }
 
   addConnection (request, reply) {
@@ -979,7 +1032,7 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('[UserController] Adding connection');
 
-    let that = this;
+    const that = this;
 
     User
       .findOne({_id: request.params.id})
@@ -1002,7 +1055,7 @@ module.exports = class UserController extends Controller{
           .then(() => {
             reply(user);
 
-            var notification = {
+            const notification = {
               type: 'connection_request',
               createdBy: request.params.currentUser,
               user: user
@@ -1010,11 +1063,13 @@ module.exports = class UserController extends Controller{
             that.app.services.NotificationService.send(notification, function () {
 
             });
-          });
+          }
+        );
       })
       .catch(err => {
         that._errorHandler(err, reply);
-      });
+      }
+    );
   }
 
   updateConnection (request, reply) {
@@ -1030,7 +1085,7 @@ module.exports = class UserController extends Controller{
         if (!user) {
           return reply(Boom.notFound());
         }
-        var connection = user.connections.id(request.params.cid);
+        const connection = user.connections.id(request.params.cid);
         connection.pending = false;
         return user
           .save()
@@ -1043,7 +1098,7 @@ module.exports = class UserController extends Controller{
           .findOne({_id: result.connection.user})
           .then(cuser => {
             // Create connection with current user
-            var cindex = cuser.connectionsIndex(result.user._id);
+            const cindex = cuser.connectionsIndex(result.user._id);
             if (cindex === -1) {
               cuser.connections.push({pending: false, user: result.user._id});
             }
@@ -1055,7 +1110,7 @@ module.exports = class UserController extends Controller{
               .then(() => {
                 reply(result.user);
                 // Send notification
-                var notification = {
+                const notification = {
                   type: 'connection_approved',
                   createdBy: result.user,
                   user: cuser
@@ -1063,12 +1118,15 @@ module.exports = class UserController extends Controller{
                 that.app.services.NotificationService.send(notification, function () {
 
                 });
-              });
-          });
+              }
+            );
+          }
+        );
       })
       .catch(err => {
         that._errorHandler(err, reply);
-      });
+      }
+    );
   }
 
   deleteConnection (request, reply) {
@@ -1076,7 +1134,7 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('[UserController] Deleting connection');
 
-    let that = this;
+    const that = this;
 
     User
       .findOne({_id: request.params.id})
@@ -1095,4 +1153,4 @@ module.exports = class UserController extends Controller{
         that._errorHandler(err, reply);
       });
   }
-}
+};

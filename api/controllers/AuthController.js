@@ -197,13 +197,19 @@ module.exports = class AuthController extends Controller{
 
     if (!cookie || (cookie && !cookie.userId)) {
       this.log.info('Got request to /oauth/authorize without session. Redirecting to the login page.');
-      return reply.redirect('/?redirect=/oauth/authorize&client_id=' + request.query.client_id + '&redirect_uri=' + request.query.redirect_uri + '&response_type=' + request.query.response_type + '&state=' + request.query.state + '&scope=' + request.query.scope + '#login');
+      return reply.redirect('/?redirect=/oauth/authorize&client_id=' + request.query.client_id +
+        '&redirect_uri=' + request.query.redirect_uri +
+        '&response_type=' + request.query.response_type +
+        '&state=' + request.query.state +
+        '&scope=' + request.query.scope + '#login'
+      );
     }
 
     const that = this;
     User.findOne({_id: cookie.userId}, function (err, user) {
       if (err) {
-        that.log.warn('An error occurred in /oauth/authorize while trying to fetch the user record for ' + cookie.userId + ' who is an active session.');
+        that.log.warn('An error occurred in /oauth/authorize while trying to fetch the user record for ' + cookie.userId +
+          ' who is an active session.');
         return reply(Boom.badImplementation('An error occurred while processing request. Please try logging in again.'));
       }
       if (!user) {
@@ -258,7 +264,25 @@ module.exports = class AuthController extends Controller{
       subject_types_supported: ['public'],
       id_token_signing_alg_values_supported: ['RS256'],
       scopes_supported: ['openid', 'email', 'profile', 'phone'],
-      claims_supported: ['iss', 'sub', 'aud', 'exp', 'iat', 'name', 'given_name', 'family_name', 'middle_name', 'picture', 'email', 'email_verified', 'zoneinfo', 'locale', 'phone_number', 'phone_number_verified', 'updated_at']
+      claims_supported: [
+        'iss',
+        'sub',
+        'aud',
+        'exp',
+        'iat',
+        'name',
+        'given_name',
+        'family_name',
+        'middle_name',
+        'picture',
+        'email',
+        'email_verified',
+        'zoneinfo',
+        'locale',
+        'phone_number',
+        'phone_number_verified',
+        'updated_at'
+      ]
     };
     reply(out);
   }

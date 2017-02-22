@@ -1,6 +1,7 @@
 'use strict';
 
 const Controller = require('trails/controller');
+const Boom = require('boom');
 
 module.exports = class ViewController extends Controller {
 
@@ -24,7 +25,7 @@ module.exports = class ViewController extends Controller {
     if (session) { // User is already logged in
       if (request.query.client_id && request.query.redirect_uri && request.query.response_type && request.query.scope) {
         // Redirect to /oauth/authorize
-        var redirect = request.query.redirect || '/oauth/authorize';
+        let redirect = request.query.redirect || '/oauth/authorize';
         redirect += "?client_id=" + request.query.client_id;
         redirect += "&redirect_uri=" + request.query.redirect_uri;
         redirect += "&response_type=" + request.query.response_type;
@@ -47,7 +48,11 @@ module.exports = class ViewController extends Controller {
   }
 
   register (request, reply) {
-    const requestUrl = request.connection.info.protocol + '://' + request.info.host + '/verify?client_id=' + request.query.client_id + '&redirect_uri=' + request.query.redirect_uri + '&response_type=' + request.query.response_type + '&scope=' + request.query.scope;
+    const requestUrl = request.connection.info.protocol + '://' + request.info.host +
+      '/verify?client_id=' + request.query.client_id +
+      '&redirect_uri=' + request.query.redirect_uri +
+      '&response_type=' + request.query.response_type +
+      '&scope=' + request.query.scope;
     reply.view('register', {
       title: 'Register in Humanitarian ID',
       requestUrl: requestUrl
@@ -56,9 +61,9 @@ module.exports = class ViewController extends Controller {
 
   registerPost (request, reply) {
     const UserController = this.app.controllers.UserController;
-    var that = this;
+    const that = this;
     UserController.create(request, function (result) {
-      var al = that._getAlert(result, 'You registered successfully. Please confirm your email address', 'There was an error registering you.');
+      const al = that._getAlert(result, 'You registered successfully. Please confirm your email address', 'There was an error registering you.');
       return reply.view('login', {
         alert: al,
         query: request.query
@@ -68,11 +73,17 @@ module.exports = class ViewController extends Controller {
 
   verify (request, reply) {
     const UserController = this.app.controllers.UserController;
-    if (!request.query.hash) return reply(Boom.badRequest('Missing hash parameter'));
+    if (!request.query.hash) {
+      return reply(Boom.badRequest('Missing hash parameter'));
+    }
     request.payload = { hash: request.query.hash };
-    var that = this;
+    const that = this;
     UserController.validateEmail(request, function (result) {
-      var al = that._getAlert(result, 'Thank you for confirming your email address. You can now log in', 'There was an error confirming your email address.');
+      const al = that._getAlert(
+        result,
+        'Thank you for confirming your email address. You can now log in',
+        'There was an error confirming your email address.'
+      );
       return reply.view('login', {
         alert: al,
         query: request.query
@@ -81,7 +92,11 @@ module.exports = class ViewController extends Controller {
   }
 
   password (request, reply) {
-    const requestUrl = request.connection.info.protocol + '://' + request.info.host + '/new_password?client_id=' + request.query.client_id + '&redirect_uri=' + request.query.redirect_uri + '&response_type=' + request.query.response_type + '&scope=' + request.query.scope;
+    const requestUrl = request.connection.info.protocol + '://' + request.info.host +
+      '/new_password?client_id=' + request.query.client_id +
+      '&redirect_uri=' + request.query.redirect_uri +
+      '&response_type=' + request.query.response_type +
+      '&scope=' + request.query.scope;
     reply.view('password', {
       requestUrl: requestUrl
     });
@@ -89,9 +104,13 @@ module.exports = class ViewController extends Controller {
 
   passwordPost (request, reply) {
     const UserController = this.app.controllers.UserController;
-    var that = this;
+    const that = this;
     UserController.resetPassword(request, function (result) {
-      var al = that._getAlert(result, 'You should have received an email which will allow you to reset your password.', 'There was an error resetting your password.');
+      const al = that._getAlert(
+        result,
+        'You should have received an email which will allow you to reset your password.',
+        'There was an error resetting your password.'
+      );
       return reply.view('login', {
         alert: al,
         query: request.query
@@ -107,9 +126,9 @@ module.exports = class ViewController extends Controller {
 
   newPasswordPost (request, reply) {
     const UserController = this.app.controllers.UserController;
-    var that = this;
+    const that = this;
     UserController.resetPassword(request, function (result) {
-      var al = that._getAlert(result, 'Your password was successfully reset.', 'There was an error resetting your password.');
+      const al = that._getAlert(result, 'Your password was successfully reset.', 'There was an error resetting your password.');
       return reply.view('login', {
         alert: al,
         query: request.payload
