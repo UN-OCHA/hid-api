@@ -484,11 +484,13 @@ module.exports = class User extends Model {
         type: String,
         lowercase: true,
         trim: true,
-        match: /^([\w-\.\+]+@([\w-]+\.)+[\w-]{2,4})?$/
+        match: /^([\w-\.\+]+@([\w-]+\.)+[\w-]{2,4})?$/,
+        required: true
       },
       service: {
         type: Schema.ObjectId,
-        ref: 'Service'
+        ref: 'Service',
+        required: true
       }
     });
 
