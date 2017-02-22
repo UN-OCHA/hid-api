@@ -20,20 +20,7 @@ module.exports = class UserController extends Controller{
 
   _removeForbiddenAttributes (request) {
     const childAttributes = this.app.orm.User.listAttributes();
-    let forbiddenAttributes = [];
-    forbiddenAttributes = childAttributes.concat(this.app.services.HelperService.getReadonlyAttributes('User'));
-    if (!request.params.currentUser || !request.params.currentUser.is_admin) {
-      forbiddenAttributes = forbiddenAttributes.concat(this.app.services.HelperService.getAdminOnlyAttributes('User'));
-    }
-    if (!request.params.currentUser || (!request.params.currentUser.is_admin && !request.params.currentUser.isManager)) {
-      forbiddenAttributes = forbiddenAttributes.concat(this.app.services.HelperService.getManagerOnlyAttributes('User'));
-    }
-    // Do not allow forbiddenAttributes to be updated directly
-    for (let i = 0, len = forbiddenAttributes.length; i < len; i++) {
-      if (request.payload[forbiddenAttributes[i]]) {
-        delete request.payload[forbiddenAttributes[i]];
-      }
-    }
+    this.app.services.HelperService.removeForbiddenAttributes('User', request, childAttributes);
   }
 
   _errorHandler (err, reply) {

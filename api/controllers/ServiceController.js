@@ -33,7 +33,7 @@ module.exports = class ServiceController extends Controller{
     }
 
     // Do not show deleted lists
-    criteria.deleted = {$in: [false, null]};
+    criteria.deleted = false;
 
     if (criteria.lists) {
       criteria.lists = {$in: criteria.lists.split(',')};
@@ -65,7 +65,7 @@ module.exports = class ServiceController extends Controller{
             if (!results) {
               return Boom.notFound();
             }
-            for (var i = 0; i < results.length; i++) {
+            for (let i = 0; i < results.length; i++) {
               results[i].sanitize(request.params.currentUser);
             }
             return reply(results).header('X-Total-Count', number);
@@ -93,9 +93,9 @@ module.exports = class ServiceController extends Controller{
 
   mailchimpLists (request, reply) {
     if (request.query.apiKey) {
-      var that = this;
+      const that = this;
       try {
-        var mc = new Mailchimp(request.query.apiKey);
+        const mc = new Mailchimp(request.query.apiKey);
         mc.get({
           path: '/lists'
         })
@@ -128,7 +128,7 @@ module.exports = class ServiceController extends Controller{
           throw Boom.badRequest();
         }
         Service.googleGroupsAuthorize(creds.googlegroup, function (auth) {
-          var service = google.admin('directory_v1');
+          const service = google.admin('directory_v1');
           service.groups.list({
             auth: auth,
             customer: 'my_customer',
@@ -137,8 +137,7 @@ module.exports = class ServiceController extends Controller{
             if (err) {
               throw err;
             }
-            var groups = response.groups;
-            return reply(groups);
+            return reply(response.groups);
           });
         });
       })
@@ -153,10 +152,10 @@ module.exports = class ServiceController extends Controller{
     const User = this.app.orm.User;
     const Service = this.app.orm.Service;
     const ServiceCredentials = this.app.orm.ServiceCredentials;
+    const NotificationService = this.app.services.NotificationService;
 
-    let that = this,
-     user = {},
-     service = {};
+    const that = this;
+    let user = {}, service = {};
     User
       .findOne({'_id': request.params.id})
       .then((user) => {
@@ -238,8 +237,7 @@ module.exports = class ServiceController extends Controller{
       .then (() => {
         // Send notification to user that he was subscribed to a service
         if (user.id !== request.params.currentUser.id) {
-          const NotificationService = that.app.services.NotificationService;
-          var notification = {type: 'service_subscription', user: user, createdBy: request.params.currentUser, params: { service: service}};
+          const notification = {type: 'service_subscription', user: user, createdBy: request.params.currentUser, params: { service: service}};
           NotificationService.send(notification, () => {});
         }
       })
@@ -250,8 +248,7 @@ module.exports = class ServiceController extends Controller{
           user.save();
           reply(user);
           if (user.id !== request.params.currentUser.id) {
-            const NotificationService = that.app.services.NotificationService;
-            var notification = {type: 'service_subscription', user: user, createdBy: request.params.currentUser, params: { service: service}};
+            const notification = {type: 'service_subscription', user: user, createdBy: request.params.currentUser, params: { service: service}};
             NotificationService.send(notification, () => {});
           }
         }
@@ -265,10 +262,10 @@ module.exports = class ServiceController extends Controller{
     const User = this.app.orm.User;
     const Service = this.app.orm.Service;
     const ServiceCredentials = this.app.orm.ServiceCredentials;
+    const NotificationService = this.app.services.NotificationService;
 
-    let that = this,
-      user = {},
-      service = {};
+    const that = this;
+    let user = {}, service = {};
     User
       .findOne({'_id': request.params.id})
       .then((user) => {
@@ -285,7 +282,7 @@ module.exports = class ServiceController extends Controller{
         }
       })
       .then((user) => {
-        var index = user.subscriptionsIndex(request.params.serviceId);
+        const index = user.subscriptionsIndex(request.params.serviceId);
         service = user.subscriptions[index].service;
         if (service.type === 'googlegroup') {
           return ServiceCredentials
@@ -303,7 +300,7 @@ module.exports = class ServiceController extends Controller{
       })
       .then((result) => {
         user = result.user;
-        var index = user.subscriptionsIndex(request.params.serviceId);
+        const index = user.subscriptionsIndex(request.params.serviceId);
         if (service.type === 'mailchimp') {
           return service.unsubscribeMailchimp(user)
             .then((output) => {
@@ -333,8 +330,7 @@ module.exports = class ServiceController extends Controller{
       .then (() => {
         // Send notification to user that he was subscribed to a service
         if (user.id !== request.params.currentUser.id) {
-          const NotificationService = that.app.services.NotificationService;
-          var notification = {type: 'service_unsubscription', user: user, createdBy: request.params.currentUser, params: { service: service}};
+          const notification = {type: 'service_unsubscription', user: user, createdBy: request.params.currentUser, params: { service: service}};
           NotificationService.send(notification, () => {});
         }
       })

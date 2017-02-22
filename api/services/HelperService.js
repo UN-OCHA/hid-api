@@ -43,6 +43,24 @@ module.exports = class HelperService extends Service {
     return this[variableName];
   }
 
+  removeForbiddenAttributes (modelName, request, extras) {
+    let forbiddenAttributes = [];
+    forbiddenAttributes = this.getReadonlyAttributes(modelName);
+    if (!request.params.currentUser || !request.params.currentUser.is_admin) {
+      forbiddenAttributes = forbiddenAttributes.concat(this.getAdminOnlyAttributes(modelName));
+    }
+    if (!request.params.currentUser || (!request.params.currentUser.is_admin && !request.params.currentUser.isManager)) {
+      forbiddenAttributes = forbiddenAttributes.concat(this.getManagerOnlyAttributes(modelName));
+    }
+    forbiddenAttributes = forbiddenAttributes.concat(extras);
+    // Do not allow forbiddenAttributes to be updated directly
+    for (let i = 0, len = forbiddenAttributes.length; i < len; i++) {
+      if (request.payload[forbiddenAttributes[i]]) {
+        delete request.payload[forbiddenAttributes[i]];
+      }
+    }
+  }
+
   getOptionsFromQuery(query) {
     return _.pick(query, queryOptions);
   }

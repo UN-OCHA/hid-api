@@ -13,22 +13,7 @@ const acceptLanguage = require('accept-language');
 module.exports = class ListController extends Controller{
 
   _removeForbiddenAttributes (request) {
-    let forbiddenAttributes = [];
-    if (!request.params.currentUser || !request.params.currentUser.is_admin) {
-      forbiddenAttributes = forbiddenAttributes.concat(
-        this.app.services.HelperService.getReadonlyAttributes('List', ['names']),
-        this.app.services.HelperService.getAdminOnlyAttributes('List')
-      );
-    }
-    else {
-      forbiddenAttributes = forbiddenAttributes.concat(this.app.services.HelperService.getReadonlyAttributes('List', ['names']));
-    }
-    // Do not allow forbiddenAttributes to be updated directly
-    for (let i = 0, len = forbiddenAttributes.length; i < len; i++) {
-      if (request.payload[forbiddenAttributes[i]]) {
-        delete request.payload[forbiddenAttributes[i]];
-      }
-    }
+    this.app.services.HelperService.removeForbiddenAttributes('List', request, ['names']);
   }
 
   create (request, reply) {
@@ -75,7 +60,7 @@ module.exports = class ListController extends Controller{
     }
 
     // Do not show deleted lists
-    criteria.deleted = {$in: [false, null]};
+    criteria.deleted = false;
 
     this.log.debug('[ListController] (find) model = list, criteria =', request.query, request.params.id, 'options =', options);
 
