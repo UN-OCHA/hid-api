@@ -12,37 +12,16 @@ const acceptLanguage = require('accept-language');
  */
 module.exports = class ListController extends Controller{
 
-  _getAdminOnlyAttributes () {
-    return this._getSchemaAttributes('adminOnlyAttributes', 'adminOnly');
-  }
-
-  _getReadonlyAttributes () {
-    var attrs = this._getSchemaAttributes('readonlyAttributes', 'readonly');
-    attrs.push('names');
-    return attrs;
-  }
-
-  _getSchemaAttributes (variableName, attributeName) {
-    if (!this[variableName] || this[variableName].length === 0) {
-      const Model = this.app.orm.list;
-      this[variableName] = [];
-      var that = this;
-      Model.schema.eachPath(function (path, options) {
-        if (options.options[attributeName]) {
-          that[variableName].push(path);
-        }
-      });
-    }
-    return this[variableName];
-  }
-
   _removeForbiddenAttributes (request) {
     var forbiddenAttributes = [];
     if (!request.params.currentUser || !request.params.currentUser.is_admin) {
-      forbiddenAttributes = forbiddenAttributes.concat(this._getReadonlyAttributes(), this._getAdminOnlyAttributes());
+      forbiddenAttributes = forbiddenAttributes.concat(
+        this.app.services.HelperService.getReadonlyAttributes('List', ['names']),
+        this.app.services.HelperService.getAdminOnlyAttributes('List')
+      );
     }
     else {
-      forbiddenAttributes = forbiddenAttributes.concat(this._getReadonlyAttributes());
+      forbiddenAttributes = forbiddenAttributes.concat(this.app.services.HelperService.getReadonlyAttributes('List', ['names']));
     }
     // Do not allow forbiddenAttributes to be updated directly
     for (var i = 0, len = forbiddenAttributes.length; i < len; i++) {

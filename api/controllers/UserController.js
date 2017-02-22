@@ -19,43 +19,17 @@ const childAttributes = ['lists', 'organization', 'organizations', 'operations',
  */
 module.exports = class UserController extends Controller{
 
-  _getAdminOnlyAttributes () {
-    return this._getSchemaAttributes('adminOnlyAttributes', 'adminOnly');
-  }
-
-  _getManagerOnlyAttributes () {
-    return this._getSchemaAttributes('managerOnlyAttributes', 'managerOnly');
-  }
-
-  _getReadonlyAttributes () {
-    return this._getSchemaAttributes('readonlyAttributes', 'readonly');
-  }
-
-  _getSchemaAttributes (variableName, attributeName) {
-    if (!this[variableName] || this[variableName].length === 0) {
-      const Model = this.app.orm.user;
-      this[variableName] = [];
-      var that = this;
-      Model.schema.eachPath(function (path, options) {
-        if (options.options[attributeName]) {
-          that[variableName].push(path);
-        }
-      });
-    }
-    return this[variableName];
-  }
-
   _removeForbiddenAttributes (request) {
-    var forbiddenAttributes = [];
-    forbiddenAttributes = childAttributes.concat(this._getReadonlyAttributes());
+    let forbiddenAttributes = [];
+    forbiddenAttributes = childAttributes.concat(this.app.services.HelperService.getReadonlyAttributes('User'));
     if (!request.params.currentUser || !request.params.currentUser.is_admin) {
-      forbiddenAttributes = forbiddenAttributes.concat(this._getAdminOnlyAttributes());
+      forbiddenAttributes = forbiddenAttributes.concat(this.app.services.HelperService.getAdminOnlyAttributes('User'));
     }
     if (!request.params.currentUser || (!request.params.currentUser.is_admin && !request.params.currentUser.isManager)) {
-      forbiddenAttributes = forbiddenAttributes.concat(this._getManagerOnlyAttributes());
+      forbiddenAttributes = forbiddenAttributes.concat(this.app.services.HelperService.getManagerOnlyAttributes('User'));
     }
     // Do not allow forbiddenAttributes to be updated directly
-    for (var i = 0, len = forbiddenAttributes.length; i < len; i++) {
+    for (let i = 0, len = forbiddenAttributes.length; i < len; i++) {
       if (request.payload[forbiddenAttributes[i]]) {
         delete request.payload[forbiddenAttributes[i]];
       }
@@ -440,7 +414,7 @@ module.exports = class UserController extends Controller{
       delete criteria.country;
     }
 
-    criteria.deleted = {$in: [false, null]};
+    criteria.deleted = false;
 
     let that = this;
 

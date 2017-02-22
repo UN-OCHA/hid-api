@@ -15,18 +15,47 @@ const queryOptions = [
  * @description General Helper Service
  */
 module.exports = class HelperService extends Service {
+
+  getManagerOnlyAttributes (modelName) {
+    return this.getSchemaAttributes(modelName, 'managerOnlyAttributes', 'managerOnly');
+  }
+
+  getReadonlyAttributes (modelName, extras) {
+    const attrs = this.getSchemaAttributes(modelName, 'readonlyAttributes', 'readonly');
+    return _.union(attrs, extras);
+  }
+
+  getAdminOnlyAttributes (modelName) {
+    return this.getSchemaAttributes(modelName, 'adminOnlyAttributes', 'adminOnly');
+  }
+
+  getSchemaAttributes (modelName, variableName, attributeName) {
+    if (!this[variableName] || this[variableName].length === 0) {
+      const Model = this.app.orm[modelName];
+      this[variableName] = [];
+      const that = this;
+      Model.schema.eachPath(function (path, options) {
+        if (options.options[attributeName]) {
+          that[variableName].push(path);
+        }
+      });
+    }
+    return this[variableName];
+  }
+
   getOptionsFromQuery(query) {
     return _.pick(query, queryOptions);
   }
 
   getCriteriaFromQuery(query) {
     let criteria = _.omit(query, queryOptions);
-    for (let i = 0, len = criteria.length; i < len; i++) {
-      if (criteria[i] === 'true') {
-        criteria[i] = true;
+    const keys = Object.keys(criteria);
+    for (let i = 0, len = keys.length; i < len; i++) {
+      if (criteria[keys[i]] === 'true') {
+        criteria[keys[i]] = true;
       }
-      if (criteria[i] === false) {
-        criteria[i] = false;
+      if (criteria[keys[i]] === 'false') {
+        criteria[keys[i]] = false;
       }
     }
     return criteria;
