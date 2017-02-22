@@ -270,7 +270,6 @@ module.exports = class ServiceController extends Controller{
     let user = {}, service = {};
     User
       .findOne({'_id': request.params.id})
-      .populate('subscriptions.service')
       .then((user) => {
         if (!user) {
           throw Boom.notFound();
@@ -285,8 +284,19 @@ module.exports = class ServiceController extends Controller{
         }
       })
       .then((user) => {
-        const index = user.subscriptionsIndex(request.params.serviceId);
-        service = user.subscriptions[index].service;
+        return Service
+          .findOne({'_id': request.params.serviceId, deleted: false})
+          .then((srv) => {
+            if (!srv) {
+              throw Boom.badRequest();
+            }
+            else {
+              service = srv;
+              return user;
+            }
+          });
+      })
+      .then((user) => {
         if (service.type === 'googlegroup') {
           return ServiceCredentials
             .findOne({type: 'googlegroup', 'googlegroup.domain': service.googlegroup.domain})
