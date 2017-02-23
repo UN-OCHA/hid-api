@@ -218,7 +218,7 @@ module.exports = class ListController extends Controller{
       })
       .then(list => {
         return Model
-          .find({_id: request.params.id})
+          .findOne({_id: request.params.id})
           .then(newlist => {
             return newlist;
           });
