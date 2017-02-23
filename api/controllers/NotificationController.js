@@ -39,7 +39,7 @@ module.exports = class NotificationController extends Controller{
     const Notification = this.app.orm.Notification;
     const that = this;
 
-    if (!request.payload || !request.payload.read || !request.payload.notified) {
+    if (!request.payload || !request.payload.hasOwnProperty('read')|| !request.payload.hasOwnProperty('notified')) {
       return reply(Boom.badRequest());
     }
 
