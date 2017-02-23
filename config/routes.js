@@ -356,7 +356,7 @@ module.exports = [
   },
 
   {
-    method: [ 'PUT', 'PATCH' ],
+    method: 'PUT',
     path: '/api/v2/list/{id}',
     handler: 'ListController.update'
   },
@@ -380,7 +380,7 @@ module.exports = [
   },
 
   {
-    method: [ 'PUT', 'PATCH' ],
+    method: 'PUT',
     path: '/api/v2/client/{id}',
     handler: 'ClientController.update'
   },
@@ -398,7 +398,7 @@ module.exports = [
   },
 
   {
-    method: [ 'PUT', 'PATCH' ],
+    method: 'PUT',
     path: '/api/v2/notification/{id?}',
     handler: 'NotificationController.update'
   },
