@@ -166,15 +166,10 @@ module.exports = class ListController extends Controller{
   }
 
   update (request, reply) {
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const Model = this.app.orm.list;
     const User = this.app.orm.user;
 
     this._removeForbiddenAttributes(request);
-
-    if (!options.populate) {
-      options.populate = 'owner managers';
-    }
 
     this.log.debug(
       '[ListController] (update) model = list, criteria =',
@@ -190,6 +185,7 @@ module.exports = class ListController extends Controller{
       .then(list => {
         const oldlist = _.clone(list);
         _.merge(list, request.payload);
+        list.markModified('managers');
         return list
           .save()
           .then(() => {
@@ -201,18 +197,13 @@ module.exports = class ListController extends Controller{
         const payloadManagers = [];
         if (request.payload.managers) {
           request.payload.managers.forEach(function (man) {
-            if (man._id) {
-              payloadManagers.push(man._id.toString());
-            }
-            else {
-              payloadManagers.push(man);
-            }
+            payloadManagers.push(man.toString());
           });
         }
         const listManagers = [];
         if (list.managers) {
           list.managers.forEach(function (man) {
-            listManagers.push(man._id.toString());
+            listManagers.push(man.toString());
           });
         }
         const diffAdded = _.difference(payloadManagers, listManagers);
