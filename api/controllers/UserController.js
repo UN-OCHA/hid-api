@@ -323,7 +323,7 @@ module.exports = class UserController extends Controller{
       delete criteria.format;
     }
 
-    let that = this;
+    const that = this;
     this.log.debug('[UserController] (find) criteria = ', criteria, ' options = ', options);
     const query = this.app.services.HelperService.find('User', criteria, options);
     query
@@ -375,35 +375,17 @@ module.exports = class UserController extends Controller{
   }
 
   find (request, reply) {
-    const FootprintService = this.app.services.FootprintService;
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    let criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
-    const List = this.app.orm.List,
-      User = this.app.orm.User;
-    const childAttributes = User.listAttributes();
-
-    // Hide unconfirmed users which are not orphans
-    if (request.params.currentUser && !request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
-      criteria.$or = [{'email_verified': true}, {'is_orphan': true}, {'is_ghost': true}];
-    }
-
-    if (criteria.name) {
-      criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
-      criteria.name = new RegExp(criteria.name, 'i');
-    }
-
-    if (criteria.country) {
-      criteria['location.country.id'] = criteria.country;
-      delete criteria.country;
-    }
-
-    criteria.deleted = false;
-
-    let that = this;
+    const User = this.app.orm.User;
+    const that = this;
 
     if (request.params.id) {
+      const criteria = {_id: request.params.id, deleted: false};
+      if (!request.params.currentUser.verified) {
+        criteria.is_orphan = false;
+        criteria.is_ghost = false;
+      }
       User
-        .findOne({_id: request.params.id})
+        .findOne(criteria)
         .then((user) => {
           if (!user) {
             return reply(Boom.notFound());
@@ -418,6 +400,31 @@ module.exports = class UserController extends Controller{
         });
     }
     else {
+      const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
+      const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
+      const List = this.app.orm.List;
+      const childAttributes = User.listAttributes();
+
+      // Hide unconfirmed users which are not orphans
+      if (request.params.currentUser && !request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
+        criteria.$or = [{'email_verified': true}, {'is_orphan': true}, {'is_ghost': true}];
+      }
+
+      if (criteria.name) {
+        criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
+        criteria.name = new RegExp(criteria.name, 'i');
+      }
+
+      if (criteria.country) {
+        criteria['location.country.id'] = criteria.country;
+        delete criteria.country;
+      }
+
+      criteria.deleted = false;
+      if (!request.params.currentUser.verified) {
+        criteria.is_orphan = false;
+        criteria.is_ghost = false;
+      }
       const listIds = [];
       for (let i = 0; i < childAttributes.length; i++) {
         if (criteria[childAttributes[i] + '.list']) {
