@@ -235,75 +235,75 @@ const importLists = function (app) {
   //Cache.then((mongoCache) => {
     //return mongoCache.get('lastPull', function (err, lastPull) {
       //if (err) app.log.info(err)
-      if (!lastPull) {
-        lastPull = 0;
-      }
-      async.eachSeries(languages, function (language, nextLanguage) {
-        // For each list type
-        async.eachSeries(listTypes,
-          function(listType, nextType) {
-            // Parse while there are pages
-            async.doWhilst(function (nextPage) {
-              path = '/' + language + '/api/v1.0/' + listType + 's?page=' + pageNumber + '&filter[created][value]=' + lastPull + '&filter[created][operator]=>';
-              if (listType === 'organization' || listType === 'functional_role') {
-                path = '/' + language + '/api/v1.0/' + listType + 's?page=' + pageNumber;
+  if (!lastPull) {
+    lastPull = 0;
+  }
+  async.eachSeries(languages, function (language, nextLanguage) {
+    // For each list type
+    async.eachSeries(listTypes,
+      function(listType, nextType) {
+        // Parse while there are pages
+        async.doWhilst(function (nextPage) {
+          path = '/' + language + '/api/v1.0/' + listType + 's?page=' + pageNumber + '&filter[created][value]=' + lastPull + '&filter[created][operator]=>';
+          if (listType === 'organization' || listType === 'functional_role') {
+            path = '/' + language + '/api/v1.0/' + listType + 's?page=' + pageNumber;
+          }
+          https.get({
+            host: 'www.humanitarianresponse.info',
+            port: 443,
+            path: path
+          }, function (response) {
+            pageNumber++;
+            let body = '';
+            response.on('data', function (d) {
+              body += d;
+            });
+            response.on('end', function() {
+              let parsed = {};
+              try {
+                parsed = JSON.parse(body);
+                hasNextPage = parsed.next ? true : false;
+                async.eachSeries(parsed.data, function (item, cb) {
+                  // Do not add disasters more than 2 years old
+                  if (listType !== 'disaster' || (listType === 'disaster' && now - item.created < 2 * 365 * 24 * 3600)) {
+                    _createList(listType, language, item, cb);
+                  }
+                  else {
+                    cb();
+                  }
+                }, function (err) {
+                  setTimeout(function() {
+                    app.log.info('Done loading page ' + pageNumber + ' for ' + listType);
+                    nextPage();
+                  }, 1000);
+                });
               }
-              https.get({
-                host: 'www.humanitarianresponse.info',
-                port: 443,
-                path: path
-              }, function (response) {
-                pageNumber++;
-                let body = '';
-                response.on('data', function (d) {
-                  body += d;
-                });
-                response.on('end', function() {
-                  let parsed = {};
-                  try {
-                    parsed = JSON.parse(body);
-                    hasNextPage = parsed.next ? true : false;
-                    async.eachSeries(parsed.data, function (item, cb) {
-                      // Do not add disasters more than 2 years old
-                      if (listType !== 'disaster' || (listType === 'disaster' && now - item.created < 2 * 365 * 24 * 3600)) {
-                        _createList(listType, language, item, cb);
-                      }
-                      else {
-                        cb();
-                      }
-                    }, function (err) {
-                      setTimeout(function() {
-                        app.log.info('Done loading page ' + pageNumber + ' for ' + listType);
-                        nextPage();
-                      }, 1000);
-                    });
-                  }
-                  catch (e) {
-                    app.log.error('Error parsing hrinfo API: ' + e);
-                  }
-                });
-              });
-            }, function () {
-              return hasNextPage;
-            }, function (err, results) {
-              pageNumber = 1;
-              app.log.info('Done processing all ' + listType + 's');
-              nextType();
-            }
-          );
-        }, function (err) {
-          const currentTime = Math.round(Date.now() / 1000);
-          // Keep item in cache 12 minutes (720 seconds)
-          app.log.info(currentTime);
-          /*mongoCache.set('lastPull', currentTime, {ttl: 720}, function (err) {
-            app.log.info(err);
-          });*/
-          app.log.info('Done processing all list types for ' + language);
-          nextLanguage();
+              catch (e) {
+                app.log.error('Error parsing hrinfo API: ' + e);
+              }
+            });
+          });
+        }, function () {
+          return hasNextPage;
+        }, function (err, results) {
+          pageNumber = 1;
+          app.log.info('Done processing all ' + listType + 's');
+          nextType();
         });
       }, function (err) {
-        app.log.info('Done importing lists');
-      });
+        const currentTime = Math.round(Date.now() / 1000);
+        // Keep item in cache 12 minutes (720 seconds)
+        app.log.info(currentTime);
+        /*mongoCache.set('lastPull', currentTime, {ttl: 720}, function (err) {
+          app.log.info(err);
+        });*/
+        app.log.info('Done processing all list types for ' + language);
+        nextLanguage();
+      }
+    );
+  }, function (err) {
+    app.log.info('Done importing lists');
+  });
     //});
   //});
 };

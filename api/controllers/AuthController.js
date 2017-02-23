@@ -84,14 +84,14 @@ module.exports = class AuthController extends Controller{
         redirect += '&response_type=' + request.payload.response_type;
         redirect += '&scope=' + request.payload.scope;
 
-        if (typeof request.payload.response_type === 'undefined' || typeof request.payload.scope === 'undefined') {
+        /*if (typeof request.payload.response_type === 'undefined' || typeof request.payload.scope === 'undefined') {
           //that.log.warn({type: 'authenticate:error', body: req.body, cookies: req.cookies, header: req.headers, query: req.query},
           //  'Undefined response_type or scope');
         }
 
         // Record the successful authentication date.
         // This facilitates troubleshooting, e.g., 10 account floods, no successes since last year.
-        /*currentUser.login_last = Date.now();
+        currentUser.login_last = Date.now();
         currentUser.save(function(err, item) {
           if (err || !item) {
             log.warn({ type: 'account:error', data: item, err: err },
@@ -106,7 +106,12 @@ module.exports = class AuthController extends Controller{
         });*/
 
         reply.redirect(redirect);
-        that.log.info('Authentication successful for ' + request.payload.email + '. Redirecting to ' + redirect);
+        that.log.info(
+          'Authentication successful for ' +
+          request.payload.email +
+          '. Redirecting to ' +
+          redirect
+        );
       }
       else {
         return reply.view('login', {
@@ -135,8 +140,16 @@ module.exports = class AuthController extends Controller{
     // all relevant query parameters.
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId)) {
-      this.log.info('Get request to /oauth/authorize without session. Redirecting to the login page.');
-      return reply.redirect('/?redirect=/oauth/authorize&client_id=' + request.query.client_id + '&redirect_uri=' + request.query.redirect_uri + '&response_type=' + request.query.response_type + '&state=' + request.query.state + '&scope=' + request.query.scope + '#login');
+      this.log.info(
+        'Get request to /oauth/authorize without session. Redirecting to the login page.'
+      );
+      return reply.redirect(
+        '/?redirect=/oauth/authorize&client_id=' + request.query.client_id +
+        '&redirect_uri=' + request.query.redirect_uri +
+        '&response_type=' + request.query.response_type +
+        '&state=' + request.query.state +
+        '&scope=' + request.query.scope + '#login'
+      );
     }
 
     // If the user is authenticated, then check whether the user has confirmed
@@ -153,7 +166,9 @@ module.exports = class AuthController extends Controller{
             cookie.userId +
             ' who is an active session.'
           );
-          return reply(Boom.badImplementation('An error occurred while processing request. Please try logging in again.'));
+          return reply(
+            Boom.badImplementation('An error occurred while processing request. Please try logging in again.')
+          );
         }
         else {
           user.sanitize(user);
@@ -178,7 +193,9 @@ module.exports = class AuthController extends Controller{
           }, {}, function (clientID, redirect, done) {
             Client.findOne({id: clientID}, function (err, client) {
               if (err || !client || !client.id) {
-                return done('An error occurred while processing the request. Please try logging in again.');
+                return done(
+                  'An error occurred while processing the request. Please try logging in again.'
+                );
               }
               // Verify redirect uri
               if (client.redirectUri !== redirect) {
