@@ -39,6 +39,10 @@ module.exports = class NotificationController extends Controller{
     const Notification = this.app.orm.Notification;
     const that = this;
 
+    if (!request.payload || !request.payload.read || !request.payload.notified) {
+      return reply(Boom.badRequest());
+    }
+
     if (request.params.id) {
       Notification
         .findOne({_id: request.params.id})
