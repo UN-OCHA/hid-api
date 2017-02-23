@@ -11,15 +11,14 @@ module.exports = class AuthController extends Controller{
 
   _loginHelper (request, reply) {
     const User = this.app.orm.User;
-    let email = request.payload.email;
-    let password = request.payload.password;
+    const email = request.payload.email;
+    const password = request.payload.password;
 
     if (!email || !password) {
       reply(Boom.unauthorized('email and password required'));
     }
     else {
       const that = this;
-      const app = this.app;
       User
         .findOne({email: email})
         .then((user) => {
@@ -146,52 +145,55 @@ module.exports = class AuthController extends Controller{
     User
       .findOne({_id: cookie.userId})
       .exec(function (err, user) {
-      let clientId = request.query.client_id,
-        scope = request.query.scope;
+        const clientId = request.query.client_id;
 
-      if (err) {
-        that.log.warn('An error occurred in /oauth/authorize while trying to fetch the user record for ' + cookie.userId + ' who is an active session.');
-        return reply(Boom.badImplementation('An error occurred while processing request. Please try logging in again.'));
-      }
-      else {
-        user.sanitize(user);
-        request.auth.credentials = user;
-        oauth.authorize(request, reply, function (req, res) {
-          if (!request.response || (request.response && !request.response.isBoom)) {
-            if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
-              request.payload = {transaction_id: req.oauth2.transactionID };
-              oauth.decision(request, reply);
+        if (err) {
+          that.log.warn(
+            'An error occurred in /oauth/authorize while trying to fetch the user record for ' +
+            cookie.userId +
+            ' who is an active session.'
+          );
+          return reply(Boom.badImplementation('An error occurred while processing request. Please try logging in again.'));
+        }
+        else {
+          user.sanitize(user);
+          request.auth.credentials = user;
+          oauth.authorize(request, reply, function (req, res) {
+            if (!request.response || (request.response && !request.response.isBoom)) {
+              if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
+                request.payload = {transaction_id: req.oauth2.transactionID };
+                oauth.decision(request, reply);
+              }
+              else {
+                // The user has not confirmed authorization, so present the
+                // authorization page.
+                return reply.view('authorize', {
+                  user: user,
+                  client: req.oauth2.client,
+                  transactionID: req.oauth2.transactionID
+                  //csrf: req.csrfToken()
+                });
+              }
             }
-            else {
-              // The user has not confirmed authorization, so present the
-              // authorization page.
-              return reply.view('authorize', {
-                user: user,
-                client: req.oauth2.client,
-                transactionID: req.oauth2.transactionID
-                //csrf: req.csrfToken()
-              });
-            }
-          }
-        }, {}, function (clientID, redirect, done) {
-          Client.findOne({id: clientID}, function (err, client) {
-            if (err || !client || !client.id) {
-              return done('An error occurred while processing the request. Please try logging in again.');
-            }
-            // Verify redirect uri
-            if (client.redirectUri !== redirect) {
-              return done('Wrong redirect URI');
-            }
-            return done(null, client, client.redirectUri);
+          }, {}, function (clientID, redirect, done) {
+            Client.findOne({id: clientID}, function (err, client) {
+              if (err || !client || !client.id) {
+                return done('An error occurred while processing the request. Please try logging in again.');
+              }
+              // Verify redirect uri
+              if (client.redirectUri !== redirect) {
+                return done('Wrong redirect URI');
+              }
+              return done(null, client, client.redirectUri);
+            });
           });
-        });
+        }
       }
-    });
+    );
   }
 
   authorizeOauth2 (request, reply) {
     const User = this.app.orm.User;
-    const Client = this.app.orm.Client;
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
     const cookie = request.yar.get('session');
 
@@ -254,7 +256,7 @@ module.exports = class AuthController extends Controller{
 
   openIdConfiguration (request, reply) {
     const root = process.env.ROOT_URL;
-    let out = {
+    const out = {
       issuer: root,
       authorization_endpoint: root + '/oauth/authorize',
       token_endpoint: root + '/oauth/access_token',
@@ -288,9 +290,9 @@ module.exports = class AuthController extends Controller{
   }
 
   jwks (request, reply) {
-    let key = this.app.services.JwtService.public2jwk();
+    const key = this.app.services.JwtService.public2jwk();
     key.alg = 'RS256';
-    let out = {
+    const out = {
       keys: [
         key
       ]

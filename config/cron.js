@@ -262,7 +262,7 @@ const importLists = function (app) {
                   let parsed = {};
                   try {
                     parsed = JSON.parse(body);
-                    hasNextPage = parsed.next ? true: false;
+                    hasNextPage = parsed.next ? true : false;
                     async.eachSeries(parsed.data, function (item, cb) {
                       // Do not add disasters more than 2 years old
                       if (listType !== 'disaster' || (listType === 'disaster' && now - item.created < 2 * 365 * 24 * 3600)) {
@@ -277,7 +277,8 @@ const importLists = function (app) {
                         nextPage();
                       }, 1000);
                     });
-                  } catch (e) {
+                  }
+                  catch (e) {
                     app.log.error('Error parsing hrinfo API: ' + e);
                   }
                 });
@@ -394,7 +395,7 @@ const sendReminderCheckoutEmails = function(app) {
       let lu = {};
       for (let i = 0; i < user[attr].length; i++) {
         lu = user[attr][i];
-        if (this.checkoutDate && this.remindedCheckout === false) {
+        if (this.checkoutDate && this.remindedCheckout === false) {
           const dep = new Date(this.checkoutDate);
           if (now.valueOf() - dep.valueOf() > 48 * 3600 * 1000) {
             that.pause();
@@ -439,7 +440,7 @@ const doAutomatedCheckout = function(app) {
       let lu = {};
       for (let i = 0; i < user[attr].length; i++) {
         lu = user[attr][i];
-        if (this.checkoutDate && this.remindedCheckout === true) {
+        if (this.checkoutDate && this.remindedCheckout === true) {
           const dep = new Date(this.checkoutDate);
           if (now.valueOf() - dep.valueOf() > 14 * 24 * 3600 * 1000) {
             that.pause();
@@ -470,9 +471,8 @@ const sendReminderCheckinEmails = function(app) {
     this.pause();
     const that = this;
     for (let i = 0; i < user.operations.length; i++) {
-      let lu = user.operations[i];
+      const lu = user.operations[i];
       const d = new Date(),
-        createdAt = new Date(lu.createdAt),
         offset = d.valueOf() - lu.valueOf();
 
       if (!lu.remindedCheckin && offset > 48 * 3600 * 1000 && offset < 72 * 3600 * 1000) {

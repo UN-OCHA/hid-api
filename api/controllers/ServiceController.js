@@ -25,7 +25,11 @@ module.exports = class ServiceController extends Controller{
     const Service = this.app.orm.Service;
 
     if (!request.params.currentUser.is_admin) {
-      criteria.$or = [{'hidden': false}, {'owner': request.params.currentUser._id}, {'managers': request.params.currentUser._id}];
+      criteria.$or = [
+        {'hidden': false},
+        {'owner': request.params.currentUser._id},
+        {'managers': request.params.currentUser._id}
+      ];
     }
 
     if (!options.populate) {
@@ -57,8 +61,8 @@ module.exports = class ServiceController extends Controller{
         .catch(err => { that.app.services.ErrorService.handle(err, reply); });
     }
     else {
-      let response = FootprintService.find('service', criteria, options);
-      let count = FootprintService.count('service', criteria);
+      const response = FootprintService.find('service', criteria, options);
+      const count = FootprintService.count('service', criteria);
       count.then(number => {
         response
           .then(results => {
@@ -119,7 +123,7 @@ module.exports = class ServiceController extends Controller{
   googleGroups(request, reply) {
     const ServiceCredentials = this.app.orm.ServiceCredentials;
     const Service = this.app.orm.Service;
-    let that = this;
+    const that = this;
     // Find service credentials associated to domain
     ServiceCredentials
       .findOne({ type: 'googlegroup', 'googlegroup.domain': request.query.domain})
@@ -222,22 +226,32 @@ module.exports = class ServiceController extends Controller{
             });
         }
         else {
-          return service.subscribeGoogleGroup(results.user, request.payload.email, results.creds, function (err, response) {
-            if (!err || (err && err.code === 409)) {
-              user.subscriptions.push({email: request.payload.email, service: service});
-              user.save();
-              return reply(user);
+          return service.subscribeGoogleGroup(
+            results.user,
+            request.payload.email,
+            results.creds,
+            function (err, response) {
+              if (!err || (err && err.code === 409)) {
+                user.subscriptions.push({email: request.payload.email, service: service});
+                user.save();
+                return reply(user);
+              }
+              else {
+                that.app.services.ErrorService.handle(err, reply);
+              }
             }
-            else {
-              that.app.services.ErrorService.handle(err, reply);
-            }
-          });
+          );
         }
       })
       .then (() => {
         // Send notification to user that he was subscribed to a service
         if (user.id !== request.params.currentUser.id) {
-          const notification = {type: 'service_subscription', user: user, createdBy: request.params.currentUser, params: { service: service}};
+          const notification = {
+            type: 'service_subscription',
+            user: user,
+            createdBy: request.params.currentUser,
+            params: { service: service}
+          };
           NotificationService.send(notification, () => {});
         }
       })
@@ -248,7 +262,12 @@ module.exports = class ServiceController extends Controller{
           user.save();
           reply(user);
           if (user.id !== request.params.currentUser.id) {
-            const notification = {type: 'service_subscription', user: user, createdBy: request.params.currentUser, params: { service: service}};
+            const notification = {
+              type: 'service_subscription',
+              user: user,
+              createdBy: request.params.currentUser,
+              params: { service: service}
+            };
             NotificationService.send(notification, () => {});
           }
         }
@@ -264,7 +283,12 @@ module.exports = class ServiceController extends Controller{
     const ServiceCredentials = this.app.orm.ServiceCredentials;
     const NotificationService = this.app.services.NotificationService;
 
-    this.log.debug('[ServiceController] Unsubscribing user ' + request.params.id + ' from ' + request.params.serviceId);
+    this.log.debug(
+      '[ServiceController] Unsubscribing user ' +
+      request.params.id +
+      ' from ' +
+      request.params.serviceId
+    );
 
     const that = this;
     let user = {}, service = {};
@@ -343,7 +367,12 @@ module.exports = class ServiceController extends Controller{
       .then (() => {
         // Send notification to user that he was subscribed to a service
         if (user.id !== request.params.currentUser.id) {
-          const notification = {type: 'service_unsubscription', user: user, createdBy: request.params.currentUser, params: { service: service}};
+          const notification = {
+            type: 'service_unsubscription',
+            user: user,
+            createdBy: request.params.currentUser,
+            params: { service: service}
+          };
           NotificationService.send(notification, () => {});
         }
       })

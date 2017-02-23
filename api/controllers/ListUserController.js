@@ -42,7 +42,9 @@ module.exports = class ListUserController extends Controller{
         }
 
         //Set the proper pending attribute depending on list type
-        if (list.joinability === 'public' || list.joinability === 'private' || list.isOwner(request.params.currentUser)) {
+        if (list.joinability === 'public' ||
+          list.joinability === 'private' ||
+          list.isOwner(request.params.currentUser)) {
           payload.pending = false;
         }
         else {
@@ -64,7 +66,7 @@ module.exports = class ListUserController extends Controller{
           });
       })
       .then((result) => {
-        let record = result.user,
+        const record = result.user,
           list = result.list;
         if (childAttribute !== 'organization') {
           if (!record[childAttribute]) {
@@ -73,7 +75,8 @@ module.exports = class ListUserController extends Controller{
 
           // Make sure user is not already checked in this list
           for (let i = 0, len = record[childAttribute].length; i < len; i++) {
-            if (record[childAttribute][i].list.equals(list._id) && record[childAttribute][i].deleted === false) {
+            if (record[childAttribute][i].list.equals(list._id) &&
+              record[childAttribute][i].deleted === false) {
               throw Boom.badRequest('User is already checked in');
             }
           }
@@ -82,8 +85,7 @@ module.exports = class ListUserController extends Controller{
       })
       .then((result) => {
         that.log.debug('Setting the listUser to the correct attribute');
-        const record = result.user,
-          list = result.list;
+        const record = result.user;
         if (childAttribute !== 'organization') {
           if (!record[childAttribute]) {
             record[childAttribute] = [];
@@ -129,7 +131,7 @@ module.exports = class ListUserController extends Controller{
             createdBy: request.params.currentUser,
             user: result.user,
             params: { list: result.list }
-          }, () => { });
+          }, () => { });
         }
         return result;
       })
@@ -157,8 +159,13 @@ module.exports = class ListUserController extends Controller{
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
 
-
-    this.log.debug('[ListUserController] (update) model = list, criteria =', request.query, request.params.checkInId, ', values = ', request.payload);
+    this.log.debug(
+      '[ListUserController] (update) model = list, criteria =',
+      request.query,
+      request.params.checkInId,
+      ', values = ',
+      request.payload
+    );
 
     // Make sure list specific attributes can not be set through update
     if (request.payload.list) {
@@ -198,10 +205,15 @@ module.exports = class ListUserController extends Controller{
           });
       })
       .then(result => {
-        let lu = result.listuser;
+        const lu = result.listuser;
         if (lu.pending === true && request.payload.pending === false) {
           // Send a notification to inform user that his checkin is not pending anymore
-          const notification = {type: 'approved_checkin', user: result.user, createdBy: request.params.currentUser, params: { list: result.list}};
+          const notification = {
+            type: 'approved_checkin',
+            user: result.user,
+            createdBy: request.params.currentUser,
+            params: { list: result.list}
+          };
           NotificationService.send(notification, () => {});
         }
       })
@@ -215,7 +227,6 @@ module.exports = class ListUserController extends Controller{
     const checkInId = request.params.checkInId;
     const payload = request.payload;
     const User = this.app.orm.user;
-    const FootprintService = this.app.services.FootprintService;
     const List = this.app.orm.List;
     const childAttributes = User.listAttributes();
 

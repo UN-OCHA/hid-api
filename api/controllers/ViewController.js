@@ -23,13 +23,16 @@ module.exports = class ViewController extends Controller {
   login (request, reply) {
     const session = request.yar.get('session');
     if (session) { // User is already logged in
-      if (request.query.client_id && request.query.redirect_uri && request.query.response_type && request.query.scope) {
+      if (request.query.client_id &&
+        request.query.redirect_uri &&
+        request.query.response_type &&
+        request.query.scope) {
         // Redirect to /oauth/authorize
         let redirect = request.query.redirect || '/oauth/authorize';
-        redirect += "?client_id=" + request.query.client_id;
-        redirect += "&redirect_uri=" + request.query.redirect_uri;
-        redirect += "&response_type=" + request.query.response_type;
-        redirect += "&scope=" + request.query.scope;
+        redirect += '?client_id=' + request.query.client_id;
+        redirect += '&redirect_uri=' + request.query.redirect_uri;
+        redirect += '&response_type=' + request.query.response_type;
+        redirect += '&scope=' + request.query.scope;
 
         return reply.redirect(redirect);
       }
@@ -63,7 +66,10 @@ module.exports = class ViewController extends Controller {
     const UserController = this.app.controllers.UserController;
     const that = this;
     UserController.create(request, function (result) {
-      const al = that._getAlert(result, 'You registered successfully. Please confirm your email address', 'There was an error registering you.');
+      const al = that._getAlert(result,
+        'You registered successfully. Please confirm your email address',
+        'There was an error registering you.'
+      );
       return reply.view('login', {
         alert: al,
         query: request.query
@@ -128,7 +134,10 @@ module.exports = class ViewController extends Controller {
     const UserController = this.app.controllers.UserController;
     const that = this;
     UserController.resetPassword(request, function (result) {
-      const al = that._getAlert(result, 'Your password was successfully reset.', 'There was an error resetting your password.');
+      const al = that._getAlert(result,
+        'Your password was successfully reset.',
+        'There was an error resetting your password.'
+      );
       return reply.view('login', {
         alert: al,
         query: request.payload

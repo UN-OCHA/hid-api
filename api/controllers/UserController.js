@@ -212,11 +212,10 @@ module.exports = class UserController extends Controller{
               'Content-Length': postData.length
             }
           };
-        let clientReq;
 
         // Send the HTML to the wkhtmltopdf service to generate a PDF, and
         // return the output.
-        clientReq = http.request(options, function(clientRes) {
+        const clientReq = http.request(options, function(clientRes) {
           if (clientRes && clientRes.statusCode === 200) {
             clientRes.setEncoding('binary');
 
@@ -416,7 +415,7 @@ module.exports = class UserController extends Controller{
       }
 
       if (criteria.country) {
-        criteria['location.country.id'] = criteria.country;
+        criteria['location.country.id'] = criteria.country;
         delete criteria.country;
       }
 
@@ -480,9 +479,7 @@ module.exports = class UserController extends Controller{
   }
 
   update (request, reply) {
-    const FootprintService = this.app.services.FootprintService;
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
     const Model = this.app.orm.user;
 
     this.log.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
@@ -525,7 +522,9 @@ module.exports = class UserController extends Controller{
             return reply(that._updateQuery(request, options));
           }
         })
-        .catch(err => { _that.errorHandler(err, reply); });
+        .catch(err => {
+          that.errorHandler(err, reply);
+        });
     }
     else {
       reply(this._updateQuery(request, options));
@@ -561,7 +560,7 @@ module.exports = class UserController extends Controller{
             return record;
           });
       })
-      .then((record) => {
+      .then((record) => {
         reply(record);
         return record;
       })
@@ -669,7 +668,7 @@ module.exports = class UserController extends Controller{
             }
           }
           else {
-            return reply(Boom.badRequest(valid));
+            return reply(Boom.badRequest('Invalid hash'));
           }
         }
         else {
@@ -684,7 +683,7 @@ module.exports = class UserController extends Controller{
 
   resetPassword (request, reply) {
     const Model = this.app.orm.User;
-    const app_reset_url = request.payload.app_reset_url;
+    const appResetUrl = request.payload.app_reset_url;
 
     if (request.payload.email) {
       const that = this;
@@ -694,7 +693,7 @@ module.exports = class UserController extends Controller{
           if (!record) {
             return that._errorHandler(Boom.badRequest('Email could not be found'), reply);
           }
-          that.app.services.EmailService.sendResetPassword(record, app_reset_url, function (merr, info) {
+          that.app.services.EmailService.sendResetPassword(record, appResetUrl, function (merr, info) {
             return reply('Password reset email sent successfully').code(202);
           });
         });
@@ -721,7 +720,7 @@ module.exports = class UserController extends Controller{
               });
             }
             else {
-              return reply(Boom.badRequest(valid));
+              return reply(Boom.badRequest('Invalid hash'));
             }
           });
       }
@@ -733,7 +732,7 @@ module.exports = class UserController extends Controller{
 
   claimEmail (request, reply) {
     const Model = this.app.orm.User;
-    const app_reset_url = request.payload.app_reset_url;
+    const appResetUrl = request.payload.app_reset_url;
     const userId = request.params.id;
 
     const that = this;
@@ -743,7 +742,7 @@ module.exports = class UserController extends Controller{
         if (!record) {
           return reply(Boom.notFound());
         }
-        that.app.services.EmailService.sendClaim(record, app_reset_url, function (err, info) {
+        that.app.services.EmailService.sendClaim(record, appResetUrl, function (err, info) {
           return reply('Claim email sent successfully').code(202);
         });
       });
@@ -844,7 +843,6 @@ module.exports = class UserController extends Controller{
       return reply(Boom.badRequest());
     }
 
-    const that = this;
     Model
       .findOne({_id: userId})
       .then(record => {
@@ -876,7 +874,6 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('[UserController] adding phone number');
 
-    const that = this;
     Model
       .findOne({_id: userId})
       .then(record => {
@@ -902,7 +899,6 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('[UserController] dropping phone number');
 
-    const that = this;
     Model
       .findOne({_id: userId})
       .then(record => {
@@ -939,7 +935,7 @@ module.exports = class UserController extends Controller{
   setPrimaryPhone (request, reply) {
     const Model = this.app.orm.user;
     const phone = request.payload.phone;
-    let that = this;
+    const that = this;
 
     this.log.debug('[UserController] Setting primary phone number');
 
@@ -985,7 +981,7 @@ module.exports = class UserController extends Controller{
     if (!request.payload._id) {
       return reply(Boom.badRequesty('Missing listUser id'));
     }
-    let that = this;
+    const that = this;
     User
       .findOne({_id: request.params.id})
       .then(user => {
@@ -1084,7 +1080,7 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('[UserController] Updating connection');
 
-    let that = this;
+    const that = this;
 
     User
       .findOne({_id: request.params.id})

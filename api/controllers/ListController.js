@@ -24,7 +24,7 @@ module.exports = class ListController extends Controller{
       request.payload.managers = [];
     }
     request.payload.managers.push(request.params.currentUser._id);
-    let that = this;
+    const that = this;
     List
       .create(request.payload)
       .then((list) => {
@@ -41,7 +41,6 @@ module.exports = class ListController extends Controller{
     const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
     const List = this.app.orm.List;
     const User = this.app.orm.User;
-    let response;
 
     if (!options.sort) {
       options.sort = 'name';
@@ -62,22 +61,23 @@ module.exports = class ListController extends Controller{
     // Do not show deleted lists
     criteria.deleted = false;
 
-    this.log.debug('[ListController] (find) model = list, criteria =', request.query, request.params.id, 'options =', options);
-
-    const findCallback = function (result) {
-      if (!result) {
-        return Boom.notFound();
-      }
-      return result;
-    };
+    this.log.debug(
+      '[ListController] (find) model = list, criteria =',
+      request.query,
+      request.params.id,
+      'options =',
+      options
+    );
 
     // List visiblity
-    const currentUser = request.params.currentUser,
-      that = this;
+    const that = this;
 
     if (request.params.id) {
       if (!options.populate) {
-        options.populate = [{path: 'owner', select: '_id name'}, {path: 'managers', select: '_id name'}];
+        options.populate = [
+          {path: 'owner', select: '_id name'},
+          {path: 'managers', select: '_id name'}
+        ];
       }
       List
         .findOne({_id: request.params.id, deleted: criteria.deleted })
@@ -119,8 +119,10 @@ module.exports = class ListController extends Controller{
             tmp.name = list.translatedAttribute('names', reqLanguage);
             tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
             if (optionsArray.indexOf('count') !== -1) {
-              let ucriteria = {};
-              ucriteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false, pending: false}};
+              const ucriteria = {};
+              ucriteria[list.type + 's'] = {
+                $elemMatch: {list: list._id, deleted: false, pending: false}
+              };
               User
                 .count(ucriteria)
                 .then((count) => {
@@ -152,16 +154,19 @@ module.exports = class ListController extends Controller{
       .then((users) => {
         for (let i = 0, len = users.length; i < len; i++) {
           that.app.services.NotificationService
-            .send({type: type, user: users[i], createdBy: request.params.currentUser, params: { list: list } }, () => {});
+            .send({
+              type: type,
+              user: users[i],
+              createdBy: request.params.currentUser,
+              params: { list: list }
+            }, () => {});
         }
       })
       .catch((err) => { that.log.error(err); });
   }
 
   update (request, reply) {
-    const FootprintService = this.app.services.FootprintService;
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
     const Model = this.app.orm.list;
     const User = this.app.orm.user;
 
@@ -171,7 +176,13 @@ module.exports = class ListController extends Controller{
       options.populate = 'owner managers';
     }
 
-    this.log.debug('[ListController] (update) model = list, criteria =', request.query, request.params.id, ', values = ', request.payload);
+    this.log.debug(
+      '[ListController] (update) model = list, criteria =',
+      request.query,
+      request.params.id,
+      ', values = ',
+      request.payload
+    );
 
     const that = this;
     Model
@@ -254,7 +265,7 @@ module.exports = class ListController extends Controller{
     const User = this.app.orm.User;
 
     this.log.debug('[ListController] (destroy) model = list, query =', request.query);
-    let that = this;
+    const that = this;
 
     List
       .findOne({ _id: request.params.id })
@@ -270,7 +281,7 @@ module.exports = class ListController extends Controller{
             return record;
           });
       })
-      .then((record) => {
+      .then((record) => {
         reply(record);
         // Remove all checkins from users in this list
         const criteria = {};

@@ -49,7 +49,8 @@ module.exports = class HelperService extends Service {
     if (!request.params.currentUser || !request.params.currentUser.is_admin) {
       forbiddenAttributes = forbiddenAttributes.concat(this.getAdminOnlyAttributes(modelName));
     }
-    if (!request.params.currentUser || (!request.params.currentUser.is_admin && !request.params.currentUser.isManager)) {
+    if (!request.params.currentUser ||
+      (!request.params.currentUser.is_admin && !request.params.currentUser.isManager)) {
       forbiddenAttributes = forbiddenAttributes.concat(this.getManagerOnlyAttributes(modelName));
     }
     forbiddenAttributes = forbiddenAttributes.concat(extras);
@@ -66,7 +67,7 @@ module.exports = class HelperService extends Service {
   }
 
   getCriteriaFromQuery(query) {
-    let criteria = _.omit(query, queryOptions);
+    const criteria = _.omit(query, queryOptions);
     const keys = Object.keys(criteria);
     for (let i = 0, len = keys.length; i < len; i++) {
       if (criteria[keys[i]] === 'true') {
@@ -81,7 +82,7 @@ module.exports = class HelperService extends Service {
 
   find (modelName, criteria, options) {
     const Model = this.app.orm[modelName];
-    let query = Model.find(criteria);
+    const query = Model.find(criteria);
     if (options.limit) {
       query.limit(parseInt(options.limit));
     }

@@ -276,7 +276,8 @@ module.exports = class User extends Model {
                 else {
                   return callback(null, false);
                 }
-              } catch (e) {
+              }
+              catch (e) {
                 that.log.info('Error parsing hrinfo API: ' + e);
                 return callback(e);
               }
@@ -321,7 +322,7 @@ module.exports = class User extends Model {
         },
 
         translateListNames: function (language) {
-          let that = this;
+          const that = this;
           listTypes.forEach(function (listType) {
             if (that[listType + 's'] && that[listType + 's'].length) {
               that[listType + 's'].forEach(function (checkin) {
@@ -637,7 +638,8 @@ module.exports = class User extends Model {
                 const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
                 const phone = phoneUtil.parse(v);
                 return phoneUtil.isValidNumber(phone);
-              } catch (e) {
+              }
+              catch (e) {
                 return false;
               }
             }
@@ -704,7 +706,7 @@ module.exports = class User extends Model {
       },
       expires: {
         type: Date,
-        default: +new Date() + 7*24*60*60*1000,
+        default: new Date() + 7 * 24 * 60 * 60 * 1000,
         readonly: true
       },
       lastLogin: {
@@ -769,7 +771,7 @@ module.exports = class User extends Model {
       });
     });
     schema.post('findOne', function (result, next) {
-      let that = this;
+      const that = this;
       if (!result) {
         return next();
       }
@@ -779,7 +781,10 @@ module.exports = class User extends Model {
         .then(user => {
           return next();
         })
-        .catch(err => that.log.error(err));
-      });
+        .catch(err => {
+          that.log.error(err);
+        }
+      );
+    });
   }
 };
