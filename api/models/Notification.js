@@ -47,6 +47,11 @@ module.exports = class Notification extends Model {
       read: {
         type: Boolean,
         default: false
+      },
+
+      notified: {
+        type: Boolean,
+        default: false
       }
     };
   }

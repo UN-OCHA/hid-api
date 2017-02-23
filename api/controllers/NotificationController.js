@@ -49,6 +49,7 @@ module.exports = class NotificationController extends Controller{
           if (record.user.toString() !== request.params.currentUser.id) {
             throw Boom.forbidden();
           }
+          record.notified = request.payload.notified;
           record.read = request.payload.read;
           record.save().then(() => {
             return reply(record);
@@ -60,7 +61,7 @@ module.exports = class NotificationController extends Controller{
     }
     else {
       Notification
-        .update({user: request.params.currentUser.id}, { read: true }, { multi: true})
+        .update({user: request.params.currentUser.id}, { read: request.payload.read, notified: request.payload.notified }, { multi: true})
         .then(() => {
           return reply();
         });
