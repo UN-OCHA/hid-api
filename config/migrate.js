@@ -349,7 +349,8 @@ module.exports = {
                   }
                 }
                 if (list.type === 'organization') {
-                  lu.orgType = list.metadata.type.label;
+                  lu.orgTypeId = list.metadata.type.id;
+                  lu.orgTypeLabel = list.metadata.type.label;
                 }
                 var luFound = false, luIndex = -1;
                 user[userAttribute].forEach(function (it2, index) {

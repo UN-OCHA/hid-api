@@ -448,7 +448,10 @@ module.exports = class User extends Model {
         type: String,
         enum: ['me', 'inlist', 'all', 'verified'],
       },
-      orgType: {
+      orgTypeId: {
+        type: Number
+      },
+      orgTypeLabel: {
         type: String,
         enum: [
           'Academic / Research',

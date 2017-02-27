@@ -56,7 +56,8 @@ module.exports = class ListUserController extends Controller{
         payload.visibility = list.visibility;
 
         if (list.type === 'organization') {
-          payload.orgType = list.metadata.type.label;
+          payload.orgTypeId = list.metadata.type.id;
+          payload.orgTypeLabel = list.metadata.type.label;
         }
 
         that.log.debug('Looking for user with id ' + userId);
