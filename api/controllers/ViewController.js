@@ -38,9 +38,38 @@ module.exports = class ViewController extends Controller {
       }
     }
 
+    let params = '';
+    if (request.query.redirect) {
+      params += 'redirect=' + request.query.redirect;
+    }
+    if (request.query.client_id) {
+      params += '&client_id=' + request.query.client_id;
+    }
+    if (request.query.redirect_uri) {
+      params += '&redirect_uri=' + request.query.redirect_uri;
+    }
+    if (request.query.response_type) {
+      params += '&response_type=' + request.query.response_type;
+    }
+    if (request.query.scope) {
+      params += '&scope=' + request.query.scope;
+    }
+
+    let registerLink = '/register';
+    if (params) {
+      registerLink += '?' + params;
+    }
+
+    let passwordLink = '/password';
+    if (params) {
+      passwordLink += '?' + params;
+    }
+
     return reply.view('login', {
       title: 'Log into Humanitarian ID',
       query: request.query,
+      registerLink: registerLink,
+      passwordLink: passwordLink,
       alert: false
     });
   }
