@@ -28,8 +28,8 @@ module.exports = {
       options: {
         server: {
           socketOptions: {
-            keepAlive: 300000,
-            connectTimeoutMS: 30000
+            keepAlive: 600000,
+            connectTimeoutMS: 60000
           }
         }
       }
