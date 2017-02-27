@@ -348,6 +348,9 @@ module.exports = {
                     user.organization = lu;
                   }
                 }
+                if (list.type === 'organization') {
+                  lu.orgType = list.metadata.type.label;
+                }
                 var luFound = false, luIndex = -1;
                 user[userAttribute].forEach(function (it2, index) {
                   var itId = it2.list._id ? it2.list._id : it2.list;

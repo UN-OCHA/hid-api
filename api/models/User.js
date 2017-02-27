@@ -448,6 +448,29 @@ module.exports = class User extends Model {
         type: String,
         enum: ['me', 'inlist', 'all', 'verified'],
       },
+      orgType: {
+        type: String,
+        enum: [
+          'Academic / Research',
+          'Civilian',
+          'Donor',
+          'Embassy',
+          'Government',
+          'International Military Force',
+          'International NGO',
+          'International Organization',
+          'Media',
+          'Military',
+          'National NGO',
+          'Non state armed groups',
+          'Other',
+          'Private sector',
+          'Red Cross / Red Crescent',
+          'Religious',
+          'United Nations',
+          'Unknown'
+        ]
+      },
       checkoutDate: Date,
       pending: {
         type: Boolean,

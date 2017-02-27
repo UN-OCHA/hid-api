@@ -55,6 +55,10 @@ module.exports = class ListUserController extends Controller{
         payload.acronym = list.acronym;
         payload.visibility = list.visibility;
 
+        if (list.type === 'organization') {
+          payload.orgType = list.metadata.type.label;
+        }
+
         that.log.debug('Looking for user with id ' + userId);
         return Model
           .findOne({ '_id': userId })
