@@ -504,12 +504,14 @@ module.exports = {
             hostname: profilesUrl,
             path: '/v0/contact/view?' + queryString + '&_access_client_id=' + clientId + '&_access_key=' + hash
           };
+          console.log('before https query');
           https.get(options, (res) => {
             var body = '', users = [], tmpUserId = [], uidLength = 0, createUser = false;
             res.on('data', function (d) {
               body += d;
             });
             res.on('end', function() {
+              console.log('parsing http result');
               var parsed = {};
               try {
                 parsed = JSON.parse(body);
@@ -607,6 +609,7 @@ module.exports = {
                   }, 3000);
                 }
               } catch (e) {
+                console.log('error parsing JSON');
                 console.error(e);
                 nextPage();
               }
