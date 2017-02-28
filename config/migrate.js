@@ -617,7 +617,9 @@ module.exports = {
               }
             });
           }).on('error', (e) => {
+            console.log('http error');
             console.error(e);
+            nextPage();
           });
         },
         function (err, n) {
