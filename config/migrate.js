@@ -393,6 +393,7 @@ module.exports = {
     var parseCheckins = function (item, user, cb) {
       async.series([
         function (callback) {
+          console.log('setting organizations');
           if (item.status) {
             setCheckins(item, user, 'organization', callback);
           }
@@ -401,15 +402,19 @@ module.exports = {
           }
         },
         function (callback) {
+          console.log('setting disasters');
           setCheckins(item, user, 'disasters', callback);
         },
         function (callback) {
+          console.log('setting operations');
           setCheckins(item, user, 'operations', callback);
         },
         function (callback) {
+          console.log('setting bundles');
           setCheckins(item, user, 'bundles', callback);
         },
         function (callback) {
+          console.log('setting functional roles');
           if (item.status) {
             setCheckins(item, user, 'functional_roles', callback);
           }
@@ -418,6 +423,7 @@ module.exports = {
           }
         },
         function (callback) {
+          console.log('setting offices');
           if (item.status) {
             setCheckins(item, user, 'offices', callback);
           }
@@ -426,9 +432,11 @@ module.exports = {
           }
         },
         function (callback) {
+          console.log('setting verified by');
           setVerifiedBy(item, user, callback);
         },
         function (callback) {
+          console.log('setting services');
           if (!user.subscriptions) {
             user.subscriptions = [];
           }
@@ -446,6 +454,7 @@ module.exports = {
                 })
                 .catch((err) => {
                   console.error(err);
+                  next();
                 });
             }, function (err, results) {
               callback();
