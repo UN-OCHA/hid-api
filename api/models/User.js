@@ -6,7 +6,7 @@ const Bcrypt = require('bcryptjs');
 const Libphonenumber = require('google-libphonenumber');
 const https = require('https');
 const _ = require('lodash');
-const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role'];
+const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
 const userPopulate1 = [
   {path: 'favoriteLists'},
   {path: 'verified_by', select: '_id name'},
