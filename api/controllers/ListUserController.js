@@ -129,7 +129,7 @@ module.exports = class ListUserController extends Controller{
       })
       .then((result) => {
         // Notify user if needed
-        if (request.params.currentUser.id !== userId) {
+        if (request.params.currentUser.id !== userId && result.list.type !== 'list') {
           that.log.debug('Checked in by a different user');
           that.app.services.NotificationService.send({
             type: 'admin_checkin',
