@@ -60,7 +60,7 @@ module.exports = class User extends Model {
       methods: {
         sanitize: function (user) {
           this.sanitizeClients();
-          this.sanitizeLists(user);
+          //this.sanitizeLists(user);
           if (this._id.toString() !== user._id.toString() && !user.is_admin) {
             if (this.emailsVisibility !== 'anyone') {
               if ((this.emailsVisibility === 'verified' && !user.verified) ||
