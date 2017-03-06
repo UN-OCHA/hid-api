@@ -60,7 +60,7 @@ module.exports = class User extends Model {
       methods: {
         sanitize: function (user) {
           this.sanitizeClients();
-          //this.sanitizeLists(user);
+          this.sanitizeLists(user);
           if (this._id.toString() !== user._id.toString() && !user.is_admin) {
             if (this.emailsVisibility !== 'anyone') {
               if ((this.emailsVisibility === 'verified' && !user.verified) ||
@@ -92,8 +92,9 @@ module.exports = class User extends Model {
         },
         sanitizeLists: function (user) {
           if (this._id.toString() !== user._id.toString()) {
+            const that = this;
             listTypes.forEach(function (attr) {
-              _.remove(this[attr + 's'], function (checkin) {
+              _.remove(that[attr + 's'], function (checkin) {
                 return checkin.visibility === 'inlist' ||
                   checkin.visibility === 'me' ||
                   checkin.visibility === 'verified' && !user.verified;
