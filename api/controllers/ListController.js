@@ -48,6 +48,9 @@ module.exports = class ListController extends Controller{
 
     // Search with contains when searching in name or label
     if (criteria.name) {
+      if (criteria.name.length < 3) {
+        return reply(Boom.badRequest('Name must have at least 3 characters'));
+      }
       let name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
       name = new RegExp(name, 'i');
       criteria['names.text'] = name;
