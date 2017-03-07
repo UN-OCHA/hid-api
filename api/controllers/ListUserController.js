@@ -187,6 +187,7 @@ module.exports = class ListUserController extends Controller{
     }
 
     const that = this;
+    let listuser = {};
     User
       .findOne({ _id: request.params.id })
       .then(record => {
@@ -194,6 +195,7 @@ module.exports = class ListUserController extends Controller{
           throw Boom.notFound();
         }
         const lu = record[childAttribute].id(checkInId);
+        listuser = _.clone(lu);
         _.assign(lu, request.payload);
         return record
           .save()
@@ -210,8 +212,7 @@ module.exports = class ListUserController extends Controller{
           });
       })
       .then(result => {
-        const lu = result.listuser;
-        if (lu.pending === true && request.payload.pending === false) {
+        if (listuser.pending === true && request.payload.pending === false) {
           // Send a notification to inform user that his checkin is not pending anymore
           const notification = {
             type: 'approved_checkin',
