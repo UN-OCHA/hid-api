@@ -13,9 +13,19 @@ module.exports = class AuthController extends Controller{
     const User = this.app.orm.User;
     const email = request.payload.email;
     const password = request.payload.password;
+    const authPolicy = this.app.policies.AuthPolicy;
 
     if (!email || !password) {
-      reply(Boom.unauthorized('email and password required'));
+      authPolicy.isAuthenticated(request, function (err) {
+        if (err && err.isBoom) {
+          return reply(err);
+        }
+        else {
+          const cuser = request.params.currentUser;
+          cuser.sanitize(cuser);
+          return reply(cuser);
+        }
+      });
     }
     else {
       const that = this;
