@@ -195,7 +195,7 @@ module.exports = class ListUserController extends Controller{
           throw Boom.notFound();
         }
         const lu = record[childAttribute].id(checkInId);
-        listuser = _.clone(lu);
+        listuser = _.cloneDeep(lu);
         _.assign(lu, request.payload);
         return record
           .save()
