@@ -68,9 +68,13 @@ module.exports = class AuthController extends Controller{
     const that = this;
     this._loginHelper(request, function (result) {
       if (!result.isBoom) {
+        const payload = {id: result._id};
+        if (request.payload && request.payload.exp) {
+          payload.exp = request.payload.exp;
+        }
         return reply({
           user: result,
-          token: that.app.services.JwtService.issue({id: result._id })
+          token: that.app.services.JwtService.issue(payload)
         });
       }
       else {
