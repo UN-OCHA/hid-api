@@ -34,6 +34,7 @@
     "nodemailer": "^2.6.4",
     "oauth2orize-openid": "^0.1.3",
     "rsa-pem-to-jwk": "^1.1.3",
+    "sharp": "^0.17.2",
     "trailpack-cache": "^1.0.2",
     "trailpack-cron": "^1.1.0",
     "trailpack-hapi": "UN-OCHA/trailpack-hapi",
@@ -60,7 +61,10 @@
   "eslintConfig": {
     "extends": "trails",
     "rules": {
-      "semi": ["error", "always"],
+      "semi": [
+        "error",
+        "always"
+      ],
       "no-underscore-dangle": "off"
     }
   },

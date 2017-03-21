@@ -8,6 +8,7 @@ const ejs = require('ejs');
 const http = require('http');
 const moment = require('moment');
 const acceptLanguage = require('accept-language');
+const sharp = require('sharp');
 
 /**
  * @module UserController
@@ -766,24 +767,32 @@ module.exports = class UserController extends Controller{
             return reply(Boom.notFound());
           }
           const ext = data.file.hapi.filename.split('.').pop();
-          const path = __dirname + '/../../assets/pictures/' + userId + '.' + ext;
-          const file = fs.createWriteStream(path);
+          sharp(data.file)
+            .resize(200)
+            .toBuffer()
+            .then ( resized => {
+              const path = __dirname + '/../../assets/pictures/' + userId + '.' + ext;
+              const file = fs.createWriteStream(path);
 
-          file.on('error', function (err) {
-            reply(Boom.badImplementation(err));
-          });
+              file.on('error', function (err) {
+                reply(Boom.badImplementation(err));
+              });
 
-          data.file.pipe(file);
+              resized.pipe(resized);
 
-          data.file.on('end', function (err) {
-            record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + ext;
-            record.save().then(() => {
-              return reply(record);
+              resized.on('end', function (err) {
+                record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + ext;
+                record.save().then(() => {
+                  return reply(record);
+                })
+                .catch(err => {
+                  return reply(Boom.badImplementation(err.toString()));
+                });
+              });
             })
-            .catch(err => {
+            .catch( err => {
               return reply(Boom.badImplementation(err.toString()));
             });
-          });
         }
       );
     }
