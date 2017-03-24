@@ -18,6 +18,9 @@ module.exports = class JwtService extends Service {
     if (!payload.exp) {
       options.expiresIn = '3h';
     }
+    if (payload.exp === 0) {
+      delete payload.exp;
+    }
     return jwt.sign(
       payload,
       cert,
