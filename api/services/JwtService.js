@@ -15,12 +15,6 @@ module.exports = class JwtService extends Service {
   issue (payload) {
     const cert = fs.readFileSync('keys/hid.rsa');
     const options = { algorithm: 'RS256', header: { kid: 'hid-dev'} };
-    if (!payload.exp) {
-      options.expiresIn = '3h';
-    }
-    if (payload.exp === 0) {
-      delete payload.exp;
-    }
     return jwt.sign(
       payload,
       cert,
