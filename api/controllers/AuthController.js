@@ -66,16 +66,29 @@ module.exports = class AuthController extends Controller{
    */
   authenticate (request, reply) {
     const that = this;
+    const JwtToken = this.app.orm.JwtToken;
     this._loginHelper(request, function (result) {
       if (!result.isBoom) {
         const payload = {id: result._id};
         if (request.payload && request.payload.exp) {
           payload.exp = request.payload.exp;
         }
-        return reply({
-          user: result,
-          token: that.app.services.JwtService.issue(payload)
-        });
+        const token = that.app.services.JwtService.issue(payload);
+        JwtToken
+          .create({
+            token: token,
+            user: result._id
+            // TODO: add expires
+          })
+          .then(() => {
+            reply({
+              user: result,
+              token: token
+            });
+          })
+          .catch((err) => {
+            that.app.services.ErrorService.handle(err, reply);
+          });
       }
       else {
         return reply(result);
@@ -329,5 +342,19 @@ module.exports = class AuthController extends Controller{
       ]
     };
     reply (out);
+  }
+
+  // Provides a list of the json web tokens created by the current user
+  jwtTokens (request, reply) {
+    const JwtToken = this.app.orm.JwtToken;
+    const that = this;
+    JwtToken
+      .find({user: request.params.currentUser._id})
+      .then((tokens) => {
+        return reply(tokens);
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
   }
 };

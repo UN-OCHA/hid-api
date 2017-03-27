@@ -738,7 +738,7 @@ paths:
       post:
         tags:
           - auth
-        summary: 'Retrieve a jsonwebtoken'
+        summary: 'Generate a jsonwebtoken'
         parameters:
           - name: 'body'
             description: 'User email'
@@ -753,3 +753,10 @@ paths:
             description: 'Bad request. Missing email and/or password'
           '401':
             description: 'Wrong email and/or password'
+      get:
+        tags:
+          - auth
+        summary: 'Retrieve the json web tokens of the current user'
+        response:
+          '200':
+            description: 'List of the JWTs of the current user'

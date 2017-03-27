@@ -157,6 +157,12 @@ module.exports = [
   },
 
   {
+    method: 'GET',
+    path: '/api/v2/jsonwebtoken',
+    handler: 'AuthController.jwtTokens'
+  },
+
+  {
     method: 'POST',
     path: '/login',
     handler: 'AuthController.login'

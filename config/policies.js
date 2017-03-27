@@ -14,6 +14,10 @@
 
 module.exports = {
 
+  AuthController: {
+    jwtTokens: ['AuthPolicy.isAuthenticated']
+  },
+
   ClientController: {
     create: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
     find: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
