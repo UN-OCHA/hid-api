@@ -30,7 +30,6 @@
     "hapi-oauth2orize": "UN-OCHA/hapi-oauth2orize",
     "jsonwebtoken": "^7.1.9",
     "mailchimp-api-v3": "^1.7.0",
-    "mongoose": "< 4.9.0",
     "newrelic": "^1.36.1",
     "nodemailer": "^2.6.4",
     "oauth2orize-openid": "^0.1.3",
