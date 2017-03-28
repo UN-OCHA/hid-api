@@ -75,7 +75,7 @@ module.exports = class AuthPolicy extends Policy {
       else {
         // Make sure token is not blacklisted
         JwtToken
-          .findOne({token: jtoken, blacklist: true})
+          .findOne({token: token, blacklist: true})
           .then(tok => {
             if (tok) {
               return reply(Boom.unauthorized('Invalid Token !'));
