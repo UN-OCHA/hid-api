@@ -13,6 +13,7 @@ module.exports = class AuthPolicy extends Policy {
   isAuthenticated (request, reply) {
     acceptLanguage.languages(['en', 'fr', 'es']);
     const OauthToken = this.app.orm.OauthToken;
+    const JwtToken = this.app.orm.JwtToken;
     // If we are creating a user and we are not authenticated, allow it
     if (request.path === '/api/v2/user' &&
       request.method === 'post' &&
@@ -72,17 +73,25 @@ module.exports = class AuthPolicy extends Policy {
           });
       }
       else {
-        request.params.token = jtoken; // This is the decrypted token or the payload you provided
-        that.app.orm.User.findOne({_id: jtoken.id}, function (err, user) {
-          if (!err && user) {
-            request.params.currentUser = user;
-            reply();
-          }
-          else {
-            that.log.error(err);
-            reply(Boom.unauthorized('Invalid Token!'));
-          }
-        });
+        // Make sure token is not blacklisted
+        JwtToken
+          .findOne({token: jtoken, blacklist: true})
+          .then(tok => {
+            if (tok) {
+              return reply(Boom.unauthorized('Invalid Token !'));
+            }
+            request.params.token = jtoken; // This is the decrypted token or the payload you provided
+            that.app.orm.User.findOne({_id: jtoken.id}, function (err, user) {
+              if (!err && user) {
+                request.params.currentUser = user;
+                reply();
+              }
+              else {
+                that.log.error(err);
+                reply(Boom.unauthorized('Invalid Token!'));
+              }
+            });
+          });
       }
     });
   }

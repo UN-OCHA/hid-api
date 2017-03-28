@@ -23,8 +23,10 @@ module.exports = class JwtToken extends Model {
         type: Schema.ObjectId,
         ref: 'User'
       },
-      expires: {
-        type: Date
+      blacklist: {
+        type: Boolean,
+        default: false,
+        required: true
       }
     };
 

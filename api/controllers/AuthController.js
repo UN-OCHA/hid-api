@@ -74,21 +74,28 @@ module.exports = class AuthController extends Controller{
           payload.exp = request.payload.exp;
         }
         const token = that.app.services.JwtService.issue(payload);
-        JwtToken
-          .create({
-            token: token,
-            user: result._id
-            // TODO: add expires
-          })
-          .then(() => {
-            reply({
-              user: result,
-              token: token
+        if (!payload.exp) {
+          // Creating an API key, store the token in the database
+          JwtToken
+            .create({
+              token: token,
+              user: result._id,
+              blacklist: false
+              // TODO: add expires
+            })
+            .then(() => {
+              reply({
+                user: result,
+                token: token
+              });
+            })
+            .catch((err) => {
+              that.app.services.ErrorService.handle(err, reply);
             });
-          })
-          .catch((err) => {
-            that.app.services.ErrorService.handle(err, reply);
-          });
+          }
+          else {
+            return reply({ user: result, token: token});
+          }
       }
       else {
         return reply(result);
@@ -344,7 +351,7 @@ module.exports = class AuthController extends Controller{
     reply (out);
   }
 
-  // Provides a list of the json web tokens created by the current user
+  // Provides a list of the json web tokens with no expiration date created by the current user
   jwtTokens (request, reply) {
     const JwtToken = this.app.orm.JwtToken;
     const that = this;
@@ -357,4 +364,36 @@ module.exports = class AuthController extends Controller{
         that.app.services.ErrorService.handle(err, reply);
       });
   }
+
+  // Blacklist a JSON Web Token
+  blacklistJwt (request, reply) {
+    const JwtToken = this.app.orm.JwtToken;
+    const that = this;
+    // Check that blacklisted token belongs to current user
+    this.app.services.JwtService.verify(request.payload.token, function (err, jtoken) {
+      if (err) {
+        return that.app.services.ErrorService.handle(err, reply);
+      }
+      if (jtoken.id === request.params.currentUser.id) {
+        // Blacklist token
+        JwtToken
+          .findOneAndUpdate({token: request.payload.token}, {
+            token: request.payload.token,
+            user: request.params.currentUser._id,
+            blacklist: true
+          }, {upsert: true, new: true})
+          .then(doc => {
+            return reply(doc);
+          })
+          .catch(err => {
+            that.app.services.ErrorService.handle(err, reply);
+          });
+      }
+      else {
+        return reply(Boom.badRequest('Could not blacklist this token because you did not generate it'));
+      }
+    });
+  }
+
+
 };

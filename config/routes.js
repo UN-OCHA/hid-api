@@ -163,6 +163,12 @@ module.exports = [
   },
 
   {
+    method: 'DELETE',
+    path: '/api/v2/jsonwebtoken',
+    handler: 'AuthController.blacklistJwt'
+  },
+
+  {
     method: 'POST',
     path: '/login',
     handler: 'AuthController.login'

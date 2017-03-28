@@ -760,3 +760,10 @@ paths:
         response:
           '200':
             description: 'List of the JWTs of the current user'
+      delete:
+        tags:
+          - auth
+        summary: 'Blacklists a json web token'
+        response:
+          '200':
+            description: 'Json Web Token was successfully blacklisted'
