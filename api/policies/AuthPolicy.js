@@ -91,6 +91,10 @@ module.exports = class AuthPolicy extends Policy {
                 reply(Boom.unauthorized('Invalid Token!'));
               }
             });
+          })
+          .catch(err => {
+            that.log.error(err);
+            return reply(Boom.unauthorized('Invalid Token !'));
           });
       }
     });
