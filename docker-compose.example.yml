@@ -1,3 +1,4 @@
+
 db:
   image: unocha/alpine-mongo
   volumes:
@@ -5,6 +6,7 @@ db:
   environment:
     DNSDOCK_NAME: db
     DNSDOCK_IMAGE: hid
+
 dev:
   image: unocha/alpine-nodejs:4.6.0-r0-201701.npm3-PR104
   volumes:
