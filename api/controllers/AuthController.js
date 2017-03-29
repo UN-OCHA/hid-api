@@ -369,16 +369,20 @@ module.exports = class AuthController extends Controller{
   blacklistJwt (request, reply) {
     const JwtToken = this.app.orm.JwtToken;
     const that = this;
+    const token = request.payload ? request.payload.token : null;
+    if (!token) {
+      return reply(Boom.badRequest('Missing token'));
+    }
     // Check that blacklisted token belongs to current user
-    this.app.services.JwtService.verify(request.payload.token, function (err, jtoken) {
+    this.app.services.JwtService.verify(token, function (err, jtoken) {
       if (err) {
         return that.app.services.ErrorService.handle(err, reply);
       }
       if (jtoken.id === request.params.currentUser.id) {
         // Blacklist token
         JwtToken
-          .findOneAndUpdate({token: request.payload.token}, {
-            token: request.payload.token,
+          .findOneAndUpdate({token: token}, {
+            token: token,
             user: request.params.currentUser._id,
             blacklist: true
           }, {upsert: true, new: true})
