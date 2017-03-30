@@ -24,13 +24,13 @@ module.exports = class OauthToken extends Model {
               .update(buffer)
               .digest('hex');
 
-            const now = Math.floor(Date.now() / 1000);
+            const now = Date.now();
             const ftoken = {
               type: type,
               token: token,
               client: client._id,
               user: user._id,
-              expires: now + 3600
+              expires: now + 3600 * 1000
             };
 
             callback(false, ftoken);
