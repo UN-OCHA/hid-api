@@ -220,6 +220,7 @@ module.exports = class AuthController extends Controller{
     const that = this;
     User
       .findOne({_id: cookie.userId})
+      .populate({path: 'authorizedClients', select: 'id name'})
       .exec(function (err, user) {
         const clientId = request.query.client_id;
 
