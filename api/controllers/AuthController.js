@@ -148,9 +148,38 @@ module.exports = class AuthController extends Controller{
         );
       }
       else {
+        let params = '';
+        if (request.payload.redirect) {
+          params += 'redirect=' + request.payload.redirect;
+        }
+        if (request.payload.client_id) {
+          params += '&client_id=' + request.payload.client_id;
+        }
+        if (request.payload.redirect_uri) {
+          params += '&redirect_uri=' + request.payload.redirect_uri;
+        }
+        if (request.payload.response_type) {
+          params += '&response_type=' + request.payload.response_type;
+        }
+        if (request.payload.scope) {
+          params += '&scope=' + request.payload.scope;
+        }
+
+        let registerLink = '/register';
+        if (params) {
+          registerLink += '?' + params;
+        }
+
+        let passwordLink = '/password';
+        if (params) {
+          passwordLink += '?' + params;
+        }
+
         return reply.view('login', {
           title: 'Log into Humanitarian ID',
           query: request.payload,
+          registerLink: registerLink,
+          passwordLink: passwordLink,
           alert: {
             type: 'danger',
             message: 'We could not log you in. Please check your email/password'
