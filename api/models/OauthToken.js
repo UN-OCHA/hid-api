@@ -30,7 +30,7 @@ module.exports = class OauthToken extends Model {
               token: token,
               client: client._id,
               user: user._id,
-              expires: now + 3600 * 1000
+              expires: now + 7 * 24 * 3600 * 1000
             };
 
             callback(false, ftoken);
