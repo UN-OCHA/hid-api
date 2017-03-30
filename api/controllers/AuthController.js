@@ -119,7 +119,7 @@ module.exports = class AuthController extends Controller{
         redirect += '&scope=' + request.payload.scope;
 
         /*if (typeof request.payload.response_type === 'undefined' || typeof request.payload.scope === 'undefined') {
-          //that.log.warn({type: 'authenticate:error', body: req.body, cookies: req.cookies, header: req.headers, payload: req.payload},
+          //that.log.warn({type: 'authenticate:error', body: req.body, cookies: req.cookies, header: req.headers, query: req.query},
           //  'Undefined response_type or scope');
         }
 
@@ -148,37 +148,9 @@ module.exports = class AuthController extends Controller{
         );
       }
       else {
-        let params = '';
-        if (request.payload.redirect) {
-          params += 'redirect=' + request.payload.redirect;
-        }
-        if (request.payload.client_id) {
-          params += '&client_id=' + request.payload.client_id;
-        }
-        if (request.payload.redirect_uri) {
-          params += '&redirect_uri=' + request.payload.redirect_uri;
-        }
-        if (request.payload.response_type) {
-          params += '&response_type=' + request.payload.response_type;
-        }
-        if (request.payload.scope) {
-          params += '&scope=' + request.payload.scope;
-        }
-
-        let registerLink = '/register';
-        if (params) {
-          registerLink += '?' + params;
-        }
-
-        let passwordLink = '/password';
-        if (params) {
-          passwordLink += '?' + params;
-        }
         return reply.view('login', {
           title: 'Log into Humanitarian ID',
           query: request.payload,
-          registerLink: registerLink,
-          passwordLink: passwordLink,
           alert: {
             type: 'danger',
             message: 'We could not log you in. Please check your email/password'
@@ -194,23 +166,23 @@ module.exports = class AuthController extends Controller{
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
 
     // Check response_type
-    if (!request.payload.response_type) {
+    if (!request.query.response_type) {
       return reply(Boom.badRequest('Missing response_type'));
     }
 
     // If the user is not authenticated, redirect to the login page and preserve
-    // all relevant payload parameters.
+    // all relevant query parameters.
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId)) {
       this.log.info(
         'Get request to /oauth/authorize without session. Redirecting to the login page.'
       );
       return reply.redirect(
-        '/?redirect=/oauth/authorize&client_id=' + request.payload.client_id +
-        '&redirect_uri=' + request.payload.redirect_uri +
-        '&response_type=' + request.payload.response_type +
-        '&state=' + request.payload.state +
-        '&scope=' + request.payload.scope + '#login'
+        '/?redirect=/oauth/authorize&client_id=' + request.query.client_id +
+        '&redirect_uri=' + request.query.redirect_uri +
+        '&response_type=' + request.query.response_type +
+        '&state=' + request.query.state +
+        '&scope=' + request.query.scope + '#login'
       );
     }
 
@@ -220,7 +192,7 @@ module.exports = class AuthController extends Controller{
     User
       .findOne({_id: cookie.userId})
       .exec(function (err, user) {
-        const clientId = request.payload.client_id;
+        const clientId = request.query.client_id;
 
         if (err) {
           that.log.warn(
@@ -278,11 +250,11 @@ module.exports = class AuthController extends Controller{
 
     if (!cookie || (cookie && !cookie.userId)) {
       this.log.info('Got request to /oauth/authorize without session. Redirecting to the login page.');
-      return reply.redirect('/?redirect=/oauth/authorize&client_id=' + request.payload.client_id +
-        '&redirect_uri=' + request.payload.redirect_uri +
-        '&response_type=' + request.payload.response_type +
-        '&state=' + request.payload.state +
-        '&scope=' + request.payload.scope + '#login'
+      return reply.redirect('/?redirect=/oauth/authorize&client_id=' + request.query.client_id +
+        '&redirect_uri=' + request.query.redirect_uri +
+        '&response_type=' + request.query.response_type +
+        '&state=' + request.query.state +
+        '&scope=' + request.query.scope + '#login'
       );
     }
 
