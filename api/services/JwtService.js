@@ -34,7 +34,7 @@ module.exports = class JwtService extends Service {
   }
 
   public2jwk () {
-    const cert = fs.readFileSync('keys/hid.pkcs1.pub');
+    const cert = fs.readFileSync('keys/hid.rsa.pub');
     return rsa2jwk(cert, { use: 'sig', kid: 'hid-dev'}, 'public');
   }
 
