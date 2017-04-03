@@ -35,6 +35,19 @@ module.exports = {
       }
     },
 
+    production: {
+      migrate: 'create',
+      uri: process.env.DATABASE,
+      options: {
+        server: {
+          socketOptions: {
+            keepAlive: 600000,
+            connectTimeoutMS: 60000
+          }
+        }
+      }
+    },
+
     testing: {
       migrate: 'drop',
       uri: 'mongodb://db:27017/testing',

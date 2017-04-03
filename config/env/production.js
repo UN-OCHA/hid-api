@@ -4,6 +4,12 @@ const winston = require('winston');
 
 module.exports = {
 
+  database: {
+    models: {
+      defaultStore: 'production'
+    }
+  },
+
   trailpack: {
     disabled: [
       'repl'
