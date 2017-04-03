@@ -1,7 +1,10 @@
 # Humanitarian ID v2 API
 
 Humanitarian ID v2 API is built on [TrailsJS](https://trailsjs.io). Much of the documentation concerning the structure of the code can
-therefore be found in [TrailsJS documentation](https://trailsjs.io/doc). It uses mongoDB as its database backend.
+therefore be found in [TrailsJS documentation](https://trailsjs.io/doc). It uses:
+
+* mongoDB as its database backend
+* hapi as its web server
 
 The HID v2 API handles 2 main functionalities:
 
@@ -39,12 +42,11 @@ and out of lists
 
 ## Routes
 
-Routes map API endpoints to their respective controller methods. Routes are defined in the config/routes.js file.
+Routes map API endpoints to their respective controller methods. Routes are defined in the `config/routes.js` file.
 
 ## Policies
 
-Policies "protect" controller methods from being accessed by unauthorized users. Policies are defined in the config/policies.js
-file.
+Policies "protect" controller methods from being accessed by unauthorized users. Policies are defined in the `config/policies.js` file.
 
 * AuthPolicy: defines policies to determine if a user is authenticated and if a user is an administrator or not
 * ListPolicy: determines if a user is allowed to create/update/delete a list
@@ -62,3 +64,21 @@ Services are helper methods provided to the controllers.
 * JwtService: issues and verifies Json Web tokens
 * ListService: helper methods for lists controller
 * NotificationService: helper methods for the notification controller
+
+## Configuration files
+
+Configuration files are stored in `/config`.
+
+* caches.js: configuration file used for trailpack-cache
+* cron.js: configuration file used for trailpack-cron: contains various functions launched at regular intervals
+* database.js: used to configure the connections to databases
+* footprints.js: used to configure footprint options
+* i18n.js: configure internationalization (not used currently)
+* log.js: configure logging
+* main.js: configure trailpacks and paths
+* migrate.js: migration code from v1 to v2: will be removed after the migration
+* policies.js: configure policies
+* routes.js: configure routes
+* session.js: used to configure sessions when authenticating with openId Connect
+* views.js: used to configure the views
+* web.js: used to configure the web server (hapi)
