@@ -78,15 +78,6 @@ module.exports = [
     }
   },
 
-  /**
-   * Constrain the DefaultController.info handler to accept only GET requests.
-   */
-  {
-    method: 'GET',
-    path: '/api/v2/default/info',
-    handler: 'DefaultController.info'
-  },
-
   {
     method: 'GET',
     path: '/api/v2/migrate/users',

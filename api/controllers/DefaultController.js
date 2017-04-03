@@ -11,13 +11,6 @@ const Controller = require('trails/controller');
  */
 module.exports = class DefaultController extends Controller {
 
-  /**
-   * Return some info about this application
-   */
-  info (request, reply) {
-    reply(this.app.services.DefaultService.getApplicationInfo());
-  }
-
   migrateUsers (request, reply) {
     reply();
     this.app.config.migrate.migrate(this.app);
