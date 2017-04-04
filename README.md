@@ -11,7 +11,7 @@ The HID v2 API handles 2 main functionalities:
 1. Authentication through Json Web Tokens and OpenID connect
 2. A user and lists API allowing users to check in & out of lists
 
-A detailed documentation about the API endpoints can be found here: https://api2.dev.humanitarian.id/docs
+A detailed documentation about the API endpoints can be found here: https://api.humanitarian.id/docs
 
 ## Models
 
