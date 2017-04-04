@@ -112,11 +112,17 @@ module.exports = class AuthController extends Controller{
       if (!result.isBoom) {
         // Redirect to /oauth/authorize
         request.yar.set('session', { userId: result._id });
-        let redirect = request.payload.redirect || '/oauth/authorize';
-        redirect += '?client_id=' + request.payload.client_id;
-        redirect += '&redirect_uri=' + request.payload.redirect_uri;
-        redirect += '&response_type=' + request.payload.response_type;
-        redirect += '&scope=' + request.payload.scope;
+        let redirect = '';
+        if (request.payload.response_type) {
+          redirect = request.payload.redirect || '/oauth/authorize';
+          redirect += '?client_id=' + request.payload.client_id;
+          redirect += '&redirect_uri=' + request.payload.redirect_uri;
+          redirect += '&response_type=' + request.payload.response_type;
+          redirect += '&scope=' + request.payload.scope;
+        }
+        else {
+          redirect = '/user';
+        }
 
         /*if (typeof request.payload.response_type === 'undefined' || typeof request.payload.scope === 'undefined') {
           //that.log.warn({type: 'authenticate:error', body: req.body, cookies: req.cookies, header: req.headers, query: req.query},

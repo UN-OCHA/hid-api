@@ -183,4 +183,27 @@ module.exports = class ViewController extends Controller {
       });
     });
   }
+
+  // Display a default user page when user is logged in without OAuth
+  user (request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const User = this.app.orm.User;
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId)) {
+      return reply.redirect('/');
+    }
+    else {
+      const that = this;
+      User
+        .findOne({_id: cookie.userId})
+        .then(user => {
+          return reply.view('user', {
+            user: user
+          });
+        })
+        .catch(err => {
+          that.app.services.ErrorService.handle(err, reply);
+        });
+    }
+  }
 };
