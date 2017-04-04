@@ -16,6 +16,26 @@ const queryOptions = [
  */
 module.exports = class HelperService extends Service {
 
+  getOauthParams(args) {
+    let params = '';
+    if (args.redirect) {
+      params += 'redirect=' + args.redirect;
+    }
+    if (args.client_id) {
+      params += '&client_id=' + args.client_id;
+    }
+    if (args.redirect_uri) {
+      params += '&redirect_uri=' + args.redirect_uri;
+    }
+    if (args.response_type) {
+      params += '&response_type=' + args.response_type;
+    }
+    if (args.scope) {
+      params += '&scope=' + args.scope;
+    }
+    return params;
+  }
+
   getManagerOnlyAttributes (modelName) {
     return this.getSchemaAttributes(modelName, 'managerOnlyAttributes', 'managerOnly');
   }

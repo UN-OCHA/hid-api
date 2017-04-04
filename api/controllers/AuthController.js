@@ -148,22 +148,7 @@ module.exports = class AuthController extends Controller{
         );
       }
       else {
-        let params = '';
-        if (request.payload.redirect) {
-          params += 'redirect=' + request.payload.redirect;
-        }
-        if (request.payload.client_id) {
-          params += '&client_id=' + request.payload.client_id;
-        }
-        if (request.payload.redirect_uri) {
-          params += '&redirect_uri=' + request.payload.redirect_uri;
-        }
-        if (request.payload.response_type) {
-          params += '&response_type=' + request.payload.response_type;
-        }
-        if (request.payload.scope) {
-          params += '&scope=' + request.payload.scope;
-        }
+        let params = this.app.services.HelperService.getOauthParams(request.payload);
 
         let registerLink = '/register';
         if (params) {

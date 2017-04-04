@@ -20,6 +20,24 @@ module.exports = class ViewController extends Controller {
     }
   }
 
+  _getRegisterLink(args) {
+    let params = this.app.services.HelperService.getOauthParams(args);
+    let registerLink = '/register';
+    if (params) {
+      registerLink += '?' + params;
+    }
+    return registerLink;
+  }
+
+  _getPasswordLink(args) {
+    let params = this.app.services.HelperService.getOauthParams(args);
+    let registerLink = '/password';
+    if (params) {
+      registerLink += '?' + params;
+    }
+    return registerLink;
+  }
+
   login (request, reply) {
     const session = request.yar.get('session');
     if (session) { // User is already logged in
@@ -38,32 +56,8 @@ module.exports = class ViewController extends Controller {
       }
     }
 
-    let params = '';
-    if (request.query.redirect) {
-      params += 'redirect=' + request.query.redirect;
-    }
-    if (request.query.client_id) {
-      params += '&client_id=' + request.query.client_id;
-    }
-    if (request.query.redirect_uri) {
-      params += '&redirect_uri=' + request.query.redirect_uri;
-    }
-    if (request.query.response_type) {
-      params += '&response_type=' + request.query.response_type;
-    }
-    if (request.query.scope) {
-      params += '&scope=' + request.query.scope;
-    }
-
-    let registerLink = '/register';
-    if (params) {
-      registerLink += '?' + params;
-    }
-
-    let passwordLink = '/password';
-    if (params) {
-      passwordLink += '?' + params;
-    }
+    let registerLink = this._getRegisterLink(request.query);
+    let passwordLink = this._getPasswordLink(request.query);
 
     return reply.view('login', {
       title: 'Log into Humanitarian ID',
@@ -99,9 +93,13 @@ module.exports = class ViewController extends Controller {
         'You registered successfully. Please confirm your email address',
         'There was an error registering you.'
       );
+      let registerLink = that._getRegisterLink(request.payload);
+      let passwordLink = that._getPasswordLink(request.payload);
       return reply.view('login', {
         alert: al,
-        query: request.query
+        query: request.query,
+        registerLink: registerLink,
+        passwordLink: passwordLink
       });
     });
   }
@@ -119,9 +117,13 @@ module.exports = class ViewController extends Controller {
         'Thank you for confirming your email address. You can now log in',
         'There was an error confirming your email address.'
       );
+      let registerLink = that._getRegisterLink(request.query);
+      let passwordLink = that._getPasswordLink(request.query);
       return reply.view('login', {
         alert: al,
-        query: request.query
+        query: request.query,
+        registerLink: registerLink,
+        passwordLink: passwordLink
       });
     });
   }
@@ -146,9 +148,13 @@ module.exports = class ViewController extends Controller {
         'You should have received an email which will allow you to reset your password.',
         'There was an error resetting your password.'
       );
+      let registerLink = that._getRegisterLink(request.payload);
+      let passwordLink = that._getPasswordLink(request.payload);
       return reply.view('login', {
         alert: al,
-        query: request.query
+        query: request.query,
+        registerLink: registerLink,
+        passwordLink: passwordLink
       });
     });
   }
@@ -167,9 +173,13 @@ module.exports = class ViewController extends Controller {
         'Your password was successfully reset.',
         'There was an error resetting your password.'
       );
+      let registerLink = that._getRegisterLink(request.payload);
+      let passwordLink = that._getPasswordLink(request.payload);
       return reply.view('login', {
         alert: al,
-        query: request.payload
+        query: request.payload,
+        registerLink: registerLink,
+        passwordLink: passwordLink
       });
     });
   }
