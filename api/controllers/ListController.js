@@ -1,7 +1,10 @@
-'use strict'
+'use strict';
 
-const Controller = require('trails-controller')
-const Boom = require('boom')
+const Controller = require('trails/controller');
+const Boom = require('boom');
+const _ = require('lodash');
+const async = require('async');
+const acceptLanguage = require('accept-language');
 
 /**
  * @module ListController
@@ -9,102 +12,291 @@ const Boom = require('boom')
  */
 module.exports = class ListController extends Controller{
 
+  _removeForbiddenAttributes (request) {
+    this.app.services.HelperService.removeForbiddenAttributes('List', request, ['names']);
+  }
+
+  create (request, reply) {
+    const List = this.app.orm.List;
+    this._removeForbiddenAttributes(request);
+    request.payload.owner = request.params.currentUser._id;
+    if (!request.payload.managers) {
+      request.payload.managers = [];
+    }
+    request.payload.managers.push(request.params.currentUser._id);
+    const that = this;
+    List
+      .create(request.payload)
+      .then((list) => {
+        return reply(list);
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
+  }
+
   find (request, reply) {
-    const FootprintService = this.app.services.FootprintService
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query)
-    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query)
-    let response, count
+    const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
+    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
+    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
+    const List = this.app.orm.List;
+    const User = this.app.orm.User;
 
-    if (!options.populate) options.populate = "owner managers"
+    if (!options.sort) {
+      options.sort = 'name';
+    }
 
-    this.log.debug('[ListController] (find) model = list, criteria =', request.query, request.params.id,
-      'options =', options)
+    // Search with contains when searching in name or label
+    if (criteria.name) {
+      if (criteria.name.length < 3) {
+        return reply(Boom.badRequest('Name must have at least 3 characters'));
+      }
+      let name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
+      name = new RegExp(name, 'i');
+      criteria['names.text'] = name;
+      delete criteria.name;
+    }
+    if (criteria.label) {
+      criteria.label = criteria.label.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
+      criteria.label = new RegExp(criteria.label, 'i');
+    }
 
-    var findCallback = function (result) {
-      if (!result) return Boom.notFound()
-      return result
-    };
+    // Do not show deleted lists
+    criteria.deleted = false;
+
+    this.log.debug(
+      '[ListController] (find) model = list, criteria =',
+      request.query,
+      request.params.id,
+      'options =',
+      options
+    );
 
     // List visiblity
-    var currentUser = request.params.currentUser;
+    const that = this;
 
     if (request.params.id) {
-      response = FootprintService.find('list', request.params.id, options)
-      reply(
-        response.then(function (result) {
-          if (!result) return Boom.notFound()
-          var isManager = result.managers.filter(function (elt) {
-            return elt._id == currentUser._id;
-          });
-
-          if (result.visibility == "all" || 
-             currentUser.is_admin || 
-             (result.visibility == "verified" && currentUser.verified) || 
-             (result.visibility == "me" && (result.owner._id == currentUser._id || isManager.length > 0)) ) {
-               console.log('returning result');
-               return result;
-           }
-           else {
-             return Boom.forbidden();
-           }
-        })
-      )
-    }
-    else {
-      if (!currentUser.is_admin) {
-        criteria.$or = [
-          {visibility: "all"},
-          {owner: request.params.token.id},
-          {managers: request.params.token.id},
+      if (!options.populate) {
+        options.populate = [
+          {path: 'owner', select: '_id name'},
+          {path: 'managers', select: '_id name'}
         ];
       }
+      List
+        .findOne({_id: request.params.id, deleted: criteria.deleted })
+        .populate(options.populate)
+        .then(result => {
+          if (!result) {
+            throw Boom.notFound();
+          }
 
-      if (currentUser.verified) {
-        criteria.$or.push({visibility: "verified"});
-      }
-
-      response = FootprintService.find('list', criteria, options)
-      count = FootprintService.count('list', criteria)
-      count.then(number => {
-        reply(response.then(findCallback)).header('X-Total-Count', number)
-      })
+          const out = result.toJSON();
+          out.name = result.translatedAttribute('names', reqLanguage);
+          out.acronym = result.translatedAttribute('acronyms', reqLanguage);
+          out.visible = result.isVisibleTo(request.params.currentUser);
+          return reply(out);
+        })
+        .catch(err => { that.app.services.ErrorService.handle(err, reply); });
+    }
+    else {
+      options.populate = [{path: 'owner', select: '_id name'}];
+      const query = this.app.services.HelperService.find('List', criteria, options);
+      query
+        .then((results) => {
+          return List
+            .count(criteria)
+            .then((number) => {
+              return {result: results, number: number};
+            });
+        })
+        .then((result) => {
+          const out = [];
+          let tmp = {};
+          let optionsArray = [];
+          if (options.fields) {
+            optionsArray = options.fields.split(' ');
+          }
+          async.eachSeries(result.result, function (list, next) {
+            tmp = list.toJSON();
+            tmp.visible = list.isVisibleTo(request.params.currentUser);
+            tmp.name = list.translatedAttribute('names', reqLanguage);
+            tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
+            if (optionsArray.indexOf('count') !== -1) {
+              const ucriteria = {};
+              ucriteria[list.type + 's'] = {
+                $elemMatch: {list: list._id, deleted: false, pending: false}
+              };
+              User
+                .count(ucriteria)
+                .then((count) => {
+                  tmp.count = count;
+                  out.push(tmp);
+                  next();
+                });
+            }
+            else {
+              out.push(tmp);
+              next();
+            }
+          }, function (err) {
+            reply(out).header('X-Total-Count', result.number);
+          });
+        })
+        .catch((err) => {
+          that.app.services.ErrorService.handle(err, reply);
+        });
     }
   }
 
+  _notifyManagers(uids, type, request, list) {
+    const User = this.app.orm.user;
+    const that = this;
+    User
+      .find({_id: {$in: uids}})
+      .exec()
+      .then((users) => {
+        for (let i = 0, len = users.length; i < len; i++) {
+          that.app.services.NotificationService
+            .send({
+              type: type,
+              user: users[i],
+              createdBy: request.params.currentUser,
+              params: { list: list }
+            }, () => {});
+        }
+      })
+      .catch((err) => { that.log.error(err); });
+  }
+
   update (request, reply) {
-    const FootprintService = this.app.services.FootprintService
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query)
-    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query)
+    const Model = this.app.orm.list;
+    const User = this.app.orm.user;
 
-    if (!options.populate) options.populate = "owner managers"
+    this._removeForbiddenAttributes(request);
 
-    this.log.debug('[ListController] (update) model = list, criteria =', request.query, request.params.id,
-      ', values = ', request.payload)
+    this.log.debug(
+      '[ListController] (update) model = list, criteria =',
+      request.query,
+      request.params.id,
+      ', values = ',
+      request.payload
+    );
 
-    if (request.params.id) {
-      reply(FootprintService.update('list', request.params.id, request.payload, options))
-    }
-    else {
-      reply(FootprintService.update('list', criteria, request.payload, options))
-    }
+    const that = this;
+    Model
+      .findOne({_id: request.params.id})
+      .then(list => {
+        const oldlist = _.clone(list);
+        _.merge(list, request.payload);
+        list.markModified('managers');
+        return list
+          .save()
+          .then(() => {
+            reply(list);
+            return oldlist;
+          });
+      })
+      .then((list) => {
+        const payloadManagers = [];
+        if (request.payload.managers) {
+          request.payload.managers.forEach(function (man) {
+            payloadManagers.push(man.toString());
+          });
+        }
+        const listManagers = [];
+        if (list.managers) {
+          list.managers.forEach(function (man) {
+            listManagers.push(man.toString());
+          });
+        }
+        const diffAdded = _.difference(payloadManagers, listManagers);
+        const diffRemoved = _.difference(listManagers, payloadManagers);
+        if (diffAdded.length) {
+          that._notifyManagers(diffAdded, 'added_list_manager', request, list);
+        }
+        if (diffRemoved.length) {
+          that._notifyManagers(diffRemoved, 'removed_list_manager', request, list);
+        }
+        return list;
+      })
+      .then(list => {
+        return Model
+          .findOne({_id: request.params.id})
+          .then(newlist => {
+            return newlist;
+          });
+      })
+      .then(list => {
+        // Update users
+        const criteria = {};
+        criteria[list.type + 's.list'] = list._id.toString();
+        return User
+          .find(criteria)
+          .then(users => {
+            for (let i = 0; i < users.length; i++) {
+              const user = users[i];
+              for (let j = 0; j < user[list.type + 's'].length; j++) {
+                if (user[list.type + 's'][j].list === list._id) {
+                  user[list.type + 's'][j].name = list.name;
+                  user[list.type + 's'][j].names = list.names;
+                  user[list.type + 's'][j].acronym = list.acronym;
+                  user[list.type + 's'][j].acronyms = list.acronyms;
+                  user[list.type + 's'][j].visibility = list.visibility;
+                }
+              }
+              user.save();
+            }
+          });
+      })
+      .catch((err) => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
   }
 
 
   destroy (request, reply) {
-    const FootprintService = this.app.services.FootprintService
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query)
-    const criteria = this.app.packs.hapi.getCriteriaFromQuery(request.query)
+    const List = this.app.orm.List;
+    const User = this.app.orm.User;
 
-    this.log.debug('[ListController] (destroy) model = list, query =', request.query)
+    this.log.debug('[ListController] (destroy) model = list, query =', request.query);
+    const that = this;
 
-    if (request.params.id) {
-      FootprintService.destroy('listuser', {list: request.params.id}, options)
-      reply(FootprintService.destroy('list', request.params.id, options))
-    }
-    else {
-      reply(FootprintService.destroy('list', criteria, options))
-    }
+    List
+      .findOne({ _id: request.params.id })
+      .then(record => {
+        if (!record) {
+          throw new Error(Boom.notFound());
+        }
+        // Set deleted to true
+        record.deleted = true;
+        return record
+          .save()
+          .then(() => {
+            return record;
+          });
+      })
+      .then((record) => {
+        reply(record);
+        // Remove all checkins from users in this list
+        const criteria = {};
+        criteria[record.type + 's.list'] = record._id.toString();
+        return User
+          .find(criteria)
+          .then(users => {
+            for (let i = 0; i < users.length; i++) {
+              const user = users[i];
+              for (let j = 0; j < user[record.type + 's'].length; j++) {
+                if (user[record.type + 's'][j].list === record._id) {
+                  user[record.type + 's'][j].deleted = true;
+                }
+              }
+              user.save();
+            }
+          });
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
   }
 
-}
-
+};

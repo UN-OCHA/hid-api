@@ -1,10 +1,10 @@
-'use strict'
+'use strict';
 /* global describe, it */
 
-const assert = require('assert')
+const assert = require('assert');
 
 describe('UserController', () => {
   it('should exist', () => {
-    assert(global.app.api.controllers['UserController'])
-  })
-})
+    assert(global.app.api.controllers['UserController']);
+  });
+});

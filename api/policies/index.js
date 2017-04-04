@@ -1,2 +1,5 @@
-exports.AuthPolicy = require('./AuthPolicy')
-exports.ListOwner = require('./ListOwner')
+exports.AuthPolicy = require('./AuthPolicy');
+exports.UserPolicy = require('./UserPolicy');
+exports.ServicePolicy = require('./ServicePolicy');
+exports.ListUserPolicy = require('./ListUserPolicy');
+exports.ListPolicy = require('./ListPolicy');

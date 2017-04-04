@@ -1,0 +1,9 @@
+<p>Dear <%= user.name %>,</p>
+
+<p>An alert for <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a> has been created through glidenumber.net.
+  If you are responding to that (potential) disaster, you can check into the disaster specific contact list on Humanitarian ID.
+Checking into this list will help others to find your contact details in that specific response. </p>
+
+<p><a href="<%= params.list.getAppUrl() %>">Yes, please check me into the contact list <%= params.list.name %></a></p>
+
+<% include ../includes/footer_en %>

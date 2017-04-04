@@ -1,0 +1,9 @@
+<p>Dear <%= user.name %>,</p>
+
+<p><a href="<%= createdBy.getAppUrl() %>"><%= createdBy.name %></a> gave you manager permissions on the list <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a> on Humanitarian ID.</p>
+
+<p>With the link below, you can manage the contact list. You can also find it under your personal "Lists I manage" on your dashboard at any time.</p>
+
+<p><a href="<%= params.list.getAppUrl() %>">Click here to open the list</a></p>
+
+<% include ../includes/footer_en %>

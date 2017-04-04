@@ -1,0 +1,26 @@
+<% include header %>
+
+<div class="container api-page">
+  <div class="row">
+    <div class="col-sm-6 offset-sm-3 col-lg-4 offset-lg-4">
+      <div class="page-header">
+        <h1 class="page-header__heading">Hi <%= user.name %></h1>
+					
+				</div>
+
+				<form action="/oauth/authorize" method="post">
+					<div class="form-field">
+					<p><strong><%= client.name %></strong> is requesting access to your account.</p>
+					<p>Do you approve?</p>
+					</div>
+				  <input type="hidden" name="transaction_id" value="<%= transactionID %>" />
+				  <input type="hidden" name="crumb" value="<%= crumb %>" />
+				  <div>
+				    <input type="submit" value="Allow" id="allow" class="btn-primary">
+				    <input type="submit" value="Deny" name="cancel" id="deny" class="btn-secondary">
+				  </div>
+				</form>
+			</div>
+		</div>
+	</div>
+<% include footer %>

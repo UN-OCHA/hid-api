@@ -1,0 +1,4 @@
+node_modules
+coverage
+docker-compose.yml
+**/.DS_Store

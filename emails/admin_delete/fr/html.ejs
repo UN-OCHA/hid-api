@@ -1,0 +1,7 @@
+<p>Bonjour <%= user.name %>,</p>
+
+<p><a href="<%= createdBy.getAppUrl() %>"><%= createdBy.name %></a> a supprimé votre profil (coordonnées de contact) de Humanitarian ID. Normalement cela arrive seulement si vous avez fait la demande de supprimer votre profil.</p>
+
+<p>S’il s’agit d’une faute de notre part, nous vous prions de bien vouloir contacter <a href="<%= createdBy.getAppUrl() %>"><%= createdBy.name %></a> ou d’envoyer un courriel à info@humanitairan.id</p>
+
+<% include ../../includes/footer_fr %>

@@ -1,0 +1,9 @@
+<p>Dear <%= user.name %>,</p>
+
+<p><a href="<%= createdBy.getAppUrl() %>"><%= createdBy.name %></a> has deleted your profile (contact details) from Humanitarian ID. Such an action should only be taken at your request and with your consent.</p>
+
+<p>If this action was taken in error, kindly contact <a href="<%= createdBy.getAppUrl() %>"><%= createdBy.name %></a> or email info@humanitairan.id.</p>
+
+<p>If you believe that this email was sent incorrectly or inappropriately, please let us know at info@humanitarian.id.</p>
+
+<% include ../includes/footer_en %>

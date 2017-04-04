@@ -15,13 +15,37 @@ module.exports = {
    */
   stores: {
 
+    local: {
+      migrate: 'create',
+      uri: 'mongodb://db:27017/local',
+      options: {}
+    },
+
     development: {
       // should be 'create' or 'drop'
       migrate: 'create',
+      uri: 'mongodb://db:27017/development',
+      options: {
+        server: {
+          socketOptions: {
+            keepAlive: 600000,
+            connectTimeoutMS: 60000
+          }
+        }
+      }
+    },
 
-      uri: 'mongodb://db:27017/hid',
-
-      options: {}
+    production: {
+      migrate: 'create',
+      uri: process.env.DATABASE,
+      options: {
+        server: {
+          socketOptions: {
+            keepAlive: 600000,
+            connectTimeoutMS: 60000
+          }
+        }
+      }
     },
 
     testing: {
@@ -32,7 +56,7 @@ module.exports = {
   },
 
   models: {
-    defaultStore: 'development',
+    defaultStore: 'local',
     migrate: 'create'
   }
-}
+};

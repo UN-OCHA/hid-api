@@ -1,0 +1,11 @@
+<p>Bonjour <%= user.name %>,</p>
+
+<p>Nous avons remarqué que vous n'avez pas mis à jour votre profil durant les six derniers mois.</p>
+
+<p>Vous pouvez mettre à jour votre profil en cliquant sur le lien suivant:</p>
+
+<p><a href="<%= user.getAppUrl() %>"><%= user.getAppUrl() %></a></p>
+
+<p>La possibilité pour les humanitaires de se trouver et se contacter durant une crise est extrêmement importante. Humanitarian ID adopte une approche décentralisée des listes de contact et compte donc sur ses membres tels que vous pour aider à maintenir les listes de contact à jour.</p>
+
+<% include ../../includes/footer_fr %>

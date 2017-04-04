@@ -1,8 +1,14 @@
-'use strict'
+'use strict';
 
-const winston = require('winston')
+const winston = require('winston');
 
 module.exports = {
+
+  database: {
+    models: {
+      defaultStore: 'production'
+    }
+  },
 
   trailpack: {
     disabled: [
@@ -34,4 +40,4 @@ module.exports = {
     })
   }
 
-}
+};
