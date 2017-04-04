@@ -70,6 +70,12 @@ module.exports = [
 
   {
     method: 'GET',
+    path: '/user',
+    handler: 'ViewController.user'
+  },
+
+  {
+    method: 'GET',
     path: '/docs/{param*}',
     handler: {
       directory: {
