@@ -100,6 +100,68 @@ module.exports = class List extends Model {
             return this[singularAttr];
           }
         }
+      },
+      onSchema(app, schema) {
+        schema.pre('save', function (next) {
+          if (this.acronym) {
+            this.name = this.label + ' (' + this.acronym + ')';
+          }
+          else {
+            this.name = this.label;
+          }
+          const that = this;
+          languages.forEach(function (lang) {
+            const labelIndex = that.languageIndex('labels', lang);
+            const nameIndex = that.languageIndex('names', lang);
+            const acronymIndex = that.languageIndex('acronyms', lang);
+            let name = '';
+            if (labelIndex !== -1) {
+              if (acronymIndex !== -1 && that.acronyms[acronymIndex].text !== '') {
+                name = that.labels[labelIndex].text + ' (' + that.acronyms[acronymIndex].text + ')';
+              }
+              else {
+                name = that.labels[labelIndex].text;
+              }
+              if (nameIndex !== -1) {
+                that.names[nameIndex].text = name;
+              }
+              else {
+                that.names.push({language: lang, text: name});
+              }
+            }
+          });
+          next ();
+        });
+        schema.pre('update', function (next) {
+          if (this.acronym) {
+            this.name = this.label + ' (' + this.acronym + ')';
+          }
+          else {
+            this.name = this.label;
+          }
+          const that = this;
+          languages.forEach(function (lang) {
+            const labelIndex = that.languageIndex('labels', lang);
+            const nameIndex = that.languageIndex('names', lang);
+            const acronymIndex = that.languageIndex('acronyms', lang);
+            let name = '';
+            if (labelIndex !== -1) {
+              if (acronymIndex !== -1 && that.acronyms[acronymIndex].text !== '') {
+                name = that.labels[labelIndex].text + ' (' + that.acronyms[acronymIndex].text + ')';
+              }
+              else {
+                name = that.labels[labelIndex].text;
+              }
+              if (nameIndex !== -1) {
+                that.names[nameIndex].text = name;
+              }
+              else {
+                that.names.push({language: lang, text: name});
+              }
+            }
+          });
+          next();
+        });
       }
     };
   }
@@ -196,69 +258,6 @@ module.exports = class List extends Model {
         readonly: true
       }
     };
-  }
-
-  onSchema(app, schema) {
-    schema.pre('save', function (next) {
-      if (this.acronym) {
-        this.name = this.label + ' (' + this.acronym + ')';
-      }
-      else {
-        this.name = this.label;
-      }
-      const that = this;
-      languages.forEach(function (lang) {
-        const labelIndex = that.languageIndex('labels', lang);
-        const nameIndex = that.languageIndex('names', lang);
-        const acronymIndex = that.languageIndex('acronyms', lang);
-        let name = '';
-        if (labelIndex !== -1) {
-          if (acronymIndex !== -1 && that.acronyms[acronymIndex].text !== '') {
-            name = that.labels[labelIndex].text + ' (' + that.acronyms[acronymIndex].text + ')';
-          }
-          else {
-            name = that.labels[labelIndex].text;
-          }
-          if (nameIndex !== -1) {
-            that.names[nameIndex].text = name;
-          }
-          else {
-            that.names.push({language: lang, text: name});
-          }
-        }
-      });
-      next ();
-    });
-    schema.pre('update', function (next) {
-      if (this.acronym) {
-        this.name = this.label + ' (' + this.acronym + ')';
-      }
-      else {
-        this.name = this.label;
-      }
-      const that = this;
-      languages.forEach(function (lang) {
-        const labelIndex = that.languageIndex('labels', lang);
-        const nameIndex = that.languageIndex('names', lang);
-        const acronymIndex = that.languageIndex('acronyms', lang);
-        let name = '';
-        if (labelIndex !== -1) {
-          if (acronymIndex !== -1 && that.acronyms[acronymIndex].text !== '') {
-            name = that.labels[labelIndex].text + ' (' + that.acronyms[acronymIndex].text + ')';
-          }
-          else {
-            name = that.labels[labelIndex].text;
-          }
-          if (nameIndex !== -1) {
-            that.names[nameIndex].text = name;
-          }
-          else {
-            that.names.push({language: lang, text: name});
-          }
-        }
-      });
-      next();
-    });
   }
 
 };

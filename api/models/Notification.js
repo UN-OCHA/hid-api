@@ -16,6 +16,30 @@ module.exports = class Notification extends Model {
     return {
       schema: {
         timestamps: true
+      },
+      onSchema(app, schema) {
+
+        schema.pre('save', function(next) {
+          if (!this.text) {
+            const templateDir = TemplateDir + this.type;
+            const template = new NotificationTemplate(templateDir);
+            const that = this;
+            template.render({
+              createdBy: that.createdBy,
+              user: that.user,
+              params: that.params
+            }, function(err, result) {
+              if (err) {
+                return next(err);
+              }
+              that.text = result.html;
+              next();
+            });
+          }
+          else {
+            next();
+          }
+        });
       }
     };
   }
@@ -54,31 +78,6 @@ module.exports = class Notification extends Model {
         default: false
       }
     };
-  }
-
-  onSchema(app, schema) {
-
-    schema.pre('save', function(next) {
-      if (!this.text) {
-        const templateDir = TemplateDir + this.type;
-        const template = new NotificationTemplate(templateDir);
-        const that = this;
-        template.render({
-          createdBy: that.createdBy,
-          user: that.user,
-          params: that.params
-        }, function(err, result) {
-          if (err) {
-            return next(err);
-          }
-          that.text = result.html;
-          next();
-        });
-      }
-      else {
-        next();
-      }
-    });
   }
 
 

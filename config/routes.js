@@ -92,6 +92,12 @@ module.exports = [
 
   {
     method: 'GET',
+    path: '/api/v2/migrate/usernames',
+    handler: 'DefaultController.setUserNames'
+  },
+
+  {
+    method: 'GET',
     path: '/api/v2/migrate/lists',
     handler: 'DefaultController.migrateLists'
   },
