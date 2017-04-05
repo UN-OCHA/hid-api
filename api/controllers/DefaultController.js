@@ -1,7 +1,7 @@
 'use strict';
 
 const Controller = require('trails/controller');
-const languages = ['en', 'fr', 'es'];
+const listAttrs = ['operations', 'bundles', 'disasters', 'lists', 'organizations', 'organization', 'functional_roles', 'offices'];
 
 /**
  * @module DefaultController
@@ -42,11 +42,27 @@ module.exports = class DefaultController extends Controller {
       const User = this.app.orm.User;
       const stream = User
         .find()
+        .populate('operations.list bundles.list disasters.list lists.list organizations.list organization.list functional_roles.list offices.list')
         .stream();
       let number = 0;
       stream.on('data', function(user) {
         console.log('Running user ' + number);
         number++;
+        listAttrs.forEach(function (attr) {
+          if (attr !== 'organization') {
+            user[attr].forEach(function (checkin) {
+              checkin.names = checkin.list.names;
+              checkin.name = checkin.list.name;
+            });
+            user.markModified(attr);
+          }
+          else {
+            if (user[attr] && user[attr].list) {
+              user[attr].names = user[attr].list.names;
+              user[attr].name = user[attr].list.name;
+            }
+          }
+        });
         /*let name = '';
         if (user.middle_name) {
           name = user.given_name + ' ' + user.middle_name + ' ' + user.family_name;
