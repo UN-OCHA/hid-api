@@ -98,6 +98,12 @@ module.exports = [
 
   {
     method: 'GET',
+    path: '/api/v2/migrate/listnames',
+    handler: 'DefaultController.setListNames'
+  },
+
+  {
+    method: 'GET',
     path: '/api/v2/migrate/lists',
     handler: 'DefaultController.migrateLists'
   },
