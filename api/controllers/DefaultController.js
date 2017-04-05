@@ -35,4 +35,27 @@ module.exports = class DefaultController extends Controller {
     reply();
     this.app.config.cron.importLists(this.app);
   }
+
+  setUserNames (request, reply) {
+    reply();
+      const User = this.app.orm.User;
+      const stream = User
+        .find()
+        .stream();
+      let number = 0;
+      stream.on('data', function(user) {
+        console.log('Running user ' + number);
+        number++;
+        /*let name = '';
+        if (user.middle_name) {
+          name = user.given_name + ' ' + user.middle_name + ' ' + user.family_name;
+        }
+        else {
+          name = user.given_name + ' ' + user.family_name;
+        }
+        User
+          .update({ _id: user._id}, {$set: {name: name}});*/
+        user.save();
+      });
+  }
 };

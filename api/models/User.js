@@ -365,6 +365,50 @@ module.exports = class User extends Model {
           });
           return user;
         }
+      },
+      onSchema(app, schema) {
+        schema.virtual('sub').get(function () {
+          return this._id;
+        });
+        schema.pre('save', function (next) {
+          if (this.middle_name) {
+            this.name = this.given_name + ' ' + this.middle_name + ' ' + this.family_name;
+          }
+          else {
+            this.name = this.given_name + ' ' + this.family_name;
+          }
+          next ();
+        });
+        schema.pre('update', function (next) {
+          let name;
+          const that = this;
+          this.findOne(function (err, user) {
+            if (user.middle_name) {
+              name = user.given_name + ' ' + user.middle_name + ' ' + user.family_name;
+            }
+            else {
+              name = user.given_name + ' ' + user.family_name;
+            }
+            that.findOneAndUpdate({_id: user._id}, {$set: {name: name}});
+            next();
+          });
+        });
+        schema.post('findOne', function (result, next) {
+          const that = this;
+          if (!result) {
+            return next();
+          }
+          result
+            .populate(userPopulate1)
+            .execPopulate()
+            .then(user => {
+              return next();
+            })
+            .catch(err => {
+              that.log.error(err);
+            }
+          );
+        });
       }
     };
   }
@@ -781,50 +825,5 @@ module.exports = class User extends Model {
         default: false
       }
     };
-  }
-
-  onSchema(app, schema) {
-    schema.virtual('sub').get(function () {
-      return this._id;
-    });
-    schema.pre('save', function (next) {
-      if (this.middle_name) {
-        this.name = this.given_name + ' ' + this.middle_name + ' ' + this.family_name;
-      }
-      else {
-        this.name = this.given_name + ' ' + this.family_name;
-      }
-      next ();
-    });
-    schema.pre('update', function (next) {
-      let name;
-      const that = this;
-      this.findOne(function (err, user) {
-        if (user.middle_name) {
-          name = user.given_name + ' ' + user.middle_name + ' ' + user.family_name;
-        }
-        else {
-          name = user.given_name + ' ' + user.family_name;
-        }
-        that.findOneAndUpdate({name: name});
-        next();
-      });
-    });
-    schema.post('findOne', function (result, next) {
-      const that = this;
-      if (!result) {
-        return next();
-      }
-      result
-        .populate(userPopulate1)
-        .execPopulate()
-        .then(user => {
-          return next();
-        })
-        .catch(err => {
-          that.log.error(err);
-        }
-      );
-    });
   }
 };
