@@ -56,7 +56,7 @@ module.exports = class Notification extends Model {
     };
   }
 
-  static onSchema(app, schema) {
+  onSchema(app, schema) {
 
     schema.pre('save', function(next) {
       if (!this.text) {
