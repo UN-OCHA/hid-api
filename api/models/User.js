@@ -783,7 +783,7 @@ module.exports = class User extends Model {
     };
   }
 
-  static onSchema(schema) {
+  static onSchema(app, schema) {
     schema.virtual('sub').get(function () {
       return this._id;
     });
