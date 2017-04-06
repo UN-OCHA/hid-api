@@ -26,6 +26,7 @@ module.exports = class OauthToken extends Model {
 
             const now = Date.now();
             let sub = user._id;
+            console.log(user);
             if (client.id === 'iasc-prod') {
               sub = user.email;
             }
