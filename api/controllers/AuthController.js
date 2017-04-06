@@ -315,6 +315,7 @@ module.exports = class AuthController extends Controller{
     if (!code) {
       return reply(Boom.badRequest('Missing authorization code'));
     }
+    const that = this;
     OauthToken
       .findOne({token: code, type: 'code'})
       .populate('client user')
