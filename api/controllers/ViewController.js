@@ -129,7 +129,7 @@ module.exports = class ViewController extends Controller {
   }
 
   password (request, reply) {
-    const requestUrl = request.connection.info.protocol + '://' + request.info.host +
+    const requestUrl = 'https://' + request.info.host +
       '/new_password?client_id=' + request.query.client_id +
       '&redirect_uri=' + request.query.redirect_uri +
       '&response_type=' + request.query.response_type +
