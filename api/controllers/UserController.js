@@ -1013,6 +1013,10 @@ module.exports = class UserController extends Controller{
       user.sub = user.email;
       this.log.info(user);
     }
+    if (request.params.currentClient.id === 'dart-prod') {
+      user.sub = user.legacyId;
+      user._id = user.legacyId;
+    }
     reply(user);
   }
 
