@@ -61,23 +61,29 @@ module.exports = class ServiceController extends Controller{
         .catch(err => { that.app.services.ErrorService.handle(err, reply); });
     }
     else {
-      const response = FootprintService.find('service', criteria, options);
-      const count = FootprintService.count('service', criteria);
-      count.then(number => {
-        response
-          .then(results => {
-            if (!results) {
-              return Boom.notFound();
-            }
-            for (let i = 0; i < results.length; i++) {
-              results[i].sanitize(request.params.currentUser);
-            }
-            return reply(results).header('X-Total-Count', number);
-          })
-          .catch(err => {
-            that.app.services.ErrorService.handle(err, reply);
-          });
-      });
+      const Service = this.app.orm.Service;
+      const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
+      const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
+
+      const that = this;
+      const query = this.app.services.HelperService.find('Service', criteria, options);
+      query
+        .then((results) => {
+          return Service
+            .count(criteria)
+            .then((number) => {
+              return {result: results, number: number};
+            });
+        })
+        .then((result) => {
+          for (let i = 0; i < result.result.length; i++) {
+            result.result[i].sanitize(request.params.currentUser);
+          }
+          return reply(result.result).header('X-Total-Count', result.number);
+        })
+        .catch((err) => {
+          that.app.services.ErrorService.handle(err, reply);
+        });
     }
   }
 
