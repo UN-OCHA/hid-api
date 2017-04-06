@@ -119,6 +119,9 @@ module.exports = class AuthController extends Controller{
           redirect += '&redirect_uri=' + request.payload.redirect_uri;
           redirect += '&response_type=' + request.payload.response_type;
           redirect += '&scope=' + request.payload.scope;
+          if (request.payload.state) {
+            redirect += '&state=' + request.payload.state;
+          }
         }
         else {
           redirect = '/user';
