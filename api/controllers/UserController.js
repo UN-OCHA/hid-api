@@ -1007,7 +1007,6 @@ module.exports = class UserController extends Controller{
   showAccount (request, reply) {
     let user = JSON.parse(JSON.stringify(request.params.currentUser));
     user.authorized_services = 'deprecated in v2';
-    console.log(request.params.currentClient.id);
     if (request.params.currentClient.id === 'iasc-prod') {
       user.sub = user.email;
     }
