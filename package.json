@@ -52,7 +52,7 @@
   },
   "scripts": {
     "test": "eslint . && mocha",
-    "start": "node ./server.js"
+    "start": "nodemon ./server.js"
   },
   "engines": {
     "node": ">= 4.0.0"
