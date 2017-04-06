@@ -123,6 +123,7 @@ module.exports = {
 
     oauth.exchange(
       oauth.exchanges.code(function (client, code, redirectURI, done) {
+        console.log(code);
         OauthToken
           .findOne({token: code, type: 'code'})
           .populate('client user')
@@ -130,6 +131,8 @@ module.exports = {
             if (err ||
               !ocode.client._id.equals(client._id) ||
               redirectURI !== ocode.client.redirectUri) {
+              console.log(err);
+              console.log(redirectURI);
               return done(null, false);
             }
             async.auto({
