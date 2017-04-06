@@ -84,7 +84,7 @@ module.exports = [
     }
   },
 
-  {
+  /*{
     method: 'GET',
     path: '/api/v2/migrate/users',
     handler: 'DefaultController.migrateUsers'
@@ -124,7 +124,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/import/lists',
     handler: 'DefaultController.importLists'
-  },
+  },*/
 
   {
     method: 'GET',
