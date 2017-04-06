@@ -29,8 +29,6 @@ module.exports = class ClientController extends Controller{
           if (!result) {
             throw Boom.notFound();
           }
-
-          result.sanitize(request.params.currentUser);
           return reply(result);
         })
         .catch(err => { that.app.services.ErrorService.handle(err, reply); });
