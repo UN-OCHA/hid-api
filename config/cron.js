@@ -505,11 +505,11 @@ module.exports = {
       start: true
     },*/
     // Delete expired oauth tokens
-    deleteExpiredTokens: {
+    /*deleteExpiredTokens: {
       schedule: '1 * * * *',
       onTick: deleteExpiredTokens,
       start: true
-    },
+    },*/
     // Import lists from Humanitarianresponse
     /*importLists: {
       schedule: '1 * * * *', // Run every 60 minutes

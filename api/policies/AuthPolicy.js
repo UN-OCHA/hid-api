@@ -61,7 +61,7 @@ module.exports = class AuthPolicy extends Policy {
       if (err) {
         // Verify it's not an oauth access token
         OauthToken
-          .findOne({token: token, type: 'access'})
+          .findOne({token: token})
           .populate('user client')
           .exec(function (err, tok) {
             // TODO: make sure the token is not expired
