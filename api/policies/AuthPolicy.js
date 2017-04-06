@@ -66,7 +66,6 @@ module.exports = class AuthPolicy extends Policy {
           .exec(function (err, tok) {
             // TODO: make sure the token is not expired
             if (err || !tok) {
-              console.log(err);
               return reply(Boom.unauthorized('Invalid Token!'));
             }
             request.params.currentUser = tok.user;
