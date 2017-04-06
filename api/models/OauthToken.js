@@ -25,11 +25,15 @@ module.exports = class OauthToken extends Model {
               .digest('hex');
 
             const now = Date.now();
+            let sub = user._id;
+            if (client.id === 'iasc-prod') {
+              sub = user.email;
+            }
             const ftoken = {
               type: type,
               token: token,
               client: client._id,
-              user: user._id,
+              user: sub,
               expires: now + 7 * 24 * 3600 * 1000
             };
 
