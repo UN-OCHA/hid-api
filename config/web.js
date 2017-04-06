@@ -129,8 +129,8 @@ module.exports = {
           .populate('client user')
           .exec(function (err, ocode) {
             if (err ||
-              !ocode.client._id.equals(client._id) ||
-              redirectURI !== ocode.client.redirectUri) {
+              !ocode.client._id.equals(client._id)) {
+              //redirectURI !== ocode.client.redirectUri) {
               console.log(err);
               console.log(redirectURI);
               return done(null, false);
