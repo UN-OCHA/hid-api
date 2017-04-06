@@ -154,7 +154,7 @@ module.exports = class AuthController extends Controller{
         );
       }
       else {
-        let params = this.app.services.HelperService.getOauthParams(request.payload);
+        let params = that.app.services.HelperService.getOauthParams(request.payload);
 
         let registerLink = '/register';
         if (params) {
