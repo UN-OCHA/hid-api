@@ -25,7 +25,6 @@ module.exports = class ClientController extends Controller{
       criteria._id = request.params.id;
       Client
         .findOne(criteria)
-        .populate(options.populate)
         .then(result => {
           if (!result) {
             throw Boom.notFound();
