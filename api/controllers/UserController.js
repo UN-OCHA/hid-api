@@ -1005,7 +1005,9 @@ module.exports = class UserController extends Controller{
   }
 
   showAccount (request, reply) {
-    reply(request.params.currentUser);
+    let user = request.params.currentUser;
+    user.authorized_services = request.params.currentUser.authorizedClients;
+    reply(user);
   }
 
   notify (request, reply) {
