@@ -308,6 +308,7 @@ module.exports = class AuthController extends Controller{
   }
 
   accessTokenOauth2 (request, reply) {
+    this.log.info('Requesting access token');
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
     const OauthToken = this.app.orm.OauthToken;
     const code = request.payload.code;
@@ -321,6 +322,7 @@ module.exports = class AuthController extends Controller{
         if (err) {
           return reply(Boom.badRequest('Wrong authorization code'));
         }
+        that.log.info('Found access token for client ');
         request.auth.credentials = ocode.client;
         oauth.token(request, reply);
       });
