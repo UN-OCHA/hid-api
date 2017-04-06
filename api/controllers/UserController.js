@@ -1005,7 +1005,8 @@ module.exports = class UserController extends Controller{
   }
 
   showAccount (request, reply) {
-    let user = request.params.currentUser;
+    console.log(typeof request.params.currentUser);
+    let user = JSON.parse(JSON.stringify(request.params.currentUser));
     console.log(user);
     user.authorized_services = 'test';
     console.log(user);
