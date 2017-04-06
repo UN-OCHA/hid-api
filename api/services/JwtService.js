@@ -40,9 +40,13 @@ module.exports = class JwtService extends Service {
 
   generateIdToken (client, user) {
     const now = Math.floor(Date.now() / 1000);
+    let sub = user._id;
+    if (client.id === 'iasc-prod') {
+      sub = user.email;
+    }
     const idToken = {
       iss: process.env.ROOT_URL,
-      sub: user._id,
+      sub: sub,
       aud: client.id,
       exp: now + 3600,
       iat: now
