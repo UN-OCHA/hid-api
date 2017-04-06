@@ -1006,7 +1006,7 @@ module.exports = class UserController extends Controller{
 
   showAccount (request, reply) {
     let user = request.params.currentUser;
-    user.authorized_services = request.params.currentUser.authorizedClients;
+    user.authorized_services = 'test';
     reply(user);
   }
 
