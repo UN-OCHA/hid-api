@@ -15,7 +15,7 @@ module.exports = class ClientController extends Controller{
   }
 
   find (request, reply) {
-    const Client = this.app.orm.Duplicate;
+    const Client = this.app.orm.Client;
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
 
