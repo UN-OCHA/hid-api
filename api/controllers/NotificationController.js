@@ -10,29 +10,30 @@ const Boom = require('boom');
 module.exports = class NotificationController extends Controller{
 
   find (request, reply) {
-    const FootprintService = this.app.services.FootprintService;
+    const Notification = this.app.orm.Notification;
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
-    const that = this;
 
     // Force to display notifications of current user
     criteria.user = request.params.currentUser.id;
 
-    FootprintService
-      .find('notification', criteria, options)
+    const that = this;
+    const query = this.app.services.HelperService.find('Notification', criteria, options);
+    query
       .then((results) => {
-        return FootprintService
-          .count('notification', criteria)
+        return Notification
+          .count(criteria)
           .then((number) => {
-            return {results: results, number: number};
+            return {result: results, number: number};
           });
       })
-      .then((results) => {
-        return reply(results.results).header('X-Total-Count', results.number);
+      .then((result) => {
+        return reply(result.result).header('X-Total-Count', result.number);
       })
-      .catch(err => {
+      .catch((err) => {
         that.app.services.ErrorService.handle(err, reply);
       });
+
   }
 
   update (request, reply) {
