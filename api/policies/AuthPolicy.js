@@ -69,6 +69,7 @@ module.exports = class AuthPolicy extends Policy {
               return reply(Boom.unauthorized('Invalid Token!'));
             }
             request.params.currentUser = tok.user;
+            request.params.currentClient = tok.client;
             reply();
           });
       }
