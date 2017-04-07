@@ -124,6 +124,7 @@ module.exports = {
     oauth.exchange(
       oauth.exchanges.code(function (client, code, redirectURI, payload, done) {
         console.log(payload);
+        const nonce = payload.nonce ? payload.nonce : '';
         OauthToken
           .findOne({token: code, type: 'code'})
           .populate('client user')
@@ -166,7 +167,7 @@ module.exports = {
               },
               idToken: function (callback) {
                 const out = {};
-                out.token = that.services.JwtService.generateIdToken(client, ocode.user);
+                out.token = that.services.JwtService.generateIdToken(client, ocode.user, nonce);
                 callback(null, out);
               },
               // Delete code token

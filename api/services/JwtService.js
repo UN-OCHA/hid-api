@@ -38,7 +38,7 @@ module.exports = class JwtService extends Service {
     return rsa2jwk(cert, { use: 'sig', kid: 'hid-dev'}, 'public');
   }
 
-  generateIdToken (client, user) {
+  generateIdToken (client, user, nonce) {
     const now = Math.floor(Date.now() / 1000);
     let sub = user._id;
     if (client.id === 'iasc-prod') {
@@ -49,8 +49,10 @@ module.exports = class JwtService extends Service {
       sub: sub,
       aud: client.id,
       exp: now + 3600,
+      nonce: nonce,
       iat: now
     };
+    console.log(idToken);
     return this.issue(idToken);
   }
 
