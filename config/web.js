@@ -108,8 +108,8 @@ module.exports = {
     }));
     // Authorization code exchange flow
     oauth.grant(oauth.grants.code(function (client, redirectURI, user, res, req, done) {
-      console.log(req);
-      OauthToken.generate('code', client, user, function (err, code) {
+      const nonce = req.nonce ? req.nonce : '';
+      OauthToken.generate('code', client, user, nonce, function (err, code) {
         if (err) {
           return done(err);
         }
@@ -124,9 +124,6 @@ module.exports = {
 
     oauth.exchange(
       oauth.exchanges.code(function (client, code, redirectURI, payload, authInfo, done) {
-        console.log(payload);
-        console.log(authInfo);
-        const nonce = payload.nonce ? payload.nonce : '';
         OauthToken
           .findOne({token: code, type: 'code'})
           .populate('client user')
@@ -169,7 +166,7 @@ module.exports = {
               },
               idToken: function (callback) {
                 const out = {};
-                out.token = that.services.JwtService.generateIdToken(client, ocode.user, nonce);
+                out.token = that.services.JwtService.generateIdToken(client, ocode.user, ocode.nonce);
                 callback(null, out);
               },
               // Delete code token
