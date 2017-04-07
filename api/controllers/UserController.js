@@ -1016,6 +1016,9 @@ module.exports = class UserController extends Controller{
     if (request.params.currentClient.id === 'dart-prod') {
       delete user._id;
     }
+    if (request.params.currentClient.id === 'kaya-prod') {
+      user.name = user.name.replace(' ', '');
+    }
     reply(user);
   }
 
