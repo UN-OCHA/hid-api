@@ -122,8 +122,9 @@ module.exports = {
     }));
 
     oauth.exchange(
-      oauth.exchanges.code(function (client, code, redirectURI, payload, done) {
+      oauth.exchanges.code(function (client, code, redirectURI, payload, authInfo, done) {
         console.log(payload);
+        console.log(authInfo);
         const nonce = payload.nonce ? payload.nonce : '';
         OauthToken
           .findOne({token: code, type: 'code'})
