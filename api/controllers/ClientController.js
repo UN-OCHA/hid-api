@@ -10,18 +10,30 @@ const Boom = require('boom');
 module.exports = class ClientController extends Controller{
 
   create (request, reply) {
-    request.params.model = 'client';
-    const FootprintController = this.app.controllers.FootprintController;
-    FootprintController.create(request, reply);
+    const Client = this.app.orm.Client;
+    const that = this;
+    Client
+      .create(request.payload)
+      .then((client) => {
+        if (!client) {
+          throw Boom.badRequest();
+        }
+        that.log.info('Client successfully created');
+        return reply(client);
+      })
+      .catch(err => {
+        this.log.info(err);
+        that.app.services.ErrorService.handle(err, reply);
+      });
   }
 
   find (request, reply) {
     const Client = this.app.orm.Client;
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
+    const that = this;
 
     if (request.params.id) {
-      const that = this;
       criteria._id = request.params.id;
       Client
         .findOne(criteria)
