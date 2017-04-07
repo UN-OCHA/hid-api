@@ -122,6 +122,9 @@ module.exports = class AuthController extends Controller{
           if (request.payload.state) {
             redirect += '&state=' + request.payload.state;
           }
+          if (request.payload.nonce) {
+            redirect += '&nonce=' + request.payload.nonce;
+          }
         }
         else {
           redirect = '/user';
@@ -205,7 +208,8 @@ module.exports = class AuthController extends Controller{
         '&redirect_uri=' + request.query.redirect_uri +
         '&response_type=' + request.query.response_type +
         '&state=' + request.query.state +
-        '&scope=' + request.query.scope + '#login'
+        '&scope=' + request.query.scope +
+        '&nonce=' + request.query.nonce + '#login'
       );
     }
 
@@ -278,7 +282,8 @@ module.exports = class AuthController extends Controller{
         '&redirect_uri=' + request.query.redirect_uri +
         '&response_type=' + request.query.response_type +
         '&state=' + request.query.state +
-        '&scope=' + request.query.scope + '#login'
+        '&scope=' + request.query.scope +
+        '&nonce=' + request.query.nonce + '#login'
       );
     }
 
