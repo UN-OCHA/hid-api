@@ -13,7 +13,7 @@ module.exports = class OauthToken extends Model {
   static config () {
     return {
       statics: {
-        generate: function (type, client, user, callback) {
+        generate: function (type, client, user, nonce, callback) {
           crypto.randomBytes(256, function (ex, buffer) {
             if (ex) {
               return callback('server_error');
@@ -30,6 +30,7 @@ module.exports = class OauthToken extends Model {
               token: token,
               client: client._id,
               user: user._id,
+              nonce: nonce,
               expires: now + 7 * 24 * 3600 * 1000
             };
 
@@ -59,6 +60,10 @@ module.exports = class OauthToken extends Model {
       user: {
         type: Schema.ObjectId,
         ref: 'User'
+      },
+      nonce: {
+        type: String,
+        default: ''
       },
       expires: {
         type: Date
