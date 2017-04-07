@@ -107,8 +107,8 @@ module.exports = {
       });
     }));
     // Authorization code exchange flow
-    oauth.grant(oauth.grants.code(function (client, redirectURI, user, ares, done) {
-      console.log(ares);
+    oauth.grant(oauth.grants.code(function (client, redirectURI, user, res, req, done) {
+      console.log(req);
       OauthToken.generate('code', client, user, function (err, code) {
         if (err) {
           return done(err);
