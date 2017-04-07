@@ -74,7 +74,7 @@ module.exports = {
     // 'id_token token' grant type.
     oauth.grant(oauth2orizeExt.grant.idTokenToken(
       function(client, user, done){
-        OauthToken.generate('access', client, user, function (err, token) {
+        OauthToken.generate('access', client, user, '', function (err, token) {
           if (err) {
             return done(err);
           }
@@ -94,7 +94,7 @@ module.exports = {
 
     // Implicit Grant Flow
     oauth.grant(oauth.grants.token(function (client, user, ares, done) {
-      OauthToken.generate('access', client, user, function (err, token) {
+      OauthToken.generate('access', client, user, '', function (err, token) {
         if (err) {
           return done(err);
         }
@@ -138,7 +138,7 @@ module.exports = {
             async.auto({
               // Create refresh token
               refreshToken: function (callback) {
-                OauthToken.generate('refresh', client, ocode.user, function (err, token) {
+                OauthToken.generate('refresh', client, ocode.user, ocode.nonce, function (err, token) {
                   if (err) {
                     return callback(err);
                   }
@@ -152,7 +152,7 @@ module.exports = {
               },
               // Create access token
               accessToken: function (callback) {
-                OauthToken.generate('access', client, ocode.user, function (err, token) {
+                OauthToken.generate('access', client, ocode.user, ocode.nonce, function (err, token) {
                   if (err) {
                     return callback(err);
                   }
@@ -204,7 +204,7 @@ module.exports = {
           if (tok.client._id !== client._id) {
             return done(null, false, { message: 'This refresh token is for a different client'});
           }
-          OauthToken.generate('access', tok.client, tok.user, function (err, atoken) {
+          OauthToken.generate('access', tok.client, tok.user, tok.nonce, function (err, atoken) {
             if (err) {
               return done(err);
             }
