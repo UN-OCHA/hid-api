@@ -1014,8 +1014,7 @@ module.exports = class UserController extends Controller{
       this.log.info(user);
     }
     if (request.params.currentClient.id === 'dart-prod') {
-      user.sub = user.legacyId;
-      user._id = user.legacyId;
+      delete user._id;
     }
     reply(user);
   }
