@@ -29,7 +29,32 @@ module.exports = class UserPolicy extends Policy {
       request.params.currentUser.id !== request.params.id) {
       return reply(Boom.unauthorized('You need to be an admin or a manager or the current user'));
     }
-    reply();
+    else {
+      if (request.params.currentUser.isManager && request.params.currentUser.id !== request.params.id) {
+        // If the user is a manager, make sure he is not trying to edit an admin account
+        const User = this.app.orm.User;
+        const that = this;
+        User
+          .findById(request.params.id)
+          .then((user) => {
+            if (!user) {
+              return reply(Boom.notFound());
+            }
+            if (user.is_admin) {
+              return reply(Boom.unauthorized('You are not authorized to edit an admin account'));
+            }
+            else {
+              return reply();
+            }
+          })
+          .catch(err => {
+            that.app.services.ErrorService.handle(err, reply);
+          });
+      }
+      else {
+        reply();
+      }
+    }
   }
 
   canDestroy (request, reply) {

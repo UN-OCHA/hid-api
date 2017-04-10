@@ -34,7 +34,7 @@ module.exports = class AuthController extends Controller{
         .then((user) => {
           if (!user) {
             that.log.info('Could not find user');
-            return reply(Boom.unauthorized('invalid email or password'));
+            return reply(Boom.unauthorized('Email address could not be found'));
           }
 
           if (!user.email_verified) {

@@ -54,6 +54,10 @@ module.exports = class ViewController extends Controller {
 
         return reply.redirect(redirect);
       }
+      else {
+        // User is already logged in
+        return reply.redirect('/user');
+      }
     }
 
     let registerLink = this._getRegisterLink(request.query);

@@ -377,21 +377,14 @@ module.exports = class User extends Model {
           else {
             this.name = this.given_name + ' ' + this.family_name;
           }
+          if (this.is_orphan || this.is_ghost) {
+            this.appMetadata.hid.login = true;
+          }
           next ();
         });
-        schema.pre('update', function (next) {
-          let name;
-          const that = this;
-          this.findOne(function (err, user) {
-            if (user.middle_name) {
-              name = user.given_name + ' ' + user.middle_name + ' ' + user.family_name;
-            }
-            else {
-              name = user.given_name + ' ' + user.family_name;
-            }
-            that.findOneAndUpdate({_id: user._id}, {$set: {name: name}});
-            next();
-          });
+        schema.post('findOneAndUpdate', function (user) {
+          // Calling user.save to go through the presave hook and update user name
+          user.save();
         });
         schema.post('findOne', function (result, next) {
           const that = this;
