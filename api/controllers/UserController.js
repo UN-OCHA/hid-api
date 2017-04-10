@@ -1008,15 +1008,15 @@ module.exports = class UserController extends Controller{
     this.log.info('calling /account.json for ' + request.params.currentUser.email);
     let user = JSON.parse(JSON.stringify(request.params.currentUser));
     user.authorized_services = 'deprecated in v2';
-    if (request.params.currentClient.id === 'iasc-prod') {
+    if (request.params.currentClient && request.params.currentClient.id === 'iasc-prod') {
       this.log.info('iasc-prod');
       user.sub = user.email;
       this.log.info(user);
     }
-    if (request.params.currentClient.id === 'dart-prod') {
+    if (request.params.currentClient && request.params.currentClient.id === 'dart-prod') {
       delete user._id;
     }
-    if (request.params.currentClient.id === 'kaya-prod') {
+    if (request.params.currentClient && request.params.currentClient.id === 'kaya-prod') {
       user.name = user.name.replace(' ', '');
     }
     reply(user);
