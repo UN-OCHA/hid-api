@@ -48,11 +48,10 @@ module.exports = class JwtService extends Service {
       iss: process.env.ROOT_URL,
       sub: sub,
       aud: client.id,
-      exp: now + 3600,
+      exp: now + 7 * 24 * 3600 * 1000,
       nonce: nonce,
       iat: now
     };
-    console.log(idToken);
     return this.issue(idToken);
   }
 
