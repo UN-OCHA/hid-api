@@ -377,6 +377,9 @@ module.exports = class User extends Model {
           else {
             this.name = this.given_name + ' ' + this.family_name;
           }
+          if (this.is_orphan || this.is_ghost) {
+            this.appMetadata.hid.login = true;
+          }
           next ();
         });
         schema.post('findOneAndUpdate', function (user) {
