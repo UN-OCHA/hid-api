@@ -379,7 +379,9 @@ module.exports = class User extends Model {
           }
           next ();
         });
-        schema.pre('findOneAndUpdate', function (next) {
+        schema.post('findOneAndUpdate', function (result) {
+          console.log('going through post findOneAndUpdate');
+          console.log(result);
           let name;
           const that = this;
           this.findOne(function (err, user) {
@@ -390,7 +392,6 @@ module.exports = class User extends Model {
               name = user.given_name + ' ' + user.family_name;
             }
             that.findOneAndUpdate({_id: user._id}, {$set: {name: name}});
-            next();
           });
         });
         schema.post('findOne', function (result, next) {
