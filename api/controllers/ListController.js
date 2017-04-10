@@ -286,7 +286,7 @@ module.exports = class ListController extends Controller{
             for (let i = 0; i < users.length; i++) {
               const user = users[i];
               for (let j = 0; j < user[record.type + 's'].length; j++) {
-                if (user[record.type + 's'][j].list === record._id) {
+                if (user[record.type + 's'][j].list.toString() === record._id.toString()) {
                   user[record.type + 's'][j].deleted = true;
                 }
               }
