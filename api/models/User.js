@@ -379,7 +379,7 @@ module.exports = class User extends Model {
           }
           next ();
         });
-        schema.pre('update', function (next) {
+        schema.pre('findOneAndUpdate', function (next) {
           let name;
           const that = this;
           this.findOne(function (err, user) {
