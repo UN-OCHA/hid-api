@@ -380,6 +380,9 @@ module.exports = class User extends Model {
           if (this.is_orphan || this.is_ghost) {
             this.appMetadata.hid.login = true;
           }
+          if (!this.user_id) {
+            this.user_id = this._id;
+          }
           next ();
         });
         schema.post('findOneAndUpdate', function (user) {
