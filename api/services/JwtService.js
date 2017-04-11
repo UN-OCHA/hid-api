@@ -44,6 +44,9 @@ module.exports = class JwtService extends Service {
     if (client.id === 'iasc-prod') {
       sub = user.email;
     }
+    if (client.id === 'kaya-dev') {
+      sub = user.legacyId;
+    }
     const idToken = {
       iss: process.env.ROOT_URL,
       sub: sub,
