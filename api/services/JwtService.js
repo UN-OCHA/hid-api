@@ -55,7 +55,10 @@ module.exports = class JwtService extends Service {
       nonce: nonce,
       iat: now
     };
-    return this.issue(idToken);
+    console.log(idToken);
+    const out = this.issue(idToken);
+    console.log(out);
+    return out;
   }
 
 };
