@@ -474,7 +474,7 @@ module.exports = class UserController extends Controller{
           });
       })
       .then((results) => {
-        return reply(results.results).header('X-Total-Count', results.number);
+        return reply({data: results.results, count: results.number);
       })
       .catch((err) => { that._errorHandler(err, reply); });
   }
