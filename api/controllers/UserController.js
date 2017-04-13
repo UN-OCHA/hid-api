@@ -460,8 +460,23 @@ module.exports = class UserController extends Controller{
   }
 
   findV1 (request, reply) {
-    request.query = request.payload;
-    this.find(request, reply);
+    const options = this.app.services.HelperService.getOptionsFromQuery(request.payload);
+    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.payload);
+    const User = this.app.orm.User;
+    const that = this;
+    const query = this.app.services.HelperService.find('User', criteria, options);
+    query
+      .then((results) => {
+        return User
+          .count(criteria)
+          .then((number) => {
+            return {results: results, number: number};
+          });
+      })
+      .then((results) => {
+        return reply(results.results).header('X-Total-Count', results.number);
+      })
+      .catch((err) => { that._errorHandler(err, reply); });
   }
 
   _updateQuery (request, options) {
