@@ -422,7 +422,7 @@ module.exports = class User extends Model {
         type: String,
         lowercase: true,
         trim: true,
-        //unique: true,
+        unique: true,
         sparse: true,
         match: /^([\w-\.\+]+@([\w-]+\.)+[\w-]{2,4})?$/
       },
