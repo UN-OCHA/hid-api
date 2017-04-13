@@ -146,6 +146,11 @@ module.exports = class UserController extends Controller{
     }
   }
 
+  registerV1 (request, reply) {
+    console.log(request.payload);
+    reply();
+  }
+
   _pdfExport (data, req, format, callback) {
     const filters = [];
     if (req.query.hasOwnProperty('name') && req.query.name.length) {

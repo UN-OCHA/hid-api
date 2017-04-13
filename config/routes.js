@@ -232,6 +232,13 @@ module.exports = [
     handler: 'UserController.findV1'
   },
 
+  // TODO: remove when HPC updates their client application to use the new API
+  {
+    method: 'POST',
+    path: '/api/register',
+    handler: 'UserController.registerV1'
+  },
+
   {
     method: [ 'PUT', 'PATCH' ],
     path: '/api/v2/user/{id}',
