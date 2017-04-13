@@ -462,17 +462,10 @@ module.exports = class UserController extends Controller{
   findV1 (request, reply) {
     const User = this.app.orm.User;
     const that = this;
-    const query = this.app.services.HelperService.find('User', {email: request.payload.email}, {});
-    query
-      .then((results) => {
-        return User
-          .count({email: request.payload.email})
-          .then((number) => {
-            return {results: results, number: number};
-          });
-      })
-      .then((results) => {
-        return reply({data: results.results, count: results.number});
+    User
+      .findOne({email: request.payload.email})
+      .then((user) => {
+        return reply(user);
       })
       .catch((err) => { that._errorHandler(err, reply); });
   }
