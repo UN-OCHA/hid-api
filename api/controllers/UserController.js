@@ -459,6 +459,11 @@ module.exports = class UserController extends Controller{
     }
   }
 
+  findV1 (request, reply) {
+    request.query = request.payload;
+    this.find(request, reply);
+  }
+
   _updateQuery (request, options) {
     const Model = this.app.orm.user,
       NotificationService = this.app.services.NotificationService;

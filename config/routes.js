@@ -132,11 +132,11 @@ module.exports = [
     handler: 'DuplicateController.find'
   },
 
-  {
+  /*{
     method: 'GET',
     path: '/api/v2/duplicate/generate',
     handler: 'DuplicateController.generate'
-  },
+  },*/
 
   {
     method: 'DELETE',
@@ -223,6 +223,13 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/user.{extension}',
     handler: 'UserController.find'
+  },
+
+  // TODO: remove when HPC updates their client application to use the new API
+  {
+    method: 'POST',
+    path: '/api/users',
+    handler: 'UserController.findV1'
   },
 
   {
