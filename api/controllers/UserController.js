@@ -147,8 +147,34 @@ module.exports = class UserController extends Controller{
   }
 
   registerV1 (request, reply) {
+    const User = this.app.orm.User;
+    const that = this;
     console.log(request.payload);
-    reply();
+    User
+      .findOne({email: request.payload.email})
+      .then((user) => {
+        if (user) {
+          return reply({status: 'ok', data: {user_id: user.user_id, is_new: 0}});
+        }
+        // Create the account
+        return User
+          .create({
+            email: request.payload.email,
+            given_name: request.payload.nameFirst,
+            family_name: request.payload.nameLast,
+          });
+      })
+      .then(user => {
+        const admin = {};
+        admin.name = request.payload.adminName;
+        // Send invitation
+        that.app.services.EmailService.sendRegisterOrphan(user, admin, 'https://auth.humanitarian.id/verify', function (merr, info) {
+          return reply({status: 'ok', data: {user_id: user.user_id, is_new: 1}});
+        });
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
   }
 
   _pdfExport (data, req, format, callback) {
