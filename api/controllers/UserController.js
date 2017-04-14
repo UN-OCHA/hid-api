@@ -1066,7 +1066,7 @@ module.exports = class UserController extends Controller{
     this.log.info('calling /account.json for ' + request.params.currentUser.email);
     let user = JSON.parse(JSON.stringify(request.params.currentUser));
     user.authorized_services = 'deprecated in v2';
-    if (request.params.currentClient && request.params.currentClient.id === 'iasc-prod') {
+    if (request.params.currentClient && (request.params.currentClient.id === 'iasc-prod' || request.params.currentClient.id === 'iasc-dev')) {
       this.log.info('iasc-prod');
       user.sub = user.email;
       this.log.info(user);
