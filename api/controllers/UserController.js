@@ -146,6 +146,7 @@ module.exports = class UserController extends Controller{
     }
   }
 
+  // TODO: remove after HPC fixes their app to use v2 API
   registerV1 (request, reply) {
     const User = this.app.orm.User;
     const that = this;
@@ -182,7 +183,7 @@ module.exports = class UserController extends Controller{
       })
       .then(users => {
         // Send invitation
-        that.app.services.EmailService.sendRegisterOrphan(users.user, users.admin, 'https://auth.humanitarian.id/verify', function (merr, info) {
+        that.app.services.EmailService.sendRegisterOrphan(users.user, users.admin, 'https://auth.humanitarian.id/new_password', function (merr, info) {
           return reply({status: 'ok', data: {user_id: users.user.user_id, is_new: 1}});
         });
       })
@@ -504,6 +505,7 @@ module.exports = class UserController extends Controller{
     }
   }
 
+  // TODO: remove after HPC fixes their app to use new API
   findV1 (request, reply) {
     const User = this.app.orm.User;
     const that = this;

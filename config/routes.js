@@ -74,6 +74,13 @@ module.exports = [
     handler: 'ViewController.user'
   },
 
+  // TODO: remove after HPC fixes their app
+  {
+    method: 'GET',
+    path: '/account',
+    handler: 'ViewController.user'
+  },
+
   {
     method: 'GET',
     path: '/docs/{param*}',
