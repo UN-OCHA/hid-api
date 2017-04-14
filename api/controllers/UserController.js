@@ -156,20 +156,34 @@ module.exports = class UserController extends Controller{
         if (user) {
           return reply({status: 'ok', data: {user_id: user.user_id, is_new: 0}});
         }
+        if (request.payload.email) {
+          request.payload.emails = [];
+          request.payload.emails.push({type: 'Work', email: request.payload.email, validated: false});
+        }
+        // Set a random password
+        request.payload.password = User.hashPassword(Math.random().toString(36).slice(2));
         // Create the account
         return User
           .create({
             email: request.payload.email,
             given_name: request.payload.nameFirst,
             family_name: request.payload.nameLast,
+            password: request.payload.password,
+            emails: request.payload.emails
           });
       })
       .then(user => {
-        const admin = {};
-        admin.name = request.payload.adminName;
+        // Find admin user
+        return User
+          .findOne({'emails.email': request.payload.adminEmail})
+          .then(admin => {
+            return {user: user, admin: admin};
+          });
+      })
+      .then(users => {
         // Send invitation
-        that.app.services.EmailService.sendRegisterOrphan(user, admin, 'https://auth.humanitarian.id/verify', function (merr, info) {
-          return reply({status: 'ok', data: {user_id: user.user_id, is_new: 1}});
+        that.app.services.EmailService.sendRegisterOrphan(users.user, users.admin, 'https://auth.humanitarian.id/verify', function (merr, info) {
+          return reply({status: 'ok', data: {user_id: users.user.user_id, is_new: 1}});
         });
       })
       .catch(err => {
@@ -494,7 +508,7 @@ module.exports = class UserController extends Controller{
     const User = this.app.orm.User;
     const that = this;
     User
-      .findOne({email: request.payload.email})
+      .findOne({'emails.email': request.payload.email})
       .then((user) => {
         return reply(user);
       })
