@@ -91,47 +91,11 @@ module.exports = [
     }
   },
 
-  /*{
-    method: 'GET',
-    path: '/api/v2/migrate/users',
-    handler: 'DefaultController.migrateUsers'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/migrate/usernames',
-    handler: 'DefaultController.setUserNames'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/migrate/listnames',
-    handler: 'DefaultController.setListNames'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/migrate/lists',
-    handler: 'DefaultController.migrateLists'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/migrate/services',
-    handler: 'DefaultController.migrateServices'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/migrate/auth',
-    handler: 'DefaultController.migrateAuth'
-  },
-
   {
     method: 'GET',
     path: '/api/v2/import/lists',
     handler: 'DefaultController.importLists'
-  },*/
+  },
 
   {
     method: 'GET',
