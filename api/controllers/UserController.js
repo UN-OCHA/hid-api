@@ -1077,6 +1077,12 @@ module.exports = class UserController extends Controller{
     if (request.params.currentClient && request.params.currentClient.id === 'kaya-prod') {
       user.name = user.name.replace(' ', '');
     }
+    if (request.params.currentClient &&
+      (request.params.currentClient.id === 'rc-shelter-database' ||
+        request.params.currentClient.id === 'rc-shelter-db-2-prod' ||
+        request.params.currentClient.id === 'deep-prod')) {
+      user.active = !user.deleted;
+    }
     reply(user);
   }
 
