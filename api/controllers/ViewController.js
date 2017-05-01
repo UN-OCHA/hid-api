@@ -77,12 +77,25 @@ module.exports = class ViewController extends Controller {
     return reply.redirect('/');
   }
 
+  _buildRequestUrl (request, url) {
+    let requestUrl = 'https://' + request.info.host + '/' + url;
+    if (request.query.client_id) {
+      requestUrl += '?client_id=' + request.query.client_id;
+    }
+    if (request.query.redirect_uri) {
+      requestUrl += '&redirect_uri=' + request.query.redirect_uri;
+    }
+    if (request.query.response_type) {
+      requestUrl += '&response_type=' + request.query.response_type;
+    }
+    if (request.query.scope) {
+      requestUrl += '&scope=' + request.query.scope;
+    }
+    return requestUrl;
+  }
+
   register (request, reply) {
-    const requestUrl = 'https://' + request.info.host +
-      '/verify?client_id=' + request.query.client_id +
-      '&redirect_uri=' + request.query.redirect_uri +
-      '&response_type=' + request.query.response_type +
-      '&scope=' + request.query.scope;
+    const requestUrl = this._buildRequestUrl(request, 'verify');
     reply.view('register', {
       title: 'Register in Humanitarian ID',
       requestUrl: requestUrl
@@ -133,11 +146,7 @@ module.exports = class ViewController extends Controller {
   }
 
   password (request, reply) {
-    const requestUrl = 'https://' + request.info.host +
-      '/new_password?client_id=' + request.query.client_id +
-      '&redirect_uri=' + request.query.redirect_uri +
-      '&response_type=' + request.query.response_type +
-      '&scope=' + request.query.scope;
+    const requestUrl = this._buildRequestUrl(request, 'new_password');
     reply.view('password', {
       requestUrl: requestUrl
     });
