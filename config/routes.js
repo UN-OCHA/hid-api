@@ -93,6 +93,12 @@ module.exports = [
 
   {
     method: 'GET',
+    path: '/api/v2/test/notify',
+    handler: 'DefaultController.testNotify'
+  },
+
+  {
+    method: 'GET',
     path: '/api/v2/import/lists',
     handler: 'DefaultController.importLists'
   },
