@@ -27,7 +27,6 @@ module.exports = class EmailService extends Service {
 
   // Send an email
   send (options, template, context, callback) {
-    console.log(context.params.list);
     let templateDir = TemplateDir + template;
     if (options.locale && options.locale !== 'en') {
       templateDir += '/' + options.locale;
@@ -36,6 +35,7 @@ module.exports = class EmailService extends Service {
       from: 'info@humanitarian.id'
     });
     if (options.to) {
+      console.log(context.params.list.name);
       templateSender(options, context, callback);
     }
     else {

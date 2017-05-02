@@ -24,6 +24,7 @@ module.exports = class NotificationService extends Service {
         console.log('created notification');
         console.log(not.params.list.name);
         that.app.services.EmailService.sendNotification(not, function (err, info) {
+          console.log(not.params.list.name);
           if (err) {
             that.log.error('Error sending an email notification: ' + err);
             return callback(Boom.badImplementation());
