@@ -21,6 +21,8 @@ module.exports = class NotificationService extends Service {
     Notification
       .create(notification)
       .then(not => {
+        console.log('created notification');
+        console.log(not);
         that.app.services.EmailService.sendNotification(not, function (err, info) {
           if (err) {
             that.log.error('Error sending an email notification: ' + err);
