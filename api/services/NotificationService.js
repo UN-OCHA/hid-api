@@ -21,10 +21,7 @@ module.exports = class NotificationService extends Service {
     Notification
       .create(notification)
       .then(not => {
-        console.log('created notification');
-        console.log(not.params.list.name);
-        that.app.services.EmailService.sendNotification(not, function (err, info) {
-          console.log(not.params.list.name);
+        return that.app.services.EmailService.sendNotification(notification, function (err, info) {
           if (err) {
             that.log.error('Error sending an email notification: ' + err);
             return callback(Boom.badImplementation());
@@ -71,7 +68,7 @@ module.exports = class NotificationService extends Service {
   // Helper function to send multiple emails and notifications
   _sendMultipleHelper(users, notification, callback) {
     const that = this;
-    async.each(users, function (user, next) {
+    async.eachSeries(users, function (user, next) {
       notification.user = user;
       that.send(notification, next);
     }, callback);
@@ -97,7 +94,7 @@ module.exports = class NotificationService extends Service {
   notifyMultiple (users, notification, callback) {
     const that = this;
     this._transformUsers(users, function (items) {
-      async.each(items, function(user, next) {
+      async.eachSeries(items, function(user, next) {
         notification.user = user;
         that.notify(notification, next);
       }, callback);

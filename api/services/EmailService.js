@@ -35,7 +35,6 @@ module.exports = class EmailService extends Service {
       from: 'info@humanitarian.id'
     });
     if (options.to) {
-      console.log(context.params.list.name);
       templateSender(options, context, callback);
     }
     else {
