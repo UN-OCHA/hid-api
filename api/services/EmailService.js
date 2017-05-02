@@ -134,7 +134,7 @@ module.exports = class EmailService extends Service {
   }
 
   sendNotification(not, cb) {
-    this.log.debug(not);
+    console.log(not.params.list);
     const mailOptions = {
       to: not.user.email,
       locale: not.user.locale
