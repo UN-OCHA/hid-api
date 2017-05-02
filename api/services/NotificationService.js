@@ -18,8 +18,6 @@ module.exports = class NotificationService extends Service {
     this.log.debug('Sending a notification of type ' +
       notification.type + ' to user ' + notification.user.email);
 
-    console.log(notification);
-
     Notification.create(notification, function (err, not) {
       if (err) {
         that.log.error('Error creating a notification: ' + err);
