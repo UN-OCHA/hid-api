@@ -23,7 +23,8 @@ module.exports = class NotificationService extends Service {
         that.log.error('Error creating a notification: ' + err);
         return callback(Boom.badImplementation());
       }
-      that.app.services.EmailService.sendNotification(notification, function (err, info) {
+      that.log.debug(not);
+      that.app.services.EmailService.sendNotification(not, function (err, info) {
         if (err) {
           that.log.error('Error sending an email notification: ' + err);
           return callback(Boom.badImplementation());
