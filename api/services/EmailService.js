@@ -138,7 +138,7 @@ module.exports = class EmailService extends Service {
       to: not.user.email,
       locale: not.user.locale
     };
-    this.log.debug(not.params.list);
+    this.log.debug(not);
     this.send(mailOptions, not.type, not, cb);
   }
 
