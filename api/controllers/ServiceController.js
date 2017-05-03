@@ -65,6 +65,13 @@ module.exports = class ServiceController extends Controller{
       const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
       const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
 
+      if (criteria.lists) {
+        let lists = criteria.lists.split(',');
+        if (lists.length > 1) {
+          criteria.lists = { $or: lists };
+        }
+      }
+
       const that = this;
       const query = this.app.services.HelperService.find('Service', criteria, options);
       query
