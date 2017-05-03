@@ -236,8 +236,6 @@ module.exports = class AuthController extends Controller{
           user.sanitize(user);
           request.auth.credentials = user;
           oauth.authorize(request, reply, function (req, res) {
-            that.log.debug('before request response');
-            that.log.debug(request.response);
             if (!request.response || (request.response && !request.response.isBoom)) {
               if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
                 request.payload = {transaction_id: req.oauth2.transactionID };
@@ -255,7 +253,7 @@ module.exports = class AuthController extends Controller{
               }
             }
             else {
-              that.log.debug('issue');
+              return reply.view('error');
             }
           }, {}, function (clientID, redirect, done) {
             Client.findOne({id: clientID}, function (err, client) {
