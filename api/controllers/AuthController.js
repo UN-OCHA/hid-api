@@ -261,7 +261,7 @@ module.exports = class AuthController extends Controller{
               }
               // Verify redirect uri
               if (client.redirectUri !== redirect) {
-                this.log.debug('Wrong redirect URI');
+                that.log.debug('Wrong redirect URI');
                 return done('Wrong redirect URI');
               }
               return done(null, client, client.redirectUri);
