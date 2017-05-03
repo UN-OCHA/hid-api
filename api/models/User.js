@@ -92,7 +92,7 @@ module.exports = class User extends Model {
           return process.env.APP_URL + '/users/' + this._id;
         },
         sanitizeLists: function (user) {
-          if (this._id.toString() !== user._id.toString()) {
+          if (this._id.toString() !== user._id.toString() && !user.is_admin && !user.isManager) {
             const that = this;
             listTypes.forEach(function (attr) {
               _.remove(that[attr + 's'], function (checkin) {
