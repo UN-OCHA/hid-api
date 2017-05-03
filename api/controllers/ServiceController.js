@@ -68,7 +68,7 @@ module.exports = class ServiceController extends Controller{
       if (criteria.lists) {
         let lists = criteria.lists.split(',');
         if (lists.length > 1) {
-          criteria.lists = { $or: lists };
+          criteria.lists = { $elemMatch: { $or: lists } };
         }
       }
 
