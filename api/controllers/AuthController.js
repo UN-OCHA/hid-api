@@ -236,6 +236,7 @@ module.exports = class AuthController extends Controller{
           user.sanitize(user);
           request.auth.credentials = user;
           oauth.authorize(request, reply, function (req, res) {
+            that.log.debug('before request response');
             that.log.debug(request.response);
             if (!request.response || (request.response && !request.response.isBoom)) {
               if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
@@ -252,6 +253,9 @@ module.exports = class AuthController extends Controller{
                   //csrf: req.csrfToken()
                 });
               }
+            }
+            else {
+              that.log.debug('issue');
             }
           }, {}, function (clientID, redirect, done) {
             Client.findOne({id: clientID}, function (err, client) {
