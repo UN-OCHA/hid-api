@@ -125,15 +125,25 @@ module.exports = class UserController extends Controller{
             that._createHelper(request, reply);
           }
           else {
-            // Unverify user, reactivate account and return it
-            record.email_verified = false;
-            record.deleted = false;
-            record.save().then(() => {
-              const appVerifyUrl = request.payload.app_verify_url;
-              that.app.services.EmailService.sendRegister(record, appVerifyUrl, function (merr, info) {
+            if (!request.params.currentUser) {
+              // Unverify user, reactivate account and return it
+              record.email_verified = false;
+              record.deleted = false;
+              record.save().then(() => {
+                const appVerifyUrl = request.payload.app_verify_url;
+                that.app.services.EmailService.sendRegister(record, appVerifyUrl, function (merr, info) {
+                  return reply(record);
+                });
+              });
+            }
+            else {
+              // User is being "reactivated" by someone else
+              // Make sure it shows up in the HID app
+              record.appMetadata.hid.login = true;
+              record.save().then(() => {
                 return reply(record);
               });
-            });
+            }
           }
         })
         .catch(err => {
