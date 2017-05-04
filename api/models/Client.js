@@ -32,19 +32,19 @@ module.exports = class Client extends Model {
       },
       url: {
         type: String,
-        trim: true,
-        match: urlRegex
+        trim: true
+        //match: urlRegex
       },
       redirectUri: {
         type: String,
         trim: true,
-        required: [true, 'Redirect uri is required'],
-        match: urlRegex
+        required: [true, 'Redirect uri is required']
+        //match: urlRegex
       },
       loginUri: {
         type: String,
-        trim: true,
-        match: urlRegex
+        trim: true
+        //match: urlRegex
       },
       description: {
         type: String
