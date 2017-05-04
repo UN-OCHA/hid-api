@@ -158,6 +158,7 @@ module.exports = class UserController extends Controller{
 
   // TODO: remove after HPC fixes their app to use v2 API
   registerV1 (request, reply) {
+    this.log.debug('registerV1 called');
     const User = this.app.orm.User;
     const that = this;
     console.log(request.payload);
@@ -517,6 +518,7 @@ module.exports = class UserController extends Controller{
 
   // TODO: remove after HPC fixes their app to use new API
   findV1 (request, reply) {
+    this.log.debug('findV1 called');
     const User = this.app.orm.User;
     const that = this;
     User
