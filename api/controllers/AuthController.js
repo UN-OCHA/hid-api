@@ -252,9 +252,6 @@ module.exports = class AuthController extends Controller{
                 });
               }
             }
-            else {
-              return reply.view('error');
-            }
           }, {}, function (clientID, redirect, done) {
             Client.findOne({id: clientID}, function (err, client) {
               if (err || !client || !client.id) {
