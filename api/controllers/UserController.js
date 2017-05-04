@@ -488,7 +488,6 @@ module.exports = class UserController extends Controller{
       for (let i = 0; i < childAttributes.length; i++) {
         if (criteria[childAttributes[i] + '.list']) {
           listIds.push(criteria[childAttributes[i] + '.list']);
-          criteria[childAttributes[i]] = {$elemMatch: {list: criteria[childAttributes[i] + '.list'], deleted: false}};
           delete criteria[childAttributes[i] + '.list'];
         }
       }
@@ -500,6 +499,9 @@ module.exports = class UserController extends Controller{
           .find({_id: { $in: listIds}})
           .then((lists) => {
             lists.forEach(function (list) {
+              if (list.isVisibleTo(request.params.currentUser)) {
+                criteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false}};
+              }
               if (!list.isOwner(request.params.currentUser)) {
                 criteria[list.type + 's'].$elemMatch.pending = false;
               }
