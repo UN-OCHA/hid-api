@@ -396,8 +396,8 @@ const sendReminderCheckoutEmails = function(app) {
       let lu = {};
       for (let i = 0; i < user[attr].length; i++) {
         lu = user[attr][i];
-        if (this.checkoutDate && this.remindedCheckout === false) {
-          const dep = new Date(this.checkoutDate);
+        if (lu.checkoutDate && lu.remindedCheckout === false) {
+          const dep = new Date(lu.checkoutDate);
           if (now.valueOf() - dep.valueOf() > 48 * 3600 * 1000) {
             that.pause();
             const notification = {type: 'reminder_checkout', user: user, params: {listUser: lu, list: lu.list}};
