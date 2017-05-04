@@ -17,7 +17,8 @@ module.exports = class Client extends Model {
       id: {
         type: String,
         trim: true,
-        required: [true, 'Client ID is required']
+        required: [true, 'Client ID is required'],
+        unique: true
       },
       name: {
         type: String,
