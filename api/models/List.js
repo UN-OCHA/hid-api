@@ -30,7 +30,7 @@ module.exports = class List extends Model {
               let out = false;
               // Is user in list ?
               for (let i = 0; i < user[this.type + 's'].length; i++) {
-                if (user[this.type + 's'][i].list.toString() === this._id.toString()) {
+                if (user[this.type + 's'][i].list.toString() === this._id.toString() && !user[this.type + 's'][i].deleted) {
                   out = true;
                 }
               }
