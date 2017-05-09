@@ -396,7 +396,7 @@ const sendReminderCheckoutEmails = function(app) {
       let lu = {};
       for (let i = 0; i < user[attr].length; i++) {
         lu = user[attr][i];
-        if (lu.checkoutDate && lu.remindedCheckout === false) {
+        if (lu.checkoutDate && lu.remindedCheckout === false && !lu.deleted) {
           const dep = new Date(lu.checkoutDate);
           if (now.valueOf() - dep.valueOf() > 48 * 3600 * 1000) {
             that.pause();
@@ -441,7 +441,7 @@ const doAutomatedCheckout = function(app) {
       let lu = {};
       for (let i = 0; i < user[attr].length; i++) {
         lu = user[attr][i];
-        if (this.checkoutDate && this.remindedCheckout === true) {
+        if (this.checkoutDate && this.remindedCheckout === true && !this.deleted) {
           const dep = new Date(this.checkoutDate);
           if (now.valueOf() - dep.valueOf() > 14 * 24 * 3600 * 1000) {
             that.pause();
@@ -476,7 +476,7 @@ const sendReminderCheckinEmails = function(app) {
       const d = new Date(),
         offset = d.valueOf() - lu.valueOf();
 
-      if (!lu.remindedCheckin && offset > 48 * 3600 * 1000 && offset < 72 * 3600 * 1000) {
+      if (!lu.remindedCheckin && offset > 48 * 3600 * 1000 && offset < 72 * 3600 * 1000 && !lu.deleted) {
         const hasLocalPhoneNumber = user.hasLocalPhoneNumber(lu.list.metadata.country.pcode);
         user.isInCountry(lu.list.metadata.country.pcode, function (err, inCountry) {
           const notification = {
