@@ -533,7 +533,8 @@ module.exports = class UserController extends Controller{
 
   _updateQuery (request, options) {
     const Model = this.app.orm.user,
-      NotificationService = this.app.services.NotificationService;
+      NotificationService = this.app.services.NotificationService,
+      that = this;
     return Model
       .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
       .exec()
@@ -550,7 +551,10 @@ module.exports = class UserController extends Controller{
             return user;
           });
       })
-      .catch(err => { return Boom.badRequest(err.message); });
+      .catch(err => {
+        that.log.debug(err);
+        return Boom.badRequest(err.message);
+      });
   }
 
   update (request, reply) {
