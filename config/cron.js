@@ -441,8 +441,8 @@ const doAutomatedCheckout = function(app) {
       let lu = {};
       for (let i = 0; i < user[attr].length; i++) {
         lu = user[attr][i];
-        if (this.checkoutDate && this.remindedCheckout === true && !this.deleted) {
-          const dep = new Date(this.checkoutDate);
+        if (lu.checkoutDate && lu.remindedCheckout === true && !lu.deleted) {
+          const dep = new Date(lu.checkoutDate);
           if (now.valueOf() - dep.valueOf() > 14 * 24 * 3600 * 1000) {
             that.pause();
             const notification = {type: 'automated_checkout', user: user, params: {listUser: lu, list: lu.list}};

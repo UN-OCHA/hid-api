@@ -431,6 +431,7 @@ module.exports = class UserController extends Controller{
   }
 
   find (request, reply) {
+    const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
     const User = this.app.orm.User;
     const that = this;
 
@@ -448,6 +449,7 @@ module.exports = class UserController extends Controller{
           }
           else {
             user.sanitize(request.params.currentUser);
+            user.translateListNames(reqLanguage);
             return reply(user);
           }
         })
