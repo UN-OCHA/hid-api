@@ -187,12 +187,11 @@ module.exports = class ListController extends Controller{
       .findOne({_id: request.params.id})
       .then(list => {
         const oldlist = _.clone(list);
-        _.merge(list, request.payload);
-        list.markModified('managers');
-        return list
-          .save()
-          .then(() => {
-            reply(list);
+        return Model
+          .findOneAndUpdate({_id: request.params.id}, request.payload, {runValidators: true, new: true})
+          .exec()
+          .then((list2) => {
+            reply(list2);
             return oldlist;
           });
       })
