@@ -60,6 +60,7 @@ module.exports = {
     const oauth2orizeExt = require('oauth2orize-openid');
     const Client = this.orm.Client;
     const OauthToken = this.orm.OauthToken;
+    const OauthExpiresIn = 7 * 24 * 3600;
 
     const that = this;
     // Register supported OpenID Connect 1.0 grant types.
@@ -102,7 +103,7 @@ module.exports = {
           if (err) {
             done(err);
           }
-          done(null, tok.token, {expires_in: 3600});
+          done(null, tok.token, {expires_in: OauthExpiresIn});
         });
       });
     }));
@@ -183,7 +184,7 @@ module.exports = {
                 return done(err);
               }
               done(null, results.accessToken.token, results.refreshToken.token, {
-                expires_in: 3600,
+                expires_in: OauthExpiresIn,
                 id_token: results.idToken.token
               });
             });
@@ -192,8 +193,6 @@ module.exports = {
     );
 
     oauth.exchange(oauth.exchanges.refreshToken(function (client, refreshToken, scope, done) {
-      const expires = new Date();
-      expires.setSeconds(expires.getSeconds() + 3600);
       OauthToken
         .findOne({type: 'refresh', token: refreshToken})
         .populate('client user')
@@ -212,7 +211,7 @@ module.exports = {
               if (err) {
                 return done(err);
               }
-              done(null, ctok.token, null, {expires_in: 3600});
+              done(null, ctok.token, null, {expires_in: OauthExpiresIn});
             });
           });
         });
