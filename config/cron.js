@@ -316,25 +316,27 @@ const sendReminderVerifyEmails = function (app) {
   const stream = User.find({'email_verified': false}).stream();
 
   stream.on('data', function(user) {
+    const that = this;
+    this.pause();
     if (user.shouldSendReminderVerify()) {
-      this.pause();
 
-      const now = Date.now(), that = this;
-      // Make sure user is not an orphan
-      if (!user.createdBy) {
-        EmailService.sendReminderVerify(user, function (err) {
-          if (err) {
-            app.log.error(err);
+      const now = Date.now();
+      EmailService.sendReminderVerify(user, function (err) {
+        if (err) {
+          app.log.error(err);
+          that.resume();
+        }
+        else {
+          user.remindedVerify = now.valueOf();
+          user.timesRemindedVerify = user.timesRemindedVerify + 1;
+          user.save(function (err) {
             that.resume();
-          }
-          else {
-            user.remindedVerify = now.valueOf();
-            user.timesRemindedVerify = user.timesRemindedVerify + 1;
-            user.save();
-            that.resume();
-          }
-        });
-      }
+          });
+        }
+      });
+    }
+    else {
+      this.resume();
     }
   });
 };
@@ -358,13 +360,18 @@ const sendReminderUpdateEmails = function (app) {
       EmailService.sendReminderUpdate(user, function (err) {
         if (err) {
           app.log.error(err);
+          that.resume();
         }
         else {
           user.remindedUpdate = now;
-          user.save();
+          user.save(function (err) {
+            that.resume();
+          });
         }
-        that.resume();
       });
+    }
+    else {
+      this.resume();
     }
   });
 };
@@ -390,25 +397,35 @@ const sendReminderCheckoutEmails = function(app) {
     .stream();
 
   stream.on('data', function(user) {
+    this.pause();
+    app.log.info('Checking ' + user.email);
     const that = this;
     const now = Date.now();
-    listAttributes.forEach(function (attr) {
-      let lu = {};
-      for (let i = 0; i < user[attr].length; i++) {
-        lu = user[attr][i];
+    async.eachSeries(listAttributes, function (attr, nextAttr) {
+      async.eachSeries(user[attr], function (lu, nextLu) {
         if (lu.checkoutDate && lu.remindedCheckout === false && !lu.deleted) {
           const dep = new Date(lu.checkoutDate);
           if (now.valueOf() - dep.valueOf() > 48 * 3600 * 1000) {
-            that.pause();
             const notification = {type: 'reminder_checkout', user: user, params: {listUser: lu, list: lu.list}};
             NotificationService.send(notification, () => {
               lu.remindedCheckout = true;
-              user.save();
-              that.resume();
+              user.save(function (err) {
+                nextLu();
+              });
             });
           }
+          else {
+            nextLu();
+          }
         }
-      }
+        else {
+          nextLu();
+        }
+      }, function (err) {
+        nextAttr();
+      });
+    }, function (err) {
+      that.resume();
     });
   });
 };
@@ -435,25 +452,35 @@ const doAutomatedCheckout = function(app) {
     .stream();
 
   stream.on('data', function(user) {
+    this.pause();
+    app.log.info('Checking ' + user.email);
     const that = this;
     const now = Date.now();
-    listAttributes.forEach(function (attr) {
-      let lu = {};
-      for (let i = 0; i < user[attr].length; i++) {
-        lu = user[attr][i];
+    async.eachSeries(listAttributes, function (attr, nextAttr) {
+      async.eachSeries(user[attr], function (lu, nextLu) {
         if (lu.checkoutDate && lu.remindedCheckout === true && !lu.deleted) {
           const dep = new Date(lu.checkoutDate);
           if (now.valueOf() - dep.valueOf() > 14 * 24 * 3600 * 1000) {
-            that.pause();
             const notification = {type: 'automated_checkout', user: user, params: {listUser: lu, list: lu.list}};
             NotificationService.send(notification, () => {
               lu.deleted = true;
-              user.save();
-              that.resume();
+              user.save(function (err) {
+                nextLu();
+              });
             });
           }
+          else {
+            nextLu();
+          }
         }
-      }
+        else {
+          nextLu();
+        }
+      }, function (err) {
+        nextAttr();
+      });
+    }, function (err) {
+      that.resume();
     });
   });
 };
@@ -470,9 +497,9 @@ const sendReminderCheckinEmails = function(app) {
 
   stream.on('data', function(user) {
     this.pause();
+    app.log.info('Checking ' + user.email);
     const that = this;
-    for (let i = 0; i < user.operations.length; i++) {
-      const lu = user.operations[i];
+    async.eachSeries(user.operations, function (lu, nextLu) {
       const d = new Date(),
         offset = d.valueOf() - lu.valueOf();
 
@@ -486,12 +513,18 @@ const sendReminderCheckinEmails = function(app) {
           };
           NotificationService.send(notification, () => {
             lu.remindedCheckin = true;
-            user.save();
+            user.save(function (err) {
+              nextLu();
+            });
           });
         });
       }
-    }
-    that.resume();
+      else {
+        nextLu();
+      }
+    }, function (err) {
+      that.resume();
+    });
   });
 };
 

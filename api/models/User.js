@@ -212,7 +212,7 @@ module.exports = class User extends Model {
           const created = new Date(this.createdAt),
             current = Date.now(),
             remindedVerify = new Date(this.remindedVerify);
-          if (this.email_verified) {
+          if (this.email_verified || this.is_orphan || this.is_ghost) {
             return false;
           }
           if (!this.remindedVerify && !this.timesRemindedVerify && current.valueOf() - created.valueOf() > 48 * 3600 * 1000) {
