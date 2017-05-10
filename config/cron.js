@@ -529,11 +529,11 @@ module.exports = {
       start: true
     },
     // Send a reminder to checkout to people who are 2 days past their checkout date
-    sendReminderCheckoutEmails: {
+    /*sendReminderCheckoutEmails: {
       schedule: '1 * * * *',
       onTick: sendReminderCheckoutEmails,
       start: true
-    },
+    },*/
     // Do the automated to checkout to people who are 14 days past their checkout date
     doAutomatedCheckout: {
       schedule: '1 * * * *',
