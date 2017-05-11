@@ -254,7 +254,7 @@ module.exports = class ListUserController extends Controller{
         // Set deleted to true
         lu.deleted = true;
         // If user is checking out of his primary organization, remove the listuser from the organization attribute
-        if (childAttribute === 'organizations' && record.organization && lu.list === record.organization.list) {
+        if (childAttribute === 'organizations' && record.organization && lu.list.toString() === record.organization.list.toString()) {
           record.organization.remove();
         }
         return record
