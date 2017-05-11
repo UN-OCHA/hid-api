@@ -10,4 +10,3 @@ exports.NotificationController = require('./NotificationController');
 exports.ServiceController = require('./ServiceController');
 exports.ServiceCredentialsController = require('./ServiceCredentialsController');
 exports.ListUserController = require('./ListUserController');
-exports.DuplicateController = require('./DuplicateController');
