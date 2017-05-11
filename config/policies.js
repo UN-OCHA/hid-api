@@ -80,10 +80,6 @@ module.exports = {
     find: ['AuthPolicy.isAuthenticated'],
     update: ['AuthPolicy.isAuthenticated', 'ListPolicy.canUpdate'],
     destroy: ['AuthPolicy.isAuthenticated', 'ListPolicy.canDestroy']
-  },
-
-  DefaultController: {
-    info: [ ]
   }
 
 };
