@@ -108,9 +108,39 @@ module.exports = class ServiceController extends Controller{
 
   destroy (request, reply) {
     // TODO: make sure user is owner of the service or admin
-    request.params.model = 'service';
-    const FootprintController = this.app.controllers.FootprintController;
-    FootprintController.destroy(request, reply);
+    const Service = this.app.orm.Service;
+    const User = this.app.orm.User;
+
+    this.log.debug('[ServiceController] (destroy) model = service, query =', request.query);
+    const that = this;
+
+    const criteria = {};
+    criteria['subscriptions.service'] = request.params.id;
+    User
+      .find(criteria)
+      .then(users => {
+        for (let i = 0; i < users.length; i++) {
+          const user = users[i];
+          for (let j = user.subscriptions.length - 1; j--; ) {
+            if (user.subscriptions[j].service.toString() === request.params.id) {
+              user.subscriptions.splice(j, 1);
+            }
+          }
+          user.markModified('subscriptions');
+          user.save();
+        }
+        return users;
+      })
+      .then(users => {
+        return Service
+          .remove({ _id: request.params.id })
+          .then(() => {
+            reply();
+          });
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, reply);
+      });
   }
 
   mailchimpLists (request, reply) {
