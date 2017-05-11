@@ -769,7 +769,7 @@ module.exports = class UserController extends Controller{
     if (request.payload.email) {
       const that = this;
       Model
-        .findOne({email: request.payload.email})
+        .findOne({email: request.payload.email.toLowerCase()})
         .then(record => {
           if (!record) {
             return that._errorHandler(Boom.badRequest('Email could not be found'), reply);
