@@ -103,24 +103,6 @@ module.exports = [
     handler: 'DefaultController.importLists'
   },
 
-  {
-    method: 'GET',
-    path: '/api/v2/duplicate',
-    handler: 'DuplicateController.find'
-  },
-
-  /*{
-    method: 'GET',
-    path: '/api/v2/duplicate/generate',
-    handler: 'DuplicateController.generate'
-  },*/
-
-  {
-    method: 'DELETE',
-    path: '/api/v2/duplicate/{id}',
-    handler: 'DuplicateController.delete'
-  },
-
   /**
    * Default authentication path.
    */
