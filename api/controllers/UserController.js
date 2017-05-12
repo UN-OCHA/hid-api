@@ -844,6 +844,10 @@ module.exports = class UserController extends Controller{
             return reply(Boom.notFound());
           }
           const ext = data.file.hapi.filename.split('.').pop();
+          // Avoid files with any extension
+          if (ext !== 'jpg' && ext !== 'jpeg' && ext !== 'png') {
+            return reply(Boom.badRequest('Only jpg, jpeg or png extensions allowed'));
+          }
           const path = __dirname + '/../../assets/pictures/' + userId + '.' + ext;
           const file = fs.createWriteStream(path);
 
