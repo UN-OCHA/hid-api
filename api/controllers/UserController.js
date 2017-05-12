@@ -844,6 +844,8 @@ module.exports = class UserController extends Controller{
             return reply(Boom.notFound());
           }
           const ext = data.file.hapi.filename.split('.').pop();
+          const mimeType = data.hapi.headers['content-type'];
+          console.log(mimeType);
           // Avoid files with any extension
           if (ext !== 'jpg' && ext !== 'jpeg' && ext !== 'png') {
             return reply(Boom.badRequest('Only jpg, jpeg or png extensions allowed'));
