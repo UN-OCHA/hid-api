@@ -832,7 +832,6 @@ module.exports = class UserController extends Controller{
   updatePicture (request, reply) {
     const Model = this.app.orm.User;
     const userId = request.params.id;
-    const Magic = require('mmmagic').Magic;
     const that = this;
 
     this.log.debug('[UserController] Updating picture ');
@@ -854,30 +853,22 @@ module.exports = class UserController extends Controller{
           if (ext !== 'jpg' && ext !== 'jpeg' && ext !== 'png') {
             return reply(Boom.badRequest('Only jpg, jpeg or png extensions allowed'));
           }
-          const mmmagic = new Magic();
-          mmmagic.detect(data.file, function (err, result) {
-            if (err) {
-              that.log.error(err);
-              return reply(Boom.badImplementation());
-            }
-            console.log(result);
-            const path = __dirname + '/../../assets/pictures/' + userId + '.' + ext;
-            const file = fs.createWriteStream(path);
+          const path = __dirname + '/../../assets/pictures/' + userId + '.' + ext;
+          const file = fs.createWriteStream(path);
 
-            file.on('error', function (err) {
-              reply(Boom.badImplementation(err));
-            });
+          file.on('error', function (err) {
+            reply(Boom.badImplementation(err));
+          });
 
-            data.file.pipe(file);
+          data.file.pipe(file);
 
-            data.file.on('end', function (err) {
-              record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + ext;
-              record.save().then(() => {
-                return reply(record);
-              })
-              .catch(err => {
-                return reply(Boom.badImplementation(err.toString()));
-              });
+          data.file.on('end', function (err) {
+            record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + ext;
+            record.save().then(() => {
+              return reply(record);
+            })
+            .catch(err => {
+              return reply(Boom.badImplementation(err.toString()));
             });
           });
         }

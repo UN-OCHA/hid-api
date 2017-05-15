@@ -69,7 +69,8 @@ module.exports = class UserPolicy extends Policy {
         .findOne({_id: request.params.id})
         .populate('createdBy')
         .then((user) => {
-          if (user.createdBy.id === request.params.currentUser.id &&
+          if (user.createdBy &&
+            user.createdBy.id === request.params.currentUser.id &&
             user.email_verified === false &&
             request.params.currentUser.isManager) {
             return reply();
