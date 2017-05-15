@@ -6,7 +6,6 @@ const Bcrypt = require('bcryptjs');
 const Libphonenumber = require('google-libphonenumber');
 const https = require('https');
 const _ = require('lodash');
-const idvalidator = require('mongoose-id-validator');
 const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
 const userPopulate1 = [
   {path: 'favoriteLists'},
@@ -566,7 +565,6 @@ module.exports = class User extends Model {
         required: true
       }
     });
-    subscriptionSchema.plugin(idvalidator);
 
     return {
       // Legacy user_id data, to be added during migration
