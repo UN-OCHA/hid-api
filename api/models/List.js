@@ -92,6 +92,9 @@ module.exports = class List extends Model {
           if (index === -1) {
             index = this.languageIndex(attr, 'en');
           }
+          if (index === -1) {
+            index = 0;
+          }
           if (index !== -1) {
             return this[attr][index].text;
           }
