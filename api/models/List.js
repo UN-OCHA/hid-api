@@ -95,7 +95,7 @@ module.exports = class List extends Model {
           if (index === -1) {
             index = 0;
           }
-          if (index !== -1) {
+          if (index !== -1 && this[attr][index]) {
             return this[attr][index].text;
           }
           else {
