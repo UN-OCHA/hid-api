@@ -6,6 +6,7 @@ const Bcrypt = require('bcryptjs');
 const Libphonenumber = require('google-libphonenumber');
 const https = require('https');
 const _ = require('lodash');
+const idvalidator = require('mongoose-id-validator');
 const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
 const userPopulate1 = [
   {path: 'favoriteLists'},
@@ -367,6 +368,7 @@ module.exports = class User extends Model {
         }
       },
       onSchema(app, schema) {
+        schema.plugin(idvalidator);
         schema.virtual('sub').get(function () {
           return this._id;
         });
