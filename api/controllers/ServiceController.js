@@ -2,6 +2,7 @@
 
 const Controller = require('trails/controller');
 const Boom = require('boom');
+const async = require('async');
 const Mailchimp = require('mailchimp-api-v3');
 const google = require('googleapis');
 
@@ -119,16 +120,17 @@ module.exports = class ServiceController extends Controller{
     User
       .find(criteria)
       .then(users => {
-        for (let i = 0; i < users.length; i++) {
-          const user = users[i];
+        async.each(users, function (user, next) {
           for (let j = user.subscriptions.length; j--; ) {
             if (user.subscriptions[j] && user.subscriptions[j].service && user.subscriptions[j].service.toString() === request.params.id) {
               user.subscriptions.splice(j, 1);
             }
           }
           user.markModified('subscriptions');
-          user.save();
-        }
+          user.save((err) => {
+            next();
+          });
+        });
         return users;
       })
       .then(users => {
