@@ -267,8 +267,14 @@ module.exports = class ServiceController extends Controller{
             .then((output) => {
               if (output.statusCode === 200) {
                 user.subscriptions.push({email: request.payload.email, service: service});
-                user.save();
-                return reply(user);
+                user.save((err) => {
+                  if (err) {
+                    throw err;
+                  }
+                  else {
+                    reply(user);
+                  }
+                });
               }
               else {
                 throw new Error(output);
@@ -283,8 +289,14 @@ module.exports = class ServiceController extends Controller{
             function (err, response) {
               if (!err || (err && err.code === 409)) {
                 user.subscriptions.push({email: request.payload.email, service: service});
-                user.save();
-                return reply(user);
+                user.save((err) => {
+                  if (err) {
+                    throw err;
+                  }
+                  else {
+                    reply(user);
+                  }
+                });
               }
               else {
                 that.app.services.ErrorService.handle(err, reply);
@@ -309,17 +321,24 @@ module.exports = class ServiceController extends Controller{
         if (err.title && err.title === 'Member Exists') {
           // Member already exists in mailchimp
           user.subscriptions.push({email: request.payload.email, service: service});
-          user.save();
-          reply(user);
-          if (user.id !== request.params.currentUser.id) {
-            const notification = {
-              type: 'service_subscription',
-              user: user,
-              createdBy: request.params.currentUser,
-              params: { service: service}
-            };
-            NotificationService.send(notification, () => {});
-          }
+          user.save((err) => {
+            if (err) {
+              that.log.error(err);
+              reply(Boom.badImplementation());
+            }
+            else {
+              reply(user);
+              if (user.id !== request.params.currentUser.id) {
+                const notification = {
+                  type: 'service_subscription',
+                  user: user,
+                  createdBy: request.params.currentUser,
+                  params: { service: service}
+                };
+                NotificationService.send(notification, () => {});
+              }
+            }
+          });
         }
         else {
           that.app.services.ErrorService.handle(err, reply);
