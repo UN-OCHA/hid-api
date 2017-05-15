@@ -121,8 +121,10 @@ module.exports = class ServiceController extends Controller{
       .then(users => {
         for (let i = 0; i < users.length; i++) {
           const user = users[i];
+          console.log(user.email);
           for (let j = user.subscriptions.length - 1; j--; ) {
             if (user.subscriptions[j].service.toString() === request.params.id) {
+              console.log(request.params.id);
               user.subscriptions.splice(j, 1);
             }
           }
@@ -132,11 +134,12 @@ module.exports = class ServiceController extends Controller{
         return users;
       })
       .then(users => {
-        return Service
+        return reply();
+        /*return Service
           .remove({ _id: request.params.id })
           .then(() => {
             reply();
-          });
+          });*/
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, reply);
