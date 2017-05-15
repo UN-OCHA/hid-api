@@ -232,7 +232,7 @@ const importLists = function (app) {
     }
   };
 
-  let lastPull = 0;
+  let lastPull = Math.round(Date.now() / 1000) - 7 * 24 * 3600;
   //Cache.then((mongoCache) => {
     //return mongoCache.get('lastPull', function (err, lastPull) {
       //if (err) app.log.info(err)
