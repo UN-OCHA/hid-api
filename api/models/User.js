@@ -368,7 +368,6 @@ module.exports = class User extends Model {
         }
       },
       onSchema(app, schema) {
-        schema.plugin(idvalidator);
         schema.virtual('sub').get(function () {
           return this._id;
         });
@@ -567,6 +566,7 @@ module.exports = class User extends Model {
         required: true
       }
     });
+    subscriptionSchema.plugin(idvalidator);
 
     return {
       // Legacy user_id data, to be added during migration
