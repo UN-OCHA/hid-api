@@ -533,31 +533,31 @@ module.exports = {
   jobs: {
     // Delete expired users
     deleteExpiredUsers: {
-      schedule: '1 * * * *',
+      schedule: '00 00 23 * * *',
       onTick: deleteExpiredUsers,
       start: true
     },
     // Delete expired oauth tokens
     deleteExpiredTokens: {
-      schedule: '1 * * * *',
+      schedule: '00 00 23 * * *',
       onTick: deleteExpiredTokens,
       start: true
     },
     // Import lists from Humanitarianresponse
     importLists: {
-      schedule: '1 * * * *', // Run every 60 minutes
+      schedule: '00 00 23 * * *', // Run every 60 minutes
       onTick: importLists,
       start: true
     },
     // Remind users to verify their email
     sendReminderVerifyEmails: {
-      schedule: '1 * * * *',
+      schedule: '00 10 23 * * *',
       onTick: sendReminderVerifyEmails,
       start: true
     },
     // Send a reminder to people who haven't updated their profile in the last 6 months
     sendReminderUpdateEmails: {
-      schedule: '1 * * * *',
+      schedule: '00 10 23 * * *',
       onTick: sendReminderUpdateEmails,
       start: true
     },
@@ -569,13 +569,13 @@ module.exports = {
     },*/
     // Do the automated to checkout to people who are 14 days past their checkout date
     doAutomatedCheckout: {
-      schedule: '1 * * * *',
+      schedule: '00 20 23 * * *',
       onTick: doAutomatedCheckout,
       start: true
     },
     // Reminder emails sent out 48 hours after checkin to remind people to add a local phone number if they didn't do so
     sendReminderCheckinEmails: {
-      schedule: '1 * * * *',
+      schedule: '00 30 23 * * *',
       onTick: sendReminderCheckinEmails,
       start: true
     }
