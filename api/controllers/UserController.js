@@ -681,6 +681,8 @@ module.exports = class UserController extends Controller{
           return reply(Boom.badRequest('Email has not been validated. You need to validate it first.'));
         }
         record.email = email;
+        // If we are there, it means that the email has been validated, so make sure email_verified is set to true.
+        record.email_verified = true;
         record
           .save()
           .then(() => {
