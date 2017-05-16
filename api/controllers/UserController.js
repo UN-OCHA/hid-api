@@ -503,9 +503,9 @@ module.exports = class UserController extends Controller{
             lists.forEach(function (list) {
               if (list.isVisibleTo(request.params.currentUser)) {
                 criteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false}};
-              }
-              if (!list.isOwner(request.params.currentUser)) {
-                criteria[list.type + 's'].$elemMatch.pending = false;
+                if (!list.isOwner(request.params.currentUser)) {
+                  criteria[list.type + 's'].$elemMatch.pending = false;
+                }
               }
             });
             return lists;
@@ -1096,7 +1096,6 @@ module.exports = class UserController extends Controller{
   showAccount (request, reply) {
     this.log.info('calling /account.json for ' + request.params.currentUser.email);
     let user = JSON.parse(JSON.stringify(request.params.currentUser));
-    //user.authorized_services = 'deprecated in v2';
     if (request.params.currentClient && (request.params.currentClient.id === 'iasc-prod' || request.params.currentClient.id === 'iasc-dev')) {
       this.log.info('iasc-prod');
       user.sub = user.email;
