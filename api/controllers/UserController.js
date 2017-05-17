@@ -507,6 +507,9 @@ module.exports = class UserController extends Controller{
                   criteria[list.type + 's'].$elemMatch.pending = false;
                 }
               }
+              else {
+                throw Boom.unauthorized('You are not authorized to view this list');
+              }
             });
             return lists;
           })
