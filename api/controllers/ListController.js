@@ -119,8 +119,12 @@ module.exports = class ListController extends Controller{
           async.eachSeries(result.result, function (list, next) {
             tmp = list.toJSON();
             tmp.visible = list.isVisibleTo(request.params.currentUser);
-            tmp.name = list.translatedAttribute('names', reqLanguage);
-            tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
+            if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('names') !== -1)) {
+              tmp.name = list.translatedAttribute('names', reqLanguage);
+            }
+            if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('acronyms') !== -1)) {
+              tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
+            }
             if (optionsArray.indexOf('count') !== -1) {
               const ucriteria = {};
               ucriteria[list.type + 's'] = {
