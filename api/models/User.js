@@ -702,7 +702,7 @@ module.exports = class User extends Model {
       },
       locale: {
         type: String,
-        enum: ['en', 'fr', 'es'],
+        enum: ['en', 'fr', 'es', 'ar'],
         default: 'en'
       },
       // TODO :make sure it's a valid organization
