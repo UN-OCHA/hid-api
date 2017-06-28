@@ -472,7 +472,7 @@ module.exports = class UserController extends Controller{
         if (criteria.name.length < 3) {
           return reply(Boom.badRequest('Name must have at least 3 characters'));
         }
-        criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{/, '');
+        criteria.name = criteria.name.replace(/([^a-z0-9 ]+)/gi, '-');
         criteria.name = new RegExp(criteria.name, 'i');
       }
 
