@@ -410,7 +410,7 @@ module.exports = class ServiceController extends Controller{
         if (service.type === 'mailchimp') {
           return service.unsubscribeMailchimp(user)
             .then((output) => {
-              if (output.statusCode === 204) {
+              if (output.statusCode === 204 || output.statusCode === 404) {
                 user.subscriptions.splice(index, 1);
                 user.save();
                 return reply(user);
