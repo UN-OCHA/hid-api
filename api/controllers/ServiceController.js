@@ -8,7 +8,7 @@ const google = require('googleapis');
 
 /**
  * @module ServiceController
- * @description Generated Trails.js Controller.
+ * @description Controller for Services (Mailchimp, GGroup).
  */
 module.exports = class ServiceController extends Controller{
 
