@@ -361,6 +361,7 @@ module.exports = class ServiceController extends Controller{
 
     const that = this;
     let user = {}, service = {};
+    let sendNotification = true;
     User
       .findOne({'_id': request.params.id})
       .then((user) => {
@@ -410,13 +411,24 @@ module.exports = class ServiceController extends Controller{
         if (service.type === 'mailchimp') {
           return service.unsubscribeMailchimp(user)
             .then((output) => {
-              if (output.statusCode === 204 || output.statusCode === 404) {
+              if (output.statusCode === 204) {
                 user.subscriptions.splice(index, 1);
                 user.save();
                 return reply(user);
               }
               else {
                 throw new Error(output);
+              }
+            })
+            .catch(err => {
+              if (err.status === 404) {
+                sendNotification = false;
+                user.subscriptions.splice(index, 1);
+                user.save();
+                return reply(user);
+              }
+              else {
+                throw err;
               }
             });
         }
@@ -435,7 +447,7 @@ module.exports = class ServiceController extends Controller{
       })
       .then (() => {
         // Send notification to user that he was subscribed to a service
-        if (user.id !== request.params.currentUser.id) {
+        if (sendNotification && user.id !== request.params.currentUser.id) {
           const notification = {
             type: 'service_unsubscription',
             user: user,

@@ -612,7 +612,7 @@ module.exports = class UserController extends Controller{
     }
     else {
       if (!request.payload.verified) {
-        request.payload.verified_by = '';
+        request.payload.verified_by = null;
       }
       reply(this._updateQuery(request, options));
     }
