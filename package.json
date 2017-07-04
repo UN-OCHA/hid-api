@@ -25,7 +25,7 @@
     "ejs": "^2.5.2",
     "email-templates": "^2.5.2",
     "google-auth-library": "^0.9.10",
-    "google-libphonenumber": "^2.0.3",
+    "google-libphonenumber": "^2.0.19",
     "googleapis": "^15.1.0",
     "hapi-oauth2orize": "UN-OCHA/hapi-oauth2orize",
     "jsonwebtoken": "^7.1.9",
