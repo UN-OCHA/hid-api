@@ -611,6 +611,9 @@ module.exports = class UserController extends Controller{
         });
     }
     else {
+      if (!request.payload.verified) {
+        request.payload.verified_by = '';
+      }
       reply(this._updateQuery(request, options));
     }
   }
