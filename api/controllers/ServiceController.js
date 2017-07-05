@@ -435,7 +435,15 @@ module.exports = class ServiceController extends Controller{
         else if (service.type === 'googlegroup') {
           service.unsubscribeGoogleGroup(user, result.creds, function (err, response) {
             if (err) {
-              throw err;
+              if (err.status === 404) {
+                sendNotification = false;
+                user.subscriptions.splice(index, 1);
+                user.save();
+                return reply(user);
+              }
+              else {
+                throw err;
+              }
             }
             else {
               user.subscriptions.splice(index, 1);
