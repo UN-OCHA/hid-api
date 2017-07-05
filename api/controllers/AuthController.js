@@ -5,7 +5,7 @@ const Boom = require('boom');
 
 /**
  * @module AuthController
- * @description Generated Trails.js Controller.
+ * @description Controller for Auth.
  */
 module.exports = class AuthController extends Controller{
 
