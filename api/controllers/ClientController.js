@@ -5,7 +5,7 @@ const Boom = require('boom');
 
 /**
  * @module ClientController
- * @description Generated Trails.js Controller.
+ * @description Controller for Clients.
  */
 module.exports = class ClientController extends Controller{
 
