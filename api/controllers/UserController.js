@@ -539,6 +539,7 @@ module.exports = class UserController extends Controller{
   _updateQuery (request, options) {
     const Model = this.app.orm.user,
       NotificationService = this.app.services.NotificationService,
+      EmailService = this.app.services.EmailService,
       that = this;
     return Model
       .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
@@ -563,13 +564,18 @@ module.exports = class UserController extends Controller{
                 if (!user.appMetadata.hid.hasOwnProperty('login')) {
                   user.appMetadata.hid.login = true;
                 }
-                user.save();
+                user
+                  .save()
+                  .then(() => {
+                    EmailService.sendAuthToProfile(user, request.params.currentUser, () => {});
+                  });
               }
-
-              // Notify user of the edit
-              // TODO: add list of actions performed by the administrator
-              const notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
-              NotificationService.send(notification, () => {});
+              else {
+                // Notify user of the edit
+                // TODO: add list of actions performed by the administrator
+                const notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
+                NotificationService.send(notification, () => {});
+              }
             }
             return user;
           });
