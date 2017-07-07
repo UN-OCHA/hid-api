@@ -552,8 +552,17 @@ module.exports = class UserController extends Controller{
               // If it's an auth account, surface it
               if (!user.hasOwnProperty('appMetadata') ||
                 !user.appMetadata.hasOwnProperty('hid') ||
+                !user.appMetadata.hid.hasOwnProperty('login') ||
                 !user.appMetadata.hid.login) {
-                user.appMetadata.hid.login = true;
+                if (!user.hasOwnProperty('appMetadata')) {
+                  user.appMetadata = { hid: { login: true}};
+                }
+                if (!user.appMetadata.hasOwnProperty('hid')) {
+                  user.appMetadata.hid = { login: true};
+                }
+                if (!user.appMetadata.hid.hasOwnProperty('login')) {
+                  user.appMetadata.hid.login = true;
+                }
                 user.save();
               }
 
