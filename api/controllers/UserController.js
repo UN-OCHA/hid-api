@@ -548,6 +548,15 @@ module.exports = class UserController extends Controller{
           .defaultPopulate()
           .then(user => {
             if (request.params.currentUser._id.toString() !== user._id.toString()) {
+              // User is being edited by someone else
+              // If it's an auth account, surface it
+              if (!user.hasOwnProperty('appMetadata') ||
+                !user.appMetadata.hasOwnProperty('hid') ||
+                !user.appMetadata.hid.login) {
+                user.appMetadata.hid.login = true;
+                user.save();
+              }
+
               // Notify user of the edit
               // TODO: add list of actions performed by the administrator
               const notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
