@@ -74,7 +74,12 @@ module.exports = class ViewController extends Controller {
 
   logout (request, reply) {
     request.yar.reset();
-    return reply.redirect('/');
+    if (request.query.redirect) {
+      return reply.redirect(request.query.redirect);
+    }
+    else {
+      return reply.redirect('/');
+    }
   }
 
   _buildRequestUrl (request, url) {
