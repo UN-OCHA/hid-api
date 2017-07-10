@@ -11,7 +11,7 @@ module.exports = class AuthController extends Controller{
 
   _loginHelper (request, reply) {
     const User = this.app.orm.User;
-    const email = request.payload ? request.payload.email : false;
+    const email = request.payload ? request.payload.email.toLowerCase() : false;
     const password = request.payload ? request.payload.password : false;
     const authPolicy = this.app.policies.AuthPolicy;
 
