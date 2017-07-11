@@ -20,8 +20,11 @@ module.exports = class DefaultController extends Controller {
     reply();
     const User = this.app.orm.User;
     User
-      .update({'appMetadata.hid.login': true}, { $set: { authOnly: false }}, {multi: true}, function (err, raw) {
+      .update({}, { $set: {authOnly: true}}, { multi: true}, function (err, raw) {
+      User
+        .update({'appMetadata.hid.login': true}, { $set: { authOnly: false }}, {multi: true}, function (err, raw) {
 
+        });
       });
   }
 };
