@@ -51,7 +51,7 @@ module.exports = class ListController extends Controller{
       if (criteria.name.length < 3) {
         return reply(Boom.badRequest('Name must have at least 3 characters'));
       }
-      let name = criteria.name.replace(/([^a-z0-9 ]+)/gi, '-');
+      let name = criteria.name.replace(/([^a-z0-9 :]+)/gi, '-');
       name = new RegExp(name, 'i');
       criteria['names.text'] = name;
       delete criteria.name;
