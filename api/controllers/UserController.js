@@ -551,7 +551,7 @@ module.exports = class UserController extends Controller{
             if (request.params.currentUser._id.toString() !== user._id.toString()) {
               // User is being edited by someone else
               // If it's an auth account, surface it
-              if (!user.hasOwnProperty('appMetadata') ||
+              /*if (!user.hasOwnProperty('appMetadata') ||
                 !user.appMetadata.hasOwnProperty('hid') ||
                 !user.appMetadata.hid.hasOwnProperty('login') ||
                 !user.appMetadata.hid.login) {
@@ -562,12 +562,12 @@ module.exports = class UserController extends Controller{
                     EmailService.sendAuthToProfile(user, request.params.currentUser, () => {});
                   });
               }
-              else {
+              else {*/
                 // Notify user of the edit
                 // TODO: add list of actions performed by the administrator
                 const notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
                 NotificationService.send(notification, () => {});
-              }
+              //}
             }
             return user;
           });
