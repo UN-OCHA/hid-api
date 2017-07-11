@@ -139,7 +139,7 @@ module.exports = class UserController extends Controller{
             else {
               // User is being "reactivated" by someone else
               // Make sure it shows up in the HID app
-              record.appMetadata.hid.login = true;
+              record.setHidLogin();
               record.save().then(() => {
                 return reply(record);
               });
@@ -555,15 +555,7 @@ module.exports = class UserController extends Controller{
                 !user.appMetadata.hasOwnProperty('hid') ||
                 !user.appMetadata.hid.hasOwnProperty('login') ||
                 !user.appMetadata.hid.login) {
-                if (!user.hasOwnProperty('appMetadata')) {
-                  user.appMetadata = { hid: { login: true}};
-                }
-                if (!user.appMetadata.hasOwnProperty('hid')) {
-                  user.appMetadata.hid = { login: true};
-                }
-                if (!user.appMetadata.hid.hasOwnProperty('login')) {
-                  user.appMetadata.hid.login = true;
-                }
+                user.setHidLogin();
                 user
                   .save()
                   .then(() => {

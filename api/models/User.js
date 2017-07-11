@@ -356,6 +356,19 @@ module.exports = class User extends Model {
             .execPopulate();
         },
 
+        // Sets appMetadata.hid.login to true
+        setHidLogin: function () {
+          if (!this.hasOwnProperty('appMetadata')) {
+            this.appMetadata = { hid: { login: true }};
+          }
+          if (!this.appMetadata.hasOwnProperty('hid')) {
+            this.appMetadata.hid = { login: true };
+          }
+          if (!this.appMetadata.hid.hasOwnProperty('login')) {
+            this.appMetadata.hid.login = true;
+          }
+        },
+
         toJSON: function () {
           const user = this.toObject();
           delete user.password;
@@ -379,7 +392,7 @@ module.exports = class User extends Model {
             this.name = this.given_name + ' ' + this.family_name;
           }
           if (this.is_orphan || this.is_ghost) {
-            this.appMetadata.hid.login = true;
+            this.setHidLogin();
           }
           if (!this.user_id) {
             this.user_id = this._id;
