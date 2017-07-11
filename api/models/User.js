@@ -356,19 +356,6 @@ module.exports = class User extends Model {
             .execPopulate();
         },
 
-        // Sets appMetadata.hid.login to true
-        setHidLogin: function () {
-          if (!this.hasOwnProperty('appMetadata')) {
-            this.appMetadata = { hid: { login: true }};
-          }
-          if (!this.appMetadata.hasOwnProperty('hid')) {
-            this.appMetadata.hid = { login: true };
-          }
-          if (!this.appMetadata.hid.hasOwnProperty('login')) {
-            this.appMetadata.hid.login = true;
-          }
-        },
-
         toJSON: function () {
           const user = this.toObject();
           delete user.password;
@@ -833,7 +820,12 @@ module.exports = class User extends Model {
       deleted: {
         type: Boolean,
         default: false
-      }
+      },
+      // Whether this user is only using auth
+      authOnly: {
+        type: Boolean,
+        default: true
+      },
     };
   }
 };
