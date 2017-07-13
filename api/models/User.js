@@ -378,6 +378,9 @@ module.exports = class User extends Model {
           else {
             this.name = this.given_name + ' ' + this.family_name;
           }
+          if (this.is_orphan || this.is_ghost) {
+            this.authOnly = false;
+          }
           if (!this.user_id) {
             this.user_id = this._id;
           }
