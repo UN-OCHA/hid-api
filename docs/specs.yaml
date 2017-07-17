@@ -250,10 +250,8 @@ paths:
         - user
       summary: 'Delete the user'
       responses:
-        '200':
-          description: 'The deleted user'
-          schema:
-            $ref: '#/definitions/User'
+        '204':
+          description: 'Successful response'
   /user/{userId}/notification:
     parameters:
       - name: 'userId'
