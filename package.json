@@ -29,6 +29,7 @@
     "googleapis": "^15.1.0",
     "hapi-oauth2orize": "UN-OCHA/hapi-oauth2orize",
     "jsonwebtoken": "^7.1.9",
+    "lwip": "0.0.9",
     "mailchimp-api-v3": "^1.7.0",
     "newrelic": "^1.36.1",
     "nodemailer": "^2.6.4",
