@@ -137,7 +137,7 @@ module.exports = class ServiceController extends Controller{
         return Service
           .remove({ _id: request.params.id })
           .then(() => {
-            reply();
+            reply().code(204);
           });
       })
       .catch(err => {

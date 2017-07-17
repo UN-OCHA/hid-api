@@ -639,36 +639,9 @@ module.exports = class UserController extends Controller{
     const that = this;
 
     User
-      .findOne({ _id: request.params.id })
-      .then(record => {
-        if (!record) {
-          throw new Error(Boom.notFound());
-        }
-        for (let j = 0; j < childAttributes.length; j++) {
-          if (childAttributes[j] === 'organization') {
-            record.organization = null;
-          }
-          else {
-            record[childAttributes[j]] = [];
-          }
-        }
-        // Set deleted to true
-        record.deleted = true;
-        return record
-          .save()
-          .then(() => {
-            return record;
-          });
-      })
-      .then((record) => {
-        reply(record);
-        return record;
-      })
-      .then((doc) => {
-        // Send notification if user is being deleted by an admin
-        if (request.params.currentUser.id !== doc.id) {
-          that.app.services.NotificationService.send({type: 'admin_delete', createdBy: request.params.currentUser, user: doc}, () => { });
-        }
+      .remove({ _id: request.params.id })
+      .then(() => {
+        return reply().code(204);
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, reply);
