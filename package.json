@@ -64,7 +64,8 @@
         "error",
         "always"
       ],
-      "no-underscore-dangle": "off"
+      "no-underscore-dangle": "off",
+      "no-process-env": "off"
     }
   },
   "repository": "un-ocha/hid-api",

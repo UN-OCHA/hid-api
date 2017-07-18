@@ -112,10 +112,10 @@ module.exports = class AuthController extends Controller{
             .catch((err) => {
               that.app.services.ErrorService.handle(err, reply);
             });
-          }
-          else {
-            return reply({ user: result, token: token});
-          }
+        }
+        else {
+          return reply({ user: result, token: token});
+        }
       }
       else {
         return reply(result);
@@ -180,7 +180,7 @@ module.exports = class AuthController extends Controller{
         );
       }
       else {
-        let params = that.app.services.HelperService.getOauthParams(request.payload);
+        const params = that.app.services.HelperService.getOauthParams(request.payload);
 
         let registerLink = '/register';
         if (params) {

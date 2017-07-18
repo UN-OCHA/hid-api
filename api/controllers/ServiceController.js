@@ -20,7 +20,6 @@ module.exports = class ServiceController extends Controller{
   }
 
   find (request, reply) {
-    const FootprintService = this.app.services.FootprintService;
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
     const Service = this.app.orm.Service;
@@ -67,7 +66,7 @@ module.exports = class ServiceController extends Controller{
       const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
 
       if (criteria.lists) {
-        let lists = criteria.lists.split(',');
+        const lists = criteria.lists.split(',');
         if (lists.length > 1) {
           criteria.$or = [];
           lists.forEach(function (id) {

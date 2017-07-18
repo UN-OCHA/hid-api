@@ -376,7 +376,7 @@ const sendReminderUpdateEmails = function (app) {
   });
 };
 
-const sendReminderCheckoutEmails = function(app) {
+/*const sendReminderCheckoutEmails = function(app) {
   app.log.info('Sending reminder checkout emails to contacts');
   const User = app.orm.User,
     NotificationService = app.services.NotificationService;
@@ -428,7 +428,7 @@ const sendReminderCheckoutEmails = function(app) {
       that.resume();
     });
   });
-};
+};*/
 
 const doAutomatedCheckout = function(app) {
   app.log.info('Running automated checkouts');

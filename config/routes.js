@@ -97,12 +97,6 @@ module.exports = [
     handler: 'DefaultController.importLists'
   },
 
-  {
-    method: 'GET',
-    path: '/api/v2/migrate/logins',
-    handler: 'DefaultController.migrateHidLogins'
-  },
-
   /**
    * Default authentication path.
    */

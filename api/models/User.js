@@ -36,6 +36,12 @@ module.exports = class User extends Model {
         hashPassword: function (password) {
           return Bcrypt.hashSync(password, 11);
         },
+        // Determines if a password is strong enough for HID.
+        isStrongPassword: function (password) {
+          const regex = /[A-Za-z0-9]/;
+          // At least 8 characters and at least one number, one uppercase and one lowercase.
+          return password.length > 8 && regex.test(password);
+        },
         explodeHash: function (hashLink) {
           const key = new Buffer(hashLink, 'base64').toString('ascii');
           const parts = key.split('/');

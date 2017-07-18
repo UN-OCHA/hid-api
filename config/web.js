@@ -132,8 +132,6 @@ module.exports = {
             if (err ||
               !ocode.client._id.equals(client._id)) {
               //redirectURI !== ocode.client.redirectUri) {
-              console.log(err);
-              console.log(redirectURI);
               return done(null, false);
             }
             async.auto({

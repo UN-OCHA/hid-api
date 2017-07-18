@@ -15,16 +15,4 @@ module.exports = class DefaultController extends Controller {
     reply();
     this.app.config.cron.importLists(this.app);
   }
-
-  migrateHidLogins (request, reply) {
-    reply();
-    const User = this.app.orm.User;
-    User
-      .update({}, { $set: {authOnly: true}}, { multi: true}, function (err, raw) {
-      User
-        .update({'appMetadata.hid.login': true}, { $set: { authOnly: false }}, {multi: true}, function (err, raw) {
-
-        });
-      });
-  }
 };

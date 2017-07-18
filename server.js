@@ -6,7 +6,7 @@
 
 'use strict';
 
-//const newrelic = require('newrelic');
+const newrelic = require('newrelic');
 
 const app = require('./');
 const TrailsApp = require('trails');

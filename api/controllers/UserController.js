@@ -161,7 +161,7 @@ module.exports = class UserController extends Controller{
     this.log.debug('registerV1 called');
     const User = this.app.orm.User;
     const that = this;
-    console.log(request.payload);
+
     User
       .findOne({email: request.payload.email})
       .then((user) => {
@@ -633,7 +633,6 @@ module.exports = class UserController extends Controller{
 
   destroy (request, reply) {
     const User = this.app.orm.User;
-    const childAttributes = User.listAttributes();
     this.log.debug('[UserController] (destroy) model = user, query =', request.query);
 
     const that = this;
@@ -826,7 +825,6 @@ module.exports = class UserController extends Controller{
   updatePicture (request, reply) {
     const Model = this.app.orm.User;
     const userId = request.params.id;
-    const that = this;
 
     this.log.debug('[UserController] Updating picture ');
 
@@ -1087,7 +1085,7 @@ module.exports = class UserController extends Controller{
 
   showAccount (request, reply) {
     this.log.info('calling /account.json for ' + request.params.currentUser.email);
-    let user = JSON.parse(JSON.stringify(request.params.currentUser));
+    const user = JSON.parse(JSON.stringify(request.params.currentUser));
     if (request.params.currentClient && (request.params.currentClient.id === 'iasc-prod' || request.params.currentClient.id === 'iasc-dev')) {
       this.log.info('iasc-prod');
       user.sub = user.email;

@@ -12,7 +12,6 @@ module.exports = class Client extends Model {
   }
 
   static schema () {
-    const urlRegex = /(http(s)?)/gi;
     return {
       id: {
         type: String,
@@ -33,18 +32,15 @@ module.exports = class Client extends Model {
       url: {
         type: String,
         trim: true
-        //match: urlRegex
       },
       redirectUri: {
         type: String,
         trim: true,
         required: [true, 'Redirect uri is required']
-        //match: urlRegex
       },
       loginUri: {
         type: String,
         trim: true
-        //match: urlRegex
       },
       description: {
         type: String
