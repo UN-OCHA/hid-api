@@ -11,6 +11,7 @@ module.exports = class AuthController extends Controller{
 
   _loginHelper (request, reply) {
     const User = this.app.orm.User;
+    const Flood = this.app.orm.Flood;
     const email = request.payload ? request.payload.email.toLowerCase() : false;
     const password = request.payload ? request.payload.password : false;
     const authPolicy = this.app.policies.AuthPolicy;
@@ -29,8 +30,22 @@ module.exports = class AuthController extends Controller{
     }
     else {
       const that = this;
-      User
-        .findOne({email: email})
+      // If there has been 5 failed login attempts in the last 5 minutes, return
+      // unauthorized.
+      const now = Date.now();
+      const offset = 5 * 60 * 1000;
+      const d5minutes = new Date(now - offset);
+
+      Flood
+        .count({email: email, createdAt: {$gte: d5minutes.toISOString()}})
+        .then((number) => {
+          if (number >= 5) {
+            throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
+          }
+          else {
+            return User.findOne({email: email});
+          }
+        })
         .then((user) => {
           if (!user) {
             that.log.info('Could not find user');
@@ -49,7 +64,12 @@ module.exports = class AuthController extends Controller{
 
           if (!user.validPassword(password)) {
             that.log.info('Wrong password');
-            return reply(Boom.unauthorized('invalid email or password'));
+            // Create a flood entry
+            Flood
+              .create({type: 'login', email: email, user: user})
+              .then(() => {
+                return reply(Boom.unauthorized('invalid email or password'));
+              });
           }
           else {
             user.sanitize(user);

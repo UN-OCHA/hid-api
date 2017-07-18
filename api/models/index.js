@@ -7,4 +7,5 @@ exports.Notification = require('./Notification');
 exports.Service = require('./Service');
 exports.ServiceCredentials = require('./ServiceCredentials');
 exports.Duplicate = require('./Duplicate');
-exports.JwtToken = require('./JwtToken')
+exports.JwtToken = require('./JwtToken');
+exports.Flood = require('./Flood');
