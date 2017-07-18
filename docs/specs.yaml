@@ -751,6 +751,8 @@ paths:
             description: 'Bad request. Missing email and/or password'
           '401':
             description: 'Wrong email and/or password'
+          '429':
+            description: 'The account was locked for 5 minutes because there were more than 5 unsuccessful login attempts within the last 5 minutes'
       get:
         tags:
           - auth
