@@ -26,6 +26,7 @@ module.exports = class UserController extends Controller{
 
   _createHelper(request, reply) {
     const Model = this.app.orm.User;
+    const UserModel = this.app.models.User;
 
     this.log.debug('Preparing request for user creation');
 
@@ -35,12 +36,12 @@ module.exports = class UserController extends Controller{
     }
 
     if (request.payload.password && request.payload.confirm_password) {
-      request.payload.password = Model.hashPassword(request.payload.password);
+      request.payload.password = UserModel.hashPassword(request.payload.password);
     }
     else {
       // Set a random password
       // TODO: check that the password is random and long enough
-      request.payload.password = Model.hashPassword(Math.random().toString(36).slice(2));
+      request.payload.password = UserModel.hashPassword(Math.random().toString(36).slice(2));
     }
 
     const appVerifyUrl = request.payload.app_verify_url;
@@ -160,6 +161,7 @@ module.exports = class UserController extends Controller{
   registerV1 (request, reply) {
     this.log.debug('registerV1 called');
     const User = this.app.orm.User;
+    const UserModel = this.app.models.User;
     const that = this;
 
     User
@@ -173,7 +175,7 @@ module.exports = class UserController extends Controller{
           request.payload.emails.push({type: 'Work', email: request.payload.email, validated: false});
         }
         // Set a random password
-        request.payload.password = User.hashPassword(Math.random().toString(36).slice(2));
+        request.payload.password = UserModel.hashPassword(Math.random().toString(36).slice(2));
         // Create the account
         return User
           .create({
@@ -578,6 +580,7 @@ module.exports = class UserController extends Controller{
   update (request, reply) {
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const Model = this.app.orm.user;
+    const UserModel = this.app.models.User;
 
     this.log.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
       ', values = ', request.payload);
@@ -608,7 +611,7 @@ module.exports = class UserController extends Controller{
           }
           if (request.payload.old_password) {
             if (user.validPassword(request.payload.old_password)) {
-              request.payload.password = Model.hashPassword(request.payload.new_password);
+              request.payload.password = UserModel.hashPassword(request.payload.new_password);
               return reply(that._updateQuery(request, options));
             }
             else {
@@ -757,6 +760,7 @@ module.exports = class UserController extends Controller{
 
   resetPassword (request, reply) {
     const Model = this.app.orm.User;
+    const UserModel = this.app.models.User;
     const appResetUrl = request.payload.app_reset_url;
 
     if (request.payload.email) {
@@ -782,7 +786,7 @@ module.exports = class UserController extends Controller{
               return reply(Boom.badRequest('Email could not be found'));
             }
             if (record.validHash(request.payload.hash)) {
-              record.password = Model.hashPassword(request.payload.password);
+              record.password = UserModel.hashPassword(request.payload.password);
               record.email_verified = true;
               record.expires = new Date(0, 0, 1, 0, 0, 0);
               record.is_orphan = false;
