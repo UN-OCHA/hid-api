@@ -10,7 +10,8 @@ module.exports = {
       }
     },
     models: {
-      defaultStore: 'local'
+      defaultStore: 'local',
+      migrate: 'create'
     }
   }
 };

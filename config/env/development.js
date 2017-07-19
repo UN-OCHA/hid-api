@@ -18,7 +18,8 @@ module.exports = {
       }
     },
     models: {
-      defaultStore: 'development'
+      defaultStore: 'development',
+      migrate: 'create'
     }
   }
 };

@@ -20,7 +20,8 @@ module.exports = {
       }
     },
     models: {
-      defaultStore: 'production'
+      defaultStore: 'production',
+      migrate: 'create'
     }
   },
 
