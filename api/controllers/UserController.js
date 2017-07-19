@@ -36,6 +36,9 @@ module.exports = class UserController extends Controller{
     }
 
     if (request.payload.password && request.payload.confirm_password) {
+      if (!UserModel.isStrongPassword(request.payload.password)) {
+        return reply(Boom.badRequest('The password is not strong enough'));
+      }
       request.payload.password = UserModel.hashPassword(request.payload.password);
     }
     else {
@@ -611,6 +614,9 @@ module.exports = class UserController extends Controller{
           }
           if (request.payload.old_password) {
             if (user.validPassword(request.payload.old_password)) {
+              if (!UserModel.isStrongPassword(request.payload.new_password)) {
+                return reply(Boom.badRequest('Password is not strong enough'));
+              }
               request.payload.password = UserModel.hashPassword(request.payload.new_password);
               return reply(that._updateQuery(request, options));
             }
@@ -786,6 +792,9 @@ module.exports = class UserController extends Controller{
               return reply(Boom.badRequest('Email could not be found'));
             }
             if (record.validHash(request.payload.hash)) {
+              if (!UserModel.isStrongPassword(request.payload.password)) {
+                return reply(Boom.badRequest('New password is not strong enough'));
+              }
               record.password = UserModel.hashPassword(request.payload.password);
               record.email_verified = true;
               record.expires = new Date(0, 0, 1, 0, 0, 0);
