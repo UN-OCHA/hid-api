@@ -919,14 +919,19 @@ module.exports = class UserController extends Controller{
             }
             // Send confirmation email
             that.app.services.EmailService.sendValidationEmail(record, email, appValidationUrl, function (err, info) {
-              const data = { email: email, type: request.payload.type, validated: false };
-              record.emails.push(data);
-              record.save().then(() => {
-                return reply(record);
-              })
-              .catch(err => {
+              if (err) {
                 return reply(Boom.badImplementation(err.toString()));
-              });
+              }
+              else {
+                const data = { email: email, type: request.payload.type, validated: false };
+                record.emails.push(data);
+                record.save().then(() => {
+                  return reply(record);
+                })
+                .catch(err => {
+                  return reply(Boom.badImplementation(err.toString()));
+                });
+              }
             });
           }
         );
