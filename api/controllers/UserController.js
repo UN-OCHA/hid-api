@@ -130,15 +130,20 @@ module.exports = class UserController extends Controller{
           }
           else {
             if (!request.params.currentUser) {
-              // Unverify user, reactivate account and return it
-              record.email_verified = false;
-              record.deleted = false;
-              record.save().then(() => {
-                const appVerifyUrl = request.payload.app_verify_url;
-                that.app.services.EmailService.sendRegister(record, appVerifyUrl, function (merr, info) {
-                  return reply(record);
+              if (record.deleted) {
+                // Unverify user, reactivate account and return it
+                record.email_verified = false;
+                record.deleted = false;
+                record.save().then(() => {
+                  const appVerifyUrl = request.payload.app_verify_url;
+                  that.app.services.EmailService.sendRegister(record, appVerifyUrl, function (merr, info) {
+                    return reply(record);
+                  });
                 });
-              });
+              }
+              else {
+                return reply(Boom.badRequest('This email address is already registered. If you can not remember your password, please reset it'));
+              }
             }
             else {
               // User is being "reactivated" by someone else
