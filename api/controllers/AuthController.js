@@ -9,6 +9,7 @@ const Boom = require('boom');
  */
 module.exports = class AuthController extends Controller{
 
+  // Main helper function used for login. All logins go through this.
   _loginHelper (request, reply) {
     const User = this.app.orm.User;
     const Flood = this.app.orm.Flood;
