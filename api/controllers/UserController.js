@@ -20,7 +20,7 @@ module.exports = class UserController extends Controller{
     this.app.services.HelperService.removeForbiddenAttributes('User', request, childAttributes);
   }
 
-  _errorHandler (err, reply) {
+  _errorHandler (err, request, reply) {
     return this.app.services.ErrorService.handle(err, request, reply);
   }
 

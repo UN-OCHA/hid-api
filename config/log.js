@@ -43,8 +43,8 @@ module.exports = {
             options.message = '[FAIL] ' + options.message;
             delete meta.fail;
           }
-          return '[' + options.timestamp() + '] '+ options.level.toUpperCase() +' '+ (options.message ? options.message : '') +
-            (meta && Object.keys(meta).length ? '\n\t'+ JSON.stringify(meta) : '' );
+          return '[' + options.timestamp() + '] ' + options.level.toUpperCase() + ' ' + (options.message ? options.message : '') +
+            (meta && Object.keys(meta).length ? '\n\t' + JSON.stringify(meta) : '' );
         }
       })
     ]
