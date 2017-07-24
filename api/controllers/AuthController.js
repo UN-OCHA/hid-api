@@ -41,6 +41,7 @@ module.exports = class AuthController extends Controller{
         .count({email: email, createdAt: {$gte: d5minutes.toISOString()}})
         .then((number) => {
           if (number >= 5) {
+            that.log.warn('Account locked for 5 minutes', {email: email, security: true, fail: true, headers: request.headers});
             throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
           }
           else {
