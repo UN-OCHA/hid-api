@@ -84,6 +84,7 @@ module.exports = class UserController extends Controller{
                 return callback();
               }
             });
+            request.payload.password = UserModel.hashPassword(UserModel.generateRandomPassword());
           }
         }
       ], function (err) {
