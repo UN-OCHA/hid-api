@@ -10,12 +10,12 @@ const newrelic = require('newrelic');
  */
 module.exports = class ErrorService extends Service {
   handle(err, request, reply) {
-    this.log.error(err);
+    this.log.error('Unexpected error', {request: request, error: err});
     if (err.isBoom) {
       return reply(err);
     }
     else {
-      reply(Boom.badImplementation(err.toString()));
+      reply(Boom.badImplementation());
       // Send the error to newrelic
       newrelic.noticeError(err);
     }

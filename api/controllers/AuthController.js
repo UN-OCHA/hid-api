@@ -106,6 +106,7 @@ module.exports = class AuthController extends Controller{
               // TODO: add expires
             })
             .then(() => {
+              that.log.warn('Created the following API key: ' + token, {email: result.email, security: true, request: request});
               reply({
                 user: result,
                 token: token
@@ -116,6 +117,7 @@ module.exports = class AuthController extends Controller{
             });
         }
         else {
+          that.log.info('Successful user authentication. Returning JWT.', {email: result.email, security: true, request: request});
           return reply({ user: result, token: token});
         }
       }
@@ -152,34 +154,8 @@ module.exports = class AuthController extends Controller{
           redirect = '/user';
         }
 
-        /*if (typeof request.payload.response_type === 'undefined' || typeof request.payload.scope === 'undefined') {
-          //that.log.warn({type: 'authenticate:error', body: req.body, cookies: req.cookies, header: req.headers, query: req.query},
-          //  'Undefined response_type or scope');
-        }
-
-        // Record the successful authentication date.
-        // This facilitates troubleshooting, e.g., 10 account floods, no successes since last year.
-        currentUser.login_last = Date.now();
-        currentUser.save(function(err, item) {
-          if (err || !item) {
-            log.warn({ type: 'account:error', data: item, err: err },
-              'Error occurred trying to update user account ' + item.user_id + ' with login success timestamp.'
-            );
-          }
-          else {
-            log.info({ type: 'account:success', data: item },
-              'User account updated with login access timestamp for ID ' + item.user_id + '.'
-            );
-          }
-        });*/
-
         reply.redirect(redirect);
-        that.log.info(
-          'Authentication successful for ' +
-          request.payload.email +
-          '. Redirecting to ' +
-          redirect
-        );
+        that.log.info('Successful user authentication. Redirecting to ' + redirect, {email: request.payload.email, security: true, request: request});
       }
       else {
         const params = that.app.services.HelperService.getOauthParams(request.payload);
@@ -215,6 +191,7 @@ module.exports = class AuthController extends Controller{
 
     // Check response_type
     if (!request.query.response_type) {
+      this.log.warn('Unsuccessful OAuth2 authorization due to missing response_type', {security: true, fail: true, request: request});
       return reply(Boom.badRequest('Missing response_type'));
     }
 
@@ -222,9 +199,7 @@ module.exports = class AuthController extends Controller{
     // all relevant query parameters.
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId)) {
-      this.log.info(
-        'Get request to /oauth/authorize without session. Redirecting to the login page.'
-      );
+      this.log.info('Get request to /oauth/authorize without session. Redirecting to the login page.', {request: request});
       return reply.redirect(
         '/?redirect=/oauth/authorize&client_id=' + request.query.client_id +
         '&redirect_uri=' + request.query.redirect_uri +
@@ -241,57 +216,49 @@ module.exports = class AuthController extends Controller{
     User
       .findOne({_id: cookie.userId})
       .populate({path: 'authorizedClients', select: 'id name'})
-      .exec(function (err, user) {
+      .then((user) => {
         const clientId = request.query.client_id;
-
-        if (err) {
-          that.log.warn(
-            'An error occurred in /oauth/authorize while trying to fetch the user record for ' +
-            cookie.userId +
-            ' who is an active session.'
-          );
-          return reply(
-            Boom.badImplementation('An error occurred while processing request. Please try logging in again.')
-          );
-        }
-        else {
-          user.sanitize(user);
-          request.auth.credentials = user;
-          oauth.authorize(request, reply, function (req, res) {
-            if (!request.response || (request.response && !request.response.isBoom)) {
-              if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
-                request.payload = {transaction_id: req.oauth2.transactionID };
-                oauth.decision(request, reply);
-              }
-              else {
-                // The user has not confirmed authorization, so present the
-                // authorization page.
-                return reply.view('authorize', {
-                  user: user,
-                  client: req.oauth2.client,
-                  transactionID: req.oauth2.transactionID
-                  //csrf: req.csrfToken()
-                });
-              }
+        user.sanitize(user);
+        request.auth.credentials = user;
+        oauth.authorize(request, reply, function (req, res) {
+          if (!request.response || (request.response && !request.response.isBoom)) {
+            if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
+              request.payload = {transaction_id: req.oauth2.transactionID };
+              oauth.decision(request, reply);
             }
-          }, {}, function (clientID, redirect, done) {
-            Client.findOne({id: clientID}, function (err, client) {
-              if (err || !client || !client.id) {
-                return done(
-                  'An error occurred while processing the request. Please try logging in again.'
-                );
-              }
-              // Verify redirect uri
-              if (client.redirectUri !== redirect) {
-                that.log.debug('Wrong redirect URI: ' + redirect + ' / ' + client.redirectUri);
-                return done('Wrong redirect URI');
-              }
-              return done(null, client, client.redirectUri);
-            });
+            else {
+              // The user has not confirmed authorization, so present the
+              // authorization page.
+              return reply.view('authorize', {
+                user: user,
+                client: req.oauth2.client,
+                transactionID: req.oauth2.transactionID
+                //csrf: req.csrfToken()
+              });
+            }
+          }
+        }, {}, function (clientID, redirect, done) {
+          Client.findOne({id: clientID}, function (err, client) {
+            if (err || !client || !client.id) {
+              return done(
+                'An error occurred while processing the request. Please try logging in again.'
+              );
+            }
+            // Verify redirect uri
+            if (client.redirectUri !== redirect) {
+              that.log.warn(
+                'Unsuccessful OAuth2 authorization due to wrong redirect URI: ' + redirect + ' / ' + client.redirectUri,
+                { security: true, fail: true, request: request}
+              );
+              return done('Wrong redirect URI');
+            }
+            return done(null, client, client.redirectUri);
           });
-        }
-      }
-    );
+        });
+      })
+      .catch((err) => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 
   authorizeOauth2 (request, reply) {
@@ -300,7 +267,7 @@ module.exports = class AuthController extends Controller{
     const cookie = request.yar.get('session');
 
     if (!cookie || (cookie && !cookie.userId)) {
-      this.log.info('Got request to /oauth/authorize without session. Redirecting to the login page.');
+      this.log.info('Got request to /oauth/authorize without session. Redirecting to the login page.', {request: request});
       return reply.redirect('/?redirect=/oauth/authorize&client_id=' + request.query.client_id +
         '&redirect_uri=' + request.query.redirect_uri +
         '&response_type=' + request.query.response_type +
@@ -311,39 +278,45 @@ module.exports = class AuthController extends Controller{
     }
 
     const that = this;
-    User.findOne({_id: cookie.userId}, function (err, user) {
-      if (err) {
-        that.log.warn('An error occurred in /oauth/authorize while trying to fetch the user record for ' + cookie.userId +
-          ' who is an active session.');
-        return reply(Boom.badImplementation('An error occurred while processing request. Please try logging in again.'));
-      }
-      if (!user) {
-        that.log.warn('Could not find user with ID ' + cookie.userId);
-        return reply(Boom.badRequest('Could not find user'));
-      }
-      user.sanitize(user);
-      request.auth.credentials = user;
-      // Save authorized client if user allowed
-      const clientId = request.yar.authorize[request.payload.transaction_id].client;
-      if (!request.payload.cancel && !user.hasAuthorizedClient(clientId)) {
-        user.authorizedClients.push(request.yar.authorize[request.payload.transaction_id].client);
-        user.markModified('authorizedClients');
-        user.save(function (err) {
+    User
+      .findOne({_id: cookie.userId})
+      .then((user) => {
+        if (!user) {
+          that.log.warn(
+            'Unsuccessful OAuth2 authorization attempt. Could not find user with ID ' + cookie.userId,
+            {security: true, fail: true, request: request}
+          );
+          return reply(Boom.badRequest('Could not find user'));
+        }
+        user.sanitize(user);
+        request.auth.credentials = user;
+        // Save authorized client if user allowed
+        const clientId = request.yar.authorize[request.payload.transaction_id].client;
+        if (!request.payload.cancel && !user.hasAuthorizedClient(clientId)) {
+          user.authorizedClients.push(request.yar.authorize[request.payload.transaction_id].client);
+          user.markModified('authorizedClients');
+          user.save(function (err) {
+            oauth.decision(request, reply);
+          });
+        }
+        else {
           oauth.decision(request, reply);
-        });
-      }
-      else {
-        oauth.decision(request, reply);
-      }
-    });
+        }
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 
   accessTokenOauth2 (request, reply) {
-    this.log.info('Requesting access token');
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
     const OauthToken = this.app.orm.OauthToken;
     const code = request.payload.code;
     if (!code) {
+      this.log.warn(
+        'Unsuccessful access token request due to missing authorization code.',
+        { security: true, fail: true, request: request }
+      );
       return reply(Boom.badRequest('Missing authorization code'));
     }
     const that = this;
@@ -352,9 +325,13 @@ module.exports = class AuthController extends Controller{
       .populate('client user')
       .exec(function (err, ocode) {
         if (err) {
+          that.log.warn(
+            'Unsuccessful access token request due to wrong authorization code.',
+            { security: true, fail: true, request: request, code: code}
+          );
           return reply(Boom.badRequest('Wrong authorization code'));
         }
-        that.log.info('Found access token for client ');
+        that.log.info('Successful access token request', { security: true, request: request, code: code});
         request.auth.credentials = ocode.client;
         oauth.token(request, reply);
       });
@@ -449,6 +426,10 @@ module.exports = class AuthController extends Controller{
           });
       }
       else {
+        that.log.warn(
+          'Tried to blacklist a token by a user who does not have the permission',
+          { security: true, fail: true, token: token, request: request}
+        );
         return reply(Boom.badRequest('Could not blacklist this token because you did not generate it'));
       }
     });
