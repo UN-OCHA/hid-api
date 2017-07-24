@@ -8,6 +8,7 @@ const ejs = require('ejs');
 const http = require('http');
 const moment = require('moment');
 const acceptLanguage = require('accept-language');
+const async = require('async');
 
 /**
  * @module UserController
@@ -30,23 +31,6 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('Preparing request for user creation');
 
-    if (request.payload.email) {
-      request.payload.emails = [];
-      request.payload.emails.push({type: 'Work', email: request.payload.email, validated: false});
-    }
-
-    if (request.payload.password && request.payload.confirm_password) {
-      if (!UserModel.isStrongPassword(request.payload.password)) {
-        return reply(Boom.badRequest('The password is not strong enough'));
-      }
-      request.payload.password = UserModel.hashPassword(request.payload.password);
-    }
-    else {
-      // Set a random password
-      // TODO: check that the password is random and long enough
-      request.payload.password = UserModel.hashPassword(Math.random().toString(36).slice(2));
-    }
-
     const appVerifyUrl = request.payload.app_verify_url;
     delete request.payload.app_verify_url;
 
@@ -56,56 +40,93 @@ module.exports = class UserController extends Controller{
       delete request.payload.registration_type;
     }
 
-    this._removeForbiddenAttributes(request);
-
-    if (request.params.currentUser && registrationType === '') {
-      // Creating an orphan user
-      request.payload.createdBy = request.params.currentUser._id;
-      // If an orphan is being created, do not expire
-      request.payload.expires = new Date(0, 0, 1, 0, 0, 0);
-      if (request.payload.email) {
-        request.payload.is_orphan = true;
-      }
-      else {
-        request.payload.is_ghost = true;
-      }
-    }
-
     const that = this;
-    Model
-      .create(request.payload)
-      .then((user) => {
-        if (!user) {
-          throw Boom.badRequest();
-        }
-        that.log.debug('User successfully created');
 
-        if (user.email) {
-          if (!request.params.currentUser) {
-            that.app.services.EmailService.sendRegister(user, appVerifyUrl, function (merr, info) {
-              return reply(user);
-            });
+    async
+      .parallel([
+        function (callback) {
+          if (request.payload.email) {
+            request.payload.emails = [];
+            request.payload.emails.push({type: 'Work', email: request.payload.email, validated: false});
           }
-          else {
-            // An admin is creating an orphan user or Kiosk registration
-            if (registrationType === 'kiosk') {
-              that.app.services.EmailService.sendRegisterKiosk(user, appVerifyUrl, function (merr, info) {
-                return reply(user);
-              });
+          that._removeForbiddenAttributes(request);
+
+          if (request.params.currentUser && registrationType === '') {
+            // Creating an orphan user
+            request.payload.createdBy = request.params.currentUser._id;
+            // If an orphan is being created, do not expire
+            request.payload.expires = new Date(0, 0, 1, 0, 0, 0);
+            if (request.payload.email) {
+              request.payload.is_orphan = true;
             }
             else {
-              that.app.services.EmailService.sendRegisterOrphan(user, request.params.currentUser, appVerifyUrl, function (merr, info) {
-                return reply(user);
-              });
+              request.payload.is_ghost = true;
             }
           }
+          return callback();
+        },
+        function (callback) {
+          if (request.payload.password && request.payload.confirm_password) {
+            if (!UserModel.isStrongPassword(request.payload.password)) {
+              return callback(Boom.badRequest('The password is not strong enough'));
+            }
+            request.payload.password = UserModel.hashPassword(request.payload.password);
+            return callback();
+          }
+          else {
+            // Set a random password
+            UserModel.generateRandomPassword((err, password) => {
+              if (err) {
+                return callback(Boom.badImplementation('Error generating random password'));
+              }
+              else {
+                request.payload.password = UserModel.hashPassword(password);
+                return callback();
+              }
+            });
+            request.payload.password = UserModel.hashPassword(UserModel.generateRandomPassword());
+          }
         }
-        else {
-          return reply(user);
+      ], function (err) {
+        if (err) {
+          return reply(err);
         }
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+
+        Model
+          .create(request.payload)
+          .then((user) => {
+            if (!user) {
+              throw Boom.badRequest();
+            }
+            that.log.debug('User successfully created');
+
+            if (user.email) {
+              if (!request.params.currentUser) {
+                that.app.services.EmailService.sendRegister(user, appVerifyUrl, function (merr, info) {
+                  return reply(user);
+                });
+              }
+              else {
+                // An admin is creating an orphan user or Kiosk registration
+                if (registrationType === 'kiosk') {
+                  that.app.services.EmailService.sendRegisterKiosk(user, appVerifyUrl, function (merr, info) {
+                    return reply(user);
+                  });
+                }
+                else {
+                  that.app.services.EmailService.sendRegisterOrphan(user, request.params.currentUser, appVerifyUrl, function (merr, info) {
+                    return reply(user);
+                  });
+                }
+              }
+            }
+            else {
+              return reply(user);
+            }
+          })
+          .catch(err => {
+            that.app.services.ErrorService.handle(err, reply);
+          });
       });
   }
 

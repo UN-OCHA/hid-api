@@ -6,6 +6,7 @@ const Bcrypt = require('bcryptjs');
 const Libphonenumber = require('google-libphonenumber');
 const https = require('https');
 const _ = require('lodash');
+const crypto = require('crypto');
 const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
 const userPopulate1 = [
   {path: 'favoriteLists'},
@@ -30,6 +31,19 @@ module.exports = class User extends Model {
 
   hashPassword (password) {
     return Bcrypt.hashSync(password, 11);
+  }
+
+  // Generate a cryptographically strong random password
+  generateRandomPassword (callback) {
+    crypto.randomBytes(48, function(err, buffer) {
+      if (err) {
+        return callback(err);
+      }
+      else {
+        const token = buffer.toString('hex');
+        return callback(err, token);
+      }
+    });
   }
 
   static config () {
