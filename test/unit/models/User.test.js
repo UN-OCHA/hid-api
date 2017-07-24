@@ -26,14 +26,4 @@ describe('User Model', () => {
     });
   });
 
-  describe('#isGeneratedPasswordLongEnough', () => {
-    it ('is longer than 12 characters', (done) => {
-      User.generateRandomPassword(function (err, password) {
-        const assertion = password.length > 11;
-        assert.equal(assertion, true);
-        done();
-      });
-    });
-  });
-
 });
