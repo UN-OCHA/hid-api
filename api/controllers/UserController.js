@@ -43,8 +43,7 @@ module.exports = class UserController extends Controller{
     }
     else {
       // Set a random password
-      // TODO: check that the password is random and long enough
-      request.payload.password = UserModel.hashPassword(Math.random().toString(36).slice(2));
+      request.payload.password = UserModel.hashPassword(UserModel.generateRandomPassword());
     }
 
     const appVerifyUrl = request.payload.app_verify_url;
@@ -183,7 +182,7 @@ module.exports = class UserController extends Controller{
           request.payload.emails.push({type: 'Work', email: request.payload.email, validated: false});
         }
         // Set a random password
-        request.payload.password = UserModel.hashPassword(Math.random().toString(36).slice(2));
+        request.payload.password = UserModel.hashPassword(UserModel.generateRandomPassword());
         // Create the account
         return User
           .create({

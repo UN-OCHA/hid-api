@@ -26,4 +26,11 @@ describe('User Model', () => {
     });
   });
 
+  describe('#isGeneratedPasswordStrongEnough', () => {
+    it ('is strong enough', () => {
+      const password = User.generateRandomPassword();
+      assert.equal(User.isStrongPassword(password), true);
+    });
+  });
+
 });
