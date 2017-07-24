@@ -23,7 +23,29 @@ module.exports = {
     transports: [
       new (winston.transports.Console)({
         prettyPrint: true,
-        colorize: true
+        colorize: true,
+        timestamp: function() {
+          const d = new Date();
+          return d.toUTCString();
+        },
+        formatter: function(options) {
+          // Return string will be passed to logger.
+          let meta = options.meta;
+          if (meta.request) {
+            meta.ip = meta.request.headers['x-forwarded-for'] ? meta.request.headers['x-forwarded-for'] : '';
+            delete meta.request;
+          }
+          if (meta.security) {
+            options.message = '[SECURITY] ' + options.message;
+            delete meta.security;
+          }
+          if (meta.fail) {
+            options.message = '[FAIL] ' + options.message;
+            delete meta.fail;
+          }
+          return '[' + options.timestamp() + '] '+ options.level.toUpperCase() +' '+ (options.message ? options.message : '') +
+            (meta && Object.keys(meta).length ? '\n\t'+ JSON.stringify(meta) : '' );
+        }
       })
     ]
   })

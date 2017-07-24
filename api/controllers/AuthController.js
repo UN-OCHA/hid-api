@@ -41,7 +41,7 @@ module.exports = class AuthController extends Controller{
         .count({email: email, createdAt: {$gte: d5minutes.toISOString()}})
         .then((number) => {
           if (number >= 5) {
-            that.log.warn('Account locked for 5 minutes', {email: email, security: true, fail: true, headers: request.headers});
+            that.log.warn('Account locked for 5 minutes', {email: email, security: true, fail: true, request: request});
             throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
           }
           else {
@@ -50,22 +50,22 @@ module.exports = class AuthController extends Controller{
         })
         .then((user) => {
           if (!user) {
-            that.log.info('Could not find user');
+            that.log.warn('Unsuccessful login attempt due to invalid email address', {email: email, security: true, fail: true, request: request});
             return reply(Boom.unauthorized('Email address could not be found'));
           }
 
           if (!user.email_verified) {
-            that.log.info('User has not verified his email');
+            that.log.warn('Unsuccessful login attempt due to unverified email', {email: email, security: true, fail: true, request: request});
             return reply(Boom.unauthorized('Please verify your email address'));
           }
 
           if (user.deleted) {
-            that.log.info('Attempt to login from a deleted user');
+            that.log.warn('Unsuccessful login attempt due to deactivated user', {email: email, security: true, fail: true, request: request});
             return reply(Boom.unauthorized('invalid email or password'));
           }
 
           if (!user.validPassword(password)) {
-            that.log.info('Wrong password');
+            that.log.warn('Unsuccessful login attempt due to invalid password', {email: email, security: true, fail: true, request: request});
             // Create a flood entry
             Flood
               .create({type: 'login', email: email, user: user})

@@ -39,7 +39,6 @@ module.exports = class ViewController extends Controller {
   }
 
   login (request, reply) {
-    this.log.info('Login function', {headers: request.headers});
     const session = request.yar.get('session');
     if (session) { // User is already logged in
       if (request.query.client_id &&
