@@ -79,7 +79,7 @@ module.exports = class AuthController extends Controller{
           }
         })
         .catch((err) => {
-          that.app.services.ErrorService.handle(err, reply);
+          that.app.services.ErrorService.handle(err, request, reply);
         });
     }
   }
@@ -112,7 +112,7 @@ module.exports = class AuthController extends Controller{
               });
             })
             .catch((err) => {
-              that.app.services.ErrorService.handle(err, reply);
+              that.app.services.ErrorService.handle(err, request, reply);
             });
         }
         else {
@@ -416,7 +416,7 @@ module.exports = class AuthController extends Controller{
         return reply(tokens);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 
@@ -431,7 +431,7 @@ module.exports = class AuthController extends Controller{
     // Check that blacklisted token belongs to current user
     this.app.services.JwtService.verify(token, function (err, jtoken) {
       if (err) {
-        return that.app.services.ErrorService.handle(err, reply);
+        return that.app.services.ErrorService.handle(err, request, reply);
       }
       if (jtoken.id === request.params.currentUser.id) {
         // Blacklist token
@@ -445,7 +445,7 @@ module.exports = class AuthController extends Controller{
             return reply(doc);
           })
           .catch(err => {
-            that.app.services.ErrorService.handle(err, reply);
+            that.app.services.ErrorService.handle(err, request, reply);
           });
       }
       else {

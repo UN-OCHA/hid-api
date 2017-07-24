@@ -31,7 +31,7 @@ module.exports = class ListController extends Controller{
         return reply(list);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 
@@ -96,7 +96,7 @@ module.exports = class ListController extends Controller{
           out.visible = result.isVisibleTo(request.params.currentUser);
           return reply(out);
         })
-        .catch(err => { that.app.services.ErrorService.handle(err, reply); });
+        .catch(err => { that.app.services.ErrorService.handle(err, request, reply); });
     }
     else {
       options.populate = [{path: 'owner', select: '_id name'}];
@@ -147,7 +147,7 @@ module.exports = class ListController extends Controller{
           });
         })
         .catch((err) => {
-          that.app.services.ErrorService.handle(err, reply);
+          that.app.services.ErrorService.handle(err, request, reply);
         });
     }
   }
@@ -252,7 +252,7 @@ module.exports = class ListController extends Controller{
           });
       })
       .catch((err) => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 
@@ -298,7 +298,7 @@ module.exports = class ListController extends Controller{
           });
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 

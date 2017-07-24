@@ -21,7 +21,7 @@ module.exports = class UserController extends Controller{
   }
 
   _errorHandler (err, reply) {
-    return this.app.services.ErrorService.handle(err, reply);
+    return this.app.services.ErrorService.handle(err, request, reply);
   }
 
   _createHelper(request, reply) {
@@ -104,7 +104,7 @@ module.exports = class UserController extends Controller{
         }
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 
@@ -155,7 +155,7 @@ module.exports = class UserController extends Controller{
           }
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, reply);
+          that.app.services.ErrorService.handle(err, request, reply);
         });
     }
     else {
@@ -208,7 +208,7 @@ module.exports = class UserController extends Controller{
         });
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 
@@ -436,7 +436,7 @@ module.exports = class UserController extends Controller{
           }
         }
       })
-      .catch((err) => { that._errorHandler(err, reply); });
+      .catch((err) => { that._errorHandler(err, request, reply); });
   }
 
   find (request, reply) {
@@ -463,7 +463,7 @@ module.exports = class UserController extends Controller{
           }
         })
         .catch((err) => {
-          that._errorHandler(err, reply);
+          that._errorHandler(err, request, reply);
         });
     }
     else {
@@ -526,7 +526,7 @@ module.exports = class UserController extends Controller{
             that._findHelper(request, reply, criteria, options, lists);
           })
           .catch(err => {
-            that._errorHandler(err, reply);
+            that._errorHandler(err, request, reply);
           });
       }
     }
@@ -542,7 +542,7 @@ module.exports = class UserController extends Controller{
       .then((user) => {
         return reply(user);
       })
-      .catch((err) => { that._errorHandler(err, reply); });
+      .catch((err) => { that._errorHandler(err, request, reply); });
   }
 
   _updateQuery (request, options) {
@@ -656,7 +656,7 @@ module.exports = class UserController extends Controller{
         return reply().code(204);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 
@@ -1070,7 +1070,7 @@ module.exports = class UserController extends Controller{
             return reply(record);
           })
           .catch(err => {
-            that._errorHandler(err, reply);
+            that._errorHandler(err, request, reply);
           }
         );
       }
@@ -1101,7 +1101,7 @@ module.exports = class UserController extends Controller{
           return reply(user);
         });
       })
-      .catch (err => { that._errorHandler(err, reply); });
+      .catch (err => { that._errorHandler(err, request, reply); });
 
   }
 
@@ -1193,7 +1193,7 @@ module.exports = class UserController extends Controller{
         );
       })
       .catch(err => {
-        that._errorHandler(err, reply);
+        that._errorHandler(err, request, reply);
       }
     );
   }
@@ -1250,7 +1250,7 @@ module.exports = class UserController extends Controller{
         );
       })
       .catch(err => {
-        that._errorHandler(err, reply);
+        that._errorHandler(err, request, reply);
       }
     );
   }
@@ -1276,7 +1276,7 @@ module.exports = class UserController extends Controller{
           });
       })
       .catch(err => {
-        that._errorHandler(err, reply);
+        that._errorHandler(err, request, reply);
       });
   }
 };

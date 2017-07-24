@@ -23,7 +23,7 @@ module.exports = class ClientController extends Controller{
       })
       .catch(err => {
         this.log.info(err);
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 
@@ -43,7 +43,7 @@ module.exports = class ClientController extends Controller{
           }
           return reply(result);
         })
-        .catch(err => { that.app.services.ErrorService.handle(err, reply); });
+        .catch(err => { that.app.services.ErrorService.handle(err, request, reply); });
     }
     else {
       const query = this.app.services.HelperService.find('Client', criteria, options);
@@ -59,7 +59,7 @@ module.exports = class ClientController extends Controller{
           return reply(result.result).header('X-Total-Count', result.number);
         })
         .catch((err) => {
-          that.app.services.ErrorService.handle(err, reply);
+          that.app.services.ErrorService.handle(err, request, reply);
         });
     }
   }

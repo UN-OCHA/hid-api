@@ -220,7 +220,7 @@ module.exports = class ViewController extends Controller {
           });
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, reply);
+          that.app.services.ErrorService.handle(err, request, reply);
         });
     }
   }

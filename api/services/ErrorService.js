@@ -9,7 +9,7 @@ const newrelic = require('newrelic');
  * @description Errors Service
  */
 module.exports = class ErrorService extends Service {
-  handle(err, reply) {
+  handle(err, request, reply) {
     this.log.error(err);
     if (err.isBoom) {
       return reply(err);

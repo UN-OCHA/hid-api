@@ -58,7 +58,7 @@ module.exports = class ServiceController extends Controller{
           result.sanitize(request.params.currentUser);
           return reply(result);
         })
-        .catch(err => { that.app.services.ErrorService.handle(err, reply); });
+        .catch(err => { that.app.services.ErrorService.handle(err, request, reply); });
     }
     else {
       const Service = this.app.orm.Service;
@@ -94,7 +94,7 @@ module.exports = class ServiceController extends Controller{
           return reply(result.result).header('X-Total-Count', result.number);
         })
         .catch((err) => {
-          that.app.services.ErrorService.handle(err, reply);
+          that.app.services.ErrorService.handle(err, request, reply);
         });
     }
   }
@@ -140,7 +140,7 @@ module.exports = class ServiceController extends Controller{
           });
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 
@@ -156,7 +156,7 @@ module.exports = class ServiceController extends Controller{
           reply(result);
         })
         .catch((err) => {
-          that.app.services.ErrorService.handle(err, reply);
+          that.app.services.ErrorService.handle(err, request, reply);
         });
       }
       catch (err) {
@@ -195,7 +195,7 @@ module.exports = class ServiceController extends Controller{
         });
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 
@@ -298,7 +298,7 @@ module.exports = class ServiceController extends Controller{
                 });
               }
               else {
-                that.app.services.ErrorService.handle(err, reply);
+                that.app.services.ErrorService.handle(err, request, reply);
               }
             }
           );
@@ -340,7 +340,7 @@ module.exports = class ServiceController extends Controller{
           });
         }
         else {
-          that.app.services.ErrorService.handle(err, reply);
+          that.app.services.ErrorService.handle(err, request, reply);
         }
       });
   }
@@ -465,7 +465,7 @@ module.exports = class ServiceController extends Controller{
         }
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 };

@@ -50,7 +50,7 @@ module.exports = class UserPolicy extends Policy {
             }
           })
           .catch(err => {
-            that.app.services.ErrorService.handle(err, reply);
+            that.app.services.ErrorService.handle(err, request, reply);
           });
       }
       else {
@@ -82,7 +82,7 @@ module.exports = class UserPolicy extends Policy {
           }
         })
         .catch((err) => {
-          that.app.services.ErrorService.handle(err, reply);
+          that.app.services.ErrorService.handle(err, request, reply);
         });
     }
   }

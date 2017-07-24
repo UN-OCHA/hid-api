@@ -153,7 +153,7 @@ module.exports = class ListUserController extends Controller{
         }
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 
@@ -223,7 +223,7 @@ module.exports = class ListUserController extends Controller{
           NotificationService.send(notification, () => {});
         }
       })
-      .catch(err => { that.app.services.ErrorService.handle(err, reply); });
+      .catch(err => { that.app.services.ErrorService.handle(err, request, reply); });
   }
 
   checkout (request, reply) {
@@ -292,7 +292,7 @@ module.exports = class ListUserController extends Controller{
         });
         return result;
       })
-      .catch(err => { that.app.services.ErrorService.handle(err, reply); });
+      .catch(err => { that.app.services.ErrorService.handle(err, request, reply); });
   }
 
 };

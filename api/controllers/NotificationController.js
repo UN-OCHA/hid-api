@@ -31,7 +31,7 @@ module.exports = class NotificationController extends Controller{
         return reply(result.result).header('X-Total-Count', result.number);
       })
       .catch((err) => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
 
   }
@@ -61,7 +61,7 @@ module.exports = class NotificationController extends Controller{
           });
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, reply);
+          that.app.services.ErrorService.handle(err, request, reply);
         });
     }
     else {
