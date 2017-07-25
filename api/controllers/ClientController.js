@@ -18,7 +18,6 @@ module.exports = class ClientController extends Controller{
         if (!client) {
           throw Boom.badRequest();
         }
-        that.log.debug('Client successfully created', {client: client});
         return reply(client);
       })
       .catch(err => {

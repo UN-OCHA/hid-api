@@ -91,6 +91,4 @@ module.exports = class ListUserPolicy extends Policy {
         that.app.services.ErrorService.handle(err, request, reply);
       });
   }
-
-
 };

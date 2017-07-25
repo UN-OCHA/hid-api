@@ -73,7 +73,6 @@ module.exports = class ServiceController extends Controller{
             criteria.$or.push({lists: id});
           });
           delete criteria.lists;
-          this.log.debug(criteria);
         }
       }
 
@@ -100,18 +99,16 @@ module.exports = class ServiceController extends Controller{
   }
 
   update (request, reply) {
-    // TODO: make sure user is owner of the service or admin
     request.params.model = 'service';
     const FootprintController = this.app.controllers.FootprintController;
     FootprintController.update(request, reply);
   }
 
   destroy (request, reply) {
-    // TODO: make sure user is owner of the service or admin
     const Service = this.app.orm.Service;
     const User = this.app.orm.User;
 
-    this.log.debug('[ServiceController] (destroy) model = service, query =', request.query);
+    this.log.debug('[ServiceController] (destroy) model = service, query =', request.query, {request: request});
     const that = this;
 
     const criteria = {};
@@ -322,7 +319,7 @@ module.exports = class ServiceController extends Controller{
           user.subscriptions.push({email: request.payload.email, service: service});
           user.save((err) => {
             if (err) {
-              that.log.error(err);
+              that.log.error('Error subscribing member to a mailchimp list', {request: request, fail: true, error: err});
               reply(Boom.badImplementation());
             }
             else {
@@ -355,7 +352,8 @@ module.exports = class ServiceController extends Controller{
       '[ServiceController] Unsubscribing user ' +
       request.params.id +
       ' from ' +
-      request.params.serviceId
+      request.params.serviceId,
+      { request: request }
     );
 
     const that = this;

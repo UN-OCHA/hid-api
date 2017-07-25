@@ -20,7 +20,7 @@ module.exports = class ListUserController extends Controller{
     const childAttributes = Model.listAttributes();
 
     this.log.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload,
-      'options =', options);
+      'options =', options, { request: request});
 
     if (childAttributes.indexOf(childAttribute) === -1 || childAttribute === 'organization') {
       return reply(Boom.notFound());
@@ -60,7 +60,7 @@ module.exports = class ListUserController extends Controller{
           payload.orgTypeLabel = list.metadata.type.label;
         }
 
-        that.log.debug('Looking for user with id ' + userId);
+        that.log.debug('Looking for user with id ' + userId, { request: request});
         return Model
           .findOne({ '_id': userId })
           .then((record) => {
@@ -89,7 +89,7 @@ module.exports = class ListUserController extends Controller{
         return result;
       })
       .then((result) => {
-        that.log.debug('Setting the listUser to the correct attribute');
+        that.log.debug('Setting the listUser to the correct attribute', {request: request});
         const record = result.user;
         if (childAttribute !== 'organization') {
           if (!record[childAttribute]) {
@@ -104,7 +104,6 @@ module.exports = class ListUserController extends Controller{
         return {list: result.list, user: record};
       })
       .then((result) => {
-        that.log.debug('Saving user');
         return result.user
           .save()
           .then(() => {
@@ -130,7 +129,7 @@ module.exports = class ListUserController extends Controller{
       .then((result) => {
         // Notify user if needed
         if (request.params.currentUser.id !== userId && result.list.type !== 'list') {
-          that.log.debug('Checked in by a different user');
+          that.log.debug('Checked in by a different user', {request: request});
           that.app.services.NotificationService.send({
             type: 'admin_checkin',
             createdBy: request.params.currentUser,
@@ -145,7 +144,7 @@ module.exports = class ListUserController extends Controller{
         const list = result.list,
           user = result.user;
         if (payload.pending) {
-          that.log.debug('Notifying list owners and manager of the new checkin');
+          that.log.debug('Notifying list owners and manager of the new checkin', {request: request});
           that.app.services.NotificationService.sendMultiple(list.managers, {
             type: 'pending_checkin',
             params: { list: list, user: user }
@@ -169,7 +168,8 @@ module.exports = class ListUserController extends Controller{
       request.query,
       request.params.checkInId,
       ', values = ',
-      request.payload
+      request.payload,
+      { request: request }
     );
 
     // Make sure list specific attributes can not be set through update
@@ -223,7 +223,9 @@ module.exports = class ListUserController extends Controller{
           NotificationService.send(notification, () => {});
         }
       })
-      .catch(err => { that.app.services.ErrorService.handle(err, request, reply); });
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 
   checkout (request, reply) {
@@ -237,7 +239,7 @@ module.exports = class ListUserController extends Controller{
     const childAttributes = User.listAttributes();
 
     this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,
-      'options =', options);
+      'options =', options, { request: request });
 
     if (childAttributes.indexOf(childAttribute) === -1) {
       return reply(Boom.notFound());
@@ -292,7 +294,9 @@ module.exports = class ListUserController extends Controller{
         });
         return result;
       })
-      .catch(err => { that.app.services.ErrorService.handle(err, request, reply); });
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 
 };

@@ -33,6 +33,9 @@ module.exports = {
           let meta = options.meta;
           if (meta.request) {
             meta.ip = meta.request.headers['x-forwarded-for'] ? meta.request.headers['x-forwarded-for'] : '';
+            if (meta.request.params && meta.request.params.currentUser) {
+              meta.email = meta.request.params.currentUser.email;
+            }
             delete meta.request;
           }
           if (meta.security) {

@@ -57,7 +57,7 @@ module.exports = class ListController extends Controller{
       delete criteria.name;
     }
     if (criteria.label) {
-      criteria.label = criteria.label.replace(/([^a-z0-9 ]+)/gi, '-');
+      criteria.label = criteria.label.replace(/([^a-z0-9 :]+)/gi, '-');
       criteria.label = new RegExp(criteria.label, 'i');
     }
 
@@ -69,7 +69,8 @@ module.exports = class ListController extends Controller{
       request.query,
       request.params.id,
       'options =',
-      options
+      options,
+      { request: request}
     );
 
     // List visiblity
@@ -157,7 +158,6 @@ module.exports = class ListController extends Controller{
     const that = this;
     User
       .find({_id: {$in: uids}})
-      .exec()
       .then((users) => {
         for (let i = 0, len = users.length; i < len; i++) {
           that.app.services.NotificationService
@@ -169,7 +169,9 @@ module.exports = class ListController extends Controller{
             }, () => {});
         }
       })
-      .catch((err) => { that.log.error(err); });
+      .catch((err) => {
+        that.log.error('Unexpected error', {request: request, error: err});
+      });
   }
 
   update (request, reply) {
@@ -183,7 +185,8 @@ module.exports = class ListController extends Controller{
       request.query,
       request.params.id,
       ', values = ',
-      request.payload
+      request.payload,
+      { request: request }
     );
 
     const that = this;
@@ -193,7 +196,6 @@ module.exports = class ListController extends Controller{
         const oldlist = _.clone(list);
         return Model
           .findOneAndUpdate({_id: request.params.id}, request.payload, {runValidators: true, new: true})
-          .exec()
           .then((list2) => {
             reply(list2);
             return oldlist;
@@ -256,19 +258,18 @@ module.exports = class ListController extends Controller{
       });
   }
 
-
   destroy (request, reply) {
     const List = this.app.orm.List;
     const User = this.app.orm.User;
 
-    this.log.debug('[ListController] (destroy) model = list, query =', request.query);
+    this.log.debug('[ListController] (destroy) model = list, query =', request.query, { request: request});
     const that = this;
 
     List
       .findOne({ _id: request.params.id })
       .then(record => {
         if (!record) {
-          throw new Error(Boom.notFound());
+          throw Boom.notFound();
         }
         // Set deleted to true
         record.deleted = true;

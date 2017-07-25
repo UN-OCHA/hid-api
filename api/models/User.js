@@ -277,7 +277,7 @@ module.exports = class User extends Model {
             }
             catch (err) {
               // Invalid phone number
-              that.log.error(err);
+              that.log.error('An invalid phone number was found', { error: err });
             }
           });
           return found;
@@ -309,7 +309,7 @@ module.exports = class User extends Model {
                 }
               }
               catch (e) {
-                that.log.info('Error parsing hrinfo API: ' + e);
+                that.log.error('Error parsing hrinfo API', { error: e});
                 return callback(e);
               }
             });
@@ -418,7 +418,7 @@ module.exports = class User extends Model {
               return next();
             })
             .catch(err => {
-              that.log.error(err);
+              that.log.error('Error populating user', { error: err });
             }
           );
         });

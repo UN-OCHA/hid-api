@@ -280,7 +280,7 @@ const importLists = function (app) {
                 });
               }
               catch (e) {
-                app.log.error('Error parsing hrinfo API: ' + e);
+                app.log.error('Error parsing hrinfo API.', { error: e });
               }
             });
           });
@@ -294,11 +294,10 @@ const importLists = function (app) {
       }, function (err) {
         const currentTime = Math.round(Date.now() / 1000);
         // Keep item in cache 12 minutes (720 seconds)
-        app.log.info(currentTime);
         /*mongoCache.set('lastPull', currentTime, {ttl: 720}, function (err) {
           app.log.info(err);
         });*/
-        app.log.info('Done processing all list types for ' + language);
+        app.log.info('Done processing all list types for ' + language + ' at ' + currentTime);
         nextLanguage();
       }
     );
@@ -453,7 +452,6 @@ const doAutomatedCheckout = function(app) {
 
   stream.on('data', function(user) {
     this.pause();
-    app.log.info('Checking ' + user.email);
     const that = this;
     const now = Date.now();
     async.eachSeries(listAttributes, function (attr, nextAttr) {

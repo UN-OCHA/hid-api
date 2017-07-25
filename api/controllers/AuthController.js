@@ -106,7 +106,7 @@ module.exports = class AuthController extends Controller{
               // TODO: add expires
             })
             .then(() => {
-              that.log.warn('Created the following API key: ' + token, {email: result.email, security: true, request: request});
+              that.log.warn('Created an API key', {email: result.email, security: true, request: request});
               reply({
                 user: result,
                 token: token
@@ -155,7 +155,7 @@ module.exports = class AuthController extends Controller{
         }
 
         reply.redirect(redirect);
-        that.log.info('Successful user authentication. Redirecting to ' + redirect, {email: request.payload.email, security: true, request: request});
+        that.log.info('Successful user authentication. Redirecting.', {email: request.payload.email, security: true, request: request});
       }
       else {
         const params = that.app.services.HelperService.getOauthParams(request.payload);
@@ -247,7 +247,7 @@ module.exports = class AuthController extends Controller{
             // Verify redirect uri
             if (client.redirectUri !== redirect) {
               that.log.warn(
-                'Unsuccessful OAuth2 authorization due to wrong redirect URI: ' + redirect + ' / ' + client.redirectUri,
+                'Unsuccessful OAuth2 authorization due to wrong redirect URI',
                 { security: true, fail: true, request: request}
               );
               return done('Wrong redirect URI');
@@ -331,7 +331,7 @@ module.exports = class AuthController extends Controller{
           );
           return reply(Boom.badRequest('Wrong authorization code'));
         }
-        that.log.info('Successful access token request', { security: true, request: request, code: code});
+        that.log.info('Successful access token request', { security: true, request: request});
         request.auth.credentials = ocode.client;
         oauth.token(request, reply);
       });
@@ -428,7 +428,7 @@ module.exports = class AuthController extends Controller{
       else {
         that.log.warn(
           'Tried to blacklist a token by a user who does not have the permission',
-          { security: true, fail: true, token: token, request: request}
+          { security: true, fail: true, request: request}
         );
         return reply(Boom.badRequest('Could not blacklist this token because you did not generate it'));
       }
