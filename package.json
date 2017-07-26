@@ -28,6 +28,7 @@
     "google-libphonenumber": "^2.0.19",
     "googleapis": "^15.1.0",
     "hapi-oauth2orize": "UN-OCHA/hapi-oauth2orize",
+    "is-html": "^1.1.0",
     "jsonwebtoken": "^7.1.9",
     "mailchimp-api-v3": "^1.7.0",
     "newrelic": "^1.36.1",

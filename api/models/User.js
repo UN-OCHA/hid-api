@@ -7,6 +7,7 @@ const Libphonenumber = require('google-libphonenumber');
 const https = require('https');
 const _ = require('lodash');
 const crypto = require('crypto');
+const isHTML = require('is-html');
 const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
 const userPopulate1 = [
   {path: 'favoriteLists'},
@@ -767,7 +768,13 @@ module.exports = class User extends Model {
       },
       functional_roles: [listUserSchema],
       status: {
-        type: String
+        type: String,
+        validate: {
+          validator: function (v) {
+            return !isHTML(v);
+          },
+          message: 'HTML code is not allowed'
+        }
       },
       // TODO: make sure this is a valid location
       location: {
