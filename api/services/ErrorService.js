@@ -14,6 +14,10 @@ module.exports = class ErrorService extends Service {
       return reply(err);
     }
     else {
+      if (err.name && err.name === 'ValidationError') {
+        this.log.error('Validation error', {request: request, error: err});
+        return reply(Boom.badRequest(err.message));
+      }
       this.log.error('Unexpected error', {request: request, error: err});
       reply(Boom.badImplementation());
       // Send the error to newrelic
