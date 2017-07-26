@@ -6,6 +6,7 @@ const Mailchimp = require('mailchimp-api-v3');
 const crypto = require('crypto');
 const google = require('googleapis');
 const GoogleAuth = require('google-auth-library');
+const isHTML = require('is-html');
 
 /**
  * @module Service
@@ -103,33 +104,83 @@ module.exports = class Service extends Model {
   }
 
   static schema () {
+    const isHTMLValidator = function (v) {
+      return !isHTML(v);
+    };
+
     const mailchimpSchema = new Schema({
       apiKey: {
-        type: String
+        type: String,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in apiKey'
+        }
       },
       list: {
-        id: String,
-        name: String
+        id: {
+          type: String,
+          validate: {
+            validator: isHTMLValidator,
+            message: 'HTML code is not allowed in list id'
+          }
+        },
+        name: {
+          type: String,
+          validate: {
+            validator: isHTMLValidator,
+            message: 'HTML code is not allowed in name'
+          }
+        }
       }
     });
 
     const googlegroupSchema = new Schema({
       domain: {
-        type: String
+        type: String,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in domain'
+        }
       },
       group: {
-        id: String,
-        name: String,
-        email: String
+        id: {
+          type: String,
+          validate: {
+            validator: isHTMLValidator,
+            message: 'HTML code is not allowed in id'
+          }
+        },
+        name: {
+          type: String,
+          validate: {
+            validator: isHTMLValidator,
+            message: 'HTML code is not allowed in name'
+          }
+        },
+        email: {
+          type: String,
+          validate: {
+            validator: isHTMLValidator,
+            message: 'HTML code is not allowed in email'
+          }
+        }
       }
     });
 
     return {
       name: {
-        type: String
+        type: String,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in name'
+        }
       },
       description: {
-        type: String
+        type: String,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in description'
+        }
       },
       legacyId: {
         type: String,

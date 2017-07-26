@@ -429,6 +429,10 @@ module.exports = class User extends Model {
 
   static schema () {
 
+    const isHTMLValidator = function (v) {
+      return !isHTML(v);
+    };
+
     const visibilities = ['anyone', 'verified', 'connections'];
 
     const emailSchema = new Schema({
@@ -488,7 +492,11 @@ module.exports = class User extends Model {
         enum: ['en', 'fr', 'es']
       },
       text: {
-        type: String
+        type: String,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in text'
+        }
       }
     });
 
@@ -598,19 +606,35 @@ module.exports = class User extends Model {
       given_name: {
         type: String,
         trim: true,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in given_name'
+        },
         required: [true, 'Given name is required']
       },
       middle_name: {
         type: String,
-        trim: true
+        trim: true,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in middle_name'
+        }
       },
       family_name: {
         type: String,
         trim: true,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in family_name'
+        },
         required: [true, 'Family name is required']
       },
       name: {
-        type: String
+        type: String,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in name'
+        }
       },
       email: {
         type: String,
@@ -663,13 +687,17 @@ module.exports = class User extends Model {
         readonly: true
       },
       // Makes sure it's a valid URL
+      // TODO: add more validation
       picture: {
         type: String,
         match: /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/
       },
-      // TODO: add validation
       notes: {
-        type: String
+        type: String,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in notes'
+        }
       },
       // Validates an array of VoIP objects
       voips: {
@@ -681,6 +709,9 @@ module.exports = class User extends Model {
               const types = ['Skype', 'Google', 'Facebook', 'Yahoo', 'Twitter'];
               for (let i = 0, len = v.length; i < len; i++) {
                 if (!v[i].username || !v[i].type || (v[i].type && types.indexOf(v[i].type) === -1)) {
+                  out = false;
+                }
+                if (v[i].username && isHTML(v[i].username)) {
                   out = false;
                 }
               }
@@ -760,7 +791,11 @@ module.exports = class User extends Model {
         default: 'anyone'
       },
       job_title: {
-        type: String
+        type: String,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in job_title'
+        }
       },
       // TODO: add validation
       job_titles: {
@@ -770,10 +805,8 @@ module.exports = class User extends Model {
       status: {
         type: String,
         validate: {
-          validator: function (v) {
-            return !isHTML(v);
-          },
-          message: 'HTML code is not allowed'
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in status field'
         }
       },
       // TODO: make sure this is a valid location

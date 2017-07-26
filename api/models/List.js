@@ -3,6 +3,7 @@
 const Model = require('trails/model');
 const Schema = require('mongoose').Schema;
 const languages = ['en', 'fr', 'es'];
+const isHTML = require('is-html');
 
 /**
  * @module List
@@ -170,20 +171,32 @@ module.exports = class List extends Model {
   }
 
   static schema () {
+    const isHTMLValidator = function (v) {
+      return !isHTML(v);
+    };
+
     const translationSchema = new Schema({
       language: {
         type: String,
         enum: ['en', 'fr', 'es']
       },
       text: {
-        type: String
+        type: String,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in text'
+        }
       }
     });
 
     return {
       name: {
         type: String,
-        readonly: true
+        readonly: true,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in name'
+        }
       },
 
       names: [translationSchema],
@@ -191,7 +204,11 @@ module.exports = class List extends Model {
       // Acronym for organizations
       acronym: {
         type: String,
-        trim: true
+        trim: true,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in acronym'
+        }
       },
 
       acronyms: [translationSchema],
@@ -199,7 +216,11 @@ module.exports = class List extends Model {
       label: {
         type: String,
         trim: true,
-        required: [true, 'Label is required']
+        required: [true, 'Label is required'],
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in label'
+        }
       },
 
       labels: [translationSchema],
