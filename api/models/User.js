@@ -666,6 +666,7 @@ module.exports = class User extends Model {
         type: String,
         match: /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/
       },
+      // TODO: add validation
       notes: {
         type: String
       },
@@ -722,7 +723,6 @@ module.exports = class User extends Model {
         enum: ['en', 'fr', 'es', 'ar'],
         default: 'en'
       },
-      // TODO :make sure it's a valid organization
       organization: listUserSchema,
       organizations: [listUserSchema],
       // Verify valid phone number with libphonenumber and reformat if needed
@@ -761,6 +761,7 @@ module.exports = class User extends Model {
       job_title: {
         type: String
       },
+      // TODO: add validation
       job_titles: {
         type: Array
       },
@@ -772,6 +773,7 @@ module.exports = class User extends Model {
       location: {
         type: Schema.Types.Mixed
       },
+      // TODO: add validation
       locations: {
         type: Array
       },
@@ -830,6 +832,7 @@ module.exports = class User extends Model {
       }],
       subscriptions: [subscriptionSchema],
       connections: [connectionSchema],
+      // TODO: add validation ?
       appMetadata: {
         type: Schema.Types.Mixed
       },
