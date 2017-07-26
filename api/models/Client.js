@@ -2,6 +2,7 @@
 
 const Model = require('trails/model');
 const isHTML = require('is-html');
+const validate = require('mongoose-validator');
 
 /**
  * @module Client
@@ -46,10 +47,14 @@ module.exports = class Client extends Model {
           message: 'HTML code is not allowed in secret'
         }
       },
-      // TODO: add validation
       url: {
         type: String,
-        trim: true
+        trim: true,
+        validate: validate({
+          validator: 'isURL',
+          passIfEmpty: true,
+          message: 'URL should be a URL'
+        })
       },
       // TODO: add validation
       redirectUri: {
