@@ -56,16 +56,24 @@ module.exports = class Client extends Model {
           message: 'URL should be a URL'
         })
       },
-      // TODO: add validation
       redirectUri: {
         type: String,
         trim: true,
-        required: [true, 'Redirect uri is required']
+        required: [true, 'Redirect uri is required'],
+        validate: validate({
+          validator: 'isURL',
+          passIfEmpty: false,
+          message: 'redirectUri should be a URL'
+        })
       },
-      // TODO: add validation
       loginUri: {
         type: String,
-        trim: true
+        trim: true,
+        validate: validate({
+          validator: 'isURL',
+          passIfEmpty: true,
+          message: 'loginUri should be a URL'
+        })
       },
       description: {
         type: String,

@@ -563,7 +563,8 @@ module.exports = class UserController extends Controller{
           });
       })
       .catch(err => {
-        that._errorHandler(err, request, reply);
+        that.log.error(err);
+        return Boom.badRequest(err.message);
       });
   }
 

@@ -8,6 +8,7 @@ const https = require('https');
 const _ = require('lodash');
 const crypto = require('crypto');
 const isHTML = require('is-html');
+const validate = require('mongoose-validator');
 const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
 const userPopulate1 = [
   {path: 'favoriteLists'},
@@ -446,7 +447,11 @@ module.exports = class User extends Model {
         trim: true,
         unique: true,
         sparse: true,
-        match: /^([\w-\.\+]+@([\w-]+\.)+[\w-]{2,4})?$/
+        validate: validate({
+          validator: 'isEmail',
+          passIfEmpty: true,
+          message: 'email should be a valid email'
+        })
       },
       validated: {
         type: Boolean,
@@ -582,7 +587,11 @@ module.exports = class User extends Model {
         type: String,
         lowercase: true,
         trim: true,
-        match: /^([\w-\.\+]+@([\w-]+\.)+[\w-]{2,4})?$/,
+        validate: validate({
+          validator: 'isEmail',
+          passIfEmpty: false,
+          message: 'email should be a valid email'
+        }),
         required: true
       },
       service: {
@@ -642,7 +651,11 @@ module.exports = class User extends Model {
         trim: true,
         unique: true,
         sparse: true,
-        match: /^([\w-\.\+]+@([\w-]+\.)+[\w-]{2,4})?$/
+        validate: validate({
+          validator: 'isEmail',
+          passIfEmpty: true,
+          message: 'email should be a valid email'
+        })
       },
       email_verified: {
         type: Boolean,
@@ -687,10 +700,14 @@ module.exports = class User extends Model {
         readonly: true
       },
       // Makes sure it's a valid URL
-      // TODO: add more validation
+      // TODO: add more validation, domain whitelists
       picture: {
         type: String,
-        match: /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/
+        validate: validate({
+          validator: 'isURL',
+          passIfEmpty: true,
+          message: 'picture should be a valid URL'
+        })
       },
       notes: {
         type: String,
