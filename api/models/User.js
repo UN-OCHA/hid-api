@@ -678,10 +678,10 @@ module.exports = class User extends Model {
         type: Date,
         readonly: true
       },
-      // TODO: find a way to set this as readonly
+      // TODO: mark this as readonly after HID-1499 is fixed
       emails: {
-        type: [emailSchema],
-        readonly: true
+        type: [emailSchema]
+        //readonly: true
       },
       emailsVisibility: {
         type: String,
@@ -775,8 +775,14 @@ module.exports = class User extends Model {
         enum: ['en', 'fr', 'es', 'ar'],
         default: 'en'
       },
-      organization: listUserSchema,
-      organizations: [listUserSchema],
+      organization: {
+        type: listUserSchema,
+        readonly: true
+      },
+      organizations: {
+        type: [listUserSchema],
+        readonly: true
+      },
       // Verify valid phone number with libphonenumber and reformat if needed
       phone_number: {
         type: String,
@@ -803,10 +809,10 @@ module.exports = class User extends Model {
         type: String,
         enum: ['Mobile', 'Landline', 'Fax', 'Satellite'],
       },
-      // TODO: find a way to set this as readonly
+      // TODO: mark this as readonly when HID-1506 is fixed
       phone_numbers: {
-        type: [phoneSchema],
-        readonly: true
+        type: [phoneSchema]
+        //readonly: true
       },
       phonesVisibility: {
         type: String,
