@@ -801,7 +801,10 @@ module.exports = class User extends Model {
         enum: ['Mobile', 'Landline', 'Fax', 'Satellite'],
       },
       // TODO: find a way to set this as readonly
-      phone_numbers: [phoneSchema],
+      phone_numbers: {
+        type: [phoneSchema],
+        readonly: true
+      },
       phonesVisibility: {
         type: String,
         enum: visibilities,
@@ -814,9 +817,22 @@ module.exports = class User extends Model {
           message: 'HTML code is not allowed in job_title'
         }
       },
-      // TODO: add validation
       job_titles: {
-        type: Array
+        type: Array,
+        validate: {
+          validator: function (v) {
+            let out = true;
+            if (v.length) {
+              for (let i =0, len = v.length; i < len; i++) {
+                if (isHTML(v[i])) {
+                  out = false;
+                }
+              }
+            }
+            return out;
+          },
+          message: 'HTML in job titles is not allowed'
+        }
       },
       functional_roles: [listUserSchema],
       status: {
