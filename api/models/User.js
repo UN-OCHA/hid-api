@@ -702,13 +702,13 @@ module.exports = class User extends Model {
         ref: 'User',
         readonly: true
       },
-      // Makes sure it's a valid URL
-      // TODO: add more validation, domain whitelists
+      // Makes sure it's a valid URL, and do not allow urls from other domains
       picture: {
         type: String,
         validate: validate({
           validator: 'isURL',
           passIfEmpty: true,
+          arguments: {host_whitelist: ['api.humanitarian.id', 'api2.dev.humanitarian.id']},
           message: 'picture should be a valid URL'
         })
       },
