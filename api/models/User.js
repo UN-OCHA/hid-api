@@ -457,7 +457,7 @@ module.exports = class User extends Model {
         type: Boolean,
         default: false
       }
-    }, { readonly: true });
+    });
 
     const phoneSchema = new Schema({
       type: {
@@ -679,7 +679,10 @@ module.exports = class User extends Model {
         readonly: true
       },
       // TODO: find a way to set this as readonly
-      emails: [emailSchema],
+      emails: {
+        type: [emailSchema],
+        readonly: true
+      },
       emailsVisibility: {
         type: String,
         enum: visibilities,
@@ -802,7 +805,8 @@ module.exports = class User extends Model {
       },
       // TODO: find a way to set this as readonly
       phone_numbers: {
-        type: [phoneSchema]
+        type: [phoneSchema],
+        readonly: true
       },
       phonesVisibility: {
         type: String,
@@ -822,7 +826,7 @@ module.exports = class User extends Model {
           validator: function (v) {
             let out = true;
             if (v.length) {
-              for (let i =0, len = v.length; i < len; i++) {
+              for (let i = 0, len = v.length; i < len; i++) {
                 if (isHTML(v[i])) {
                   out = false;
                 }
