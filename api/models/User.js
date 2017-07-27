@@ -802,8 +802,7 @@ module.exports = class User extends Model {
       },
       // TODO: find a way to set this as readonly
       phone_numbers: {
-        type: [phoneSchema],
-        readonly: true
+        type: [phoneSchema]
       },
       phonesVisibility: {
         type: String,
