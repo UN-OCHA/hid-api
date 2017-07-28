@@ -14,6 +14,12 @@ const appResetUrls = [
   'https://app2.dev.humanitarian.id/reset_password',
   'https://api2.dev.humanitarian.id/new_password'
 ];
+const appVerifyUrls = [
+  'https://app2.dev.humanitarian.id/verify',
+  'https://humanitarian.id/verify',
+  'https://api2.dev.humanitarian.id/verify',
+  'https://auth.humanitarian.id/verify'
+];
 
 /**
  * @module UserController
@@ -124,6 +130,12 @@ module.exports = class UserController extends Controller{
       return reply(Boom.badRequest('Missing app_verify_url'));
     }
 
+    const appVerifyUrl = request.payload.app_verify_url;
+    if (appVerifyUrls.indexOf(appVerifyUrl) === -1) {
+      this.log.warn('Invalid app_verify_url', { security: true, fail: true, request: request});
+      return reply(Boom.badRequest('Invalid app_verify_url'));
+    }
+
     const that = this;
     if (request.payload.email) {
       Model
@@ -140,7 +152,6 @@ module.exports = class UserController extends Controller{
                 record.email_verified = false;
                 record.deleted = false;
                 record.save().then(() => {
-                  const appVerifyUrl = request.payload.app_verify_url;
                   that.app.services.EmailService.sendRegister(record, appVerifyUrl, function (merr, info) {
                     return reply(record);
                   });
@@ -759,6 +770,10 @@ module.exports = class UserController extends Controller{
         else {
           // Send validation email again
           const appValidationUrl = request.payload.app_validation_url;
+          if (appVerifyUrls.indexOf(appValidationUrl) === -1) {
+            that.log.warn('Invalid app_validation_url', { security: true, fail: true, request: request});
+            return reply(Boom.badRequest('Invalid app_validation_url'));
+          }
           that.app.services.EmailService.sendValidationEmail(record, email, appValidationUrl, function (err, info) {
             return reply('Validation email sent successfully').code(202);
           });
@@ -833,6 +848,11 @@ module.exports = class UserController extends Controller{
     const appResetUrl = request.payload.app_reset_url;
     const userId = request.params.id;
 
+    if (appResetUrls.indexOf(appResetUrl) === -1) {
+      this.log.warn('Invalid app_reset_url', { security: true, fail: true, request: request});
+      return reply(Boom.badRequest('app_reset_url is invalid'));
+    }
+
     const that = this;
     Model
       .findOne({_id: userId})
@@ -904,6 +924,11 @@ module.exports = class UserController extends Controller{
     this.log.debug('[UserController] adding email', { request: request});
     if (!appValidationUrl || !request.payload.email) {
       return reply(Boom.badRequest());
+    }
+
+    if (appVerifyUrls.indexOf(appValidationUrl) === -1) {
+      this.log.warn('Invalid app_validation_url', { security: true, fail: true, request: request});
+      return reply(Boom.badRequest('Invalid app_validation_url'));
     }
 
     // Make sure email added is unique
