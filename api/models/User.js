@@ -768,7 +768,11 @@ module.exports = class User extends Model {
       },
       // TODO: validate timezone
       zoneinfo: {
-        type: String
+        type: String,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in zoneinfo'
+        }
       },
       locale: {
         type: String,
@@ -851,13 +855,21 @@ module.exports = class User extends Model {
           message: 'HTML code is not allowed in status field'
         }
       },
-      // TODO: make sure this is a valid location
       location: {
-        type: Schema.Types.Mixed
+        type: Schema.Types.Mixed,
+        validate: validate({
+          validator: 'isJSON',
+          passIfEmpty: true,
+          message: 'location should be valid JSON'
+        })
       },
-      // TODO: add validation
       locations: {
-        type: Array
+        type: Array,
+        validate: validate({
+          validator: 'isJSON',
+          passIfEmpty: true,
+          message: 'locations should be valid JSON'
+        })
       },
       locationsVisibility: {
         type: String,
@@ -903,20 +915,45 @@ module.exports = class User extends Model {
         type: Schema.ObjectId,
         ref: 'List'
       }],
-      lists: [listUserSchema],
-      operations: [listUserSchema],
-      bundles: [listUserSchema],
-      disasters: [listUserSchema],
-      offices: [listUserSchema],
+      lists: {
+        type: [listUserSchema],
+        readonly: true
+      },
+      operations: {
+        type: [listUserSchema],
+        readonly: true
+      },
+      bundles: {
+        type: [listUserSchema],
+        readonly: true
+      },
+      disasters: {
+        type: [listUserSchema],
+        readonly: true
+      },
+      offices: {
+        type: [listUserSchema],
+        readonly: true
+      },
       authorizedClients: [{
         type: Schema.ObjectId,
         ref: 'Client'
       }],
-      subscriptions: [subscriptionSchema],
-      connections: [connectionSchema],
-      // TODO: add validation ?
+      subscriptions: {
+        type: [subscriptionSchema],
+        readonly: true
+      },
+      connections: {
+        type: [connectionSchema],
+        readonly: true
+      },
       appMetadata: {
-        type: Schema.Types.Mixed
+        type: Schema.Types.Mixed,
+        validate: validate({
+          validator: 'isJSON',
+          passIfEmpty: true,
+          message: 'appMetadata should be valid JSON'
+        })
       },
       deleted: {
         type: Boolean,
