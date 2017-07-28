@@ -8,7 +8,12 @@ const ejs = require('ejs');
 const http = require('http');
 const moment = require('moment');
 const acceptLanguage = require('accept-language');
-const validator = require('validator');
+const appResetUrls = [
+  'https://humanitarian.id/reset_password',
+  'https://auth.humanitarian.id/new_password',
+  'https://app2.dev.humanitarian.id/reset_password',
+  'https://api2.dev.humanitarian.id/new_password'
+];
 
 /**
  * @module UserController
@@ -767,7 +772,7 @@ module.exports = class UserController extends Controller{
     const appResetUrl = request.payload.app_reset_url;
     const that = this;
 
-    if (!validator.isURL(appResetUrl, { host_whitelist: ['humanitarian.id']})) {
+    if (appResetUrls.indexOf(appResetUrl) === -1) {
       this.log.warn('Invalid app_reset_url', { security: true, fail: true, request: request});
       return reply(Boom.badRequest('app_reset_url is invalid'));
     }
