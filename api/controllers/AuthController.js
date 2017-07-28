@@ -51,7 +51,7 @@ module.exports = class AuthController extends Controller{
         .then((user) => {
           if (!user) {
             that.log.warn('Unsuccessful login attempt due to invalid email address', {email: email, security: true, fail: true, request: request});
-            return reply(Boom.unauthorized('Email address could not be found'));
+            return reply(Boom.unauthorized('invalid email or password'));
           }
 
           if (!user.email_verified) {
