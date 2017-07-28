@@ -8,6 +8,7 @@ const ejs = require('ejs');
 const http = require('http');
 const moment = require('moment');
 const acceptLanguage = require('accept-language');
+const validator = require('validator');
 
 /**
  * @module UserController
@@ -765,6 +766,11 @@ module.exports = class UserController extends Controller{
     const UserModel = this.app.models.User;
     const appResetUrl = request.payload.app_reset_url;
     const that = this;
+
+    if (!validator.isURL(appResetUrl, { host_whitelist: ['humanitarian.id']})) {
+      this.log.warn('Invalid app_reset_url', { security: true, fail: true, request: request});
+      return reply(Boom.badRequest('app_reset_url is invalid'));
+    }
 
     if (request.payload.email) {
       Model
