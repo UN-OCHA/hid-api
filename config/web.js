@@ -29,9 +29,13 @@ module.exports = {
     {
       register: require('yar'),
       options: {
+        cache: {
+          expiresIn: 4 * 60 * 60 * 1000 // 4 hours sessions
+        },
         cookieOptions: {
           password: process.env.COOKIE_PASSWORD,
-          isSecure: process.env.NODE_ENV === 'production'
+          isSecure: process.env.NODE_ENV === 'production',
+          isHttpOnly: true
         }
       }
     },
