@@ -238,6 +238,9 @@ module.exports = {
       },
       payload: {
         maxBytes: 5242880
+      },
+      security: {
+        xframe: true
       }
     }
   }
