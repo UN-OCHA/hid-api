@@ -807,15 +807,14 @@ module.exports = class UserController extends Controller{
     else {
       if (request.payload.hash && request.payload.password) {
         this.log.warn('Resetting password', { security: true, request: request});
-        const parts = Model.explodeHash(request.payload.hash);
         Model
-          .findOne({email: parts.email})
+          .findOne({hash: request.payload.hash, hashAction: 'reset_password'})
           .then(record => {
             if (!record) {
-              that.log.warn('Could not reset password. Email not found', { security: true, fail: true, request: request});
-              return reply(Boom.badRequest('Email could not be found'));
+              that.log.warn('Could not reset password. Hash not found', { security: true, fail: true, request: request});
+              return reply(Boom.badRequest('Reset password link is expired or invalid'));
             }
-            if (record.validHash(request.payload.hash)) {
+            if (record.validHash(request.payload.hash) === true) {
               if (!UserModel.isStrongPassword(request.payload.password)) {
                 that.log.warn('Could not reset password. New password is not strong enough.', { security: true, fail: true, request: request});
                 return reply(Boom.badRequest('New password is not strong enough'));
@@ -824,6 +823,7 @@ module.exports = class UserController extends Controller{
               record.email_verified = true;
               record.expires = new Date(0, 0, 1, 0, 0, 0);
               record.is_orphan = false;
+              record.hash = '';
               record.save().then(() => {
                 that.log.warn('Password updated successfully', { security: true, request: request});
                 return reply('Password reset successfully');
@@ -833,7 +833,7 @@ module.exports = class UserController extends Controller{
               });
             }
             else {
-              return reply(Boom.badRequest('Invalid hash'));
+              return reply(Boom.badRequest('Reset password link is expired or invalid'));
             }
           });
       }

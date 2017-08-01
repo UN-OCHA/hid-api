@@ -146,19 +146,18 @@ module.exports = class User extends Model {
           }
         },
 
-        generateHash: function (email) {
+        generateHash: function () {
+          const buffer = crypto.randomBytes(256);
           const now = Date.now();
-          const hash = new Buffer(Bcrypt.hashSync(this.password + now + this._id, 11)).toString('base64');
-          return new Buffer(email + '/' + now + '/' + hash).toString('base64');
+          const hash = buffer.toString('hex').slice(0, 15);
+          return new Buffer(now + '/' + hash).toString('base64');
         },
 
         // Validate the hash of a confirmation link
         validHash: function (hashLink) {
           const key = new Buffer(hashLink, 'base64').toString('ascii');
           const parts = key.split('/');
-          const email = parts[0];
-          const timestamp = parts[1];
-          const hash = new Buffer(parts[2], 'base64').toString('ascii');
+          const timestamp = parts[0];
           const now = Date.now();
 
           // Verify hash
@@ -167,14 +166,6 @@ module.exports = class User extends Model {
             return false;
           }
 
-          if (this.emailIndex(email) === -1) {
-            return false;
-          }
-
-          // verify hash
-          if (!Bcrypt.compareSync(this.password + timestamp + this._id, hash)) {
-            return false;
-          }
           return true;
         },
 
@@ -377,6 +368,8 @@ module.exports = class User extends Model {
         toJSON: function () {
           const user = this.toObject();
           delete user.password;
+          delete user.hash;
+          delete user.hashAction;
           listTypes.forEach(function (attr) {
             _.remove(user[attr + 's'], function (checkin) {
               return checkin.deleted;
@@ -954,6 +947,15 @@ module.exports = class User extends Model {
           passIfEmpty: true,
           message: 'appMetadata should be valid JSON'
         })
+      },
+      hash: {
+        type: String,
+        readonly: true
+      },
+      hashAction: {
+        type: String,
+        enum: ['verify_email', 'reset_password'],
+        readonly: true
       },
       deleted: {
         type: Boolean,
