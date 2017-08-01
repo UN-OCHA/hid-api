@@ -153,7 +153,12 @@ module.exports = class UserController extends Controller{
                 record.deleted = false;
                 record.save().then(() => {
                   that.app.services.EmailService.sendRegister(record, appVerifyUrl, function (merr, info) {
-                    return reply(record);
+                    if (!merr) {
+                      return reply(record);
+                    }
+                    else {
+                      that.app.services.ErrorService.handle(merr, request, reply);
+                    }
                   });
                 });
               }

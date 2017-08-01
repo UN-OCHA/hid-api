@@ -123,12 +123,23 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale
     };
-    const resetUrl = this._addHash(appResetUrl, user.generateHash(user.email));
-    const context = {
-      name: user.name,
-      reset_url: resetUrl
-    };
-    this.send(mailOptions, 'claim', context, callback);
+    const hash = user.generateHash();
+    const that = this;
+    user.hash = hash;
+    user.hashAction = 'reset_password';
+    user
+      .save()
+      .then(() => {
+        const resetUrl = that._addHash(appResetUrl, hash);
+        const context = {
+          name: user.name,
+          reset_url: resetUrl
+        };
+        that.send(mailOptions, 'claim', context, callback);
+      })
+      .catch(err => {
+        callback(err);
+      });
   }
 
   sendValidationEmail (user, email, appValidationUrl, callback) {
