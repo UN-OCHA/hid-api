@@ -800,7 +800,12 @@ module.exports = class UserController extends Controller{
             return that._errorHandler(Boom.badRequest('Email could not be found'), request, reply);
           }
           that.app.services.EmailService.sendResetPassword(record, appResetUrl, function (merr, info) {
-            return reply('Password reset email sent successfully').code(202);
+            if (!merr) {
+              return reply('Password reset email sent successfully').code(202);
+            }
+            else {
+              return that._errorHandler(merr, request, reply);
+            }
           });
         });
     }
