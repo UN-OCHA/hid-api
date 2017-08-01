@@ -164,16 +164,16 @@ module.exports = class User extends Model {
           // Verify hash
           // verify timestamp is not too old (allow up to 7 days in milliseconds)
           if (timestamp < (now - 7 * 86400000) || timestamp > now) {
-            return 'Expired confirmation link';
+            return false;
           }
 
           if (this.emailIndex(email) === -1) {
-            return 'Wrong user or wrong email in the hash';
+            return false;
           }
 
           // verify hash
           if (!Bcrypt.compareSync(this.password + timestamp + this._id, hash)) {
-            return 'This verification link has already been used';
+            return false;
           }
           return true;
         },
