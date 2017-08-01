@@ -787,12 +787,11 @@ module.exports = class UserController extends Controller{
     const appResetUrl = request.payload.app_reset_url;
     const that = this;
 
-    if (appResetUrls.indexOf(appResetUrl) === -1) {
-      this.log.warn('Invalid app_reset_url', { security: true, fail: true, request: request});
-      return reply(Boom.badRequest('app_reset_url is invalid'));
-    }
-
     if (request.payload.email) {
+      if (appResetUrls.indexOf(appResetUrl) === -1) {
+        this.log.warn('Invalid app_reset_url', { security: true, fail: true, request: request});
+        return reply(Boom.badRequest('app_reset_url is invalid'));
+      }
       Model
         .findOne({email: request.payload.email.toLowerCase()})
         .then(record => {
