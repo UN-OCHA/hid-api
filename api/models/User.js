@@ -941,12 +941,12 @@ module.exports = class User extends Model {
         readonly: true
       },
       appMetadata: {
-        type: Schema.Types.Mixed,
-        validate: validate({
+        type: Schema.Types.Mixed
+        /*validate: validate({
           validator: 'isJSON',
           passIfEmpty: true,
           message: 'appMetadata should be valid JSON'
-        })
+        })*/
       },
       hash: {
         type: String,
