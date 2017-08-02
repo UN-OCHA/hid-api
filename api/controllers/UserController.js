@@ -205,13 +205,13 @@ module.exports = class UserController extends Controller{
 
   _pdfExport (data, req, format, callback) {
     const filters = [];
-    if (req.query.hasOwnProperty('name') && req.query.name.length) {
+    if (Object.prototype.hasOwnProperty.call(req.query, 'name') && req.query.name.length) {
       filters.push(req.query.name);
     }
-    if (req.query.hasOwnProperty('verified') && req.query.verified) {
+    if (Object.prototype.hasOwnProperty.call(req.query, 'verified') && req.query.verified) {
       filters.push('Verified User');
     }
-    if (req.query.hasOwnProperty('is_admin') && req.query.is_admin) {
+    if (Object.prototype.hasOwnProperty.call(req.query, 'is_admin') && req.query.is_admin) {
       filters.push('Administrator');
     }
     data.lists.forEach(function (list, index) {
