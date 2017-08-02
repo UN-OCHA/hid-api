@@ -710,7 +710,7 @@ module.exports = class UserController extends Controller{
 
   validateEmail (request, reply) {
     const Model = this.app.orm.user;
-    let parts = {}, email = '', query = {};
+    let email = '', query = {};
 
     this.log.debug('[UserController] Verifying email ', { request: request });
 
