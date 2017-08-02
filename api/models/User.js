@@ -848,21 +848,23 @@ module.exports = class User extends Model {
           message: 'HTML code is not allowed in status field'
         }
       },
+      // TODO: figure out validation
       location: {
-        type: Schema.Types.Mixed,
-        validate: validate({
+        type: Schema.Types.Mixed
+        /*validate: validate({
           validator: 'isJSON',
           passIfEmpty: true,
           message: 'location should be valid JSON'
-        })
+        })*/
       },
+      // TODO: figure out validation
       locations: {
-        type: Array,
-        validate: validate({
+        type: Array
+        /*validate: validate({
           validator: 'isJSON',
           passIfEmpty: true,
           message: 'locations should be valid JSON'
-        })
+        })*/
       },
       locationsVisibility: {
         type: String,
