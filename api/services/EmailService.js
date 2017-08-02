@@ -47,12 +47,25 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale || 'en'
     };
-    const resetUrl = this._addHash(appVerifyUrl, user.generateHash(user.email));
-    const context = {
-      name: user.name,
-      reset_url: resetUrl
-    };
-    this.send(mailOptions, 'register', context, callback);
+
+    const hash = user.generateHash();
+    const that = this;
+    user.hash = hash;
+    user.hashAction = 'verify_email';
+    user.hashEmail = user.email;
+    user
+      .save()
+      .then(() => {
+        const resetUrl = that._addHash(appVerifyUrl, hash);
+        const context = {
+          name: user.name,
+          reset_url: resetUrl
+        };
+        that.send(mailOptions, 'register', context, callback);
+      })
+      .catch(err => {
+        callback(err);
+      });
   }
 
   sendRegisterOrphan(user, admin, appVerifyUrl, callback) {
@@ -60,13 +73,25 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale || 'en'
     };
-    const resetUrl = this._addHash(appVerifyUrl, user.generateHash(user.email));
-    const context = {
-      user: user,
-      admin: admin,
-      reset_url: resetUrl
-    };
-    this.send(mailOptions, 'register_orphan', context, callback);
+    const hash = user.generateHash();
+    const that = this;
+    user.hash = hash;
+    user.hashAction = 'verify_email';
+    user.hashEmail = user.email;
+    user
+      .save()
+      .then(() => {
+        const resetUrl = that._addHash(appVerifyUrl, hash);
+        const context = {
+          user: user,
+          admin: admin,
+          reset_url: resetUrl
+        };
+        that.send(mailOptions, 'register_orphan', context, callback);
+      })
+      .catch(err => {
+        callback(err);
+      });
   }
 
   sendRegisterKiosk(user, appVerifyUrl, callback) {
@@ -74,12 +99,25 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale || 'en'
     };
-    const resetUrl = this._addHash(appVerifyUrl, user.generateHash(user.email));
-    const context = {
-      user: user,
-      reset_url: resetUrl
-    };
-    this.send(mailOptions, 'register_kiosk', context, callback);
+
+    const hash = user.generateHash();
+    const that = this;
+    user.hash = hash;
+    user.hashAction = 'verify_email';
+    user.hashEmail = user.email;
+    user
+      .save()
+      .then(() => {
+        const resetUrl = that._addHash(appVerifyUrl, hash);
+        const context = {
+          user: user,
+          reset_url: resetUrl
+        };
+        that.send(mailOptions, 'register_kiosk', context, callback);
+      })
+      .catch(err => {
+        callback(err);
+      });
   }
 
   sendPostRegister (user, callback) {
@@ -103,6 +141,7 @@ module.exports = class EmailService extends Service {
     const that = this;
     user.hash = hash;
     user.hashAction = 'reset_password';
+    user.hashEmail = '';
     user
       .save()
       .then(() => {
@@ -127,6 +166,7 @@ module.exports = class EmailService extends Service {
     const that = this;
     user.hash = hash;
     user.hashAction = 'reset_password';
+    user.hashEmail = '';
     user
       .save()
       .then(() => {
@@ -147,12 +187,24 @@ module.exports = class EmailService extends Service {
       to: email,
       locale: user.locale
     };
-    const resetUrl = this._addHash(appValidationUrl, user.generateHash(email));
-    const context = {
-      user: user,
-      reset_url: resetUrl
-    };
-    this.send(mailOptions, 'email_validation', context, callback);
+    const hash = user.generateHash();
+    const that = this;
+    user.hash = hash;
+    user.hashAction = 'verify_email';
+    user.hashEmail = email;
+    user
+      .save()
+      .then(() => {
+        const resetUrl = that._addHash(appValidationUrl, hash);
+        const context = {
+          user: user,
+          reset_url: resetUrl
+        };
+        that.send(mailOptions, 'email_validation', context, callback);
+      })
+      .catch(err => {
+        callback(err);
+      });
   }
 
   sendNotification(not, cb) {
@@ -168,11 +220,23 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale
     };
-    const context = {
-      user: user,
-      verifyLink: this._addHash(process.env.APP_URL, user.generateHash(user.email))
-    };
-    this.send(mailOptions, 'reminder_verify', context, callback);
+    const hash = user.generateHash();
+    const that = this;
+    user.hash = hash;
+    user.hashAction = 'verify_email';
+    user.hashEmail = user.email;
+    user
+      .save()
+      .then(() => {
+        const context = {
+          user: user,
+          verifyLink: this._addHash(process.env.APP_URL, hash)
+        };
+        that.send(mailOptions, 'reminder_verify', context, callback);
+      })
+      .catch(err => {
+        callback(err);
+      });
   }
 
   sendReminderUpdate (user, callback) {

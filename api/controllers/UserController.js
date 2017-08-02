@@ -710,7 +710,7 @@ module.exports = class UserController extends Controller{
 
   validateEmail (request, reply) {
     const Model = this.app.orm.user;
-    let parts = {}, email = '';
+    let parts = {}, email = '', query = {};
 
     this.log.debug('[UserController] Verifying email ', { request: request });
 
@@ -721,25 +721,24 @@ module.exports = class UserController extends Controller{
     // TODO: make sure current user can do this
 
     if (request.payload.hash) {
-      parts = Model.explodeHash(request.payload.hash);
-      email = parts.email;
+      query = Model.findOne({hash: request.payload.hash, hashAction: 'verify_email'});
     }
     else {
       email = request.params.email;
+      query = Model.findOne({'emails.email': email});
     }
 
     const that = this;
-    Model
-      .findOne({ 'emails.email': email })
+    query
       .then(record => {
         if (!record) {
           return reply(Boom.notFound());
         }
         if (request.payload.hash) {
           // Verify hash
-          if (record.validHash(request.payload.hash)) {
+          if (record.validHash(request.payload.hash) === true) {
             // Verify user email
-            if (record.email === parts.email) {
+            if (record.email === record.hashEmail) {
               record.email_verified = true;
               record.expires = new Date(0, 0, 1, 0, 0, 0);
               record.emails[0].validated = true;
@@ -755,7 +754,7 @@ module.exports = class UserController extends Controller{
             }
             else {
               for (let i = 0, len = record.emails.length; i < len; i++) {
-                if (record.emails[i].email === parts.email) {
+                if (record.emails[i].email === record.hashEmail) {
                   record.emails[i].validated = true;
                   record.emails.set(i, record.emails[i]);
                 }

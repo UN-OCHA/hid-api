@@ -370,6 +370,7 @@ module.exports = class User extends Model {
           delete user.password;
           delete user.hash;
           delete user.hashAction;
+          delete user.hashEmail;
           listTypes.forEach(function (attr) {
             _.remove(user[attr + 's'], function (checkin) {
               return checkin.deleted;
@@ -942,6 +943,7 @@ module.exports = class User extends Model {
         type: [connectionSchema],
         readonly: true
       },
+      // TODO: figure out validation
       appMetadata: {
         type: Schema.Types.Mixed
         /*validate: validate({
@@ -958,6 +960,15 @@ module.exports = class User extends Model {
         type: String,
         enum: ['verify_email', 'reset_password'],
         readonly: true
+      },
+      hashEmail: {
+        type: String,
+        readonly: true,
+        validate: validate({
+          validator: 'isEmail',
+          passIfEmpty: true,
+          message: 'hashEmail should be a valid email'
+        })
       },
       deleted: {
         type: Boolean,
