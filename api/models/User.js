@@ -28,7 +28,7 @@ module.exports = class User extends Model {
   isStrongPassword (password) {
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
     // At least 8 characters and at least one number, one uppercase and one lowercase.
-    return password.length > 8 && regex.test(password);
+    return password.length > 7 && regex.test(password);
   }
 
   hashPassword (password) {
