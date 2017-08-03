@@ -172,8 +172,7 @@ module.exports = class List extends Model {
 
   static schema () {
     const isHTMLValidator = function (v) {
-      return true;
-      //return !isHTML(v);
+      return !isHTML(v);
     };
 
     const translationSchema = new Schema({

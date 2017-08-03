@@ -114,9 +114,7 @@ module.exports = class User extends Model {
             const that = this;
             listTypes.forEach(function (attr) {
               _.remove(that[attr + 's'], function (checkin) {
-                return checkin.visibility === 'inlist' ||
-                  checkin.visibility === 'me' ||
-                  checkin.visibility === 'verified' && !user.verified;
+                return !checkin.isVisibleTo(user);
               });
             });
           }
