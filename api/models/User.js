@@ -441,11 +441,11 @@ module.exports = class User extends Model {
         trim: true,
         unique: true,
         sparse: true,
-        validate: validate({
+        /*validate: validate({
           validator: 'isEmail',
           passIfEmpty: true,
           message: 'email should be a valid email'
-        })
+        })*/
       },
       validated: {
         type: Boolean,
@@ -581,11 +581,11 @@ module.exports = class User extends Model {
         type: String,
         lowercase: true,
         trim: true,
-        validate: validate({
+        /*validate: validate({
           validator: 'isEmail',
           passIfEmpty: false,
           message: 'email should be a valid email'
-        }),
+        }),*/
         required: true
       },
       service: {
@@ -609,47 +609,47 @@ module.exports = class User extends Model {
       given_name: {
         type: String,
         trim: true,
-        validate: {
+        /*validate: {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in given_name'
-        },
+        },*/
         required: [true, 'Given name is required']
       },
       middle_name: {
         type: String,
         trim: true,
-        validate: {
+        /*validate: {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in middle_name'
-        }
+        }*/
       },
       family_name: {
         type: String,
         trim: true,
-        validate: {
+        /*validate: {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in family_name'
-        },
+        },*/
         required: [true, 'Family name is required']
       },
       name: {
-        type: String,
-        validate: {
+        type: String
+        /*validate: {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in name'
-        }
+        }*/
       },
       email: {
         type: String,
         lowercase: true,
         trim: true,
         unique: true,
-        sparse: true,
-        validate: validate({
+        sparse: true
+        /*validate: validate({
           validator: 'isEmail',
           passIfEmpty: true,
           message: 'email should be a valid email'
-        })
+        })*/
       },
       email_verified: {
         type: Boolean,
@@ -698,20 +698,20 @@ module.exports = class User extends Model {
       },
       // Makes sure it's a valid URL, and do not allow urls from other domains
       picture: {
-        type: String,
-        validate: validate({
+        type: String
+        /*validate: validate({
           validator: 'isURL',
           passIfEmpty: true,
           arguments: {host_whitelist: ['api.humanitarian.id', 'api2.dev.humanitarian.id']},
           message: 'picture should be a valid URL'
-        })
+        })*/
       },
       notes: {
-        type: String,
-        validate: {
+        type: String
+        /*validate: {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in notes'
-        }
+        }*/
       },
       // Validates an array of VoIP objects
       voips: {
@@ -762,11 +762,11 @@ module.exports = class User extends Model {
       },
       // TODO: validate timezone
       zoneinfo: {
-        type: String,
-        validate: {
+        type: String
+        /*validate: {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in zoneinfo'
-        }
+        }*/
       },
       locale: {
         type: String,
@@ -819,10 +819,10 @@ module.exports = class User extends Model {
       },
       job_title: {
         type: String,
-        validate: {
+        /*validate: {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in job_title'
-        }
+        }*/
       },
       job_titles: {
         type: Array,
@@ -843,11 +843,11 @@ module.exports = class User extends Model {
       },
       functional_roles: [listUserSchema],
       status: {
-        type: String,
-        validate: {
+        type: String
+        /*validate: {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in status field'
-        }
+        }*/
       },
       // TODO: figure out validation
       location: {
@@ -963,12 +963,12 @@ module.exports = class User extends Model {
       },
       hashEmail: {
         type: String,
-        readonly: true,
-        validate: validate({
+        readonly: true
+        /*validate: validate({
           validator: 'isEmail',
           passIfEmpty: true,
           message: 'hashEmail should be a valid email'
-        })
+        })*/
       },
       deleted: {
         type: Boolean,
