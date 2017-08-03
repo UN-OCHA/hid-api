@@ -21,9 +21,9 @@ module.exports = {
     level: 'debug',
     exitOnError: false,
     transports: [
-      new (winston.transports.Console)({
+      /*new (winston.transports.Console)({
         timestamp: true
-        /*prettyPrint: true,
+        prettyPrint: true,
         colorize: true,
         timestamp: function() {
           const d = new Date();
@@ -49,8 +49,8 @@ module.exports = {
           }
           return '[' + options.timestamp() + '] ' + options.level.toUpperCase() + ' ' + (options.message ? options.message : '') +
             (meta && Object.keys(meta).length ? '\n\t' + JSON.stringify(meta) : '' );
-        }*/
-      })
+        }
+      })*/
     ]
   })
 
