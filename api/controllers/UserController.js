@@ -323,7 +323,7 @@ module.exports = class UserController extends Controller{
   _txtExport (users) {
     let out = '';
     for (let i = 0; i < users.length; i++) {
-      out += users[i].name + ' <' + users[i].email + '>,';
+      out += users[i].name + ' <' + users[i].email + '>;';
     }
     return out;
   }
