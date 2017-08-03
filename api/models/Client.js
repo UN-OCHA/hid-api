@@ -24,33 +24,33 @@ module.exports = class Client extends Model {
         type: String,
         trim: true,
         required: [true, 'Client ID is required'],
-        unique: true
-        /*validate: {
+        unique: true,
+        validate: {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in id'
-        }*/
+        }
       },
       name: {
         type: String,
         trim: true,
-        required: [true, 'Client name is required']
-        /*validate: {
+        required: [true, 'Client name is required'],
+        validate: {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in name'
-        }*/
+        }
       },
       secret: {
         type: String,
         trim: true,
-        required: [true, 'Client secret is required']
-        /*validate: {
+        required: [true, 'Client secret is required'],
+        validate: {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in secret'
-        }*/
+        }
       },
       url: {
         type: String,
-        trim: true
+        trim: true,
         /*validate: validate({
           validator: 'isURL',
           passIfEmpty: true,
@@ -78,10 +78,10 @@ module.exports = class Client extends Model {
       },
       description: {
         type: String,
-        /*validate: {
+        validate: {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in description'
-        }*/
+        }
       }
     };
   }
