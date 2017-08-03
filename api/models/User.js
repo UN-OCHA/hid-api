@@ -7,8 +7,8 @@ const Libphonenumber = require('google-libphonenumber');
 const https = require('https');
 const _ = require('lodash');
 const crypto = require('crypto');
-const isHTML = require('is-html');
-const validate = require('mongoose-validator');
+//const isHTML = require('is-html');
+//const validate = require('mongoose-validator');
 const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
 const userPopulate1 = [
   {path: 'favoriteLists'},
@@ -423,8 +423,8 @@ module.exports = class User extends Model {
   static schema () {
 
     const isHTMLValidator = function (v) {
-      console.log('going through user html validator');
-      return !isHTML(v);
+      return true;
+      //return !isHTML(v);
     };
 
     const visibilities = ['anyone', 'verified', 'connections'];
@@ -440,11 +440,11 @@ module.exports = class User extends Model {
         trim: true,
         unique: true,
         sparse: true,
-        validate: validate({
+        /*validate: validate({
           validator: 'isEmail',
           passIfEmpty: true,
           message: 'email should be a valid email'
-        })
+        })*/
       },
       validated: {
         type: Boolean,
@@ -580,11 +580,11 @@ module.exports = class User extends Model {
         type: String,
         lowercase: true,
         trim: true,
-        validate: validate({
+        /*validate: validate({
           validator: 'isEmail',
           passIfEmpty: false,
           message: 'email should be a valid email'
-        }),
+        }),*/
         required: true
       },
       service: {
@@ -608,10 +608,10 @@ module.exports = class User extends Model {
       given_name: {
         type: String,
         trim: true,
-        validate: {
+        /*validate: {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in given_name'
-        },
+        },*/
         required: [true, 'Given name is required']
       },
       middle_name: {
@@ -644,11 +644,11 @@ module.exports = class User extends Model {
         trim: true,
         unique: true,
         sparse: true,
-        validate: validate({
+        /*validate: validate({
           validator: 'isEmail',
           passIfEmpty: true,
           message: 'email should be a valid email'
-        })
+        })*/
       },
       email_verified: {
         type: Boolean,
@@ -698,12 +698,12 @@ module.exports = class User extends Model {
       // Makes sure it's a valid URL, and do not allow urls from other domains
       picture: {
         type: String,
-        validate: validate({
+        /*validate: validate({
           validator: 'isURL',
           passIfEmpty: true,
           arguments: {host_whitelist: ['api.humanitarian.id', 'api2.dev.humanitarian.id']},
           message: 'picture should be a valid URL'
-        })
+        })*/
       },
       notes: {
         type: String,
@@ -825,7 +825,7 @@ module.exports = class User extends Model {
       },
       job_titles: {
         type: Array,
-        validate: {
+        /*validate: {
           validator: function (v) {
             let out = true;
             if (v.length) {
@@ -838,7 +838,7 @@ module.exports = class User extends Model {
             return out;
           },
           message: 'HTML in job titles is not allowed'
-        }
+        }*/
       },
       functional_roles: [listUserSchema],
       status: {
@@ -963,11 +963,11 @@ module.exports = class User extends Model {
       hashEmail: {
         type: String,
         readonly: true,
-        validate: validate({
+        /*validate: validate({
           validator: 'isEmail',
           passIfEmpty: true,
           message: 'hashEmail should be a valid email'
-        })
+        })*/
       },
       deleted: {
         type: Boolean,

@@ -6,7 +6,7 @@ const Mailchimp = require('mailchimp-api-v3');
 const crypto = require('crypto');
 const google = require('googleapis');
 const GoogleAuth = require('google-auth-library');
-const isHTML = require('is-html');
+//const isHTML = require('is-html');
 
 /**
  * @module Service
