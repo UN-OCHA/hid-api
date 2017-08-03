@@ -6,7 +6,7 @@ const Mailchimp = require('mailchimp-api-v3');
 const crypto = require('crypto');
 const google = require('googleapis');
 const GoogleAuth = require('google-auth-library');
-//const isHTML = require('is-html');
+const isHTML = require('is-html');
 
 /**
  * @module Service
@@ -105,8 +105,7 @@ module.exports = class Service extends Model {
 
   static schema () {
     const isHTMLValidator = function (v) {
-      return true;
-      //return !isHTML(v);
+      return !isHTML(v);
     };
 
     const mailchimpSchema = new Schema({

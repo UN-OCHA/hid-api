@@ -3,7 +3,7 @@
 const Model = require('trails/model');
 const Schema = require('mongoose').Schema;
 const languages = ['en', 'fr', 'es'];
-//const isHTML = require('is-html');
+const isHTML = require('is-html');
 
 /**
  * @module List
@@ -172,8 +172,7 @@ module.exports = class List extends Model {
 
   static schema () {
     const isHTMLValidator = function (v) {
-      return true;
-      //return !isHTML(v);
+      return !isHTML(v);
     };
 
     const translationSchema = new Schema({
