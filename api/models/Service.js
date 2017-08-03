@@ -105,7 +105,8 @@ module.exports = class Service extends Model {
 
   static schema () {
     const isHTMLValidator = function (v) {
-      return !isHTML(v);
+      return true;
+      //return !isHTML(v);
     };
 
     const mailchimpSchema = new Schema({
