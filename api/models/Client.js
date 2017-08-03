@@ -15,7 +15,6 @@ module.exports = class Client extends Model {
 
   static schema () {
     const isHTMLValidator = function (v) {
-      console.log('going through client html validator');
       return !isHTML(v);
     };
 

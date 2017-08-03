@@ -62,6 +62,7 @@ module.exports = class ClientController extends Controller{
     }
   }
 
+  // TODO: force to go through validators
   update (request, reply) {
     request.params.model = 'client';
     const FootprintController = this.app.controllers.FootprintController;

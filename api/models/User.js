@@ -425,8 +425,8 @@ module.exports = class User extends Model {
   static schema () {
 
     const isHTMLValidator = function (v) {
-      return true;
-      //return !isHTML(v);
+      console.log('going through user html validator');
+      return !isHTML(v);
     };
 
     const visibilities = ['anyone', 'verified', 'connections'];
