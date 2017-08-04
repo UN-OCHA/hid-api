@@ -8,6 +8,10 @@
 'use strict';
 
 const winston = require('winston');
+const os = require('os');
+const _ = {
+  clone: require('lodash.clone')
+};
 
 module.exports = {
 
@@ -20,9 +24,26 @@ module.exports = {
   logger: new winston.Logger({
     level: 'debug',
     exitOnError: false,
+    rewriters: [
+      function (level, msg, metadata) {
+        delete metadata.request;
+
+        // Keep original metadata safe.
+        metadata = _.clone(metadata || {});
+
+        // Extend metadata with some default.
+        metadata.level = level;
+        metadata.hostname = os.hostname();
+        metadata.env = 'hid-' + process.env.NODE_ENV;
+        metadata.category = metadata.category || 'no-category';
+        metadata['@timestamp'] = new Date().toJSON();
+
+        return metadata;
+      }
+    ],
     transports: [
-      /*new (winston.transports.Console)({
-        timestamp: true
+      new (winston.transports.Console)({
+        /*timestamp: true
         prettyPrint: true,
         colorize: true,
         timestamp: function() {
@@ -49,8 +70,8 @@ module.exports = {
           }
           return '[' + options.timestamp() + '] ' + options.level.toUpperCase() + ' ' + (options.message ? options.message : '') +
             (meta && Object.keys(meta).length ? '\n\t' + JSON.stringify(meta) : '' );
-        }
-      })*/
+        }*/
+      })
     ]
   })
 
