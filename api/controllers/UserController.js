@@ -10,8 +10,10 @@ const moment = require('moment');
 const acceptLanguage = require('accept-language');
 const appResetUrls = [
   'https://humanitarian.id/reset_password',
+  'https://humanitarian.id/reset_password?orphan=true',
   'https://auth.humanitarian.id/new_password',
   'https://app2.dev.humanitarian.id/reset_password',
+  'https://app2.dev.humanitarian.id/reset_password?orphan=true',
   'https://api2.dev.humanitarian.id/new_password'
 ];
 const appVerifyUrls = [
