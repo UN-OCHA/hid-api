@@ -33,7 +33,6 @@ module.exports = {
         metadata.level = level;
         metadata.hostname = os.hostname();
         metadata.env = 'hid-' + process.env.NODE_ENV;
-        metadata.category = metadata.category || 'no-category';
         metadata['@timestamp'] = new Date().toJSON();
 
         return metadata;
