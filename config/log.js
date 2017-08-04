@@ -9,9 +9,7 @@
 
 const winston = require('winston');
 const os = require('os');
-const _ = {
-  clone: require('lodash.clone')
-};
+const _ = require('lodash');
 
 module.exports = {
 
