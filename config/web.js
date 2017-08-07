@@ -29,9 +29,13 @@ module.exports = {
     {
       register: require('yar'),
       options: {
+        cache: {
+          expiresIn: 4 * 60 * 60 * 1000 // 4 hours sessions
+        },
         cookieOptions: {
           password: process.env.COOKIE_PASSWORD,
-          isSecure: process.env.NODE_ENV === 'production'
+          isSecure: process.env.NODE_ENV === 'production',
+          isHttpOnly: true
         }
       }
     },
@@ -132,8 +136,6 @@ module.exports = {
             if (err ||
               !ocode.client._id.equals(client._id)) {
               //redirectURI !== ocode.client.redirectUri) {
-              console.log(err);
-              console.log(redirectURI);
               return done(null, false);
             }
             async.auto({
@@ -240,6 +242,9 @@ module.exports = {
       },
       payload: {
         maxBytes: 5242880
+      },
+      security: {
+        xframe: true
       }
     }
   }

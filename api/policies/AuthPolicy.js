@@ -14,6 +14,7 @@ module.exports = class AuthPolicy extends Policy {
     acceptLanguage.languages(['en', 'fr', 'es']);
     const OauthToken = this.app.orm.OauthToken;
     const JwtToken = this.app.orm.JwtToken;
+    const User = this.app.orm.User;
     // If we are creating a user and we are not authenticated, allow it
     if (request.path === '/api/v2/user' &&
       request.method === 'post' &&
@@ -35,6 +36,7 @@ module.exports = class AuthPolicy extends Policy {
         }
       }
       else {
+        this.log.warn('Wrong format for authorization header', {security: true, fail: true, request: request});
         return reply(Boom.unauthorized('Format is Authorization: Bearer [token]'));
       }
     }
@@ -52,6 +54,7 @@ module.exports = class AuthPolicy extends Policy {
       delete request.payload.access_token;
     }
     else {
+      this.log.warn('No authorization token was found', { security: true, fail: true, request: request});
       return reply(Boom.unauthorized('No Authorization header was found'));
     }
 
@@ -66,6 +69,7 @@ module.exports = class AuthPolicy extends Policy {
           .exec(function (err, tok) {
             // TODO: make sure the token is not expired
             if (err || !tok) {
+              that.log.warn('Invalid token', { security: true, fail: true, request: request});
               return reply(Boom.unauthorized('Invalid Token!'));
             }
             request.params.currentUser = tok.user;
@@ -79,23 +83,26 @@ module.exports = class AuthPolicy extends Policy {
           .findOne({token: token, blacklist: true})
           .then(tok => {
             if (tok) {
+              that.log.warn('Tried to get authorization with a blacklisted token', { security: true, fail: true, request: request});
               return reply(Boom.unauthorized('Invalid Token !'));
             }
             request.params.token = jtoken; // This is the decrypted token or the payload you provided
-            that.app.orm.User.findOne({_id: jtoken.id}, function (err, user) {
-              if (!err && user) {
-                request.params.currentUser = user;
-                reply();
-              }
-              else {
-                that.log.error(err);
-                reply(Boom.unauthorized('Invalid Token!'));
-              }
-            });
+            User
+              .findOne({_id: jtoken.id})
+              .then(user => {
+                if (user) {
+                  that.log.warn('Successful authentication through JWT', { security: true, request: request});
+                  request.params.currentUser = user;
+                  reply();
+                }
+                else {
+                  that.log.warn('Could not find user linked to JWT', { security: true, fail: true, request: request });
+                  reply(Boom.unauthorized('Invalid Token !'));
+                }
+              });
           })
           .catch(err => {
-            that.log.error(err);
-            return reply(Boom.unauthorized('Invalid Token !'));
+            that.app.services.ErrorService.handle(err, request, reply);
           });
       }
     });
@@ -103,11 +110,10 @@ module.exports = class AuthPolicy extends Policy {
 
   isAdmin (request, reply) {
     if (!request.params.currentUser.is_admin) {
+      this.log.warn('User is not an admin', { security: true, fail: true, request: request});
       return reply(Boom.forbidden('You need to be an admin'));
     }
     reply();
   }
-
-
 
 };

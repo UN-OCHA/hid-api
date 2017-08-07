@@ -29,7 +29,7 @@ module.exports = class ServicePolicy extends Policy {
         }
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 

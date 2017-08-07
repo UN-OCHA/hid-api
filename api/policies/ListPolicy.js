@@ -40,7 +40,7 @@ module.exports = class ListPolicy extends Policy {
 
       })
       .catch((err) => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 
@@ -63,7 +63,7 @@ module.exports = class ListPolicy extends Policy {
 
       })
       .catch((err) => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
 
   }

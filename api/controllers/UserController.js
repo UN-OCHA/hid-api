@@ -8,6 +8,22 @@ const ejs = require('ejs');
 const http = require('http');
 const moment = require('moment');
 const acceptLanguage = require('accept-language');
+const appResetUrls = [
+  'https://humanitarian.id/reset_password',
+  'https://auth.humanitarian.id/new_password',
+  'https://app2.dev.humanitarian.id/reset_password',
+  'https://api2.dev.humanitarian.id/new_password'
+];
+const appVerifyUrls = [
+  'https://app2.dev.humanitarian.id/verify',
+  'https://humanitarian.id/verify',
+  'https://api2.dev.humanitarian.id/verify',
+  'https://auth.humanitarian.id/verify',
+  'https://humanitarian.id/reset_password?orphan=true',
+  'https://app2.dev.humanitarian.id/reset_password?orphan=true',
+  'https://app2.dev.humanitarian.id/reset_password',
+  'https://humanitarian.id/reset_password'
+];
 
 /**
  * @module UserController
@@ -20,14 +36,15 @@ module.exports = class UserController extends Controller{
     this.app.services.HelperService.removeForbiddenAttributes('User', request, childAttributes);
   }
 
-  _errorHandler (err, reply) {
-    return this.app.services.ErrorService.handle(err, reply);
+  _errorHandler (err, request, reply) {
+    return this.app.services.ErrorService.handle(err, request, reply);
   }
 
   _createHelper(request, reply) {
     const Model = this.app.orm.User;
+    const UserModel = this.app.models.User;
 
-    this.log.debug('Preparing request for user creation');
+    this.log.debug('Preparing request for user creation', { request: request });
 
     if (request.payload.email) {
       request.payload.emails = [];
@@ -35,12 +52,14 @@ module.exports = class UserController extends Controller{
     }
 
     if (request.payload.password && request.payload.confirm_password) {
-      request.payload.password = Model.hashPassword(request.payload.password);
+      if (!UserModel.isStrongPassword(request.payload.password)) {
+        return reply(Boom.badRequest('The password is not strong enough'));
+      }
+      request.payload.password = UserModel.hashPassword(request.payload.password);
     }
     else {
       // Set a random password
-      // TODO: check that the password is random and long enough
-      request.payload.password = Model.hashPassword(Math.random().toString(36).slice(2));
+      request.payload.password = UserModel.hashPassword(UserModel.generateRandomPassword());
     }
 
     const appVerifyUrl = request.payload.app_verify_url;
@@ -74,7 +93,7 @@ module.exports = class UserController extends Controller{
         if (!user) {
           throw Boom.badRequest();
         }
-        that.log.debug('User successfully created');
+        that.log.debug('User ' + user._id.toString() + ' successfully created', { request: request });
 
         if (user.email) {
           if (!request.params.currentUser) {
@@ -101,7 +120,7 @@ module.exports = class UserController extends Controller{
         }
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 
@@ -109,10 +128,16 @@ module.exports = class UserController extends Controller{
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
     const Model = this.app.orm.user;
 
-    this.log.debug('[UserController] (create) payload =', request.payload, 'options =', options);
+    this.log.debug('[UserController] (create) payload =', request.payload, 'options =', options, { request: request });
 
     if (!request.payload.app_verify_url) {
       return reply(Boom.badRequest('Missing app_verify_url'));
+    }
+
+    const appVerifyUrl = request.payload.app_verify_url;
+    if (appVerifyUrls.indexOf(appVerifyUrl) === -1) {
+      this.log.warn('Invalid app_verify_url', { security: true, fail: true, request: request});
+      return reply(Boom.badRequest('Invalid app_verify_url'));
     }
 
     const that = this;
@@ -126,15 +151,24 @@ module.exports = class UserController extends Controller{
           }
           else {
             if (!request.params.currentUser) {
-              // Unverify user, reactivate account and return it
-              record.email_verified = false;
-              record.deleted = false;
-              record.save().then(() => {
-                const appVerifyUrl = request.payload.app_verify_url;
-                that.app.services.EmailService.sendRegister(record, appVerifyUrl, function (merr, info) {
-                  return reply(record);
+              if (record.deleted) {
+                // Unverify user, reactivate account and return it
+                record.email_verified = false;
+                record.deleted = false;
+                record.save().then(() => {
+                  that.app.services.EmailService.sendRegister(record, appVerifyUrl, function (merr, info) {
+                    if (!merr) {
+                      return reply(record);
+                    }
+                    else {
+                      that.app.services.ErrorService.handle(merr, request, reply);
+                    }
+                  });
                 });
-              });
+              }
+              else {
+                return reply(Boom.badRequest('This email address is already registered. If you can not remember your password, please reset it'));
+              }
             }
             else {
               // User is being "reactivated" by someone else
@@ -147,7 +181,7 @@ module.exports = class UserController extends Controller{
           }
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, reply);
+          that.app.services.ErrorService.handle(err, request, reply);
         });
     }
     else {
@@ -158,10 +192,11 @@ module.exports = class UserController extends Controller{
 
   // TODO: remove after HPC fixes their app to use v2 API
   registerV1 (request, reply) {
-    this.log.debug('registerV1 called');
+    this.log.debug('registerV1 called', { request: request });
     const User = this.app.orm.User;
+    const UserModel = this.app.models.User;
     const that = this;
-    console.log(request.payload);
+
     User
       .findOne({email: request.payload.email})
       .then((user) => {
@@ -173,7 +208,7 @@ module.exports = class UserController extends Controller{
           request.payload.emails.push({type: 'Work', email: request.payload.email, validated: false});
         }
         // Set a random password
-        request.payload.password = User.hashPassword(Math.random().toString(36).slice(2));
+        request.payload.password = UserModel.hashPassword(UserModel.generateRandomPassword());
         // Create the account
         return User
           .create({
@@ -194,12 +229,17 @@ module.exports = class UserController extends Controller{
       })
       .then(users => {
         // Send invitation
-        that.app.services.EmailService.sendRegisterOrphan(users.user, users.admin, 'https://auth.humanitarian.id/new_password', function (merr, info) {
-          return reply({status: 'ok', data: {user_id: users.user.user_id, is_new: 1}});
-        });
+        that.app.services.EmailService.sendRegisterOrphan(
+          users.user,
+          users.admin,
+          'https://auth.humanitarian.id/new_password',
+          function (merr, info) {
+            return reply({status: 'ok', data: {user_id: users.user.user_id, is_new: 1}});
+          }
+        );
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 
@@ -219,28 +259,6 @@ module.exports = class UserController extends Controller{
         filters.push(list.name);
       }
     });
-    // TODO: missing roles
-    // TODO: missing location country
-    /*  _.each(query, function (val, key) {
-        if (['address.country', 'address.administrative_area', 'address.locality', 'bundle', 'office.name', 'organization.name', 'protectedBundles'].indexOf(key) !== -1) {
-          filters.push(query[key]);
-        }
-        else if (key == 'protectedRoles') {
-          var prIndex = _.findIndex(protectedRolesData, function (item) {
-            return (item.id == val);
-          });
-          filters.push(protectedRolesData[prIndex].name);
-        }
-      });
-      if (req.query.hasOwnProperty('role') && req.query.role) {
-        var role = _.find(rolesData, function (item) {
-          return (item.id === req.query.role);
-        });
-        if (role && role.name) {
-          filters.push(role.name);
-        }
-      }
-      */
 
     data.dateGenerated = moment().format('LL');
     data.filters = filters;
@@ -309,7 +327,7 @@ module.exports = class UserController extends Controller{
   _txtExport (users) {
     let out = '';
     for (let i = 0; i < users.length; i++) {
-      out += users[i].name + ' <' + users[i].email + '>,';
+      out += users[i].name + ' <' + users[i].email + '>;';
     }
     return out;
   }
@@ -380,7 +398,7 @@ module.exports = class UserController extends Controller{
     }
 
     const that = this;
-    this.log.debug('[UserController] (find) criteria = ', criteria, ' options = ', options);
+    this.log.debug('[UserController] (find) criteria = ', criteria, ' options = ', options, { request: request });
     const query = this.app.services.HelperService.find('User', criteria, options);
     query
       .then((results) => {
@@ -427,7 +445,9 @@ module.exports = class UserController extends Controller{
           }
         }
       })
-      .catch((err) => { that._errorHandler(err, reply); });
+      .catch((err) => {
+        that._errorHandler(err, request, reply);
+      });
   }
 
   find (request, reply) {
@@ -454,7 +474,7 @@ module.exports = class UserController extends Controller{
           }
         })
         .catch((err) => {
-          that._errorHandler(err, reply);
+          that._errorHandler(err, request, reply);
         });
     }
     else {
@@ -517,7 +537,7 @@ module.exports = class UserController extends Controller{
             that._findHelper(request, reply, criteria, options, lists);
           })
           .catch(err => {
-            that._errorHandler(err, reply);
+            that._errorHandler(err, request, reply);
           });
       }
     }
@@ -525,7 +545,7 @@ module.exports = class UserController extends Controller{
 
   // TODO: remove after HPC fixes their app to use new API
   findV1 (request, reply) {
-    this.log.debug('findV1 called');
+    this.log.debug('findV1 called', { request: request });
     const User = this.app.orm.User;
     const that = this;
     User
@@ -533,7 +553,7 @@ module.exports = class UserController extends Controller{
       .then((user) => {
         return reply(user);
       })
-      .catch((err) => { that._errorHandler(err, reply); });
+      .catch((err) => { that._errorHandler(err, request, reply); });
   }
 
   _updateQuery (request, options) {
@@ -561,7 +581,6 @@ module.exports = class UserController extends Controller{
               }
               else {
                 // Notify user of the edit
-                // TODO: add list of actions performed by the administrator
                 const notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
                 NotificationService.send(notification, () => {});
               }
@@ -578,9 +597,10 @@ module.exports = class UserController extends Controller{
   update (request, reply) {
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const Model = this.app.orm.user;
+    const UserModel = this.app.models.User;
 
     this.log.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
-      ', values = ', request.payload);
+      ', values = ', request.payload, { request: request });
 
     this._removeForbiddenAttributes(request);
     if (request.payload.password) {
@@ -594,7 +614,7 @@ module.exports = class UserController extends Controller{
 
     const that = this;
     if ((request.payload.old_password && request.payload.new_password) || request.payload.verified) {
-      this.log.debug('Updating user password or user is verified');
+      this.log.debug('Updating user password or user is verified', { request: request });
       // Check old password
       Model
         .findOne({_id: request.params.id})
@@ -607,11 +627,18 @@ module.exports = class UserController extends Controller{
             request.payload.verified_by = request.params.currentUser._id;
           }
           if (request.payload.old_password) {
+            that.log.warn('Updating user password', { request: request, security: true});
             if (user.validPassword(request.payload.old_password)) {
-              request.payload.password = Model.hashPassword(request.payload.new_password);
+              if (!UserModel.isStrongPassword(request.payload.new_password)) {
+                that.log.warn('Could not update user password. New password is not strong enough', { request: request, security: true, fail: true});
+                return reply(Boom.badRequest('Password is not strong enough'));
+              }
+              request.payload.password = UserModel.hashPassword(request.payload.new_password);
+              that.log.warn('Successfully updated user password', { request: request, security: true});
               return reply(that._updateQuery(request, options));
             }
             else {
+              that.log.warn('Could not update user password. Old password is wrong', { request: request, security: true, fail: true});
               return reply(Boom.badRequest('The old password is wrong'));
             }
           }
@@ -633,45 +660,17 @@ module.exports = class UserController extends Controller{
 
   destroy (request, reply) {
     const User = this.app.orm.User;
-    const childAttributes = User.listAttributes();
-    this.log.debug('[UserController] (destroy) model = user, query =', request.query);
+    this.log.debug('[UserController] (destroy) model = user, query =', request.query, { request: request });
 
     const that = this;
 
     User
-      .findOne({ _id: request.params.id })
-      .then(record => {
-        if (!record) {
-          throw new Error(Boom.notFound());
-        }
-        for (let j = 0; j < childAttributes.length; j++) {
-          if (childAttributes[j] === 'organization') {
-            record.organization = null;
-          }
-          else {
-            record[childAttributes[j]] = [];
-          }
-        }
-        // Set deleted to true
-        record.deleted = true;
-        return record
-          .save()
-          .then(() => {
-            return record;
-          });
-      })
-      .then((record) => {
-        reply(record);
-        return record;
-      })
-      .then((doc) => {
-        // Send notification if user is being deleted by an admin
-        if (request.params.currentUser.id !== doc.id) {
-          that.app.services.NotificationService.send({type: 'admin_delete', createdBy: request.params.currentUser, user: doc}, () => { });
-        }
+      .remove({ _id: request.params.id })
+      .then(() => {
+        return reply().code(204);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 
@@ -679,7 +678,7 @@ module.exports = class UserController extends Controller{
     const Model = this.app.orm.user;
     const email = request.payload.email;
 
-    this.log.debug('[UserController] Setting primary email');
+    this.log.debug('[UserController] Setting primary email', { request: request });
 
     if (!request.payload.email) {
       return reply(Boom.badRequest());
@@ -715,9 +714,9 @@ module.exports = class UserController extends Controller{
 
   validateEmail (request, reply) {
     const Model = this.app.orm.user;
-    let parts = {}, email = '';
+    let email = '', query = {};
 
-    this.log.debug('[UserController] Verifying email ');
+    this.log.debug('[UserController] Verifying email ', { request: request });
 
     if (!request.payload.hash && !request.params.email) {
       return reply(Boom.badRequest());
@@ -726,25 +725,24 @@ module.exports = class UserController extends Controller{
     // TODO: make sure current user can do this
 
     if (request.payload.hash) {
-      parts = Model.explodeHash(request.payload.hash);
-      email = parts.email;
+      query = Model.findOne({hash: request.payload.hash, hashAction: 'verify_email'});
     }
     else {
       email = request.params.email;
+      query = Model.findOne({'emails.email': email});
     }
 
     const that = this;
-    Model
-      .findOne({ 'emails.email': email })
+    query
       .then(record => {
         if (!record) {
           return reply(Boom.notFound());
         }
         if (request.payload.hash) {
           // Verify hash
-          if (record.validHash(request.payload.hash)) {
+          if (record.validHash(request.payload.hash) === true) {
             // Verify user email
-            if (record.email === parts.email) {
+            if (record.email === record.hashEmail) {
               record.email_verified = true;
               record.expires = new Date(0, 0, 1, 0, 0, 0);
               record.emails[0].validated = true;
@@ -754,11 +752,13 @@ module.exports = class UserController extends Controller{
                   return reply(record);
                 });
               })
-              .catch(err => { return reply(Boom.badImplementation(err.toString())); });
+              .catch(err => {
+                that._errorHandler(err, request, reply);
+              });
             }
             else {
               for (let i = 0, len = record.emails.length; i < len; i++) {
-                if (record.emails[i].email === parts.email) {
+                if (record.emails[i].email === record.hashEmail) {
                   record.emails[i].validated = true;
                   record.emails.set(i, record.emails[i]);
                 }
@@ -766,7 +766,9 @@ module.exports = class UserController extends Controller{
               record.save().then((r) => {
                 return reply(r);
               })
-              .catch(err => { return reply(Boom.badImplementation(err.toString())); });
+              .catch(err => {
+                that._errorHandler(err, request, reply);
+              });
             }
           }
           else {
@@ -776,6 +778,10 @@ module.exports = class UserController extends Controller{
         else {
           // Send validation email again
           const appValidationUrl = request.payload.app_validation_url;
+          if (appVerifyUrls.indexOf(appValidationUrl) === -1) {
+            that.log.warn('Invalid app_validation_url', { security: true, fail: true, request: request});
+            return reply(Boom.badRequest('Invalid app_validation_url'));
+          }
           that.app.services.EmailService.sendValidationEmail(record, email, appValidationUrl, function (err, info) {
             return reply('Validation email sent successfully').code(202);
           });
@@ -785,44 +791,61 @@ module.exports = class UserController extends Controller{
 
   resetPassword (request, reply) {
     const Model = this.app.orm.User;
+    const UserModel = this.app.models.User;
     const appResetUrl = request.payload.app_reset_url;
+    const that = this;
 
     if (request.payload.email) {
-      const that = this;
+      if (appResetUrls.indexOf(appResetUrl) === -1) {
+        this.log.warn('Invalid app_reset_url', { security: true, fail: true, request: request});
+        return reply(Boom.badRequest('app_reset_url is invalid'));
+      }
       Model
         .findOne({email: request.payload.email.toLowerCase()})
         .then(record => {
           if (!record) {
-            return that._errorHandler(Boom.badRequest('Email could not be found'), reply);
+            return that._errorHandler(Boom.badRequest('Email could not be found'), request, reply);
           }
           that.app.services.EmailService.sendResetPassword(record, appResetUrl, function (merr, info) {
-            return reply('Password reset email sent successfully').code(202);
+            if (!merr) {
+              return reply('Password reset email sent successfully').code(202);
+            }
+            else {
+              return that._errorHandler(merr, request, reply);
+            }
           });
         });
     }
     else {
       if (request.payload.hash && request.payload.password) {
-        const parts = Model.explodeHash(request.payload.hash);
+        this.log.warn('Resetting password', { security: true, request: request});
         Model
-          .findOne({email: parts.email})
+          .findOne({hash: request.payload.hash, hashAction: 'reset_password'})
           .then(record => {
             if (!record) {
-              return reply(Boom.badRequest('Email could not be found'));
+              that.log.warn('Could not reset password. Hash not found', { security: true, fail: true, request: request});
+              return reply(Boom.badRequest('Reset password link is expired or invalid'));
             }
-            if (record.validHash(request.payload.hash)) {
-              record.password = Model.hashPassword(request.payload.password);
+            if (record.validHash(request.payload.hash) === true) {
+              if (!UserModel.isStrongPassword(request.payload.password)) {
+                that.log.warn('Could not reset password. New password is not strong enough.', { security: true, fail: true, request: request});
+                return reply(Boom.badRequest('New password is not strong enough'));
+              }
+              record.password = UserModel.hashPassword(request.payload.password);
               record.email_verified = true;
               record.expires = new Date(0, 0, 1, 0, 0, 0);
               record.is_orphan = false;
+              record.hash = '';
               record.save().then(() => {
+                that.log.warn('Password updated successfully', { security: true, request: request});
                 return reply('Password reset successfully');
               })
               .catch(err => {
-                return reply(Boom.badImplementation(err.message));
+                that._errorHandler(err, request, reply);
               });
             }
             else {
-              return reply(Boom.badRequest('Invalid hash'));
+              return reply(Boom.badRequest('Reset password link is expired or invalid'));
             }
           });
       }
@@ -836,6 +859,11 @@ module.exports = class UserController extends Controller{
     const Model = this.app.orm.User;
     const appResetUrl = request.payload.app_reset_url;
     const userId = request.params.id;
+
+    if (appResetUrls.indexOf(appResetUrl) === -1) {
+      this.log.warn('Invalid app_reset_url', { security: true, fail: true, request: request});
+      return reply(Boom.badRequest('app_reset_url is invalid'));
+    }
 
     const that = this;
     Model
@@ -855,7 +883,7 @@ module.exports = class UserController extends Controller{
     const userId = request.params.id;
     const that = this;
 
-    this.log.debug('[UserController] Updating picture ');
+    this.log.debug('[UserController] Updating picture ', { request: request });
 
     const data = request.payload;
     if (data.file) {
@@ -878,7 +906,7 @@ module.exports = class UserController extends Controller{
           const file = fs.createWriteStream(path);
 
           file.on('error', function (err) {
-            reply(Boom.badImplementation(err));
+            that._errorHandler(err, request, reply);
           });
 
           data.file.pipe(file);
@@ -889,7 +917,7 @@ module.exports = class UserController extends Controller{
               return reply(record);
             })
             .catch(err => {
-              return reply(Boom.badImplementation(err.toString()));
+              that._errorHandler(err, request, reply);
             });
           });
         }
@@ -905,9 +933,14 @@ module.exports = class UserController extends Controller{
     const appValidationUrl = request.payload.app_validation_url;
     const userId = request.params.id;
 
-    this.log.debug('[UserController] adding email');
+    this.log.debug('[UserController] adding email', { request: request});
     if (!appValidationUrl || !request.payload.email) {
       return reply(Boom.badRequest());
+    }
+
+    if (appVerifyUrls.indexOf(appValidationUrl) === -1) {
+      this.log.warn('Invalid app_validation_url', { security: true, fail: true, request: request});
+      return reply(Boom.badRequest('Invalid app_validation_url'));
     }
 
     // Make sure email added is unique
@@ -930,14 +963,19 @@ module.exports = class UserController extends Controller{
             }
             // Send confirmation email
             that.app.services.EmailService.sendValidationEmail(record, email, appValidationUrl, function (err, info) {
-              const data = { email: email, type: request.payload.type, validated: false };
-              record.emails.push(data);
-              record.save().then(() => {
-                return reply(record);
-              })
-              .catch(err => {
-                return reply(Boom.badImplementation(err.toString()));
-              });
+              if (err) {
+                return that._errorHandler(err, request, reply);
+              }
+              else {
+                const data = { email: email, type: request.payload.type, validated: false };
+                record.emails.push(data);
+                record.save().then(() => {
+                  return reply(record);
+                })
+                .catch(err => {
+                  that._errorHandler(err, request, reply);
+                });
+              }
             });
           }
         );
@@ -948,8 +986,9 @@ module.exports = class UserController extends Controller{
   dropEmail (request, reply) {
     const Model = this.app.orm.User;
     const userId = request.params.id;
+    const that = this;
 
-    this.log.debug('[UserController] dropping email');
+    this.log.debug('[UserController] dropping email', { request: request });
     if (!request.params.email) {
       return reply(Boom.badRequest());
     }
@@ -973,7 +1012,7 @@ module.exports = class UserController extends Controller{
           return reply(record);
         })
         .catch(err => {
-          return reply(Boom.badImplementation(err.toString()));
+          that._errorHandler(err, request, reply);
         });
       }
     );
@@ -982,8 +1021,9 @@ module.exports = class UserController extends Controller{
   addPhone (request, reply) {
     const Model = this.app.orm.User;
     const userId = request.params.id;
+    const that = this;
 
-    this.log.debug('[UserController] adding phone number');
+    this.log.debug('[UserController] adding phone number', { request: request });
 
     Model
       .findOne({_id: userId})
@@ -997,7 +1037,7 @@ module.exports = class UserController extends Controller{
           return reply(record);
         })
         .catch(err => {
-          return reply(Boom.badImplementation(err.toString()));
+          that._errorHandler(err, request, reply);
         });
       }
     );
@@ -1007,8 +1047,9 @@ module.exports = class UserController extends Controller{
     const Model = this.app.orm.User;
     const userId = request.params.id;
     const phoneId = request.params.pid;
+    const that = this;
 
-    this.log.debug('[UserController] dropping phone number');
+    this.log.debug('[UserController] dropping phone number', { request: request });
 
     Model
       .findOne({_id: userId})
@@ -1036,7 +1077,7 @@ module.exports = class UserController extends Controller{
             return reply(record);
           })
           .catch(err => {
-            return reply(Boom.badImplementation(err.toString()));
+            that._errorHandler(err, request, reply);
           }
         );
       }
@@ -1048,7 +1089,7 @@ module.exports = class UserController extends Controller{
     const phone = request.payload.phone;
     const that = this;
 
-    this.log.debug('[UserController] Setting primary phone number');
+    this.log.debug('[UserController] Setting primary phone number', { request: request });
 
     if (!request.payload.phone) {
       return reply(Boom.badRequest());
@@ -1077,7 +1118,7 @@ module.exports = class UserController extends Controller{
             return reply(record);
           })
           .catch(err => {
-            that._errorHandler(err, reply);
+            that._errorHandler(err, request, reply);
           }
         );
       }
@@ -1108,17 +1149,15 @@ module.exports = class UserController extends Controller{
           return reply(user);
         });
       })
-      .catch (err => { that._errorHandler(err, reply); });
+      .catch (err => { that._errorHandler(err, request, reply); });
 
   }
 
   showAccount (request, reply) {
-    this.log.info('calling /account.json for ' + request.params.currentUser.email);
-    let user = JSON.parse(JSON.stringify(request.params.currentUser));
+    this.log.info('calling /account.json for ' + request.params.currentUser.email, { request: request });
+    const user = JSON.parse(JSON.stringify(request.params.currentUser));
     if (request.params.currentClient && (request.params.currentClient.id === 'iasc-prod' || request.params.currentClient.id === 'iasc-dev')) {
-      this.log.info('iasc-prod');
       user.sub = user.email;
-      this.log.info(user);
     }
     if (request.params.currentClient && request.params.currentClient.id === 'dart-prod') {
       delete user._id;
@@ -1138,7 +1177,7 @@ module.exports = class UserController extends Controller{
   notify (request, reply) {
     const Model = this.app.orm.User;
 
-    this.log.debug('[UserController] Notifying user');
+    this.log.debug('[UserController] Notifying user', { request: request });
 
     const that = this;
     Model
@@ -1156,14 +1195,16 @@ module.exports = class UserController extends Controller{
         that.app.services.NotificationService.send(notPayload, function (out) {
           return reply(out);
         });
-      }
-    );
+      })
+      .catch(err => {
+        that._errorHandler(err, request, reply);
+      });
   }
 
   addConnection (request, reply) {
     const User = this.app.orm.User;
 
-    this.log.debug('[UserController] Adding connection');
+    this.log.debug('[UserController] Adding connection', { request: request });
 
     const that = this;
 
@@ -1200,7 +1241,7 @@ module.exports = class UserController extends Controller{
         );
       })
       .catch(err => {
-        that._errorHandler(err, reply);
+        that._errorHandler(err, request, reply);
       }
     );
   }
@@ -1208,7 +1249,7 @@ module.exports = class UserController extends Controller{
   updateConnection (request, reply) {
     const User = this.app.orm.User;
 
-    this.log.debug('[UserController] Updating connection');
+    this.log.debug('[UserController] Updating connection', { request: request });
 
     const that = this;
 
@@ -1257,7 +1298,7 @@ module.exports = class UserController extends Controller{
         );
       })
       .catch(err => {
-        that._errorHandler(err, reply);
+        that._errorHandler(err, request, reply);
       }
     );
   }
@@ -1265,7 +1306,7 @@ module.exports = class UserController extends Controller{
   deleteConnection (request, reply) {
     const User = this.app.orm.User;
 
-    this.log.debug('[UserController] Deleting connection');
+    this.log.debug('[UserController] Deleting connection', { request: request });
 
     const that = this;
 
@@ -1283,7 +1324,7 @@ module.exports = class UserController extends Controller{
           });
       })
       .catch(err => {
-        that._errorHandler(err, reply);
+        that._errorHandler(err, request, reply);
       });
   }
 };

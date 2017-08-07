@@ -4,7 +4,33 @@
 const assert = require('assert');
 
 describe('User Model', () => {
-  it('should exist', () => {
-    assert(global.app.api.models['User']);
+  let User;
+  before(() => {
+    assert(global.app.models.User);
+
+    User = global.app.models.User;
   });
+
+  describe('#isStrongPassword', () => {
+    it ('does not have numbers', () => {
+      assert.equal(User.isStrongPassword('testTest'), false);
+    });
+    it ('does not have uppercase', () => {
+      assert.equal(User.isStrongPassword('testtest2'), false);
+    });
+    it ('is not long enough', () => {
+      assert.equal(User.isStrongPassword('ATest2'), false);
+    });
+    it ('should be strong enough', () => {
+      assert(User.isStrongPassword('ATestTest3'));
+    });
+  });
+
+  describe('#isGeneratedPasswordStrongEnough', () => {
+    it ('is strong enough', () => {
+      const password = User.generateRandomPassword();
+      assert.equal(User.isStrongPassword(password), true);
+    });
+  });
+
 });

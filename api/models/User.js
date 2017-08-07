@@ -6,6 +6,9 @@ const Bcrypt = require('bcryptjs');
 const Libphonenumber = require('google-libphonenumber');
 const https = require('https');
 const _ = require('lodash');
+const crypto = require('crypto');
+const isHTML = require('is-html');
+const validate = require('mongoose-validator');
 const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
 const userPopulate1 = [
   {path: 'favoriteLists'},
@@ -21,6 +24,24 @@ const userPopulate1 = [
  */
 module.exports = class User extends Model {
 
+  // Determines if a password is strong enough for HID
+  isStrongPassword (password) {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+    // At least 8 characters and at least one number, one uppercase and one lowercase.
+    return password.length > 7 && regex.test(password);
+  }
+
+  hashPassword (password) {
+    return Bcrypt.hashSync(password, 11);
+  }
+
+  // Generate a cryptographically strong random password.
+  generateRandomPassword () {
+    const buffer = crypto.randomBytes(256);
+    return buffer.toString('hex').slice(0, 10) + 'B';
+  }
+
+
   static config () {
     return {
       schema: {
@@ -33,9 +54,6 @@ module.exports = class User extends Model {
         }
       },
       statics: {
-        hashPassword: function (password) {
-          return Bcrypt.hashSync(password, 11);
-        },
         explodeHash: function (hashLink) {
           const key = new Buffer(hashLink, 'base64').toString('ascii');
           const parts = key.split('/');
@@ -128,25 +146,25 @@ module.exports = class User extends Model {
           }
         },
 
-        generateHash: function (email) {
+        generateHash: function () {
+          const buffer = crypto.randomBytes(256);
           const now = Date.now();
-          const hash = new Buffer(Bcrypt.hashSync(this.password + now + this._id, 11)).toString('base64');
-          return new Buffer(email + '/' + now + '/' + hash).toString('base64');
+          const hash = buffer.toString('hex').slice(0, 15);
+          return new Buffer(now + '/' + hash).toString('base64');
         },
 
         // Validate the hash of a confirmation link
         validHash: function (hashLink) {
           const key = new Buffer(hashLink, 'base64').toString('ascii');
           const parts = key.split('/');
-          const email = parts[0];
-          const timestamp = parts[1];
-          const hash = new Buffer(parts[2], 'base64').toString('ascii');
+          const timestamp = parts[0];
           const now = Date.now();
 
           // Verify hash
           // verify timestamp is not too old (allow up to 7 days in milliseconds)
           if (timestamp < (now - 7 * 86400000) || timestamp > now) {
             return false;
+<<<<<<< HEAD
           }
 
           if (this.emailIndex(email) === -1) {
@@ -157,6 +175,10 @@ module.exports = class User extends Model {
           if (!Bcrypt.compareSync(this.password + timestamp + this._id, hash)) {
             return false;
           }
+=======
+          }
+
+>>>>>>> dev
           return true;
         },
 
@@ -261,7 +283,7 @@ module.exports = class User extends Model {
             }
             catch (err) {
               // Invalid phone number
-              that.log.error(err);
+              that.log.error('An invalid phone number was found', { error: err });
             }
           });
           return found;
@@ -293,7 +315,7 @@ module.exports = class User extends Model {
                 }
               }
               catch (e) {
-                that.log.info('Error parsing hrinfo API: ' + e);
+                that.log.error('Error parsing hrinfo API', { error: e});
                 return callback(e);
               }
             });
@@ -359,6 +381,9 @@ module.exports = class User extends Model {
         toJSON: function () {
           const user = this.toObject();
           delete user.password;
+          delete user.hash;
+          delete user.hashAction;
+          delete user.hashEmail;
           listTypes.forEach(function (attr) {
             _.remove(user[attr + 's'], function (checkin) {
               return checkin.deleted;
@@ -402,7 +427,7 @@ module.exports = class User extends Model {
               return next();
             })
             .catch(err => {
-              that.log.error(err);
+              that.log.error('Error populating user', { error: err });
             }
           );
         });
@@ -411,6 +436,10 @@ module.exports = class User extends Model {
   }
 
   static schema () {
+
+    const isHTMLValidator = function (v) {
+      return !isHTML(v);
+    };
 
     const visibilities = ['anyone', 'verified', 'connections'];
 
@@ -425,13 +454,17 @@ module.exports = class User extends Model {
         trim: true,
         unique: true,
         sparse: true,
-        match: /^([\w-\.\+]+@([\w-]+\.)+[\w-]{2,4})?$/
+        validate: validate({
+          validator: 'isEmail',
+          passIfEmpty: true,
+          message: 'email should be a valid email'
+        })
       },
       validated: {
         type: Boolean,
         default: false
       }
-    }, { readonly: true });
+    });
 
     const phoneSchema = new Schema({
       type: {
@@ -471,7 +504,11 @@ module.exports = class User extends Model {
         enum: ['en', 'fr', 'es']
       },
       text: {
-        type: String
+        type: String,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in text'
+        }
       }
     });
 
@@ -557,7 +594,11 @@ module.exports = class User extends Model {
         type: String,
         lowercase: true,
         trim: true,
-        match: /^([\w-\.\+]+@([\w-]+\.)+[\w-]{2,4})?$/,
+        validate: validate({
+          validator: 'isEmail',
+          passIfEmpty: false,
+          message: 'email should be a valid email'
+        }),
         required: true
       },
       service: {
@@ -581,19 +622,35 @@ module.exports = class User extends Model {
       given_name: {
         type: String,
         trim: true,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in given_name'
+        },
         required: [true, 'Given name is required']
       },
       middle_name: {
         type: String,
-        trim: true
+        trim: true,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in middle_name'
+        }
       },
       family_name: {
         type: String,
         trim: true,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in family_name'
+        },
         required: [true, 'Family name is required']
       },
       name: {
-        type: String
+        type: String,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in name'
+        }
       },
       email: {
         type: String,
@@ -601,7 +658,11 @@ module.exports = class User extends Model {
         trim: true,
         unique: true,
         sparse: true,
-        match: /^([\w-\.\+]+@([\w-]+\.)+[\w-]{2,4})?$/
+        validate: validate({
+          validator: 'isEmail',
+          passIfEmpty: true,
+          message: 'email should be a valid email'
+        })
       },
       email_verified: {
         type: Boolean,
@@ -624,8 +685,11 @@ module.exports = class User extends Model {
         type: Date,
         readonly: true
       },
-      // TODO: find a way to set this as readonly
-      emails: [emailSchema],
+      // TODO: mark this as readonly after HID-1499 is fixed
+      emails: {
+        type: [emailSchema]
+        //readonly: true
+      },
       emailsVisibility: {
         type: String,
         enum: visibilities,
@@ -645,13 +709,22 @@ module.exports = class User extends Model {
         ref: 'User',
         readonly: true
       },
-      // Makes sure it's a valid URL
+      // Makes sure it's a valid URL, and do not allow urls from other domains
       picture: {
         type: String,
-        match: /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/
+        validate: validate({
+          validator: 'isURL',
+          passIfEmpty: true,
+          arguments: {host_whitelist: ['api.humanitarian.id', 'api2.dev.humanitarian.id']},
+          message: 'picture should be a valid URL'
+        })
       },
       notes: {
-        type: String
+        type: String,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in notes'
+        }
       },
       // Validates an array of VoIP objects
       voips: {
@@ -663,6 +736,9 @@ module.exports = class User extends Model {
               const types = ['Skype', 'Google', 'Facebook', 'Yahoo', 'Twitter'];
               for (let i = 0, len = v.length; i < len; i++) {
                 if (!v[i].username || !v[i].type || (v[i].type && types.indexOf(v[i].type) === -1)) {
+                  out = false;
+                }
+                if (v[i].username && isHTML(v[i].username)) {
                   out = false;
                 }
               }
@@ -699,16 +775,25 @@ module.exports = class User extends Model {
       },
       // TODO: validate timezone
       zoneinfo: {
-        type: String
+        type: String,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in zoneinfo'
+        }
       },
       locale: {
         type: String,
         enum: ['en', 'fr', 'es', 'ar'],
         default: 'en'
       },
-      // TODO :make sure it's a valid organization
-      organization: listUserSchema,
-      organizations: [listUserSchema],
+      organization: {
+        type: listUserSchema,
+        readonly: true
+      },
+      organizations: {
+        type: [listUserSchema],
+        readonly: true
+      },
       // Verify valid phone number with libphonenumber and reformat if needed
       phone_number: {
         type: String,
@@ -735,29 +820,65 @@ module.exports = class User extends Model {
         type: String,
         enum: ['Mobile', 'Landline', 'Fax', 'Satellite'],
       },
-      // TODO: find a way to set this as readonly
-      phone_numbers: [phoneSchema],
+      // TODO: mark this as readonly when HID-1506 is fixed
+      phone_numbers: {
+        type: [phoneSchema]
+        //readonly: true
+      },
       phonesVisibility: {
         type: String,
         enum: visibilities,
         default: 'anyone'
       },
       job_title: {
-        type: String
+        type: String,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in job_title'
+        }
       },
       job_titles: {
-        type: Array
+        type: Array,
+        validate: {
+          validator: function (v) {
+            let out = true;
+            if (v.length) {
+              for (let i = 0, len = v.length; i < len; i++) {
+                if (isHTML(v[i])) {
+                  out = false;
+                }
+              }
+            }
+            return out;
+          },
+          message: 'HTML in job titles is not allowed'
+        }
       },
       functional_roles: [listUserSchema],
       status: {
-        type: String
+        type: String,
+        validate: {
+          validator: isHTMLValidator,
+          message: 'HTML code is not allowed in status field'
+        }
       },
-      // TODO: make sure this is a valid location
+      // TODO: figure out validation
       location: {
         type: Schema.Types.Mixed
+        /*validate: validate({
+          validator: 'isJSON',
+          passIfEmpty: true,
+          message: 'location should be valid JSON'
+        })*/
       },
+      // TODO: figure out validation
       locations: {
         type: Array
+        /*validate: validate({
+          validator: 'isJSON',
+          passIfEmpty: true,
+          message: 'locations should be valid JSON'
+        })*/
       },
       locationsVisibility: {
         type: String,
@@ -803,19 +924,64 @@ module.exports = class User extends Model {
         type: Schema.ObjectId,
         ref: 'List'
       }],
-      lists: [listUserSchema],
-      operations: [listUserSchema],
-      bundles: [listUserSchema],
-      disasters: [listUserSchema],
-      offices: [listUserSchema],
+      lists: {
+        type: [listUserSchema],
+        readonly: true
+      },
+      operations: {
+        type: [listUserSchema],
+        readonly: true
+      },
+      bundles: {
+        type: [listUserSchema],
+        readonly: true
+      },
+      disasters: {
+        type: [listUserSchema],
+        readonly: true
+      },
+      offices: {
+        type: [listUserSchema],
+        readonly: true
+      },
       authorizedClients: [{
         type: Schema.ObjectId,
         ref: 'Client'
       }],
-      subscriptions: [subscriptionSchema],
-      connections: [connectionSchema],
+      subscriptions: {
+        type: [subscriptionSchema],
+        readonly: true
+      },
+      connections: {
+        type: [connectionSchema],
+        readonly: true
+      },
+      // TODO: figure out validation
       appMetadata: {
         type: Schema.Types.Mixed
+        /*validate: validate({
+          validator: 'isJSON',
+          passIfEmpty: true,
+          message: 'appMetadata should be valid JSON'
+        })*/
+      },
+      hash: {
+        type: String,
+        readonly: true
+      },
+      hashAction: {
+        type: String,
+        enum: ['verify_email', 'reset_password'],
+        readonly: true
+      },
+      hashEmail: {
+        type: String,
+        readonly: true,
+        validate: validate({
+          validator: 'isEmail',
+          passIfEmpty: true,
+          message: 'hashEmail should be a valid email'
+        })
       },
       deleted: {
         type: Boolean,

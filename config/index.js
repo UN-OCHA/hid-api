@@ -6,7 +6,6 @@ exports.footprints = require('./footprints');
 exports.i18n = require('./i18n');
 exports.log = require('./log');
 exports.main = require('./main');
-exports.migrate = require('./migrate');
 exports.policies = require('./policies');
 exports.routes = require('./routes');
 exports.session = require('./session');

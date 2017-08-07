@@ -21,7 +21,7 @@ module.exports = class ViewController extends Controller {
   }
 
   _getRegisterLink(args) {
-    let params = this.app.services.HelperService.getOauthParams(args);
+    const params = this.app.services.HelperService.getOauthParams(args);
     let registerLink = '/register';
     if (params) {
       registerLink += '?' + params;
@@ -30,7 +30,7 @@ module.exports = class ViewController extends Controller {
   }
 
   _getPasswordLink(args) {
-    let params = this.app.services.HelperService.getOauthParams(args);
+    const params = this.app.services.HelperService.getOauthParams(args);
     let registerLink = '/password';
     if (params) {
       registerLink += '?' + params;
@@ -39,6 +39,7 @@ module.exports = class ViewController extends Controller {
   }
 
   login (request, reply) {
+    const Client = this.app.orm.Client;
     const session = request.yar.get('session');
     if (session) { // User is already logged in
       if (request.query.client_id &&
@@ -60,16 +61,41 @@ module.exports = class ViewController extends Controller {
       }
     }
 
-    let registerLink = this._getRegisterLink(request.query);
-    let passwordLink = this._getPasswordLink(request.query);
-
-    return reply.view('login', {
+    const registerLink = this._getRegisterLink(request.query);
+    const passwordLink = this._getPasswordLink(request.query);
+    const loginArgs = {
       title: 'Log into Humanitarian ID',
       query: request.query,
       registerLink: registerLink,
       passwordLink: passwordLink,
       alert: false
-    });
+    };
+
+    // Check client ID and redirect URI at this stage, so we can send an error message if needed.
+    if (request.query.client_id) {
+      Client
+        .findOne({id: request.query.client_id})
+        .then(client => {
+          if (!client || (client && client.redirectUri !== request.query.redirect_uri)) {
+            loginArgs.alert = {
+              type: 'danger',
+              message: 'The configuration of the client application is invalid. We can not log you in.'
+            };
+            return reply.view('login', loginArgs);
+          }
+          return reply.view('login', loginArgs);
+        })
+        .catch(err => {
+          loginArgs.alert = {
+            type: 'danger',
+            message: 'Internal server error. We can not log you in. Please let us know at info@humanitarian.id'
+          };
+          return reply.view('login', loginArgs);
+        });
+    }
+    else {
+      return reply.view('login', loginArgs);
+    }
   }
 
   logout (request, reply) {
@@ -115,8 +141,8 @@ module.exports = class ViewController extends Controller {
         'You registered successfully. Please confirm your email address',
         'There was an error registering you.'
       );
-      let registerLink = that._getRegisterLink(request.payload);
-      let passwordLink = that._getPasswordLink(request.payload);
+      const registerLink = that._getRegisterLink(request.payload);
+      const passwordLink = that._getPasswordLink(request.payload);
       return reply.view('login', {
         alert: al,
         query: request.query,
@@ -139,8 +165,8 @@ module.exports = class ViewController extends Controller {
         'Thank you for confirming your email address. You can now log in',
         'There was an error confirming your email address.'
       );
-      let registerLink = that._getRegisterLink(request.query);
-      let passwordLink = that._getPasswordLink(request.query);
+      const registerLink = that._getRegisterLink(request.query);
+      const passwordLink = that._getPasswordLink(request.query);
       return reply.view('login', {
         alert: al,
         query: request.query,
@@ -166,8 +192,8 @@ module.exports = class ViewController extends Controller {
         'You should have received an email which will allow you to reset your password.',
         'There was an error resetting your password.'
       );
-      let registerLink = that._getRegisterLink(request.payload);
-      let passwordLink = that._getPasswordLink(request.payload);
+      const registerLink = that._getRegisterLink(request.payload);
+      const passwordLink = that._getPasswordLink(request.payload);
       return reply.view('login', {
         alert: al,
         query: request.query,
@@ -191,8 +217,8 @@ module.exports = class ViewController extends Controller {
         'Your password was successfully reset.',
         'There was an error resetting your password.'
       );
-      let registerLink = that._getRegisterLink(request.payload);
-      let passwordLink = that._getPasswordLink(request.payload);
+      const registerLink = that._getRegisterLink(request.payload);
+      const passwordLink = that._getPasswordLink(request.payload);
       return reply.view('login', {
         alert: al,
         query: request.payload,
@@ -220,7 +246,7 @@ module.exports = class ViewController extends Controller {
           });
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, reply);
+          that.app.services.ErrorService.handle(err, request, reply);
         });
     }
   }

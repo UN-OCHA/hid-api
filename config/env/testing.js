@@ -9,9 +9,10 @@ module.exports = {
   },
 
   database: {
+    stores: {
+    },
     models: {
-      defaultStore: 'testing',
-      migrate: 'drop'
+      migrate: 'create'
     }
   }
 };

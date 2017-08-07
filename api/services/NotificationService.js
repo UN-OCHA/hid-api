@@ -23,14 +23,14 @@ module.exports = class NotificationService extends Service {
       .then(not => {
         return that.app.services.EmailService.sendNotification(notification, function (err, info) {
           if (err) {
-            that.log.error('Error sending an email notification: ' + err);
+            that.log.error('Error sending an email notification', { error: err });
             return callback(Boom.badImplementation());
           }
           return callback();
         });
       })
       .catch(err => {
-        that.log.error('Error creating a notification: ' + err);
+        that.log.error('Error creating a notification', { error: err });
         return callback(Boom.badImplementation());
       });
   }
@@ -53,7 +53,6 @@ module.exports = class NotificationService extends Service {
       }
     }
     if (!areUsers) {
-      this.log.debug('Transforming user ID in users');
       User
         .find({_id: { $in: users}})
         .then((items) => {
@@ -84,7 +83,7 @@ module.exports = class NotificationService extends Service {
 
     Notification.create(notification, function (err, not) {
       if (err) {
-        that.log.error('Error creating a notification: ' + err);
+        that.log.error('Error creating a notification.', { error: err });
         return callback(Boom.badImplementation());
       }
       return callback();

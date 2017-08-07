@@ -20,7 +20,6 @@ module.exports = class ServiceController extends Controller{
   }
 
   find (request, reply) {
-    const FootprintService = this.app.services.FootprintService;
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
     const Service = this.app.orm.Service;
@@ -59,7 +58,7 @@ module.exports = class ServiceController extends Controller{
           result.sanitize(request.params.currentUser);
           return reply(result);
         })
-        .catch(err => { that.app.services.ErrorService.handle(err, reply); });
+        .catch(err => { that.app.services.ErrorService.handle(err, request, reply); });
     }
     else {
       const Service = this.app.orm.Service;
@@ -67,14 +66,13 @@ module.exports = class ServiceController extends Controller{
       const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
 
       if (criteria.lists) {
-        let lists = criteria.lists.split(',');
+        const lists = criteria.lists.split(',');
         if (lists.length > 1) {
           criteria.$or = [];
           lists.forEach(function (id) {
             criteria.$or.push({lists: id});
           });
           delete criteria.lists;
-          this.log.debug(criteria);
         }
       }
 
@@ -95,24 +93,22 @@ module.exports = class ServiceController extends Controller{
           return reply(result.result).header('X-Total-Count', result.number);
         })
         .catch((err) => {
-          that.app.services.ErrorService.handle(err, reply);
+          that.app.services.ErrorService.handle(err, request, reply);
         });
     }
   }
 
   update (request, reply) {
-    // TODO: make sure user is owner of the service or admin
     request.params.model = 'service';
     const FootprintController = this.app.controllers.FootprintController;
     FootprintController.update(request, reply);
   }
 
   destroy (request, reply) {
-    // TODO: make sure user is owner of the service or admin
     const Service = this.app.orm.Service;
     const User = this.app.orm.User;
 
-    this.log.debug('[ServiceController] (destroy) model = service, query =', request.query);
+    this.log.debug('[ServiceController] (destroy) model = service, query =', request.query, {request: request});
     const that = this;
 
     const criteria = {};
@@ -137,11 +133,11 @@ module.exports = class ServiceController extends Controller{
         return Service
           .remove({ _id: request.params.id })
           .then(() => {
-            reply();
+            reply().code(204);
           });
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 
@@ -157,7 +153,7 @@ module.exports = class ServiceController extends Controller{
           reply(result);
         })
         .catch((err) => {
-          that.app.services.ErrorService.handle(err, reply);
+          that.app.services.ErrorService.handle(err, request, reply);
         });
       }
       catch (err) {
@@ -196,7 +192,7 @@ module.exports = class ServiceController extends Controller{
         });
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 
@@ -299,7 +295,7 @@ module.exports = class ServiceController extends Controller{
                 });
               }
               else {
-                that.app.services.ErrorService.handle(err, reply);
+                that.app.services.ErrorService.handle(err, request, reply);
               }
             }
           );
@@ -323,7 +319,7 @@ module.exports = class ServiceController extends Controller{
           user.subscriptions.push({email: request.payload.email, service: service});
           user.save((err) => {
             if (err) {
-              that.log.error(err);
+              that.log.error('Error subscribing member to a mailchimp list', {request: request, fail: true, error: err});
               reply(Boom.badImplementation());
             }
             else {
@@ -341,7 +337,7 @@ module.exports = class ServiceController extends Controller{
           });
         }
         else {
-          that.app.services.ErrorService.handle(err, reply);
+          that.app.services.ErrorService.handle(err, request, reply);
         }
       });
   }
@@ -356,7 +352,8 @@ module.exports = class ServiceController extends Controller{
       '[ServiceController] Unsubscribing user ' +
       request.params.id +
       ' from ' +
-      request.params.serviceId
+      request.params.serviceId,
+      { request: request }
     );
 
     const that = this;
@@ -466,7 +463,7 @@ module.exports = class ServiceController extends Controller{
         }
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, reply);
+        that.app.services.ErrorService.handle(err, request, reply);
       });
   }
 };

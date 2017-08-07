@@ -3,8 +3,8 @@
 
 const assert = require('assert');
 
-describe('Duplicate Model', () => {
+describe('Flood Model', () => {
   it('should exist', () => {
-    assert(global.app.api.models['Duplicate']);
+    assert(global.app.api.models.Flood);
   });
 });

@@ -5,8 +5,23 @@ const winston = require('winston');
 module.exports = {
 
   database: {
+    stores: {
+      production: {
+        migrate: 'create',
+        uri: process.env.DATABASE,
+        options: {
+          server: {
+            socketOptions: {
+              keepAlive: 600000,
+              connectTimeoutMS: 60000
+            }
+          }
+        }
+      }
+    },
     models: {
-      defaultStore: 'production'
+      defaultStore: 'production',
+      migrate: 'create'
     }
   },
 
