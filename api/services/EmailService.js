@@ -76,7 +76,7 @@ module.exports = class EmailService extends Service {
     const hash = user.generateHash();
     const that = this;
     user.hash = hash;
-    user.hashAction = 'verify_email';
+    user.hashAction = 'reset_password';
     user.hashEmail = user.email;
     user
       .save()
@@ -103,7 +103,7 @@ module.exports = class EmailService extends Service {
     const hash = user.generateHash();
     const that = this;
     user.hash = hash;
-    user.hashAction = 'verify_email';
+    user.hashAction = 'reset_password';
     user.hashEmail = user.email;
     user
       .save()

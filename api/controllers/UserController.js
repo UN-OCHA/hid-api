@@ -20,7 +20,9 @@ const appVerifyUrls = [
   'https://api2.dev.humanitarian.id/verify',
   'https://auth.humanitarian.id/verify',
   'https://humanitarian.id/reset_password?orphan=true',
-  'https://app2.dev.humanitarian.id/reset_password?orphan=true'
+  'https://app2.dev.humanitarian.id/reset_password?orphan=true',
+  'https://app2.dev.humanitarian.id/reset_password',
+  'https://humanitarian.id/reset_password'
 ];
 
 /**
