@@ -164,21 +164,7 @@ module.exports = class User extends Model {
           // verify timestamp is not too old (allow up to 7 days in milliseconds)
           if (timestamp < (now - 7 * 86400000) || timestamp > now) {
             return false;
-<<<<<<< HEAD
           }
-
-          if (this.emailIndex(email) === -1) {
-            return false;
-          }
-
-          // verify hash
-          if (!Bcrypt.compareSync(this.password + timestamp + this._id, hash)) {
-            return false;
-          }
-=======
-          }
-
->>>>>>> dev
           return true;
         },
 
