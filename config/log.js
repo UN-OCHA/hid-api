@@ -25,6 +25,10 @@ module.exports = {
     rewriters: [
       function (level, msg, metadata) {
         const ip = metadata.request ? metadata.request.headers['x-forwarded-for'] || metadata.request.info.remoteAddress : '';
+        let userId = '';
+        if (metadata.request && metadata.request.params && metadata.request.params.currentUser) {
+          userId = metadata.request.params.currentUser._id.toString();
+        }
         delete metadata.request;
 
         // Keep original metadata safe.
@@ -35,42 +39,14 @@ module.exports = {
         metadata.hostname = os.hostname();
         metadata.env = 'hid-' + process.env.NODE_ENV;
         metadata.ip = ip;
+        metadata.user = userId;
         metadata['@timestamp'] = new Date().toJSON();
 
         return metadata;
       }
     ],
     transports: [
-      new (winston.transports.Console)({
-        /*timestamp: true
-        prettyPrint: true,
-        colorize: true,
-        timestamp: function() {
-          const d = new Date();
-          return d.toUTCString();
-        },
-        formatter: function(options) {
-          // Return string will be passed to logger.
-          let meta = options.meta;
-          if (meta.request) {
-            meta.ip = meta.request.headers['x-forwarded-for'] ? meta.request.headers['x-forwarded-for'] : '';
-            if (meta.request.params && meta.request.params.currentUser) {
-              meta.email = meta.request.params.currentUser.email;
-            }
-            delete meta.request;
-          }
-          if (meta.security) {
-            options.message = '[SECURITY] ' + options.message;
-            delete meta.security;
-          }
-          if (meta.fail) {
-            options.message = '[FAIL] ' + options.message;
-            delete meta.fail;
-          }
-          return '[' + options.timestamp() + '] ' + options.level.toUpperCase() + ' ' + (options.message ? options.message : '') +
-            (meta && Object.keys(meta).length ? '\n\t' + JSON.stringify(meta) : '' );
-        }*/
-      })
+      new (winston.transports.Console)()
     ]
   })
 
