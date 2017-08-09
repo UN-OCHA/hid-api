@@ -24,6 +24,7 @@ module.exports = {
     exitOnError: false,
     rewriters: [
       function (level, msg, metadata) {
+        const ip = metadata.request ? metadata.request.headers['x-forwarded-for'] || metadata.request.info.remoteAddress : '';
         delete metadata.request;
 
         // Keep original metadata safe.
@@ -33,6 +34,7 @@ module.exports = {
         metadata.level = level;
         metadata.hostname = os.hostname();
         metadata.env = 'hid-' + process.env.NODE_ENV;
+        metadata.ip = ip;
         metadata['@timestamp'] = new Date().toJSON();
 
         return metadata;
