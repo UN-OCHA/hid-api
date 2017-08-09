@@ -320,28 +320,27 @@ module.exports = class ListUserController extends Controller{
       ])
       .stream();
 
-      stream.on('data', function(user) {
-        this.pause();
-        const that = this;
-        const now = Date.now();
-        async.eachSeries(childAttributes, function (attr, nextAttr) {
-          async.eachSeries(user[attr], function (lu, nextLu) {
-            lu.owner = lu.list.owner;
-            lu.managers = lu.list.managers;
-            user.save(function (err) {
-              nextLu();
-            });
-          }, function (err) {
-            nextAttr();
+    stream.on('data', function(user) {
+      this.pause();
+      const that = this;
+      async.eachSeries(childAttributes, function (attr, nextAttr) {
+        async.eachSeries(user[attr], function (lu, nextLu) {
+          lu.owner = lu.list.owner;
+          lu.managers = lu.list.managers;
+          user.save(function (err) {
+            nextLu();
           });
         }, function (err) {
-          that.resume();
+          nextAttr();
         });
+      }, function (err) {
+        that.resume();
       });
+    });
 
-      stream.on('close', function () {
-        that.log.info('Finished updating listusers');
-      });
+    stream.on('close', function () {
+      that.log.info('Finished updating listusers');
+    });
   }
 
 };
