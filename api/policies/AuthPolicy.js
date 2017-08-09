@@ -91,8 +91,8 @@ module.exports = class AuthPolicy extends Policy {
               .findOne({_id: jtoken.id})
               .then(user => {
                 if (user) {
-                  that.log.warn('Successful authentication through JWT', { security: true, request: request});
                   request.params.currentUser = user;
+                  that.log.warn('Successful authentication through JWT', { security: true, request: request});
                   reply();
                 }
                 else {
