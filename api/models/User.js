@@ -114,9 +114,32 @@ module.exports = class User extends Model {
             const that = this;
             listTypes.forEach(function (attr) {
               _.remove(that[attr + 's'], function (checkin) {
-                return checkin.visibility === 'inlist' ||
-                  checkin.visibility === 'me' ||
-                  checkin.visibility === 'verified' && !user.verified;
+                if (checkin.visibility === 'inlist') {
+                  let out = true;
+                  // Is user in list ?
+                  for (let i = 0; i < user[attr + 's'].length; i++) {
+                    if (user[attr + 's'][i].list.toString() === checkin.list.toString() && !user[attr + 's'][i].deleted) {
+                      out = false;
+                    }
+                  }
+                  // Is user the owner of the list ?
+                  if (checkin.owner && checkin.owner.toString() === user._id.toString()) {
+                    out = false;
+                  }
+                  // Is user a manager of the list ?
+                  if (checkin.managers && checkin.managers.length) {
+                    for (let i = 0; i < checkin.managers.length; i++) {
+                      if (checkin.managers[i].toString() === user._id.toString()) {
+                        out = false;
+                      }
+                    }
+                  }
+                  return out;
+                }
+                else {
+                  return checkin.visibility === 'me' ||
+                    checkin.visibility === 'verified' && !user.verified;
+                }
               });
             });
           }
@@ -523,6 +546,14 @@ module.exports = class User extends Model {
       names: [translationSchema],
       acronym: { type: String},
       acronyms: [translationSchema],
+      owner: {
+        type: Schema.ObjectId,
+        ref: 'User'
+      },
+      managers: [{
+        type: Schema.ObjectId,
+        ref: 'User'
+      }],
       visibility: {
         type: String,
         enum: ['me', 'inlist', 'all', 'verified'],
