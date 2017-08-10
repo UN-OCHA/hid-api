@@ -328,12 +328,14 @@ module.exports = class ListUserController extends Controller{
           if (lu.list && lu.list.owner) {
             lu.owner = lu.list.owner;
             lu.managers = lu.list.managers;
+            app.log.info('Updated list for ' + user._id.toString());
             user.save(function (err) {
               nextLu();
             });
           }
           else {
             app.log.info('No list for ' + user._id.toString());
+            nextLu();
           }
         }, function (err) {
           nextAttr();
