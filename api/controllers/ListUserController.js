@@ -304,7 +304,7 @@ module.exports = class ListUserController extends Controller{
 
   updateListUsers(request, reply) {
     reply();
-    const that = this;
+    const app = this;
     const User = this.app.orm.User;
     const childAttributes = User.listAttributes();
     const stream = User
@@ -333,7 +333,7 @@ module.exports = class ListUserController extends Controller{
             });
           }
           else {
-            that.log.info('No list for ' + user._id.toString());
+            app.log.info('No list for ' + user._id.toString());
           }
         }, function (err) {
           nextAttr();
@@ -344,7 +344,7 @@ module.exports = class ListUserController extends Controller{
     });
 
     stream.on('close', function () {
-      that.log.info('Finished updating listusers');
+      app.log.info('Finished updating listusers');
     });
   }
 
