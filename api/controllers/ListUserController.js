@@ -325,11 +325,16 @@ module.exports = class ListUserController extends Controller{
       const that = this;
       async.eachSeries(childAttributes, function (attr, nextAttr) {
         async.eachSeries(user[attr], function (lu, nextLu) {
-          lu.owner = lu.list.owner;
-          lu.managers = lu.list.managers;
-          user.save(function (err) {
-            nextLu();
-          });
+          if (lu.list && lu.list.owner) {
+            lu.owner = lu.list.owner;
+            lu.managers = lu.list.managers;
+            user.save(function (err) {
+              nextLu();
+            });
+          }
+          else {
+            that.log.info('No list for ' + user._id.toString());
+          }
         }, function (err) {
           nextAttr();
         });
