@@ -171,12 +171,7 @@ module.exports = class UserController extends Controller{
               }
             }
             else {
-              // User is being "reactivated" by someone else
-              // Make sure it shows up in the HID app
-              record.authOnly = false;
-              record.save().then(() => {
-                return reply(record);
-              });
+              return reply(Boom.badRequest('This user already exists.', {user_id: record._id.toString()}));
             }
           }
         })
