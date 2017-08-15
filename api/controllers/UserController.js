@@ -171,7 +171,7 @@ module.exports = class UserController extends Controller{
               }
             }
             else {
-              return reply(Boom.badRequest('This user already exists.', {user_id: record._id.toString()}));
+              return reply(Boom.badRequest('This user already exists. user_id=' + record._id.toString()));
             }
           }
         })
