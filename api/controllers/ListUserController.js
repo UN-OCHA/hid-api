@@ -3,6 +3,7 @@
 const Controller = require('trails/controller');
 const Boom = require('boom');
 const _ = require('lodash');
+const async = require('async');
 
 /**
  * @module ListUserController
@@ -53,6 +54,8 @@ module.exports = class ListUserController extends Controller{
 
         payload.name = list.name;
         payload.acronym = list.acronym;
+        payload.owner = list.owner;
+        payload.managers = list.managers;
         payload.visibility = list.visibility;
 
         if (list.type === 'organization') {
@@ -297,6 +300,54 @@ module.exports = class ListUserController extends Controller{
       .catch(err => {
         that.app.services.ErrorService.handle(err, request, reply);
       });
+  }
+
+  updateListUsers(request, reply) {
+    reply();
+    const app = this;
+    const User = this.app.orm.User;
+    const childAttributes = User.listAttributes();
+    const stream = User
+      .find({})
+      .populate([{path: 'lists.list'},
+        {path: 'operations.list'},
+        {path: 'bundles.list'},
+        {path: 'disasters.list'},
+        {path: 'organization.list'},
+        {path: 'organizations.list'},
+        {path: 'functional_roles.list'},
+        {path: 'offices.list'}
+      ])
+      .stream();
+
+    stream.on('data', function(user) {
+      this.pause();
+      const that = this;
+      async.eachSeries(childAttributes, function (attr, nextAttr) {
+        async.eachSeries(user[attr], function (lu, nextLu) {
+          if (lu && lu.list && lu.list.owner) {
+            lu.owner = lu.list.owner;
+            lu.managers = lu.list.managers;
+            app.log.info('Updated list for ' + user._id.toString());
+            user.save(function (err) {
+              nextLu();
+            });
+          }
+          else {
+            app.log.info('No list for ' + user._id.toString());
+            nextLu();
+          }
+        }, function (err) {
+          nextAttr();
+        });
+      }, function (err) {
+        that.resume();
+      });
+    });
+
+    stream.on('close', function () {
+      app.log.info('Finished updating listusers');
+    });
   }
 
 };

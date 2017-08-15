@@ -136,6 +136,10 @@ module.exports = class List extends Model {
           });
           next ();
         });
+        schema.post('findOneAndUpdate', function (list) {
+          // Calling list.save to go through the presave hook and update list name
+          list.save();
+        });
         schema.pre('update', function (next) {
           if (this.acronym) {
             this.name = this.label + ' (' + this.acronym + ')';

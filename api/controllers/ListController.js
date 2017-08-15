@@ -246,6 +246,8 @@ module.exports = class ListController extends Controller{
                   user[list.type + 's'][j].names = list.names;
                   user[list.type + 's'][j].acronym = list.acronym;
                   user[list.type + 's'][j].acronyms = list.acronyms;
+                  user[list.type + 's'][j].owner = list.owner;
+                  user[list.type + 's'][j].managers = list.managers;
                   user[list.type + 's'][j].visibility = list.visibility;
                 }
               }

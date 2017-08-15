@@ -101,7 +101,37 @@ module.exports = class ViewController extends Controller {
   logout (request, reply) {
     request.yar.reset();
     if (request.query.redirect) {
-      return reply.redirect(request.query.redirect);
+      // Validate redirect URL
+      const url = request.query.redirect;
+      let hostname;
+      if (url.indexOf('://') > -1) {
+        hostname = url.split('/')[2];
+      }
+      else {
+        hostname = url.split('/')[0];
+      }
+      //find & remove port number
+      hostname = hostname.split(':')[0];
+      //find & remove "?"
+      hostname = hostname.split('?')[0];
+      const Client = this.app.orm.Client;
+      const regex = new RegExp(hostname, 'i');
+      const that = this;
+      Client
+        .count({redirectUri: regex})
+        .then(count => {
+          if (count > 0) {
+            return reply.redirect(request.query.redirect);
+          }
+          else {
+            that.log.warn('Redirecting to ' + request.query.redirect + ' is not allowed', { security: true, fail: true, request: request});
+            return reply.redirect('/');
+          }
+        })
+        .catch(err => {
+          that.log.error('Error logging user out', {request: request, error: err});
+          return reply.redirect('/');
+        });
     }
     else {
       return reply.redirect('/');
