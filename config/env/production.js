@@ -66,10 +66,16 @@ module.exports = {
           timestamp: true
         }),
         new winston.transports.DailyRotateFile({
-          filename: './log',
-          datePattern: 'yyyy-MM-dd',
-          prepend: true,
-          level: 'info'
+          name: 'info-file',
+          filename: 'trails-info.log',
+          level: 'info',
+          timestamp: true
+        }),
+        new winston.transports.DailyRotateFile({
+          name: 'error-file',
+          filename: 'trails-error.log',
+          level: 'error',
+          timestamp: true
         })
       ]
     })
