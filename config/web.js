@@ -55,6 +55,14 @@ module.exports = {
     {
       register: require('hapi-oauth2orize'),
       options: { }
+    },
+    {
+      register: require('hapi-rate-limit'),
+      options: {
+        userLimit: 1,
+        trustProxy: true,
+        pathLimit: false
+      }
     }
   ],
 
