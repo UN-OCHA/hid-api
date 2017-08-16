@@ -10,6 +10,7 @@
 const winston = require('winston');
 const os = require('os');
 const _ = require('lodash');
+require('winston-daily-rotate-file');
 
 module.exports = {
 
@@ -46,7 +47,13 @@ module.exports = {
       }
     ],
     transports: [
-      new (winston.transports.Console)()
+      new (winston.transports.Console)(),
+      new winston.transports.DailyRotateFile({
+        filename: './log',
+        datePattern: 'yyyy-MM-dd',
+        prepend: true,
+        level: 'debug'
+      })
     ]
   })
 
