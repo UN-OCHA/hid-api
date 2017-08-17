@@ -9,6 +9,13 @@ const queryOptions = [
   'sort',
   'fields'
 ];
+const authorizedDomains = [
+  'https://humanitarian.id',
+  'https://auth.humanitarian.id',
+  'https://app2.dev.humanitarian.id',
+  'https://api2.dev.humanitarian.id',
+  'https://api.humanitarian.id'
+];
 
 /**
  * @module HelperService
@@ -119,5 +126,15 @@ module.exports = class HelperService extends Service {
       query.select(options.fields);
     }
     return query;
+  }
+
+  isAuthorizedUrl (url) {
+    let out = false;
+    for (let i = 0; i < authorizedDomains.length; i++) {
+      if (url.indexOf(authorizedDomains[i]) === 0) {
+        out = true;
+      }
+    }
+    return out;
   }
 };
