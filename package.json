@@ -28,6 +28,7 @@
     "google-libphonenumber": "^2.0.19",
     "googleapis": "^15.1.0",
     "hapi-oauth2orize": "UN-OCHA/hapi-oauth2orize",
+    "hapi-rate-limit": "^1.4.0",
     "is-html": "^1.1.0",
     "jsonwebtoken": "^7.1.9",
     "mailchimp-api-v3": "^1.7.0",
@@ -43,6 +44,7 @@
     "trailpack-router": "^2.1.0",
     "trails": "^2.0.1",
     "winston": "^2.2",
+    "winston-daily-rotate-file": "^1.4.6",
     "yar": "^8.1.0"
   },
   "devDependencies": {

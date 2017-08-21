@@ -8,22 +8,6 @@ const ejs = require('ejs');
 const http = require('http');
 const moment = require('moment');
 const acceptLanguage = require('accept-language');
-const appResetUrls = [
-  'https://humanitarian.id/reset_password',
-  'https://auth.humanitarian.id/new_password',
-  'https://app2.dev.humanitarian.id/reset_password',
-  'https://api2.dev.humanitarian.id/new_password'
-];
-const appVerifyUrls = [
-  'https://app2.dev.humanitarian.id/verify',
-  'https://humanitarian.id/verify',
-  'https://api2.dev.humanitarian.id/verify',
-  'https://auth.humanitarian.id/verify',
-  'https://humanitarian.id/reset_password?orphan=true',
-  'https://app2.dev.humanitarian.id/reset_password?orphan=true',
-  'https://app2.dev.humanitarian.id/reset_password',
-  'https://humanitarian.id/reset_password'
-];
 
 /**
  * @module UserController
@@ -135,7 +119,7 @@ module.exports = class UserController extends Controller{
     }
 
     const appVerifyUrl = request.payload.app_verify_url;
-    if (appVerifyUrls.indexOf(appVerifyUrl) === -1) {
+    if (!this.app.services.HelperService.isAuthorizedUrl(appVerifyUrl)) {
       this.log.warn('Invalid app_verify_url', { security: true, fail: true, request: request});
       return reply(Boom.badRequest('Invalid app_verify_url'));
     }
@@ -171,12 +155,7 @@ module.exports = class UserController extends Controller{
               }
             }
             else {
-              // User is being "reactivated" by someone else
-              // Make sure it shows up in the HID app
-              record.authOnly = false;
-              record.save().then(() => {
-                return reply(record);
-              });
+              return reply(Boom.badRequest('This user already exists. user_id=' + record._id.toString()));
             }
           }
         })
@@ -778,7 +757,7 @@ module.exports = class UserController extends Controller{
         else {
           // Send validation email again
           const appValidationUrl = request.payload.app_validation_url;
-          if (appVerifyUrls.indexOf(appValidationUrl) === -1) {
+          if (!that.app.services.HelperService.isAuthorizedUrl(appValidationUrl)) {
             that.log.warn('Invalid app_validation_url', { security: true, fail: true, request: request});
             return reply(Boom.badRequest('Invalid app_validation_url'));
           }
@@ -796,7 +775,7 @@ module.exports = class UserController extends Controller{
     const that = this;
 
     if (request.payload.email) {
-      if (appResetUrls.indexOf(appResetUrl) === -1) {
+      if (!this.app.services.HelperService.isAuthorizedUrl(appResetUrl)) {
         this.log.warn('Invalid app_reset_url', { security: true, fail: true, request: request});
         return reply(Boom.badRequest('app_reset_url is invalid'));
       }
@@ -860,7 +839,7 @@ module.exports = class UserController extends Controller{
     const appResetUrl = request.payload.app_reset_url;
     const userId = request.params.id;
 
-    if (appResetUrls.indexOf(appResetUrl) === -1) {
+    if (!this.app.services.HelperService.isAuthorizedUrl(appResetUrl)) {
       this.log.warn('Invalid app_reset_url', { security: true, fail: true, request: request});
       return reply(Boom.badRequest('app_reset_url is invalid'));
     }
@@ -938,7 +917,7 @@ module.exports = class UserController extends Controller{
       return reply(Boom.badRequest());
     }
 
-    if (appVerifyUrls.indexOf(appValidationUrl) === -1) {
+    if (!this.app.services.HelperService.isAuthorizedUrl(appValidationUrl)) {
       this.log.warn('Invalid app_validation_url', { security: true, fail: true, request: request});
       return reply(Boom.badRequest('Invalid app_validation_url'));
     }

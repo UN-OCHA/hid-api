@@ -62,11 +62,17 @@ module.exports = class ClientController extends Controller{
     }
   }
 
-  // TODO: force to go through validators
   update (request, reply) {
-    request.params.model = 'client';
-    const FootprintController = this.app.controllers.FootprintController;
-    FootprintController.update(request, reply);
+    const Model = this.app.orm.client,
+      that = this;
+    Model
+      .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
+      .then((client) => {
+        reply(client);
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 
   destroy (request, reply) {

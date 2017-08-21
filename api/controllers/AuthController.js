@@ -155,7 +155,7 @@ module.exports = class AuthController extends Controller{
         }
 
         reply.redirect(redirect);
-        that.log.info('Successful user authentication. Redirecting.', {email: request.payload.email, security: true, request: request});
+        that.log.info('Successful user authentication. Redirecting.', {client_id: request.payload.client_id, email: request.payload.email, security: true, request: request});
       }
       else {
         const params = that.app.services.HelperService.getOauthParams(request.payload);
@@ -191,7 +191,7 @@ module.exports = class AuthController extends Controller{
 
     // Check response_type
     if (!request.query.response_type) {
-      this.log.warn('Unsuccessful OAuth2 authorization due to missing response_type', {security: true, fail: true, request: request});
+      this.log.warn('Unsuccessful OAuth2 authorization due to missing response_type', {client_id: request.query.client_id, security: true, fail: true, request: request});
       return reply(Boom.badRequest('Missing response_type'));
     }
 
@@ -199,7 +199,7 @@ module.exports = class AuthController extends Controller{
     // all relevant query parameters.
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId)) {
-      this.log.info('Get request to /oauth/authorize without session. Redirecting to the login page.', {request: request});
+      this.log.info('Get request to /oauth/authorize without session. Redirecting to the login page.', {client_id: request.query.client_id, request: request});
       return reply.redirect(
         '/?redirect=/oauth/authorize&client_id=' + request.query.client_id +
         '&redirect_uri=' + request.query.redirect_uri +
@@ -267,7 +267,7 @@ module.exports = class AuthController extends Controller{
     const cookie = request.yar.get('session');
 
     if (!cookie || (cookie && !cookie.userId)) {
-      this.log.info('Got request to /oauth/authorize without session. Redirecting to the login page.', {request: request});
+      this.log.info('Got request to /oauth/authorize without session. Redirecting to the login page.', {client_id: request.query.client_id, request: request});
       return reply.redirect('/?redirect=/oauth/authorize&client_id=' + request.query.client_id +
         '&redirect_uri=' + request.query.redirect_uri +
         '&response_type=' + request.query.response_type +
