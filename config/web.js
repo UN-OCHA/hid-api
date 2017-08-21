@@ -59,7 +59,7 @@ module.exports = {
     {
       register: require('hapi-rate-limit'),
       options: {
-        userLimit: 1,
+        userLimit: 100000,
         trustProxy: true,
         pathLimit: false
       }
