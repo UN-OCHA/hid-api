@@ -263,4 +263,16 @@ module.exports = class EmailService extends Service {
     this.send(mailOptions, 'auth_to_profile', context, callback);
   }
 
+  sendEmailAlert (user, emailSend, emailAdded, callback) {
+    const mailOptions = {
+      to: emailSend,
+      locale: user.locale
+    };
+    const context = {
+      user: user,
+      emailAdded: emailAdded
+    };
+    this.send(mailOptions, 'email_alert', context, callback);
+  }
+
 };
