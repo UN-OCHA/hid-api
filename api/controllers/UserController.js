@@ -947,7 +947,7 @@ module.exports = class UserController extends Controller{
               }
               else {
                 for (let i = 0; i < record.emails.length; i++) {
-                  that.app.services.EmailService.sendEmailAlert(record, record.emails[i], email);
+                  that.app.services.EmailService.sendEmailAlert(record, record.emails[i].email, email);
                 }
                 const data = { email: email, type: request.payload.type, validated: false };
                 record.emails.push(data);
