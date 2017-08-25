@@ -47,6 +47,10 @@ module.exports = class TOTPController extends Controller{
       .catch(err => {
         that.app.services.ErrorService.handleError(err, request, reply);
       });
+  }
 
+  // Empty endpoint to verify a TOTP token
+  verifyTOTPToken (request, reply) {
+    reply();
   }
 };

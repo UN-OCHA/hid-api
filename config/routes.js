@@ -333,12 +333,6 @@ module.exports = [
 
   {
     method: 'POST',
-    path: '/api/v2/user/totp-qrcode',
-    handler: 'TOTPController.generateQRCode'
-  },
-
-  {
-    method: 'POST',
     path: '/api/v2/list',
     handler: 'ListController.create'
   },
@@ -437,5 +431,17 @@ module.exports = [
     method: 'DELETE',
     path: '/api/v2/service/{id}',
     handler: 'ServiceController.destroy'
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v2/totp/qrcode',
+    handler: 'TOTPController.generateQRCode'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/totp/check',
+    handler: 'TOTPController.verifyTOTPToken'
   }
 ];

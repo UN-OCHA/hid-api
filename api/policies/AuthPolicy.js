@@ -3,6 +3,7 @@
 const Policy = require('trails/policy');
 const Boom = require('boom');
 const acceptLanguage = require('accept-language');
+const speakeasy = require('speakeasy');
 
 /**
  * @module AuthPolicy
@@ -106,6 +107,33 @@ module.exports = class AuthPolicy extends Policy {
           });
       }
     });
+  }
+
+  isTOTPAuthenticated (request, reply) {
+    const user = request.params.currentUser;
+    const token = request.headers['X-HID-TOTP'];
+
+    if (!user.totpConf || !user.totpConf.secret) {
+      return reply(Boom.unauthorized('TOTP was not configured for this user'));
+    }
+
+    if (!token) {
+      return reply(Boom.unauthorized('No TOTP token'));
+    }
+
+    const success = speakeasy.totp.verify({
+      secret: user.totpConf.secret,
+      encoding: `base32`,
+      window: 1, // let user enter previous totp token because ux
+      token
+    });
+
+    if (success) {
+      return reply();
+    }
+    else {
+      return reply(Boom.unauthorized('Invalid TOTP token !'));
+    }
   }
 
   isAdmin (request, reply) {
