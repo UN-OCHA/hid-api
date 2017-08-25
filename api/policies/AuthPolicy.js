@@ -123,7 +123,7 @@ module.exports = class AuthPolicy extends Policy {
 
     const success = speakeasy.totp.verify({
       secret: user.totpConf.secret,
-      encoding: `base32`,
+      encoding: 'base32',
       window: 1, // let user enter previous totp token because ux
       token
     });
