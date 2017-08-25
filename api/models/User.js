@@ -394,6 +394,9 @@ module.exports = class User extends Model {
           delete user.hash;
           delete user.hashAction;
           delete user.hashEmail;
+          if (user.totpConf) {
+            delete user.totpConf;
+          }
           listTypes.forEach(function (attr) {
             _.remove(user[attr + 's'], function (checkin) {
               return checkin.deleted;
@@ -1010,6 +1013,19 @@ module.exports = class User extends Model {
         type: Boolean,
         default: true
       },
+      // Whether the user uses TOTP for security
+      totp: {
+        type: Boolean,
+        default: false
+      },
+      totpMethod: {
+        type: String,
+        enum: ['app']
+      },
+      totpConf: {
+        type: Schema.Types.Mixed,
+        readonly: true
+      }
     };
   }
 };

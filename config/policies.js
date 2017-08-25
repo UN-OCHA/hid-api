@@ -41,6 +41,10 @@ module.exports = {
     find: ['AuthPolicy.isAuthenticated']
   },
 
+  TOTPController: {
+    generateQRCode: ['AuthPolicy.isAuthenticated']
+  },
+
   UserController: {
     showAccount: [ 'AuthPolicy.isAuthenticated'],
     create: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canCreate' ],
