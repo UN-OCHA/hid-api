@@ -111,7 +111,7 @@ module.exports = class AuthPolicy extends Policy {
 
   isTOTPAuthenticated (request, reply) {
     const user = request.params.currentUser;
-    const token = request.headers['X-HID-TOTP'];
+    const token = request.headers['x-hid-totp'];
 
     if (!user.totpConf || !user.totpConf.secret) {
       return reply(Boom.unauthorized('TOTP was not configured for this user'));

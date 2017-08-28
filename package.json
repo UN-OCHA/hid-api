@@ -21,7 +21,6 @@
     "bcryptjs": "^2.3.0",
     "bson": "1.0.1",
     "crumb": "^6.0.3",
-    "crypto": "0.0.3",
     "ejs": "^2.5.2",
     "email-templates": "^2.5.2",
     "google-auth-library": "^0.9.10",
