@@ -244,7 +244,7 @@ module.exports = class ViewController extends Controller {
     const that = this;
     UserController.resetPassword(request, function (result) {
       const al = that._getAlert(result,
-        'Your password was successfully reset.',
+        'Your password was successfully reset. You can now login.',
         'There was an error resetting your password.'
       );
       const registerLink = that._getRegisterLink(request.payload);

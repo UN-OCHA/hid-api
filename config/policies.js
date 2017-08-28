@@ -41,6 +41,12 @@ module.exports = {
     find: ['AuthPolicy.isAuthenticated']
   },
 
+  // Limit 2FA to admins for now
+  TOTPController: {
+    generateQRCode: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
+    verifyTOTPToken: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPAuthenticated']
+  },
+
   UserController: {
     showAccount: [ 'AuthPolicy.isAuthenticated'],
     create: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canCreate' ],
