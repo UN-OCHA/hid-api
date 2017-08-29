@@ -1,6 +1,6 @@
 'use strict';
 
-const speakeasy = require('speakeasy');
+const authenticator = require('authenticator');
 const Boom = require('boom');
 const QRCode = require('qrcode');
 const Controller = require('trails/controller');
@@ -20,22 +20,20 @@ module.exports = class TOTPController extends Controller{
       this.log.warn('2FA already enabled. Can not generate QRCode.', { security: true, fail: true, request: request});
       return reply(Boom.badRequest('You have already enabled 2FA. You need to disable it first'));
     }
+    const secret = authenticator.generateKey();
     const options = {
       issuer: 'HID',
       name: user.name,
       length: 64
     };
-    const { base32, otpauth_url } = speakeasy.generateSecret(options);
     const mfa = {
-      created: new Date(),
-      enrolled: null,
-      secret: base32,
-      otp: otpauth_url
+      secret: secret
     };
     user.totpConf = mfa;
     user
       .save()
       .then(() => {
+        const otpauth_url = authenticator.generateTotpUri(secret, user.name, 'HID', 'SHA1', 6, 30);
         QRCode.toDataURL(otpauth_url, function (err, qrcode) {
           if (err) {
             that.app.services.ErrorService.handleError(err, request, reply);
