@@ -23,6 +23,8 @@ tags:
     description: 'Methods related to oauth clients'
   - name: 'notification'
     description: 'Methods related to notifications'
+  - name: 'totp'
+    description: 'Methods related to 2 Factor Authentication'
 host: 'api2.dev.humanitarian.id'
 basePath: '/api/v2'
 schemes:
@@ -833,37 +835,124 @@ paths:
         '200':
           description: 'Notification was updated successfully'
   /jsonwebtoken:
-      post:
-        tags:
-          - auth
-        summary: 'Generate a jsonwebtoken'
-        parameters:
-          - name: 'body'
-            description: 'User email'
-            in: body
-            required: true
-            schema:
-              $ref: '#/definitions/Auth'
-        responses:
-          '200':
-            description: 'The json web token'
-          '400':
-            description: 'Bad request. Missing email and/or password'
-          '401':
-            description: 'Wrong email and/or password'
-          '429':
-            description: 'The account was locked for 5 minutes because there were more than 5 unsuccessful login attempts within the last 5 minutes'
-      get:
-        tags:
-          - auth
-        summary: 'Retrieve the json web tokens of the current user'
-        responses:
-          '200':
-            description: 'List of the JWTs of the current user'
-      delete:
-        tags:
-          - auth
-        summary: 'Blacklists a json web token'
-        responses:
-          '200':
-            description: 'Json Web Token was successfully blacklisted'
+    post:
+      tags:
+        - auth
+      summary: 'Generate a jsonwebtoken'
+      parameters:
+        - name: 'body'
+          description: 'User email'
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Auth'
+      responses:
+        '200':
+          description: 'The json web token'
+        '400':
+          description: 'Bad request. Missing email and/or password'
+        '401':
+          description: 'Wrong email and/or password'
+        '429':
+          description: 'The account was locked for 5 minutes because there were more than 5 unsuccessful login attempts within the last 5 minutes'
+    get:
+      tags:
+        - auth
+      summary: 'Retrieve the json web tokens of the current user'
+      responses:
+        '200':
+          description: 'List of the JWTs of the current user'
+    delete:
+      tags:
+        - auth
+      summary: 'Blacklists a json web token'
+      responses:
+        '200':
+          description: 'Json Web Token was successfully blacklisted'
+  /totp:
+    post:
+      tags:
+        - totp
+      summary: 'Enable TOTP for the current user'
+      parameters:
+        - name: 'method'
+          description: 'TOTP method to use (app or sms)'
+          in: body
+          required: true
+        - name: 'authorization'
+          in: 'header'
+          description: 'The JWT'
+          required: true
+          type: string
+        - name: 'X-HID-TOTP'
+          in: 'header'
+          description: 'The TOTP token'
+          required: true
+          type: string
+      responses:
+        '200':
+          description: 'TOTP was enabled successfully'
+        '400':
+          description: 'Bad request. Invalid TOTP method or TOTP is already enabled'
+        '401':
+          description: 'Missing or invalid TOTP token'
+    get:
+      tags:
+        - totp
+      summary: 'Check if a TOTP token is valid'
+      parameters:
+        - name: 'authorization'
+          in: 'header'
+          description: 'The JWT'
+          required: true
+          type: string
+        - name: 'X-HID-TOTP'
+          in: 'header'
+          description: 'The TOTP token'
+          required: true
+          type: string
+      responses:
+        '200':
+          description: 'The TOTP token is valid'
+        '401':
+          description: 'Missing or invalid TOTP token'
+    delete:
+      tags:
+        - totp
+      summary: 'Disables 2FA for the current user'
+      parameters:
+        - name: 'authorization'
+          in: 'header'
+          description: 'The JWT'
+          required: true
+          type: string
+        - name: 'X-HID-TOTP'
+          in: 'header'
+          description: 'The TOTP token'
+          required: true
+          type: string
+      responses:
+        '200':
+          description: '2FA was successfully disabled'
+        '400':
+          description: 'Bad request. TOTP is already disabled for the current user'
+        '401':
+          description: 'Missing or invalid TOTP token'
+  /totp/qrcode:
+    post:
+      tags:
+        - totp
+      summary: 'Generate a QRCode for TOTP authentication via an application'
+      parameters:
+        - name: 'authorization'
+          in: 'header'
+          description: 'The JWT'
+          required: true
+          type: string
+      responses:
+        '200':
+          description: 'TOTP was enabled successfully'
+        '400':
+          description: 'Bad request. TOTP is already enabled, and needs to be disabled before generating a QRCode'
+        '401':
+          description: 'Missing or invalid authorization token'
