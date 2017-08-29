@@ -15,7 +15,7 @@ module.exports = class TOTPController extends Controller{
   generateQRCode (request, reply) {
     const user = request.params.currentUser;
     const that = this;
-    if (user.totp) {
+    if (user.totp === true) {
       // TOTP is already enabled, user needs to disable it first
       this.log.warn('2FA already enabled. Can not generate QRCode.', { security: true, fail: true, request: request});
       return reply(Boom.badRequest('You have already enabled 2FA. You need to disable it first'));
@@ -45,5 +45,51 @@ module.exports = class TOTPController extends Controller{
   // Empty endpoint to verify a TOTP token
   verifyTOTPToken (request, reply) {
     reply();
+  }
+
+  // Enables TOTP for current user
+  enable (request, reply) {
+    const user = request.params.currentUser;
+    const that = this;
+    if (user.totp === true) {
+      // TOTP is already enabled, user needs to disable it first
+      this.log.warn('2FA already enabled. No need to reenable.', { security: true, fail: true, request: request});
+      return reply(Boom.badRequest('2FA is already enabled. You need to disable it first'));
+    }
+    const method = request.payload.method;
+    if (!method || (method !== 'app' && method !== 'sms')) {
+      return reply(Boom.badRequest('Valid 2FA method is required'));
+    }
+    user.totpMethod = request.payload.method;
+    user.totp = true;
+    user
+      .save()
+      .then(() => {
+        return reply(user);
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handleError(err, request, reply);
+      });
+  }
+
+  // Disables TOTP for current user
+  disable (request, reply) {
+    const user = request.params.currentUser;
+    const that = this;
+    if (user.totp !== true) {
+      // TOTP is already disabled
+      this.log.warn('2FA already disabled.', { security: true, fail: true, request: request});
+      return reply(Boom.badRequest('2FA is already disabled.'));
+    }
+    user.totp = false;
+    user.totpConf = {};
+    user
+      .save()
+      .then(() => {
+        return reply(user);
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handleError(err, request, reply);
+      });
   }
 };
