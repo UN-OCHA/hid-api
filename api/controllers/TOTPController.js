@@ -21,11 +21,6 @@ module.exports = class TOTPController extends Controller{
       return reply(Boom.badRequest('You have already enabled 2FA. You need to disable it first'));
     }
     const secret = authenticator.generateKey();
-    const options = {
-      issuer: 'HID',
-      name: user.name,
-      length: 64
-    };
     const mfa = {
       secret: secret
     };
@@ -33,8 +28,8 @@ module.exports = class TOTPController extends Controller{
     user
       .save()
       .then(() => {
-        const otpauth_url = authenticator.generateTotpUri(secret, user.name, 'HID', 'SHA1', 6, 30);
-        QRCode.toDataURL(otpauth_url, function (err, qrcode) {
+        const otpauthUrl = authenticator.generateTotpUri(secret, user.name, 'HID', 'SHA1', 6, 30);
+        QRCode.toDataURL(otpauthUrl, function (err, qrcode) {
           if (err) {
             that.app.services.ErrorService.handleError(err, request, reply);
             return;
