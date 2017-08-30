@@ -873,7 +873,7 @@ module.exports = class UserController extends Controller{
           if (!record) {
             return reply(Boom.notFound());
           }
-          const ext = data.file.hapi.filename.split('.').pop();
+          /*const ext = data.file.hapi.filename.split('.').pop();
           const mimeType = data.file.hapi.headers['content-type'];
           if (mimeType !== 'image/jpeg' && mimeType !== 'image/png') {
             return reply(Boom.badRequest('Only jpg, jpeg or png extensions allowed'));
@@ -881,8 +881,8 @@ module.exports = class UserController extends Controller{
           // Avoid files with any extension
           if (ext !== 'jpg' && ext !== 'jpeg' && ext !== 'png') {
             return reply(Boom.badRequest('Only jpg, jpeg or png extensions allowed'));
-          }
-          const path = __dirname + '/../../assets/pictures/' + userId + '.' + ext;
+          }*/
+          const path = __dirname + '/../../assets/pictures/' + userId + '.jpg';
 
           sharp(data.file)
             .resize(320, 240)
@@ -891,7 +891,7 @@ module.exports = class UserController extends Controller{
                 that._errorHandler(err, request, reply);
               }
               else {
-                record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + ext;
+                record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.jpg';
                 record.save().then(() => {
                   return reply(record);
                 })

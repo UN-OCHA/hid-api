@@ -246,7 +246,7 @@ module.exports = [
     handler: 'UserController.updatePicture',
     config: {
       payload: {
-        output: 'stream',
+        output: 'data',
         parse: true,
         allow: 'multipart/form-data'
       }
