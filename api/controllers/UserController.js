@@ -2,7 +2,6 @@
 
 const Controller = require('trails/controller');
 const Boom = require('boom');
-const fs = require('fs');
 const qs = require('qs');
 const ejs = require('ejs');
 const http = require('http');
