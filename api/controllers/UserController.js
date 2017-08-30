@@ -873,15 +873,6 @@ module.exports = class UserController extends Controller{
           if (!record) {
             return reply(Boom.notFound());
           }
-          /*const ext = data.file.hapi.filename.split('.').pop();
-          const mimeType = data.file.hapi.headers['content-type'];
-          if (mimeType !== 'image/jpeg' && mimeType !== 'image/png') {
-            return reply(Boom.badRequest('Only jpg, jpeg or png extensions allowed'));
-          }
-          // Avoid files with any extension
-          if (ext !== 'jpg' && ext !== 'jpeg' && ext !== 'png') {
-            return reply(Boom.badRequest('Only jpg, jpeg or png extensions allowed'));
-          }*/
           let path = __dirname + '/../../assets/pictures/' + userId + '.';
           let ext = '';
 
@@ -908,23 +899,6 @@ module.exports = class UserController extends Controller{
             .catch(err => {
               that._errorHandler(err, request, reply);
             });
-          /*const file = fs.createWriteStream(path);
-
-          file.on('error', function (err) {
-            that._errorHandler(err, request, reply);
-          });
-
-          data.file.pipe(file);
-
-          data.file.on('end', function (err) {
-            record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + ext;
-            record.save().then(() => {
-              return reply(record);
-            })
-            .catch(err => {
-              that._errorHandler(err, request, reply);
-            });
-          });*/
         }
       );
     }
