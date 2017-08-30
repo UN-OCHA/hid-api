@@ -882,23 +882,31 @@ module.exports = class UserController extends Controller{
           if (ext !== 'jpg' && ext !== 'jpeg' && ext !== 'png') {
             return reply(Boom.badRequest('Only jpg, jpeg or png extensions allowed'));
           }*/
-          const path = __dirname + '/../../assets/pictures/' + userId + '.jpg';
+          let path = __dirname + '/../../assets/pictures/' + userId + '.';
+          let ext = '';
 
-          sharp(data.file)
-            .resize(320, 240)
-            .toFile(path, (err, info) => {
-              if (err) {
-                that._errorHandler(err, request, reply);
+          const image = sharp(data.file);
+          image
+            .metadata()
+            .then(function(metadata) {
+              if (metadata.format !== 'jpeg' && metadata.format !== 'png') {
+                return reply(Boom.badRequest('Invalid image format. Only jpeg and png are accepted'));
               }
-              else {
-                record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.jpg';
-                record.save().then(() => {
-                  return reply(record);
-                })
-                .catch(err => {
-                  that._errorHandler(err, request, reply);
-                });
-              }
+              ext = metadata.format;
+              path = path + ext;
+              return image
+                .resize(320, 240)
+                .toFile(path);
+            })
+            .then(function (info) {
+              record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + ext;
+              return record.save();
+            })
+            .then(function() {
+              return reply(record);
+            })
+            .catch(err => {
+              that._errorHandler(err, request, reply);
             });
           /*const file = fs.createWriteStream(path);
 
