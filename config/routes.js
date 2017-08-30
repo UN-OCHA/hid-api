@@ -246,7 +246,7 @@ module.exports = [
     handler: 'UserController.updatePicture',
     config: {
       payload: {
-        output: 'stream',
+        output: 'data',
         parse: true,
         allow: 'multipart/form-data'
       }
@@ -440,8 +440,20 @@ module.exports = [
   },
 
   {
+    method: 'POST',
+    path: '/api/v2/totp',
+    handler: 'TOTPController.enable'
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/totp',
+    handler: 'TOTPController.disable'
+  },
+
+  {
     method: 'GET',
-    path: '/api/v2/totp/check',
+    path: '/api/v2/totp',
     handler: 'TOTPController.verifyTOTPToken'
   }
 ];

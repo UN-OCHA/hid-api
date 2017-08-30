@@ -3,7 +3,7 @@
 const Policy = require('trails/policy');
 const Boom = require('boom');
 const acceptLanguage = require('accept-language');
-const speakeasy = require('speakeasy');
+const authenticator = require('authenticator');
 
 /**
  * @module AuthPolicy
@@ -121,12 +121,7 @@ module.exports = class AuthPolicy extends Policy {
       return reply(Boom.unauthorized('No TOTP token'));
     }
 
-    const success = speakeasy.totp.verify({
-      secret: user.totpConf.secret,
-      encoding: 'base32',
-      window: 1, // let user enter previous totp token because ux
-      token
-    });
+    const success = authenticator.verifyToken(user.totpConf.secret, token);
 
     if (success) {
       return reply();

@@ -62,9 +62,6 @@ module.exports = {
         }
       ],
       transports: [
-        new winston.transports.Console({
-          timestamp: true
-        }),
         new winston.transports.DailyRotateFile({
           name: 'info-file',
           filename: 'trails-info.log',

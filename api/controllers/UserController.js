@@ -8,6 +8,7 @@ const ejs = require('ejs');
 const http = require('http');
 const moment = require('moment');
 const acceptLanguage = require('accept-language');
+const sharp = require('sharp');
 
 /**
  * @module UserController
@@ -872,33 +873,32 @@ module.exports = class UserController extends Controller{
           if (!record) {
             return reply(Boom.notFound());
           }
-          const ext = data.file.hapi.filename.split('.').pop();
-          const mimeType = data.file.hapi.headers['content-type'];
-          if (mimeType !== 'image/jpeg' && mimeType !== 'image/png') {
-            return reply(Boom.badRequest('Only jpg, jpeg or png extensions allowed'));
-          }
-          // Avoid files with any extension
-          if (ext !== 'jpg' && ext !== 'jpeg' && ext !== 'png') {
-            return reply(Boom.badRequest('Only jpg, jpeg or png extensions allowed'));
-          }
-          const path = __dirname + '/../../assets/pictures/' + userId + '.' + ext;
-          const file = fs.createWriteStream(path);
+          let path = __dirname + '/../../assets/pictures/' + userId + '.';
+          let ext = '';
 
-          file.on('error', function (err) {
-            that._errorHandler(err, request, reply);
-          });
-
-          data.file.pipe(file);
-
-          data.file.on('end', function (err) {
-            record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + ext;
-            record.save().then(() => {
+          const image = sharp(data.file);
+          image
+            .metadata()
+            .then(function(metadata) {
+              if (metadata.format !== 'jpeg' && metadata.format !== 'png') {
+                return reply(Boom.badRequest('Invalid image format. Only jpeg and png are accepted'));
+              }
+              ext = metadata.format;
+              path = path + ext;
+              return image
+                .resize(200, 200)
+                .toFile(path);
+            })
+            .then(function (info) {
+              record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + ext;
+              return record.save();
+            })
+            .then(function() {
               return reply(record);
             })
             .catch(err => {
               that._errorHandler(err, request, reply);
             });
-          });
         }
       );
     }
