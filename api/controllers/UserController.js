@@ -887,14 +887,19 @@ module.exports = class UserController extends Controller{
           sharp(data.file)
             .resize(320, 240)
             .toFile(path, (err, info) => {
-              record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + ext;
-              record.save().then(() => {
-                return reply(record);
-              })
-              .catch(err => {
+              if (err) {
                 that._errorHandler(err, request, reply);
-              });
-            } );
+              }
+              else {
+                record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + ext;
+                record.save().then(() => {
+                  return reply(record);
+                })
+                .catch(err => {
+                  that._errorHandler(err, request, reply);
+                });
+              }
+            });
           /*const file = fs.createWriteStream(path);
 
           file.on('error', function (err) {
