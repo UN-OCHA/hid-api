@@ -895,7 +895,7 @@ module.exports = class UserController extends Controller{
               ext = metadata.format;
               path = path + ext;
               return image
-                .resize(320, 240)
+                .resize(200, 200)
                 .toFile(path);
             })
             .then(function (info) {
