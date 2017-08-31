@@ -8,6 +8,7 @@ const http = require('http');
 const moment = require('moment');
 const acceptLanguage = require('accept-language');
 const sharp = require('sharp');
+const authenticator = require('authenticator');
 
 /**
  * @module UserController
@@ -768,69 +769,147 @@ module.exports = class UserController extends Controller{
       });
   }
 
+  // Send a password reset email
+  // TODO: make sure we control flood
+  sendResetPassword (request, reply) {
+    const User = this.app.orm.User;
+    const appResetUrl = request.payload.app_reset_url;
+    const that = this;
+
+    if (!this.app.services.HelperService.isAuthorizedUrl(appResetUrl)) {
+      this.log.warn('Invalid app_reset_url', { security: true, fail: true, request: request});
+      return reply(Boom.badRequest('app_reset_url is invalid'));
+    }
+    User
+      .findOne({email: request.payload.email.toLowerCase()})
+      .then(record => {
+        if (!record) {
+          return that._errorHandler(Boom.badRequest('Email could not be found'), request, reply);
+        }
+        that.app.services.EmailService.sendResetPassword(record, appResetUrl, function (merr, info) {
+          if (!merr) {
+            return reply('Password reset email sent successfully').code(202);
+          }
+          else {
+            return that._errorHandler(merr, request, reply);
+          }
+        });
+      });
+  }
+
+  updatePassword (request, reply) {
+    const User = this.app.orm.user;
+    const UserModel = this.app.models.User;
+
+    this.log.debug('[UserController] Updating user password', { request: request });
+
+    if (!request.payload.old_password || !request.payload.new_password) {
+      return reply(Boom.badRequest('Request is missing parameters (old or new password)'));
+    }
+
+    if (!UserModel.isStrongPassword(request.payload.new_password)) {
+      this.log.warn('New password is not strong enough', { request: request, security: true, fail: true});
+      return reply(Boom.badRequest('New password is not strong enough'));
+    }
+
+    const that = this;
+    // Check old password
+    User
+      .findOne({_id: request.params.id})
+      .then((user) => {
+        if (!user) {
+          return reply(Boom.notFound());
+        }
+        that.log.warn('Updating user password', { request: request, security: true});
+        if (user.validPassword(request.payload.old_password)) {
+          user.password = UserModel.hashPassword(request.payload.new_password);
+          that.log.warn('Successfully updated user password', { request: request, security: true});
+          return user.save();
+        }
+        else {
+          that.log.warn('Could not update user password. Old password is wrong', { request: request, security: true, fail: true});
+          return reply(Boom.badRequest('The old password is wrong'));
+        }
+      })
+      .then(() => {
+        return reply().code(204);
+      })
+      .catch(err => {
+        that.errorHandler(err, reply);
+      });
+  }
+
   resetPassword (request, reply) {
+    const Model = this.app.orm.User;
+    const UserModel = this.app.models.User;
+    const that = this;
+
+    if (!request.payload.hash || !request.payload.password) {
+      return reply(Boom.badRequest('Wrong arguments'));
+    }
+
+    if (!UserModel.isStrongPassword(request.payload.password)) {
+      this.log.warn('Could not reset password. New password is not strong enough.', { security: true, fail: true, request: request});
+      return reply(Boom.badRequest('New password is not strong enough'));
+    }
+
+    this.log.warn('Resetting password', { security: true, request: request});
+    Model
+      .findOne({hash: request.payload.hash, hashAction: 'reset_password'})
+      .then(record => {
+        if (!record) {
+          that.log.warn('Could not reset password. Hash not found', { security: true, fail: true, request: request});
+          throw Boom.badRequest('Reset password link is expired or invalid');
+        }
+        return record;
+      })
+      .then(record => {
+        if (record.totp) {
+          // Check that there is a TOTP token and that it is valid
+          const token = request.headers['x-hid-totp'];
+          if (!token) {
+            throw Boom.unauthorized('No TOTP token');
+          }
+          const success = authenticator.verifyToken(record.totpConf.secret, token);
+          if (!success) {
+            throw Boom.unauthorized('Invalid TOTP token');
+          }
+        }
+        return record;
+      })
+      .then(record => {
+        if (record.validHash(request.payload.hash) === true) {
+          record.password = UserModel.hashPassword(request.payload.password);
+          record.email_verified = true;
+          record.expires = new Date(0, 0, 1, 0, 0, 0);
+          record.is_orphan = false;
+          record.hash = '';
+          return record.save();
+        }
+        else {
+          throw Boom.badRequest('Reset password link is expired or invalid');
+        }
+      })
+      .then(() => {
+        that.log.warn('Password updated successfully', { security: true, request: request});
+        return reply('Password reset successfully');
+      })
+      .catch(err => {
+        that._errorHandler(err, request, reply);
+      });
+  }
+
+  resetPasswordEndpoint (request, reply) {
     const Model = this.app.orm.User;
     const UserModel = this.app.models.User;
     const appResetUrl = request.payload.app_reset_url;
     const that = this;
 
     if (request.payload.email) {
-      if (!this.app.services.HelperService.isAuthorizedUrl(appResetUrl)) {
-        this.log.warn('Invalid app_reset_url', { security: true, fail: true, request: request});
-        return reply(Boom.badRequest('app_reset_url is invalid'));
-      }
-      Model
-        .findOne({email: request.payload.email.toLowerCase()})
-        .then(record => {
-          if (!record) {
-            return that._errorHandler(Boom.badRequest('Email could not be found'), request, reply);
-          }
-          that.app.services.EmailService.sendResetPassword(record, appResetUrl, function (merr, info) {
-            if (!merr) {
-              return reply('Password reset email sent successfully').code(202);
-            }
-            else {
-              return that._errorHandler(merr, request, reply);
-            }
-          });
-        });
+      return this.sendResetPassword(request, reply);
     }
     else {
-      if (request.payload.hash && request.payload.password) {
-        this.log.warn('Resetting password', { security: true, request: request});
-        Model
-          .findOne({hash: request.payload.hash, hashAction: 'reset_password'})
-          .then(record => {
-            if (!record) {
-              that.log.warn('Could not reset password. Hash not found', { security: true, fail: true, request: request});
-              return reply(Boom.badRequest('Reset password link is expired or invalid'));
-            }
-            if (record.validHash(request.payload.hash) === true) {
-              if (!UserModel.isStrongPassword(request.payload.password)) {
-                that.log.warn('Could not reset password. New password is not strong enough.', { security: true, fail: true, request: request});
-                return reply(Boom.badRequest('New password is not strong enough'));
-              }
-              record.password = UserModel.hashPassword(request.payload.password);
-              record.email_verified = true;
-              record.expires = new Date(0, 0, 1, 0, 0, 0);
-              record.is_orphan = false;
-              record.hash = '';
-              record.save().then(() => {
-                that.log.warn('Password updated successfully', { security: true, request: request});
-                return reply('Password reset successfully');
-              })
-              .catch(err => {
-                that._errorHandler(err, request, reply);
-              });
-            }
-            else {
-              return reply(Boom.badRequest('Reset password link is expired or invalid'));
-            }
-          });
-      }
-      else {
-        return reply(Boom.badRequest('Wrong arguments'));
-      }
+      return this.resetPassword(request, reply);
     }
   }
 

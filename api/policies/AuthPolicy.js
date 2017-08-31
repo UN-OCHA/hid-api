@@ -109,7 +109,19 @@ module.exports = class AuthPolicy extends Policy {
     });
   }
 
-  isTOTPAuthenticated (request, reply) {
+  isTOTPEnabledAndValid (request, reply) {
+    const user = request.params.currentUser;
+
+    if (!user.totp) {
+      // User does not have totp enabled, pass
+      return reply();
+    }
+    else {
+      return this.isTOTPValid(request, reply);
+    }
+  }
+
+  isTOTPValid (request, reply) {
     const user = request.params.currentUser;
     const token = request.headers['x-hid-totp'];
 

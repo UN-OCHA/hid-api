@@ -44,9 +44,9 @@ module.exports = {
   // Limit 2FA to admins for now
   TOTPController: {
     generateQRCode: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
-    verifyTOTPToken: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPAuthenticated'],
-    enable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPAuthenticated'],
-    disable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPAuthenticated']
+    verifyTOTPToken: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPValid'],
+    enable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPValid'],
+    disable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid']
   },
 
   UserController: {
@@ -56,7 +56,8 @@ module.exports = {
     update: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate'],
     destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
     notify: ['AuthPolicy.isAuthenticated'],
-    resetPassword: [],
+    updatePassword: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid'],
+    resetPasswordEndpoint: [],
     claimEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canClaim'],
     updatePicture: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate'],
     addEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate'],
