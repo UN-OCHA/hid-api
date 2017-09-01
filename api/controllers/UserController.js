@@ -9,6 +9,7 @@ const moment = require('moment');
 const acceptLanguage = require('accept-language');
 const sharp = require('sharp');
 const authenticator = require('authenticator');
+const validator = require('validator');
 
 /**
  * @module UserController
@@ -466,6 +467,16 @@ module.exports = class UserController extends Controller{
       // Hide unconfirmed users which are not orphans
       if (request.params.currentUser && !request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
         criteria.$or = [{'email_verified': true}, {'is_orphan': true}, {'is_ghost': true}];
+      }
+
+      if (criteria.q) {
+        if (validator.isEmail(criteria.q)) {
+          criteria['emails.email'] = criteria.q;
+        }
+        else {
+          criteria.name = criteria.q;
+        }
+        delete criteria.q;
       }
 
       if (criteria.name) {
