@@ -911,11 +911,6 @@ module.exports = class UserController extends Controller{
   }
 
   resetPasswordEndpoint (request, reply) {
-    const Model = this.app.orm.User;
-    const UserModel = this.app.models.User;
-    const appResetUrl = request.payload.app_reset_url;
-    const that = this;
-
     if (request.payload.email) {
       return this.sendResetPassword(request, reply);
     }
