@@ -4,9 +4,8 @@
 const assert = require('assert');
 
 describe('UserController', () => {
-  let UserController, server;
+  let server;
   before(() => {
-    UserController = global.app.controllers.UserController;
     server = global.app.packs.hapi.server;
   });
 
