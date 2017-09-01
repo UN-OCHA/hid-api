@@ -10,6 +10,18 @@ module.exports = {
 
   database: {
     stores: {
+      testing: {
+        migrate: 'create',
+        uri: 'mongodb://127.0.0.1/testing',
+        options: {
+          server: {
+            socketOptions: {
+              keepAlive: 600000,
+              connectTimeoutMS: 60000
+            }
+          }
+        }
+      }
     },
     models: {
       migrate: 'create'

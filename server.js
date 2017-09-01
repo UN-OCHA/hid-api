@@ -6,14 +6,19 @@
 
 'use strict';
 
-const newrelic = require('newrelic');
-
 const app = require('./');
 const TrailsApp = require('trails');
 const server = new TrailsApp(app);
 
-server
-  .start()
-  .catch(err => {
-    newrelic.noticeError(err);
-  });
+if (process.env.NODE_ENV !== 'testing') {
+  const newrelic = require('newrelic');
+  server
+    .start()
+    .catch(err => {
+      newrelic.noticeError(err);
+    });
+}
+else {
+  server
+    .start();
+}
