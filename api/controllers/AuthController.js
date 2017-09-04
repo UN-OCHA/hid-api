@@ -293,8 +293,8 @@ module.exports = class AuthController extends Controller{
         // Save authorized client if user allowed
         const clientId = request.yar.authorize[request.payload.transaction_id].client;
         if (!request.payload.cancel && !user.hasAuthorizedClient(clientId)) {
-          user.authorizedClients.push(request.yar.authorize[request.payload.transaction_id].client);
-          user.markModified('authorizedClients');
+          //user.authorizedClients.push(request.yar.authorize[request.payload.transaction_id].client);
+          //user.markModified('authorizedClients');
           user.save(function (err) {
             oauth.decision(request, reply);
           });
