@@ -263,6 +263,7 @@ module.exports = class AuthController extends Controller{
 
   authorizeOauth2 (request, reply) {
     const User = this.app.orm.User;
+    const Client = this.app.orm.Client;
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
     const cookie = request.yar.get('session');
 

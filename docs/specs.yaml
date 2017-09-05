@@ -499,12 +499,55 @@ paths:
       responses:
         '200':
           description: 'Primary organization was set successfully'
+  /user/{userId}/password:
+    put:
+      tags:
+        - user
+      summary: 'Updates the password of a user'
+      parameters:
+        - name: 'userId'
+          description: 'Id of the user'
+          in: 'path'
+          type: string
+          required: true
+        - name: 'X-HID-TOTP'
+          in: 'header'
+          description: 'The TOTP token - Required if the user has TOTP activated'
+          required: false
+          type: string
+        - name: 'body'
+          description: 'Provide the current password of the user and the new one'
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              old_password:
+                type: string
+              new_password:
+                type: string
+      responses:
+        '204':
+          description: 'Password was updated successfully'
+        '400':
+          description: 'Bad request.'
+        '401':
+          description: 'Unauthorized'
+        '404':
+          description: 'User can not be found.'
+        '500':
+          description: 'Unexpected error.'
   /user/password:
     put:
       tags:
         - user
       summary: 'Resets a user password or sends a password reset email'
       parameters:
+        - name: 'X-HID-TOTP'
+          in: 'header'
+          description: 'The TOTP token - Required to reset the password if the user has TOTP activated'
+          required: false
+          type: string
         - name: 'body'
           description: 'Send an email and an app_reset_url to this method to have it send an email with a password
           recovery email. Send a hash with a password to this method to have it reset the password.'

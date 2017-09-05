@@ -231,7 +231,13 @@ module.exports = [
   {
     method: 'PUT',
     path: '/api/v2/user/password',
-    handler: 'UserController.resetPassword'
+    handler: 'UserController.resetPasswordEndpoint'
+  },
+
+  {
+    method: 'PUT',
+    path: '/api/v2/user/{id}/password',
+    handler: 'UserController.updatePassword'
   },
 
   {

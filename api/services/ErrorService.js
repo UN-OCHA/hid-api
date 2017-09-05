@@ -2,7 +2,6 @@
 
 const Service = require('trails/service');
 const Boom = require('boom');
-const newrelic = require('newrelic');
 
 /**
  * @module ErrorService
@@ -20,8 +19,11 @@ module.exports = class ErrorService extends Service {
       }
       this.log.error('Unexpected error', {request: request, error: err});
       reply(Boom.badImplementation());
-      // Send the error to newrelic
-      newrelic.noticeError(err);
+      if (process.env.NODE_ENV !== 'testing') {
+        const newrelic = require('newrelic');
+        // Send the error to newrelic
+        newrelic.noticeError(err);
+      }
     }
   }
 };
