@@ -309,32 +309,6 @@ module.exports = class AuthController extends Controller{
       });
   }
 
-  authorizeOauth2Test (request, reply) {
-    const User = this.app.orm.User;
-    const Client = this.app.orm.Client;
-    const that = this;
-
-    User
-      .findOne({email: 'guillaume@viguierjust.com'})
-      .then((user) => {
-        if (!user) {
-          return reply(Boom.badRequest('Could not find user'));
-        }
-        user.sanitize(user);
-        Client
-          .findOne({id: 'deep-dev'})
-          .then((client) => {
-            user.authorizedClients.push(client);
-            user.markModified('authorizedClients');
-            user.save(function (err) {
-            });
-          });
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
-
   accessTokenOauth2 (request, reply) {
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
     const OauthToken = this.app.orm.OauthToken;
