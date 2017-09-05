@@ -151,7 +151,7 @@ module.exports = [
   {
     method: 'GET',
     path: '/oauth/test',
-    handler: 'AuthController.authorizeOaut2Test'
+    handler: 'AuthController.authorizeOauth2Test'
   },
 
   {
