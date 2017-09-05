@@ -202,6 +202,17 @@ module.exports = class User extends Model {
           return index;
         },
 
+        verifyEmail: function (email) {
+          if (this.email === email) {
+            this.email_verified = true;
+          }
+          let index = this.emailIndex(email);
+          if (index !== -1) {
+            this.emails[index].validated = true;
+            this.emails.set(index, this.emails[index]);
+          }
+        },
+
         connectionsIndex: function (userId) {
           let index = -1;
           if (this.connections && this.connections.length) {

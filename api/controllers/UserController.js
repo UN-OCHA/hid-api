@@ -691,7 +691,7 @@ module.exports = class UserController extends Controller{
         }
         record.email = email;
         // If we are there, it means that the email has been validated, so make sure email_verified is set to true.
-        record.email_verified = true;
+        record.verifyEmail(email);
         record
           .save()
           .then(() => {
@@ -891,7 +891,7 @@ module.exports = class UserController extends Controller{
       .then(record => {
         if (record.validHash(request.payload.hash) === true) {
           record.password = UserModel.hashPassword(request.payload.password);
-          record.email_verified = true;
+          record.verifyEmail(record.email);
           record.expires = new Date(0, 0, 1, 0, 0, 0);
           record.is_orphan = false;
           record.hash = '';
