@@ -263,6 +263,7 @@ module.exports = class AuthController extends Controller{
 
   authorizeOauth2 (request, reply) {
     const User = this.app.orm.User;
+    const Client = this.app.orm.Client;
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
     const cookie = request.yar.get('session');
 
@@ -302,6 +303,32 @@ module.exports = class AuthController extends Controller{
         else {
           oauth.decision(request, reply);
         }
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
+  }
+
+  authorizeOauth2Test (request, reply) {
+    const User = this.app.orm.User;
+    const Client = this.app.orm.Client;
+    const that = this;
+
+    User
+      .findOne({email: 'guillaume@viguierjust.com'})
+      .then((user) => {
+        if (!user) {
+          return reply(Boom.badRequest('Could not find user'));
+        }
+        user.sanitize(user);
+        Client
+          .findOne({id: 'deep-dev'})
+          .then((client) => {
+            user.authorizedClients.push(client);
+            user.markModified('authorizedClients');
+            user.save(function (err) {
+            });
+          });
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, request, reply);
