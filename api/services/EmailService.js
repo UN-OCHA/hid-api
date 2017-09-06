@@ -28,7 +28,7 @@ module.exports = class EmailService extends Service {
   // Send an email
   send (options, template, context, callback) {
     let templateDir = TemplateDir + template;
-    if (options.locale && options.locale !== 'en') {
+    if (options.locale && options.locale === 'fr') {
       templateDir += '/' + options.locale;
     }
     const templateSender = Transporter.templateSender(new EmailTemplate(templateDir), {
