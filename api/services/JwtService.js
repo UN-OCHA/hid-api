@@ -41,7 +41,7 @@ module.exports = class JwtService extends Service {
   generateIdToken (client, user, nonce) {
     const now = Math.floor(Date.now() / 1000);
     let sub = user._id;
-    if (client.id === 'iasc-prod' || client.id === 'kaya-prod' || client.id === 'iasc-dev') {
+    if (client.id === 'iasc-prod' || client.id === 'iasc-dev') {
       sub = user.email;
     }
     const idToken = {
