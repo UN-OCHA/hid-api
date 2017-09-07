@@ -156,7 +156,7 @@ module.exports = class ViewController extends Controller {
   }
 
   register (request, reply) {
-    const requestUrl = this._buildRequestUrl(request, 'verify');
+    const requestUrl = this._buildRequestUrl(request, 'verify2');
     reply.view('register', {
       title: 'Register in Humanitarian ID',
       requestUrl: requestUrl

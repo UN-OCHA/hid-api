@@ -40,6 +40,12 @@ module.exports = [
 
   {
     method: 'GET',
+    path: '/verify2',
+    handler: 'ViewController.verify'
+  },
+
+  {
+    method: 'GET',
     path: '/logout',
     handler: 'ViewController.logout'
   },
