@@ -895,6 +895,8 @@ module.exports = class UserController extends Controller{
           record.expires = new Date(0, 0, 1, 0, 0, 0);
           record.is_orphan = false;
           record.hash = '';
+          // Reactivate user account if it was disabled
+          record.deleted = false;
           return record.save();
         }
         else {
@@ -1197,7 +1199,7 @@ module.exports = class UserController extends Controller{
       return reply(Boom.badRequest('Missing listUser id'));
     }
     if (!request.payload._id) {
-      return reply(Boom.badRequesty('Missing listUser id'));
+      return reply(Boom.badRequest('Missing listUser id'));
     }
     const that = this;
     User
