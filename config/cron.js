@@ -173,7 +173,9 @@ const importLists = function (app) {
   const _createList = function (listType, language, item, cb) {
     const inactiveOps = [2782,2785,2791,38230];
     if ((listType === 'operation' &&
-      (item.status !== 'inactive' || inactiveOps.indexOf(item.id) !== -1)) ||
+      item.status !== 'inactive' &&
+      inactiveOps.indexOf(item.id) === -1 &&
+      item.hid_access !== 'inactive') ||
       listType !== 'operation') {
       List.findOne({type: listType, remote_id: item.id}, function (err, list) {
         if (!list) {
