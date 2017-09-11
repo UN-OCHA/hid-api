@@ -189,12 +189,8 @@ const importLists = function (app) {
               updateUsers = true;
             }
             // Do not change list visibility or joinability if the list is already there
-            if (!item.hid_access && list.visibility) {
-              delete newList.visibility;
-            }
-            if (!item.hid_access && list.joinability) {
-              delete newList.joinability;
-            }
+            delete newList.visibility;
+            delete newList.joinability;
             _parseListLanguage(list, newList.label, newList.acronym, language);
             if (language !== 'en') {
               delete newList.label;
