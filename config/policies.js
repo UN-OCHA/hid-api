@@ -54,7 +54,7 @@ module.exports = {
     create: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canCreate' ],
     find: ['AuthPolicy.isAuthenticated'],
     update: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate'],
-    destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
+    destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin', 'AuthPolicy.isTOTPEnabledAndValid'],
     notify: ['AuthPolicy.isAuthenticated'],
     updatePassword: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid'],
     resetPasswordEndpoint: [],
