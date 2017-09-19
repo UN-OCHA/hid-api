@@ -74,6 +74,13 @@ module.exports = class AuthController extends Controller{
               });
           }
           else {
+            if (user.totp === true) {
+              const token = request.headers['x-hid-totp'] || request.payload['x-hid-totp'];
+              const result = authPolicy.isTOTPValid(user, token);
+              if (result.isBoom) {
+                return reply(result);
+              }
+            }
             user.sanitize(user);
             return reply(user);
           }
@@ -170,16 +177,27 @@ module.exports = class AuthController extends Controller{
           passwordLink += '?' + params;
         }
 
-        return reply.view('login', {
-          title: 'Log into Humanitarian ID',
-          query: request.payload,
-          registerLink: registerLink,
-          passwordLink: passwordLink,
-          alert: {
-            type: 'danger',
-            message: 'We could not log you in. Please check your email/password'
-          }
-        });
+        if (result.typeof === Boom.badRequest &&
+          result.output.headers &&
+          result.output.headers['www-authenticate'] &&
+          result.output.headers['www-authenticated'] === 'totp') {
+          return reply.view('totp', {
+            title: 'Enter your TOTP code',
+            query: request.payload
+          });
+        }
+        else {
+          return reply.view('login', {
+            title: 'Log into Humanitarian ID',
+            query: request.payload,
+            registerLink: registerLink,
+            passwordLink: passwordLink,
+            alert: {
+              type: 'danger',
+              message: 'We could not log you in. Please check your email/password'
+            }
+          });
+        }
       }
     });
   }

@@ -61,7 +61,7 @@ module.exports = {
     claimEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canClaim'],
     updatePicture: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate'],
     addEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate'],
-    setPrimaryEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate'],
+    setPrimaryEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate', 'AuthPolicy.isTOTPEnabledAndValid'],
     validateEmail: [],
     dropEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],
     addPhone: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],
