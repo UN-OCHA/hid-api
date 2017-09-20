@@ -4,7 +4,7 @@
   <div class="row">
     <div class="col-sm-6 offset-sm-3 col-lg-4 offset-lg-4">
       <div class="page-header">
-        <h1 class="page-header__heading">TOTP Code</h1>
+        <h1 class="page-header__heading">Two-factor authentication</h1>
       </div>
 
       <% if (alert) { %>
@@ -17,8 +17,8 @@
 
       <form method="post" action="/login">
         <div class="form-field">
-          <label for="x-hid-totp" translate>Enter your TOTP Code</label>
-          <input type="text" name="x-hid-totp" id="x-hid-totp" placeholder="Your TOTP code" required>
+          <label for="x-hid-totp" translate>Authentication code</label>
+          <input type="text" name="x-hid-totp" id="x-hid-totp" autocomplete="off" placeholder="Authentication code" required>
         </div>
         <input type="hidden" name="email" value="<%= query.email %>" />
         <input type="hidden" name="password" value="<%= query.password %>" />

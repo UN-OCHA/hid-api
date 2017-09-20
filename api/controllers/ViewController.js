@@ -216,7 +216,7 @@ module.exports = class ViewController extends Controller {
   passwordPost (request, reply) {
     const UserController = this.app.controllers.UserController;
     const that = this;
-    UserController.resetPassword(request, function (result) {
+    UserController.resetPasswordEndpoint(request, function (result) {
       const al = that._getAlert(
         result,
         'You should have received an email which will allow you to reset your password.',
@@ -242,7 +242,7 @@ module.exports = class ViewController extends Controller {
   newPasswordPost (request, reply) {
     const UserController = this.app.controllers.UserController;
     const that = this;
-    UserController.resetPassword(request, function (result) {
+    UserController.resetPasswordEndpoint(request, function (result) {
       const al = that._getAlert(result,
         'Your password was successfully reset. You can now login.',
         'There was an error resetting your password.'
