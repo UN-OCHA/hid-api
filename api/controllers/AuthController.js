@@ -177,13 +177,20 @@ module.exports = class AuthController extends Controller{
           passwordLink += '?' + params;
         }
 
-        if (result.typeof === Boom.badRequest &&
-          result.output.headers &&
-          result.output.headers['www-authenticate'] &&
-          result.output.headers['www-authenticated'] === 'totp') {
+        if (result.output.headers &&
+          result.output.headers['WWW-Authenticate'] &&
+          result.output.headers['WWW-Authenticate'].indexOf('totp') !== -1) {
+          let alert = false;
+          if (result.output.payload.message !== 'No TOTP token') {
+            alert = {
+              type: 'danger',
+              message: result.output.payload.message
+            };
+          }
           return reply.view('totp', {
             title: 'Enter your TOTP code',
-            query: request.payload
+            query: request.payload,
+            alert: alert
           });
         }
         else {
