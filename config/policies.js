@@ -44,8 +44,8 @@ module.exports = {
   // Limit 2FA to admins for now
   TOTPController: {
     generateQRCode: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
-    verifyTOTPToken: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPValid'],
-    enable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPValid'],
+    verifyTOTPToken: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPValidPolicy'],
+    enable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPValidPolicy'],
     disable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid']
   },
 
@@ -54,14 +54,14 @@ module.exports = {
     create: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canCreate' ],
     find: ['AuthPolicy.isAuthenticated'],
     update: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate'],
-    destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
+    destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin', 'AuthPolicy.isTOTPEnabledAndValid'],
     notify: ['AuthPolicy.isAuthenticated'],
     updatePassword: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid'],
     resetPasswordEndpoint: [],
     claimEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canClaim'],
     updatePicture: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate'],
     addEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate'],
-    setPrimaryEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate'],
+    setPrimaryEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate', 'AuthPolicy.isTOTPEnabledAndValid'],
     validateEmail: [],
     dropEmail: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],
     addPhone: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate' ],

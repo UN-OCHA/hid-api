@@ -117,29 +117,44 @@ module.exports = class AuthPolicy extends Policy {
       return reply();
     }
     else {
-      return this.isTOTPValid(request, reply);
+      const result = this.isTOTPValid(request.params.currentUser, request.headers['x-hid-totp']);
+      if (result.isBoom) {
+        return reply(result);
+      }
+      else {
+        return reply();
+      }
     }
   }
 
-  isTOTPValid (request, reply) {
+  isTOTPValidPolicy (request, reply) {
     const user = request.params.currentUser;
     const token = request.headers['x-hid-totp'];
+    const result = this.isTOTPValid(user, token);
+    if (result.isBoom) {
+      return reply(result);
+    }
+    else {
+      return reply();
+    }
+  }
 
+  isTOTPValid (user, token) {
     if (!user.totpConf || !user.totpConf.secret) {
-      return reply(Boom.unauthorized('TOTP was not configured for this user'));
+      return Boom.unauthorized('TOTP was not configured for this user', 'totp');
     }
 
     if (!token) {
-      return reply(Boom.unauthorized('No TOTP token'));
+      return Boom.unauthorized('No TOTP token', 'totp');
     }
 
     const success = authenticator.verifyToken(user.totpConf.secret, token);
 
     if (success) {
-      return reply();
+      return true;
     }
     else {
-      return reply(Boom.unauthorized('Invalid TOTP token !'));
+      return Boom.unauthorized('Invalid TOTP token !', 'totp');
     }
   }
 

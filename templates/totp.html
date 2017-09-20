@@ -1,0 +1,45 @@
+<% include header %>
+
+<div class="container api-page">
+  <div class="row">
+    <div class="col-sm-6 offset-sm-3 col-lg-4 offset-lg-4">
+      <div class="page-header">
+        <h1 class="page-header__heading">Two-factor authentication</h1>
+      </div>
+
+      <% if (alert) { %>
+        <div class="alert alert--inline alert--<%= alert.type %>" role="alert">
+          <div class="alert__inner">
+            <%= alert.message %>
+          </div>
+        </div>
+      <% } %>
+
+      <form method="post" action="/login">
+        <div class="form-field">
+          <label for="x-hid-totp" translate>Authentication code</label>
+          <input type="text" name="x-hid-totp" id="x-hid-totp" autocomplete="off" placeholder="Authentication code" required>
+        </div>
+        <input type="hidden" name="email" value="<%= query.email %>" />
+        <input type="hidden" name="password" value="<%= query.password %>" />
+        <input type="hidden" name="redirect" value="<%= query.redirect %>" />
+        <input type="hidden" name="client_id" value="<%= query.client_id %>" />
+        <input type="hidden" name="redirect_uri" value="<%= query.redirect_uri %>" />
+        <input type="hidden" name="response_type" value="<%= query.response_type %>" />
+        <input type="hidden" name="state" value="<%= query.state %>" />
+        <input type="hidden" name="scope" value="<%= query.scope %>" />
+        <input type="hidden" name="nonce" value="<%= query.nonce %>" />
+        <input type="hidden" name="crumb" value="<%= crumb %>" />
+
+        <div class="row form-field">
+          <div class="col-xs-12">
+            <button type="submit" class="btn-primary btn-block">
+              Verify
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<% include footer %>
