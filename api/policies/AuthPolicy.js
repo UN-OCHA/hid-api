@@ -127,6 +127,18 @@ module.exports = class AuthPolicy extends Policy {
     }
   }
 
+  isTOTPValidPolicy (request, reply) {
+    const user = request.params.currentUser;
+    const token = request.headers['x-hid-totp'];
+    const result = this.isTOTPValid(user, token);
+    if (result.isBoom) {
+      return reply(result);
+    }
+    else {
+      return reply();
+    }
+  }
+
   isTOTPValid (user, token) {
     if (!user.totpConf || !user.totpConf.secret) {
       return Boom.unauthorized('TOTP was not configured for this user', 'totp');
