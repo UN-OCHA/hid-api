@@ -10,7 +10,7 @@ const app = require('./');
 const TrailsApp = require('trails');
 const server = new TrailsApp(app);
 
-if (process.env.NODE_ENV !== 'testing') {
+if ( (process.env.NODE_ENV !== 'testing') && (process.env.NODE_ENV !== 'local') ) {
   const newrelic = require('newrelic');
   server
     .start()
