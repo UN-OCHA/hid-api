@@ -243,18 +243,38 @@ module.exports = class ViewController extends Controller {
     const UserController = this.app.controllers.UserController;
     const that = this;
     UserController.resetPasswordEndpoint(request, function (result) {
-      const al = that._getAlert(result,
-        'Your password was successfully reset. You can now login.',
-        'There was an error resetting your password.'
-      );
-      const registerLink = that._getRegisterLink(request.payload);
-      const passwordLink = that._getPasswordLink(request.payload);
-      return reply.view('login', {
-        alert: al,
-        query: request.payload,
-        registerLink: registerLink,
-        passwordLink: passwordLink
-      });
+      // Missing totp code
+      if (result.isBoom &&
+        result.output.headers &&
+        result.output.headers['WWW-Authenticate'] &&
+        result.output.headers['WWW-Authenticate'].indexOf('totp') !== -1) {
+        let alert = false;
+        if (result.output.payload.message !== 'No TOTP token') {
+          alert = {
+            type: 'danger',
+            message: result.output.payload.message
+          };
+        }
+        return reply.view('totp', {
+          title: 'Enter your TOTP code',
+          query: request.payload,
+          alert: alert
+        });
+      }
+      else {
+        const al = that._getAlert(result,
+          'Your password was successfully reset. You can now login.',
+          'There was an error resetting your password.'
+        );
+        const registerLink = that._getRegisterLink(request.payload);
+        const passwordLink = that._getPasswordLink(request.payload);
+        return reply.view('login', {
+          alert: al,
+          query: request.payload,
+          registerLink: registerLink,
+          passwordLink: passwordLink
+        });
+      }
     });
   }
 

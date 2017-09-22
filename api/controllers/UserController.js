@@ -854,6 +854,7 @@ module.exports = class UserController extends Controller{
     const Model = this.app.orm.User;
     const UserModel = this.app.models.User;
     const that = this;
+    const authPolicy = this.app.policies.AuthPolicy;
 
     if (!request.payload.hash || !request.payload.password) {
       return reply(Boom.badRequest('Wrong arguments'));
@@ -878,12 +879,9 @@ module.exports = class UserController extends Controller{
         if (record.totp) {
           // Check that there is a TOTP token and that it is valid
           const token = request.headers['x-hid-totp'];
-          if (!token) {
-            throw Boom.unauthorized('No TOTP token');
-          }
-          const success = authenticator.verifyToken(record.totpConf.secret, token);
-          if (!success) {
-            throw Boom.unauthorized('Invalid TOTP token');
+          const totpResponse = authPolicy.isTOTPValid(record, token);
+          if (totpResponse !== true && totpResponse.isBoom) {
+            throw totpResponse;
           }
         }
         return record;
