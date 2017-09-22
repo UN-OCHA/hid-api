@@ -4,6 +4,7 @@ services:
     image: unocha/alpine-mongo
     volumes:
       - ./db:/srv/db
+      - .:/srv/www
     environment:
       DNSDOCK_NAME: db
       DNSDOCK_IMAGE: hid
@@ -26,7 +27,7 @@ services:
       PORT: 80
       NODE_ENV: local
       ROOT_URL: http://api.hid.vm
-      SMTP_HOST: app.mailhog.vm
+      SMTP_HOST: 12345.com
       SMTP_PORT: 1025
       SMTP_USER: humanitarianid
       SMTP_PASS: smtp_password
