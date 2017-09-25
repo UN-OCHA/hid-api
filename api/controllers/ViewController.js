@@ -40,61 +40,75 @@ module.exports = class ViewController extends Controller {
 
   login (request, reply) {
     const Client = this.app.orm.Client;
-    const session = request.yar.get('session');
-    if (session) { // User is already logged in
-      if (request.query.client_id &&
-        request.query.redirect_uri &&
-        request.query.response_type &&
-        request.query.scope) {
-        // Redirect to /oauth/authorize
-        let redirect = request.query.redirect || '/oauth/authorize';
-        redirect += '?client_id=' + request.query.client_id;
-        redirect += '&redirect_uri=' + request.query.redirect_uri;
-        redirect += '&response_type=' + request.query.response_type;
-        redirect += '&scope=' + request.query.scope;
+    const cookie = request.yar.get('session');
 
-        return reply.redirect(redirect);
-      }
-      else {
-        // User is already logged in
-        return reply.redirect('/user');
-      }
-    }
+    if (!cookie || (cookie && !cookie.userId)) {
+      // Show the login form
+      const registerLink = this._getRegisterLink(request.query);
+      const passwordLink = this._getPasswordLink(request.query);
+      const loginArgs = {
+        title: 'Log into Humanitarian ID',
+        query: request.query,
+        registerLink: registerLink,
+        passwordLink: passwordLink,
+        alert: false
+      };
 
-    const registerLink = this._getRegisterLink(request.query);
-    const passwordLink = this._getPasswordLink(request.query);
-    const loginArgs = {
-      title: 'Log into Humanitarian ID',
-      query: request.query,
-      registerLink: registerLink,
-      passwordLink: passwordLink,
-      alert: false
-    };
-
-    // Check client ID and redirect URI at this stage, so we can send an error message if needed.
-    if (request.query.client_id) {
-      Client
-        .findOne({id: request.query.client_id})
-        .then(client => {
-          if (!client || (client && client.redirectUri !== request.query.redirect_uri)) {
+      // Check client ID and redirect URI at this stage, so we can send an error message if needed.
+      if (request.query.client_id) {
+        Client
+          .findOne({id: request.query.client_id})
+          .then(client => {
+            if (!client || (client && client.redirectUri !== request.query.redirect_uri)) {
+              loginArgs.alert = {
+                type: 'danger',
+                message: 'The configuration of the client application is invalid. We can not log you in.'
+              };
+              return reply.view('login', loginArgs);
+            }
+            return reply.view('login', loginArgs);
+          })
+          .catch(err => {
             loginArgs.alert = {
               type: 'danger',
-              message: 'The configuration of the client application is invalid. We can not log you in.'
+              message: 'Internal server error. We can not log you in. Please let us know at info@humanitarian.id'
             };
             return reply.view('login', loginArgs);
-          }
-          return reply.view('login', loginArgs);
-        })
-        .catch(err => {
-          loginArgs.alert = {
-            type: 'danger',
-            message: 'Internal server error. We can not log you in. Please let us know at info@humanitarian.id'
-          };
-          return reply.view('login', loginArgs);
-        });
+          });
+      }
+      else {
+        return reply.view('login', loginArgs);
+      }
+
+      if (cookie && cookie.userId && cookie.totp) { // User is already logged in
+        if (request.query.client_id &&
+          request.query.redirect_uri &&
+          request.query.response_type &&
+          request.query.scope) {
+          // Redirect to /oauth/authorize
+          let redirect = request.query.redirect || '/oauth/authorize';
+          redirect += '?client_id=' + request.query.client_id;
+          redirect += '&redirect_uri=' + request.query.redirect_uri;
+          redirect += '&response_type=' + request.query.response_type;
+          redirect += '&scope=' + request.query.scope;
+
+          return reply.redirect(redirect);
+        }
+        else {
+          // User is already logged in
+          return reply.redirect('/user');
+        }
+      }
     }
-    else {
-      return reply.view('login', loginArgs);
+
+    if (cookie && cookie.userId && cookie.totp === false) {
+      // Show TOTP form
+      return reply.view('totp', {
+        title: 'Enter your Authentication code',
+        query: request.query,
+        destination: '/login',
+        alert: false
+      });
     }
   }
 
@@ -234,34 +248,73 @@ module.exports = class ViewController extends Controller {
   }
 
   newPassword (request, reply) {
-    reply.view('new_password', {
-      query: request.query
-    });
+    const that = this;
+    const User = this.app.orm.User;
+    request.yar.reset();
+    request.yar.set('session', { hash: request.query.hash, totp: false});
+    User
+      .findOne(({hash: request.query.hash, hashAction: 'reset_password'}))
+      .then(user => {
+        if (user.totp) {
+          return reply.view('totp', {
+            query: request.query,
+            destination: '/new_password',
+            alert: false
+          });
+        }
+        else {
+          request.yar.set('session', { hash: request.query.hash, totp: true });
+          return reply.view('new_password', {
+            query: request.query,
+            hash: request.query.hash
+          });
+        }
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 
   newPasswordPost (request, reply) {
     const UserController = this.app.controllers.UserController;
+    const User = this.app.orm.User;
     const that = this;
-    UserController.resetPasswordEndpoint(request, function (result) {
-      // Missing totp code
-      if (result.isBoom &&
-        result.output.headers &&
-        result.output.headers['WWW-Authenticate'] &&
-        result.output.headers['WWW-Authenticate'].indexOf('totp') !== -1) {
-        let alert = false;
-        if (result.output.payload.message !== 'No TOTP token') {
-          alert = {
-            type: 'danger',
-            message: result.output.payload.message
-          };
-        }
-        return reply.view('totp', {
-          title: 'Enter your TOTP code',
-          query: request.payload,
-          alert: alert
+    const cookie = request.yar.get('session');
+    const authPolicy = this.app.policies.AuthPolicy;
+
+    if (cookie && cookie.hash && !cookie.totp) {
+      User
+        .findOne(({hash: cookie.hash, hashAction: 'reset_password'}))
+        .then(user => {
+          const token = request.payload['x-hid-totp'];
+          const totpResponse = authPolicy.isTOTPValid(user, token);
+          if (totpResponse !== true && totpResponse.isBoom) {
+            let alert =  {
+              type: 'danger',
+              message: totpResponse.output.payload.message
+            };
+            return reply.view('totp', {
+              query: request.payload,
+              destination: '/new_password',
+              alert: alert
+            });
+          }
+          else {
+            cookie.totp = true;
+            request.yar.set('session', cookie);
+            return reply.view('new_password', {
+              query: request.payload,
+              hash: cookie.hash
+            });
+          }
+        })
+        .catch(err => {
+          that.app.services.ErrorService.handle(err, request, reply);
         });
-      }
-      else {
+    }
+
+    if (cookie && cookie.hash && cookie.totp) {
+      UserController.resetPassword(request, function (result) {
         const al = that._getAlert(result,
           'Your password was successfully reset. You can now login.',
           'There was an error resetting your password.'
@@ -274,8 +327,8 @@ module.exports = class ViewController extends Controller {
           registerLink: registerLink,
           passwordLink: passwordLink
         });
-      }
-    });
+      }, false);
+    }
   }
 
   // Display a default user page when user is logged in without OAuth
@@ -283,7 +336,7 @@ module.exports = class ViewController extends Controller {
     // If the user is not authenticated, redirect to the login page
     const User = this.app.orm.User;
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId)) {
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
       return reply.redirect('/');
     }
     else {

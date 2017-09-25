@@ -15,13 +15,14 @@
         </div>
       <% } %>
 
-      <form method="post" action="/login">
+      <form method="post" action="<%= destination %>">
         <div class="form-field">
           <label for="x-hid-totp" translate>Authentication code</label>
           <input type="text" name="x-hid-totp" id="x-hid-totp" autocomplete="off" placeholder="Authentication code" required>
         </div>
-        <input type="hidden" name="email" value="<%= query.email %>" />
-        <input type="hidden" name="password" value="<%= query.password %>" />
+        <div class="form-field">
+          <input type="checkbox" name="x-hid-totp-trust" id="x-hid-trust" value="1"> Save this device for 30 days
+        </div>
         <input type="hidden" name="redirect" value="<%= query.redirect %>" />
         <input type="hidden" name="client_id" value="<%= query.client_id %>" />
         <input type="hidden" name="redirect_uri" value="<%= query.redirect_uri %>" />

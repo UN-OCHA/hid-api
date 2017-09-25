@@ -850,7 +850,7 @@ module.exports = class UserController extends Controller{
       });
   }
 
-  resetPassword (request, reply) {
+  resetPassword (request, reply, checkTotp = true) {
     const Model = this.app.orm.User;
     const UserModel = this.app.models.User;
     const that = this;
@@ -876,7 +876,7 @@ module.exports = class UserController extends Controller{
         return record;
       })
       .then(record => {
-        if (record.totp) {
+        if (record.totp && checkTotp) {
           // Check that there is a TOTP token and that it is valid
           const token = request.headers['x-hid-totp'];
           const totpResponse = authPolicy.isTOTPValid(record, token);

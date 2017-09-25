@@ -56,8 +56,8 @@ module.exports = class TOTPController extends Controller{
       this.log.warn('2FA already enabled. No need to reenable.', { security: true, fail: true, request: request});
       return reply(Boom.badRequest('2FA is already enabled. You need to disable it first'));
     }
-    const method = request.payload.method;
-    if (!method || (method !== 'app' && method !== 'sms')) {
+    const method = request.payload ? request.payload.method : '';
+    if (method !== 'app' && method !== 'sms') {
       return reply(Boom.badRequest('Valid 2FA method is required'));
     }
     user.totpMethod = request.payload.method;

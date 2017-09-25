@@ -14,7 +14,8 @@ const authorizedDomains = [
   'https://auth.humanitarian.id',
   'https://app2.dev.humanitarian.id',
   'https://api2.dev.humanitarian.id',
-  'https://api.humanitarian.id'
+  'https://api.humanitarian.id',
+  'https://api.hid.vm'
 ];
 
 /**
