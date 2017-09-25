@@ -254,9 +254,6 @@ module.exports = {
       security: {
         xframe: true
       }
-    },
-    state: {
-      isSecure: false
     }
   }
 };
