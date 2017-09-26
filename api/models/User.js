@@ -399,6 +399,16 @@ module.exports = class User extends Model {
             .execPopulate();
         },
 
+        trustedDeviceIndex: function (ua) {
+          let index = -1;
+          for (let i = 0, len = this.totpTrusted.length; i < len; i++) {
+            if (this.totpTrusted[i].ua === ua) {
+              index = i;
+            }
+          }
+          return index;
+        },
+
         toJSON: function () {
           const user = this.toObject();
           delete user.password;
@@ -407,6 +417,9 @@ module.exports = class User extends Model {
           delete user.hashEmail;
           if (user.totpConf) {
             delete user.totpConf;
+          }
+          if (user.totpTrusted) {
+            delete user.totpTrusted;
           }
           listTypes.forEach(function (attr) {
             _.remove(user[attr + 's'], function (checkin) {
@@ -1035,6 +1048,10 @@ module.exports = class User extends Model {
       },
       totpConf: {
         type: Schema.Types.Mixed,
+        readonly: true
+      },
+      totpTrusted: {
+        type: Array,
         readonly: true
       }
     };

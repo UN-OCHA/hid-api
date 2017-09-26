@@ -76,7 +76,6 @@ module.exports = class AuthController extends Controller{
               });
           }
           else {
-            user.sanitize(user);
             return reply(user);
           }
         })
@@ -106,6 +105,7 @@ module.exports = class AuthController extends Controller{
           payload.exp = request.payload.exp;
         }
         const token = that.app.services.JwtService.issue(payload);
+        result.sanitize(result);
         if (!payload.exp) {
           // Creating an API key, store the token in the database
           JwtToken
@@ -137,7 +137,7 @@ module.exports = class AuthController extends Controller{
     });
   }
 
-  _loginRedirect (request, reply) {
+  _loginRedirect (request, reply, cookie = false) {
     let redirect = '';
     if (request.payload.response_type) {
       redirect = request.payload.redirect || '/oauth/authorize';
@@ -156,7 +156,12 @@ module.exports = class AuthController extends Controller{
       redirect = '/user';
     }
 
-    reply.redirect(redirect);
+    if (!cookie) {
+      reply.redirect(redirect);
+    }
+    else {
+      reply.redirect(redirect).state(cookie.name, cookie.value, cookie.options);
+    }
     this.log.info('Successful user authentication. Redirecting.', {client_id: request.payload.client_id, email: request.payload.email, security: true, request: request});
   }
 
@@ -167,16 +172,30 @@ module.exports = class AuthController extends Controller{
     const that = this;
     const authPolicy = this.app.policies.AuthPolicy;
     const User = this.app.orm.User;
+    const UserModel = this.app.models.User;
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId)) {
       return this._loginHelper(request, function (result) {
         if (!result.isBoom) {
-          // Redirect to /oauth/authorize
-          request.yar.set('session', { userId: result._id, totp: !result.totp });
           if (!result.totp) {
+            request.yar.set('session', { userId: result._id, totp: true });
             return that._loginRedirect(request, reply);
           }
           else {
+            // Check to see if device is not a trusted device
+            const trusted = request.state['x-hid-totp-trust'];
+            if (trusted) {
+              const tindex = result.trustedDeviceIndex(request.headers['user-agent']);
+              const offset = Date.now() - 30 * 24 * 60 * 60 * 1000;
+              if (tindex !== -1 &&
+              result.totpTrusted[tindex].secret === trusted &&
+              offset < result.totpTrusted[tindex].date) {
+                // If trusted device, go on
+                request.yar.set('session', { userId: result._id, totp: true });
+                return that._loginRedirect(request, reply);
+              }
+            }
+            request.yar.set('session', { userId: result._id, totp: false });
             return reply.view('totp', {
               title: 'Enter your Authentication code',
               query: request.payload,
@@ -231,7 +250,31 @@ module.exports = class AuthController extends Controller{
           else {
             cookie.totp = true;
             request.yar.set('session', cookie);
-            return this._loginRedirect(request, reply);
+            if (request.payload['x-hid-totp-trust']) {
+              that.app.log.debug('Saving device as trusted');
+              const random = user.generateHash();
+              const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
+              if (tindex !== -1) {
+                user.totpTrusted[tindex].secret = random;
+                user.totpTrusted[tindex].date = Date.now();
+              }
+              else {
+                user.totpTrusted.push({
+                  secret: random,
+                  ua: request.headers['user-agent'],
+                  date: Date.now()
+                });
+              }
+              user.markModified('totpTrusted');
+              user
+                .save()
+                .then(() => {
+                  return that._loginRedirect(request, reply, { name: 'x-hid-totp-trust', value: random, options: {ttl: 30 * 24 * 60 * 60 * 1000}});
+                });
+            }
+            else {
+              return that._loginRedirect(request, reply);
+            }
           }
         })
         .catch (err => {
