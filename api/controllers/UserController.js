@@ -8,7 +8,6 @@ const http = require('http');
 const moment = require('moment');
 const acceptLanguage = require('accept-language');
 const sharp = require('sharp');
-const authenticator = require('authenticator');
 const validator = require('validator');
 
 /**

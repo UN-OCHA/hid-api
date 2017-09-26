@@ -42,7 +42,7 @@ module.exports = class ViewController extends Controller {
     const Client = this.app.orm.Client;
     const cookie = request.yar.get('session');
 
-    if (!cookie || (cookie && !cookie.userId)) {
+    if (!cookie || (cookie && !cookie.userId)) {
       // Show the login form
       const registerLink = this._getRegisterLink(request.query);
       const passwordLink = this._getPasswordLink(request.query);
@@ -289,7 +289,7 @@ module.exports = class ViewController extends Controller {
           const token = request.payload['x-hid-totp'];
           const totpResponse = authPolicy.isTOTPValid(user, token);
           if (totpResponse !== true && totpResponse.isBoom) {
-            let alert =  {
+            const alert =  {
               type: 'danger',
               message: totpResponse.output.payload.message
             };
