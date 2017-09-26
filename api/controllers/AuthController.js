@@ -172,7 +172,6 @@ module.exports = class AuthController extends Controller{
     const that = this;
     const authPolicy = this.app.policies.AuthPolicy;
     const User = this.app.orm.User;
-    const UserModel = this.app.models.User;
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId)) {
       return this._loginHelper(request, function (result) {
