@@ -50,7 +50,7 @@ module.exports = class UserController extends Controller{
     const appVerifyUrl = request.payload.app_verify_url;
     delete request.payload.app_verify_url;
 
-    const notify = request.payload.notify ? request.payload.notify : true;
+    const notify = request.payload.hasOwnProperty('notify') ? request.payload.notify : true;
     delete request.payload.notify;
 
     let registrationType = '';
@@ -83,7 +83,7 @@ module.exports = class UserController extends Controller{
         }
         that.log.debug('User ' + user._id.toString() + ' successfully created', { request: request });
 
-        if (user.email) {
+        if (user.email && notify === true) {
           if (!request.params.currentUser) {
             that.app.services.EmailService.sendRegister(user, appVerifyUrl, function (merr, info) {
               return reply(user);
