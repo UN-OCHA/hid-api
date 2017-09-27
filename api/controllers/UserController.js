@@ -50,6 +50,9 @@ module.exports = class UserController extends Controller{
     const appVerifyUrl = request.payload.app_verify_url;
     delete request.payload.app_verify_url;
 
+    const notify = request.payload.notify ? request.payload.notify : true;
+    delete request.payload.notify;
+
     let registrationType = '';
     if (request.payload.registration_type) {
       registrationType = request.payload.registration_type;
