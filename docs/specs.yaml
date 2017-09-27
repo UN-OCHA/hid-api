@@ -1022,3 +1022,20 @@ paths:
           description: 'Bad request.'
         '401':
           description: 'Missing or invalid authorization token'
+    delete:
+      tags:
+        - totp
+      summary: 'Remove saved device'
+      parameters:
+        - name: 'authorization'
+          in: 'header'
+          description: 'The JWT'
+          required: true
+          type: string
+      responses:
+        '204':
+          description: 'Device was removed successfully.'
+        '400':
+          description: 'Bad request.'
+        '401':
+          description: 'Missing or invalid authorization token'

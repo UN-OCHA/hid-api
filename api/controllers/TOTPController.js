@@ -105,4 +105,25 @@ module.exports = class TOTPController extends Controller{
         that.app.services.ErrorService.handle(err, request, reply);
       });
   }
+
+  destroyDevice (request, reply) {
+    const that = this;
+    const user = request.params.currentUser;
+    const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
+    if (tindex !== -1 ) {
+      user.totpTrusted.splice(tindex, 1);
+      user.markModified('totpTrusted');
+      user
+        .save()
+        .then(() => {
+          return reply().code(204);
+        })
+        .catch(err => {
+          that.app.services.ErrorService.handle(err, request, reply);
+        });
+    }
+    else {
+      return reply(Boom.notFound());
+    }
+  }
 };
