@@ -95,7 +95,7 @@ module.exports = class AuthController extends Controller{
       if (!result.isBoom) {
         if (result.totp === true) {
           // Check to see if device is not a trusted device
-          const trusted = request.headers['x-hid-totp-trust'];
+          const trusted = request.state['x-hid-totp-trust'];
           if (!trusted || (trusted && !result.isTrustedDevice(request.headers['user-agent'], trusted))) {
             const token = request.headers['x-hid-totp'];
             const totpValid = authPolicy.isTOTPValid(result, token);

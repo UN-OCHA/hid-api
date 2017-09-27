@@ -98,8 +98,8 @@ module.exports = class TOTPController extends Controller{
     this.app.services.HelperService.saveTOTPDevice(request, request.params.currentUser)
       .then(() => {
         const tindex = request.params.currentUser.trustedDeviceIndex(request.headers['user-agent']);
-        const random = request.params.currentUser.totpTrusted[tindex].secret;
-        return reply({ secret: random });
+        const secret = request.params.currentUser.totpTrusted[tindex].secret;
+        return reply().state('x-hid-totp-trust', secret, { ttl: 30 * 24 * 60 * 60 * 1000});
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, request, reply);
