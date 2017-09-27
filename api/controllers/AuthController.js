@@ -94,10 +94,14 @@ module.exports = class AuthController extends Controller{
     this._loginHelper(request, function (result) {
       if (!result.isBoom) {
         if (result.totp === true) {
-          const token = request.headers['x-hid-totp'];
-          const totpValid = authPolicy.isTOTPValid(result, token);
-          if (totpValid.isBoom) {
-            return reply(totpValid);
+          // Check to see if device is not a trusted device
+          const trusted = request.headers['x-hid-totp-trust'];
+          if (!trusted || (trusted && !result.isTrustedDevice(request.headers['user-agent'], trusted))) {
+            const token = request.headers['x-hid-totp'];
+            const totpValid = authPolicy.isTOTPValid(result, token);
+            if (totpValid.isBoom) {
+              return reply(totpValid);
+            }
           }
         }
         const payload = {id: result._id};
@@ -183,16 +187,10 @@ module.exports = class AuthController extends Controller{
           else {
             // Check to see if device is not a trusted device
             const trusted = request.state['x-hid-totp-trust'];
-            if (trusted) {
-              const tindex = result.trustedDeviceIndex(request.headers['user-agent']);
-              const offset = Date.now() - 30 * 24 * 60 * 60 * 1000;
-              if (tindex !== -1 &&
-              result.totpTrusted[tindex].secret === trusted &&
-              offset < result.totpTrusted[tindex].date) {
-                // If trusted device, go on
-                request.yar.set('session', { userId: result._id, totp: true });
-                return that._loginRedirect(request, reply);
-              }
+            if (trusted && result.isTrustedDevice(request.headers['user-agent'], trusted)) {
+              // If trusted device, go on
+              request.yar.set('session', { userId: result._id, totp: true });
+              return that._loginRedirect(request, reply);
             }
             request.yar.set('session', { userId: result._id, totp: false });
             return reply.view('totp', {
@@ -250,24 +248,10 @@ module.exports = class AuthController extends Controller{
             cookie.totp = true;
             request.yar.set('session', cookie);
             if (request.payload['x-hid-totp-trust']) {
-              that.app.log.debug('Saving device as trusted');
-              const random = user.generateHash();
-              const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
-              if (tindex !== -1) {
-                user.totpTrusted[tindex].secret = random;
-                user.totpTrusted[tindex].date = Date.now();
-              }
-              else {
-                user.totpTrusted.push({
-                  secret: random,
-                  ua: request.headers['user-agent'],
-                  date: Date.now()
-                });
-              }
-              user.markModified('totpTrusted');
-              user
-                .save()
+              that.app.services.HelperService.saveTOTPDevice(request, user)
                 .then(() => {
+                  const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
+                  const random = user.totpTrusted[tindex].secret;
                   return that._loginRedirect(request, reply, { name: 'x-hid-totp-trust', value: random, options: {ttl: 30 * 24 * 60 * 60 * 1000}});
                 });
             }

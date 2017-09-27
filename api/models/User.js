@@ -409,6 +409,19 @@ module.exports = class User extends Model {
           return index;
         },
 
+        isTrustedDevice: function (ua, secret) {
+          const tindex = this.trustedDeviceIndex(ua);
+          const offset = Date.now() - 30 * 24 * 60 * 60 * 1000;
+          if (tindex !== -1 &&
+          this.totpTrusted[tindex].secret === secret &&
+          offset < this.totpTrusted[tindex].date) {
+            return true;
+          }
+          else {
+            return false;
+          }
+        },
+
         toJSON: function () {
           const user = this.toObject();
           delete user.password;

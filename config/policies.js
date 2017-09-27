@@ -46,7 +46,8 @@ module.exports = {
     generateQRCode: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
     verifyTOTPToken: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPValidPolicy'],
     enable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPValidPolicy'],
-    disable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid']
+    disable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid'],
+    saveDevice: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid']
   },
 
   UserController: {

@@ -92,4 +92,17 @@ module.exports = class TOTPController extends Controller{
         that.app.services.ErrorService.handleError(err, request, reply);
       });
   }
+
+  saveDevice (request, reply) {
+    const that = this;
+    this.app.services.HelperService.saveTOTPDevice(request, request.params.currentUser)
+      .then(() => {
+        const tindex = request.params.currentUser.trustedDeviceIndex(request.headers['user-agent']);
+        const random = request.params.currentUser.totpTrusted[tindex].secret;
+        return reply({ secret: random });
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
+  }
 };

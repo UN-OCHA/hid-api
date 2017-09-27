@@ -142,4 +142,23 @@ module.exports = class HelperService extends Service {
     }
     return out;
   }
+
+  saveTOTPDevice (request, user) {
+    this.app.log.debug('Saving device as trusted');
+    const random = user.generateHash();
+    const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
+    if (tindex !== -1) {
+      user.totpTrusted[tindex].secret = random;
+      user.totpTrusted[tindex].date = Date.now();
+    }
+    else {
+      user.totpTrusted.push({
+        secret: random,
+        ua: request.headers['user-agent'],
+        date: Date.now()
+      });
+    }
+    user.markModified('totpTrusted');
+    return user.save();
+  }
 };
