@@ -3,7 +3,7 @@ services:
   db:
     image: unocha/alpine-mongo
     volumes:
-      - ./db:/srv/db
+      - ./data:/srv
       - .:/srv/www
     environment:
       DNSDOCK_NAME: db
@@ -38,10 +38,10 @@ services:
       WKHTMLTOPDF_HOST: pdf.contactsid.vm
       WKHTMLTOPDF_PORT: 3000
     hostname: hidapi
-    networks: 
-      service: 
-        aliases: 
-          - hidapi 
+    networks:
+      service:
+        aliases:
+          - hidapi
           - api.hid.vm
     expose:
       - 80
