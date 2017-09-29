@@ -50,7 +50,10 @@ module.exports = class UserController extends Controller{
     const appVerifyUrl = request.payload.app_verify_url;
     delete request.payload.app_verify_url;
 
-    const notify = request.payload.hasOwnProperty('notify') ? request.payload.notify : true;
+    let notify = true;
+    if (typeof request.payload.notify !== 'undefined') {
+      notify = request.payload.notify;
+    }
     delete request.payload.notify;
 
     let registrationType = '';
