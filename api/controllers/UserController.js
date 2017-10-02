@@ -8,7 +8,6 @@ const http = require('http');
 const moment = require('moment');
 const acceptLanguage = require('accept-language');
 const sharp = require('sharp');
-const authenticator = require('authenticator');
 const validator = require('validator');
 
 /**
@@ -51,6 +50,12 @@ module.exports = class UserController extends Controller{
     const appVerifyUrl = request.payload.app_verify_url;
     delete request.payload.app_verify_url;
 
+    let notify = true;
+    if (typeof request.payload.notify !== 'undefined') {
+      notify = request.payload.notify;
+    }
+    delete request.payload.notify;
+
     let registrationType = '';
     if (request.payload.registration_type) {
       registrationType = request.payload.registration_type;
@@ -81,7 +86,7 @@ module.exports = class UserController extends Controller{
         }
         that.log.debug('User ' + user._id.toString() + ' successfully created', { request: request });
 
-        if (user.email) {
+        if (user.email && notify === true) {
           if (!request.params.currentUser) {
             that.app.services.EmailService.sendRegister(user, appVerifyUrl, function (merr, info) {
               return reply(user);
@@ -850,10 +855,11 @@ module.exports = class UserController extends Controller{
       });
   }
 
-  resetPassword (request, reply) {
+  resetPassword (request, reply, checkTotp = true) {
     const Model = this.app.orm.User;
     const UserModel = this.app.models.User;
     const that = this;
+    const authPolicy = this.app.policies.AuthPolicy;
 
     if (!request.payload.hash || !request.payload.password) {
       return reply(Boom.badRequest('Wrong arguments'));
@@ -875,15 +881,12 @@ module.exports = class UserController extends Controller{
         return record;
       })
       .then(record => {
-        if (record.totp) {
+        if (record.totp && checkTotp) {
           // Check that there is a TOTP token and that it is valid
           const token = request.headers['x-hid-totp'];
-          if (!token) {
-            throw Boom.unauthorized('No TOTP token');
-          }
-          const success = authenticator.verifyToken(record.totpConf.secret, token);
-          if (!success) {
-            throw Boom.unauthorized('Invalid TOTP token');
+          const totpResponse = authPolicy.isTOTPValid(record, token);
+          if (totpResponse !== true && totpResponse.isBoom) {
+            throw totpResponse;
           }
         }
         return record;

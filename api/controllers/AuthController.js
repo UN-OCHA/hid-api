@@ -17,6 +17,8 @@ module.exports = class AuthController extends Controller{
     const password = request.payload ? request.payload.password : false;
     const authPolicy = this.app.policies.AuthPolicy;
 
+    this.log.debug('Entering _loginHelper');
+
     if (!email || !password) {
       authPolicy.isAuthenticated(request, function (err) {
         if (err && err.isBoom) {
@@ -74,14 +76,6 @@ module.exports = class AuthController extends Controller{
               });
           }
           else {
-            if (user.totp === true) {
-              const token = request.headers['x-hid-totp'] || request.payload['x-hid-totp'];
-              const result = authPolicy.isTOTPValid(user, token);
-              if (result.isBoom) {
-                return reply(result);
-              }
-            }
-            user.sanitize(user);
             return reply(user);
           }
         })
@@ -96,13 +90,26 @@ module.exports = class AuthController extends Controller{
   authenticate (request, reply) {
     const that = this;
     const JwtToken = this.app.orm.JwtToken;
+    const authPolicy = this.app.policies.AuthPolicy;
     this._loginHelper(request, function (result) {
       if (!result.isBoom) {
+        if (result.totp === true) {
+          // Check to see if device is not a trusted device
+          const trusted = request.state['x-hid-totp-trust'];
+          if (!trusted || (trusted && !result.isTrustedDevice(request.headers['user-agent'], trusted))) {
+            const token = request.headers['x-hid-totp'];
+            const totpValid = authPolicy.isTOTPValid(result, token);
+            if (totpValid.isBoom) {
+              return reply(totpValid);
+            }
+          }
+        }
         const payload = {id: result._id};
         if (request.payload && request.payload.exp) {
           payload.exp = request.payload.exp;
         }
         const token = that.app.services.JwtService.issue(payload);
+        result.sanitize(result);
         if (!payload.exp) {
           // Creating an API key, store the token in the database
           JwtToken
@@ -134,66 +141,78 @@ module.exports = class AuthController extends Controller{
     });
   }
 
+  _loginRedirect (request, reply, cookie = false) {
+    let redirect = '';
+    if (request.payload.response_type) {
+      redirect = request.payload.redirect || '/oauth/authorize';
+      redirect += '?client_id=' + request.payload.client_id;
+      redirect += '&redirect_uri=' + request.payload.redirect_uri;
+      redirect += '&response_type=' + request.payload.response_type;
+      redirect += '&scope=' + request.payload.scope;
+      if (request.payload.state) {
+        redirect += '&state=' + request.payload.state;
+      }
+      if (request.payload.nonce) {
+        redirect += '&nonce=' + request.payload.nonce;
+      }
+    }
+    else {
+      redirect = '/user';
+    }
+
+    if (!cookie) {
+      reply.redirect(redirect);
+    }
+    else {
+      reply.redirect(redirect).state(cookie.name, cookie.value, cookie.options);
+    }
+    this.log.info('Successful user authentication. Redirecting.', {client_id: request.payload.client_id, email: request.payload.email, security: true, request: request});
+  }
+
   /**
    * Create a session and redirect to /oauth/authorize
    */
   login (request, reply) {
     const that = this;
-    this._loginHelper(request, function (result) {
-      if (!result.isBoom) {
-        // Redirect to /oauth/authorize
-        request.yar.set('session', { userId: result._id });
-        let redirect = '';
-        if (request.payload.response_type) {
-          redirect = request.payload.redirect || '/oauth/authorize';
-          redirect += '?client_id=' + request.payload.client_id;
-          redirect += '&redirect_uri=' + request.payload.redirect_uri;
-          redirect += '&response_type=' + request.payload.response_type;
-          redirect += '&scope=' + request.payload.scope;
-          if (request.payload.state) {
-            redirect += '&state=' + request.payload.state;
+    const authPolicy = this.app.policies.AuthPolicy;
+    const User = this.app.orm.User;
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId)) {
+      return this._loginHelper(request, function (result) {
+        if (!result.isBoom) {
+          if (!result.totp) {
+            request.yar.set('session', { userId: result._id, totp: true });
+            return that._loginRedirect(request, reply);
           }
-          if (request.payload.nonce) {
-            redirect += '&nonce=' + request.payload.nonce;
+          else {
+            // Check to see if device is not a trusted device
+            const trusted = request.state['x-hid-totp-trust'];
+            if (trusted && result.isTrustedDevice(request.headers['user-agent'], trusted)) {
+              // If trusted device, go on
+              request.yar.set('session', { userId: result._id, totp: true });
+              return that._loginRedirect(request, reply);
+            }
+            request.yar.set('session', { userId: result._id, totp: false });
+            return reply.view('totp', {
+              title: 'Enter your Authentication code',
+              query: request.payload,
+              destination: '/login',
+              alert: false
+            });
           }
         }
         else {
-          redirect = '/user';
-        }
+          const params = that.app.services.HelperService.getOauthParams(request.payload);
 
-        reply.redirect(redirect);
-        that.log.info('Successful user authentication. Redirecting.', {client_id: request.payload.client_id, email: request.payload.email, security: true, request: request});
-      }
-      else {
-        const params = that.app.services.HelperService.getOauthParams(request.payload);
-
-        let registerLink = '/register';
-        if (params) {
-          registerLink += '?' + params;
-        }
-
-        let passwordLink = '/password';
-        if (params) {
-          passwordLink += '?' + params;
-        }
-
-        if (result.output.headers &&
-          result.output.headers['WWW-Authenticate'] &&
-          result.output.headers['WWW-Authenticate'].indexOf('totp') !== -1) {
-          let alert = false;
-          if (result.output.payload.message !== 'No TOTP token') {
-            alert = {
-              type: 'danger',
-              message: result.output.payload.message
-            };
+          let registerLink = '/register';
+          if (params) {
+            registerLink += '?' + params;
           }
-          return reply.view('totp', {
-            title: 'Enter your TOTP code',
-            query: request.payload,
-            alert: alert
-          });
-        }
-        else {
+
+          let passwordLink = '/password';
+          if (params) {
+            passwordLink += '?' + params;
+          }
           return reply.view('login', {
             title: 'Log into Humanitarian ID',
             query: request.payload,
@@ -205,8 +224,49 @@ module.exports = class AuthController extends Controller{
             }
           });
         }
-      }
-    });
+      });
+    }
+    if (cookie && cookie.userId && cookie.totp === false) {
+      User
+        .findOne({_id: cookie.userId})
+        .then((user) => {
+          const token = request.payload['x-hid-totp'];
+          const totpValid = authPolicy.isTOTPValid(user, token);
+          if (totpValid.isBoom) {
+            let alert =  {
+              type: 'danger',
+              message: totpValid.output.payload.message
+            };
+            return reply.view('totp', {
+              title: 'Enter your Authentication code',
+              query: request.payload,
+              destination: '/login',
+              alert: alert
+            });
+          }
+          else {
+            cookie.totp = true;
+            request.yar.set('session', cookie);
+            if (request.payload['x-hid-totp-trust']) {
+              that.app.services.HelperService.saveTOTPDevice(request, user)
+                .then(() => {
+                  const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
+                  const random = user.totpTrusted[tindex].secret;
+                  return that._loginRedirect(request, reply, { name: 'x-hid-totp-trust', value: random, options: {ttl: 30 * 24 * 60 * 60 * 1000}});
+                });
+            }
+            else {
+              return that._loginRedirect(request, reply);
+            }
+          }
+        })
+        .catch (err => {
+          that.app.services.ErrorService.handle(err, request, reply);
+        });
+    }
+    if (cookie && cookie.userId && cookie.totp === true) {
+      return this._loginRedirect(request, reply);
+    }
   }
 
   authorizeDialogOauth2 (request, reply) {
@@ -223,7 +283,7 @@ module.exports = class AuthController extends Controller{
     // If the user is not authenticated, redirect to the login page and preserve
     // all relevant query parameters.
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId)) {
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
       this.log.info('Get request to /oauth/authorize without session. Redirecting to the login page.', {client_id: request.query.client_id, request: request});
       return reply.redirect(
         '/?redirect=/oauth/authorize&client_id=' + request.query.client_id +
@@ -291,7 +351,7 @@ module.exports = class AuthController extends Controller{
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
     const cookie = request.yar.get('session');
 
-    if (!cookie || (cookie && !cookie.userId)) {
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
       this.log.info('Got request to /oauth/authorize without session. Redirecting to the login page.', {client_id: request.query.client_id, request: request});
       return reply.redirect('/?redirect=/oauth/authorize&client_id=' + request.query.client_id +
         '&redirect_uri=' + request.query.redirect_uri +

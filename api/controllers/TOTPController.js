@@ -56,8 +56,8 @@ module.exports = class TOTPController extends Controller{
       this.log.warn('2FA already enabled. No need to reenable.', { security: true, fail: true, request: request});
       return reply(Boom.badRequest('2FA is already enabled. You need to disable it first'));
     }
-    const method = request.payload.method;
-    if (!method || (method !== 'app' && method !== 'sms')) {
+    const method = request.payload ? request.payload.method : '';
+    if (method !== 'app' && method !== 'sms') {
       return reply(Boom.badRequest('Valid 2FA method is required'));
     }
     user.totpMethod = request.payload.method;
@@ -91,5 +91,39 @@ module.exports = class TOTPController extends Controller{
       .catch(err => {
         that.app.services.ErrorService.handleError(err, request, reply);
       });
+  }
+
+  saveDevice (request, reply) {
+    const that = this;
+    this.app.services.HelperService.saveTOTPDevice(request, request.params.currentUser)
+      .then(() => {
+        const tindex = request.params.currentUser.trustedDeviceIndex(request.headers['user-agent']);
+        const secret = request.params.currentUser.totpTrusted[tindex].secret;
+        return reply().state('x-hid-totp-trust', secret, { ttl: 30 * 24 * 60 * 60 * 1000});
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
+  }
+
+  destroyDevice (request, reply) {
+    const that = this;
+    const user = request.params.currentUser;
+    const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
+    if (tindex !== -1 ) {
+      user.totpTrusted.splice(tindex, 1);
+      user.markModified('totpTrusted');
+      user
+        .save()
+        .then(() => {
+          return reply().code(204);
+        })
+        .catch(err => {
+          that.app.services.ErrorService.handle(err, request, reply);
+        });
+    }
+    else {
+      return reply(Boom.notFound());
+    }
   }
 };

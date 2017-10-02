@@ -40,8 +40,48 @@ module.exports = class ViewController extends Controller {
 
   login (request, reply) {
     const Client = this.app.orm.Client;
-    const session = request.yar.get('session');
-    if (session) { // User is already logged in
+    const cookie = request.yar.get('session');
+
+    if (!cookie || (cookie && !cookie.userId)) {
+      // Show the login form
+      const registerLink = this._getRegisterLink(request.query);
+      const passwordLink = this._getPasswordLink(request.query);
+      const loginArgs = {
+        title: 'Log into Humanitarian ID',
+        query: request.query,
+        registerLink: registerLink,
+        passwordLink: passwordLink,
+        alert: false
+      };
+
+      // Check client ID and redirect URI at this stage, so we can send an error message if needed.
+      if (request.query.client_id) {
+        Client
+          .findOne({id: request.query.client_id})
+          .then(client => {
+            if (!client || (client && client.redirectUri !== request.query.redirect_uri)) {
+              loginArgs.alert = {
+                type: 'danger',
+                message: 'The configuration of the client application is invalid. We can not log you in.'
+              };
+              return reply.view('login', loginArgs);
+            }
+            return reply.view('login', loginArgs);
+          })
+          .catch(err => {
+            loginArgs.alert = {
+              type: 'danger',
+              message: 'Internal server error. We can not log you in. Please let us know at info@humanitarian.id'
+            };
+            return reply.view('login', loginArgs);
+          });
+      }
+      else {
+        return reply.view('login', loginArgs);
+      }
+    }
+
+    if (cookie && cookie.userId && cookie.totp === true) { // User is already logged in
       if (request.query.client_id &&
         request.query.redirect_uri &&
         request.query.response_type &&
@@ -61,40 +101,14 @@ module.exports = class ViewController extends Controller {
       }
     }
 
-    const registerLink = this._getRegisterLink(request.query);
-    const passwordLink = this._getPasswordLink(request.query);
-    const loginArgs = {
-      title: 'Log into Humanitarian ID',
-      query: request.query,
-      registerLink: registerLink,
-      passwordLink: passwordLink,
-      alert: false
-    };
-
-    // Check client ID and redirect URI at this stage, so we can send an error message if needed.
-    if (request.query.client_id) {
-      Client
-        .findOne({id: request.query.client_id})
-        .then(client => {
-          if (!client || (client && client.redirectUri !== request.query.redirect_uri)) {
-            loginArgs.alert = {
-              type: 'danger',
-              message: 'The configuration of the client application is invalid. We can not log you in.'
-            };
-            return reply.view('login', loginArgs);
-          }
-          return reply.view('login', loginArgs);
-        })
-        .catch(err => {
-          loginArgs.alert = {
-            type: 'danger',
-            message: 'Internal server error. We can not log you in. Please let us know at info@humanitarian.id'
-          };
-          return reply.view('login', loginArgs);
-        });
-    }
-    else {
-      return reply.view('login', loginArgs);
+    if (cookie && cookie.userId && cookie.totp === false) {
+      // Show TOTP form
+      return reply.view('totp', {
+        title: 'Enter your Authentication code',
+        query: request.query,
+        destination: '/login',
+        alert: false
+      });
     }
   }
 
@@ -234,28 +248,87 @@ module.exports = class ViewController extends Controller {
   }
 
   newPassword (request, reply) {
-    reply.view('new_password', {
-      query: request.query
-    });
+    const that = this;
+    const User = this.app.orm.User;
+    request.yar.reset();
+    request.yar.set('session', { hash: request.query.hash, totp: false});
+    User
+      .findOne(({hash: request.query.hash, hashAction: 'reset_password'}))
+      .then(user => {
+        if (user.totp) {
+          return reply.view('totp', {
+            query: request.query,
+            destination: '/new_password',
+            alert: false
+          });
+        }
+        else {
+          request.yar.set('session', { hash: request.query.hash, totp: true });
+          return reply.view('new_password', {
+            query: request.query,
+            hash: request.query.hash
+          });
+        }
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 
   newPasswordPost (request, reply) {
     const UserController = this.app.controllers.UserController;
+    const User = this.app.orm.User;
     const that = this;
-    UserController.resetPasswordEndpoint(request, function (result) {
-      const al = that._getAlert(result,
-        'Your password was successfully reset. You can now login.',
-        'There was an error resetting your password.'
-      );
-      const registerLink = that._getRegisterLink(request.payload);
-      const passwordLink = that._getPasswordLink(request.payload);
-      return reply.view('login', {
-        alert: al,
-        query: request.payload,
-        registerLink: registerLink,
-        passwordLink: passwordLink
-      });
-    });
+    const cookie = request.yar.get('session');
+    const authPolicy = this.app.policies.AuthPolicy;
+
+    if (cookie && cookie.hash && !cookie.totp) {
+      User
+        .findOne(({hash: cookie.hash, hashAction: 'reset_password'}))
+        .then(user => {
+          const token = request.payload['x-hid-totp'];
+          const totpResponse = authPolicy.isTOTPValid(user, token);
+          if (totpResponse !== true && totpResponse.isBoom) {
+            const alert =  {
+              type: 'danger',
+              message: totpResponse.output.payload.message
+            };
+            return reply.view('totp', {
+              query: request.payload,
+              destination: '/new_password',
+              alert: alert
+            });
+          }
+          else {
+            cookie.totp = true;
+            request.yar.set('session', cookie);
+            return reply.view('new_password', {
+              query: request.payload,
+              hash: cookie.hash
+            });
+          }
+        })
+        .catch(err => {
+          that.app.services.ErrorService.handle(err, request, reply);
+        });
+    }
+
+    if (cookie && cookie.hash && cookie.totp) {
+      UserController.resetPassword(request, function (result) {
+        const al = that._getAlert(result,
+          'Your password was successfully reset. You can now login.',
+          'There was an error resetting your password.'
+        );
+        const registerLink = that._getRegisterLink(request.payload);
+        const passwordLink = that._getPasswordLink(request.payload);
+        return reply.view('login', {
+          alert: al,
+          query: request.payload,
+          registerLink: registerLink,
+          passwordLink: passwordLink
+        });
+      }, false);
+    }
   }
 
   // Display a default user page when user is logged in without OAuth
@@ -263,7 +336,7 @@ module.exports = class ViewController extends Controller {
     // If the user is not authenticated, redirect to the login page
     const User = this.app.orm.User;
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId)) {
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
       return reply.redirect('/');
     }
     else {

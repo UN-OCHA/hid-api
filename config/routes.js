@@ -453,6 +453,18 @@ module.exports = [
 
   {
     method: 'POST',
+    path: '/api/v2/totp/device',
+    handler: 'TOTPController.saveDevice'
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/totp/device',
+    handler: 'TOTPController.destroyDevice'
+  },
+
+  {
+    method: 'POST',
     path: '/api/v2/totp',
     handler: 'TOTPController.enable'
   },
