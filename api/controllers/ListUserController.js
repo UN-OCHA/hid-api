@@ -32,6 +32,12 @@ module.exports = class ListUserController extends Controller{
       return reply(Boom.badRequest('Missing list attribute'));
     }
 
+    let notify = true;
+    if (typeof request.payload.notify !== 'undefined') {
+      notify = request.payload.notify;
+    }
+    delete request.payload.notify;
+
     const that = this;
 
     List
@@ -131,7 +137,7 @@ module.exports = class ListUserController extends Controller{
       })
       .then((result) => {
         // Notify user if needed
-        if (request.params.currentUser.id !== userId && result.list.type !== 'list') {
+        if (request.params.currentUser.id !== userId && result.list.type !== 'list' && notify === true) {
           that.log.debug('Checked in by a different user', {request: request});
           that.app.services.NotificationService.send({
             type: 'admin_checkin',
