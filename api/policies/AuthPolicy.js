@@ -117,7 +117,7 @@ module.exports = class AuthPolicy extends Policy {
       return reply();
     }
     else {
-      const result = this.isTOTPValid(request.params.currentUser, request.headers['x-hid-totp'], function (result) {
+      this.isTOTPValid(request.params.currentUser, request.headers['x-hid-totp'], function (result) {
         if (result.isBoom) {
           return reply(result);
         }
