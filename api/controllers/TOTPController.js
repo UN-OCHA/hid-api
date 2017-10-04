@@ -4,6 +4,7 @@ const authenticator = require('authenticator');
 const Boom = require('boom');
 const QRCode = require('qrcode');
 const Controller = require('trails/controller');
+const BCrypt = require('bcryptjs');
 
 /**
  * @module TOTPController
@@ -125,5 +126,31 @@ module.exports = class TOTPController extends Controller{
     else {
       return reply(Boom.notFound());
     }
+  }
+
+  generateBackupCodes (request, reply) {
+    const user = request.params.currentUser;
+    if (!user.totp) {
+      return reply(Boom.badRequest('TOTP needs to be enabled'));
+    }
+    const HelperService = this.app.services.HelperService;
+    let codes = [], hashedCodes = [];
+    for (let i = 0; i < 16; i++) {
+      codes.push(HelperService.generateRandom());
+    }
+    for (let i = 0; i < 16; i++) {
+      hashedCodes.push(BCrypt.hashSync(codes[i], 5));
+    }
+    // Save the hashed codes in the user and show the ones which are not hashed
+    const that = this;
+    user.totpConf.backupCodes = hashedCodes;
+    user
+      .save()
+      .then(() => {
+        return reply(codes);
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 };

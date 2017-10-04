@@ -117,44 +117,67 @@ module.exports = class AuthPolicy extends Policy {
       return reply();
     }
     else {
-      const result = this.isTOTPValid(request.params.currentUser, request.headers['x-hid-totp']);
-      if (result.isBoom) {
-        return reply(result);
-      }
-      else {
-        return reply();
-      }
+      const result = this.isTOTPValid(request.params.currentUser, request.headers['x-hid-totp'], function (result) {
+        if (result.isBoom) {
+          return reply(result);
+        }
+        else {
+          return reply();
+        }
+      });
     }
   }
 
   isTOTPValidPolicy (request, reply) {
     const user = request.params.currentUser;
     const token = request.headers['x-hid-totp'];
-    const result = this.isTOTPValid(user, token);
-    if (result.isBoom) {
-      return reply(result);
-    }
-    else {
-      return reply();
-    }
+    this.isTOTPValid(user, token, function (result) {
+      if (result.isBoom) {
+        return reply(result);
+      }
+      else {
+        return reply();
+      }
+    });
   }
 
-  isTOTPValid (user, token) {
+  isTOTPValid (user, token, callback) {
     if (!user.totpConf || !user.totpConf.secret) {
-      return Boom.unauthorized('TOTP was not configured for this user', 'totp');
+      return callback(Boom.unauthorized('TOTP was not configured for this user', 'totp'));
     }
 
     if (!token) {
-      return Boom.unauthorized('No TOTP token', 'totp');
+      return callback(Boom.unauthorized('No TOTP token', 'totp'));
     }
 
-    const success = authenticator.verifyToken(user.totpConf.secret, token);
+    if (token.length === 6) {
+      const success = authenticator.verifyToken(user.totpConf.secret, token);
 
-    if (success) {
-      return true;
+      if (success) {
+        return callback(true);
+      }
+      else {
+        return callback(Boom.unauthorized('Invalid TOTP token !', 'totp'));
+      }
     }
     else {
-      return Boom.unauthorized('Invalid TOTP token !', 'totp');
+      // Using backup code
+      const index = user.backupCodeIndex(token);
+      if (index === -1) {
+        return callback(Boom.unauthorized('Invalid backup code !', 'totp'));
+      }
+      else {
+        // remove backup code so it can't be reused
+        user.totpConf.backupCodes.slice(index, 1);
+        user
+          .save()
+          .then(() => {
+            return callback(true);
+          })
+          .catch(err => {
+            return callback(Boom.badImplementation());
+          });
+      }
     }
   }
 

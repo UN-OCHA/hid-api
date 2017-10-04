@@ -48,7 +48,8 @@ module.exports = {
     enable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPValidPolicy'],
     disable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid'],
     saveDevice: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid'],
-    destroyDevice: ['AuthPolicy.isAuthenticated']
+    destroyDevice: ['AuthPolicy.isAuthenticated'],
+    generateBackupCodes: ['AuthPolicy.isAuthenticated'],
   },
 
   UserController: {

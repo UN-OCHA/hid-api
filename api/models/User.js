@@ -422,6 +422,16 @@ module.exports = class User extends Model {
           }
         },
 
+        backupCodeIndex: function (code) {
+          let index = -1;
+          for (let i = 0; i < this.totpConf.backupCodes.length; i++) {
+            if (Bcrypt.compareSync(code, this.totpConf.backupCodes[i])) {
+              index = i;
+            }
+          }
+          return index;
+        },
+
         toJSON: function () {
           const user = this.toObject();
           delete user.password;
