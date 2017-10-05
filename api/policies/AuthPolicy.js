@@ -169,6 +169,7 @@ module.exports = class AuthPolicy extends Policy {
       else {
         // remove backup code so it can't be reused
         user.totpConf.backupCodes.slice(index, 1);
+        user.markModified('totpConf');
         user
           .save()
           .then(() => {

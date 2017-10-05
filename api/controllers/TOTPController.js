@@ -29,7 +29,11 @@ module.exports = class TOTPController extends Controller{
     user
       .save()
       .then(() => {
-        const otpauthUrl = authenticator.generateTotpUri(secret, user.name, 'HID', 'SHA1', 6, 30);
+        let qrCodeName = 'HID (' + process.env.NODE_ENV + ')';
+        if (process.env.NODE_ENV === 'production') {
+          qrCodeName = 'HID';
+        }
+        const otpauthUrl = authenticator.generateTotpUri(secret, user.name, qrCodeName, 'SHA1', 6, 30);
         QRCode.toDataURL(otpauthUrl, function (err, qrcode) {
           if (err) {
             that.app.services.ErrorService.handleError(err, request, reply);
@@ -144,6 +148,7 @@ module.exports = class TOTPController extends Controller{
     // Save the hashed codes in the user and show the ones which are not hashed
     const that = this;
     user.totpConf.backupCodes = hashedCodes;
+    user.markModified('totpConf');
     user
       .save()
       .then(() => {

@@ -84,6 +84,41 @@ module.exports = class AuthController extends Controller{
         });
     }
   }
+
+  _authenticateHelper (result, request, reply) {
+    const that = this;
+    const JwtToken = this.app.orm.JwtToken;
+    const payload = {id: result._id};
+    if (request.payload && request.payload.exp) {
+      payload.exp = request.payload.exp;
+    }
+    const token = that.app.services.JwtService.issue(payload);
+    result.sanitize(result);
+    if (!payload.exp) {
+      // Creating an API key, store the token in the database
+      JwtToken
+        .create({
+          token: token,
+          user: result._id,
+          blacklist: false
+          // TODO: add expires
+        })
+        .then(() => {
+          that.log.warn('Created an API key', {email: result.email, security: true, request: request});
+          reply({
+            user: result,
+            token: token
+          });
+        })
+        .catch((err) => {
+          that.app.services.ErrorService.handle(err, request, reply);
+        });
+    }
+    else {
+      that.log.info('Successful user authentication. Returning JWT.', {email: result.email, security: true, request: request});
+      return reply({ user: result, token: token});
+    }
+  }
   /**
    * Authenticate user through JWT
    */
@@ -98,41 +133,21 @@ module.exports = class AuthController extends Controller{
           const trusted = request.state['x-hid-totp-trust'];
           if (!trusted || (trusted && !result.isTrustedDevice(request.headers['user-agent'], trusted))) {
             const token = request.headers['x-hid-totp'];
-            const totpValid = authPolicy.isTOTPValid(result, token);
-            if (totpValid.isBoom) {
-              return reply(totpValid);
-            }
+            const totpValid = authPolicy.isTOTPValid(result, token, function (totpValid) {
+              if (totpValid.isBoom) {
+                return reply(totpValid);
+              }
+              else {
+                return that._authenticateHelper(result, request, reply);
+              }
+            });
+          }
+          else {
+            return that._authenticateHelper(result, request, reply);
           }
         }
-        const payload = {id: result._id};
-        if (request.payload && request.payload.exp) {
-          payload.exp = request.payload.exp;
-        }
-        const token = that.app.services.JwtService.issue(payload);
-        result.sanitize(result);
-        if (!payload.exp) {
-          // Creating an API key, store the token in the database
-          JwtToken
-            .create({
-              token: token,
-              user: result._id,
-              blacklist: false
-              // TODO: add expires
-            })
-            .then(() => {
-              that.log.warn('Created an API key', {email: result.email, security: true, request: request});
-              reply({
-                user: result,
-                token: token
-              });
-            })
-            .catch((err) => {
-              that.app.services.ErrorService.handle(err, request, reply);
-            });
-        }
         else {
-          that.log.info('Successful user authentication. Returning JWT.', {email: result.email, security: true, request: request});
-          return reply({ user: result, token: token});
+          return that._authenticateHelper(result, request, reply);
         }
       }
       else {
@@ -231,34 +246,35 @@ module.exports = class AuthController extends Controller{
         .findOne({_id: cookie.userId})
         .then((user) => {
           const token = request.payload['x-hid-totp'];
-          const totpValid = authPolicy.isTOTPValid(user, token);
-          if (totpValid.isBoom) {
-            let alert =  {
-              type: 'danger',
-              message: totpValid.output.payload.message
-            };
-            return reply.view('totp', {
-              title: 'Enter your Authentication code',
-              query: request.payload,
-              destination: '/login',
-              alert: alert
-            });
-          }
-          else {
-            cookie.totp = true;
-            request.yar.set('session', cookie);
-            if (request.payload['x-hid-totp-trust']) {
-              that.app.services.HelperService.saveTOTPDevice(request, user)
-                .then(() => {
-                  const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
-                  const random = user.totpTrusted[tindex].secret;
-                  return that._loginRedirect(request, reply, { name: 'x-hid-totp-trust', value: random, options: {ttl: 30 * 24 * 60 * 60 * 1000}});
-                });
+          authPolicy.isTOTPValid(user, token, function (totpValid) {
+            if (totpValid.isBoom) {
+              let alert =  {
+                type: 'danger',
+                message: totpValid.output.payload.message
+              };
+              return reply.view('totp', {
+                title: 'Enter your Authentication code',
+                query: request.payload,
+                destination: '/login',
+                alert: alert
+              });
             }
             else {
-              return that._loginRedirect(request, reply);
+              cookie.totp = true;
+              request.yar.set('session', cookie);
+              if (request.payload['x-hid-totp-trust']) {
+                that.app.services.HelperService.saveTOTPDevice(request, user)
+                  .then(() => {
+                    const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
+                    const random = user.totpTrusted[tindex].secret;
+                    return that._loginRedirect(request, reply, { name: 'x-hid-totp-trust', value: random, options: {ttl: 30 * 24 * 60 * 60 * 1000}});
+                  });
+              }
+              else {
+                return that._loginRedirect(request, reply);
+              }
             }
-          }
+          });
         })
         .catch (err => {
           that.app.services.ErrorService.handle(err, request, reply);
