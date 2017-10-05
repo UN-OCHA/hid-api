@@ -124,7 +124,6 @@ module.exports = class AuthController extends Controller{
    */
   authenticate (request, reply) {
     const that = this;
-    const JwtToken = this.app.orm.JwtToken;
     const authPolicy = this.app.policies.AuthPolicy;
     this._loginHelper(request, function (result) {
       if (!result.isBoom) {
@@ -133,7 +132,7 @@ module.exports = class AuthController extends Controller{
           const trusted = request.state['x-hid-totp-trust'];
           if (!trusted || (trusted && !result.isTrustedDevice(request.headers['user-agent'], trusted))) {
             const token = request.headers['x-hid-totp'];
-            const totpValid = authPolicy.isTOTPValid(result, token, function (totpValid) {
+            authPolicy.isTOTPValid(result, token, function (totpValid) {
               if (totpValid.isBoom) {
                 return reply(totpValid);
               }
