@@ -1,5 +1,6 @@
 #!/bin/sh
 cd /srv/www/
+mongo drop_collections.js
 if [ ! -d "tmp" ];
 then echo "Creating tmp folder !"; 
 mkdir tmp
