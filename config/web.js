@@ -246,7 +246,7 @@ module.exports = {
     routes: {
       cors: {
         additionalExposedHeaders: [ 'X-Total-Count' ],
-        additionalHeaders: ['Accept-Language']
+        additionalHeaders: ['Accept-Language', 'X-HID-TOTP']
       },
       payload: {
         maxBytes: 5242880
