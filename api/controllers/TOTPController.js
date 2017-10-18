@@ -104,7 +104,7 @@ module.exports = class TOTPController extends Controller{
       .then(() => {
         const tindex = request.params.currentUser.trustedDeviceIndex(request.headers['user-agent']);
         const secret = request.params.currentUser.totpTrusted[tindex].secret;
-        return reply().state('x-hid-totp-trust', secret, { ttl: 30 * 24 * 60 * 60 * 1000});
+        return reply().state('x-hid-totp-trust', secret, { ttl: 30 * 24 * 60 * 60 * 1000, domain: 'humanitarian.id'});
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, request, reply);
