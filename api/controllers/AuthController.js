@@ -266,7 +266,7 @@ module.exports = class AuthController extends Controller{
                   .then(() => {
                     const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
                     const random = user.totpTrusted[tindex].secret;
-                    return that._loginRedirect(request, reply, { name: 'x-hid-totp-trust', value: random, options: {ttl: 30 * 24 * 60 * 60 * 1000}});
+                    return that._loginRedirect(request, reply, { name: 'x-hid-totp-trust', value: random, options: {ttl: 30 * 24 * 60 * 60 * 1000, domain: 'humanitarian.id'}});
                   });
               }
               else {
