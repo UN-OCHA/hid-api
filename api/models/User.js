@@ -442,7 +442,9 @@ module.exports = class User extends Model {
             delete user.totpConf;
           }
           if (user.totpTrusted) {
-            delete user.totpTrusted;
+            for (let i = 0; i < user.totpTrusted.length; i++) {
+              delete user.totpTrusted[i].secret;
+            }
           }
           listTypes.forEach(function (attr) {
             _.remove(user[attr + 's'], function (checkin) {
@@ -765,6 +767,11 @@ module.exports = class User extends Model {
       },
       password: {
         type: String
+      },
+      // Last time the user reset his password
+      lastPasswordReset: {
+        type: Date,
+        readonly: true
       },
       // Only admins can set this
       verified: {

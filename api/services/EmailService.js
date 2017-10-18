@@ -157,6 +157,31 @@ module.exports = class EmailService extends Service {
       });
   }
 
+  sendForcedPasswordReset (user, appResetUrl, callback) {
+    const mailOptions = {
+      to: user.email,
+      locale: user.locale
+    };
+    const hash = user.generateHash();
+    const that = this;
+    user.hash = hash;
+    user.hashAction = 'reset_password';
+    user.hashEmail = '';
+    user
+      .save()
+      .then(() => {
+        const resetUrl = that._addHash(appResetUrl, hash);
+        const context = {
+          name: user.name,
+          reset_url: resetUrl
+        };
+        that.send(mailOptions, 'reset_password', context, callback);
+      })
+      .catch(err => {
+        callback(err);
+      });
+  }
+
   sendClaim (user, appResetUrl, callback) {
     const mailOptions = {
       to: user.email,

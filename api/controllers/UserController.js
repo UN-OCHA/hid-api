@@ -630,6 +630,7 @@ module.exports = class UserController extends Controller{
                 return reply(Boom.badRequest('Password is not strong enough'));
               }
               request.payload.password = UserModel.hashPassword(request.payload.new_password);
+              request.payload.lastPasswordReset = new Date();
               that.log.warn('Successfully updated user password', { request: request, security: true});
               return reply(that._updateQuery(request, options));
             }
@@ -893,14 +894,21 @@ module.exports = class UserController extends Controller{
       })
       .then(record => {
         if (record.validHash(request.payload.hash) === true) {
-          record.password = UserModel.hashPassword(request.payload.password);
-          record.verifyEmail(record.email);
-          record.expires = new Date(0, 0, 1, 0, 0, 0);
-          record.is_orphan = false;
-          record.hash = '';
-          // Reactivate user account if it was disabled
-          record.deleted = false;
-          return record.save();
+          const pwd = UserModel.hashPassword(request.payload.password);
+          if (pwd === record.password) {
+            throw Boom.badRequest('The new password can not be the same as the old one');
+          }
+          else {
+            record.password = pwd;
+            record.verifyEmail(record.email);
+            record.expires = new Date(0, 0, 1, 0, 0, 0);
+            record.is_orphan = false;
+            record.hash = '';
+            record.lastPasswordReset = new Date();
+            // Reactivate user account if it was disabled
+            record.deleted = false;
+            return record.save();
+          }
         }
         else {
           throw Boom.badRequest('Reset password link is expired or invalid');
