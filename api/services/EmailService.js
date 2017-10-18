@@ -162,24 +162,10 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale
     };
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'reset_password';
-    user.hashEmail = '';
-    user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appResetUrl, hash);
-        const context = {
-          name: user.name,
-          reset_url: resetUrl
-        };
-        that.send(mailOptions, 'reset_password', context, callback);
-      })
-      .catch(err => {
-        callback(err);
-      });
+    const context = {
+      user: user
+    };
+    this.send(mailOptions, 'forced_password_reset', context, callback);
   }
 
   sendForcedPasswordResetAlert (user, callback) {

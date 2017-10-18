@@ -41,7 +41,7 @@ const forceResetPassword = function (app) {
   const sixMonths = new Date(current - 6 * 30 * 24 * 3600 * 1000);
   const stream = User.find({totp: false, lastPasswordReset: { $lte: sixMonths }}).cursor();
   stream.on('data', function (user) {
-    EmailService.sendForcedPasswordReset(user, 'https://auth.humanitarian.id/new_password');
+    EmailService.sendForcedPasswordReset(user);
   });
 };
 
@@ -604,15 +604,15 @@ module.exports = {
       onTick: sendReminderCheckinEmails,
       start: true
     },
-    /*forceResetPassword: {
-      schedule: '00 40 23 * * *',
-      onTick: forceResetPassword,
-      start: true
-    },*/
     forcedResetPasswordAlert: {
       schedule: '00 40 23 * * *',
       onTick: forcedResetPasswordAlert,
       start: true
     },
+    forceResetPassword: {
+      schedule: '00 50 23 * * *',
+      onTick: forceResetPassword,
+      start: true
+    }
   }
 };
