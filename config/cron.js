@@ -45,6 +45,17 @@ const forceResetPassword = function (app) {
   });
 };
 
+const forcedResetPasswordAlert = function (app) {
+  const User = app.orm.user;
+  const EmailService = app.services.EmailService;
+  const current = Date.now();
+  const fiveMonths = new Date(current - 5 * 30 * 24 * 3600 * 1000);
+  const stream = User.find({totp: false, lastPasswordReset: { $lte: fiveMonths }}).cursor();
+  stream.on('data', function (user) {
+    EmailService.sendForcedPasswordResetAlert(user);
+  });
+};
+
 const importLists = function (app) {
   const List = app.orm.list;
   const User = app.orm.user;
@@ -598,5 +609,10 @@ module.exports = {
       onTick: forceResetPassword,
       start: true
     },*/
+    forcedResetPasswordAlert: {
+      schedule: '00 40 23 * * *',
+      onTick: forcedResetPasswordAlert,
+      start: true
+    },
   }
 };
