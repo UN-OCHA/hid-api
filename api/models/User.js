@@ -678,6 +678,18 @@ module.exports = class User extends Model {
       }
     });
 
+    const trustedDeviceSchema = new Schema({
+      ua: {
+        type: String
+      },
+      secret: {
+        type: String
+      },
+      date: {
+        type: Date
+      }
+    });
+
     return {
       // Legacy user_id data, to be added during migration
       user_id: {
@@ -1081,7 +1093,7 @@ module.exports = class User extends Model {
         readonly: true
       },
       totpTrusted: {
-        type: Array,
+        type: [trustedDeviceSchema],
         readonly: true
       }
     };

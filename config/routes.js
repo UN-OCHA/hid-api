@@ -465,7 +465,7 @@ module.exports = [
 
   {
     method: 'DELETE',
-    path: '/api/v2/totp/device',
+    path: '/api/v2/totp/device/{id}',
     handler: 'TOTPController.destroyDevice'
   },
 

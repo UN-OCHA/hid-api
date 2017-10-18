@@ -114,10 +114,10 @@ module.exports = class TOTPController extends Controller{
   destroyDevice (request, reply) {
     const that = this;
     const user = request.params.currentUser;
-    const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
-    if (tindex !== -1 ) {
-      user.totpTrusted.splice(tindex, 1);
-      user.markModified('totpTrusted');
+    const deviceId = request.params.id;
+    const device = user.totpTrusted.id(deviceId);
+    if (device) {
+      user.totpTrusted.id(deviceId).remove();
       user
         .save()
         .then(() => {
