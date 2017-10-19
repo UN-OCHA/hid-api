@@ -132,14 +132,14 @@ module.exports = class AuthController extends Controller{
           const trusted = request.state['x-hid-totp-trust'];
           if (!trusted || (trusted && !result.isTrustedDevice(request.headers['user-agent'], trusted))) {
             const token = request.headers['x-hid-totp'];
-            authPolicy.isTOTPValid(result, token, function (totpValid) {
-              if (totpValid.isBoom) {
-                return reply(totpValid);
-              }
-              else {
+            authPolicy
+              .isTOTPValid(result, token)
+              .then(() => {
                 return that._authenticateHelper(result, request, reply);
-              }
-            });
+              })
+              .catch(err => {
+                return reply(err);
+              });
           }
           else {
             return that._authenticateHelper(result, request, reply);
@@ -245,38 +245,34 @@ module.exports = class AuthController extends Controller{
         .findOne({_id: cookie.userId})
         .then((user) => {
           const token = request.payload['x-hid-totp'];
-          authPolicy.isTOTPValid(user, token, function (totpValid) {
-            if (totpValid.isBoom) {
-              let alert =  {
-                type: 'danger',
-                message: totpValid.output.payload.message
-              };
-              return reply.view('totp', {
-                title: 'Enter your Authentication code',
-                query: request.payload,
-                destination: '/login',
-                alert: alert
-              });
-            }
-            else {
-              cookie.totp = true;
-              request.yar.set('session', cookie);
-              if (request.payload['x-hid-totp-trust']) {
-                that.app.services.HelperService.saveTOTPDevice(request, user)
-                  .then(() => {
-                    const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
-                    const random = user.totpTrusted[tindex].secret;
-                    return that._loginRedirect(request, reply, { name: 'x-hid-totp-trust', value: random, options: {ttl: 30 * 24 * 60 * 60 * 1000, domain: 'humanitarian.id', isSameSite: false, isHttpOnly: false}});
-                  });
-              }
-              else {
-                return that._loginRedirect(request, reply);
-              }
-            }
-          });
+          return authPolicy.isTOTPValid(user, token);
         })
-        .catch (err => {
-          that.app.services.ErrorService.handle(err, request, reply);
+        .then((user) => {
+          cookie.totp = true;
+          request.yar.set('session', cookie);
+          if (request.payload['x-hid-totp-trust']) {
+            that.app.services.HelperService.saveTOTPDevice(request, user)
+              .then(() => {
+                const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
+                const random = user.totpTrusted[tindex].secret;
+                return that._loginRedirect(request, reply, { name: 'x-hid-totp-trust', value: random, options: {ttl: 30 * 24 * 60 * 60 * 1000, domain: 'humanitarian.id', isSameSite: false, isHttpOnly: false}});
+              });
+          }
+          else {
+            return that._loginRedirect(request, reply);
+          }
+        })
+        .catch(err => {
+          let alert =  {
+            type: 'danger',
+            message: err.output.payload.message
+          };
+          return reply.view('totp', {
+            title: 'Enter your Authentication code',
+            query: request.payload,
+            destination: '/login',
+            alert: alert
+          });
         });
     }
     if (cookie && cookie.userId && cookie.totp === true) {

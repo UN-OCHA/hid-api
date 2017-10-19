@@ -287,29 +287,26 @@ module.exports = class ViewController extends Controller {
         .findOne(({hash: cookie.hash, hashAction: 'reset_password'}))
         .then(user => {
           const token = request.payload['x-hid-totp'];
-          const totpResponse = authPolicy.isTOTPValid(user, token);
-          if (totpResponse !== true && totpResponse.isBoom) {
-            const alert =  {
-              type: 'danger',
-              message: totpResponse.output.payload.message
-            };
-            return reply.view('totp', {
-              query: request.payload,
-              destination: '/new_password',
-              alert: alert
-            });
-          }
-          else {
-            cookie.totp = true;
-            request.yar.set('session', cookie);
-            return reply.view('new_password', {
-              query: request.payload,
-              hash: cookie.hash
-            });
-          }
+          return authPolicy.isTOTPValid(user, token);
+        })
+        .then((user) => {
+          cookie.totp = true;
+          request.yar.set('session', cookie);
+          return reply.view('new_password', {
+            query: request.payload,
+            hash: cookie.hash
+          });
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          const alert =  {
+            type: 'danger',
+            message: err.output.payload.message
+          };
+          return reply.view('totp', {
+            query: request.payload,
+            destination: '/new_password',
+            alert: alert
+          });
         });
     }
 
