@@ -246,7 +246,7 @@ module.exports = {
     routes: {
       cors: {
         additionalExposedHeaders: [ 'X-Total-Count' ],
-        additionalHeaders: ['Accept-Language', 'X-HID-TOTP'],
+        additionalHeaders: ['Accept-Language', 'X-HID-TOTP', 'Set-Cookie'],
         credentials: true // Allow the x-hid-totp-trust cookie to be sent
       },
       payload: {
