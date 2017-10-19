@@ -885,12 +885,11 @@ module.exports = class UserController extends Controller{
         if (record.totp && checkTotp) {
           // Check that there is a TOTP token and that it is valid
           const token = request.headers['x-hid-totp'];
-          const totpResponse = authPolicy.isTOTPValid(record, token);
-          if (totpResponse !== true && totpResponse.isBoom) {
-            throw totpResponse;
-          }
+          return authPolicy.isTOTPValid(record, token);
         }
-        return record;
+        else {
+          return record;
+        }
       })
       .then(record => {
         if (record.validHash(request.payload.hash) === true) {
