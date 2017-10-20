@@ -555,6 +555,8 @@ const sendReminderCheckinEmails = function(app) {
 
 module.exports = {
   importLists: importLists,
+  forcedResetPasswordAlert: forcedResetPasswordAlert,
+  forceResetPassword: forceResetPassword,
   jobs: {
     // Delete expired users
     deleteExpiredUsers: {

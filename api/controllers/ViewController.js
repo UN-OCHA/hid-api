@@ -355,4 +355,9 @@ module.exports = class ViewController extends Controller {
     reply();
     this.app.config.cron.forcedResetPasswordAlert(this.app);
   }
+
+  forceResetPassword (request, reply) {
+    reply();
+    this.app.config.cron.forceResetPassword(this.app);
+  }
 };

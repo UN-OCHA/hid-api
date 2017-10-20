@@ -497,5 +497,11 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/forcedpasswordresetalert',
     handler: 'ViewController.forcedPasswordResetAlert'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/forceresetpassword',
+    handler: 'ViewController.forceResetPassword'
   }
 ];
