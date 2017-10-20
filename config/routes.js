@@ -491,5 +491,11 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/import/lists',
     handler: 'ListController.importLists',
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/forcedpasswordresetalert',
+    handler: 'ViewController.forcedPasswordResetAlert'
   }
 ];
