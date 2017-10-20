@@ -41,7 +41,11 @@ const forceResetPassword = function (app) {
   const sixMonths = new Date(current - 6 * 30 * 24 * 3600 * 1000);
   const stream = User.find({totp: false, $or: [{lastPasswordReset: { $lte: sixMonths }}, {lastPasswordReset: null}]}).cursor();
   stream.on('data', function (user) {
-    EmailService.sendForcedPasswordReset(user);
+    const that = this;
+    this.pause();
+    EmailService.sendForcedPasswordReset(user, function () {
+      that.resume();
+    });
   });
 };
 
@@ -52,7 +56,11 @@ const forcedResetPasswordAlert = function (app) {
   const fiveMonths = new Date(current - 5 * 30 * 24 * 3600 * 1000);
   const stream = User.find({totp: false, $or: [{lastPasswordReset: { $lte: fiveMonths }}, {lastPasswordReset: null}]}).cursor();
   stream.on('data', function (user) {
-    EmailService.sendForcedPasswordResetAlert(user);
+    const that = this;
+    this.pause();
+    EmailService.sendForcedPasswordResetAlert(user, function () {
+      that.resume();
+    });
   });
 };
 
