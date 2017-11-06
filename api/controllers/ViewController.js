@@ -183,7 +183,7 @@ module.exports = class ViewController extends Controller {
     UserController.create(request, function (result) {
       const al = that._getAlert(result,
         'You registered successfully. Please confirm your email address',
-        'There was an error registering you.'
+        'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.'
       );
       const registerLink = that._getRegisterLink(request.payload);
       const passwordLink = that._getPasswordLink(request.payload);
