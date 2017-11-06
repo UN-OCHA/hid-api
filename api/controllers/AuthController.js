@@ -66,6 +66,11 @@ module.exports = class AuthController extends Controller{
             return reply(Boom.unauthorized('invalid email or password'));
           }
 
+          if (user.isPasswordExpired()) {
+            that.log.warn('Unsuccessful login attempt due to expired password', {email: email, security: true, fail: true, request: request});
+            return reply(Boom.unauthorized('password is expired'));
+          }
+
           if (!user.validPassword(password)) {
             that.log.warn('Unsuccessful login attempt due to invalid password', {email: email, security: true, fail: true, request: request});
             // Create a flood entry

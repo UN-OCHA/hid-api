@@ -432,6 +432,17 @@ module.exports = class User extends Model {
           return index;
         },
 
+        isPasswordExpired: function () {
+          const lastPasswordReset = this.lastPasswordReset.valueOf();
+          const current = new Date().valueOf();
+          if (current - lastPasswordReset > 6 * 30 * 24 * 3600 * 1000) {
+            return true;
+          }
+          else {
+            return false;
+          }
+        },
+
         toJSON: function () {
           const user = this.toObject();
           delete user.password;
@@ -783,7 +794,8 @@ module.exports = class User extends Model {
       // Last time the user reset his password
       lastPasswordReset: {
         type: Date,
-        readonly: true
+        readonly: true,
+        default: Date.now
       },
       // Only admins can set this
       verified: {
