@@ -117,45 +117,71 @@ module.exports = class AuthPolicy extends Policy {
       return reply();
     }
     else {
-      const result = this.isTOTPValid(request.params.currentUser, request.headers['x-hid-totp']);
-      if (result.isBoom) {
-        return reply(result);
-      }
-      else {
-        return reply();
-      }
+      this
+        .isTOTPValid(request.params.currentUser, request.headers['x-hid-totp'])
+        .then(() => {
+          return reply();
+        })
+        .catch(err => {
+          return reply(err);
+        });
     }
   }
 
   isTOTPValidPolicy (request, reply) {
     const user = request.params.currentUser;
     const token = request.headers['x-hid-totp'];
-    const result = this.isTOTPValid(user, token);
-    if (result.isBoom) {
-      return reply(result);
-    }
-    else {
-      return reply();
-    }
+    this
+      .isTOTPValid(user, token)
+      .then(() => {
+        return reply();
+      })
+      .catch(err => {
+        return reply(err);
+      });
   }
 
   isTOTPValid (user, token) {
-    if (!user.totpConf || !user.totpConf.secret) {
-      return Boom.unauthorized('TOTP was not configured for this user', 'totp');
-    }
+    return new Promise(function (resolve, reject) {
+      if (!user.totpConf || !user.totpConf.secret) {
+        return reject(Boom.unauthorized('TOTP was not configured for this user', 'totp'));
+      }
 
-    if (!token) {
-      return Boom.unauthorized('No TOTP token', 'totp');
-    }
+      if (!token) {
+        return reject(Boom.unauthorized('No TOTP token', 'totp'));
+      }
 
-    const success = authenticator.verifyToken(user.totpConf.secret, token);
+      if (token.length === 6) {
+        const success = authenticator.verifyToken(user.totpConf.secret, token);
 
-    if (success) {
-      return true;
-    }
-    else {
-      return Boom.unauthorized('Invalid TOTP token !', 'totp');
-    }
+        if (success) {
+          return resolve(user);
+        }
+        else {
+          return reject(Boom.unauthorized('Invalid TOTP token !', 'totp'));
+        }
+      }
+      else {
+        // Using backup code
+        const index = user.backupCodeIndex(token);
+        if (index === -1) {
+          return reject(Boom.unauthorized('Invalid backup code !', 'totp'));
+        }
+        else {
+          // remove backup code so it can't be reused
+          user.totpConf.backupCodes.slice(index, 1);
+          user.markModified('totpConf');
+          user
+            .save()
+            .then(() => {
+              return resolve(user);
+            })
+            .catch(err => {
+              return reject(Boom.badImplementation());
+            });
+        }
+      }
+    });
   }
 
   isAdmin (request, reply) {

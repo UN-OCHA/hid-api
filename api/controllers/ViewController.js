@@ -91,6 +91,9 @@ module.exports = class ViewController extends Controller {
         redirect += '?client_id=' + request.query.client_id;
         redirect += '&redirect_uri=' + request.query.redirect_uri;
         redirect += '&response_type=' + request.query.response_type;
+        if (request.query.state) {
+          redirect += '&state=' + request.query.state;
+        }
         redirect += '&scope=' + request.query.scope;
 
         return reply.redirect(redirect);
@@ -183,7 +186,7 @@ module.exports = class ViewController extends Controller {
     UserController.create(request, function (result) {
       const al = that._getAlert(result,
         'You registered successfully. Please confirm your email address',
-        'There was an error registering you.'
+        'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.'
       );
       const registerLink = that._getRegisterLink(request.payload);
       const passwordLink = that._getPasswordLink(request.payload);
@@ -287,29 +290,26 @@ module.exports = class ViewController extends Controller {
         .findOne(({hash: cookie.hash, hashAction: 'reset_password'}))
         .then(user => {
           const token = request.payload['x-hid-totp'];
-          const totpResponse = authPolicy.isTOTPValid(user, token);
-          if (totpResponse !== true && totpResponse.isBoom) {
-            const alert =  {
-              type: 'danger',
-              message: totpResponse.output.payload.message
-            };
-            return reply.view('totp', {
-              query: request.payload,
-              destination: '/new_password',
-              alert: alert
-            });
-          }
-          else {
-            cookie.totp = true;
-            request.yar.set('session', cookie);
-            return reply.view('new_password', {
-              query: request.payload,
-              hash: cookie.hash
-            });
-          }
+          return authPolicy.isTOTPValid(user, token);
+        })
+        .then((user) => {
+          cookie.totp = true;
+          request.yar.set('session', cookie);
+          return reply.view('new_password', {
+            query: request.payload,
+            hash: cookie.hash
+          });
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          const alert =  {
+            type: 'danger',
+            message: err.output.payload.message
+          };
+          return reply.view('totp', {
+            query: request.payload,
+            destination: '/new_password',
+            alert: alert
+          });
         });
     }
 

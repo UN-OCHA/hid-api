@@ -421,6 +421,27 @@ module.exports = class User extends Model {
           }
         },
 
+        backupCodeIndex: function (code) {
+          let index = -1;
+          for (let i = 0; i < this.totpConf.backupCodes.length; i++) {
+            if (Bcrypt.compareSync(code, this.totpConf.backupCodes[i])) {
+              index = i;
+            }
+          }
+          return index;
+        },
+
+        isPasswordExpired: function () {
+          const lastPasswordReset = this.lastPasswordReset.valueOf();
+          const current = new Date().valueOf();
+          if (current - lastPasswordReset > 6 * 30 * 24 * 3600 * 1000) {
+            return true;
+          }
+          else {
+            return false;
+          }
+        },
+
         toJSON: function () {
           const user = this.toObject();
           delete user.password;
@@ -431,7 +452,9 @@ module.exports = class User extends Model {
             delete user.totpConf;
           }
           if (user.totpTrusted) {
-            delete user.totpTrusted;
+            for (let i = 0; i < user.totpTrusted.length; i++) {
+              delete user.totpTrusted[i].secret;
+            }
           }
           listTypes.forEach(function (attr) {
             _.remove(user[attr + 's'], function (checkin) {
@@ -665,6 +688,18 @@ module.exports = class User extends Model {
       }
     });
 
+    const trustedDeviceSchema = new Schema({
+      ua: {
+        type: String
+      },
+      secret: {
+        type: String
+      },
+      date: {
+        type: Date
+      }
+    });
+
     return {
       // Legacy user_id data, to be added during migration
       user_id: {
@@ -754,6 +789,12 @@ module.exports = class User extends Model {
       },
       password: {
         type: String
+      },
+      // Last time the user reset his password
+      lastPasswordReset: {
+        type: Date,
+        readonly: true,
+        default: Date.now
       },
       // Only admins can set this
       verified: {
@@ -1063,7 +1104,7 @@ module.exports = class User extends Model {
         readonly: true
       },
       totpTrusted: {
-        type: Array,
+        type: [trustedDeviceSchema],
         readonly: true
       }
     };

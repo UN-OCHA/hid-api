@@ -1,6 +1,7 @@
 'use strict';
 
 const Service = require('trails/service');
+const crypto = require('crypto');
 const _ = require('lodash');
 const queryOptions = [
   'populate',
@@ -106,6 +107,11 @@ module.exports = class HelperService extends Service {
       }
     }
     return criteria;
+  }
+
+  generateRandom () {
+    const buffer = crypto.randomBytes(256);
+    return buffer.toString('hex').slice(0, 10);
   }
 
   find (modelName, criteria, options) {

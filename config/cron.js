@@ -34,6 +34,36 @@ const deleteExpiredTokens = function (app) {
   OauthToken.remove({expires: {$lt: now }});
 };
 
+const forceResetPassword = function (app) {
+  const User = app.orm.user;
+  const EmailService = app.services.EmailService;
+  const current = Date.now();
+  const sixMonths = new Date(current - 6 * 30 * 24 * 3600 * 1000);
+  const stream = User.find({totp: false, $or: [{lastPasswordReset: { $lte: sixMonths }}, {lastPasswordReset: null}]}).cursor();
+  stream.on('data', function (user) {
+    const that = this;
+    this.pause();
+    EmailService.sendForcedPasswordReset(user, function () {
+      that.resume();
+    });
+  });
+};
+
+const forcedResetPasswordAlert = function (app) {
+  const User = app.orm.user;
+  const EmailService = app.services.EmailService;
+  const current = Date.now();
+  const fiveMonths = new Date(current - 5 * 30 * 24 * 3600 * 1000);
+  const stream = User.find({totp: false, $or: [{lastPasswordReset: { $lte: fiveMonths }}, {lastPasswordReset: null}]}).cursor();
+  stream.on('data', function (user) {
+    const that = this;
+    this.pause();
+    EmailService.sendForcedPasswordResetAlert(user, function () {
+      that.resume();
+    });
+  });
+};
+
 const importLists = function (app) {
   const List = app.orm.list;
   const User = app.orm.user;
@@ -533,6 +563,8 @@ const sendReminderCheckinEmails = function(app) {
 
 module.exports = {
   importLists: importLists,
+  forcedResetPasswordAlert: forcedResetPasswordAlert,
+  forceResetPassword: forceResetPassword,
   jobs: {
     // Delete expired users
     deleteExpiredUsers: {
@@ -580,6 +612,16 @@ module.exports = {
     sendReminderCheckinEmails: {
       schedule: '00 30 23 * * *',
       onTick: sendReminderCheckinEmails,
+      start: true
+    },
+    forcedResetPasswordAlert: {
+      schedule: '00 40 23 * * *',
+      onTick: forcedResetPasswordAlert,
+      start: true
+    },
+    forceResetPassword: {
+      schedule: '00 50 23 * * *',
+      onTick: forceResetPassword,
       start: true
     }
   }

@@ -1,4 +1,29 @@
 <% include header %>
+
+<script type="text/javascript">
+  function checkPassword(str)
+  {
+    var re = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+    return re.test(str);
+  }
+
+  function checkForm(form)
+  {
+    if(form.password.value != "" && form.password.value == form.confirmPassword.value) {
+      if(!checkPassword(form.password.value)) {
+        alert("The password you have entered is not valid ! Make sure it has at least 8 characters with one number, one lowercase and one uppercase character.");
+        form.password.focus();
+        return false;
+      }
+    } else {
+      alert("Please check that you've entered and confirmed your password !");
+      form.password.focus();
+      return false;
+    }
+    return true;
+  }
+</script>
+
 <div class="container api-page">
   <div class="row">
     <div class="col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
@@ -6,7 +31,7 @@
         <h1 class="page-header__heading">Register in Humanitarian ID</h1>
         <p class="form-field">Sign up for a Humanitarian ID account. Doing so will give you access to Humanitarian ID as well as a growing number of related humanitarian community sites.</p>
       </div>
-      <form name="register" action="/register" method="POST">
+      <form name="register" action="/register" method="POST" onsubmit="return checkForm(this)">
         <div class="form-field">
           <label for="email" translate>Email</label>
           <input type="email" name="email" id="email" placeholder="Your email address" required>
@@ -28,7 +53,7 @@
         </div>
         <div class="form-field">
           <label for="confirm_password">Password (confirm)</label>
-          <input type="password" name="confirm_password" id="confirm_password" placeholder="" required>
+          <input type="password" name="confirmPassword" id="confirm_password" placeholder="" required>
         </div>
         <input type="hidden" name="crumb" value="<%= crumb %>" />
         <input type="hidden" name="app_verify_url" value="<%= requestUrl %>" />

@@ -1039,3 +1039,21 @@ paths:
           description: 'Bad request.'
         '401':
           description: 'Missing or invalid authorization token'
+  /totp/device:
+    post:
+      tags:
+        - totp
+      summary: 'Retrieve backup codes for a user with TOTP enabled'
+      parameters:
+        - name: 'authorization'
+          in: 'header'
+          description: 'The JWT'
+          required: true
+          type: string
+      responses:
+        '200':
+          description: 'Array of 16 backup codes'
+        '400':
+          description: 'Bad request. TOTP is not enabled for this user.'
+        '401':
+          description: 'Missing or invalid authorization token'

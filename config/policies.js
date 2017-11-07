@@ -43,12 +43,13 @@ module.exports = {
 
   // Limit 2FA to admins for now
   TOTPController: {
-    generateQRCode: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
+    generateQRCode: ['AuthPolicy.isAuthenticated'],
     verifyTOTPToken: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPValidPolicy'],
     enable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPValidPolicy'],
     disable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid'],
     saveDevice: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid'],
-    destroyDevice: ['AuthPolicy.isAuthenticated']
+    destroyDevice: ['AuthPolicy.isAuthenticated'],
+    generateBackupCodes: ['AuthPolicy.isAuthenticated'],
   },
 
   UserController: {

@@ -4,6 +4,7 @@ const authenticator = require('authenticator');
 const Boom = require('boom');
 const QRCode = require('qrcode');
 const Controller = require('trails/controller');
+const BCrypt = require('bcryptjs');
 
 /**
  * @module TOTPController
@@ -28,7 +29,11 @@ module.exports = class TOTPController extends Controller{
     user
       .save()
       .then(() => {
-        const otpauthUrl = authenticator.generateTotpUri(secret, user.name, 'HID', 'SHA1', 6, 30);
+        let qrCodeName = 'HID (' + process.env.NODE_ENV + ')';
+        if (process.env.NODE_ENV === 'production') {
+          qrCodeName = 'HID';
+        }
+        const otpauthUrl = authenticator.generateTotpUri(secret, user.name, qrCodeName, 'SHA1', 6, 30);
         QRCode.toDataURL(otpauthUrl, function (err, qrcode) {
           if (err) {
             that.app.services.ErrorService.handleError(err, request, reply);
@@ -99,7 +104,7 @@ module.exports = class TOTPController extends Controller{
       .then(() => {
         const tindex = request.params.currentUser.trustedDeviceIndex(request.headers['user-agent']);
         const secret = request.params.currentUser.totpTrusted[tindex].secret;
-        return reply().state('x-hid-totp-trust', secret, { ttl: 30 * 24 * 60 * 60 * 1000});
+        return reply({'x-hid-totp-trust': secret}).state('x-hid-totp-trust', secret, { ttl: 30 * 24 * 60 * 60 * 1000, domain: 'humanitarian.id', isSameSite: false, isHttpOnly: false});
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, request, reply);
@@ -109,10 +114,10 @@ module.exports = class TOTPController extends Controller{
   destroyDevice (request, reply) {
     const that = this;
     const user = request.params.currentUser;
-    const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
-    if (tindex !== -1 ) {
-      user.totpTrusted.splice(tindex, 1);
-      user.markModified('totpTrusted');
+    const deviceId = request.params.id;
+    const device = user.totpTrusted.id(deviceId);
+    if (device) {
+      user.totpTrusted.id(deviceId).remove();
       user
         .save()
         .then(() => {
@@ -125,5 +130,32 @@ module.exports = class TOTPController extends Controller{
     else {
       return reply(Boom.notFound());
     }
+  }
+
+  generateBackupCodes (request, reply) {
+    const user = request.params.currentUser;
+    if (!user.totp) {
+      return reply(Boom.badRequest('TOTP needs to be enabled'));
+    }
+    const HelperService = this.app.services.HelperService;
+    let codes = [], hashedCodes = [];
+    for (let i = 0; i < 16; i++) {
+      codes.push(HelperService.generateRandom());
+    }
+    for (let i = 0; i < 16; i++) {
+      hashedCodes.push(BCrypt.hashSync(codes[i], 5));
+    }
+    // Save the hashed codes in the user and show the ones which are not hashed
+    const that = this;
+    user.totpConf.backupCodes = hashedCodes;
+    user.markModified('totpConf');
+    user
+      .save()
+      .then(() => {
+        return reply(codes);
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 };
