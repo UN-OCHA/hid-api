@@ -9,7 +9,7 @@
 
   function checkForm(form)
   {
-    if(form.password.value != "" && form.password.value == form.confirmPassword.value) {
+    if(form.password.value != "" && form.password.value == form.confirm_password.value) {
       if(!checkPassword(form.password.value)) {
         alert("The password you have entered is not valid ! Make sure it has at least 8 characters with one number, one lowercase and one uppercase character.");
         form.password.focus();
@@ -53,7 +53,7 @@
         </div>
         <div class="form-field">
           <label for="confirm_password">Password (confirm)</label>
-          <input type="password" name="confirmPassword" id="confirm_password" placeholder="" required>
+          <input type="password" name="confirm_password" id="confirm_password" placeholder="" required>
         </div>
         <input type="hidden" name="crumb" value="<%= crumb %>" />
         <input type="hidden" name="app_verify_url" value="<%= requestUrl %>" />
