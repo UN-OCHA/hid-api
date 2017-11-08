@@ -657,6 +657,11 @@ module.exports = class UserController extends Controller{
 
   destroy (request, reply) {
     const User = this.app.orm.User;
+
+    if (!request.params.currentUser.is_admin && request.params.currentUser._id.toString() !== request.params.id) {
+      return reply(Boom.forbidden('You are not allowed to delete this account'));
+    }
+    
     this.log.debug('[UserController] (destroy) model = user, query =', request.query, { request: request });
 
     const that = this;
