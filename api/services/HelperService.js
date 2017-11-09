@@ -122,7 +122,7 @@ module.exports = class HelperService extends Service {
     }
     else {
       // Set a default limit
-      query.limit(500);
+      query.limit(100);
     }
     if (options.offset) {
       query.skip(parseInt(options.offset));

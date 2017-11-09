@@ -386,6 +386,10 @@ module.exports = class UserController extends Controller{
     const that = this;
     this.log.debug('[UserController] (find) criteria = ', criteria, ' options = ', options, { request: request });
     const query = this.app.services.HelperService.find('User', criteria, options);
+    // HID-1561 - Set export limit to 2000
+    if (!options.limit && request.params.extension) {
+      query.limit(2000);
+    }
     query
       .then((results) => {
         return User
