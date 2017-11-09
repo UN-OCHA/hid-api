@@ -258,6 +258,9 @@ module.exports = class ViewController extends Controller {
     User
       .findOne(({hash: request.query.hash, hashAction: 'reset_password'}))
       .then(user => {
+        if (!user) {
+          return reply.view('error');
+        }
         if (user.totp) {
           return reply.view('totp', {
             query: request.query,
