@@ -167,6 +167,12 @@ module.exports = [
   },
 
   {
+    method: 'GET',
+    path: '/api/v2/numbers',
+    handler: 'NumbersController.numbers'
+  },
+
+  {
     method: 'POST',
     path: '/api/v2/user',
     handler: 'UserController.create'
