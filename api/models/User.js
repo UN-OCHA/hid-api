@@ -739,6 +739,7 @@ module.exports = class User extends Model {
       },
       name: {
         type: String,
+        index: true,
         validate: {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in name'
