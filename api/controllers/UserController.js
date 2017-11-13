@@ -389,6 +389,8 @@ module.exports = class UserController extends Controller{
     // HID-1561 - Set export limit to 2000
     if (!options.limit && request.params.extension) {
       query.limit(2000);
+      query.select('name given_name family_name email job_title phone_number status organization bundles location voips');
+      query.lean();
     }
     query
       .then((results) => {
@@ -402,11 +404,11 @@ module.exports = class UserController extends Controller{
         if (!results.results) {
           return reply(Boom.notFound());
         }
-        for (let i = 0, len = results.results.length; i < len; i++) {
-          results.results[i].sanitize(request.params.currentUser);
-          results.results[i].translateListNames(reqLanguage);
-        }
         if (!request.params.extension) {
+          for (let i = 0, len = results.results.length; i < len; i++) {
+            results.results[i].sanitize(request.params.currentUser);
+            results.results[i].translateListNames(reqLanguage);
+          }
           return reply(results.results).header('X-Total-Count', results.number);
         }
         else {
