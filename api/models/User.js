@@ -41,6 +41,48 @@ module.exports = class User extends Model {
     return buffer.toString('hex').slice(0, 10) + 'B';
   }
 
+  sanitizeExportedUser (user, requester) {
+    if (user._id.toString() !== requester._id.toString() && !requester.is_admin) {
+      if (user.emailsVisibility !== 'anyone') {
+        if ((user.emailsVisibility === 'verified' && !requester.verified) ||
+            (user.emailsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
+          user.email = null;
+          user.emails = [];
+        }
+      }
+
+      if (user.phonesVisibility !== 'anyone') {
+        if ((user.phonesVisibility === 'verified' && !requester.verified) ||
+            (user.phonesVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
+          user.phone_number = null;
+          user.phone_numbers = [];
+        }
+      }
+
+      if (user.locationsVisibility !== 'anyone') {
+        if ((user.locationsVisibility === 'verified' && !requester.verified) ||
+            (user.locationsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
+          user.location = null;
+          user.locations = [];
+        }
+      }
+    }
+  }
+
+  connectionsIndex (user, userId) {
+    let index = -1;
+    if (user.connections && user.connections.length) {
+      for (let i = 0, len = user.connections.length; i < len; i++) {
+        if (user.connections[i].pending === false &&
+          ((user.connections[i].user._id && user.connections[i].user._id.toString() === userId.toString()) ||
+          (!user.connections[i].user._id && user.connections[i].user.toString() === userId.toString()))) {
+          index = i;
+        }
+      }
+    }
+    return index;
+  }
+
 
   static config () {
     return {

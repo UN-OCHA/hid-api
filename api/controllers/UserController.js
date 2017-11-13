@@ -376,6 +376,7 @@ module.exports = class UserController extends Controller{
 
   _findHelper(request, reply, criteria, options, lists) {
     const User = this.app.orm.User;
+    const UserModel = this.app.models.User;
     const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
     let pdfFormat = '';
     if (criteria.format) {
@@ -391,7 +392,7 @@ module.exports = class UserController extends Controller{
       query.limit(100000);
     }
     if (request.params.extension) {
-      query.select('name given_name family_name email job_title phone_number status organization bundles location voips');
+      query.select('name given_name family_name email job_title phone_number status organization bundles location voips connections phonesVisibility emailsVisibility locationsVisibility');
       query.lean();
     }
     query
@@ -414,6 +415,10 @@ module.exports = class UserController extends Controller{
           return reply(results.results).header('X-Total-Count', results.number);
         }
         else {
+          // TODO: sanitize users and translate list names
+          for (let i = 0, len = results.results.length; i < len; i++) {
+            UserModel.sanitizeExportedUser(results.results[i], request.params.currentUser);
+          }
           if (request.params.extension === 'csv') {
             return reply(that._csvExport(results.results))
               .type('text/csv')
