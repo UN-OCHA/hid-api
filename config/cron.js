@@ -88,7 +88,16 @@ const importLists = function (app) {
             return User
               .find({'operations.list': list._id})
               .then((users) => {
-                return {list: list, users: users};
+                let users2 = users.filter(function (u) {
+                  let notify = false;
+                  for (let j = 0, ulen = u.operations; j < ulen; j++) {
+                    if (u.operations[j].list.toString() === list._id.toString() && !u.operations[j].deleted) {
+                      notify = true;
+                    }
+                  }
+                  return notify;
+                });
+                return {list: list, users: users2};
               });
           })
           .then((results) => {
