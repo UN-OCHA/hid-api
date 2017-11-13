@@ -388,7 +388,7 @@ module.exports = class UserController extends Controller{
     const query = this.app.services.HelperService.find('User', criteria, options);
     // HID-1561 - Set export limit to 2000
     if (!options.limit && request.params.extension) {
-      query.limit(2000);
+      query.limit(100000);
     }
     if (request.params.extension) {
       query.select('name given_name family_name email job_title phone_number status organization bundles location voips');
