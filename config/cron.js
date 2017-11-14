@@ -74,11 +74,11 @@ const importLists = function (app) {
   let hasNextPage = false, pageNumber = 1, path = '';
 
   // Notify users of a new disaster
-  const _notifyNewDisaster = function (list) {
-    if (list.metadata.operation && list.metadata.operation.length) {
+  const _notifyNewDisaster = function (disaster) {
+    if (disaster.metadata.operation && disaster.metadata.operation.length) {
       let operation = {}, opList = {};
-      for (let i = 0, len = list.metadata.operation.length; i < len; i++) {
-        operation = list.metadata.operation[i];
+      for (let i = 0, len = disaster.metadata.operation.length; i < len; i++) {
+        operation = disaster.metadata.operation[i];
         List
           .findOne({remote_id: operation.id})
           .then((list) => {
@@ -90,8 +90,8 @@ const importLists = function (app) {
               .find({operations: { $elemMatch: { list: list._id, deleted: false }} });
           })
           .then((users) => {
-            const notification = {type: 'new_disaster', params: {list: opList}};
-            app.log.debug('Notifying ' + users.length + ' users of a new disaster: ' + opList.label);
+            const notification = {type: 'new_disaster', params: {list: disaster}};
+            app.log.debug('Notifying ' + users.length + ' users of a new disaster: ' + disaster.label);
             NotificationService.sendMultiple(users, notification, () => { });
           })
           .catch((err) => {});
