@@ -26,6 +26,9 @@ module.exports = class EmailService extends Service {
 
   // Send an email
   send (options, template, context, callback) {
+    if (options.locale && options.locale === 'fr') {
+      template = template + '/fr';
+    }
     const email = new Email({
       views: {
         options: {
