@@ -3,7 +3,6 @@
 const Service = require('trails/service');
 const Nodemailer = require('nodemailer');
 const Email = require('email-templates');
-const TemplateDir = require('path').join(__dirname, '../../emails/');
 const TransporterUrl = 'smtp://' + process.env.SMTP_USER + ':' + process.env.SMTP_PASS + '@' + process.env.SMTP_HOST + ':' + process.env.SMTP_PORT;
 const Transporter = Nodemailer.createTransport(TransporterUrl);
 
@@ -27,13 +26,8 @@ module.exports = class EmailService extends Service {
 
   // Send an email
   send (options, template, context, callback) {
-    /*let templateDir = TemplateDir + template;
-    if (options.locale && options.locale === 'fr') {
-      templateDir += '/' + options.locale;
-    }*/
     const email = new Email({
       views: {
-        root: TemplateDir,
         options: {
           extension: 'ejs'
         }
