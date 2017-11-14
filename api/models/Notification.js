@@ -27,6 +27,9 @@ module.exports = class Notification extends Model {
                 options: {
                   extension: 'ejs',
                 }
+              },
+              transport: {
+                jsonTransport: true
               }
             });
             const that = this;
