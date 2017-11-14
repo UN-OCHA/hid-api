@@ -41,6 +41,8 @@ module.exports = class User extends Model {
     return buffer.toString('hex').slice(0, 10) + 'B';
   }
 
+  // TODO: try to remove this duplication after trails v3 is released
+
   sanitizeExportedUser (user, requester) {
     if (user._id.toString() !== requester._id.toString() && !requester.is_admin) {
       if (user.emailsVisibility !== 'anyone') {
@@ -83,6 +85,41 @@ module.exports = class User extends Model {
     return index;
   }
 
+  translateCheckin (checkin, language) {
+    let name = '', nameEn = '', acronym = '', acronymEn = '';
+    checkin.names.forEach(function (nameLn) {
+      if (nameLn.language === language) {
+        name = nameLn.text;
+      }
+      if (nameLn.language === 'en') {
+        nameEn = nameLn.text;
+      }
+    });
+    checkin.acronyms.forEach(function (acroLn) {
+      if (acroLn.language === language) {
+        acronym = acroLn.text;
+      }
+      if (acroLn.language === 'en') {
+        acronymEn = acroLn.text;
+      }
+    });
+    if (name !== '') {
+      checkin.name = name;
+    }
+    else {
+      if (nameEn !== '') {
+        checkin.name = nameEn;
+      }
+    }
+    if (acronym !== '') {
+      checkin.acronym = acronym;
+    }
+    else {
+      if (acronymEn !== '') {
+        checkin.acronym = acronymEn;
+      }
+    }
+  }
 
   static config () {
     return {

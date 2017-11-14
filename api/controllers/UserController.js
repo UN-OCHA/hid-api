@@ -418,6 +418,7 @@ module.exports = class UserController extends Controller{
           // TODO: sanitize users and translate list names
           for (let i = 0, len = results.results.length; i < len; i++) {
             UserModel.sanitizeExportedUser(results.results[i], request.params.currentUser);
+            UserModel.translateCheckin(results.results[i].organization, reqLanguage);
           }
           if (request.params.extension === 'csv') {
             return reply(that._csvExport(results.results))
