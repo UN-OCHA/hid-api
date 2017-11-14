@@ -415,10 +415,12 @@ module.exports = class UserController extends Controller{
           return reply(results.results).header('X-Total-Count', results.number);
         }
         else {
-          // TODO: sanitize users and translate list names
+          // Sanitize users and translate list names from a plain object
           for (let i = 0, len = results.results.length; i < len; i++) {
             UserModel.sanitizeExportedUser(results.results[i], request.params.currentUser);
-            UserModel.translateCheckin(results.results[i].organization, reqLanguage);
+            if (results.results[i].organization) {
+              UserModel.translateCheckin(results.results[i].organization, reqLanguage);
+            }
           }
           if (request.params.extension === 'csv') {
             return reply(that._csvExport(results.results))
