@@ -268,7 +268,7 @@ module.exports = class AuthController extends Controller{
           }
         })
         .catch(err => {
-          let alert =  {
+          const alert =  {
             type: 'danger',
             message: err.output.payload.message
           };

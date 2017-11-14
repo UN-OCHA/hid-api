@@ -138,7 +138,7 @@ module.exports = class TOTPController extends Controller{
       return reply(Boom.badRequest('TOTP needs to be enabled'));
     }
     const HelperService = this.app.services.HelperService;
-    let codes = [], hashedCodes = [];
+    const codes = [], hashedCodes = [];
     for (let i = 0; i < 16; i++) {
       codes.push(HelperService.generateRandom());
     }

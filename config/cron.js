@@ -76,7 +76,7 @@ const importLists = function (app) {
   // Notify users of a new disaster
   const _notifyNewDisaster = function (disaster) {
     if (disaster.metadata.operation && disaster.metadata.operation.length) {
-      let operation = {}, opList = {};
+      let operation = {};
       for (let i = 0, len = disaster.metadata.operation.length; i < len; i++) {
         operation = disaster.metadata.operation[i];
         List
@@ -85,7 +85,6 @@ const importLists = function (app) {
             if (!list) {
               throw new Error('List not found');
             }
-            opList = list;
             return User
               .find({operations: { $elemMatch: { list: list._id, deleted: false }} });
           })

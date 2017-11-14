@@ -247,7 +247,7 @@ module.exports = class User extends Model {
           if (this.email === email) {
             this.email_verified = true;
           }
-          let index = this.emailIndex(email);
+          const index = this.emailIndex(email);
           if (index !== -1) {
             this.emails[index].validated = true;
             this.emails.set(index, this.emails[index]);
