@@ -3,7 +3,7 @@
 const Model = require('trails/model');
 const Schema = require('mongoose').Schema;
 const path = require('path');
-const EJS = require('ejs');
+const ejs = require('ejs');
 
 
 /**
@@ -21,14 +21,20 @@ module.exports = class Notification extends Model {
 
         schema.pre('save', function(next) {
           if (!this.text) {
+            const that = this;
             const template = path.resolve('notifications/' + this.type + '/html.ejs');
 
-            this.text = new EJS({url: template}).render({
-                createdBy: this.createdBy,
-                user: this.user,
-                params: this.params
-              });
-            next();
+            ejs.renderFile(template, {
+              createdBy: this.createdBy,
+              user: this.user,
+              params: this.params
+            }, {}, function (err, str) {
+              if (err) {
+                return next(err);
+              }
+              that.text = str;
+              next();
+            });
           }
           else {
             next();
