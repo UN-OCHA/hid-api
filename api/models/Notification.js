@@ -22,7 +22,12 @@ module.exports = class Notification extends Model {
         schema.pre('save', function(next) {
           if (!this.text) {
             const that = this;
-            const template = path.resolve('notifications/' + this.type + '/html.ejs');
+            let templatePath = 'notifications/' + this.type;
+            if (this.user.locale && this.user.locale === 'fr') {
+              templatePath += '/fr';
+            }
+            templatePath += '/html.ejs';
+            const template = path.resolve(templatePath);
 
             ejs.renderFile(template, {
               createdBy: this.createdBy,
