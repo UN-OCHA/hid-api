@@ -87,24 +87,11 @@ const importLists = function (app) {
             }
             opList = list;
             return User
-              .find({'operations.list': list._id});
+              .find({operations: { $elemMatch: { list: list._id, deleted: false }} });
           })
           .then((users) => {
-            let users2 = users.filter(function (u) {
-              let notify = false;
-              for (let j = 0, ulen = u.operations; j < ulen; j++) {
-                if (u.operations[j].list.toString() === list._id.toString() && !u.operations[j].deleted) {
-                  notify = true;
-                }
-              }
-              return notify;
-            });
-            return {list: opList, users: users2};
-          })
-          .then((results) => {
-            const list = results.list, users = results.users;
-            const notification = {type: 'new_disaster', params: {list: list}};
-            app.log.debug('Notifying ' + users.length + ' users of a new disaster: ' + list.label);
+            const notification = {type: 'new_disaster', params: {list: opList}};
+            app.log.debug('Notifying ' + users.length + ' users of a new disaster: ' + opList.label);
             NotificationService.sendMultiple(users, notification, () => { });
           })
           .catch((err) => {});
