@@ -76,7 +76,7 @@ const importLists = function (app) {
   // Notify users of a new disaster
   const _notifyNewDisaster = function (list) {
     if (list.metadata.operation && list.metadata.operation.length) {
-      let operation = {};
+      let operation = {}, opList = {};
       for (let i = 0, len = list.metadata.operation.length; i < len; i++) {
         operation = list.metadata.operation[i];
         List
@@ -85,24 +85,26 @@ const importLists = function (app) {
             if (!list) {
               throw new Error('List not found');
             }
+            opList = list;
             return User
-              .find({'operations.list': list._id})
-              .then((users) => {
-                let users2 = users.filter(function (u) {
-                  let notify = false;
-                  for (let j = 0, ulen = u.operations; j < ulen; j++) {
-                    if (u.operations[j].list.toString() === list._id.toString() && !u.operations[j].deleted) {
-                      notify = true;
-                    }
-                  }
-                  return notify;
-                });
-                return {list: list, users: users2};
-              });
+              .find({'operations.list': list._id});
+          })
+          .then((users) => {
+            let users2 = users.filter(function (u) {
+              let notify = false;
+              for (let j = 0, ulen = u.operations; j < ulen; j++) {
+                if (u.operations[j].list.toString() === list._id.toString() && !u.operations[j].deleted) {
+                  notify = true;
+                }
+              }
+              return notify;
+            });
+            return {list: opList, users: users2};
           })
           .then((results) => {
             const list = results.list, users = results.users;
             const notification = {type: 'new_disaster', params: {list: list}};
+            app.log.debug('Notifying ' + users.length + ' users of a new disaster: ' + list.label);
             NotificationService.sendMultiple(users, notification, () => { });
           })
           .catch((err) => {});
@@ -151,7 +153,6 @@ const importLists = function (app) {
       metadata: item
     };
 
-    app.log.debug('Creating list of type ' + listType + ': ' + label);
     if (listType === 'bundle') {
       List
         .findOne({type: 'operation', remote_id: item.operation[0].id})
