@@ -2,7 +2,7 @@
 
 const Model = require('trails/model');
 const Schema = require('mongoose').Schema;
-const NotificationTemplate = require('email-templates').EmailTemplate;
+const NotificationTemplate = require('email-templates');
 const TemplateDir = require('path').join(__dirname, '../../notifications/');
 
 
@@ -21,20 +21,28 @@ module.exports = class Notification extends Model {
 
         schema.pre('save', function(next) {
           if (!this.text) {
-            const templateDir = TemplateDir + this.type;
-            const template = new NotificationTemplate(templateDir);
-            const that = this;
-            template.render({
-              createdBy: that.createdBy,
-              user: that.user,
-              params: that.params
-            }, function(err, result) {
-              if (err) {
-                return next(err);
+            const template = new NotificationTemplate({
+              views: {
+                root: TemplateDir,
+                options: {
+                  extension: 'ejs',
+                }
               }
-              that.text = result.html;
-              next();
             });
+            const that = this;
+            template
+              .render(this.type, {
+                createdBy: that.createdBy,
+                user: that.user,
+                params: that.params
+              })
+              .then((result) => {
+                that.text = result.html;
+                next();
+              })
+              .catch(err => {
+                return next(err);
+              });
           }
           else {
             next();

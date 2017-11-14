@@ -32,10 +32,16 @@ module.exports = class EmailService extends Service {
       templateDir += '/' + options.locale;
     }*/
     const email = new Email({
-      views: { root: TemplateDir },
+      views: {
+        root: TemplateDir,
+        options: {
+          extension: 'ejs'
+        }
+      },
       message: {
         from: 'info@humanitarian.id'
       },
+      send: true,
       transport: Transporter
     });
     if (options.to) {
