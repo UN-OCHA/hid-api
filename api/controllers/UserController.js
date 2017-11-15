@@ -399,7 +399,7 @@ module.exports = class UserController extends Controller{
       query.limit(100000);
     }
     if (request.params.extension) {
-      query.select('name given_name family_name email job_title phone_number status organization bundles location voips connections phonesVisibility emailsVisibility locationsVisibility');
+      query.select('name given_name family_name email job_title phone_number status organization bundles location voips connections phonesVisibility emailsVisibility locationsVisibility createdAt updatedAt is_orphan is_ghost verified isManager is_admin');
       query.lean();
     }
     query
