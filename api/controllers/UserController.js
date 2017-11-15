@@ -340,6 +340,7 @@ module.exports = class UserController extends Controller{
       country = '';
       region = '';
       skype = '';
+      roles = '';
       jobTitle = users[i].job_title || ' ';
       phoneNumber = users[i].phone_number || ' ';
       status = users[i].status || ' ';
