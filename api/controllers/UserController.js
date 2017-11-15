@@ -327,7 +327,12 @@ module.exports = class UserController extends Controller{
       jobTitle = '',
       phoneNumber = '',
       skype = '',
-      status = '';
+      status = '',
+      orphan = '',
+      ghost = '',
+      verified = '',
+      manager = '',
+      admin = '';
     for (let i = 0; i < users.length; i++) {
       org = '';
       bundles = '';
@@ -358,6 +363,11 @@ module.exports = class UserController extends Controller{
           }
         }
       }
+      orphan = users[i].is_orphan ? '1' : '0';
+      ghost = users[i].is_ghost ? '1' : '0';
+      verified = users[i].verified ? '1' : '0';
+      manager = users[i].isManager ? '1' : '0';
+      admin = users[i].is_admin ? '1' : '0';
       out = out +
         '"' + users[i].given_name + '",' +
         '"' + users[i].family_name + '",' +
@@ -372,11 +382,11 @@ module.exports = class UserController extends Controller{
         '"' + status + '",' +
         '"' + users[i].createdAt + '",' +
         '"' + users[i].updatedAt + '",' +
-        '"' + users[i].is_orphan ? '1' : '0' + '",' +
-        '"' + users[i].is_ghost ? '1' : '0'+ '",' +
-        '"' + users[i].verified ? '1' : '0' + '",' +
-        '"' + users[i].isManager ? '1' : '0' + '",' +
-        '"' + users[i].is_admin ? '1' : '0' + '"\n';
+        '"' + orphan + '",' +
+        '"' + ghost + '",' +
+        '"' + verified + '",' +
+        '"' + manager + '",' +
+        '"' + admin + '"\n';
     }
     return out;
   }
