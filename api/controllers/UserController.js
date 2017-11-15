@@ -319,9 +319,10 @@ module.exports = class UserController extends Controller{
   }
 
   _csvExport (users) {
-    let out = 'Given Name,Family Name,Job Title,Organization,Groups,Country,Admin Area,Phone,Skype,Email,Notes,Created At,Updated At,Orphan,Ghost,Verified,Manager,Admin\n',
+    let out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes,Created At,Updated At,Orphan,Ghost,Verified,Manager,Admin\n',
       org = '',
       bundles = '',
+      roles = '',
       country = '',
       region = '',
       jobTitle = '',
@@ -350,6 +351,11 @@ module.exports = class UserController extends Controller{
           bundles += bundle.name + ';';
         });
       }
+      if (users[i].functional_roles && users[i].functional_roles.length) {
+        users[i].functional_roles.forEach(function (role) {
+          roles += role.name + ';';
+        });
+      }
       if (users[i].location && users[i].location.country) {
         country = users[i].location.country.name;
       }
@@ -374,6 +380,7 @@ module.exports = class UserController extends Controller{
         '"' + jobTitle + '",' +
         '"' + org + '",' +
         '"' + bundles + '",' +
+        '"' + roles + '",' +
         '"' + country + '",' +
         '"' + region + '",' +
         '"' + phoneNumber + '",' +
@@ -409,7 +416,7 @@ module.exports = class UserController extends Controller{
       query.limit(100000);
     }
     if (request.params.extension) {
-      query.select('name given_name family_name email job_title phone_number status organization bundles location voips connections phonesVisibility emailsVisibility locationsVisibility createdAt updatedAt is_orphan is_ghost verified isManager is_admin');
+      query.select('name given_name family_name email job_title phone_number status organization bundles location voips connections phonesVisibility emailsVisibility locationsVisibility createdAt updatedAt is_orphan is_ghost verified isManager is_admin functional_roles');
       query.lean();
     }
     query
