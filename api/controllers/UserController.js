@@ -319,7 +319,7 @@ module.exports = class UserController extends Controller{
   }
 
   _csvExport (users) {
-    let out = 'Given Name,Family Name,Job Title,Organization,Groups,Country,Admin Area,Phone,Skype,Email,Notes\n',
+    let out = 'Given Name,Family Name,Job Title,Organization,Groups,Country,Admin Area,Phone,Skype,Email,Notes,Created At,Updated At\n',
       org = '',
       bundles = '',
       country = '',
@@ -369,7 +369,9 @@ module.exports = class UserController extends Controller{
         '"' + phoneNumber + '",' +
         '"' + skype + '",' +
         '"' + users[i].email + '",' +
-        '"' + status + '"\n';
+        '"' + status + '",' +
+        '"' + users[i].createdAt + '",' +
+        '"' + users[i].updatedAt + '"\n';
     }
     return out;
   }
