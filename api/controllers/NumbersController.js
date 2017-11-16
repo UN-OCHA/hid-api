@@ -20,19 +20,19 @@ module.exports = class NumbersController extends Controller{
       .count({type: 'list'})
       .then(number1 => {
         numberCcls = number1;
-        return User.count({'authOnly': true});
+        return User.count({'authOnly': true, 'deleted': false});
       })
       .then(number2 => {
         numberAuth = number2;
-        return User.count({});
+        return User.count({'deleted': false});
       })
       .then(number3 => {
         numberUsers = number3;
-        return User.count({'is_orphan': true});
+        return User.count({'is_orphan': true, 'deleted': false});
       })
       .then(number4 => {
         numberOrphans = number4;
-        return User.count({'is_ghost': true});
+        return User.count({'is_ghost': true, 'deleted': false});
       })
       .then(number5 => {
         numberGhosts = number5;
