@@ -318,8 +318,8 @@ module.exports = class UserController extends Controller{
     return out;
   }
 
-  _csvExport (users) {
-    let out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes,Created At,Updated At,Orphan,Ghost,Verified,Manager,Admin\n',
+  _csvExport (users, full = false) {
+    let out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes\n',
       org = '',
       bundles = '',
       roles = '',
@@ -334,6 +334,9 @@ module.exports = class UserController extends Controller{
       verified = '',
       manager = '',
       admin = '';
+    if (full) {
+      out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes,Created At,Updated At,Orphan,Ghost,Verified,Manager,Admin\n';
+    }
     for (let i = 0; i < users.length; i++) {
       org = '';
       bundles = '';
@@ -387,14 +390,20 @@ module.exports = class UserController extends Controller{
         '"' + phoneNumber + '",' +
         '"' + skype + '",' +
         '"' + users[i].email + '",' +
-        '"' + status + '",' +
-        '"' + users[i].createdAt + '",' +
-        '"' + users[i].updatedAt + '",' +
-        '"' + orphan + '",' +
-        '"' + ghost + '",' +
-        '"' + verified + '",' +
-        '"' + manager + '",' +
-        '"' + admin + '"\n';
+        '"' + status;
+      if (full) {
+        out = out + '",' +
+          '"' + users[i].createdAt + '",' +
+          '"' + users[i].updatedAt + '",' +
+          '"' + orphan + '",' +
+          '"' + ghost + '",' +
+          '"' + verified + '",' +
+          '"' + manager + '",' +
+          '"' + admin + '"\n';
+      }
+      else {
+        out = out + '"\n';
+      }
     }
     return out;
   }
@@ -448,7 +457,14 @@ module.exports = class UserController extends Controller{
             }
           }
           if (request.params.extension === 'csv') {
-            return reply(that._csvExport(results.results))
+            let csvExport = '';
+            if (request.params.currentUser.is_admin) {
+              csvExport = that._csvExport(results.results, true);
+            }
+            else {
+              csvExport = that._csvExport(results.results, false);
+            }
+            return reply(csvExport)
               .type('text/csv')
               .header('Content-Disposition', 'attachment; filename="Humanitarian ID Contacts ' + moment().format('YYYYMMDD') + '.csv"');
           }
