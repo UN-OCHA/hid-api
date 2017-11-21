@@ -1039,7 +1039,7 @@ paths:
           description: 'Bad request.'
         '401':
           description: 'Missing or invalid authorization token'
-  /totp/device:
+  /totp/codes:
     post:
       tags:
         - totp
