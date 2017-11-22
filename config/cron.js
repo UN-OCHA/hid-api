@@ -406,7 +406,7 @@ const sendReminderUpdateEmails = function (app) {
   });
 };
 
-/*const sendReminderCheckoutEmails = function(app) {
+const sendReminderCheckoutEmails = function(app) {
   app.log.info('Sending reminder checkout emails to contacts');
   const User = app.orm.User,
     NotificationService = app.services.NotificationService;
@@ -458,7 +458,7 @@ const sendReminderUpdateEmails = function (app) {
       that.resume();
     });
   });
-};*/
+};
 
 const doAutomatedCheckout = function(app) {
   app.log.info('Running automated checkouts');
@@ -576,7 +576,7 @@ module.exports = {
     },
     // Import lists from Humanitarianresponse
     importLists: {
-      schedule: '00 00 23 * * *', // Run every 60 minutes
+      schedule: '00 00 23 * * *',
       onTick: importLists,
       start: true
     },
@@ -593,11 +593,11 @@ module.exports = {
       start: true
     },
     // Send a reminder to checkout to people who are 2 days past their checkout date
-    /*sendReminderCheckoutEmails: {
-      schedule: '1 * * * *',
+    sendReminderCheckoutEmails: {
+      schedule: '00 15 23 * * *',
       onTick: sendReminderCheckoutEmails,
       start: true
-    },*/
+    },
     // Do the automated to checkout to people who are 14 days past their checkout date
     doAutomatedCheckout: {
       schedule: '00 20 23 * * *',
