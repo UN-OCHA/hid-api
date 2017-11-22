@@ -424,17 +424,22 @@ module.exports = class AuthController extends Controller{
     OauthToken
       .findOne({token: code, type: 'code'})
       .populate('client user')
-      .exec(function (err, ocode) {
-        if (err) {
-          that.log.warn(
-            'Unsuccessful access token request due to wrong authorization code.',
-            { security: true, fail: true, request: request, code: code}
-          );
-          return reply(Boom.badRequest('Wrong authorization code'));
+      .then(ocode => {
+        if (!ocode) {
+          throw new Error();
         }
-        that.log.info('Successful access token request', { security: true, request: request});
-        request.auth.credentials = ocode.client;
-        oauth.token(request, reply);
+        else {
+          that.log.info('Successful access token request', { security: true, request: request});
+          request.auth.credentials = ocode.client;
+          oauth.token(request, reply);
+        }
+      })
+      .catch(err => {
+        that.log.warn(
+          'Unsuccessful access token request due to wrong authorization code.',
+          { security: true, fail: true, request: request, code: code}
+        );
+        return reply(Boom.badRequest('Wrong authorization code'));
       });
   }
 
