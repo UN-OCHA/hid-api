@@ -170,6 +170,8 @@ module.exports = class List extends Model {
           });
           next();
         });
+
+        schema.index({ 'remote_id': 1, 'type': 1}, { unique: true, partialFilterExpression: { remote_id: { $exists: true } } });
       }
     };
   }
@@ -197,6 +199,7 @@ module.exports = class List extends Model {
       name: {
         type: String,
         readonly: true,
+        index: true,
         validate: {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in name'
