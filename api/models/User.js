@@ -547,6 +547,26 @@ module.exports = class User extends Model {
         schema.virtual('sub').get(function () {
           return this._id;
         });
+        schema.pre('remove', function (next) {
+          // Avoid null connections from being created when a user is removed
+          this
+            .model('User')
+            .find({'connections.user': this._id})
+            .then(users => {
+              for (let i = 0; i < users.length; i++) {
+                for (let j = 0; j < users[i].connections.length; j++) {
+                  if (users[i].connections[j].user.toString() === this._id.toString()) {
+                    users[i].connections.id(users[i].connections[j]._id).remove();
+                  }
+                }
+                users[i].save();
+              }
+              next();
+            })
+            .catch(err => {
+              next(err);
+            });
+        });
         schema.pre('save', function (next) {
           if (this.middle_name) {
             this.name = this.given_name + ' ' + this.middle_name + ' ' + this.family_name;
