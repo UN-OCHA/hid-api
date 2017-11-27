@@ -51,6 +51,9 @@ module.exports = class ViewController extends Controller {
         redirect += '?client_id=' + request.query.client_id;
         redirect += '&redirect_uri=' + request.query.redirect_uri;
         redirect += '&response_type=' + request.query.response_type;
+        if (request.query.state) {
+          redirect += '&state=' + request.query.state;
+        }
         redirect += '&scope=' + request.query.scope;
 
         return reply.redirect(redirect);
