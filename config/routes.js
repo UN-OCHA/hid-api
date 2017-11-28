@@ -80,13 +80,6 @@ module.exports = [
     handler: 'ViewController.user'
   },
 
-  // TODO: remove after HPC fixes their app
-  /*{
-    method: 'GET',
-    path: '/account',
-    handler: 'ViewController.user'
-  },*/
-
   {
     method: 'GET',
     path: '/docs/{param*}',
@@ -189,20 +182,6 @@ module.exports = [
     path: '/api/v2/user.{extension}',
     handler: 'UserController.find'
   },
-
-  // TODO: remove when HPC updates their client application to use the new API
-  /*{
-    method: 'POST',
-    path: '/api/users',
-    handler: 'UserController.findV1'
-  },*/
-
-  // TODO: remove when HPC updates their client application to use the new API
-  /*{
-    method: 'POST',
-    path: '/api/register',
-    handler: 'UserController.registerV1'
-  },*/
 
   {
     method: [ 'PUT', 'PATCH' ],
