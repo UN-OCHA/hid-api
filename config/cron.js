@@ -460,7 +460,7 @@ const sendReminderCheckoutEmails = function(app) {
   });
 };
 
-/*const doAutomatedCheckout = function(app) {
+const doAutomatedCheckout = function(app) {
   app.log.info('Running automated checkouts');
   const User = app.orm.User,
     NotificationService = app.services.NotificationService;
@@ -512,7 +512,7 @@ const sendReminderCheckoutEmails = function(app) {
       that.resume();
     });
   });
-};*/
+};
 
 const sendReminderCheckinEmails = function(app) {
   app.log.info('Sending reminder checkin emails to contacts');
@@ -599,11 +599,11 @@ module.exports = {
       start: true
     },
     // Do the automated to checkout to people who are 14 days past their checkout date
-    /*doAutomatedCheckout: {
+    doAutomatedCheckout: {
       schedule: '00 20 23 * * *',
       onTick: doAutomatedCheckout,
       start: true
-    },*/
+    },
     // Reminder emails sent out 48 hours after checkin to remind people to add a local phone number if they didn't do so
     sendReminderCheckinEmails: {
       schedule: '00 30 23 * * *',
