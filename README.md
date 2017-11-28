@@ -1,5 +1,7 @@
 # Humanitarian ID v2 API
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/UN-OCHA/hid_api.svg)](https://greenkeeper.io/)
+
 [![Build Status](https://travis-ci.org/UN-OCHA/hid_api.svg?branch=master)](https://travis-ci.org/UN-OCHA/hid_api)
 
 Humanitarian ID v2 API is built on [TrailsJS](https://trailsjs.io). Much of the documentation concerning the structure of the code can
