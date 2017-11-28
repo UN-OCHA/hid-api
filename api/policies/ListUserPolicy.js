@@ -81,7 +81,7 @@ module.exports = class ListUserPolicy extends Policy {
           // Other changes are being made; allow only: admins, global managers, list managers, list owners, current user
           if (!lu.list.isOwner(request.params.currentUser) &&
             !request.params.currentUser.isManager &&
-            request.params.currentUser.id !== lu.user.id) {
+            request.params.currentUser.id !== request.params.id) {
             return reply(Boom.unauthorized('You are not authorized to do this'));
           }
         }
