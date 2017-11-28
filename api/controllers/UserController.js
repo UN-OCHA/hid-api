@@ -142,24 +142,7 @@ module.exports = class UserController extends Controller{
           }
           else {
             if (!request.params.currentUser) {
-              if (record.deleted) {
-                // Unverify user, reactivate account and return it
-                record.email_verified = false;
-                record.deleted = false;
-                record.save().then(() => {
-                  that.app.services.EmailService.sendRegister(record, appVerifyUrl, function (merr, info) {
-                    if (!merr) {
-                      return reply(record);
-                    }
-                    else {
-                      that.app.services.ErrorService.handle(merr, request, reply);
-                    }
-                  });
-                });
-              }
-              else {
-                return reply(Boom.badRequest('This email address is already registered. If you can not remember your password, please reset it'));
-              }
+              return reply(Boom.badRequest('This email address is already registered. If you can not remember your password, please reset it'));
             }
             else {
               return reply(Boom.badRequest('This user already exists. user_id=' + record._id.toString()));
@@ -446,7 +429,7 @@ module.exports = class UserController extends Controller{
     const that = this;
 
     if (request.params.id) {
-      const criteria = {_id: request.params.id, deleted: false};
+      const criteria = {_id: request.params.id};
       if (!request.params.currentUser.verified) {
         criteria.is_orphan = false;
         criteria.is_ghost = false;
@@ -501,7 +484,6 @@ module.exports = class UserController extends Controller{
         delete criteria.country;
       }
 
-      criteria.deleted = false;
       if (!request.params.currentUser.verified) {
         criteria.is_orphan = false;
         criteria.is_ghost = false;
@@ -900,8 +882,6 @@ module.exports = class UserController extends Controller{
             record.is_orphan = false;
             record.hash = '';
             record.lastPasswordReset = new Date();
-            // Reactivate user account if it was disabled
-            record.deleted = false;
             return record.save();
           }
         }

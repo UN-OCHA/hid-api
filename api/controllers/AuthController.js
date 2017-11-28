@@ -61,11 +61,6 @@ module.exports = class AuthController extends Controller{
             return reply(Boom.unauthorized('Please verify your email address'));
           }
 
-          if (user.deleted) {
-            that.log.warn('Unsuccessful login attempt due to deactivated user', {email: email, security: true, fail: true, request: request});
-            return reply(Boom.unauthorized('invalid email or password'));
-          }
-
           if (user.isPasswordExpired()) {
             that.log.warn('Unsuccessful login attempt due to expired password', {email: email, security: true, fail: true, request: request});
             return reply(Boom.unauthorized('password is expired'));
