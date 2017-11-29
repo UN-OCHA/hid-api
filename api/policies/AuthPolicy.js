@@ -67,15 +67,22 @@ module.exports = class AuthPolicy extends Policy {
         OauthToken
           .findOne({token: token})
           .populate('user client')
-          .exec(function (err, tok) {
+          .then(tok => {
             // TODO: make sure the token is not expired
-            if (err || !tok) {
+            if (!tok) {
               that.log.warn('Invalid token', { security: true, fail: true, request: request});
               return reply(Boom.unauthorized('Invalid Token!'));
+            }
+            if (tok.isExpired()) {
+              that.log.warn('Token is expired', { security: true, fail: true, request: request});
+              return reply(Boom.unauthorized('Expired token'));
             }
             request.params.currentUser = tok.user;
             request.params.currentClient = tok.client;
             reply();
+          })
+          .catch(err => {
+            that.app.services.ErrorService.handle(err, request, reply);
           });
       }
       else {
@@ -88,19 +95,18 @@ module.exports = class AuthPolicy extends Policy {
               return reply(Boom.unauthorized('Invalid Token !'));
             }
             request.params.token = jtoken; // This is the decrypted token or the payload you provided
-            User
-              .findOne({_id: jtoken.id})
-              .then(user => {
-                if (user) {
-                  request.params.currentUser = user;
-                  that.log.warn('Successful authentication through JWT', { security: true, request: request});
-                  reply();
-                }
-                else {
-                  that.log.warn('Could not find user linked to JWT', { security: true, fail: true, request: request });
-                  reply(Boom.unauthorized('Invalid Token !'));
-                }
-              });
+            return User.findOne({_id: jtoken.id});
+          })
+          .then(user => {
+            if (user) {
+              request.params.currentUser = user;
+              that.log.warn('Successful authentication through JWT', { security: true, request: request});
+              reply();
+            }
+            else {
+              that.log.warn('Could not find user linked to JWT', { security: true, fail: true, request: request });
+              reply(Boom.unauthorized('Invalid Token !'));
+            }
           })
           .catch(err => {
             that.app.services.ErrorService.handle(err, request, reply);
