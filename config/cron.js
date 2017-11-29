@@ -30,7 +30,7 @@ const deleteExpiredUsers = function (app) {
 const deleteExpiredTokens = function (app) {
   app.log.info('Deleting expired Oauth Tokens');
   const OauthToken = app.orm.OauthToken;
-  const now = Date.now();
+  const now = new Date();
   OauthToken.remove({expires: {$lt: now }});
 };
 
