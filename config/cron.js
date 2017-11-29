@@ -22,7 +22,7 @@ const listTypes = [
 
 const deleteExpiredUsers = function (app) {
   const User = app.orm.user;
-  const now = Date.now();
+  const now = new Date();
   const start = new Date(2016, 0, 1, 0, 0, 0);
   User.remove({expires: {$gt: start, $lt: now}});
 };
