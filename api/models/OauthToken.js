@@ -42,6 +42,8 @@ module.exports = class OauthToken extends Model {
         isExpired: function () {
           const now = new Date();
           const expires = this.expires;
+          console.log(expires.getTime());
+          console.log(now.getTime());
           return now.getTime() < expires.getTime();
         }
       }
