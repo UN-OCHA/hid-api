@@ -880,6 +880,7 @@ module.exports = class UserController extends Controller{
             record.verifyEmail(record.email);
             record.expires = new Date(0, 0, 1, 0, 0, 0);
             record.is_orphan = false;
+            record.is_ghost = false;
             record.hash = '';
             record.lastPasswordReset = new Date();
             return record.save();
@@ -1020,6 +1021,12 @@ module.exports = class UserController extends Controller{
               else {
                 for (let i = 0; i < record.emails.length; i++) {
                   that.app.services.EmailService.sendEmailAlert(record, record.emails[i].email, email);
+                }
+                if (record.emails.length === 0 && record.is_ghost) {
+                  // Turn ghost into orphan and set main email address
+                  record.is_ghost = false;
+                  record.is_orphan = true;
+                  record.email = email;
                 }
                 const data = { email: email, type: request.payload.type, validated: false };
                 record.emails.push(data);
