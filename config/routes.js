@@ -473,6 +473,18 @@ module.exports = [
   },
 
   {
+    method: 'POST',
+    path: '/api/v2/gsssync',
+    handler: 'GSSSyncController.create'
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/gsssync',
+    handler: 'GSSSyncController.destroy'
+  },
+
+  {
     method: 'GET',
     path: '/api/v2/import/lists',
     handler: 'ListController.importLists',

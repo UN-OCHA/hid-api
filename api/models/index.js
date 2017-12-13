@@ -8,3 +8,4 @@ exports.Service = require('./Service');
 exports.ServiceCredentials = require('./ServiceCredentials');
 exports.JwtToken = require('./JwtToken');
 exports.Flood = require('./Flood');
+exports.GSSSync = require('./GSSSync');

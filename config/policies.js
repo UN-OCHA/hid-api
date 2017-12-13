@@ -92,6 +92,11 @@ module.exports = {
     find: ['AuthPolicy.isAuthenticated'],
     update: ['AuthPolicy.isAuthenticated', 'ListPolicy.canUpdate'],
     destroy: ['AuthPolicy.isAuthenticated', 'ListPolicy.canDestroy']
+  },
+
+  GSSSyncController: {
+    create: ['AuthPolicy.isAuthenticated'],
+    destroy: ['AuthPolicy.isAuthenticated', 'GSSSyncPolicy.canDestroy']
   }
 
 };

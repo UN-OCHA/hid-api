@@ -11,3 +11,4 @@ exports.ServiceCredentialsController = require('./ServiceCredentialsController')
 exports.ListUserController = require('./ListUserController');
 exports.TOTPController = require('./TOTPController');
 exports.NumbersController = require('./NumbersController');
+exports.GSSSyncController = require('./GSSSyncController')
