@@ -697,7 +697,7 @@ module.exports = class User extends Model {
       },
       email_verified: {
         type: Boolean,
-        default: false,
+        default: true,
         readonly: true
       },
       // Last time the user was reminded to verify his account
