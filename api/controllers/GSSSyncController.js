@@ -19,7 +19,7 @@ module.exports = class GSSSyncController extends Controller{
     request.payload.user = request.params.currentUser._id;
     if (request.payload.code) {
       const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
-      const authClient = new auth.OAuth2(creds.web.client_id, creds.web.client_secret);
+      const authClient = new auth.OAuth2(creds.web.client_id, creds.web.client_secret, 'https://api2.dev.humanitarian.id/google/callback');
       authClient.getToken(request.payload.code, function (err, tokens) {
         if (err) {
           console.log(err);
