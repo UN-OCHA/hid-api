@@ -4,6 +4,7 @@ const Controller = require('trails/controller');
 const Boom = require('boom');
 const Google = require('googleapis');
 const GoogleAuth = require('google-auth-library');
+const fs = require('fs');
 
 /**
  * @module GSSSyncController
@@ -14,12 +15,18 @@ module.exports = class GSSSyncController extends Controller{
   create (request, reply) {
     const GSSSync = this.app.orm.GSSSync;
     const that = this;
-    const authFactory = new GoogleAuth();
+    const auth = new GoogleAuth();
     request.payload.user = request.params.currentUser._id;
-    if (request.payload.access_token) {
-      authFactory.getApplicationDefault(function (err, authClient) {
-        authClient.credentials = request.payload.access_token;
-        that._readSpreadsheet(authClient, request.payload.spreadsheet, reply);
+    if (request.payload.code) {
+      const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
+      const authClient = new auth.OAuth2(creds.web.client_id, creds.web.client_secret);
+      authClient.getToken(request.payload.code, function (err, tokens) {
+        if (err) {
+          console.log(err);
+        }
+        reply(tokens);
+        //authClient.setCredentials(tokens);
+        //that._readSpreadsheet(authClient, request.payload.spreadsheet, reply);
       });
 
     }
