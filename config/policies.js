@@ -96,7 +96,8 @@ module.exports = {
 
   GSSSyncController: {
     create: ['AuthPolicy.isAuthenticated'],
-    destroy: ['AuthPolicy.isAuthenticated', 'GSSSyncPolicy.canDestroy']
+    destroy: ['AuthPolicy.isAuthenticated', 'GSSSyncPolicy.canDestroy'],
+    saveGoogleCredentials: ['AuthPolicy.isAuthenticated']
   }
 
 };

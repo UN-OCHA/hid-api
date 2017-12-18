@@ -330,6 +330,12 @@ module.exports = [
 
   {
     method: 'POST',
+    path: '/api/v2/user/{id}/googlecredentials',
+    handler: 'GSSSyncController.saveGoogleCredentials'
+  },
+
+  {
+    method: 'POST',
     path: '/api/v2/list',
     handler: 'ListController.create'
   },

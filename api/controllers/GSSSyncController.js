@@ -15,46 +15,19 @@ module.exports = class GSSSyncController extends Controller{
   create (request, reply) {
     const GSSSync = this.app.orm.GSSSync;
     const that = this;
-    const OAuth2 = Google.auth.OAuth2;
     request.payload.user = request.params.currentUser._id;
-    if (request.payload.code) {
-      const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
-      const authClient = new OAuth2(creds.web.client_id, creds.web.client_secret, 'postmessage');
-      authClient
-        .getToken(request.payload.code, function (err, tokens) {
-          let gsync = {};
-          if (err || !tokens) {
-            return that.app.services.ErrorService.handle(err, request, reply);
-          }
-          delete request.payload.code;
-          GSSSync
-            .create(request.payload)
-            .then((gsssync) => {
-              if (!gsssync) {
-                throw Boom.badRequest();
-              }
-              gsync = gsssync;
-            })
-            .then(() => {
-              if (tokens && tokens.refresh_token) {
-                request.params.currentUser.googleCredentials = tokens;
-                return request.params.currentUser.save();
-              }
-            })
-            .then(() => {
-              return that._syncSpreadsheet(gsync);
-            })
-            .then(() => {
-              reply(gsync);
-            })
-            .catch(err => {
-              that.app.services.ErrorService.handle(err, request, reply);
-            });
-        });
-    }
-    else {
-      return reply(Boom.badRequest());
-    }
+    GSSSync
+      .create(request.payload)
+      .then((gsssync) => {
+        if (!gsssync) {
+          throw Boom.badRequest();
+        }
+        that._syncSpreadsheet(gsssync);
+        reply(gsssync);
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 
   _syncSpreadsheet (gsssync) {
@@ -149,6 +122,32 @@ module.exports = class GSSSyncController extends Controller{
           resource: body
         });
       });
+  }
+
+  saveGoogleCredentials (request, reply) {
+    const that = this;
+    const OAuth2 = Google.auth.OAuth2;
+    if (request.payload.code) {
+      const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
+      const authClient = new OAuth2(creds.web.client_id, creds.web.client_secret, 'postmessage');
+      authClient
+        .getToken(request.payload.code, function (err, tokens) {
+          if (err || !tokens) {
+            return that.app.services.ErrorService.handle(err, request, reply);
+          }
+          if (tokens && tokens.refresh_token) {
+            request.params.currentUser.googleCredentials = tokens;
+            return request.params.currentUser.save();
+          }
+          else {
+            const noRefreshToken = Boom.badRequest('No refresh token');
+            that.app.services.ErrorService.handle(noRefreshToken, request, reply);
+          }
+        });
+    }
+    else {
+      return reply(Boom.badRequest());
+    }
   }
 
   destroy (request, reply) {
