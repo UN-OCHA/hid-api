@@ -527,6 +527,7 @@ module.exports = class User extends Model {
           delete user.hash;
           delete user.hashAction;
           delete user.hashEmail;
+          delete user.googleCredentials;
           if (user.totpConf) {
             delete user.totpConf;
           }
@@ -1206,6 +1207,9 @@ module.exports = class User extends Model {
       totpTrusted: {
         type: [trustedDeviceSchema],
         readonly: true
+      },
+      googleCredentials: {
+        type: Schema.Types.Mixed
       }
     };
   }

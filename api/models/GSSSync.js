@@ -28,9 +28,6 @@ module.exports = class GSSSync extends Model {
         type: String,
         required: [true, 'A spreadsheet ID is required']
       },
-      credentials: {
-        type: Schema.Types.Mixed
-      },
       user: {
         type: Schema.ObjectId,
         ref: 'User'
