@@ -34,7 +34,6 @@ module.exports = class GSSSyncController extends Controller{
                 throw Boom.badRequest();
               }
               gsync = gsssync;
-              reply(gsssync);
             })
             .then(() => {
               if (tokens && tokens.refresh_token) {
@@ -44,6 +43,9 @@ module.exports = class GSSSyncController extends Controller{
             })
             .then(() => {
               return that._syncSpreadsheet(gsync);
+            })
+            .then(() => {
+              reply(gsync);
             })
             .catch(err => {
               that.app.services.ErrorService.handle(err, request, reply);

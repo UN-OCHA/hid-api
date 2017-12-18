@@ -527,7 +527,6 @@ module.exports = class User extends Model {
           delete user.hash;
           delete user.hashAction;
           delete user.hashEmail;
-          delete user.googleCredentials;
           if (user.totpConf) {
             delete user.totpConf;
           }
@@ -535,6 +534,12 @@ module.exports = class User extends Model {
             for (let i = 0; i < user.totpTrusted.length; i++) {
               delete user.totpTrusted[i].secret;
             }
+          }
+          if (user.googleCredentials && user.googleCredentials.refresh_token) {
+            user.googleCredentials = true;
+          }
+          else {
+            user.googleCredentials = false;
           }
           listTypes.forEach(function (attr) {
             _.remove(user[attr + 's'], function (checkin) {
