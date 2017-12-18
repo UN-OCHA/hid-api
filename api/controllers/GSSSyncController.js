@@ -22,34 +22,32 @@ module.exports = class GSSSyncController extends Controller{
       const authClient = new OAuth2(creds.web.client_id, creds.web.client_secret, 'postmessage');
       authClient
         .getToken(request.payload.code, function (err, tokens) {
-          if (err) {
+          let gsync = {};
+          if (err || !tokens) {
             return that.app.services.ErrorService.handle(err, request, reply);
           }
           delete request.payload.code;
-          if (tokens && tokens.refresh_token) {
-            request.params.currentUser.googleCredentials = tokens;
-            return request.params.currentUser.save();
-          }
-        })
-        .then((tokens) => {
-          delete request.payload.code;
-          if (tokens && tokens.refresh_token) {
-            request.params.currentUser.googleCredentials = tokens;
-            return request.params.currentUser.save();
-          }
-        })
-        .then(() => {
-          return GSSSync.create(request.payload);
-        })
-        .then((gsssync) => {
-          if (!gsssync) {
-            throw Boom.badRequest();
-          }
-          reply(gsssync);
-          return that._syncSpreadsheet(gsssync);
-        })
-        .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          GSSSync
+            .create(request.payload)
+            .then((gsssync) => {
+              if (!gsssync) {
+                throw Boom.badRequest();
+              }
+              gsync = gsssync;
+              reply(gsssync);
+            })
+            .then(() => {
+              if (tokens && tokens.refresh_token) {
+                request.params.currentUser.googleCredentials = tokens;
+                return request.params.currentUser.save();
+              }
+            })
+            .then(() => {
+              return that._syncSpreadsheet(gsync);
+            })
+            .catch(err => {
+              that.app.services.ErrorService.handle(err, request, reply);
+            });
         });
     }
     else {
