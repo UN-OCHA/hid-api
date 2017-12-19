@@ -34,6 +34,7 @@ module.exports = class GSSSyncController extends Controller{
     const User = this.app.orm.User;
     return gsssync
       .populate('list user')
+      .execPopulate()
       .then(gsssync => {
         // Authenticate with Google
         const auth = new GoogleAuth();
