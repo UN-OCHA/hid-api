@@ -52,7 +52,7 @@ module.exports = class GSSSyncController extends Controller{
         // Find users
         const list = gsssync.list;
         const listType = list.type;
-        let criteria = [];
+        let criteria = {};
         if (list.isVisibleTo(gsssync.user)) {
           criteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false}};
           if (!list.isOwner(gsssync.user)) {
@@ -65,6 +65,7 @@ module.exports = class GSSSyncController extends Controller{
         return User
           .find(criteria)
           .select('name given_name family_name email job_title phone_number status organization bundles location voips connections phonesVisibility emailsVisibility locationsVisibility createdAt updatedAt is_orphan is_ghost verified isManager is_admin functional_roles')
+          .sort('name')
           .lean();
       })
       .then((users) => {
