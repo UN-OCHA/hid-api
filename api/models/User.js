@@ -1214,7 +1214,8 @@ module.exports = class User extends Model {
         readonly: true
       },
       googleCredentials: {
-        type: Schema.Types.Mixed
+        type: Schema.Types.Mixed,
+        readonly: true
       }
     };
   }
