@@ -14,10 +14,8 @@ module.exports = class GSSSync extends Model {
       schema: {
         timestamps: true
       },
-      methods: {
-        onSchema(app, schema) {
-          schema.index({list: 1, spreadsheet: 1}, { unique: true});
-        }
+      onSchema(app, schema) {
+        schema.index({list: 1, spreadsheet: 1}, { unique: true});
       }
     };
   }
