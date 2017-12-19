@@ -15,6 +15,7 @@ module.exports = class GSSSyncController extends Controller{
   create (request, reply) {
     const GSSSync = this.app.orm.GSSSync;
     const that = this;
+    let gsync = {};
     request.payload.user = request.params.currentUser._id;
     GSSSync
       .create(request.payload)
@@ -22,8 +23,11 @@ module.exports = class GSSSyncController extends Controller{
         if (!gsssync) {
           throw Boom.badRequest();
         }
-        that._syncSpreadsheet(gsssync);
-        reply(gsssync);
+        gsync = gsssync;
+        return that._syncSpreadsheet(gsssync);
+      })
+      .then((resp) => {
+        reply (gsync);
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, request, reply);
@@ -90,7 +94,7 @@ module.exports = class GSSSyncController extends Controller{
           if (elt.location && elt.location.region) {
             region = elt.location.region.name;
           }
-          if (elt.voips.length) {
+          if (elt.voips && elt.voips.length) {
             elt.voips.forEach(function (voip) {
               if (voip.type === 'Skype') {
                 skype = voip.username;
