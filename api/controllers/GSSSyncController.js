@@ -36,6 +36,7 @@ module.exports = class GSSSyncController extends Controller{
 
   _syncSpreadsheet (gsssync) {
     const User = this.app.orm.User;
+    let authClient = {};
     return gsssync
       .populate('list user')
       .execPopulate()
@@ -43,7 +44,7 @@ module.exports = class GSSSyncController extends Controller{
         // Authenticate with Google
         const auth = new GoogleAuth();
         const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
-        const authClient = new auth.OAuth2(creds.web.client_id, creds.web.client_secret, 'postmessage');
+        authClient = new auth.OAuth2(creds.web.client_id, creds.web.client_secret, 'postmessage');
         authClient.credentials = gsssync.user.googleCredentials;
         return gsssync;
       })
@@ -124,7 +125,8 @@ module.exports = class GSSSyncController extends Controller{
         const sheets = Google.sheets('v4');
         return sheets.spreadsheets.values.batchUpdate({
           spreadsheetId: gsssync.spreadsheet,
-          resource: body
+          resource: body,
+          auth: authClient
         });
       });
   }
