@@ -144,7 +144,8 @@ module.exports = class GSSSyncController extends Controller{
           }
           if (tokens && tokens.refresh_token) {
             request.params.currentUser.googleCredentials = tokens;
-            return request.params.currentUser.save();
+            request.params.currentUser.save();
+            reply().code(204);
           }
           else {
             const noRefreshToken = Boom.badRequest('No refresh token');
