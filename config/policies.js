@@ -98,6 +98,10 @@ module.exports = {
     create: ['AuthPolicy.isAuthenticated'],
     destroy: ['AuthPolicy.isAuthenticated', 'GSSSyncPolicy.canDestroy'],
     saveGoogleCredentials: ['AuthPolicy.isAuthenticated']
+  },
+
+  CronController: {
+    synchronizeGoogleSpreadsheets: ['CronPolicy.canRun']
   }
 
 };
