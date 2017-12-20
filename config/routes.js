@@ -492,8 +492,8 @@ module.exports = [
 
   {
     method: 'GET',
-    path: '/api/v2/import/lists',
-    handler: 'ListController.importLists',
+    path: '/api/v2/cron/importLists',
+    handler: 'CronController.importLists',
   },
 
   {

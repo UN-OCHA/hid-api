@@ -34,4 +34,9 @@ module.exports = class CronController extends Controller{
     });
   }
 
+  importLists (request, reply) {
+    reply();
+    this.app.config.cron.importLists(this.app);
+  }
+
 };

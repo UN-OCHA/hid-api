@@ -101,7 +101,8 @@ module.exports = {
   },
 
   CronController: {
-    synchronizeGoogleSpreadsheets: ['CronPolicy.canRun']
+    synchronizeGoogleSpreadsheets: ['CronPolicy.canRun'],
+    importLists: ['CronPolicy.canRun']
   }
 
 };

@@ -305,9 +305,4 @@ module.exports = class ListController extends Controller{
       });
   }
 
-  importLists (request, reply) {
-    reply();
-    this.app.config.cron.importLists(this.app);
-  }
-
 };
