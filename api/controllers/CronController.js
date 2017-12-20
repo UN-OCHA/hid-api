@@ -20,7 +20,7 @@ module.exports = class CronController extends Controller{
     stream.on('data', function(gsssync) {
       this.pause();
       const sthat = this;
-      that.app.controllers.GSSSyncController.syncSpreadsheet(gsssync)
+      that.app.controllers.GSSSyncController._syncSpreadsheet(gsssync)
         .then(resp => {
           sthat.resume();
         })
