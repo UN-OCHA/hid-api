@@ -567,7 +567,8 @@ module.exports = {
   doAutomatedCheckout: doAutomatedCheckout,
   sendReminderCheckinEmails: sendReminderCheckinEmails,
   forcedResetPasswordAlert: forcedResetPasswordAlert,
-  forceResetPassword: forceResetPassword
+  forceResetPassword: forceResetPassword,
+  jobs: {}
   /*jobs: {
     // Delete expired users
     deleteExpiredUsers: {
