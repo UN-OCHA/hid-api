@@ -492,8 +492,56 @@ module.exports = [
 
   {
     method: 'GET',
+    path: '/api/v2/cron/deleteExpiredUsers',
+    handler: 'CronController.deleteExpiredUsers'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/deleteExpiredTokens',
+    handler: 'CronController.deleteExpiredTokens'
+  },
+
+  {
+    method: 'GET',
     path: '/api/v2/cron/importLists',
     handler: 'CronController.importLists',
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/sendReminderVerifyEmails',
+    handler: 'CronController.sendReminderVerifyEmails'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/sendReminderUpdateEmails',
+    handler: 'CronController.sendReminderUpdateEmails'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/sendReminderCheckoutEmails',
+    handler: 'CronController.sendReminderCheckoutEmails'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/sendReminderCheckinEmails',
+    handler: 'CronController.sendReminderCheckinEmails'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/forcedResetPasswordAlert',
+    handler: 'CronController.forcedResetPasswordAlert'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/forceResetPassword',
+    handler: 'CronController.forceResetPassword'
   },
 
   {

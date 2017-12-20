@@ -35,8 +35,48 @@ module.exports = class CronController extends Controller{
   }
 
   importLists (request, reply) {
-    reply();
+    reply().code(204);
     this.app.config.cron.importLists(this.app);
+  }
+
+  deleteExpiredUsers (request, reply) {
+    reply().code(204);
+    this.app.config.cron.deleteExpiredUsers(this.app);
+  }
+
+  deleteExpiredTokens (request, reply) {
+    reply().code(204);
+    this.app.config.cron.deleteExpiredTokens(this.app);
+  }
+
+  sendReminderVerifyEmails (request, reply) {
+    reply().code(204);
+    this.app.config.cron.sendReminderVerifyEmails(this.app);
+  }
+
+  sendReminderUpdateEmails (request, reply) {
+    reply().code(204);
+    this.app.config.cron.sendReminderUpdateEmails(this.app);
+  }
+
+  sendReminderCheckoutEmails (request, reply) {
+    reply().code(204);
+    this.app.config.cron.sendReminderCheckoutEmails(this.app);
+  }
+
+  sendReminderCheckinEmails (request, reply) {
+    reply().code(204);
+    this.app.config.cron.sendReminderCheckinEmails(this.app);
+  }
+
+  forcedResetPasswordAlert (request, reply) {
+    reply().code(204);
+    this.app.config.cron.forcedResetPasswordAlert(this.app);
+  }
+
+  forceResetPassword (request, reply) {
+    reply().code(204);
+    this.app.config.cron.forceResetPassword(this.app);
   }
 
 };

@@ -558,10 +558,17 @@ const sendReminderCheckinEmails = function(app) {
 };
 
 module.exports = {
+  deleteExpiredUsers: deleteExpiredUsers,
+  deleteExpiredTokens: deleteExpiredTokens,
   importLists: importLists,
+  sendReminderVerifyEmails: sendReminderVerifyEmails,
+  sendReminderUpdateEmails: sendReminderUpdateEmails,
+  sendReminderCheckoutEmails: sendReminderCheckoutEmails,
+  doAutomatedCheckout: doAutomatedCheckout,
+  sendReminderCheckinEmails: sendReminderCheckinEmails,
   forcedResetPasswordAlert: forcedResetPasswordAlert,
-  forceResetPassword: forceResetPassword,
-  jobs: {
+  forceResetPassword: forceResetPassword
+  /*jobs: {
     // Delete expired users
     deleteExpiredUsers: {
       schedule: '00 00 23 * * *',
@@ -620,5 +627,5 @@ module.exports = {
       onTick: forceResetPassword,
       start: true
     }
-  }
+  }*/
 };
