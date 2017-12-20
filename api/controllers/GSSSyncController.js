@@ -51,7 +51,6 @@ module.exports = class GSSSyncController extends Controller{
       .then(gsssync => {
         // Find users
         const list = gsssync.list;
-        const listType = list.type;
         let criteria = {};
         if (list.isVisibleTo(gsssync.user)) {
           criteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false}};
@@ -70,7 +69,6 @@ module.exports = class GSSSyncController extends Controller{
       })
       .then((users) => {
         // Export users to spreadsheet
-        let values = [];
         let data = [];
         let index = 2;
         let organization = '',
