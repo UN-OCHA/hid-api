@@ -11,6 +11,7 @@ module.exports = class CronController extends Controller{
   synchronizeGoogleSpreadsheets (request, reply) {
     this.app.log.info('Synchronizing google spreadsheets');
     const GSSSync = this.app.orm.GSSSync;
+    const that = this;
 
     const stream = GSSSync
       .find({})
@@ -18,13 +19,13 @@ module.exports = class CronController extends Controller{
 
     stream.on('data', function(gsssync) {
       this.pause();
-      const that = this;
-      this.app.controllers.GSSSyncController.syncSpreadsheet(gsssync)
+      const sthat = this;
+      that.app.controllers.GSSSyncController.syncSpreadsheet(gsssync)
         .then(resp => {
-          that.resume();
+          sthat.resume();
         })
         .catch(err => {
-          that.resume();
+          sthat.resume();
         });
     });
 
