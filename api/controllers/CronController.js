@@ -100,7 +100,6 @@ module.exports = class CronController extends Controller{
 
   // Create a list based on the item pulled from hrinfo
   _createList (listType, language, item, cb) {
-    const app = this.app;
     const List = this.app.orm.List;
     const User = this.app.orm.User;
     const that = this;
@@ -154,12 +153,11 @@ module.exports = class CronController extends Controller{
                       user.save();
                     }
                     cb();
-                  }
-                );
-              }
-              else {
-                cb();
-              }
+                  });
+                }
+                else {
+                  cb();
+                }
             });
           });
         }
@@ -257,9 +255,6 @@ module.exports = class CronController extends Controller{
 
   importLists (request, reply) {
     const app = this.app;
-    const List = app.orm.list;
-    const User = app.orm.user;
-    const NotificationService = app.services.NotificationService;
     const now = Math.floor(Date.now() / 1000);
     const languages = ['en', 'fr', 'es'];
     const that = this;
@@ -377,7 +372,6 @@ module.exports = class CronController extends Controller{
   sendReminderVerifyEmails (request, reply) {
     const User = this.app.orm.User;
     const EmailService = this.app.services.EmailService;
-    const that = this;
     const app = this.app;
     this.app.log.info('sending reminder emails to verify addresses');
     const stream = User.find({'email_verified': false}).cursor();
@@ -616,7 +610,6 @@ module.exports = class CronController extends Controller{
   forcedResetPasswordAlert (request, reply) {
     const User = this.app.orm.user;
     const EmailService = this.app.services.EmailService;
-    const that = this;
     const current = Date.now();
     const fiveMonths = new Date(current - 5 * 30 * 24 * 3600 * 1000);
     const stream = User.find({totp: false, $or: [{lastPasswordReset: { $lte: fiveMonths }}, {lastPasswordReset: null}]}).cursor();
@@ -635,7 +628,6 @@ module.exports = class CronController extends Controller{
   forceResetPassword (request, reply) {
     const User = this.app.orm.user;
     const EmailService = this.app.services.EmailService;
-    const that = this;
     const current = Date.now();
     const sixMonths = new Date(current - 6 * 30 * 24 * 3600 * 1000);
     const stream = User.find({totp: false, $or: [{lastPasswordReset: { $lte: sixMonths }}, {lastPasswordReset: null}]}).cursor();
@@ -650,7 +642,5 @@ module.exports = class CronController extends Controller{
       reply().code(204);
     });
   }
-
-
 
 };
