@@ -110,7 +110,8 @@ module.exports = {
     sendReminderCheckoutEmails: ['CronPolicy.canRun'],
     sendReminderCheckinEmails: ['CronPolicy.canRun'],
     forcedResetPasswordAlert: ['CronPolicy.canRun'],
-    forceResetPassword: ['CronPolicy.canRun']
+    forceResetPassword: ['CronPolicy.canRun'],
+    doAutomatedCheckout: ['CronPolicy.canRun']
   }
 
 };
