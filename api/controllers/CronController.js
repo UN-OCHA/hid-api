@@ -180,6 +180,8 @@ module.exports = class CronController extends Controller{
       populate += ' ' + attr + '.list';
     });
 
+    reply().code(204);
+
     const stream = User
       .find(criteria)
       .populate(populate)
@@ -216,10 +218,6 @@ module.exports = class CronController extends Controller{
       }, function (err) {
         that.resume();
       });
-    });
-
-    stream.on('end', function () {
-      reply().code(204);
     });
   }
 
@@ -287,6 +285,8 @@ module.exports = class CronController extends Controller{
     const User = app.orm.User,
       NotificationService = app.services.NotificationService;
 
+    reply().code(204);
+
     const stream = User
       .find({'operations.remindedCheckin': false })
       .populate('operations.list')
@@ -322,9 +322,6 @@ module.exports = class CronController extends Controller{
       }, function (err) {
         that.resume();
       });
-    });
-    stream.on('end', function () {
-      reply().code(204);
     });
   }
 
