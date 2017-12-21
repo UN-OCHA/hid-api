@@ -40,13 +40,33 @@ module.exports = class CronController extends Controller{
   }
 
   deleteExpiredUsers (request, reply) {
-    reply().code(204);
-    this.app.config.cron.deleteExpiredUsers(this.app);
+    const User = this.app.orm.user;
+    const that = this;
+    const now = new Date();
+    const start = new Date(2016, 0, 1, 0, 0, 0);
+    User
+      .remove({expires: {$gt: start, $lt: now}})
+      .then(() => {
+        reply().code(204);
+      })
+      .catch (err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 
   deleteExpiredTokens (request, reply) {
-    reply().code(204);
-    this.app.config.cron.deleteExpiredTokens(this.app);
+    this.app.log.info('Deleting expired Oauth Tokens');
+    const OauthToken = this.app.orm.OauthToken;
+    const that = this;
+    const now = new Date();
+    OauthToken
+      .remove({expires: {$lt: now }})
+      .then(() => {
+        reply().code(204);
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 
   sendReminderVerifyEmails (request, reply) {

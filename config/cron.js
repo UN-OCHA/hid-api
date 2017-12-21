@@ -20,20 +20,6 @@ const listTypes = [
   'office'
 ];
 
-const deleteExpiredUsers = function (app) {
-  const User = app.orm.user;
-  const now = new Date();
-  const start = new Date(2016, 0, 1, 0, 0, 0);
-  User.remove({expires: {$gt: start, $lt: now}});
-};
-
-const deleteExpiredTokens = function (app) {
-  app.log.info('Deleting expired Oauth Tokens');
-  const OauthToken = app.orm.OauthToken;
-  const now = new Date();
-  OauthToken.remove({expires: {$lt: now }});
-};
-
 const forceResetPassword = function (app) {
   const User = app.orm.user;
   const EmailService = app.services.EmailService;
@@ -558,8 +544,6 @@ const sendReminderCheckinEmails = function(app) {
 };
 
 module.exports = {
-  deleteExpiredUsers: deleteExpiredUsers,
-  deleteExpiredTokens: deleteExpiredTokens,
   importLists: importLists,
   sendReminderVerifyEmails: sendReminderVerifyEmails,
   sendReminderUpdateEmails: sendReminderUpdateEmails,
