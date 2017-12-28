@@ -34,6 +34,83 @@ module.exports = class GSSSyncController extends Controller{
       });
   }
 
+  _findByList(listId) {
+    const GSSSync = this.app.orm.GSSSync;
+    const that = this;
+
+    return GSSSync
+      .find({list: listId});
+  }
+
+  _deleteUserFromSpreadsheets(listId, hid) {
+    const that = this;
+    return this
+      ._findByList(listId)
+      .then(gsssyncs => {
+        if (gsssyncs.length) {
+          const fn = function (gsssync) {
+            return that._deleteUser(gsssync, hid);
+          };
+          const actions = gsssyncs.map(fn);
+          return Promise.all(actions);
+        }
+      });
+  }
+
+  _deleteUser (gsssync, hid) {
+    const sheets = Google.sheets('v4');
+    let authClient = {};
+    return gsssync
+      .populate('list user')
+      .execPopulate()
+      .then(gsssync => {
+        // Authenticate with Google
+        const auth = new GoogleAuth();
+        const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
+        authClient = new auth.OAuth2(creds.web.client_id, creds.web.client_secret, 'postmessage');
+        authClient.credentials = gsssync.user.googleCredentials;
+        return gsssync;
+      })
+      .then(gsssync => {
+        return sheets.spreadsheets.values.get({
+          spreadsheetId: gsssync.spreadsheet,
+          range: 'A:A',
+          auth: authClient
+        });
+      })
+      .then(column => {
+        let row = 0, index = 0;
+        column.values.forEach(function (elt) {
+          if (elt === hid) {
+            index = row;
+          }
+          row++;
+        });
+        if (index !== 0) {
+          let body = {
+            requests: [{
+              deleteDimension: {
+                range: {
+                  //sheetId: 1,
+                  dimension: 'ROWS',
+                  startIndex: index,
+                  endIndex: index + 1
+                }
+              }
+            }]
+          };
+          return sheets.spreadsheets.batchUpdate({
+            spreadsheetId: gsssync.spreadsheet,
+            resource: body,
+            auth: authClient
+          });
+        }
+        else {
+          throw Boom.badRequest('Could not find user');
+        }
+      });
+  }
+
   _syncSpreadsheet (gsssync) {
     const User = this.app.orm.User;
     let authClient = {};

@@ -245,6 +245,7 @@ module.exports = class ListUserController extends Controller{
     const payload = request.payload;
     const User = this.app.orm.user;
     const List = this.app.orm.List;
+    const GSSSyncController = this.app.controllers.GSSSyncController;
     const childAttributes = User.listAttributes();
 
     this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,
@@ -302,6 +303,10 @@ module.exports = class ListUserController extends Controller{
           params: { list: result.list }
         });
         return result;
+      })
+      .then((result) => {
+        // Synchronize google spreadsheets
+        return GSSSyncController._deleteUserFromSpreadsheets(result.list._id, result.user.id);
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, request, reply);
