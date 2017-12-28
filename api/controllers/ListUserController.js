@@ -19,6 +19,7 @@ module.exports = class ListUserController extends Controller{
     const Model = this.app.orm.user;
     const List = this.app.orm.list;
     const childAttributes = Model.listAttributes();
+    const GSSSyncController = this.app.controllers.GSSSyncController;
 
     this.log.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload,
       'options =', options, { request: request});
@@ -159,6 +160,10 @@ module.exports = class ListUserController extends Controller{
             params: { list: list, user: user }
           }, () => { });
         }
+      })
+      .then((result) => {
+        // Synchronize google spreadsheets
+        return GSSSyncController._addUserToSpreadsheets(result.list._id, result.user);
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, request, reply);

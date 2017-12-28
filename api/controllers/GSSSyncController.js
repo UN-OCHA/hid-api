@@ -42,6 +42,107 @@ module.exports = class GSSSyncController extends Controller{
       .find({list: listId});
   }
 
+  _addUserToSpreadsheets(listId, user) {
+    const that = this;
+    return this
+      ._findByList(listId)
+      .then(gsssyncs => {
+        if (gsssyncs.length) {
+          const fn = function (gsssync) {
+            return that._addUser(gsssync, user);
+          };
+          const actions = gsssyncs.map(fn);
+          return Promise.all(actions);
+        }
+      });
+  }
+
+  _addUser (gsssync, user) {
+    const User = this.app.orm.User;
+    const that = this;
+    const sheets = Google.sheets('v4');
+    let authClient = {};
+    return gsssync
+      .populate('list user')
+      .execPopulate()
+      .then(gsssync => {
+        // Authenticate with Google
+        const auth = new GoogleAuth();
+        const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
+        authClient = new auth.OAuth2(creds.web.client_id, creds.web.client_secret, 'postmessage');
+        authClient.credentials = gsssync.user.googleCredentials;
+        return gsssync;
+      })
+      .then(gsssync => {
+        // Find users
+        const list = gsssync.list;
+        let criteria = {};
+        if (list.isVisibleTo(gsssync.user)) {
+          criteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false}};
+          if (!list.isOwner(gsssync.user)) {
+            criteria[list.type + 's'].$elemMatch.pending = false;
+          }
+        }
+        else {
+          throw Boom.unauthorized('You are not authorized to view this list');
+        }
+        return User
+          .find(criteria)
+          .select('name given_name family_name email job_title phone_number status organization bundles location voips connections phonesVisibility emailsVisibility locationsVisibility createdAt updatedAt is_orphan is_ghost verified isManager is_admin functional_roles')
+          .sort('name')
+          .lean();
+      })
+      .then(users => {
+        return sheets.spreadsheets.values.get({
+          spreadsheetId: gsssync.spreadsheet,
+          range: 'A:A',
+          auth: authClient
+        }, function (err, column) {
+          let row = 0, index = 0;
+          column.values.forEach(function (elt) {
+            if (elt[0] !== users[row]._id.toString()) {
+              index = row;
+            }
+            row++;
+          });
+          if (index !== 0) {
+            let body = {
+              requests: [{
+                insertDimension: {
+                  range: {
+                    dimension: 'ROWS',
+                    startIndex: index,
+                    endIndex: index + 1
+                  }
+                }
+              }]
+            };
+            sheets.spreadsheets.batchUpdate({
+              spreadsheetId: gsssync.spreadsheet,
+              resource: body,
+              auth: authClient
+            }, function (err, response) {
+              if (!err) {
+                let values = that._getRowFromUser(user);
+                let body = {
+                  values: [values]
+                };
+                sheets.spreadsheets.values.update({
+                  spreadsheetId: gsssync.spreadsheet,
+                  range: 'A' + index + ':M' + index,
+                  valueInputOption: 'RAW',
+                  resource: body
+                });
+              }
+            });
+          }
+          else {
+            throw Boom.badRequest('Could not add user');
+          }
+        });
+      });
+  }
+
   _deleteUserFromSpreadsheets(listId, hid) {
     const that = this;
     return this
@@ -89,7 +190,6 @@ module.exports = class GSSSyncController extends Controller{
               requests: [{
                 deleteDimension: {
                   range: {
-                    //sheetId: 1,
                     dimension: 'ROWS',
                     startIndex: index,
                     endIndex: index + 1
@@ -110,8 +210,42 @@ module.exports = class GSSSyncController extends Controller{
       });
   }
 
+  _getRowFromUser (elt) {
+    let organization = elt.organization ? elt.organization.name : '',
+      country = '',
+      region = '',
+      skype = '',
+      bundles = '',
+      roles = '';
+      if (elt.location && elt.location.country) {
+        country = elt.location.country.name;
+      }
+      if (elt.location && elt.location.region) {
+        region = elt.location.region.name;
+      }
+      if (elt.voips && elt.voips.length) {
+        elt.voips.forEach(function (voip) {
+          if (voip.type === 'Skype') {
+            skype = voip.username;
+          }
+        });
+      }
+      if (elt.bundles && elt.bundles.length) {
+        elt.bundles.forEach(function (bundle) {
+          bundles += bundle.name + ';';
+        });
+      }
+      if (elt.functional_roles && elt.functional_roles.length) {
+        elt.functional_roles.forEach(function (role) {
+          roles += role.name + ';';
+        });
+      }
+      return [elt._id , elt.given_name, elt.family_name, elt.job_title, organization, bundles, roles, country, region, elt.phone_number, skype, elt.email, elt.status];
+  }
+
   _syncSpreadsheet (gsssync) {
     const User = this.app.orm.User;
+    const that = this;
     let authClient = {};
     return gsssync
       .populate('list user')
@@ -147,49 +281,16 @@ module.exports = class GSSSyncController extends Controller{
         // Export users to spreadsheet
         let data = [];
         let index = 2;
-        let organization = '',
-          country = '',
-          region = '',
-          skype = '',
-          bundles = '',
-          roles = '';
+        let row = [];
         data.push({
           range: 'A1:M1',
           values: [['Humanitarian ID', 'First Name', 'Last Name', 'Job Title', 'Organization', 'Groups', 'Roles', 'Country', 'Admin Area', 'Phone number', 'Skype', 'Email', 'Notes']]
         });
         users.forEach(function (elt) {
-          organization = elt.organization ? elt.organization.name : '';
-          country = '';
-          region = '';
-          skype = '';
-          bundles = '';
-          roles = '';
-          if (elt.location && elt.location.country) {
-            country = elt.location.country.name;
-          }
-          if (elt.location && elt.location.region) {
-            region = elt.location.region.name;
-          }
-          if (elt.voips && elt.voips.length) {
-            elt.voips.forEach(function (voip) {
-              if (voip.type === 'Skype') {
-                skype = voip.username;
-              }
-            });
-          }
-          if (elt.bundles && elt.bundles.length) {
-            elt.bundles.forEach(function (bundle) {
-              bundles += bundle.name + ';';
-            });
-          }
-          if (elt.functional_roles && elt.functional_roles.length) {
-            elt.functional_roles.forEach(function (role) {
-              roles += role.name + ';';
-            });
-          }
+          row = that._getRowFromUser(elt);
           data.push({
             range: 'A' + index + ':M' + index,
-            values: [[elt._id , elt.given_name, elt.family_name, elt.job_title, organization, bundles, roles, country, region, elt.phone_number, skype, elt.email, elt.status]]
+            values: [row]
           });
           index++;
         });
