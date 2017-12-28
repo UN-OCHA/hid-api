@@ -79,7 +79,7 @@ module.exports = class GSSSyncController extends Controller{
         }, function (err, column) {
           let row = 0, index = 0;
           column.values.forEach(function (elt) {
-            if (elt === hid) {
+            if (elt[0] === hid) {
               index = row;
             }
             row++;
