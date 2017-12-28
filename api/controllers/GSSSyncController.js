@@ -76,38 +76,37 @@ module.exports = class GSSSyncController extends Controller{
           spreadsheetId: gsssync.spreadsheet,
           range: 'A:A',
           auth: authClient
-        });
-      })
-      .then(column => {
-        let row = 0, index = 0;
-        column.values.forEach(function (elt) {
-          if (elt === hid) {
-            index = row;
-          }
-          row++;
-        });
-        if (index !== 0) {
-          let body = {
-            requests: [{
-              deleteDimension: {
-                range: {
-                  //sheetId: 1,
-                  dimension: 'ROWS',
-                  startIndex: index,
-                  endIndex: index + 1
-                }
-              }
-            }]
-          };
-          return sheets.spreadsheets.batchUpdate({
-            spreadsheetId: gsssync.spreadsheet,
-            resource: body,
-            auth: authClient
+        }, function (err, column) {
+          let row = 0, index = 0;
+          column.values.forEach(function (elt) {
+            if (elt === hid) {
+              index = row;
+            }
+            row++;
           });
-        }
-        else {
-          throw Boom.badRequest('Could not find user');
-        }
+          if (index !== 0) {
+            let body = {
+              requests: [{
+                deleteDimension: {
+                  range: {
+                    //sheetId: 1,
+                    dimension: 'ROWS',
+                    startIndex: index,
+                    endIndex: index + 1
+                  }
+                }
+              }]
+            };
+            sheets.spreadsheets.batchUpdate({
+              spreadsheetId: gsssync.spreadsheet,
+              resource: body,
+              auth: authClient
+            });
+          }
+          else {
+            throw Boom.badRequest('Could not find user');
+          }
+        });
       });
   }
 
@@ -190,7 +189,7 @@ module.exports = class GSSSyncController extends Controller{
           }
           data.push({
             range: 'A' + index + ':M' + index,
-            values: [[elt.id, elt.given_name, elt.family_name, elt.job_title, organization, bundles, roles, country, region, elt.phone_number, skype, elt.email, elt.status]]
+            values: [[elt._id , elt.given_name, elt.family_name, elt.job_title, organization, bundles, roles, country, region, elt.phone_number, skype, elt.email, elt.status]]
           });
           index++;
         });
