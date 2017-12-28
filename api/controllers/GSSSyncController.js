@@ -127,9 +127,10 @@ module.exports = class GSSSyncController extends Controller{
                 let body = {
                   values: [values]
                 };
+                const writeIndex = index + 1;
                 sheets.spreadsheets.values.update({
                   spreadsheetId: gsssync.spreadsheet,
-                  range: 'A' + index + ':M' + index,
+                  range: 'A' + writeIndex + ':M' + writeIndex,
                   valueInputOption: 'RAW',
                   resource: body,
                   auth: authClient
