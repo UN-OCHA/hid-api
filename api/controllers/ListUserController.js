@@ -160,6 +160,7 @@ module.exports = class ListUserController extends Controller{
             params: { list: list, user: user }
           }, () => { });
         }
+        return result;
       })
       .then((result) => {
         // Synchronize google spreadsheets
