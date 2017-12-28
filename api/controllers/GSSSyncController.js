@@ -100,7 +100,7 @@ module.exports = class GSSSyncController extends Controller{
         }, function (err, column) {
           let row = 0, index = 0;
           column.values.forEach(function (elt) {
-            if (elt[0] !== users[row]._id.toString()) {
+            if (elt[0] !== 'Humanitarian ID' && elt[0] !== users[row]._id.toString()) {
               index = row;
             }
             row++;
@@ -131,7 +131,8 @@ module.exports = class GSSSyncController extends Controller{
                   spreadsheetId: gsssync.spreadsheet,
                   range: 'A' + index + ':M' + index,
                   valueInputOption: 'RAW',
-                  resource: body
+                  resource: body,
+                  auth: authClient
                 });
               }
             });
