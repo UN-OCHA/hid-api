@@ -195,7 +195,7 @@ module.exports = class User extends Model {
           listTypes.forEach(function (attr) {
             if (that[attr + 's'].length > 0) {
               that[attr + 's'].forEach(function (lu) {
-                if (lu.deleted !== false) {
+                if (lu.deleted === false) {
                   listIds.push(lu.list.toString());
                 }
               });
