@@ -157,7 +157,7 @@ module.exports = class GSSSyncService extends Service {
   addUserToSpreadsheets(listId, user) {
     const that = this;
     return this
-      ._findByList(listId)
+      .findByList(listId)
       .then(gsssyncs => {
         if (gsssyncs.length) {
           const fn = function (gsssync) {
@@ -172,7 +172,7 @@ module.exports = class GSSSyncService extends Service {
   deleteUserFromSpreadsheets(listId, hid) {
     const that = this;
     return this
-      ._findByList(listId)
+      .findByList(listId)
       .then(gsssyncs => {
         if (gsssyncs.length) {
           const fn = function (gsssync) {
