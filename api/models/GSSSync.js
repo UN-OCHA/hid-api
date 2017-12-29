@@ -2,6 +2,10 @@
 
 const Model = require('trails/model');
 const Schema = require('mongoose').Schema;
+const GoogleAuth = require('google-auth-library');
+const Google = require('googleapis');
+const fs = require('fs');
+const Boom = require('boom');
 
 /**
  * @module GSSSync
@@ -16,6 +20,75 @@ module.exports = class GSSSync extends Model {
       },
       onSchema(app, schema) {
         schema.index({list: 1, spreadsheet: 1}, { unique: true});
+      },
+      statics: {
+        getSpreadsheetHeaders: function () {
+          return [
+            'Humanitarian ID',
+            'First Name',
+            'Last Name',
+            'Job Title',
+            'Organization',
+            'Groups',
+            'Roles',
+            'Country',
+            'Admin Area',
+            'Phone number',
+            'Skype',
+            'Email',
+            'Notes'
+          ];
+        },
+        getUserAttributes: function () {
+          return [
+            'name',
+            'given_name',
+            'family_name',
+            'email',
+            'job_title',
+            'phone_number',
+            'status',
+            'organization',
+            'bundles',
+            'location',
+            'voips',
+            'connections',
+            'phonesVisibility',
+            'emailsVisibility',
+            'locationsVisibility',
+            'createdAt',
+            'updatedAt',
+            'is_orphan',
+            'is_ghost',
+            'verified',
+            'isManager',
+            'is_admin',
+            'functional_roles'
+          ].join(' ');
+        }
+      },
+      methods: {
+
+        getAuthClient: function () {
+          // Authenticate with Google
+          const auth = new GoogleAuth();
+          const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
+          const authClient = new auth.OAuth2(creds.web.client_id, creds.web.client_secret, 'postmessage');
+          authClient.credentials = this.user.googleCredentials;
+          return authClient;
+        },
+
+        getUserCriteria: function () {
+          const list = this.list;
+          let criteria = {};
+          if (list.isVisibleTo(this.user)) {
+            criteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false}};
+            if (!list.isOwner(this.user)) {
+              criteria[list.type + 's'].$elemMatch.pending = false;
+            }
+          }
+          return criteria;
+        }
       }
     };
   }

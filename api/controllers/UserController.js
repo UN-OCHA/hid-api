@@ -557,6 +557,9 @@ module.exports = class UserController extends Controller{
             return user;
           });
       })
+      .then(user => {
+        return that.app.services.GSSSyncService.synchronizeUser(user);
+      })
       .catch(err => {
         that.log.error(err);
         return Boom.badRequest(err.message);
@@ -652,6 +655,7 @@ module.exports = class UserController extends Controller{
   setPrimaryEmail (request, reply) {
     const Model = this.app.orm.user;
     const email = request.payload.email;
+    const that = this;
 
     this.log.debug('[UserController] Setting primary email', { request: request });
 
@@ -676,14 +680,16 @@ module.exports = class UserController extends Controller{
         record.email = email;
         // If we are there, it means that the email has been validated, so make sure email_verified is set to true.
         record.verifyEmail(email);
-        record
-          .save()
-          .then(() => {
-            return reply(record);
-          })
-          .catch(err => {
-            return reply(Boom.badImplementation(err.message));
-          });
+        return record.save();
+      })
+      .then(record => {
+        return that.app.services.GSSSyncService.synchronizeUser(record);
+      })
+      .then(record => {
+        return reply(record);
+      })
+      .catch(err => {
+        return reply(Boom.badImplementation(err.message));
       });
   }
 
@@ -1173,17 +1179,17 @@ module.exports = class UserController extends Controller{
         }
         record.phone_number = record.phone_numbers[index].number;
         record.phone_number_type = record.phone_numbers[index].type;
-        record
-          .save()
-          .then(() => {
-            return reply(record);
-          })
-          .catch(err => {
-            that._errorHandler(err, request, reply);
-          }
-        );
-      }
-    );
+        return record.save();
+      })
+      .then(user => {
+        return that.app.services.GSSSyncService.synchronizeUser(user);
+      })
+      .then(user => {
+        return reply(user);
+      })
+      .catch(err => {
+        that._errorHandler(err, request, reply);
+      });
   }
 
   setPrimaryOrganization (request, reply) {
@@ -1206,11 +1212,17 @@ module.exports = class UserController extends Controller{
           return reply(Boom.badRequest('Organization should be part of user organizations'));
         }
         user.organization = checkin;
-        user.save().then(() => {
-          return reply(user);
-        });
+        return user.save();
       })
-      .catch (err => { that._errorHandler(err, request, reply); });
+      .then(user => {
+        return that.app.services.GSSSyncService.synchronizeUser(user);
+      })
+      .then(user => {
+        return reply(user);
+      })
+      .catch (err => {
+        that._errorHandler(err, request, reply);
+      });
 
   }
 

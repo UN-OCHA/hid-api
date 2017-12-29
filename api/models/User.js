@@ -188,6 +188,22 @@ module.exports = class User extends Model {
         getAppUrl: function () {
           return process.env.APP_URL + '/users/' + this._id;
         },
+
+        getListIds : function () {
+          const that = this;
+          let listIds = [];
+          listTypes.forEach(function (attr) {
+            if (that[attr + 's'].length > 0) {
+              that[attr + 's'].forEach(function (lu) {
+                if (lu.deleted !== false) {
+                  listIds.push(lu.list.toString());
+                }
+              });
+            }
+          });
+          return listIds;
+        },
+
         sanitizeLists: function (user) {
           if (this._id.toString() !== user._id.toString() && !user.is_admin && !user.isManager) {
             const that = this;
