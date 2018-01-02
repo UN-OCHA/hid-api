@@ -78,41 +78,37 @@ module.exports = class UserController extends Controller{
     }
 
     const that = this;
+    let guser = {};
     Model
       .create(request.payload)
-      .then((user) => {
-        if (!user) {
-          throw Boom.badRequest();
-        }
-        that.log.debug('User ' + user._id.toString() + ' successfully created', { request: request });
-
-        if (user.email && notify === true) {
-          if (!request.params.currentUser) {
-            that.app.services.EmailService.sendRegister(user, appVerifyUrl, function (merr, info) {
-              return reply(user);
-            });
+        .then((user) => {
+          if (!user) {
+            throw Boom.badRequest();
           }
-          else {
-            // An admin is creating an orphan user or Kiosk registration
-            if (registrationType === 'kiosk') {
-              that.app.services.EmailService.sendRegisterKiosk(user, appVerifyUrl, function (merr, info) {
-                return reply(user);
-              });
+          guser = user;
+          that.log.debug('User ' + user._id.toString() + ' successfully created', { request: request });
+
+          if (user.email && notify === true) {
+            if (!request.params.currentUser) {
+              return that.app.services.EmailService.sendRegister(user, appVerifyUrl);
             }
             else {
-              that.app.services.EmailService.sendRegisterOrphan(user, request.params.currentUser, appVerifyUrl, function (merr, info) {
-                return reply(user);
-              });
+              // An admin is creating an orphan user or Kiosk registration
+              if (registrationType === 'kiosk') {
+                return that.app.services.EmailService.sendRegisterKiosk(user, appVerifyUrl);
+              }
+              else {
+                return that.app.services.EmailService.sendRegisterOrphan(user, request.params.currentUser, appVerifyUrl);
+              }
             }
           }
-        }
-        else {
-          return reply(user);
-        }
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
+        })
+        .then(info => {
+          return reply(guser);
+        })
+        .catch(err => {
+          that.app.services.ErrorService.handle(err, request, reply);
+        });
   }
 
   create (request, reply) {
@@ -359,8 +355,10 @@ module.exports = class UserController extends Controller{
       query.select('name given_name family_name email job_title phone_number status organization bundles location voips connections phonesVisibility emailsVisibility locationsVisibility createdAt updatedAt is_orphan is_ghost verified isManager is_admin functional_roles');
       query.lean();
     }
+    let gresults = {};
     query
       .then((results) => {
+        gresults = results;
         return User
           .count(criteria)
           .then((number) => {
@@ -436,19 +434,19 @@ module.exports = class UserController extends Controller{
       }
       User
         .findOne(criteria)
-        .then((user) => {
-          if (!user) {
-            return reply(Boom.notFound());
-          }
-          else {
-            user.sanitize(request.params.currentUser);
-            user.translateListNames(reqLanguage);
-            return reply(user);
-          }
-        })
-        .catch((err) => {
-          that._errorHandler(err, request, reply);
-        });
+          .then((user) => {
+            if (!user) {
+              throw Boom.notFound();
+            }
+            else {
+              user.sanitize(request.params.currentUser);
+              user.translateListNames(reqLanguage);
+              return reply(user);
+            }
+          })
+          .catch((err) => {
+            that._errorHandler(err, request, reply);
+          });
     }
     else {
       const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
@@ -530,39 +528,40 @@ module.exports = class UserController extends Controller{
       NotificationService = this.app.services.NotificationService,
       EmailService = this.app.services.EmailService,
       that = this;
+    let nextAction = '';
     return Model
       .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
       .exec()
       .then((user) => {
-        return user
-          .defaultPopulate()
-          .then(user => {
-            if (request.params.currentUser._id.toString() !== user._id.toString()) {
-              // User is being edited by someone else
-              // If it's an auth account, surface it
-              if (user.authOnly) {
-                user.authOnly = false;
-                user
-                  .save()
-                  .then(() => {
-                    EmailService.sendAuthToProfile(user, request.params.currentUser, () => {});
-                  });
-              }
-              else {
-                // Notify user of the edit
-                const notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
-                NotificationService.send(notification, () => {});
-              }
-            }
-            return user;
-          });
+        return user.defaultPopulate();
+      })
+      .then(user => {
+        if (request.params.currentUser._id.toString() !== user._id.toString()) {
+          // User is being edited by someone else
+          // If it's an auth account, surface it
+          if (user.authOnly) {
+            nextAction = 'sendAuthToProfile';
+            user.authOnly = false;
+            return user.save();
+          }
+          else {
+            nextAction = 'notification';
+          }
+        }
+        return user;
+      })
+      .then(user => {
+        if (nextAction === 'sendAuthToProfile') {
+          EmailService.sendAuthToProfile(user, request.params.currentUser, () => {});
+        }
+        if (nextAction === 'notification') {
+          const notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
+          NotificationService.send(notification, () => {});
+        }
+        return user;
       })
       .then(user => {
         return that.app.services.GSSSyncService.synchronizeUser(user);
-      })
-      .catch(err => {
-        that.log.error(err);
-        return Boom.badRequest(err.message);
       });
   }
 
@@ -590,44 +589,53 @@ module.exports = class UserController extends Controller{
       // Check old password
       Model
         .findOne({_id: request.params.id})
-        .then((user) => {
-          if (!user) {
-            return reply(Boom.notFound());
-          }
-          // If verifying user, set verified_by
-          if (request.payload.verified && !user.verified) {
-            request.payload.verified_by = request.params.currentUser._id;
-          }
-          if (request.payload.old_password) {
-            that.log.warn('Updating user password', { request: request, security: true});
-            if (user.validPassword(request.payload.old_password)) {
-              if (!UserModel.isStrongPassword(request.payload.new_password)) {
-                that.log.warn('Could not update user password. New password is not strong enough', { request: request, security: true, fail: true});
-                return reply(Boom.badRequest('Password is not strong enough'));
+          .then((user) => {
+            if (!user) {
+              throw Boom.notFound();
+            }
+            // If verifying user, set verified_by
+            if (request.payload.verified && !user.verified) {
+              request.payload.verified_by = request.params.currentUser._id;
+            }
+            if (request.payload.old_password) {
+              that.log.warn('Updating user password', { request: request, security: true});
+              if (user.validPassword(request.payload.old_password)) {
+                if (!UserModel.isStrongPassword(request.payload.new_password)) {
+                  that.log.warn('Could not update user password. New password is not strong enough', { request: request, security: true, fail: true});
+                  throw Boom.badRequest('Password is not strong enough');
+                }
+                request.payload.password = UserModel.hashPassword(request.payload.new_password);
+                request.payload.lastPasswordReset = new Date();
+                that.log.warn('Successfully updated user password', { request: request, security: true});
+                return that._updateQuery(request, options);
               }
-              request.payload.password = UserModel.hashPassword(request.payload.new_password);
-              request.payload.lastPasswordReset = new Date();
-              that.log.warn('Successfully updated user password', { request: request, security: true});
-              return reply(that._updateQuery(request, options));
+              else {
+                that.log.warn('Could not update user password. Old password is wrong', { request: request, security: true, fail: true});
+                throw Boom.badRequest('The old password is wrong');
+              }
             }
             else {
-              that.log.warn('Could not update user password. Old password is wrong', { request: request, security: true, fail: true});
-              return reply(Boom.badRequest('The old password is wrong'));
+              return that._updateQuery(request, options);
             }
-          }
-          else {
-            return reply(that._updateQuery(request, options));
-          }
-        })
-        .catch(err => {
-          that.errorHandler(err, reply);
-        });
+          })
+          .then(user => {
+            return reply(user);
+          })
+          .catch(err => {
+            that._errorHandler(err, request, reply);
+          });
     }
     else {
       if (!request.payload.verified) {
         request.payload.verified_by = null;
       }
-      reply(this._updateQuery(request, options));
+      this._updateQuery(request, options)
+        .then(user => {
+          return reply(user);
+        })
+        .catch(err => {
+          that._errorHandler(err, request, reply);
+        });
     }
   }
 
@@ -667,15 +675,15 @@ module.exports = class UserController extends Controller{
       .findOne({ _id: request.params.id})
       .then(record => {
         if (!record) {
-          return reply(Boom.notFound());
+          throw Boom.notFound();
         }
         // Make sure email is validated
         const index = record.emailIndex(email);
         if (index === -1) {
-          return reply(Boom.badRequest('Email does not exist'));
+          throw Boom.badRequest('Email does not exist');
         }
         if (!record.emails[index].validated) {
-          return reply(Boom.badRequest('Email has not been validated. You need to validate it first.'));
+          throw Boom.badRequest('Email has not been validated. You need to validate it first.');
         }
         record.email = email;
         // If we are there, it means that the email has been validated, so make sure email_verified is set to true.
@@ -689,7 +697,7 @@ module.exports = class UserController extends Controller{
         return reply(record);
       })
       .catch(err => {
-        return reply(Boom.badImplementation(err.message));
+        that._errorHandler(err, request, reply);
       });
   }
 
@@ -714,6 +722,7 @@ module.exports = class UserController extends Controller{
     }
 
     const that = this;
+    let grecord = {};
     query
       .then(record => {
         if (!record) {
@@ -755,15 +764,14 @@ module.exports = class UserController extends Controller{
         }
       })
       .then(record => {
+        grecord = record;
+        if (request.payload.hash && record.email === record.hashEmail) {
+          return that.app.services.EmailService.sendPostRegister(record);
+        }
+      })
+      .then(info => {
         if (request.payload.hash) {
-          if (record.email === record.hashEmail) {
-            that.app.services.EmailService.sendPostRegister(record, function (merr, info) {
-              return reply(record);
-            });
-          }
-          else {
-            return reply(record);
-          }
+          return reply(grecord);
         }
         else {
           return reply('Validation email sent successfully').code(202);
@@ -787,19 +795,18 @@ module.exports = class UserController extends Controller{
     }
     User
       .findOne({email: request.payload.email.toLowerCase()})
-      .then(record => {
-        if (!record) {
-          return that._errorHandler(Boom.badRequest('Email could not be found'), request, reply);
-        }
-        that.app.services.EmailService.sendResetPassword(record, appResetUrl, function (merr, info) {
-          if (!merr) {
-            return reply('Password reset email sent successfully').code(202);
+        .then(record => {
+          if (!record) {
+            return that._errorHandler(Boom.badRequest('Email could not be found'), request, reply);
           }
-          else {
-            return that._errorHandler(merr, request, reply);
-          }
+          return that.app.services.EmailService.sendResetPassword(record, appResetUrl);
+        })
+        .then(info => {
+          return reply('Password reset email sent successfully').code(202);
+        })
+        .catch(err => {
+          that._errorHandler(err, reply);
         });
-      });
   }
 
   updatePassword (request, reply) {
@@ -840,7 +847,7 @@ module.exports = class UserController extends Controller{
         return reply().code(204);
       })
       .catch(err => {
-        that.errorHandler(err, reply);
+        that._errorHandler(err, reply);
       });
   }
 
@@ -931,14 +938,18 @@ module.exports = class UserController extends Controller{
     const that = this;
     Model
       .findOne({_id: userId})
-      .then(record => {
-        if (!record) {
-          return reply(Boom.notFound());
-        }
-        that.app.services.EmailService.sendClaim(record, appResetUrl, function (err, info) {
+        .then(record => {
+          if (!record) {
+            return reply(Boom.notFound());
+          }
+          return that.app.services.EmailService.sendClaim(record, appResetUrl);
+        })
+        .then(info => {
           return reply('Claim email sent successfully').code(202);
+        })
+        .catch(err => {
+          that._errorHandler(err, request, reply);
         });
-      });
   }
 
   updatePicture (request, reply) {
@@ -1380,7 +1391,7 @@ module.exports = class UserController extends Controller{
         user.connections.id(request.params.cid).remove();
         return user.save();
       })
-      .then(() => {
+      .then(user => {
         reply(user);
       })
       .catch(err => {

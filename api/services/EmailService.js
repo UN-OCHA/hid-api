@@ -60,7 +60,7 @@ module.exports = class EmailService extends Service {
     }
   }
 
-  sendRegister (user, appVerifyUrl, callback) {
+  sendRegister (user, appVerifyUrl) {
     const mailOptions = {
       to: user.email,
       locale: user.locale || 'en'
@@ -71,7 +71,7 @@ module.exports = class EmailService extends Service {
     user.hash = hash;
     user.hashAction = 'verify_email';
     user.hashEmail = user.email;
-    user
+    return user
       .save()
       .then(() => {
         const resetUrl = that._addHash(appVerifyUrl, hash);
@@ -79,14 +79,11 @@ module.exports = class EmailService extends Service {
           name: user.name,
           reset_url: resetUrl
         };
-        that.send(mailOptions, 'register', context, callback);
-      })
-      .catch(err => {
-        callback(err);
+        return that.send(mailOptions, 'register', context);
       });
   }
 
-  sendRegisterOrphan(user, admin, appVerifyUrl, callback) {
+  sendRegisterOrphan(user, admin, appVerifyUrl) {
     const mailOptions = {
       to: user.email,
       locale: user.locale || 'en'
@@ -96,7 +93,7 @@ module.exports = class EmailService extends Service {
     user.hash = hash;
     user.hashAction = 'reset_password';
     user.hashEmail = user.email;
-    user
+    return user
       .save()
       .then(() => {
         const resetUrl = that._addHash(appVerifyUrl, hash);
@@ -105,14 +102,11 @@ module.exports = class EmailService extends Service {
           admin: admin,
           reset_url: resetUrl
         };
-        that.send(mailOptions, 'register_orphan', context, callback);
-      })
-      .catch(err => {
-        callback(err);
+        return that.send(mailOptions, 'register_orphan', context);
       });
   }
 
-  sendRegisterKiosk(user, appVerifyUrl, callback) {
+  sendRegisterKiosk(user, appVerifyUrl) {
     const mailOptions = {
       to: user.email,
       locale: user.locale || 'en'
@@ -123,7 +117,7 @@ module.exports = class EmailService extends Service {
     user.hash = hash;
     user.hashAction = 'reset_password';
     user.hashEmail = user.email;
-    user
+    return user
       .save()
       .then(() => {
         const resetUrl = that._addHash(appVerifyUrl, hash);
@@ -131,14 +125,11 @@ module.exports = class EmailService extends Service {
           user: user,
           reset_url: resetUrl
         };
-        that.send(mailOptions, 'register_kiosk', context, callback);
-      })
-      .catch(err => {
-        callback(err);
+        return that.send(mailOptions, 'register_kiosk', context);
       });
   }
 
-  sendPostRegister (user, callback) {
+  sendPostRegister (user) {
     const mailOptions = {
       to: user.email,
       locale: user.locale
@@ -147,10 +138,10 @@ module.exports = class EmailService extends Service {
       given_name: user.given_name,
       profile_url: process.env.APP_URL + '/users/' + user._id
     };
-    this.send(mailOptions, 'post_register', context, callback);
+    return this.send(mailOptions, 'post_register', context);
   }
 
-  sendResetPassword (user, appResetUrl, callback) {
+  sendResetPassword (user, appResetUrl) {
     const mailOptions = {
       to: user.email,
       locale: user.locale
@@ -160,7 +151,7 @@ module.exports = class EmailService extends Service {
     user.hash = hash;
     user.hashAction = 'reset_password';
     user.hashEmail = '';
-    user
+    return user
       .save()
       .then(() => {
         const resetUrl = that._addHash(appResetUrl, hash);
@@ -168,10 +159,7 @@ module.exports = class EmailService extends Service {
           name: user.name,
           reset_url: resetUrl
         };
-        that.send(mailOptions, 'reset_password', context, callback);
-      })
-      .catch(err => {
-        callback(err);
+        return that.send(mailOptions, 'reset_password', context);
       });
   }
 
@@ -197,7 +185,7 @@ module.exports = class EmailService extends Service {
     this.send(mailOptions, 'forced_password_reset_alert', context, callback);
   }
 
-  sendClaim (user, appResetUrl, callback) {
+  sendClaim (user, appResetUrl) {
     const mailOptions = {
       to: user.email,
       locale: user.locale
@@ -207,7 +195,7 @@ module.exports = class EmailService extends Service {
     user.hash = hash;
     user.hashAction = 'reset_password';
     user.hashEmail = '';
-    user
+    return user
       .save()
       .then(() => {
         const resetUrl = that._addHash(appResetUrl, hash);
@@ -215,10 +203,7 @@ module.exports = class EmailService extends Service {
           name: user.name,
           reset_url: resetUrl
         };
-        that.send(mailOptions, 'claim', context, callback);
-      })
-      .catch(err => {
-        callback(err);
+        return that.send(mailOptions, 'claim', context);
       });
   }
 
