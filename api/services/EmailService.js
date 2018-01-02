@@ -41,12 +41,13 @@ module.exports = class EmailService extends Service {
       send: true,
       transport: Transporter
     });
-    if (options.to) {
-      email.send({
-        template: template,
-        message: options,
-        locals: context
-      })
+    const args = {
+      template: template,
+      message: options,
+      locals: context
+    };
+    if (callback) {
+      email.send(args)
         .then(() => {
           return callback();
         })
@@ -55,7 +56,7 @@ module.exports = class EmailService extends Service {
         });
     }
     else {
-      callback();
+      return email.send(args);
     }
   }
 
@@ -221,7 +222,7 @@ module.exports = class EmailService extends Service {
       });
   }
 
-  sendValidationEmail (user, email, appValidationUrl, callback) {
+  sendValidationEmail (user, email, appValidationUrl) {
     const mailOptions = {
       to: email,
       locale: user.locale
@@ -231,7 +232,7 @@ module.exports = class EmailService extends Service {
     user.hash = hash;
     user.hashAction = 'verify_email';
     user.hashEmail = email;
-    user
+    return user
       .save()
       .then(() => {
         const resetUrl = that._addHash(appValidationUrl, hash);
@@ -239,10 +240,7 @@ module.exports = class EmailService extends Service {
           user: user,
           reset_url: resetUrl
         };
-        that.send(mailOptions, 'email_validation', context, callback);
-      })
-      .catch(err => {
-        callback(err);
+        return that.send(mailOptions, 'email_validation', context);
       });
   }
 

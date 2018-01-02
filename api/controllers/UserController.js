@@ -717,7 +717,7 @@ module.exports = class UserController extends Controller{
     query
       .then(record => {
         if (!record) {
-          return reply(Boom.notFound());
+          throw Boom.notFound();
         }
         if (request.payload.hash) {
           // Verify hash
@@ -728,15 +728,7 @@ module.exports = class UserController extends Controller{
               record.expires = new Date(0, 0, 1, 0, 0, 0);
               record.emails[0].validated = true;
               record.emails.set(0, record.emails[0]);
-              record.save()
-                .then(() => {
-                  that.app.services.EmailService.sendPostRegister(record, function (merr, info) {
-                    return reply(record);
-                  });
-                })
-                .catch(err => {
-                  that._errorHandler(err, request, reply);
-                });
+              return record.save();
             }
             else {
               for (let i = 0, len = record.emails.length; i < len; i++) {
@@ -745,17 +737,11 @@ module.exports = class UserController extends Controller{
                   record.emails.set(i, record.emails[i]);
                 }
               }
-              record.save()
-                .then((r) => {
-                  return reply(r);
-                })
-                .catch(err => {
-                  that._errorHandler(err, request, reply);
-                });
+              return record.save();
             }
           }
           else {
-            return reply(Boom.badRequest('Invalid hash'));
+            throw Boom.badRequest('Invalid hash');
           }
         }
         else {
@@ -763,12 +749,28 @@ module.exports = class UserController extends Controller{
           const appValidationUrl = request.payload.app_validation_url;
           if (!that.app.services.HelperService.isAuthorizedUrl(appValidationUrl)) {
             that.log.warn('Invalid app_validation_url', { security: true, fail: true, request: request});
-            return reply(Boom.badRequest('Invalid app_validation_url'));
+            throw Boom.badRequest('Invalid app_validation_url');
           }
-          that.app.services.EmailService.sendValidationEmail(record, email, appValidationUrl, function (err, info) {
-            return reply('Validation email sent successfully').code(202);
-          });
+          return that.app.services.EmailService.sendValidationEmail(record, email, appValidationUrl);
         }
+      })
+      .then(record => {
+        if (request.payload.hash) {
+          if (record.email === record.hashEmail) {
+            that.app.services.EmailService.sendPostRegister(record, function (merr, info) {
+              return reply(record);
+            });
+          }
+          else {
+            return reply(record);
+          }
+        }
+        else {
+          return reply('Validation email sent successfully').code(202);
+        }
+      })
+      .catch(err => {
+        that._errorHandler(err, request, reply);
       });
   }
 
@@ -948,38 +950,39 @@ module.exports = class UserController extends Controller{
 
     const data = request.payload;
     if (data.file) {
+      const image = sharp(data.file);
+      let guser = {}, gmetadata = {};
       Model
         .findOne({_id: userId})
         .then(record => {
           if (!record) {
-            return reply(Boom.notFound());
+            throw Boom.notFound();
           }
+          guser = record;
+          return image.metadata();
+        })
+        .then(function(metadata) {
+          if (metadata.format !== 'jpeg' && metadata.format !== 'png') {
+            return reply(Boom.badRequest('Invalid image format. Only jpeg and png are accepted'));
+          }
+          gmetadata = metadata;
           let path = __dirname + '/../../assets/pictures/' + userId + '.';
           let ext = '';
-
-          const image = sharp(data.file);
-          image
-            .metadata()
-            .then(function(metadata) {
-              if (metadata.format !== 'jpeg' && metadata.format !== 'png') {
-                return reply(Boom.badRequest('Invalid image format. Only jpeg and png are accepted'));
-              }
-              ext = metadata.format;
-              path = path + ext;
-              return image
-                .resize(200, 200)
-                .toFile(path);
-            })
-            .then(function (info) {
-              record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + ext;
-              return record.save();
-            })
-            .then(function() {
-              return reply(record);
-            })
-            .catch(err => {
-              that._errorHandler(err, request, reply);
-            });
+          ext = metadata.format;
+          path = path + ext;
+          return image
+            .resize(200, 200)
+            .toFile(path);
+        })
+        .then(function (info) {
+          guser.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + gmetadata.format;
+          return guser.save();
+        })
+        .then(record => {
+          return reply(record);
+        })
+        .catch(err => {
+          that._errorHandler(err, request, reply);
         });
     }
     else {
@@ -1004,51 +1007,47 @@ module.exports = class UserController extends Controller{
 
     // Make sure email added is unique
     const that = this;
+    let user = {};
     Model
       .findOne({'emails.email': request.payload.email})
-      .then(erecord => {
-        if (erecord) {
-          return reply(Boom.badRequest('Email is not unique'));
-        }
-        Model
-          .findOne({_id: userId})
-          .then(record => {
-            if (!record) {
-              return reply(Boom.notFound());
-            }
-            const email = request.payload.email;
-            if (record.emailIndex(email) !== -1) {
-              return reply(Boom.badRequest('Email already exists'));
-            }
-            // Send confirmation email
-            that.app.services.EmailService.sendValidationEmail(record, email, appValidationUrl, function (err, info) {
-              if (err) {
-                return that._errorHandler(err, request, reply);
-              }
-              else {
-                for (let i = 0; i < record.emails.length; i++) {
-                  that.app.services.EmailService.sendEmailAlert(record, record.emails[i].email, email);
-                }
-                if (record.emails.length === 0 && record.is_ghost) {
-                  // Turn ghost into orphan and set main email address
-                  record.is_ghost = false;
-                  record.is_orphan = true;
-                  record.email = email;
-                }
-                const data = { email: email, type: request.payload.type, validated: false };
-                record.emails.push(data);
-                record.save().then(() => {
-                  return reply(record);
-                })
-                .catch(err => {
-                  that._errorHandler(err, request, reply);
-                });
-              }
-            });
+        .then(erecord => {
+          if (erecord) {
+            throw Boom.badRequest('Email is not unique');
           }
-        );
-      }
-    );
+          return Model.findOne({_id: userId});
+        })
+        .then(record => {
+          if (!record) {
+            throw Boom.notFound();
+          }
+          const email = request.payload.email;
+          if (record.emailIndex(email) !== -1) {
+            throw Boom.badRequest('Email already exists');
+          }
+          user = record;
+          // Send confirmation email
+          return that.app.services.EmailService.sendValidationEmail(record, email, appValidationUrl);
+        })
+        .then(info => {
+          for (let i = 0; i < user.emails.length; i++) {
+            that.app.services.EmailService.sendEmailAlert(user, user.emails[i].email, request.payload.email);
+          }
+          if (user.emails.length === 0 && user.is_ghost) {
+            // Turn ghost into orphan and set main email address
+            user.is_ghost = false;
+            user.is_orphan = true;
+            user.email = request.payload.email;
+          }
+          const data = { email: request.payload.email, type: request.payload.type, validated: false };
+          user.emails.push(data);
+          return user.save();
+        })
+        .then(() => {
+          return reply(user);
+        })
+        .catch(err => {
+          that._errorHandler(err, request, reply);
+        });
   }
 
   dropEmail (request, reply) {
@@ -1063,27 +1062,27 @@ module.exports = class UserController extends Controller{
 
     Model
       .findOne({_id: userId})
-      .then(record => {
-        if (!record) {
-          return reply(Boom.notFound());
-        }
-        const email = request.params.email;
-        if (email === record.email) {
-          return reply(Boom.badRequest('You can not remove the primary email'));
-        }
-        const index = record.emailIndex(email);
-        if (index === -1) {
-          return reply(Boom.badRequest('Email does not exist'));
-        }
-        record.emails.splice(index, 1);
-        record.save().then(() => {
+        .then(record => {
+          if (!record) {
+            throw Boom.notFound();
+          }
+          const email = request.params.email;
+          if (email === record.email) {
+            throw Boom.badRequest('You can not remove the primary email');
+          }
+          const index = record.emailIndex(email);
+          if (index === -1) {
+            throw Boom.badRequest('Email does not exist');
+          }
+          record.emails.splice(index, 1);
+          return record.save();
+        })
+        .then(record => {
           return reply(record);
         })
         .catch(err => {
           that._errorHandler(err, request, reply);
         });
-      }
-    );
   }
 
   addPhone (request, reply) {
@@ -1095,20 +1094,20 @@ module.exports = class UserController extends Controller{
 
     Model
       .findOne({_id: userId})
-      .then(record => {
-        if (!record) {
-          return reply(Boom.notFound());
-        }
-        const data = { number: request.payload.number, type: request.payload.type };
-        record.phone_numbers.push(data);
-        record.save().then(() => {
+        .then(record => {
+          if (!record) {
+            throw Boom.notFound();
+          }
+          const data = { number: request.payload.number, type: request.payload.type };
+          record.phone_numbers.push(data);
+          return record.save();
+        })
+        .then(record => {
           return reply(record);
         })
         .catch(err => {
           that._errorHandler(err, request, reply);
         });
-      }
-    );
   }
 
   dropPhone (request, reply) {
@@ -1121,35 +1120,32 @@ module.exports = class UserController extends Controller{
 
     Model
       .findOne({_id: userId})
-      .then(record => {
-        if (!record) {
-          return reply(Boom.notFound());
-        }
-        let index = -1;
-        for (let i = 0, len = record.phone_numbers.length; i < len; i++) {
-          if (record.phone_numbers[i]._id === phoneId) {
-            index = i;
+        .then(record => {
+          if (!record) {
+            throw Boom.notFound();
           }
-        }
-        if (index === -1) {
-          return reply(Boom.notFound());
-        }
-        // Do not allow deletion of primary phone number
-        if (record.phone_numbers[index].number === record.phone_number) {
-          return reply(Boom.badRequest('Can not remove primary phone number'));
-        }
-        record.phone_numbers.splice(index, 1);
-        record
-          .save()
-          .then(() => {
-            return reply(record);
-          })
-          .catch(err => {
-            that._errorHandler(err, request, reply);
+          let index = -1;
+          for (let i = 0, len = record.phone_numbers.length; i < len; i++) {
+            if (record.phone_numbers[i]._id === phoneId) {
+              index = i;
+            }
           }
-        );
-      }
-    );
+          if (index === -1) {
+            throw Boom.notFound();
+          }
+          // Do not allow deletion of primary phone number
+          if (record.phone_numbers[index].number === record.phone_number) {
+            throw Boom.badRequest('Can not remove primary phone number');
+          }
+          record.phone_numbers.splice(index, 1);
+          return record.save();
+        })
+        .then(record => {
+          return reply(record);
+        })
+        .catch(err => {
+          that._errorHandler(err, request, reply);
+        });
   }
 
   setPrimaryPhone (request, reply) {
@@ -1166,7 +1162,7 @@ module.exports = class UserController extends Controller{
       .findOne({ _id: request.params.id})
       .then(record => {
         if (!record) {
-          return reply(Boom.notFound());
+          throw Boom.notFound();
         }
         // Make sure phone is part of phone_numbers
         let index = -1;
@@ -1176,7 +1172,7 @@ module.exports = class UserController extends Controller{
           }
         }
         if (index === -1) {
-          return reply(Boom.badRequest('Phone does not exist'));
+          throw Boom.badRequest('Phone does not exist');
         }
         record.phone_number = record.phone_numbers[index].number;
         record.phone_number_type = record.phone_numbers[index].type;
@@ -1206,11 +1202,11 @@ module.exports = class UserController extends Controller{
       .findOne({_id: request.params.id})
       .then(user => {
         if (!user) {
-          return reply(Boom.notFound());
+          throw Boom.notFound();
         }
         const checkin = user.organizations.id(request.payload._id);
         if (!checkin) {
-          return reply(Boom.badRequest('Organization should be part of user organizations'));
+          throw Boom.badRequest('Organization should be part of user organizations');
         }
         user.organization = checkin;
         return user.save();
@@ -1258,7 +1254,7 @@ module.exports = class UserController extends Controller{
       .findOne({ _id: request.params.id})
       .then(record => {
         if (!record) {
-          return reply(Boom.notFound());
+          throw Boom.notFound();
         }
 
         const notPayload = {
@@ -1286,38 +1282,35 @@ module.exports = class UserController extends Controller{
       .findOne({_id: request.params.id})
       .then(user => {
         if (!user) {
-          return reply(Boom.notFound());
+          throw Boom.notFound();
         }
 
         if (!user.connections) {
           user.connections = [];
         }
         if (user.connectionsIndex(request.params.currentUser._id) !== -1) {
-          return reply(Boom.badRequest('User is already a connection'));
+          throw Boom.badRequest('User is already a connection');
         }
 
         user.connections.push({pending: true, user: request.params.currentUser._id});
 
-        user
-          .save()
-          .then(() => {
-            reply(user);
+        return user.save();
+      })
+      .then(user => {
+        reply(user);
 
-            const notification = {
-              type: 'connection_request',
-              createdBy: request.params.currentUser,
-              user: user
-            };
-            that.app.services.NotificationService.send(notification, function () {
+        const notification = {
+          type: 'connection_request',
+          createdBy: request.params.currentUser,
+          user: user
+        };
+        that.app.services.NotificationService.send(notification, function () {
 
-            });
-          }
-        );
+        });
       })
       .catch(err => {
         that._errorHandler(err, request, reply);
-      }
-    );
+      });
   }
 
   updateConnection (request, reply) {
@@ -1326,6 +1319,7 @@ module.exports = class UserController extends Controller{
     this.log.debug('[UserController] Updating connection', { request: request });
 
     const that = this;
+    let guser = {};
 
     User
       .findOne({_id: request.params.id})
@@ -1335,46 +1329,39 @@ module.exports = class UserController extends Controller{
         }
         const connection = user.connections.id(request.params.cid);
         connection.pending = false;
-        return user
-          .save()
-          .then(() => {
-            return {user: user, connection: connection};
-          });
+        return user.save();
       })
-      .then(result => {
-        User
-          .findOne({_id: result.connection.user})
-          .then(cuser => {
-            // Create connection with current user
-            const cindex = cuser.connectionsIndex(result.user._id);
-            if (cindex === -1) {
-              cuser.connections.push({pending: false, user: result.user._id});
-            }
-            else {
-              cuser.connections[cindex].pending = false;
-            }
-            cuser
-              .save()
-              .then(() => {
-                reply(result.user);
-                // Send notification
-                const notification = {
-                  type: 'connection_approved',
-                  createdBy: result.user,
-                  user: cuser
-                };
-                that.app.services.NotificationService.send(notification, function () {
+      .then(user => {
+        guser = user;
+        const connection = user.connections.id(request.params.cid);
+        return User.findOne({_id: connection.user});
+      })
+      .then(cuser => {
+        // Create connection with current user
+        const cindex = cuser.connectionsIndex(guser._id);
+        if (cindex === -1) {
+          cuser.connections.push({pending: false, user: guser._id});
+        }
+        else {
+          cuser.connections[cindex].pending = false;
+        }
+        return cuser.save();
+      })
+      .then(cuser => {
+        reply(guser);
+        // Send notification
+        const notification = {
+          type: 'connection_approved',
+          createdBy: guser,
+          user: cuser
+        };
+        that.app.services.NotificationService.send(notification, function () {
 
-                });
-              }
-            );
-          }
-        );
+        });
       })
       .catch(err => {
         that._errorHandler(err, request, reply);
-      }
-    );
+      });
   }
 
   deleteConnection (request, reply) {
@@ -1388,14 +1375,13 @@ module.exports = class UserController extends Controller{
       .findOne({_id: request.params.id})
       .then(user => {
         if (!user) {
-          return reply(Boom.notFound());
+          throw Boom.notFound();
         }
         user.connections.id(request.params.cid).remove();
-        user
-          .save()
-          .then(() => {
-            reply(user);
-          });
+        return user.save();
+      })
+      .then(() => {
+        reply(user);
       })
       .catch(err => {
         that._errorHandler(err, request, reply);
