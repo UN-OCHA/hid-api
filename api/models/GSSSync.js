@@ -78,7 +78,7 @@ module.exports = class GSSSync extends Model {
 
         getUserCriteria: function () {
           const list = this.list;
-          let criteria = {};
+          const criteria = {};
           if (list.isVisibleTo(this.user)) {
             criteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false}};
             if (!list.isOwner(this.user)) {

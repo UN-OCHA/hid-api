@@ -117,7 +117,7 @@ module.exports = class GSSSyncService extends Service {
             row++;
           });
           if (index !== 0) {
-            let body = {
+            const body = {
               requests: [{
                 insertDimension: {
                   range: {
@@ -184,8 +184,8 @@ module.exports = class GSSSyncService extends Service {
   }
 
   getRowFromUser (elt) {
-    let organization = elt.organization ? elt.organization.name : '',
-      country = '',
+    const organization = elt.organization ? elt.organization.name : '';
+    let country = '',
       region = '',
       skype = '',
       bundles = '',

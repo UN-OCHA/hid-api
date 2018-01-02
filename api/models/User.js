@@ -191,7 +191,7 @@ module.exports = class User extends Model {
 
         getListIds: function () {
           const that = this;
-          let listIds = [];
+          const listIds = [];
           listTypes.forEach(function (attr) {
             if (that[attr + 's'].length > 0) {
               that[attr + 's'].forEach(function (lu) {
