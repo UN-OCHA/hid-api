@@ -35,15 +35,15 @@ module.exports = class ClientController extends Controller{
       criteria._id = request.params.id;
       Client
         .findOne(criteria)
-          .then(result => {
-            if (!result) {
-              throw Boom.notFound();
-            }
-            return reply(result);
-          })
-          .catch(err => {
-            that.app.services.ErrorService.handle(err, request, reply);
-          });
+        .then(result => {
+          if (!result) {
+            throw Boom.notFound();
+          }
+          return reply(result);
+        })
+        .catch(err => {
+          that.app.services.ErrorService.handle(err, request, reply);
+        });
     }
     else {
       const query = this.app.services.HelperService.find('Client', criteria, options);
@@ -67,12 +67,12 @@ module.exports = class ClientController extends Controller{
       that = this;
     Model
       .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
-        .then((client) => {
-          reply(client);
-        })
-        .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
-        });
+      .then((client) => {
+        reply(client);
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 
   destroy (request, reply) {
