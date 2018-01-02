@@ -229,12 +229,12 @@ module.exports = class EmailService extends Service {
       });
   }
 
-  sendNotification(not, cb) {
+  sendNotification(not) {
     const mailOptions = {
       to: not.user.email,
       locale: not.user.locale
     };
-    this.send(mailOptions, not.type, not, cb);
+    return this.send(mailOptions, not.type, not);
   }
 
   sendReminderVerify (user, callback) {

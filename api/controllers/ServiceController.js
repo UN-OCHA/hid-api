@@ -78,19 +78,17 @@ module.exports = class ServiceController extends Controller{
 
       const that = this;
       const query = this.app.services.HelperService.find('Service', criteria, options);
+      let gresults = {};
       query
         .then((results) => {
-          return Service
-            .count(criteria)
-            .then((number) => {
-              return {result: results, number: number};
-            });
+          gresults = results;
+          return Service.count(criteria);
         })
-        .then((result) => {
-          for (let i = 0; i < result.result.length; i++) {
-            result.result[i].sanitize(request.params.currentUser);
+        .then((number) => {
+          for (let i = 0; i < gresults.length; i++) {
+            gresults[i].sanitize(request.params.currentUser);
           }
-          return reply(result.result).header('X-Total-Count', result.number);
+          return reply(gresults).header('X-Total-Count', number);
         })
         .catch((err) => {
           that.app.services.ErrorService.handle(err, request, reply);
@@ -130,11 +128,10 @@ module.exports = class ServiceController extends Controller{
         return users;
       })
       .then(users => {
-        return Service
-          .remove({ _id: request.params.id })
-          .then(() => {
-            reply().code(204);
-          });
+        return Service.remove({ _id: request.params.id });
+      })
+      .then(() => {
+        reply().code(204);
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, request, reply);
