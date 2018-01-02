@@ -42,7 +42,7 @@ module.exports = class GSSSyncService extends Service {
             row++;
           });
           if (index !== 0) {
-            let body = {
+            const body = {
               requests: [{
                 deleteDimension: {
                   range: {
@@ -68,8 +68,8 @@ module.exports = class GSSSyncService extends Service {
 
   writeUser (gsssync, authClient, user, index) {
     const sheets = Google.sheets('v4');
-    let values = this.getRowFromUser(user);
-    let body = {
+    const values = this.getRowFromUser(user);
+    const body = {
       values: [values]
     };
     sheets.spreadsheets.values.update({
@@ -111,7 +111,7 @@ module.exports = class GSSSyncService extends Service {
         }, function (err, column) {
           let row = 0, index = 0;
           column.values.forEach(function (elt) {
-            if (elt[0] !== 'Humanitarian ID' && elt[0] !== users[row - 1]._id.toString() && index === 0) {
+            if (elt[0] !== 'Humanitarian ID' && elt[0] !== users[row - 1]._id.toString() && index === 0) {
               index = row;
             }
             row++;
@@ -148,7 +148,6 @@ module.exports = class GSSSyncService extends Service {
 
   findByList(listId) {
     const GSSSync = this.app.orm.GSSSync;
-    const that = this;
 
     return GSSSync
       .find({list: listId});
@@ -191,44 +190,44 @@ module.exports = class GSSSyncService extends Service {
       skype = '',
       bundles = '',
       roles = '';
-      if (elt.location && elt.location.country) {
-        country = elt.location.country.name;
-      }
-      if (elt.location && elt.location.region) {
-        region = elt.location.region.name;
-      }
-      if (elt.voips && elt.voips.length) {
-        elt.voips.forEach(function (voip) {
-          if (voip.type === 'Skype') {
-            skype = voip.username;
-          }
-        });
-      }
-      if (elt.bundles && elt.bundles.length) {
-        elt.bundles.forEach(function (bundle) {
-          bundles += bundle.name + ';';
-        });
-      }
-      if (elt.functional_roles && elt.functional_roles.length) {
-        elt.functional_roles.forEach(function (role) {
-          roles += role.name + ';';
-        });
-      }
-      return [
-        elt._id,
-        elt.given_name,
-        elt.family_name,
-        elt.job_title,
-        organization,
-        bundles,
-        roles,
-        country,
-        region,
-        elt.phone_number,
-        skype,
-        elt.email,
-        elt.status
-      ];
+    if (elt.location && elt.location.country) {
+      country = elt.location.country.name;
+    }
+    if (elt.location && elt.location.region) {
+      region = elt.location.region.name;
+    }
+    if (elt.voips && elt.voips.length) {
+      elt.voips.forEach(function (voip) {
+        if (voip.type === 'Skype') {
+          skype = voip.username;
+        }
+      });
+    }
+    if (elt.bundles && elt.bundles.length) {
+      elt.bundles.forEach(function (bundle) {
+        bundles += bundle.name + ';';
+      });
+    }
+    if (elt.functional_roles && elt.functional_roles.length) {
+      elt.functional_roles.forEach(function (role) {
+        roles += role.name + ';';
+      });
+    }
+    return [
+      elt._id,
+      elt.given_name,
+      elt.family_name,
+      elt.job_title,
+      organization,
+      bundles,
+      roles,
+      country,
+      region,
+      elt.phone_number,
+      skype,
+      elt.email,
+      elt.status
+    ];
   }
 
   synchronizeUser (user) {
@@ -312,7 +311,7 @@ module.exports = class GSSSyncService extends Service {
       })
       .then((users) => {
         // Export users to spreadsheet
-        let data = [];
+        const data = [];
         let index = 2;
         let row = [];
         data.push({
@@ -327,7 +326,7 @@ module.exports = class GSSSyncService extends Service {
           });
           index++;
         });
-        let body = {
+        const body = {
           data: data,
           valueInputOption: 'RAW'
         };

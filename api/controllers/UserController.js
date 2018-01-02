@@ -728,14 +728,15 @@ module.exports = class UserController extends Controller{
               record.expires = new Date(0, 0, 1, 0, 0, 0);
               record.emails[0].validated = true;
               record.emails.set(0, record.emails[0]);
-              record.save().then(() => {
-                that.app.services.EmailService.sendPostRegister(record, function (merr, info) {
-                  return reply(record);
+              record.save()
+                .then(() => {
+                  that.app.services.EmailService.sendPostRegister(record, function (merr, info) {
+                    return reply(record);
+                  });
+                })
+                .catch(err => {
+                  that._errorHandler(err, request, reply);
                 });
-              })
-              .catch(err => {
-                that._errorHandler(err, request, reply);
-              });
             }
             else {
               for (let i = 0, len = record.emails.length; i < len; i++) {
@@ -744,12 +745,13 @@ module.exports = class UserController extends Controller{
                   record.emails.set(i, record.emails[i]);
                 }
               }
-              record.save().then((r) => {
-                return reply(r);
-              })
-              .catch(err => {
-                that._errorHandler(err, request, reply);
-              });
+              record.save()
+                .then((r) => {
+                  return reply(r);
+                })
+                .catch(err => {
+                  that._errorHandler(err, request, reply);
+                });
             }
           }
           else {
@@ -978,8 +980,7 @@ module.exports = class UserController extends Controller{
             .catch(err => {
               that._errorHandler(err, request, reply);
             });
-        }
-      );
+        });
     }
     else {
       return reply(Boom.badRequest('No file found'));

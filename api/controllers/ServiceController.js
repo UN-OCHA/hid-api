@@ -149,12 +149,12 @@ module.exports = class ServiceController extends Controller{
         mc.get({
           path: '/lists'
         })
-        .then((result) => {
-          reply(result);
-        })
-        .catch((err) => {
-          that.app.services.ErrorService.handle(err, request, reply);
-        });
+          .then((result) => {
+            reply(result);
+          })
+          .catch((err) => {
+            that.app.services.ErrorService.handle(err, request, reply);
+          });
       }
       catch (err) {
         reply(Boom.badRequest('Invalid API key'));

@@ -128,10 +128,10 @@ module.exports = class CronController extends Controller {
                     }
                     cb();
                   });
-                }
-                else {
-                  cb();
-                }
+              }
+              else {
+                cb();
+              }
             });
           });
         }
@@ -239,8 +239,8 @@ module.exports = class CronController extends Controller {
 
     let lastPull = Math.round(Date.now() / 1000) - 7 * 24 * 3600;
     //Cache.then((mongoCache) => {
-      //return mongoCache.get('lastPull', function (err, lastPull) {
-        //if (err) app.log.info(err)
+    //return mongoCache.get('lastPull', function (err, lastPull) {
+    //if (err) app.log.info(err)
     if (!lastPull) {
       lastPull = 0;
     }
@@ -309,7 +309,7 @@ module.exports = class CronController extends Controller {
     }, function (err) {
       app.log.info('Done importing lists');
     });
-      //});
+    //});
     //});
   }
 

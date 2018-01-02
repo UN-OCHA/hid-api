@@ -3,9 +3,7 @@
 const Model = require('trails/model');
 const Schema = require('mongoose').Schema;
 const GoogleAuth = require('google-auth-library');
-const Google = require('googleapis');
 const fs = require('fs');
-const Boom = require('boom');
 
 /**
  * @module GSSSync

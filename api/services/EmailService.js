@@ -47,12 +47,12 @@ module.exports = class EmailService extends Service {
         message: options,
         locals: context
       })
-      .then(() => {
-        return callback();
-      })
-      .catch(err => {
-        return callback(err);
-      });
+        .then(() => {
+          return callback();
+        })
+        .catch(err => {
+          return callback(err);
+        });
     }
     else {
       callback();

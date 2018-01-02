@@ -3,7 +3,6 @@
 const Controller = require('trails/controller');
 const Boom = require('boom');
 const Google = require('googleapis');
-const GoogleAuth = require('google-auth-library');
 const fs = require('fs');
 
 /**

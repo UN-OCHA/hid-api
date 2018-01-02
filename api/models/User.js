@@ -189,7 +189,7 @@ module.exports = class User extends Model {
           return process.env.APP_URL + '/users/' + this._id;
         },
 
-        getListIds : function () {
+        getListIds: function () {
           const that = this;
           let listIds = [];
           listTypes.forEach(function (attr) {
@@ -621,8 +621,7 @@ module.exports = class User extends Model {
             })
             .catch(err => {
               that.log.error('Error populating user', { error: err });
-            }
-          );
+            });
         });
       }
     };
@@ -978,7 +977,7 @@ module.exports = class User extends Model {
           validator: function (v) {
             if (v.length) {
               let out = true;
-              const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
+              const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/;
               for (let i = 0, len = v.length; i < len; i++) {
                 if (!urlRegex.test(v[i].url)) {
                   out = false;
