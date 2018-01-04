@@ -365,7 +365,7 @@ exports.config = {
      * @env NEW_RELIC_IGNORING_RULES
      */
     ignore: [
-      '^\/socket\.io\/.*\/xhr-polling/'
+      '^/socket.io/.*/xhr-polling/'
     ]
   },
   /**
