@@ -81,6 +81,7 @@ module.exports = class UserController extends Controller{
     if (request.payload.tester) {
       const now = Date.now();
       request.payload.expires = new Date(now + 3600 * 1000);
+      request.payload.email_verified = true;
       delete request.payload.tester;
     }
 
