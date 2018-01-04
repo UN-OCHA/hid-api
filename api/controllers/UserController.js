@@ -77,6 +77,13 @@ module.exports = class UserController extends Controller{
       }
     }
 
+    // HID-1582: creating a short lived user for testing
+    if (request.payload.tester) {
+      const now = Date.now();
+      request.payload.expires = new Date(now + 3600 * 1000);
+      delete request.payload.tester;
+    }
+
     const that = this;
     let guser = {};
     Model
