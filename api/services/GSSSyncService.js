@@ -285,23 +285,34 @@ module.exports = class GSSSyncService extends Service {
       });
   }
 
-  createSpreadsheet (user, list, callback) {
-    const authClient = this.getAuthClient(user);
-    const sheets = Google.sheets('v4');
-    let request = {
-      resource: {
-        properties: {
-          title: list.name
+  createSpreadsheet (user, listId, callback) {
+    const List = this.app.orm.List;
+    List
+      .findOne({ _id: listId })
+      .then(list => {
+        if (!list) {
+          return callback(new Error('List not found'));
         }
-      },
-      auth: authClient
-    };
-    sheets.spreadsheets.create(request, function (err, response) {
-      if (err) {
+        const authClient = this.getAuthClient(user);
+        const sheets = Google.sheets('v4');
+        let request = {
+          resource: {
+            properties: {
+              title: list.name
+            }
+          },
+          auth: authClient
+        };
+        sheets.spreadsheets.create(request, function (err, response) {
+          if (err) {
+            return callback(err);
+          }
+          callback(null, response.spreadsheetId);
+        });
+      })
+      .catch(err => {
         return callback(err);
-      }
-      callback(null, response.spreadsheetId);
-    });
+      });
   }
 
   synchronizeAll (gsssync) {
