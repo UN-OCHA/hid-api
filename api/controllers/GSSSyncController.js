@@ -34,10 +34,8 @@ module.exports = class GSSSyncController extends Controller{
   }
 
   create (request, reply) {
-    const GSSSync = this.app.orm.GSSSync;
     const GSSSyncService = this.app.services.GSSSyncService;
     const that = this;
-    let gsync = {};
     request.payload.user = request.params.currentUser._id;
     if (!request.payload.spreadsheet) {
       GSSSyncService.createSpreadsheet(request.params.currentUser, request.payload.list, function (err, spreadsheet) {
