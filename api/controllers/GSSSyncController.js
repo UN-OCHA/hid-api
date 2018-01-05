@@ -11,12 +11,11 @@ const fs = require('fs');
  */
 module.exports = class GSSSyncController extends Controller{
 
-  create (request, reply) {
+  createHelper (request, reply) {
     const GSSSync = this.app.orm.GSSSync;
     const GSSSyncService = this.app.services.GSSSyncService;
     const that = this;
     let gsync = {};
-    request.payload.user = request.params.currentUser._id;
     GSSSync
       .create(request.payload)
       .then((gsssync) => {
@@ -32,6 +31,26 @@ module.exports = class GSSSyncController extends Controller{
       .catch(err => {
         that.app.services.ErrorService.handle(err, request, reply);
       });
+  }
+
+  create (request, reply) {
+    const GSSSync = this.app.orm.GSSSync;
+    const GSSSyncService = this.app.services.GSSSyncService;
+    const that = this;
+    let gsync = {};
+    request.payload.user = request.params.currentUser._id;
+    if (!request.payload.spreadsheet) {
+      GSSSyncService.createSpreadsheet(request.payload.user, request.payload.list, function (err, spreadsheet) {
+        if (err) {
+          return that.app.services.ErrorService.handle(err, request, reply);
+        }
+        request.payload.spreadsheet = spreadsheet;
+        that.createHelper(request, reply);
+      });
+    }
+    else {
+      this.createHelper(request, reply);
+    }
   }
 
   saveGoogleCredentials (request, reply) {

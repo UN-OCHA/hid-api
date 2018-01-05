@@ -12,12 +12,12 @@ const Boom = require('boom');
  */
 module.exports = class GSSSyncService extends Service {
 
-  getAuthClient () {
+  getAuthClient (user) {
     // Authenticate with Google
     const auth = new GoogleAuth();
     const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
     const authClient = new auth.OAuth2(creds.web.client_id, creds.web.client_secret, 'postmessage');
-    authClient.credentials = this.user.googleCredentials;
+    authClient.credentials = user.googleCredentials;
     return authClient;
   }
 
@@ -283,6 +283,25 @@ module.exports = class GSSSyncService extends Service {
           }
         });
       });
+  }
+
+  createSpreadsheet (user, list, callback) {
+    const authClient = this.getAuthClient(user);
+    const sheets = Google.sheets('v4');
+    let request = {
+      resource: {
+        properties: {
+          title: list.name
+        }
+      },
+      auth: authClient
+    };
+    sheets.spreadsheets.create(request, function (err, response) {
+      if (err) {
+        return callback(err);
+      }
+      callback(null, response.spreadsheetId);
+    });
   }
 
   synchronizeAll (gsssync) {
