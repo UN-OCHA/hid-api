@@ -111,8 +111,8 @@ module.exports = class GSSSyncService extends Service {
         }, function (err, column) {
           let row = 0, index = 0;
           column.values.forEach(function (elt) {
-            if (elt[0] !== 'Humanitarian ID' && elt[0] !== users[row - 1]._id.toString() && index === 0) {
-              index = row;
+            if (elt[0] !== users[row]._id.toString() && index === 0) {
+              index = row + 1;
             }
             row++;
           });
@@ -271,7 +271,7 @@ module.exports = class GSSSyncService extends Service {
           let row = 0, index = 0;
           column.values.forEach(function (elt) {
             if (elt[0] === user._id.toString()) {
-              index = row;
+              index = row + 1;
             }
             row++;
           });
