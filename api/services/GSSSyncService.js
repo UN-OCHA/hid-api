@@ -109,12 +109,18 @@ module.exports = class GSSSyncService extends Service {
           range: 'A:A',
           auth: authClient
         }, function (err, column) {
-          let row = 0, index = 0;
+          let row = 0, index = 0, firstLine = true;
           column.values.forEach(function (elt) {
-            if (elt[0] !== users[row]._id.toString() && index === 0) {
-              index = row + 1;
+            // Skip first line as it's the headers
+            if (firstLine === true) {
+              firstLine = false;
             }
-            row++;
+            else {
+              if (elt[0] !== users[row]._id.toString() && index === 0) {
+                index = row + 1;
+              }
+              row++;
+            }
           });
           if (index !== 0) {
             const body = {
