@@ -22,6 +22,7 @@ module.exports = class GSSSyncService extends Service {
   }
 
   deleteUser (gsssync, hid) {
+    const ErrorService = this.app.services.ErrorService;
     const sheets = Google.sheets('v4');
     let authClient = {};
     return gsssync
@@ -34,6 +35,13 @@ module.exports = class GSSSyncService extends Service {
           range: 'A:A',
           auth: authClient
         }, function (err, column) {
+          if (err) {
+            if (err.code === 404) {
+              // Spreadsheet has been deleted, remove the synchronization
+              gsssync.remove();
+            }
+            return ErrorService.handleWithoutReply(err);
+          }
           let row = 0, index = 0;
           column.values.forEach(function (elt) {
             if (elt[0] === hid) {
@@ -67,6 +75,7 @@ module.exports = class GSSSyncService extends Service {
   }
 
   writeUser (gsssync, authClient, user, index) {
+    const ErrorService = this.app.services.ErrorService;
     const sheets = Google.sheets('v4');
     const values = this.getRowFromUser(user);
     const body = {
@@ -78,12 +87,21 @@ module.exports = class GSSSyncService extends Service {
       valueInputOption: 'RAW',
       resource: body,
       auth: authClient
+    }, function (err, response) {
+      if (err) {
+        if (err.code === 404) {
+          // Spreadsheet has been deleted, remove the synchronization
+          gsssync.remove();
+        }
+        return ErrorService.handleWithoutReply(err);
+      }
     });
   }
 
   addUser (gsssync, user) {
     const User = this.app.orm.User;
     const GSSSync = this.app.orm.GSSSync;
+    const ErrorService = this.app.services.ErrorService;
     const that = this;
     const sheets = Google.sheets('v4');
     let authClient = {};
@@ -110,7 +128,11 @@ module.exports = class GSSSyncService extends Service {
           auth: authClient
         }, function (err, column) {
           if (err) {
-            console.log(err);
+            if (err.code === 404) {
+              // Spreadsheet has been deleted, remove the synchronization
+              gsssync.remove();
+            }
+            return ErrorService.handleWithoutReply(err);
           }
           let row = 0, index = 0, firstLine = true;
           column.values.forEach(function (elt) {
@@ -264,6 +286,7 @@ module.exports = class GSSSyncService extends Service {
   }
 
   updateUser (gsssync, user) {
+    const ErrorService = this.app.services.ErrorService;
     const sheets = Google.sheets('v4');
     const that = this;
     let authClient = {};
@@ -277,6 +300,13 @@ module.exports = class GSSSyncService extends Service {
           range: 'A:A',
           auth: authClient
         }, function (err, column) {
+          if (err) {
+            if (err.code === 404) {
+              // Spreadsheet has been deleted, remove the synchronization
+              gsssync.remove();
+            }
+            return ErrorService.handleWithoutReply(err);
+          }
           let row = 0, index = 0;
           column.values.forEach(function (elt) {
             if (elt[0] === user._id.toString()) {

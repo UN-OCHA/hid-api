@@ -26,4 +26,13 @@ module.exports = class ErrorService extends Service {
       }
     }
   }
+
+  handleWithoutReply(err) {
+    this.log.error('Unexpected error', {error: err.toString()});
+    if (process.env.NODE_ENV !== 'testing') {
+      const newrelic = require('newrelic');
+      // Send the error to newrelic
+      newrelic.noticeError(err.toString());
+    }
+  }
 };
