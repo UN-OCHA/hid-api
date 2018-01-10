@@ -109,6 +109,9 @@ module.exports = class GSSSyncService extends Service {
           range: 'A:A',
           auth: authClient
         }, function (err, column) {
+          if (err) {
+            console.log(err);
+          }
           let row = 0, index = 0, firstLine = true;
           column.values.forEach(function (elt) {
             // Skip first line as it's the headers
