@@ -530,14 +530,22 @@ module.exports = class UserController extends Controller{
   }
 
   _updateQuery (request, options) {
-    const Model = this.app.orm.user,
+    const User = this.app.orm.user,
       NotificationService = this.app.services.NotificationService,
       EmailService = this.app.services.EmailService,
       that = this;
     let nextAction = '';
-    return Model
-      .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
-      .exec()
+    return User
+      .findOne({ _id: request.params.id })
+      .then(user => {
+        if (!user) {
+          throw Boom.notFound();
+        }
+        for (let key in request.payload) {
+          user[key] = request.payload[key];
+        }
+        return user.save();
+      })
       .then((user) => {
         return user.defaultPopulate();
       })

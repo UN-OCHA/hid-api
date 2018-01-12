@@ -389,7 +389,8 @@ module.exports = class CronController extends Controller {
       EmailService = app.services.EmailService;
 
     const stream = User.find({
-      'updatedAt': { $lt: sixMonthsAgo }
+      'updatedAt': { $lt: sixMonthsAgo },
+      'authOnly': false
     }).stream();
 
     stream.on('data', function(user) {
