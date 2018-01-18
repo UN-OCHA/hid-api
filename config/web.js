@@ -256,5 +256,14 @@ module.exports = {
         xframe: true
       }
     }
-  }
+  },
+
+  extensions: [
+    {
+      type: 'onPreResponse',
+      method (request, reply) {
+        reply.continue();
+      }
+    }
+  ]
 };
