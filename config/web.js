@@ -262,6 +262,13 @@ module.exports = {
     {
       type: 'onPreResponse',
       method (request, reply) {
+        if (request.response.isBoom) {
+          request.response.output.headers['X-Powered-By'] = '';
+        }
+        else if (request.response.header) {
+          request.response.header('X-Powered-By', '');
+        }
+
         reply.continue();
       }
     }
