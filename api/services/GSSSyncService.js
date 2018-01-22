@@ -338,7 +338,14 @@ module.exports = class GSSSyncService extends Service {
           resource: {
             properties: {
               title: list.name
-            }
+            },
+            sheets: [{
+              properties: {
+                gridProperties: {
+                  rowCount: 10000
+                }
+              }
+            }]
           },
           auth: authClient
         };
