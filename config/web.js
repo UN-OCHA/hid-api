@@ -261,7 +261,8 @@ module.exports = {
   extensions: [
     {
       type: 'onPreResponse',
-      method (request, reply) {
+      method: function (request, reply) {
+        console.log('going through extension');
         if (request.response.isBoom) {
           request.response.output.headers['X-Powered-By'] = '';
         }
