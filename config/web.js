@@ -256,22 +256,5 @@ module.exports = {
         xframe: true
       }
     }
-  },
-
-  extensions: [
-    {
-      type: 'onPreResponse',
-      method: function (request, reply) {
-        console.log('going through extension');
-        if (request.response.isBoom) {
-          request.response.output.headers['X-Powered-By'] = '';
-        }
-        else if (request.response.header) {
-          request.response.header('X-Powered-By', '', { override: true});
-        }
-
-        reply.continue();
-      }
-    }
-  ]
+  }
 };
