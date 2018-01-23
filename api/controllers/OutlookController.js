@@ -24,8 +24,9 @@ module.exports = class OutlookController extends Controller{
           that.app.services.ErrorService.handle(error, request, reply);
         }
         else {
+          const token = oauth2.accessToken.create(result);
           console.log(result);
-          reply(result);
+          reply(token);
         }
       });
     }
