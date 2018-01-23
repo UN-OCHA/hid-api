@@ -42,6 +42,9 @@ module.exports = class GSSSyncService extends Service {
             }
             return ErrorService.handleWithoutReply(err);
           }
+          if (!column || !column.values) {
+            throw Boom.badImplementation('column or column.values is undefined on spreadsheet ' + gsssync.spreadsheet);
+          }
           let row = 0, index = 0;
           column.values.forEach(function (elt) {
             if (elt[0] === hid) {
@@ -133,6 +136,9 @@ module.exports = class GSSSyncService extends Service {
               gsssync.remove();
             }
             return ErrorService.handleWithoutReply(err);
+          }
+          if (!column || !column.values) {
+            throw Boom.badImplementation('column or column.values is undefined on spreadsheet ' + gsssync.spreadsheet);
           }
           let row = 0, index = 0, firstLine = true;
           column.values.forEach(function (elt) {
@@ -306,6 +312,9 @@ module.exports = class GSSSyncService extends Service {
               gsssync.remove();
             }
             return ErrorService.handleWithoutReply(err);
+          }
+          if (!column || !column.values) {
+            throw Boom.badImplementation('column or column.values is undefined on spreadsheet ' + gsssync.spreadsheet);
           }
           let row = 0, index = 0;
           column.values.forEach(function (elt) {
