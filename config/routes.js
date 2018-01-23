@@ -336,6 +336,12 @@ module.exports = [
 
   {
     method: 'POST',
+    path: '/api/v2/user/{id}/outlookcredentials',
+    handler: 'OutlookController.saveOutlookCredentials'
+  },
+
+  {
+    method: 'POST',
     path: '/api/v2/list',
     handler: 'ListController.create'
   },

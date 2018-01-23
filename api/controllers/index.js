@@ -13,3 +13,4 @@ exports.TOTPController = require('./TOTPController');
 exports.NumbersController = require('./NumbersController');
 exports.GSSSyncController = require('./GSSSyncController');
 exports.CronController = require('./CronController');
+exports.OutlookController = require('./OutlookController');

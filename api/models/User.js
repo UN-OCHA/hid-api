@@ -557,6 +557,12 @@ module.exports = class User extends Model {
           else {
             user.googleCredentials = false;
           }
+          if (user.outlookCredentials) {
+            user.outlookCredentials = true;
+          }
+          else {
+            user.outlookCredentials = false;
+          }
           listTypes.forEach(function (attr) {
             _.remove(user[attr + 's'], function (checkin) {
               return checkin.deleted;
@@ -1229,6 +1235,11 @@ module.exports = class User extends Model {
         readonly: true
       },
       googleCredentials: {
+        type: Schema.Types.Mixed,
+        readonly: true,
+        default: false
+      },
+      outlookCredentials: {
         type: Schema.Types.Mixed,
         readonly: true,
         default: false

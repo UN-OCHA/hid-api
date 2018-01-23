@@ -100,6 +100,10 @@ module.exports = {
     saveGoogleCredentials: ['AuthPolicy.isAuthenticated']
   },
 
+  OutlookController: {
+    saveOutlookCredentials: ['AuthPolicy.isAuthenticated']
+  },
+
   CronController: {
     synchronizeGoogleSpreadsheets: ['CronPolicy.canRun'],
     importLists: ['CronPolicy.canRun'],
