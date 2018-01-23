@@ -1,6 +1,6 @@
 'use strict';
 
-const Controller = require('trails-controller');
+const Controller = require('trails/controller');
 const Boom = require('boom');
 const fs = require('fs');
 const credentials = JSON.parse(fs.readFileSync('keys/outlook.json'));
