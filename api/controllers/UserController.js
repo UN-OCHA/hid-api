@@ -535,17 +535,12 @@ module.exports = class UserController extends Controller{
       EmailService = this.app.services.EmailService,
       that = this;
     let nextAction = '';
+    if (request.payload.updatedAt) {
+      delete request.payload.updatedAt;
+    }
     return User
-      .findOne({ _id: request.params.id })
-      .then(user => {
-        if (!user) {
-          throw Boom.notFound();
-        }
-        for (let key in request.payload) {
-          user[key] = request.payload[key];
-        }
-        return user.save();
-      })
+      .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
+      .exec()
       .then((user) => {
         return user.defaultPopulate();
       })
