@@ -73,7 +73,7 @@ module.exports = class OutlookController extends Controller{
       .get()
       .then(res => {
         return client
-          .api('/user/' + res.id + '/contactFolders')
+          .api('/users/' + res.id + '/contactFolders')
           .post({
             displayName: 'Humanitarian ID Test'
           });
