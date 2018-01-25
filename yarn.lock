@@ -18,6 +18,13 @@
     qs "^6.5.1"
     underscore.string "^3.3.4"
 
+"@microsoft/microsoft-graph-client@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@microsoft/microsoft-graph-client/-/microsoft-graph-client-1.0.0.tgz#1c0aab2f428c7cbac0d44f265a8127b2586c380d"
+  dependencies:
+    es6-promise "^4.1.0"
+    superagent "^3.5.2"
+
 "@newrelic/native-metrics@^2.1.0":
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/@newrelic/native-metrics/-/native-metrics-2.1.2.tgz#9a595dc602654b717188a294507087a51e79fba3"
@@ -978,6 +985,10 @@ es6-promise@3.2.1:
 es6-promise@^3.3.1:
   version "3.3.1"
   resolved "https://registry.yarnpkg.com/es6-promise/-/es6-promise-3.3.1.tgz#a08cdde84ccdbf34d027a1451bc91d4bcd28a613"
+
+es6-promise@^4.1.0:
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/es6-promise/-/es6-promise-4.2.4.tgz#dc4221c2b16518760bd8c39a52d8f356fc00ed29"
 
 escape-string-regexp@1.0.5, escape-string-regexp@^1.0.2, escape-string-regexp@^1.0.5:
   version "1.0.5"
@@ -3618,7 +3629,7 @@ subtext@^4.3.x:
     pez "2.x.x"
     wreck "12.x.x"
 
-superagent@^3.0.0:
+superagent@^3.0.0, superagent@^3.5.2:
   version "3.8.2"
   resolved "https://registry.yarnpkg.com/superagent/-/superagent-3.8.2.tgz#e4a11b9d047f7d3efeb3bbe536d9ec0021d16403"
   dependencies:

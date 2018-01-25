@@ -497,6 +497,12 @@ module.exports = [
   },
 
   {
+    method: 'POST',
+    path: '/api/v2/outlookGroup',
+    handler: 'OutlookController.create'
+  },
+
+  {
     method: 'GET',
     path: '/api/v2/cron/deleteExpiredUsers',
     handler: 'CronController.deleteExpiredUsers'

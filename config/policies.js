@@ -101,7 +101,8 @@ module.exports = {
   },
 
   OutlookController: {
-    saveOutlookCredentials: ['AuthPolicy.isAuthenticated']
+    saveOutlookCredentials: ['AuthPolicy.isAuthenticated'],
+    create: ['AuthPolicy.isAuthenticated']
   },
 
   CronController: {
