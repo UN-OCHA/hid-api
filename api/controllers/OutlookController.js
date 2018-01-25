@@ -26,8 +26,9 @@ module.exports = class OutlookController extends Controller{
         }
         else {
           const token = oauth2.accessToken.create(result);
-          if (token && token.refresh_token) {
-            request.params.currentUser.outlookCredentials = token;
+          console.log(token);
+          if (token && token.token && token.token.refresh_token) {
+            request.params.currentUser.outlookCredentials = token.token;
             request.params.currentUser.save();
             reply().code(204);
           }
