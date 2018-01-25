@@ -54,15 +54,18 @@ module.exports = class OutlookController extends Controller{
     });
 
     // Get the Graph /Me endpoint to get user email address
-    const res = await client
+    const res = client
       .api('/me')
-      .get();
-
-    // Office 365 users have a mail attribute
-    // Outlook.com users do not, instead they have
-    // userPrincipalName
-    const email = res.mail ? res.mail : res.userPrincipalName;
-    reply(email);
+      .get()
+      .then(res => {
+        console.log(res);
+        //const email = res.mail ? res.mail : res.userPrincipalName;
+        reply(res);
+      })
+      .catch(err => {
+        console.log(err);
+        reply(err);
+      });
   }
 
 };
