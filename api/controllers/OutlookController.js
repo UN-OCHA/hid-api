@@ -19,7 +19,7 @@ module.exports = class OutlookController extends Controller{
       oauth2.authorizationCode.getToken({
         code: request.payload.code,
         redirect_uri: request.payload.redirectUri,
-        scope: 'openid offline_access User.Read'
+        scope: 'openid offline_access User.Read Contacts.ReadWrite'
       }, function (error, result) {
         if (error) {
           that.app.services.ErrorService.handle(error, request, reply);
@@ -44,8 +44,21 @@ module.exports = class OutlookController extends Controller{
     }
   }
 
+  getAccessToken (credentials) {
+    const expiration = new Date(credentials.expires_at);
+
+    if (expiration <= new Date()) {
+      // Refresh access token
+      const accessToken = oauth2.accessToken.create({refresh_token: credentials.refresh_token}).refresh();
+      return accessToken.access_token;
+    }
+    else {
+      return credentials.access_token;
+    }
+  }
+
   create (request, reply) {
-    const token = request.params.currentUser.outlookCredentials.access_token;
+    const token = this.getAccessToken(request.params.currentUser.outlookCredentials);
       // Create a Graph client
     const client = microsoftGraph.Client.init({
       authProvider: (done) => {
@@ -55,12 +68,17 @@ module.exports = class OutlookController extends Controller{
     });
 
     // Get the Graph /Me endpoint to get user email address
-    const res = client
+    client
       .api('/me')
       .get()
       .then(res => {
-        console.log(res);
-        //const email = res.mail ? res.mail : res.userPrincipalName;
+        return client
+          .api('/user/' + res.id + '/contactFolders')
+          .post({
+            displayName: 'Humanitarian ID Test'
+          });
+      })
+      .then(res => {
         reply(res);
       })
       .catch(err => {
