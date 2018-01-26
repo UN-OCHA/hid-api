@@ -82,7 +82,10 @@ module.exports = class CronController extends Controller {
       item.status !== 'inactive' &&
       inactiveOps.indexOf(item.id) === -1 &&
       item.hid_access !== 'inactive') ||
-      listType !== 'operation') {
+      (listType === 'bundle' &&
+      item.hid_access !== 'no_list') ||
+      (listType !== 'operation' &&
+      listType !== 'bundle')) {
       List.findOne({type: listType, remote_id: item.id}, function (err, list) {
         if (!list) {
           that._parseList(listType, language, item, function (newList) {
