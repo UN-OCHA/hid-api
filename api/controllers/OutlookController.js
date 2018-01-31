@@ -49,9 +49,16 @@ module.exports = class OutlookController extends Controller{
       const that = this;
       const List = this.app.orm.List;
       const User = this.app.orm.User;
+      const OutlookSync = this.app.orm.OutlookSync;
       let accessToken = '', client = {}, gList = {}, folderId = '';
-      oauth2.accessToken.create({refresh_token: credentials.refresh_token})
-        .refresh()
+      OutlookSync
+        .findOne({user: request.params.currentUser._id, list: request.payload.list})
+        .then(sync => {
+          if (sync) {
+            throw Boom.conflict('Contact folder already exists');
+          }
+          return oauth2.accessToken.create({refresh_token: credentials.refresh_token}).refresh();
+        })
         .then(res => {
           accessToken = res.token.access_token;
           // Create a Graph client
@@ -119,10 +126,18 @@ module.exports = class OutlookController extends Controller{
           return Promise.all(promises);
         })
         .then(data => {
-          reply().code(204);
+          // Create OutlookSync
+          return OutlookSync
+            .create({
+              list: gList._id,
+              user: request.params.currentUser._id,
+              folder: folderId
+            });
+        })
+        .then(osync => {
+          reply(osync);
         })
         .catch(err => {
-          console.log(err);
           that.app.services.ErrorService.handle(err, request, reply);
         });
       }
