@@ -26,7 +26,6 @@ module.exports = class OutlookController extends Controller{
         }
         else {
           const token = oauth2.accessToken.create(result);
-          console.log(token);
           if (token && token.token && token.token.refresh_token) {
             request.params.currentUser.outlookCredentials = token.token;
             request.params.currentUser.save();
@@ -59,32 +58,84 @@ module.exports = class OutlookController extends Controller{
 
   create (request, reply) {
     const token = this.getAccessToken(request.params.currentUser.outlookCredentials);
+    if (request.payload.list) {
       // Create a Graph client
-    const client = microsoftGraph.Client.init({
-      authProvider: (done) => {
-        // Just return the token
-        done(null, token);
-      }
-    });
-
-    // Get the Graph /Me endpoint to get user email address
-    client
-      .api('/me')
-      .get()
-      .then(res => {
-        return client
-          .api('/users/' + res.id + '/contactFolders')
-          .post({
-            displayName: 'Humanitarian ID Test'
-          });
-      })
-      .then(res => {
-        reply(res);
-      })
-      .catch(err => {
-        console.log(err);
-        reply(err);
+      const client = microsoftGraph.Client.init({
+        authProvider: (done) => {
+          // Just return the token
+          done(null, token);
+        }
       });
+      const that = this;
+      const List = this.app.orm.List;
+      const User = this.app.orm.User;
+      let gList = {}, folderId = '';
+      List
+        .findOne({ _id: request.payload.list })
+        .then(list => {
+          if (!list) {
+            throw Boom.notFound();
+          }
+          gList = list;
+
+          // Get the Graph /Me endpoint to get user email address
+          return client
+            .api('/me')
+            .get();
+        })
+        .then(res => {
+          return client
+            .api('/users/' + res.id + '/contactFolders')
+            .post({
+              displayName: gList.name
+            });
+        })
+        .then(res => {
+          const criteria = {};
+          if (gList.isVisibleTo(request.params.currentUser)) {
+            criteria[gList.type + 's'] = {$elemMatch: {list: gList._id, deleted: false}};
+            if (!gList.isOwner(request.params.currentUser)) {
+              criteria[gList.type + 's'].$elemMatch.pending = false;
+            }
+          }
+          folderId = res.id;
+          return User
+            .find(criteria)
+            .sort('name')
+            .lean();
+        })
+        .then(users => {
+          let promises = [];
+          users.forEach(function (elt) {
+            let emails = [];
+            elt.emails.forEach(function (email) {
+              emails.push({
+                address: email.email,
+                name: elt.name
+              });
+            });
+            promises.push(client
+              .api('/me/contactFolders/' + folderId + '/contacts')
+              .post({
+                givenName: elt.given_name,
+                surname: elt.family_name,
+                emailAddresses: emails
+              })
+            );
+          });
+          return Promise.all(promises);
+        })
+        .then(data => {
+          reply().code(204);
+        })
+        .catch(err => {
+          console.log(err);
+          that.app.services.ErrorService.handle(err, request, reply);
+        });
+      }
+      else {
+        return reply(Boom.badRequest());
+      }
   }
 
 };
