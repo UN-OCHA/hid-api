@@ -53,7 +53,7 @@ module.exports = class OutlookController extends Controller{
       oauth2.accessToken.create({refresh_token: credentials.refresh_token})
         .refresh()
         .then(res => {
-          accessToken = res;
+          accessToken = res.token.access_token;
           // Create a Graph client
           client = microsoftGraph.Client.init({
             authProvider: (done) => {
