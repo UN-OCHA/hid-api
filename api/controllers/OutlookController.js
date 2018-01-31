@@ -43,35 +43,28 @@ module.exports = class OutlookController extends Controller{
     }
   }
 
-  getAccessToken (credentials) {
-    const expiration = new Date(credentials.expires_at);
-
-    if (expiration <= new Date()) {
-      // Refresh access token
-      const accessToken = oauth2.accessToken.create({refresh_token: credentials.refresh_token}).refresh();
-      return accessToken.access_token;
-    }
-    else {
-      return credentials.access_token;
-    }
-  }
-
   create (request, reply) {
-    const token = this.getAccessToken(request.params.currentUser.outlookCredentials);
+    const credentials = request.params.currentUser.outlookCredentials;
     if (request.payload && request.payload.list) {
-      // Create a Graph client
-      const client = microsoftGraph.Client.init({
-        authProvider: (done) => {
-          // Just return the token
-          done(null, token);
-        }
-      });
       const that = this;
       const List = this.app.orm.List;
       const User = this.app.orm.User;
-      let gList = {}, folderId = '';
-      List
-        .findOne({ _id: request.payload.list })
+      let accessToken = '', client = {}, gList = {}, folderId = '';
+      oauth2.accessToken.create({refresh_token: credentials.refresh_token})
+        .refresh()
+        .then(res => {
+          accessToken = res;
+          // Create a Graph client
+          client = microsoftGraph.Client.init({
+            authProvider: (done) => {
+              // Just return the token
+              done(null, accessToken);
+            }
+          });
+        })
+        .then(() => {
+          return List.findOne({_id: request.payload.list});
+        })
         .then(list => {
           if (!list) {
             throw Boom.notFound();
