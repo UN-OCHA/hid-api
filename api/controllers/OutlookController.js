@@ -66,13 +66,6 @@ module.exports = class OutlookController extends Controller{
           done(null, token);
         }
       });
-      client
-        .api('/me')
-        .get()
-        .then(res => {
-          reply(res);
-        });
-      return;
       const that = this;
       const List = this.app.orm.List;
       const User = this.app.orm.User;
