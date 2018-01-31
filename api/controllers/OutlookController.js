@@ -58,7 +58,7 @@ module.exports = class OutlookController extends Controller{
 
   create (request, reply) {
     const token = this.getAccessToken(request.params.currentUser.outlookCredentials);
-    if (request.payload.list) {
+    if (request.payload && request.payload.list) {
       // Create a Graph client
       const client = microsoftGraph.Client.init({
         authProvider: (done) => {
@@ -66,6 +66,13 @@ module.exports = class OutlookController extends Controller{
           done(null, token);
         }
       });
+      client
+        .api('/me')
+        .get()
+        .then(res => {
+          reply(res);
+        });
+      return;
       const that = this;
       const List = this.app.orm.List;
       const User = this.app.orm.User;
