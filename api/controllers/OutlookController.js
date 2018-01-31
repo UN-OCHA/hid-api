@@ -78,14 +78,8 @@ module.exports = class OutlookController extends Controller{
           }
           gList = list;
 
-          // Get the Graph /Me endpoint to get user email address
           return client
-            .api('/me')
-            .get();
-        })
-        .then(res => {
-          return client
-            .api('/users/' + res.id + '/contactFolders')
+            .api('/me/contactFolders')
             .post({
               displayName: gList.name
             });
