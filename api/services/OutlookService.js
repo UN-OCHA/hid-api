@@ -45,4 +45,28 @@ module.exports = class OutlookService extends Service {
       });
   }
 
+  synchronizeUser (user) {
+    // Get all lists from user
+    const listIds = user.getListIds();
+    const OutlookSync = this.app.orm.OutlookSync;
+    const that = this;
+
+    // Find the gsssyncs associated to the lists
+    return OutlookSync
+      .find({list: {$in: listIds}})
+      .then(osyncs => {
+        if (osyncs.length) {
+          // For each gsssync, call updateUser
+          const fn = function (osync) {
+            return osync.updateUser(user);
+          };
+          const actions = osyncs.map(fn);
+          return Promise.all(actions);
+        }
+      })
+      .then(values => {
+        return user;
+      });
+  }
+
 };

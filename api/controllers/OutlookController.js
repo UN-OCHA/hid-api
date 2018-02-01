@@ -50,7 +50,7 @@ module.exports = class OutlookController extends Controller{
       const List = this.app.orm.List;
       const User = this.app.orm.User;
       const OutlookSync = this.app.orm.OutlookSync;
-      let accessToken = '', client = {}, gList = {}, folderId = '';
+      let accessToken = '', client = {}, gList = {}, gOsync = {};
       OutlookSync
         .findOne({user: request.params.currentUser._id, list: request.payload.list})
         .then(sync => {
@@ -85,6 +85,15 @@ module.exports = class OutlookController extends Controller{
             });
         })
         .then(res => {
+          // Create OutlookSync
+          return OutlookSync
+            .create({
+              list: gList._id,
+              user: request.params.currentUser._id,
+              folder: res.id
+            });
+        })
+        .then(osync => {
           const criteria = {};
           if (gList.isVisibleTo(request.params.currentUser)) {
             criteria[gList.type + 's'] = {$elemMatch: {list: gList._id, deleted: false}};
@@ -92,7 +101,7 @@ module.exports = class OutlookController extends Controller{
               criteria[gList.type + 's'].$elemMatch.pending = false;
             }
           }
-          folderId = res.id;
+          gOsync = osync;
           return User
             .find(criteria)
             .sort('name')
@@ -109,27 +118,14 @@ module.exports = class OutlookController extends Controller{
               });
             });
             promises.push(client
-              .api('/me/contactFolders/' + folderId + '/contacts')
-              .post({
-                givenName: elt.given_name,
-                surname: elt.family_name,
-                emailAddresses: emails
-              })
+              .api('/me/contactFolders/' + gOsync.folder + '/contacts')
+              .post(gOsync.getContact(elt))
             );
           });
           return Promise.all(promises);
         })
         .then(data => {
-          // Create OutlookSync
-          return OutlookSync
-            .create({
-              list: gList._id,
-              user: request.params.currentUser._id,
-              folder: folderId
-            });
-        })
-        .then(osync => {
-          reply(osync);
+          reply(gOsync);
         })
         .catch(err => {
           that.app.services.ErrorService.handle(err, request, reply);

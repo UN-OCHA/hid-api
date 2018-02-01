@@ -571,6 +571,9 @@ module.exports = class UserController extends Controller{
       })
       .then(user => {
         return that.app.services.GSSSyncService.synchronizeUser(user);
+      })
+      .then(user => {
+        return that.app.services.OutlookService.synchronizeUser(user);
       });
   }
 
@@ -701,6 +704,9 @@ module.exports = class UserController extends Controller{
       })
       .then(record => {
         return that.app.services.GSSSyncService.synchronizeUser(record);
+      })
+      .then(record => {
+        return that.app.services.OutlookService.synchronizeUser(record);
       })
       .then(record => {
         return reply(record);
@@ -1202,6 +1208,9 @@ module.exports = class UserController extends Controller{
         return that.app.services.GSSSyncService.synchronizeUser(user);
       })
       .then(user => {
+        return that.app.services.OutlookService.synchronizeUser(user);
+      })
+      .then(user => {
         return reply(user);
       })
       .catch(err => {
@@ -1233,6 +1242,9 @@ module.exports = class UserController extends Controller{
       })
       .then(user => {
         return that.app.services.GSSSyncService.synchronizeUser(user);
+      })
+      .then(user => {
+        return that.app.services.OutlookService.synchronizeUser(user);
       })
       .then(user => {
         return reply(user);
