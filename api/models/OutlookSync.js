@@ -30,7 +30,7 @@ module.exports = class OutlookSync extends Model {
             .populate('user')
             .execPopulate()
             .then(user => {
-              return oauth2.accessToken.create({refresh_token: user.outlookCredentials.refresh_token}).refresh();
+              return oauth2.accessToken.create({refresh_token: that.user.outlookCredentials.refresh_token}).refresh();
             })
             .then(res => {
               accessToken = res.token.access_token;
