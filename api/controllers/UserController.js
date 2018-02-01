@@ -1068,6 +1068,9 @@ module.exports = class UserController extends Controller{
         user.emails.push(data);
         return user.save();
       })
+      .then(record => {
+        return that.app.services.OutlookService.synchronizeUser(record);
+      })
       .then(() => {
         return reply(user);
       })
@@ -1104,6 +1107,9 @@ module.exports = class UserController extends Controller{
         return record.save();
       })
       .then(record => {
+        return that.app.services.OutlookService.synchronizeUser(record);
+      })
+      .then(record => {
         return reply(record);
       })
       .catch(err => {
@@ -1127,6 +1133,9 @@ module.exports = class UserController extends Controller{
         const data = { number: request.payload.number, type: request.payload.type };
         record.phone_numbers.push(data);
         return record.save();
+      })
+      .then(record => {
+        return that.app.services.OutlookService.synchronizeUser(record);
       })
       .then(record => {
         return reply(record);
@@ -1165,6 +1174,9 @@ module.exports = class UserController extends Controller{
         }
         record.phone_numbers.splice(index, 1);
         return record.save();
+      })
+      .then(record => {
+        return that.app.services.OutlookService.synchronizeUser(record);
       })
       .then(record => {
         return reply(record);

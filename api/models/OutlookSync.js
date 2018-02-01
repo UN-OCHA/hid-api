@@ -25,10 +25,12 @@ module.exports = class OutlookSync extends Model {
         getContact: function (user) {
           let emails = [];
           user.emails.forEach(function (email) {
-            emails.push({
-              address: email.email,
-              name: user.name
-            });
+            if (email.validated) {
+              emails.push({
+                address: email.email,
+                name: user.name
+              });
+            }
           });
           let businessPhones = [];
           user.phone_numbers.forEach(function (phone) {
