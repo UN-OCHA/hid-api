@@ -101,7 +101,7 @@ module.exports = class OutlookSync extends Model {
               if (res && res.value) {
                 let contactId = '';
                 res.value.forEach(function (contact) {
-                  if (contact.personalNotes === user._id) {
+                  if (contact.personalNotes === user._id.toString()) {
                     contactId = contact.id;
                   }
                 });
