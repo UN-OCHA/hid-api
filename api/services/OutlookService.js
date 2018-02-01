@@ -30,4 +30,19 @@ module.exports = class OutlookService extends Service {
       });
   }
 
+  deleteUserFromContactFolders(listId, userId) {
+    const that = this;
+    return this
+      .findByList(listId)
+      .then(osyncs => {
+        if (osyncs.length) {
+          const fn = function (osync) {
+            return osync.deleteUser(userId);
+          };
+          const actions = osyncs.map(fn);
+          return Promise.all(actions);
+        }
+      });
+  }
+
 };

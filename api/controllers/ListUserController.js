@@ -258,6 +258,7 @@ module.exports = class ListUserController extends Controller{
     const User = this.app.orm.user;
     const List = this.app.orm.List;
     const GSSSyncService = this.app.services.GSSSyncService;
+    const OutlookService = this.app.services.OutlookService;
     const childAttributes = User.listAttributes();
 
     this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,
@@ -268,6 +269,8 @@ module.exports = class ListUserController extends Controller{
     }
 
     const that = this;
+    let gResult = {};
+
     User
       .findOne({ _id: request.params.id })
       .then(record => {
@@ -317,8 +320,12 @@ module.exports = class ListUserController extends Controller{
         return result;
       })
       .then((result) => {
+        gResult = result;
         // Synchronize google spreadsheets
         return GSSSyncService.deleteUserFromSpreadsheets(result.list._id, result.user.id);
+      })
+      .then(data => {
+        return OutlookService.deleteUserFromContactFolders(gResult.list._id, gResult.user.id);
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, request, reply);

@@ -57,6 +57,46 @@ module.exports = class OutlookSync extends Model {
                   personalNotes: addedUser._id
                 });
             });
+        },
+
+        deleteUser: function (userId) {
+          const oauth2 = this.getOAuthClient();
+          const that = this;
+          let accessToken = '', client = {};
+          return this
+            .populate('user')
+            .execPopulate()
+            .then(user => {
+              return oauth2.accessToken.create({refresh_token: that.user.outlookCredentials.refresh_token}).refresh();
+            })
+            .then(res => {
+              accessToken = res.token.access_token;
+              // Create a Graph client
+              client = microsoftGraph.Client.init({
+                authProvider: (done) => {
+                  // Just return the token
+                  done(null, accessToken);
+                }
+              });
+              return client
+                .api('/me/contactFolders/' + that.folder + '/contacts')
+                .get();
+            })
+            .then(res => {
+              if (res && res.value) {
+                let contactId = '';
+                res.value.forEach(function (contact) {
+                  if (contact.personalNotes === userId) {
+                    contactId = contact.id;
+                  }
+                });
+                if (contactId) {
+                  return client
+                    .api('/me/contactFolders/' + that.folder + '/contacts/' + contactId)
+                    .delete();
+                }
+              }
+            });
         }
       }
     };
