@@ -245,6 +245,15 @@ module.exports = class ListController extends Controller{
               user[newlist.type + 's'][j].visibility = newlist.visibility;
             }
           }
+          if (newlist.type === 'organization' && user.organization.list.toString() === newlist._id.toString()) {
+            user.organization.name = newlist.name;
+            user.organization.names = newlist.names;
+            user.organization.acronym = newlist.acronym;
+            user.organization.acronyms = newlist.acronyms;
+            user.organization.owner = newlist.owner;
+            user.organization.managers = newlist.managers;
+            user.organization.visibility = newlist.visibility;
+          }
           actions.push(user.save());
         }
         return Promise.all(actions);
