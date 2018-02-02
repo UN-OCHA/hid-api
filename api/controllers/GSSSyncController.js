@@ -102,6 +102,9 @@ module.exports = class GSSSyncController extends Controller{
           }
         });
       })
+      .then(() => {
+        reply();
+      })
       .catch(err => {
         that.app.services.ErrorService.handle(err, request, reply);
       });
