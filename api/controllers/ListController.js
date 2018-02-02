@@ -190,18 +190,19 @@ module.exports = class ListController extends Controller{
     );
 
     const that = this;
+    let oldlist = {}, newlist = {};
     Model
       .findOne({_id: request.params.id})
       .then(list => {
-        const oldlist = _.clone(list);
+        oldlist = _.clone(list);
         return Model
-          .findOneAndUpdate({_id: request.params.id}, request.payload, {runValidators: true, new: true})
-          .then((list2) => {
-            reply(list2);
-            return oldlist;
-          });
+          .findOneAndUpdate({_id: request.params.id}, request.payload, {runValidators: true, new: true});
       })
-      .then((list) => {
+      .then((list2) => {
+        newlist = list2;
+        reply(list2);
+      })
+      .then(() => {
         const payloadManagers = [];
         if (request.payload.managers) {
           request.payload.managers.forEach(function (man) {
@@ -209,51 +210,44 @@ module.exports = class ListController extends Controller{
           });
         }
         const listManagers = [];
-        if (list.managers) {
-          list.managers.forEach(function (man) {
+        if (newlist.managers) {
+          newlist.managers.forEach(function (man) {
             listManagers.push(man.toString());
           });
         }
         const diffAdded = _.difference(payloadManagers, listManagers);
         const diffRemoved = _.difference(listManagers, payloadManagers);
         if (diffAdded.length) {
-          that._notifyManagers(diffAdded, 'added_list_manager', request, list);
+          that._notifyManagers(diffAdded, 'added_list_manager', request, newlist);
         }
         if (diffRemoved.length) {
-          that._notifyManagers(diffRemoved, 'removed_list_manager', request, list);
+          that._notifyManagers(diffRemoved, 'removed_list_manager', request, newlist);
         }
-        return list;
-      })
-      .then(list => {
-        return Model
-          .findOne({_id: request.params.id})
-          .then(newlist => {
-            return newlist;
-          });
-      })
-      .then(list => {
+
         // Update users
         const criteria = {};
-        criteria[list.type + 's.list'] = list._id.toString();
+        criteria[newlist.type + 's.list'] = newlist._id.toString();
         return User
-          .find(criteria)
-          .then(users => {
-            for (let i = 0; i < users.length; i++) {
-              const user = users[i];
-              for (let j = 0; j < user[list.type + 's'].length; j++) {
-                if (user[list.type + 's'][j].list === list._id) {
-                  user[list.type + 's'][j].name = list.name;
-                  user[list.type + 's'][j].names = list.names;
-                  user[list.type + 's'][j].acronym = list.acronym;
-                  user[list.type + 's'][j].acronyms = list.acronyms;
-                  user[list.type + 's'][j].owner = list.owner;
-                  user[list.type + 's'][j].managers = list.managers;
-                  user[list.type + 's'][j].visibility = list.visibility;
-                }
-              }
-              user.save();
+          .find(criteria);
+      })
+      .then(users => {
+        let actions = [];
+        for (let i = 0; i < users.length; i++) {
+          const user = users[i];
+          for (let j = 0; j < user[newlist.type + 's'].length; j++) {
+            if (user[newlist.type + 's'][j].list.toString() === newlist._id.toString()) {
+              user[newlist.type + 's'][j].name = newlist.name;
+              user[newlist.type + 's'][j].names = newlist.names;
+              user[newlist.type + 's'][j].acronym = newlist.acronym;
+              user[newlist.type + 's'][j].acronyms = newlist.acronyms;
+              user[newlist.type + 's'][j].owner = newlist.owner;
+              user[newlist.type + 's'][j].managers = newlist.managers;
+              user[newlist.type + 's'][j].visibility = newlist.visibility;
             }
-          });
+          }
+          actions.push(user.save());
+        }
+        return Promise.all(actions);
       })
       .catch((err) => {
         that.app.services.ErrorService.handle(err, request, reply);
