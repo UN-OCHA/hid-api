@@ -383,7 +383,12 @@ module.exports = class GSSSyncService extends Service {
           spreadsheetId: gsssync.spreadsheet,
           auth: authClient
         }, function (err, sheet) {
-          callback(sheet.sheets[0].properties.sheetId);
+          if (sheet) {
+            callback(sheet.sheets[0].properties.sheetId);
+          }
+          else {
+            callback('');
+          }
         });
       });
   }
