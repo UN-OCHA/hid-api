@@ -3,8 +3,6 @@
 const Controller = require('trails/controller');
 const Boom = require('boom');
 const fs = require('fs');
-const credentials = JSON.parse(fs.readFileSync('keys/outlook.json'));
-const oauth2 = require('simple-oauth2').create(credentials);
 const microsoftGraph = require('@microsoft/microsoft-graph-client');
 
 /**
@@ -14,6 +12,8 @@ const microsoftGraph = require('@microsoft/microsoft-graph-client');
 module.exports = class OutlookController extends Controller{
 
   saveOutlookCredentials (request, reply) {
+    const credentials = JSON.parse(fs.readFileSync('keys/outlook.json'));
+    const oauth2 = require('simple-oauth2').create(credentials);
     const that = this;
     if (request.payload.code && request.payload.redirectUri) {
       oauth2.authorizationCode.getToken({
@@ -44,6 +44,8 @@ module.exports = class OutlookController extends Controller{
   }
 
   create (request, reply) {
+    const appCreds = JSON.parse(fs.readFileSync('keys/outlook.json'));
+    const oauth2 = require('simple-oauth2').create(appCreds);
     const credentials = request.params.currentUser.outlookCredentials;
     if (request.payload && request.payload.list) {
       const that = this;
