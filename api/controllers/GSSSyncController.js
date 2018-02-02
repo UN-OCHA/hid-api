@@ -89,7 +89,6 @@ module.exports = class GSSSyncController extends Controller{
     const GSSSync = this.app.orm.GSSSync;
     const GSSSyncService = this.app.services.GSSSyncService;
     const that = this;
-    let gsync = {};
     GSSSync
       .find({})
       .then(gsssyncs => {

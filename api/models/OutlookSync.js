@@ -33,7 +33,7 @@ module.exports = class OutlookSync extends Model {
             }
           });
           let businessPhones = [];
-          user.phone_numbers.forEach(function (phone) {
+          user.phone_numbers.forEach(function (phone) {
             businessPhones.push(phone.number);
           });
           let companyName = '';
@@ -102,7 +102,7 @@ module.exports = class OutlookSync extends Model {
             .then(res => {
               if (res && res.value) {
                 let contactId = '';
-                res.value.forEach(function (contact) {
+                res.value.forEach(function (contact) {
                   if (contact.personalNotes === user._id.toString()) {
                     contactId = contact.id;
                   }
@@ -142,7 +142,7 @@ module.exports = class OutlookSync extends Model {
             .then(res => {
               if (res && res.value) {
                 let contactId = '';
-                res.value.forEach(function (contact) {
+                res.value.forEach(function (contact) {
                   if (contact.personalNotes === userId) {
                     contactId = contact.id;
                   }

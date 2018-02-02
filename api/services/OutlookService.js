@@ -16,7 +16,6 @@ module.exports = class OutlookService extends Service {
   }
 
   addUserToContactFolders(listId, user) {
-    const that = this;
     return this
       .findByList(listId)
       .then(osyncs => {
@@ -31,7 +30,6 @@ module.exports = class OutlookService extends Service {
   }
 
   deleteUserFromContactFolders(listId, userId) {
-    const that = this;
     return this
       .findByList(listId)
       .then(osyncs => {
@@ -49,7 +47,6 @@ module.exports = class OutlookService extends Service {
     // Get all lists from user
     const listIds = user.getListIds();
     const OutlookSync = this.app.orm.OutlookSync;
-    const that = this;
 
     // Find the gsssyncs associated to the lists
     return OutlookSync

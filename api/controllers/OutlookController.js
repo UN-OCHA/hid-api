@@ -130,10 +130,10 @@ module.exports = class OutlookController extends Controller{
         .catch(err => {
           that.app.services.ErrorService.handle(err, request, reply);
         });
-      }
-      else {
-        return reply(Boom.badRequest());
-      }
+    }
+    else {
+      return reply(Boom.badRequest());
+    }
   }
 
 };

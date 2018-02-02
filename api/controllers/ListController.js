@@ -190,11 +190,10 @@ module.exports = class ListController extends Controller{
     );
 
     const that = this;
-    let oldlist = {}, newlist = {};
+    let newlist = {};
     Model
       .findOne({_id: request.params.id})
       .then(list => {
-        oldlist = _.clone(list);
         return Model
           .findOneAndUpdate({_id: request.params.id}, request.payload, {runValidators: true, new: true});
       })
