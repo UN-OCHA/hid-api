@@ -372,6 +372,22 @@ module.exports = class GSSSyncService extends Service {
       });
   }
 
+  getSheetId (gsssync, callback) {
+    gsssync
+      .populate('user')
+      .execPopulate()
+      .then(() => {
+        const authClient = gsssync.getAuthClient();
+        const sheets = Google.sheets('v4');
+        sheets.spreadsheets.get({
+          spreadsheetId: gsssync.spreadsheet,
+          auth: authClient
+        }, function (err, sheet) {
+          callback(sheet.sheets[0].properties.sheetId);
+        });
+      });
+  }
+
   synchronizeAll (gsssync) {
     const User = this.app.orm.User;
     const GSSSync = this.app.orm.GSSSync;

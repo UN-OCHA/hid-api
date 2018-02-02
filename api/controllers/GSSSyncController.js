@@ -84,4 +84,26 @@ module.exports = class GSSSyncController extends Controller{
     const FootprintController = this.app.controllers.FootprintController;
     FootprintController.destroy(request, reply);
   }
+
+  addSheetIds (request, reply) {
+    const GSSSync = this.app.orm.GSSSync;
+    const GSSSyncService = this.app.services.GSSSyncService;
+    const that = this;
+    let gsync = {};
+    GSSSync
+      .find({})
+      .then(gsssyncs => {
+        gsssyncs.forEach(function (gsssync) {
+          if (!gsssync.sheetId) {
+            GSSSyncService.getSheetId(gsssync, function (sheetId) {
+              gsssync.sheetId = sheetId;
+              gsssync.save();
+            });
+          }
+        });
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
+  }
 };

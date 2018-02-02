@@ -560,5 +560,11 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/doAutomatedCheckout',
     handler: 'CronController.doAutomatedCheckout'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/gsssync/addSheetIds',
+    handler: 'GSSSyncController.addSheetIds'
   }
 ];
