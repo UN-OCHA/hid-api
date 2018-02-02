@@ -57,6 +57,7 @@ module.exports = class GSSSyncService extends Service {
               requests: [{
                 deleteDimension: {
                   range: {
+                    sheetId: gsssync.sheetId,
                     dimension: 'ROWS',
                     startIndex: index,
                     endIndex: index + 1
@@ -158,6 +159,7 @@ module.exports = class GSSSyncService extends Service {
               requests: [{
                 insertDimension: {
                   range: {
+                    sheetId: gsssync.sheetId,
                     dimension: 'ROWS',
                     startIndex: index,
                     endIndex: index + 1
@@ -362,7 +364,7 @@ module.exports = class GSSSyncService extends Service {
           if (err) {
             return callback(err);
           }
-          callback(null, response.spreadsheetId);
+          callback(null, response);
         });
       })
       .catch(err => {

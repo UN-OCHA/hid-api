@@ -42,7 +42,8 @@ module.exports = class GSSSyncController extends Controller{
         if (err) {
           return that.app.services.ErrorService.handle(err, request, reply);
         }
-        request.payload.spreadsheet = spreadsheet;
+        request.payload.spreadsheet = spreadsheet.spreadsheetId;
+        request.payload.sheetId = spreadsheet.sheets[0].properties.sheetId;
         that.createHelper(request, reply);
       });
     }
