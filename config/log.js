@@ -25,7 +25,13 @@ module.exports = {
     exitOnError: false,
     rewriters: [
       function (level, msg, metadata) {
-        const ip = metadata.request ? metadata.request.headers['x-forwarded-for'] || metadata.request.info.remoteAddress : '';
+        let ip = '';
+        if (metadata.request && metadata.request.info && metadata.request.info.remoteAddress) {
+          ip = metadata.request.info.remoteAddress;
+        }
+        if (metadata.request && metadata.request.headers && metadata.request.headers['x-forwarded-for']) {
+          ip = metadata.request.headers['x-forwarded-for'];
+        }
         let userId = '';
         if (metadata.request && metadata.request.params && metadata.request.params.currentUser) {
           userId = metadata.request.params.currentUser._id.toString();
