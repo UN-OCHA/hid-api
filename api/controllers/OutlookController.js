@@ -75,15 +75,6 @@ module.exports = class OutlookController extends Controller{
           return List.findOne({_id: request.payload.list});
         })
         .then(list => {
-          return client
-            .api('/me/contactFolders')
-            .get();
-        })
-        .then(res => {
-          console.log(res);
-          reply();
-        })
-        .then(list => {
           if (!list) {
             throw Boom.notFound();
           }
