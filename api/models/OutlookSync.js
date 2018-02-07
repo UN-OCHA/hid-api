@@ -51,10 +51,20 @@ module.exports = class OutlookSync extends Model {
           };
         },
 
+        folderExists: function (folders) {
+          let folderFound = false;
+          folders.forEach(function (folder) {
+            if (folder.id === this.folder) {
+              folderFound = true;
+            }
+          });
+          return folderFound;
+        },
+
         addUser: function (addedUser) {
           const oauth2 = this.getOAuthClient();
           const that = this;
-          let accessToken = '', client = {};
+          let accessToken = '', client = {}, folderExists = false;
           return this
             .populate('user')
             .execPopulate()
@@ -75,29 +85,24 @@ module.exports = class OutlookSync extends Model {
                 .get();
             })
             .then(res => {
-              let folderFound = false;
-              if (res.value) {
-                res.value.forEach(function (folder) {
-                  if (folder.id === that.folder) {
-                    folderFound = true;
-                  }
-                });
-              }
-              if (!folderFound) {
+              folderExists = that.folderExists(res.value);
+              if (!folderExists) {
                 that.remove();
               }
             })
             .then(() => {
-              return client
-                .api('/me/contactFolders/' + that.folder + '/contacts')
-                .post(that.getContact(addedUser));
+              if (folderExists) {
+                return client
+                  .api('/me/contactFolders/' + that.folder + '/contacts')
+                  .post(that.getContact(addedUser));
+              }
             });
         },
 
         updateUser: function (user) {
           const oauth2 = this.getOAuthClient();
           const that = this;
-          let accessToken = '', client = {};
+          let accessToken = '', client = {}, folderExists = false;
           return this
             .populate('user')
             .execPopulate()
@@ -114,11 +119,22 @@ module.exports = class OutlookSync extends Model {
                 }
               });
               return client
-                .api('/me/contactFolders/' + that.folder + '/contacts')
+                .api('/me/contactFolders')
                 .get();
             })
             .then(res => {
-              if (res && res.value) {
+              folderExists = that.folderExists(res.value);
+              if (!folderExists) {
+                that.remove();
+              }
+              else {
+                return client
+                  .api('/me/contactFolders/' + that.folder + '/contacts')
+                  .get();
+              }
+            })
+            .then(res => {
+              if (folderExists && res && res.value) {
                 let contactId = '';
                 res.value.forEach(function (contact) {
                   if (contact.personalNotes === user._id.toString()) {
@@ -137,7 +153,7 @@ module.exports = class OutlookSync extends Model {
         deleteUser: function (userId) {
           const oauth2 = this.getOAuthClient();
           const that = this;
-          let accessToken = '', client = {};
+          let accessToken = '', client = {}, folderExists = false;
           return this
             .populate('user')
             .execPopulate()
@@ -154,11 +170,22 @@ module.exports = class OutlookSync extends Model {
                 }
               });
               return client
-                .api('/me/contactFolders/' + that.folder + '/contacts')
+                .api('/me/contactFolders')
                 .get();
             })
             .then(res => {
-              if (res && res.value) {
+              folderExists = that.folderExists(res.value);
+              if (!folderExists) {
+                that.remove();
+              }
+              else {
+                return client
+                  .api('/me/contactFolders/' + that.folder + '/contacts')
+                  .get();
+              }
+            })
+            .then(res => {
+              if (folderExists && res && res.value) {
                 let contactId = '';
                 res.value.forEach(function (contact) {
                   if (contact.personalNotes === userId) {
