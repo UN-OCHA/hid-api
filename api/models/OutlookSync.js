@@ -71,6 +71,14 @@ module.exports = class OutlookSync extends Model {
                 }
               });
               return client
+                .api('/me/contactFolders')
+                .get();
+            })
+            .then(res => {
+              console.log(res);
+            })
+            .then(() => {
+              return client
                 .api('/me/contactFolders/' + that.folder + '/contacts')
                 .post(that.getContact(addedUser));
             });
