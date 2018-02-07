@@ -83,7 +83,7 @@ module.exports = class OutlookController extends Controller{
           console.log(res);
           reply();
         })
-        /*.then(list => {
+        .then(list => {
           if (!list) {
             throw Boom.notFound();
           }
@@ -137,7 +137,7 @@ module.exports = class OutlookController extends Controller{
         })
         .then(data => {
           reply(gOsync);
-        })*/
+        })
         .catch(err => {
           that.app.services.ErrorService.handle(err, request, reply);
         });
