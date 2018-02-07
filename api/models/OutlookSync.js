@@ -75,7 +75,17 @@ module.exports = class OutlookSync extends Model {
                 .get();
             })
             .then(res => {
-              console.log(res);
+              let folderFound = false;
+              if (res.value) {
+                res.value.forEach(function (folder) {
+                  if (folder.id === that.folder) {
+                    folderFound = true;
+                  }
+                });
+              }
+              if (!folderFound) {
+                that.remove();
+              }
             })
             .then(() => {
               return client
