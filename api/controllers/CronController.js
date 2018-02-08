@@ -126,12 +126,12 @@ module.exports = class CronController extends Controller {
                           user[list.type + 's'][j].names = list.names;
                           user[list.type + 's'][j].acronym = list.acronym;
                           user[list.type + 's'][j].acronyms = list.acronyms;
-                          //user[list.type + 's'][j].owner = list.owner;
-                          //user[list.type + 's'][j].managers = list.managers;
+                          user[list.type + 's'][j].owner = list.owner;
+                          user[list.type + 's'][j].managers = list.managers;
                           user[list.type + 's'][j].visibility = list.visibility;
                         }
                       }
-                      /*if (list.type === 'organization' && user.organization.list.toString() === list._id.toString()) {
+                      if (list.type === 'organization' && user.organization.list.toString() === list._id.toString()) {
                         user.organization.name = list.name;
                         user.organization.names = list.names;
                         user.organization.acronym = list.acronym;
@@ -139,7 +139,7 @@ module.exports = class CronController extends Controller {
                         user.organization.owner = list.owner;
                         user.organization.managers = list.managers;
                         user.organization.visibility = list.visibility;
-                      }*/
+                      }
                       user.save();
                     }
                     cb();
