@@ -228,13 +228,13 @@ module.exports = class UserController extends Controller{
             });
           }
           else {
-            callback('An error occurred while generating PDF');
+            callback(new Error('An error occurred while generating PDF for list ' + data.lists[0].name));
           }
         });
 
         // Handle errors with the HTTP request.
         clientReq.on('error', function(e) {
-          callback('An error occurred while generating PDF');
+          callback(new Error('An error occurred while generating PDF for list ' + data.lists[0].name));
         });
 
         // Write post data containing the rendered HTML.
