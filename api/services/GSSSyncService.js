@@ -316,7 +316,7 @@ module.exports = class GSSSyncService extends Service {
             return ErrorService.handleWithoutReply(err);
           }
           if (!column || !column.values) {
-            throw Boom.badImplementation('column or column.values is undefined on spreadsheet ' + gsssync.spreadsheet);
+            return ErrorService.handleWithoutReply('column or column.values is undefined on spreadsheet ' + gsssync.spreadsheet);
           }
           let row = 0, index = 0;
           column.values.forEach(function (elt) {
@@ -329,7 +329,7 @@ module.exports = class GSSSyncService extends Service {
             that.writeUser(gsssync, authClient, user, index);
           }
           else {
-            throw Boom.badRequest('Could not find user');
+            return ErrorService.handleWithoutReply('Could not find user ' + user._id.toString() + ' for spreadsheet ' + gsssync.spreadsheet);
           }
         });
       });
