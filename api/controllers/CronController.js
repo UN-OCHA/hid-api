@@ -129,7 +129,7 @@ module.exports = class CronController extends Controller {
                           user[list.type + 's'][j].visibility = list.visibility;
                         }
                       }
-                      if (list.type === 'organization' && user.organization.list.toString() === list._id.toString()) {
+                      /*if (list.type === 'organization' && user.organization.list.toString() === list._id.toString()) {
                         user.organization.name = list.name;
                         user.organization.names = list.names;
                         user.organization.acronym = list.acronym;
@@ -137,7 +137,7 @@ module.exports = class CronController extends Controller {
                         user.organization.owner = list.owner;
                         user.organization.managers = list.managers;
                         user.organization.visibility = list.visibility;
-                      }
+                      }*/
                       user.save();
                     }
                     cb();
