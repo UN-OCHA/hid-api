@@ -110,10 +110,8 @@ module.exports = class CronController extends Controller {
             _.merge(list, newList);
             list.save().then(function (list) {
               if (updateUsers) {
-                console.log('updating users');
                 const criteria = {};
                 criteria[list.type + 's.list'] = list._id.toString();
-                console.log(criteria);
                 User
                   .find(criteria)
                   .then(users => {
