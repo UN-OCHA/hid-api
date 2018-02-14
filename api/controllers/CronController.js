@@ -89,14 +89,12 @@ module.exports = class CronController extends Controller {
       List.findOne({type: listType, remote_id: item.id}, function (err, list) {
 
         if (!list) {
-          console.log('creating list' + item.id);
           that._parseList(listType, language, item, function (newList) {
             that._parseListLanguage(newList, newList.label, newList.acronym, language);
             that._createListHelper(newList, cb);
           });
         }
         else {
-          console.log('updating list ' + list.name);
           that._parseList(listType, language, item, function (newList) {
             let updateUsers = false;
             if (newList.name !== list.name || newList.visibility !== list.visibility) {
@@ -111,6 +109,9 @@ module.exports = class CronController extends Controller {
               delete newList.acronym;
             }
             _.merge(list, newList);
+            if (list.deleted) {
+              list.deleted = false;
+            }
             list.save().then(function (list) {
               if (updateUsers) {
                 const criteria = {};
