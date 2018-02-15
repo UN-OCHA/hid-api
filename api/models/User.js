@@ -487,6 +487,32 @@ module.exports = class User extends Model {
           }
         },
 
+        updateCheckins: function (list) {
+          for (let j = 0; j < this[list.type + 's'].length; j++) {
+            if (this[list.type + 's'][j].list.toString() === list._id.toString()) {
+              this[list.type + 's'][j].name = list.name;
+              this[list.type + 's'][j].names = list.names;
+              this[list.type + 's'][j].acronym = list.acronym;
+              this[list.type + 's'][j].acronyms = list.acronyms;
+              this[list.type + 's'][j].owner = list.owner;
+              this[list.type + 's'][j].managers = list.managers;
+              this[list.type + 's'][j].visibility = list.visibility;
+            }
+          }
+          if (list.type === 'organization' &&
+            this.organization &&
+            this.organization.list &&
+            this.organization.list.toString() === list._id.toString()) {
+            this.organization.name = list.name;
+            this.organization.names = list.names;
+            this.organization.acronym = list.acronym;
+            this.organization.acronyms = list.acronyms;
+            this.organization.owner = list.owner;
+            this.organization.managers = list.managers;
+            this.organization.visibility = list.visibility;
+          }
+        },
+
         defaultPopulate: function () {
           return this
             .populate(userPopulate1)

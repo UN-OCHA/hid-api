@@ -233,26 +233,7 @@ module.exports = class ListController extends Controller{
         let actions = [];
         for (let i = 0; i < users.length; i++) {
           const user = users[i];
-          for (let j = 0; j < user[newlist.type + 's'].length; j++) {
-            if (user[newlist.type + 's'][j].list.toString() === newlist._id.toString()) {
-              user[newlist.type + 's'][j].name = newlist.name;
-              user[newlist.type + 's'][j].names = newlist.names;
-              user[newlist.type + 's'][j].acronym = newlist.acronym;
-              user[newlist.type + 's'][j].acronyms = newlist.acronyms;
-              user[newlist.type + 's'][j].owner = newlist.owner;
-              user[newlist.type + 's'][j].managers = newlist.managers;
-              user[newlist.type + 's'][j].visibility = newlist.visibility;
-            }
-          }
-          if (newlist.type === 'organization' && user.organization.list.toString() === newlist._id.toString()) {
-            user.organization.name = newlist.name;
-            user.organization.names = newlist.names;
-            user.organization.acronym = newlist.acronym;
-            user.organization.acronyms = newlist.acronyms;
-            user.organization.owner = newlist.owner;
-            user.organization.managers = newlist.managers;
-            user.organization.visibility = newlist.visibility;
-          }
+          user.updateCheckins(newlist);
           actions.push(user.save());
         }
         return Promise.all(actions);

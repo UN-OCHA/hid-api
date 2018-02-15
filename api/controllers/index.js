@@ -14,3 +14,4 @@ exports.NumbersController = require('./NumbersController');
 exports.GSSSyncController = require('./GSSSyncController');
 exports.CronController = require('./CronController');
 exports.OutlookController = require('./OutlookController');
+exports.WebhooksController = require('./WebhooksController');
