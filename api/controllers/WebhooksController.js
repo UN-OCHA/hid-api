@@ -29,6 +29,7 @@ module.exports = class WebhooksController extends Controller{
     const event = request.headers['x-hrinfo-event'] ? request.headers['x-hrinfo-event'] : '';
     const entity = request.payload.entity ? request.payload.entity : '';
     const resource = request.payload.type ? request.payload.type : '';
+    const language = request.payload.language ? request.payload.language : 'en';
     if (!event || !entity || !resource) {
       return reply(Boom.badRequest());
     }
@@ -40,7 +41,6 @@ module.exports = class WebhooksController extends Controller{
       return reply(Boom.badRequest());
     }
     if (event === 'create' || event === 'update') {
-      const language = 'en';
       const inactiveOps = [2782,2785,2791,38230];
       if ((listType === 'operation' &&
         entity.status !== 'inactive' &&
