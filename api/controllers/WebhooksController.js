@@ -196,7 +196,9 @@ module.exports = class WebhooksController extends Controller{
         });
     }
     else {
-      return new Promise(tmpList);
+      return new Promise((resolve, reject) => {
+        resolve(tmpList);
+      });
     }
   }
 
