@@ -25,6 +25,7 @@ module.exports = class WebhooksController extends Controller{
     const List = this.app.orm.List;
     const User = this.app.orm.User;
     const ListController = this.app.controllers.ListController;
+    const that = this;
     const event = request.headers['x-hrinfo-event'] ? request.headers['x-hrinfo-event'] : '';
     const entity = request.payload.entity ? request.payload.entity : '';
     const resource = request.payload.type ? request.payload.type : '';
@@ -39,7 +40,6 @@ module.exports = class WebhooksController extends Controller{
       return reply(Boom.badRequest());
     }
     if (event === 'create' || event === 'update') {
-      const that = this;
       const language = 'en';
       const inactiveOps = [2782,2785,2791,38230];
       if ((listType === 'operation' &&
@@ -114,8 +114,20 @@ module.exports = class WebhooksController extends Controller{
       }
     }
     else if (event === 'delete') {
-      request.params.id = entity.id;
-      ListController.destroy(request, reply);
+      List
+        .findOne({type: listType, remote_id: entity.id})
+        .then(list => {
+          if (!list) {
+            return reply(Boom.badRequest());
+          }
+          else {
+            request.params.id = list._id.toString();
+            ListController.destroy(request, reply);
+          }
+        })
+        .catch(err => {
+          that.app.services.ErrorService.handle(err, request, reply);
+        });
     }
 
   }
