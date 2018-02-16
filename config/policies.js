@@ -117,6 +117,10 @@ module.exports = {
     forcedResetPasswordAlert: ['CronPolicy.canRun'],
     forceResetPassword: ['CronPolicy.canRun'],
     doAutomatedCheckout: ['CronPolicy.canRun']
+  },
+
+  WebhooksController: {
+    hrinfo: ['WebhooksPolicy.canRun']
   }
 
 };
