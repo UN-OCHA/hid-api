@@ -12,6 +12,7 @@ module.exports = class WebhooksController extends Controller{
 
   // Receive events from hrinfo and act upon it
   hrinfo (request, reply) {
+    console.log(request);
     const listTypes = [
       'operation',
       'bundle',
@@ -24,7 +25,7 @@ module.exports = class WebhooksController extends Controller{
     const List = this.app.orm.List;
     const User = this.app.orm.User;
     const ListController = this.app.controllers.ListController;
-    const event = request.headers['X-HRInfo-Event'] ? request.headers['X-HRInfo-Event'] : '';
+    const event = request.headers['x-hrinfo-event'] ? request.headers['x-hrinfo-event'] : '';
     const entity = request.payload.entity ? request.payload.entity : '';
     const resource = request.payload.type ? request.payload.type : '';
     if (!event || !entity || !resource) {
