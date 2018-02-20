@@ -12,7 +12,6 @@ module.exports = class WebhooksController extends Controller{
 
   // Receive events from hrinfo and act upon it
   hrinfo (request, reply) {
-    console.log(request);
     const listTypes = [
       'operation',
       'bundle',
@@ -31,7 +30,7 @@ module.exports = class WebhooksController extends Controller{
     const resource = request.payload.type ? request.payload.type : '';
     const language = request.payload.language ? request.payload.language : 'en';
     const translations = request.payload.translations ? request.payload.translations : ['en'];
-    if (!event || !entity || !resource) {
+    if (!event || !entity || !resource) {
       return reply(Boom.badRequest());
     }
     const listType = resource.substring(0, resource.length - 1);
@@ -54,69 +53,69 @@ module.exports = class WebhooksController extends Controller{
         listType !== 'disaster' ||
         (listType === 'disaster' && now - entity.created < 2 * 365 * 24 * 3600))) {
         let gList = {}, updateUsers = false;
-          List
-            .findOne({type: listType, remote_id: entity.id})
-            .then(list => {
-              gList = list;
-              return that._parseList(listType, language, entity);
-            })
-            .then(newList => {
-              if (!gList) {
-                that._parseListLanguage(newList, newList.label, newList.acronym, language);
-                return List.create(newList);
+        List
+          .findOne({type: listType, remote_id: entity.id})
+          .then(list => {
+            gList = list;
+            return that._parseList(listType, language, entity);
+          })
+          .then(newList => {
+            if (!gList) {
+              that._parseListLanguage(newList, newList.label, newList.acronym, language);
+              return List.create(newList);
+            }
+            else {
+              if (newList.name !== gList.name || newList.visibility !== gList.visibility) {
+                updateUsers = true;
               }
-              else {
-                if (newList.name !== gList.name || newList.visibility !== gList.visibility) {
-                  updateUsers = true;
-                }
-                // Do not change list visibility or joinability if the list is already there
-                delete newList.visibility;
-                delete newList.joinability;
-                that._parseListLanguage(gList, newList.label, newList.acronym, language);
-                if (language !== 'en') {
-                  delete newList.label;
-                  delete newList.acronym;
-                }
-                // Handle translations for lists with no translation in hrinfo
-                if (gList.names.length) {
-                  gList.names.forEach(function (elt) {
-                    if (translations.indexOf(elt.language) === -1) {
-                      that._parseListLanguage(gList, newList.label, newList.acronym, elt.language);
+              // Do not change list visibility or joinability if the list is already there
+              delete newList.visibility;
+              delete newList.joinability;
+              that._parseListLanguage(gList, newList.label, newList.acronym, language);
+              if (language !== 'en') {
+                delete newList.label;
+                delete newList.acronym;
+              }
+              // Handle translations for lists with no translation in hrinfo
+              if (gList.names.length) {
+                gList.names.forEach(function (elt) {
+                  if (translations.indexOf(elt.language) === -1) {
+                    that._parseListLanguage(gList, newList.label, newList.acronym, elt.language);
+                  }
+                });
+              }
+              _.merge(gList, newList);
+              if (gList.deleted) {
+                gList.deleted = false;
+              }
+              return gList.save();
+            }
+          })
+          .then(list => {
+            if (!gList && list.type === 'disaster') {
+              that._notifyNewDisaster(list);
+            }
+            else {
+              if (updateUsers) {
+                const criteria = {};
+                criteria[list.type + 's.list'] = list._id.toString();
+                User
+                  .find(criteria)
+                  .then(users => {
+                    let user = {};
+                    for (let i = 0; i < users.length; i++) {
+                      user = users[i];
+                      user.updateCheckins(list);
+                      user.save();
                     }
                   });
-                }
-                _.merge(gList, newList);
-                if (gList.deleted) {
-                  gList.deleted = false;
-                }
-                return gList.save();
               }
-            })
-            .then(list => {
-              if (!gList && list.type === 'disaster') {
-                that._notifyNewDisaster(list);
-              }
-              else {
-                if (updateUsers) {
-                  const criteria = {};
-                  criteria[list.type + 's.list'] = list._id.toString();
-                  User
-                    .find(criteria)
-                    .then(users => {
-                      let user = {};
-                      for (let i = 0; i < users.length; i++) {
-                        user = users[i];
-                        user.updateCheckins(list);
-                        user.save();
-                      }
-                    });
-                }
-              }
-              return reply(list);
-            })
-            .catch(err => {
-              that.app.services.ErrorService.handle(err, request, reply);
-            });
+            }
+            return reply(list);
+          })
+          .catch(err => {
+            that.app.services.ErrorService.handle(err, request, reply);
+          });
       }
       else {
         return reply(Boom.badRequest());
