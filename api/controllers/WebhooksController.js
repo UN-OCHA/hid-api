@@ -78,11 +78,13 @@ module.exports = class WebhooksController extends Controller{
                   delete newList.acronym;
                 }
                 // Handle translations for lists with no translation in hrinfo
-                newList.names.forEach(function (elt) {
-                  if (translations.indexOf(elt.language) === -1) {
-                    that._parseListLanguage(gList, newList.label, newList.acronym, elt.language);
-                  }
-                });
+                if (gList.names.length) {
+                  gList.names.forEach(function (elt) {
+                    if (translations.indexOf(elt.language) === -1) {
+                      that._parseListLanguage(gList, newList.label, newList.acronym, elt.language);
+                    }
+                  });
+                }
                 _.merge(gList, newList);
                 if (gList.deleted) {
                   gList.deleted = false;
