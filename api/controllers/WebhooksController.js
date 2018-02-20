@@ -30,6 +30,7 @@ module.exports = class WebhooksController extends Controller{
     const entity = request.payload.entity ? request.payload.entity : '';
     const resource = request.payload.type ? request.payload.type : '';
     const language = request.payload.language ? request.payload.language : 'en';
+    const translations = request.payload.translations ? request.payload.translations : ['en'];
     if (!event || !entity || !resource) {
       return reply(Boom.badRequest());
     }
@@ -76,6 +77,12 @@ module.exports = class WebhooksController extends Controller{
                   delete newList.label;
                   delete newList.acronym;
                 }
+                // Handle translations for lists with no translation in hrinfo
+                newList.names.forEach(function (elt) {
+                  if (translations.indexOf(elt.language) === -1) {
+                    that._parseListLanguage(gList, newList.label, newList.acronym, elt.language);
+                  }
+                });
                 _.merge(gList, newList);
                 if (gList.deleted) {
                   gList.deleted = false;
