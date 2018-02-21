@@ -89,7 +89,7 @@ module.exports = class WebhooksController extends Controller{
             }
           })
           .then(list => {
-            if (!gList && list.type === 'disaster') {
+            if (!gList && list.type === 'disaster' && event === 'create') {
               that._notifyNewDisaster(list);
             }
             else {
