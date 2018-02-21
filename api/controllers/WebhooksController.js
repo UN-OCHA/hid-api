@@ -20,7 +20,6 @@ module.exports = class WebhooksController extends Controller{
       'functional_role',
       'office'
     ];
-    const now = Math.floor(Date.now() / 1000);
     const List = this.app.orm.List;
     const User = this.app.orm.User;
     const ListController = this.app.controllers.ListController;
@@ -49,9 +48,7 @@ module.exports = class WebhooksController extends Controller{
         (listType === 'bundle' &&
         entity.hid_access !== 'no_list') ||
         (listType !== 'operation' &&
-        listType !== 'bundle' &&
-        listType !== 'disaster' ||
-        (listType === 'disaster' && now - entity.created < 2 * 365 * 24 * 3600))) {
+        listType !== 'bundle')) {
         let gList = {}, updateUsers = false;
         List
           .findOne({type: listType, remote_id: entity.id})
