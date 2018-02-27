@@ -497,8 +497,10 @@ module.exports = class User extends Model {
               this[list.type + 's'][j].owner = list.owner;
               this[list.type + 's'][j].managers = list.managers;
               this[list.type + 's'][j].visibility = list.visibility;
-              this[list.type + 's'][j].orgTypeId = list.metadata.type.id;
-              this[list.type + 's'][j].orgTypeLabel = list.metadata.type.label;
+              if (list.type === 'organization') {
+                this[list.type + 's'][j].orgTypeId = list.metadata.type.id;
+                this[list.type + 's'][j].orgTypeLabel = list.metadata.type.label;
+              }
             }
           }
           if (list.type === 'organization' &&
