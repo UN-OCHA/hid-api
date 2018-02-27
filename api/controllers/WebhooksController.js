@@ -85,6 +85,7 @@ module.exports = class WebhooksController extends Controller{
               if (gList.deleted) {
                 gList.deleted = false;
               }
+              gList.markModified('metadata');
               return gList.save();
             }
           })
