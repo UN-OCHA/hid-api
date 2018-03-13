@@ -16,6 +16,9 @@ const authorizedDomains = [
   'https://app2.dev.humanitarian.id',
   'https://api2.dev.humanitarian.id',
   'https://api.humanitarian.id',
+  'https://auth.staging.humanitarian.id',
+  'https://api.staging.humanitarian.id',
+  'https://app.staging.humanitarian.id',
   'https://api.hid.vm'
 ];
 
