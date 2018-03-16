@@ -297,4 +297,15 @@ module.exports = class EmailService extends Service {
     this.send(mailOptions, 'email_alert', context, callback);
   }
 
+  sendSpecialPasswordReset (user, callback) {
+    const mailOptions = {
+      to: user.email,
+      locale: user.locale
+    };
+    const context = {
+      user: user
+    };
+    this.send(mailOptions, 'special_password_reset', context, callback);
+  }
+
 };

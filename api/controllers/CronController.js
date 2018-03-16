@@ -639,4 +639,18 @@ module.exports = class CronController extends Controller {
     });
   }
 
+  sendSpecialPasswordResetEmail (request, reply) {
+    reply().code(204);
+    const User = this.app.orm.user;
+    const EmailService = this.app.services.EmailService;
+    const stream = User.find({deleted: false}).cursor();
+    stream.on('data', function (user) {
+      const sthat = this;
+      this.pause();
+      EmailService.sendSpecialPasswordReset(user, function () {
+        sthat.resume();
+      });
+    });
+  }
+
 };

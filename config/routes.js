@@ -563,6 +563,12 @@ module.exports = [
   },
 
   {
+    method: 'GET',
+    path: '/api/v2/cron/specialPasswordReset',
+    handler: 'CronController.sendSpecialPasswordResetEmail'
+  },
+
+  {
     method: 'POST',
     path: '/api/v2/webhooks/hrinfo',
     handler: 'WebhooksController.hrinfo'
