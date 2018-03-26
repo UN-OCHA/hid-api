@@ -124,6 +124,14 @@ module.exports = class ListUserController extends Controller{
           });
       })
       .then((result) => {
+        result.list.count = result.list.count + 1;
+        return result.list
+          .save()
+          .then(() => {
+            return result;
+          });
+      })
+      .then((result) => {
         const managers = [];
         result.list.managers.forEach(function (manager) {
           if (manager.toString() !== request.params.currentUser._id.toString()) {
@@ -294,6 +302,10 @@ module.exports = class ListUserController extends Controller{
         reply(result.user);
         return List
           .findOne({ _id: result.listuser.list })
+          .then(list => {
+            list.count = list.count - 1;
+            return list.save();
+          })
           .then(list => {
             return {user: result.user, listuser: result.listuser, list: list};
           });

@@ -283,6 +283,12 @@ module.exports = class List extends Model {
         readonly: true
       },
 
+      count: {
+        type: Number,
+        default: 0,
+        readonly: true
+      },
+
       deleted: {
         type: Boolean,
         default: false,

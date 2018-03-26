@@ -653,4 +653,30 @@ module.exports = class CronController extends Controller {
     });
   }
 
+  setListCounts (request, reply) {
+    reply().code(204);
+    const List = this.app.orm.list;
+    const User = this.app.orm.User;
+    const stream = List.find({deleted: false}).cursor();
+    stream.on('data', function (list) {
+      const sthat = this;
+      const listType = list.type;
+      this.pause();
+      let criteria = { };
+      criteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false}};
+      User
+        .count(criteria)
+        .then(number => {
+          list.count = number;
+          return list.save();
+        })
+        .then(() => {
+          sthat.resume();
+        })
+        .catch(err => {
+          sthat.resume();
+        });
+    });
+  }
+
 };
