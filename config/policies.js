@@ -123,6 +123,13 @@ module.exports = {
 
   WebhooksController: {
     hrinfo: ['WebhooksPolicy.canRun']
-  }
+  },
+
+  OperationController: {
+    create: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
+    find: ['AuthPolicy.isAuthenticated'],
+    update: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
+    destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin']
+  },
 
 };

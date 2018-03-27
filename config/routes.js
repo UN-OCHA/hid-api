@@ -578,5 +578,29 @@ module.exports = [
     method: 'POST',
     path: '/api/v2/webhooks/hrinfo',
     handler: 'WebhooksController.hrinfo'
-  }
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v2/operation',
+    handler: 'OperationController.create'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/operation/{id?}',
+    handler: 'OperationController.find'
+  },
+
+  {
+    method: 'PUT',
+    path: '/api/v2/operation/{id}',
+    handler: 'OperationController.update'
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/operation/{id}',
+    handler: 'OperationController.destroy'
+  },
 ];
