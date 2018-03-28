@@ -14,9 +14,6 @@ module.exports = class Operation extends Model {
 
   static schema () {
     return {
-      name: {
-        type: String
-      },
       remote_id: {
         type: Number,
         readonly: true

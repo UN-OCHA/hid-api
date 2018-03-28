@@ -46,6 +46,7 @@ module.exports = class OperationController extends Controller{
         });
     }
     else {
+      options.populate = 'managers key_roles key_lists';
       const query = this.app.services.HelperService.find('Operation', criteria, options);
       let gresults = {};
       query
