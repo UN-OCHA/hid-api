@@ -126,10 +126,10 @@ module.exports = {
   },
 
   OperationController: {
-    create: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
+    create: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdminOrGlobalManager'],
     find: ['AuthPolicy.isAuthenticated'],
-    update: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
-    destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin']
+    update: ['AuthPolicy.isAuthenticated', 'OperationsPolicy.canUpdateOperation'],
+    destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdminOrGlobalManager']
   },
 
 };

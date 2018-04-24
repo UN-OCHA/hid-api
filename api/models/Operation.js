@@ -10,6 +10,19 @@ const Schema = require('mongoose').Schema;
 module.exports = class Operation extends Model {
 
   static config () {
+    return {
+      methods: {
+        managersIndex: function (user) {
+          let index = -1;
+          for (let i = 0; i < this.managers.length; i++) {
+            if (this.managers[i].id === user.id) {
+              index = i;
+            }
+          }
+          return index;
+        },
+      }
+    };
   }
 
   static schema () {

@@ -198,4 +198,12 @@ module.exports = class AuthPolicy extends Policy {
     reply();
   }
 
+  isAdminOrGlobalManager (request, reply) {
+    if (!request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
+      this.log.warn('User is neither an admin nor a global manager', { security: true, fail: true, request: request});
+      return reply(Boom.forbidden('You need to be an admin or a global manager'));
+    }
+    reply();
+  }
+
 };
