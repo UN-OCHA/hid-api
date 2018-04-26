@@ -107,6 +107,9 @@ module.exports = class HelperService extends Service {
         // Get what's inside the brackets
         const match = keys[i].match(regex);
         const ikey = keys[i].replace(regex, '');
+        if (typeof criteria[ikey] === 'undefined') {
+          criteria[ikey] = {};
+        }
         criteria[ikey]['$' + match[1]] = criteria[keys[i]];
         delete criteria[keys[i]];
       }
