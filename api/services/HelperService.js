@@ -101,7 +101,15 @@ module.exports = class HelperService extends Service {
   getCriteriaFromQuery(query) {
     const criteria = _.omit(query, queryOptions);
     const keys = Object.keys(criteria);
+    const regex = new RegExp(/\[(.*?)\]/);
     for (let i = 0, len = keys.length; i < len; i++) {
+      if (keys[i].indexOf('[') !== -1) {
+        // Get what's inside the brackets
+        const match = keys[i].match(regex);
+        const ikey = keys[i].replace(regex, '');
+        criteria[ikey]['$' + match[1]] = criteria[keys[i]];
+        delete criteria[keys[i]];
+      }
       if (criteria[keys[i]] === 'true') {
         criteria[keys[i]] = true;
       }
