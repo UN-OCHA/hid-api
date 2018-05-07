@@ -239,7 +239,7 @@ module.exports = class AuthController extends Controller{
             passwordLink: passwordLink,
             alert: {
               type: 'danger',
-              message: 'We could not log you in. Please check your email/password'
+              message: alertMessage
             }
           });
         }
