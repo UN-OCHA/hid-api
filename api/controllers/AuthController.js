@@ -227,6 +227,11 @@ module.exports = class AuthController extends Controller{
           if (params) {
             passwordLink += '?' + params;
           }
+
+          let alertMessage = 'We could not log you in. Please check your email/pasword.';
+          if (result.message === 'password is expired') {
+            alertMessage = 'We could not log you in because your password is expired. Please reset your password.';
+          }
           return reply.view('login', {
             title: 'Log into Humanitarian ID',
             query: request.payload,
