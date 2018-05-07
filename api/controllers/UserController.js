@@ -618,6 +618,8 @@ module.exports = class UserController extends Controller{
               }
               request.payload.password = UserModel.hashPassword(request.payload.new_password);
               request.payload.lastPasswordReset = new Date();
+              request.payload.passwordResetAlert30days = false;
+              request.payload.passwordResetAlert = false;
               that.log.warn('Successfully updated user password', { request: request, security: true});
               return that._updateQuery(request, options);
             }
@@ -915,6 +917,8 @@ module.exports = class UserController extends Controller{
             record.is_ghost = false;
             record.hash = '';
             record.lastPasswordReset = new Date();
+            record.passwordResetAlert30days = false;
+            record.passwordResetAlert = false;
             return record.save();
           }
         }

@@ -955,6 +955,16 @@ module.exports = class User extends Model {
         readonly: true,
         default: Date.now
       },
+      passwordResetAlert30days: {
+        type: Boolean,
+        default: false,
+        readonly: true
+      },
+      passwordResetAlert: {
+        type: Boolean,
+        default: false,
+        readonly: true
+      },
       // Only admins can set this
       verified: {
         type: Boolean,
