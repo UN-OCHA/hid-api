@@ -822,7 +822,7 @@ module.exports = class UserController extends Controller{
         return reply('Password reset email sent successfully').code(202);
       })
       .catch(err => {
-        that._errorHandler(err, reply);
+        that._errorHandler(err, request, reply);
       });
   }
 
