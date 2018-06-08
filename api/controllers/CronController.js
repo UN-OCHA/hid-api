@@ -325,7 +325,7 @@ module.exports = class CronController extends Controller {
     stream.on('data', function (user) {
       const sthat = this;
       this.pause();
-      EmailService.sendForcedPasswordResetAlert(user, function () {
+      EmailService.sendForcedPasswordResetAlert7(user, function () {
         user.passwordResetAlert7days = true;
         user.save();
         sthat.resume();

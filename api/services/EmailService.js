@@ -185,6 +185,17 @@ module.exports = class EmailService extends Service {
     this.send(mailOptions, 'forced_password_reset_alert', context, callback);
   }
 
+  sendForcedPasswordResetAlert7 (user, callback) {
+    const mailOptions = {
+      to: user.email,
+      locale: user.locale
+    };
+    const context = {
+      user: user
+    };
+    this.send(mailOptions, 'forced_password_reset_alert7', context, callback);
+  }
+
   sendClaim (user, appResetUrl) {
     const mailOptions = {
       to: user.email,
