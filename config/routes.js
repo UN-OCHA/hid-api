@@ -516,12 +516,6 @@ module.exports = [
 
   {
     method: 'GET',
-    path: '/api/v2/cron/importLists',
-    handler: 'CronController.importLists',
-  },
-
-  {
-    method: 'GET',
     path: '/api/v2/cron/sendReminderVerifyEmails',
     handler: 'CronController.sendReminderVerifyEmails'
   },
@@ -554,6 +548,12 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/forceResetPassword',
     handler: 'CronController.forceResetPassword'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/forcedResetPasswordAlert7',
+    handler: 'CronController.forcedResetPasswordAlert7'
   },
 
   {

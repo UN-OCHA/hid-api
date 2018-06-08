@@ -311,7 +311,7 @@ module.exports = class User extends Model {
           let index = -1;
           if (this.connections && this.connections.length) {
             for (let i = 0, len = this.connections.length; i < len; i++) {
-              if (this.connections[i].user && 
+              if (this.connections[i].user &&
                 this.connections[i].pending === false &&
                 ((this.connections[i].user._id && this.connections[i].user._id.toString() === userId.toString()) ||
                 (!this.connections[i].user._id && this.connections[i].user.toString() === userId.toString()))) {
@@ -957,6 +957,11 @@ module.exports = class User extends Model {
         default: Date.now
       },
       passwordResetAlert30days: {
+        type: Boolean,
+        default: false,
+        readonly: true
+      },
+      passwordResetAlert7days: {
         type: Boolean,
         default: false,
         readonly: true

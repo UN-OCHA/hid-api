@@ -107,7 +107,6 @@ module.exports = {
 
   CronController: {
     synchronizeGoogleSpreadsheets: ['CronPolicy.canRun'],
-    importLists: ['CronPolicy.canRun'],
     deleteExpiredUsers: ['CronPolicy.canRun'],
     deleteExpiredTokens: ['CronPolicy.canRun'],
     sendReminderVerifyEmails: ['CronPolicy.canRun'],
@@ -115,6 +114,7 @@ module.exports = {
     sendReminderCheckoutEmails: ['CronPolicy.canRun'],
     sendReminderCheckinEmails: ['CronPolicy.canRun'],
     forcedResetPasswordAlert: ['CronPolicy.canRun'],
+    forcedResetPasswordAlert7: ['CronPolicy.canRun'],
     forceResetPassword: ['CronPolicy.canRun'],
     doAutomatedCheckout: ['CronPolicy.canRun'],
     sendSpecialPasswordResetEmail: ['CronPolicy.canRun'],
