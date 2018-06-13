@@ -608,6 +608,7 @@ module.exports = class UserController extends Controller{
           // If verifying user, set verified_by
           if (request.payload.verified && !user.verified) {
             request.payload.verified_by = request.params.currentUser._id;
+            request.payload.verifiedOn = new Date();
           }
           if (request.payload.old_password) {
             that.log.warn('Updating user password', { request: request, security: true});
@@ -643,6 +644,7 @@ module.exports = class UserController extends Controller{
     else {
       if (!request.payload.verified) {
         request.payload.verified_by = null;
+        request.payload.verifiedOn = null;
       }
       this._updateQuery(request, options)
         .then(user => {

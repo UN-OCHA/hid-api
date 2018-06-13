@@ -17,6 +17,17 @@ const userPopulate1 = [
   {path: 'connections.user', select: '_id name'},
   {path: 'authorizedClients', select: '_id id name'}
 ];
+const verifiedDomains = [
+  'un.org',
+  'unhcr.org',
+  'wfp.org',
+  'unicef.org',
+  'undp.org',
+  'iom.int',
+  'icrc.org',
+  'oxfam.org',
+  'savethechildren.org'
+];
 
 /**
  * @module User
@@ -980,6 +991,10 @@ module.exports = class User extends Model {
       verified_by: {
         type: Schema.ObjectId,
         ref: 'User',
+        readonly: true
+      },
+      verifiedOn: {
+        type: Date,
         readonly: true
       },
       // Makes sure it's a valid URL, and do not allow urls from other domains
