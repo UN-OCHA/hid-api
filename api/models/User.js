@@ -581,6 +581,25 @@ module.exports = class User extends Model {
           }
         },
 
+        isVerifiableEmail: function (email) {
+          let out = false;
+          const ind = email.indexOf('@');
+          const domain = email.substr((ind+1));
+          return verifiedDomains.indexOf(domain) !== -1;
+        },
+
+        canBeVerifiedAutomatically: function () {
+          const that = this;
+          let out = false;
+          // Check all emails
+          this.emails.forEach(function (email) {
+            if (email.validated && that.isVerifiableEmail(email.email)) {
+              out = true;
+            }
+          });
+          return out;
+        },
+
         toJSON: function () {
           const user = this.toObject();
           delete user.password;

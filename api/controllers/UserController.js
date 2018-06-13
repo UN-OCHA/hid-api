@@ -9,6 +9,7 @@ const moment = require('moment');
 const acceptLanguage = require('accept-language');
 const sharp = require('sharp');
 const validator = require('validator');
+const hidAccount = '5b2128e754a0d6046d6c69f2';
 
 /**
  * @module UserController
@@ -757,6 +758,11 @@ module.exports = class UserController extends Controller{
               record.expires = new Date(0, 0, 1, 0, 0, 0);
               record.emails[0].validated = true;
               record.emails.set(0, record.emails[0]);
+              if (record.isVerifiableEmail(record.hashEmail) && !record.verified) {
+                record.verified = true;
+                record.verified_by = hidAccount;
+                record.verifiedOn = new Date();
+              }
               return record.save();
             }
             else {
@@ -765,6 +771,11 @@ module.exports = class UserController extends Controller{
                   record.emails[i].validated = true;
                   record.emails.set(i, record.emails[i]);
                 }
+              }
+              if (record.isVerifiableEmail(record.hashEmail) && !record.verified) {
+                record.verified = true;
+                record.verified_by = hidAccount;
+                record.verifiedOn = new Date();
               }
               return record.save();
             }
