@@ -118,7 +118,7 @@ module.exports = {
     forceResetPassword: ['CronPolicy.canRun'],
     doAutomatedCheckout: ['CronPolicy.canRun'],
     sendSpecialPasswordResetEmail: ['CronPolicy.canRun'],
-    setListCounts: ['CronPolicy.canRun']
+    verifyAutomatically: ['CronPolicy.canRun']
   },
 
   WebhooksController: {

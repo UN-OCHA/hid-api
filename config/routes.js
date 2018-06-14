@@ -570,8 +570,8 @@ module.exports = [
 
   {
     method: 'GET',
-    path: '/api/v2/cron/setListCounts',
-    handler: 'CronController.setListCounts'
+    path: '/api/v2/cron/verifyAutomatically',
+    handler: 'CronController.verifyAutomatically'
   },
 
   {

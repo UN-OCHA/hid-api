@@ -20,6 +20,7 @@ const listTypes = [
   'functional_role',
   'office'
 ];
+const hidAccount = '5b2128e754a0d6046d6c69f2';
 
 /**
  * @module CronController
@@ -370,7 +371,7 @@ module.exports = class CronController extends Controller {
     });
   }
 
-  setListCounts (request, reply) {
+  /*setListCounts (request, reply) {
     reply().code(204);
     const List = this.app.orm.list;
     const User = this.app.orm.User;
@@ -393,6 +394,34 @@ module.exports = class CronController extends Controller {
         .catch(err => {
           sthat.resume();
         });
+    });
+  }*/
+
+  verifyAutomatically (request, reply) {
+    const User = this.app.orm.User;
+    const app = this.app;
+    this.app.log.info('automatically verify users');
+    const stream = User.find({'verified': false}).cursor();
+
+    stream.on('data', function(user) {
+      const sthat = this;
+      this.pause();
+      if (user.canBeVerifiedAutomatically()) {
+        // Verify user
+        user.verified = true;
+        user.verified_by = hidAccount;
+        user.verifiedOn = new Date();
+        user.save(function (err) {
+          sthat.resume();
+        });
+      }
+      else {
+        this.resume();
+      }
+    });
+
+    stream.on('end', function () {
+      reply().code(204);
     });
   }
 
