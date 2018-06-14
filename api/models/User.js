@@ -26,7 +26,10 @@ const verifiedDomains = [
   'iom.int',
   'icrc.org',
   'oxfam.org',
-  'savethechildren.org'
+  'savethechildren.org',
+  'who.int',
+  'ohchr.org',
+  'wvi.org'
 ];
 
 /**
