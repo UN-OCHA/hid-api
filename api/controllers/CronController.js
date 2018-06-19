@@ -397,6 +397,66 @@ module.exports = class CronController extends Controller {
     });
   }*/
 
+  adjustEmailVerified (request, reply) {
+    const User = this.app.orm.User;
+    const app = this.app;
+    const stream = User.find({'email_verified': false}).cursor();
+
+    stream.on('data', function(user) {
+      const sthat = this;
+      this.pause();
+      let index = user.emailIndex(user.email);
+      if (index !== -1 && user.emails[index].validated === true) {
+        user.email_verified = true;
+        user.save(function (err) {
+          sthat.resume();
+        });
+      }
+      else {
+        this.resume();
+      }
+    });
+
+    stream.on('end', function () {
+      reply().code(204);
+    });
+  }
+
+  adjustEmailDuplicates (request, reply) {
+    const User = this.app.orm.User;
+    const app = this.app;
+    const stream = User.find({}).cursor();
+
+    stream.on('data', function(user) {
+      const sthat = this;
+      this.pause();
+      let count = 0, ids = [];
+      user.emails.forEach(function (email) {
+        if (email.email === user.email) {
+          count++;
+          if (count > 1 && email.validated === false) {
+            ids.push(email._id);
+          }
+        }
+      });
+      if (ids.length) {
+        ids.forEach(function (id) {
+          user.emails.id(id).remove();
+        });
+        user.save(function (err) {
+          sthat.resume();
+        });
+      }
+      else {
+        this.resume();
+      }
+    });
+
+    stream.on('end', function () {
+      reply().code(204);
+    });
+  }
+
   verifyAutomatically (request, reply) {
     const User = this.app.orm.User;
     const app = this.app;

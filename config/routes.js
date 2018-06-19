@@ -522,6 +522,12 @@ module.exports = [
 
   {
     method: 'GET',
+    path: '/api/v2/cron/adjustEmailDuplicates',
+    handler: 'CronController.adjustEmailDuplicates'
+  },
+
+  {
+    method: 'GET',
     path: '/api/v2/cron/sendReminderUpdateEmails',
     handler: 'CronController.sendReminderUpdateEmails'
   },
@@ -578,6 +584,12 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/verificationExpiryEmail',
     handler: 'CronController.verificationExpiryEmail'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/adjustEmailVerified',
+    handler: 'CronController.adjustEmailVerified'
   },
 
   {

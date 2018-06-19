@@ -119,7 +119,9 @@ module.exports = {
     doAutomatedCheckout: ['CronPolicy.canRun'],
     sendSpecialPasswordResetEmail: ['CronPolicy.canRun'],
     verifyAutomatically: ['CronPolicy.canRun'],
-    verificationExpiryEmail: ['CronPolicy.canRun']
+    verificationExpiryEmail: ['CronPolicy.canRun'],
+    adjustEmailVerified: ['CronPolicy.canRun'],
+    adjustEmailDuplicates: ['CronPolicy.canRun']
   },
 
   WebhooksController: {
