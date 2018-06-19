@@ -758,7 +758,7 @@ module.exports = class UserController extends Controller{
               record.expires = new Date(0, 0, 1, 0, 0, 0);
               record.emails[0].validated = true;
               record.emails.set(0, record.emails[0]);
-              if (record.isVerifiableEmail(record.hashEmail) && !record.verified) {
+              if (record.isVerifiableEmail(record.hashEmail)) {
                 record.verified = true;
                 record.verified_by = hidAccount;
                 record.verifiedOn = new Date();
@@ -772,7 +772,7 @@ module.exports = class UserController extends Controller{
                   record.emails.set(i, record.emails[i]);
                 }
               }
-              if (record.isVerifiableEmail(record.hashEmail) && !record.verified) {
+              if (record.isVerifiableEmail(record.hashEmail)) {
                 record.verified = true;
                 record.verified_by = hidAccount;
                 record.verifiedOn = new Date();
