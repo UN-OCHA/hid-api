@@ -926,6 +926,12 @@ module.exports = class UserController extends Controller{
           else {
             record.password = pwd;
             record.verifyEmail(record.email);
+            if (record.isVerifiableEmail(record.email)) {
+              // Reset verifiedOn date as user was able to reset his password via an email from a trusted domain
+              record.verified = true;
+              record.verified_by = hidAccount;
+              record.verifiedOn = new Date();
+            }
             record.expires = new Date(0, 0, 1, 0, 0, 0);
             record.is_orphan = false;
             record.is_ghost = false;
