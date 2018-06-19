@@ -425,4 +425,24 @@ module.exports = class CronController extends Controller {
     });
   }
 
+  verificationExpiryEmail (request, reply) {
+    const User = this.app.orm.user;
+    const EmailService = this.app.services.EmailService;
+    const current = Date.now();
+    const oneYear = new Date(current - 358 * 24 * 3600 * 1000);
+    const stream = User.find({verified: true, verifiedOn: { $lte: oneYear }}).cursor();
+    stream.on('data', function (user) {
+      const sthat = this;
+      this.pause();
+      EmailService.sendVerificationExpiryEmail(user, function () {
+        user.verificationExpiryEmail = true;
+        user.save();
+        sthat.resume();
+      });
+    });
+    stream.on('end', function () {
+      reply().code(204);
+    });
+  }
+
 };

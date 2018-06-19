@@ -575,6 +575,12 @@ module.exports = [
   },
 
   {
+    method: 'GET',
+    path: '/api/v2/cron/verificationExpiryEmail',
+    handler: 'CronController.verificationExpiryEmail'
+  },
+
+  {
     method: 'POST',
     path: '/api/v2/webhooks/hrinfo',
     handler: 'WebhooksController.hrinfo'

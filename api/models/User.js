@@ -1020,6 +1020,11 @@ module.exports = class User extends Model {
         type: Date,
         readonly: true
       },
+      verificationExpiryEmail: {
+        type: Boolean,
+        default: false,
+        readonly: true
+      },
       // Makes sure it's a valid URL, and do not allow urls from other domains
       picture: {
         type: String,
