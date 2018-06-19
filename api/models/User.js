@@ -27,6 +27,7 @@ const verifiedDomains = [
   'icrc.org',
   'oxfam.org',
   'savethechildren.org',
+  'fao.org',
   'who.int',
   'ohchr.org',
   'wvi.org'
