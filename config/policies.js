@@ -120,8 +120,7 @@ module.exports = {
     sendSpecialPasswordResetEmail: ['CronPolicy.canRun'],
     verifyAutomatically: ['CronPolicy.canRun'],
     verificationExpiryEmail: ['CronPolicy.canRun'],
-    adjustEmailVerified: ['CronPolicy.canRun'],
-    adjustEmailDuplicates: ['CronPolicy.canRun']
+    unverifyAfterOneYear: ['CronPolicy.canRun']
   },
 
   WebhooksController: {

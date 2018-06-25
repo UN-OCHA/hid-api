@@ -395,7 +395,7 @@ module.exports = class CronController extends Controller {
           sthat.resume();
         });
     });
-  }*/
+  }
 
   adjustEmailVerified (request, reply) {
     const User = this.app.orm.User;
@@ -455,7 +455,7 @@ module.exports = class CronController extends Controller {
     stream.on('end', function () {
       reply().code(204);
     });
-  }
+  }*/
 
   verifyAutomatically (request, reply) {
     const User = this.app.orm.User;
@@ -496,7 +496,29 @@ module.exports = class CronController extends Controller {
       this.pause();
       EmailService.sendVerificationExpiryEmail(user, function () {
         user.verificationExpiryEmail = true;
-        user.save();
+        user.save(function (err) {
+          sthat.resume();
+        });
+      });
+    });
+    stream.on('end', function () {
+      reply().code(204);
+    });
+  }
+
+  unverifyAfterOneYear (request, reply) {
+    const User = this.app.orm.user;
+    const EmailService = this.app.services.EmailService;
+    const current = Date.now();
+    const oneYear = new Date(current - 365 * 24 * 3600 * 1000);
+    const stream = User.find({verified: true, verifiedOn: { $lte: oneYear }, verificationExpiryEmail: true}).cursor();
+    stream.on('data', function (user) {
+      const sthat = this;
+      this.pause();
+      user.verified = false;
+      user.verifiedOn = new Date(0, 0, 1, 0, 0, 0);
+      user.verified_by = {};
+      user.save(function (err) {
         sthat.resume();
       });
     });
