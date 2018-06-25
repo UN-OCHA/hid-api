@@ -546,6 +546,12 @@ module.exports = [
 
   {
     method: 'GET',
+    path: '/api/v2/cron/testMongoose',
+    handler: 'CronController.testMongoose'
+  },
+
+  {
+    method: 'GET',
     path: '/api/v2/cron/forceResetPassword',
     handler: 'CronController.forceResetPassword'
   },

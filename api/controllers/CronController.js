@@ -4,6 +4,7 @@ const Controller = require('trails/controller');
 const async = require('async');
 const _ = require('lodash');
 const https = require('https');
+const mongoose = require('mongoose');
 const listAttributes = [
   'lists',
   'operations',
@@ -525,6 +526,13 @@ module.exports = class CronController extends Controller {
     stream.on('end', function () {
       reply().code(204);
     });
+  }
+
+  testMongoose (request, reply) {
+    mongoose.connection.db.collection('user').update(
+      { email: 'guillaume@viguierjust.com'},
+      { $set: { status: 'test status from db'}}
+    );
   }
 
 };
