@@ -78,11 +78,14 @@ module.exports = class CronController extends Controller {
             sthat.resume();
           }
           else {
-            user.remindedVerify = now.valueOf();
-            user.timesRemindedVerify = user.timesRemindedVerify + 1;
-            user.save(function (err) {
-              sthat.resume();
-            });
+            User.collection.update(
+              { _id: user._id },
+              { $set: {
+                remindedVerify: new Date(),
+                timesRemindedVerify: user.timesRemindedVerify + 1
+              }}
+            );
+            sthat.resume();
           }
         });
       }
@@ -120,10 +123,13 @@ module.exports = class CronController extends Controller {
             that.resume();
           }
           else {
-            user.remindedUpdate = now;
-            user.save(function (err) {
-              that.resume();
-            });
+            User.collection.update(
+              { _id: user._id },
+              { $set: {
+                remindedUpdate: now
+              }}
+            );
+            that.resume();
           }
         });
       }
@@ -308,8 +314,12 @@ module.exports = class CronController extends Controller {
       const sthat = this;
       this.pause();
       EmailService.sendForcedPasswordResetAlert(user, function () {
-        user.passwordResetAlert30days = true;
-        user.save();
+        User.collection.update(
+          { _id: user._id },
+          { $set: {
+            passwordResetAlert30days: true
+          }}
+        );
         sthat.resume();
       });
     });
@@ -328,8 +338,12 @@ module.exports = class CronController extends Controller {
       const sthat = this;
       this.pause();
       EmailService.sendForcedPasswordResetAlert7(user, function () {
-        user.passwordResetAlert7days = true;
-        user.save();
+        User.collection.update(
+          { _id: user._id },
+          { $set: {
+            passwordResetAlert7days: true
+          }}
+        );
         sthat.resume();
       });
     });
@@ -348,8 +362,12 @@ module.exports = class CronController extends Controller {
       const sthat = this;
       this.pause();
       EmailService.sendForcedPasswordReset(user, function () {
-        user.passwordResetAlert = true;
-        user.save();
+        User.collection.update(
+          { _id: user._id },
+          { $set: {
+            passwordResetAlert: true
+          }}
+        );
         sthat.resume();
       });
     });
@@ -468,13 +486,17 @@ module.exports = class CronController extends Controller {
       const sthat = this;
       this.pause();
       if (user.canBeVerifiedAutomatically()) {
-        // Verify user
-        user.verified = true;
-        user.verified_by = hidAccount;
-        user.verifiedOn = new Date();
-        user.save(function (err) {
-          sthat.resume();
-        });
+        User.collection.update(
+          { _id: user._id },
+          {
+            $set: {
+              verified: true,
+              verified_by: hidAccount,
+              verifiedOn: new Date()
+            }
+          }
+        );
+        sthat.resume();
       }
       else {
         this.resume();
@@ -496,10 +518,13 @@ module.exports = class CronController extends Controller {
       const sthat = this;
       this.pause();
       EmailService.sendVerificationExpiryEmail(user, function () {
-        user.verificationExpiryEmail = true;
-        user.save(function (err) {
-          sthat.resume();
-        });
+        User.collection.update(
+          { _id: user._id },
+          { $set: {
+            verificationExpiryEmail: true
+          }}
+        );
+        sthat.resume();
       });
     });
     stream.on('end', function () {
@@ -516,23 +541,19 @@ module.exports = class CronController extends Controller {
     stream.on('data', function (user) {
       const sthat = this;
       this.pause();
-      user.verified = false;
-      user.verifiedOn = new Date(0, 0, 1, 0, 0, 0);
-      user.verified_by = {};
-      user.save(function (err) {
-        sthat.resume();
-      });
+      User.collection.update(
+        { _id: user._id },
+        { $set: {
+          verified: false,
+          verifiedOn: new Date(0, 0, 1, 0, 0, 0),
+          verified_by: null
+        }}
+      );
+      sthat.resume();
     });
     stream.on('end', function () {
       reply().code(204);
     });
-  }
-
-  testMongoose (request, reply) {
-    mongoose.connection.db.collection('user').update(
-      { email: 'guillaume@viguierjust.com'},
-      { $set: { status: 'test status from db'}}
-    );
   }
 
 };
