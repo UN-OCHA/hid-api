@@ -41,18 +41,9 @@ module.exports = class AuthPolicy extends Policy {
         return reply(Boom.unauthorized('Format is Authorization: Bearer [token]'));
       }
     }
-    else if (request.query.token) {
-      token = request.query.token;
-      // We delete the token from param to not mess with blueprints
-      delete request.query.token;
-    }
     else if (request.query.access_token) {
       token = request.query.access_token;
       delete request.query.access_token;
-    }
-    else if (request.payload && request.payload.access_token) {
-      token = request.payload.access_token;
-      delete request.payload.access_token;
     }
     else {
       this.log.warn('No authorization token was found', { security: true, fail: true, request: request});

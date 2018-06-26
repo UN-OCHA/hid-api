@@ -10,7 +10,7 @@ const Boom = require('boom');
 module.exports = class CronPolicy extends Policy {
 
   canRun (request, reply) {
-    if (request.query.cron_key && request.query.cron_key === process.env.CRON_KEY) {
+    if (request.headers && request.headers.authorization && request.headers.authorization === process.env.CRON_KEY) {
       return reply();
     }
     else {

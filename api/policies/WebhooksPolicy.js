@@ -10,7 +10,7 @@ const Boom = require('boom');
 module.exports = class WebhooksPolicy extends Policy {
 
   canRun (request, reply) {
-    if (request.query.secret && request.query.secret === process.env.CRON_KEY) {
+    if (request.headers && request.headers.authorization && request.headers.authorization === process.env.CRON_KEY) {
       return reply();
     }
     else {
