@@ -41,20 +41,20 @@ module.exports = class ClientController extends Controller{
           }
           return reply(result);
         })
-        .catch(err => { that.app.services.ErrorService.handle(err, request, reply); });
+        .catch(err => {
+          that.app.services.ErrorService.handle(err, request, reply);
+        });
     }
     else {
       const query = this.app.services.HelperService.find('Client', criteria, options);
+      let gresults = {};
       query
         .then((results) => {
-          return Client
-            .count(criteria)
-            .then((number) => {
-              return {result: results, number: number};
-            });
+          gresults = results;
+          return Client.count(criteria);
         })
-        .then((result) => {
-          return reply(result.result).header('X-Total-Count', result.number);
+        .then((number) => {
+          return reply(gresults).header('X-Total-Count', number);
         })
         .catch((err) => {
           that.app.services.ErrorService.handle(err, request, reply);

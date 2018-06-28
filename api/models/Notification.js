@@ -2,8 +2,8 @@
 
 const Model = require('trails/model');
 const Schema = require('mongoose').Schema;
-const NotificationTemplate = require('email-templates').EmailTemplate;
-const TemplateDir = require('path').join(__dirname, '../../notifications/');
+const path = require('path');
+const ejs = require('ejs');
 
 
 /**
@@ -21,18 +21,23 @@ module.exports = class Notification extends Model {
 
         schema.pre('save', function(next) {
           if (!this.text) {
-            const templateDir = TemplateDir + this.type;
-            const template = new NotificationTemplate(templateDir);
             const that = this;
-            template.render({
-              createdBy: that.createdBy,
-              user: that.user,
-              params: that.params
-            }, function(err, result) {
+            let templatePath = 'notifications/' + this.type;
+            if (this.user.locale && this.user.locale === 'fr') {
+              templatePath += '/fr';
+            }
+            templatePath += '/html.ejs';
+            const template = path.resolve(templatePath);
+
+            ejs.renderFile(template, {
+              createdBy: this.createdBy,
+              user: this.user,
+              params: this.params
+            }, {}, function (err, str) {
               if (err) {
                 return next(err);
               }
-              that.text = result.html;
+              that.text = str;
               next();
             });
           }

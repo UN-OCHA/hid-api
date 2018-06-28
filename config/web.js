@@ -44,7 +44,7 @@ module.exports = {
       options: {
         skip: function (request, reply) {
           const paths = ['/', '/login', '/oauth/authorize',
-            '/register', '/verify', '/password', '/new_password'];
+            '/register', '/verify', '/verify2', '/password', '/new_password'];
           if (paths.indexOf(request.path) === -1) {
             return true;
           }
@@ -245,8 +245,9 @@ module.exports = {
   options: {
     routes: {
       cors: {
-        additionalExposedHeaders: [ 'X-Total-Count' ],
-        additionalHeaders: ['Accept-Language']
+        additionalExposedHeaders: [ 'X-Total-Count', 'set-cookie' ],
+        additionalHeaders: ['Accept-Language', 'X-HID-TOTP'],
+        credentials: true // Allow the x-hid-totp-trust cookie to be sent
       },
       payload: {
         maxBytes: 5242880

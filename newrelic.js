@@ -365,7 +365,7 @@ exports.config = {
      * @env NEW_RELIC_IGNORING_RULES
      */
     ignore: [
-      '^\/socket\.io\/.*\/xhr-polling/'
+      '^/socket.io/.*/xhr-polling/'
     ]
   },
   /**
@@ -494,7 +494,7 @@ exports.config = {
    * This is used to configure properties about the user's host name.
    */
   process_host: {
-     /**
+    /**
      * Configurable display name for hosts
      *
      * @env NEW_RELIC_PROCESS_HOST_DISPLAY_NAME

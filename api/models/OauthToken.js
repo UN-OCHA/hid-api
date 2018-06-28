@@ -37,6 +37,13 @@ module.exports = class OauthToken extends Model {
             callback(false, ftoken);
           });
         }
+      },
+      methods: {
+        isExpired: function () {
+          const now = new Date();
+          const expires = this.expires;
+          return now.getTime() > expires.getTime();
+        }
       }
     };
   }

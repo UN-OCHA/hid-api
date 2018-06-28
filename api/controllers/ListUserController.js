@@ -19,6 +19,8 @@ module.exports = class ListUserController extends Controller{
     const Model = this.app.orm.user;
     const List = this.app.orm.list;
     const childAttributes = Model.listAttributes();
+    const GSSSyncService = this.app.services.GSSSyncService;
+    const OutlookService = this.app.services.OutlookService;
 
     this.log.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload,
       'options =', options, { request: request});
@@ -32,7 +34,14 @@ module.exports = class ListUserController extends Controller{
       return reply(Boom.badRequest('Missing list attribute'));
     }
 
+    let notify = true;
+    if (typeof request.payload.notify !== 'undefined') {
+      notify = request.payload.notify;
+    }
+    delete request.payload.notify;
+
     const that = this;
+    let gResult = {};
 
     List
       .findOne({ '_id': payload.list })
@@ -115,6 +124,14 @@ module.exports = class ListUserController extends Controller{
           });
       })
       .then((result) => {
+        result.list.count = result.list.count + 1;
+        return result.list
+          .save()
+          .then(() => {
+            return result;
+          });
+      })
+      .then((result) => {
         const managers = [];
         result.list.managers.forEach(function (manager) {
           if (manager.toString() !== request.params.currentUser._id.toString()) {
@@ -131,7 +148,7 @@ module.exports = class ListUserController extends Controller{
       })
       .then((result) => {
         // Notify user if needed
-        if (request.params.currentUser.id !== userId && result.list.type !== 'list') {
+        if (request.params.currentUser.id !== userId && result.list.type !== 'list' && notify === true) {
           that.log.debug('Checked in by a different user', {request: request});
           that.app.services.NotificationService.send({
             type: 'admin_checkin',
@@ -153,6 +170,15 @@ module.exports = class ListUserController extends Controller{
             params: { list: list, user: user }
           }, () => { });
         }
+        return result;
+      })
+      .then((result) => {
+        gResult = result;
+        // Synchronize google spreadsheets
+        return GSSSyncService.addUserToSpreadsheets(result.list._id, result.user);
+      })
+      .then(data => {
+        return OutlookService.addUserToContactFolders(gResult.list._id, gResult.user);
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, request, reply);
@@ -239,6 +265,8 @@ module.exports = class ListUserController extends Controller{
     const payload = request.payload;
     const User = this.app.orm.user;
     const List = this.app.orm.List;
+    const GSSSyncService = this.app.services.GSSSyncService;
+    const OutlookService = this.app.services.OutlookService;
     const childAttributes = User.listAttributes();
 
     this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,
@@ -249,6 +277,8 @@ module.exports = class ListUserController extends Controller{
     }
 
     const that = this;
+    let gResult = {};
+
     User
       .findOne({ _id: request.params.id })
       .then(record => {
@@ -273,6 +303,10 @@ module.exports = class ListUserController extends Controller{
         return List
           .findOne({ _id: result.listuser.list })
           .then(list => {
+            list.count = list.count - 1;
+            return list.save();
+          })
+          .then(list => {
             return {user: result.user, listuser: result.listuser, list: list};
           });
       })
@@ -296,6 +330,14 @@ module.exports = class ListUserController extends Controller{
           params: { list: result.list }
         });
         return result;
+      })
+      .then((result) => {
+        gResult = result;
+        // Synchronize google spreadsheets
+        return GSSSyncService.deleteUserFromSpreadsheets(result.list._id, result.user.id);
+      })
+      .then(data => {
+        return OutlookService.deleteUserFromContactFolders(gResult.list._id, gResult.user.id);
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, request, reply);

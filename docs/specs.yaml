@@ -994,8 +994,66 @@ paths:
           type: string
       responses:
         '200':
-          description: 'TOTP was enabled successfully'
+          description: 'TOTP qrcode generated successfully'
         '400':
           description: 'Bad request. TOTP is already enabled, and needs to be disabled before generating a QRCode'
+        '401':
+          description: 'Missing or invalid authorization token'
+  /totp/device:
+    post:
+      tags:
+        - totp
+      summary: 'Save a device as trusted for 30 days'
+      parameters:
+        - name: 'authorization'
+          in: 'header'
+          description: 'The JWT'
+          required: true
+          type: string
+        - name: 'X-HID-TOTP'
+          in: 'header'
+          description: 'The TOTP token'
+          required: true
+          type: string
+      responses:
+        '200':
+          description: 'Device was saved successfully. The response should contain a secret which will need to be provided in the x-hid-totp-trust header.'
+        '400':
+          description: 'Bad request.'
+        '401':
+          description: 'Missing or invalid authorization token'
+    delete:
+      tags:
+        - totp
+      summary: 'Remove saved device'
+      parameters:
+        - name: 'authorization'
+          in: 'header'
+          description: 'The JWT'
+          required: true
+          type: string
+      responses:
+        '204':
+          description: 'Device was removed successfully.'
+        '400':
+          description: 'Bad request.'
+        '401':
+          description: 'Missing or invalid authorization token'
+  /totp/codes:
+    post:
+      tags:
+        - totp
+      summary: 'Retrieve backup codes for a user with TOTP enabled'
+      parameters:
+        - name: 'authorization'
+          in: 'header'
+          description: 'The JWT'
+          required: true
+          type: string
+      responses:
+        '200':
+          description: 'Array of 16 backup codes'
+        '400':
+          description: 'Bad request. TOTP is not enabled for this user.'
         '401':
           description: 'Missing or invalid authorization token'

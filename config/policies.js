@@ -43,10 +43,13 @@ module.exports = {
 
   // Limit 2FA to admins for now
   TOTPController: {
-    generateQRCode: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
+    generateQRCode: ['AuthPolicy.isAuthenticated'],
     verifyTOTPToken: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPValidPolicy'],
     enable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPValidPolicy'],
-    disable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid']
+    disable: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid'],
+    saveDevice: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid'],
+    destroyDevice: ['AuthPolicy.isAuthenticated'],
+    generateBackupCodes: ['AuthPolicy.isAuthenticated'],
   },
 
   UserController: {
@@ -54,7 +57,7 @@ module.exports = {
     create: [ 'AuthPolicy.isAuthenticated', 'UserPolicy.canCreate' ],
     find: ['AuthPolicy.isAuthenticated'],
     update: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate'],
-    destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin', 'AuthPolicy.isTOTPEnabledAndValid'],
+    destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid'],
     notify: ['AuthPolicy.isAuthenticated'],
     updatePassword: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid'],
     resetPasswordEndpoint: [],
@@ -89,6 +92,46 @@ module.exports = {
     find: ['AuthPolicy.isAuthenticated'],
     update: ['AuthPolicy.isAuthenticated', 'ListPolicy.canUpdate'],
     destroy: ['AuthPolicy.isAuthenticated', 'ListPolicy.canDestroy']
-  }
+  },
+
+  GSSSyncController: {
+    create: ['AuthPolicy.isAuthenticated'],
+    destroy: ['AuthPolicy.isAuthenticated', 'GSSSyncPolicy.canDestroy'],
+    saveGoogleCredentials: ['AuthPolicy.isAuthenticated']
+  },
+
+  OutlookController: {
+    saveOutlookCredentials: ['AuthPolicy.isAuthenticated'],
+    create: ['AuthPolicy.isAuthenticated']
+  },
+
+  CronController: {
+    synchronizeGoogleSpreadsheets: ['CronPolicy.canRun'],
+    deleteExpiredUsers: ['CronPolicy.canRun'],
+    deleteExpiredTokens: ['CronPolicy.canRun'],
+    sendReminderVerifyEmails: ['CronPolicy.canRun'],
+    sendReminderUpdateEmails: ['CronPolicy.canRun'],
+    sendReminderCheckoutEmails: ['CronPolicy.canRun'],
+    sendReminderCheckinEmails: ['CronPolicy.canRun'],
+    forcedResetPasswordAlert: ['CronPolicy.canRun'],
+    forcedResetPasswordAlert7: ['CronPolicy.canRun'],
+    forceResetPassword: ['CronPolicy.canRun'],
+    doAutomatedCheckout: ['CronPolicy.canRun'],
+    sendSpecialPasswordResetEmail: ['CronPolicy.canRun'],
+    verifyAutomatically: ['CronPolicy.canRun'],
+    verificationExpiryEmail: ['CronPolicy.canRun'],
+    unverifyAfterOneYear: ['CronPolicy.canRun']
+  },
+
+  WebhooksController: {
+    hrinfo: ['WebhooksPolicy.canRun']
+  },
+
+  OperationController: {
+    create: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdminOrGlobalManager'],
+    find: ['AuthPolicy.isAuthenticated'],
+    update: ['AuthPolicy.isAuthenticated', 'OperationsPolicy.canUpdateOperation'],
+    destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdminOrGlobalManager']
+  },
 
 };

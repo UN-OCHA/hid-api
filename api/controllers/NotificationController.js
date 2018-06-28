@@ -19,16 +19,14 @@ module.exports = class NotificationController extends Controller{
 
     const that = this;
     const query = this.app.services.HelperService.find('Notification', criteria, options);
+    let gresults = {};
     query
       .then((results) => {
-        return Notification
-          .count(criteria)
-          .then((number) => {
-            return {result: results, number: number};
-          });
+        gresults = results;
+        return Notification.count(criteria);
       })
-      .then((result) => {
-        return reply(result.result).header('X-Total-Count', result.number);
+      .then((number) => {
+        return reply(gresults).header('X-Total-Count', number);
       })
       .catch((err) => {
         that.app.services.ErrorService.handle(err, request, reply);
@@ -56,9 +54,10 @@ module.exports = class NotificationController extends Controller{
           }
           record.notified = request.payload.notified;
           record.read = request.payload.read;
-          record.save().then(() => {
-            return reply(record);
-          });
+          return record.save();
+        })
+        .then(record => {
+          return reply(record);
         })
         .catch(err => {
           that.app.services.ErrorService.handle(err, request, reply);
@@ -69,6 +68,9 @@ module.exports = class NotificationController extends Controller{
         .update({user: request.params.currentUser.id}, { read: request.payload.read, notified: request.payload.notified }, { multi: true})
         .then(() => {
           return reply();
+        })
+        .catch(err => {
+          that.app.services.ErrorService.handle(err, request, reply);
         });
     }
   }

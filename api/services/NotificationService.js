@@ -21,13 +21,10 @@ module.exports = class NotificationService extends Service {
     Notification
       .create(notification)
       .then(not => {
-        return that.app.services.EmailService.sendNotification(notification, function (err, info) {
-          if (err) {
-            that.log.error('Error sending an email notification', { error: err });
-            return callback(Boom.badImplementation());
-          }
-          return callback();
-        });
+        return that.app.services.EmailService.sendNotification(notification);
+      })
+      .then(info => {
+        return callback();
       })
       .catch(err => {
         that.log.error('Error creating a notification', { error: err });

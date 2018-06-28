@@ -80,13 +80,6 @@ module.exports = [
     handler: 'ViewController.user'
   },
 
-  // TODO: remove after HPC fixes their app
-  {
-    method: 'GET',
-    path: '/account',
-    handler: 'ViewController.user'
-  },
-
   {
     method: 'GET',
     path: '/docs/{param*}',
@@ -167,6 +160,12 @@ module.exports = [
   },
 
   {
+    method: 'GET',
+    path: '/api/v2/numbers',
+    handler: 'NumbersController.numbers'
+  },
+
+  {
     method: 'POST',
     path: '/api/v2/user',
     handler: 'UserController.create'
@@ -182,20 +181,6 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/user.{extension}',
     handler: 'UserController.find'
-  },
-
-  // TODO: remove when HPC updates their client application to use the new API
-  {
-    method: 'POST',
-    path: '/api/users',
-    handler: 'UserController.findV1'
-  },
-
-  // TODO: remove when HPC updates their client application to use the new API
-  {
-    method: 'POST',
-    path: '/api/register',
-    handler: 'UserController.registerV1'
   },
 
   {
@@ -345,6 +330,18 @@ module.exports = [
 
   {
     method: 'POST',
+    path: '/api/v2/user/{id}/googlecredentials',
+    handler: 'GSSSyncController.saveGoogleCredentials'
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v2/user/{id}/outlookcredentials',
+    handler: 'OutlookController.saveOutlookCredentials'
+  },
+
+  {
+    method: 'POST',
     path: '/api/v2/list',
     handler: 'ListController.create'
   },
@@ -453,6 +450,24 @@ module.exports = [
 
   {
     method: 'POST',
+    path: '/api/v2/totp/codes',
+    handler: 'TOTPController.generateBackupCodes'
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v2/totp/device',
+    handler: 'TOTPController.saveDevice'
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/totp/device/{id}',
+    handler: 'TOTPController.destroyDevice'
+  },
+
+  {
+    method: 'POST',
     path: '/api/v2/totp',
     handler: 'TOTPController.enable'
   },
@@ -470,8 +485,134 @@ module.exports = [
   },
 
   {
+    method: 'POST',
+    path: '/api/v2/gsssync',
+    handler: 'GSSSyncController.create'
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/gsssync',
+    handler: 'GSSSyncController.destroy'
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v2/outlookGroup',
+    handler: 'OutlookController.create'
+  },
+
+  {
     method: 'GET',
-    path: '/api/v2/import/lists',
-    handler: 'ListController.importLists',
-  }
+    path: '/api/v2/cron/deleteExpiredUsers',
+    handler: 'CronController.deleteExpiredUsers'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/deleteExpiredTokens',
+    handler: 'CronController.deleteExpiredTokens'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/sendReminderVerifyEmails',
+    handler: 'CronController.sendReminderVerifyEmails'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/sendReminderUpdateEmails',
+    handler: 'CronController.sendReminderUpdateEmails'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/sendReminderCheckoutEmails',
+    handler: 'CronController.sendReminderCheckoutEmails'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/sendReminderCheckinEmails',
+    handler: 'CronController.sendReminderCheckinEmails'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/forcedResetPasswordAlert',
+    handler: 'CronController.forcedResetPasswordAlert'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/forceResetPassword',
+    handler: 'CronController.forceResetPassword'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/forcedResetPasswordAlert7',
+    handler: 'CronController.forcedResetPasswordAlert7'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/doAutomatedCheckout',
+    handler: 'CronController.doAutomatedCheckout'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/specialPasswordReset',
+    handler: 'CronController.sendSpecialPasswordResetEmail'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/verifyAutomatically',
+    handler: 'CronController.verifyAutomatically'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/verificationExpiryEmail',
+    handler: 'CronController.verificationExpiryEmail'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/cron/unverifyAfterOneYear',
+    handler: 'CronController.unverifyAfterOneYear'
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v2/webhooks/hrinfo',
+    handler: 'WebhooksController.hrinfo'
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v2/operation',
+    handler: 'OperationController.create'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/operation/{id?}',
+    handler: 'OperationController.find'
+  },
+
+  {
+    method: 'PUT',
+    path: '/api/v2/operation/{id}',
+    handler: 'OperationController.update'
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/operation/{id}',
+    handler: 'OperationController.destroy'
+  },
 ];

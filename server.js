@@ -1,7 +1,7 @@
 /**
  * @module server
  *
- * Start up the Trails Application.
+ * Start up the Trails Application.Test
  */
 
 'use strict';

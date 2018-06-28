@@ -17,6 +17,21 @@ const userPopulate1 = [
   {path: 'connections.user', select: '_id name'},
   {path: 'authorizedClients', select: '_id id name'}
 ];
+const verifiedDomains = [
+  'un.org',
+  'unhcr.org',
+  'wfp.org',
+  'unicef.org',
+  'undp.org',
+  'iom.int',
+  'icrc.org',
+  'oxfam.org',
+  'savethechildren.org',
+  'fao.org',
+  'who.int',
+  'ohchr.org',
+  'wvi.org'
+];
 
 /**
  * @module User
@@ -41,6 +56,85 @@ module.exports = class User extends Model {
     return buffer.toString('hex').slice(0, 10) + 'B';
   }
 
+  // TODO: try to remove this duplication after trails v3 is released
+
+  sanitizeExportedUser (user, requester) {
+    if (user._id.toString() !== requester._id.toString() && !requester.is_admin) {
+      if (user.emailsVisibility !== 'anyone') {
+        if ((user.emailsVisibility === 'verified' && !requester.verified) ||
+            (user.emailsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
+          user.email = null;
+          user.emails = [];
+        }
+      }
+
+      if (user.phonesVisibility !== 'anyone') {
+        if ((user.phonesVisibility === 'verified' && !requester.verified) ||
+            (user.phonesVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
+          user.phone_number = null;
+          user.phone_numbers = [];
+        }
+      }
+
+      if (user.locationsVisibility !== 'anyone') {
+        if ((user.locationsVisibility === 'verified' && !requester.verified) ||
+            (user.locationsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
+          user.location = null;
+          user.locations = [];
+        }
+      }
+    }
+  }
+
+  connectionsIndex (user, userId) {
+    let index = -1;
+    if (user.connections && user.connections.length) {
+      for (let i = 0, len = user.connections.length; i < len; i++) {
+        if (user.connections[i].pending === false &&
+          ((user.connections[i].user._id && user.connections[i].user._id.toString() === userId.toString()) ||
+          (!user.connections[i].user._id && user.connections[i].user.toString() === userId.toString()))) {
+          index = i;
+        }
+      }
+    }
+    return index;
+  }
+
+  translateCheckin (checkin, language) {
+    let name = '', nameEn = '', acronym = '', acronymEn = '';
+    checkin.names.forEach(function (nameLn) {
+      if (nameLn.language === language) {
+        name = nameLn.text;
+      }
+      if (nameLn.language === 'en') {
+        nameEn = nameLn.text;
+      }
+    });
+    checkin.acronyms.forEach(function (acroLn) {
+      if (acroLn.language === language) {
+        acronym = acroLn.text;
+      }
+      if (acroLn.language === 'en') {
+        acronymEn = acroLn.text;
+      }
+    });
+    if (name !== '') {
+      checkin.name = name;
+    }
+    else {
+      if (nameEn !== '') {
+        checkin.name = nameEn;
+      }
+    }
+    if (acronym !== '') {
+      checkin.acronym = acronym;
+    }
+    else {
+      if (acronymEn !== '') {
+        checkin.acronym = acronymEn;
+      }
+    }
+  }
 
   static config () {
     return {
@@ -109,6 +203,22 @@ module.exports = class User extends Model {
         getAppUrl: function () {
           return process.env.APP_URL + '/users/' + this._id;
         },
+
+        getListIds: function () {
+          const that = this;
+          const listIds = [];
+          listTypes.forEach(function (attr) {
+            if (that[attr + 's'].length > 0) {
+              that[attr + 's'].forEach(function (lu) {
+                if (lu.deleted === false) {
+                  listIds.push(lu.list.toString());
+                }
+              });
+            }
+          });
+          return listIds;
+        },
+
         sanitizeLists: function (user) {
           if (this._id.toString() !== user._id.toString() && !user.is_admin && !user.isManager) {
             const that = this;
@@ -205,7 +315,7 @@ module.exports = class User extends Model {
           if (this.email === email) {
             this.email_verified = true;
           }
-          let index = this.emailIndex(email);
+          const index = this.emailIndex(email);
           if (index !== -1) {
             this.emails[index].validated = true;
             this.emails.set(index, this.emails[index]);
@@ -216,7 +326,8 @@ module.exports = class User extends Model {
           let index = -1;
           if (this.connections && this.connections.length) {
             for (let i = 0, len = this.connections.length; i < len; i++) {
-              if (this.connections[i].pending === false &&
+              if (this.connections[i].user &&
+                this.connections[i].pending === false &&
                 ((this.connections[i].user._id && this.connections[i].user._id.toString() === userId.toString()) ||
                 (!this.connections[i].user._id && this.connections[i].user.toString() === userId.toString()))) {
                 index = i;
@@ -392,10 +503,105 @@ module.exports = class User extends Model {
           }
         },
 
+        updateCheckins: function (list) {
+          for (let j = 0; j < this[list.type + 's'].length; j++) {
+            if (this[list.type + 's'][j].list.toString() === list._id.toString()) {
+              this[list.type + 's'][j].name = list.name;
+              this[list.type + 's'][j].names = list.names;
+              this[list.type + 's'][j].acronym = list.acronym;
+              this[list.type + 's'][j].acronyms = list.acronyms;
+              this[list.type + 's'][j].owner = list.owner;
+              this[list.type + 's'][j].managers = list.managers;
+              this[list.type + 's'][j].visibility = list.visibility;
+              if (list.type === 'organization') {
+                this[list.type + 's'][j].orgTypeId = list.metadata.type.id;
+                this[list.type + 's'][j].orgTypeLabel = list.metadata.type.label;
+              }
+            }
+          }
+          if (list.type === 'organization' &&
+            this.organization &&
+            this.organization.list &&
+            this.organization.list.toString() === list._id.toString()) {
+            this.organization.name = list.name;
+            this.organization.names = list.names;
+            this.organization.acronym = list.acronym;
+            this.organization.acronyms = list.acronyms;
+            this.organization.owner = list.owner;
+            this.organization.managers = list.managers;
+            this.organization.visibility = list.visibility;
+            this.organization.orgTypeId = list.metadata.type.id;
+            this.organization.orgTypeLabel = list.metadata.type.label;
+          }
+        },
+
         defaultPopulate: function () {
           return this
             .populate(userPopulate1)
             .execPopulate();
+        },
+
+        trustedDeviceIndex: function (ua) {
+          let index = -1;
+          for (let i = 0, len = this.totpTrusted.length; i < len; i++) {
+            if (this.totpTrusted[i].ua === ua) {
+              index = i;
+            }
+          }
+          return index;
+        },
+
+        isTrustedDevice: function (ua, secret) {
+          const tindex = this.trustedDeviceIndex(ua);
+          const offset = Date.now() - 30 * 24 * 60 * 60 * 1000;
+          if (tindex !== -1 &&
+          this.totpTrusted[tindex].secret === secret &&
+          offset < this.totpTrusted[tindex].date) {
+            return true;
+          }
+          else {
+            return false;
+          }
+        },
+
+        backupCodeIndex: function (code) {
+          let index = -1;
+          for (let i = 0; i < this.totpConf.backupCodes.length; i++) {
+            if (Bcrypt.compareSync(code, this.totpConf.backupCodes[i])) {
+              index = i;
+            }
+          }
+          return index;
+        },
+
+        isPasswordExpired: function () {
+          const lastPasswordReset = this.lastPasswordReset.valueOf();
+          const current = new Date().valueOf();
+          if (current - lastPasswordReset > 6 * 30 * 24 * 3600 * 1000) {
+            return true;
+          }
+          else {
+            return false;
+          }
+        },
+
+        isVerifiableEmail: function (email) {
+          let out = false;
+          const ind = email.indexOf('@');
+          const domain = email.substr((ind+1));
+          return verifiedDomains.indexOf(domain) !== -1;
+        },
+
+        canBeVerifiedAutomatically: function () {
+          const that = this;
+          let out = false;
+          // Check all emails
+          this.emails.forEach(function (email) {
+            if (email.validated && that.isVerifiableEmail(email.email)) {
+              out = true;
+            }
+          });
+          return out;
         },
 
         toJSON: function () {
@@ -406,6 +612,23 @@ module.exports = class User extends Model {
           delete user.hashEmail;
           if (user.totpConf) {
             delete user.totpConf;
+          }
+          if (user.totpTrusted) {
+            for (let i = 0; i < user.totpTrusted.length; i++) {
+              delete user.totpTrusted[i].secret;
+            }
+          }
+          if (user.googleCredentials && user.googleCredentials.refresh_token) {
+            user.googleCredentials = true;
+          }
+          else {
+            user.googleCredentials = false;
+          }
+          if (user.outlookCredentials) {
+            user.outlookCredentials = true;
+          }
+          else {
+            user.outlookCredentials = false;
           }
           listTypes.forEach(function (attr) {
             _.remove(user[attr + 's'], function (checkin) {
@@ -418,6 +641,26 @@ module.exports = class User extends Model {
       onSchema(app, schema) {
         schema.virtual('sub').get(function () {
           return this._id;
+        });
+        schema.pre('remove', function (next) {
+          // Avoid null connections from being created when a user is removed
+          this
+            .model('User')
+            .find({'connections.user': this._id})
+            .then(users => {
+              for (let i = 0; i < users.length; i++) {
+                for (let j = 0; j < users[i].connections.length; j++) {
+                  if (users[i].connections[j].user.toString() === this._id.toString()) {
+                    users[i].connections.id(users[i].connections[j]._id).remove();
+                  }
+                }
+                users[i].save();
+              }
+              next();
+            })
+            .catch(err => {
+              next(err);
+            });
         });
         schema.pre('save', function (next) {
           if (this.middle_name) {
@@ -451,8 +694,7 @@ module.exports = class User extends Model {
             })
             .catch(err => {
               that.log.error('Error populating user', { error: err });
-            }
-          );
+            });
         });
       }
     };
@@ -639,6 +881,18 @@ module.exports = class User extends Model {
       }
     });
 
+    const trustedDeviceSchema = new Schema({
+      ua: {
+        type: String
+      },
+      secret: {
+        type: String
+      },
+      date: {
+        type: Date
+      }
+    });
+
     return {
       // Legacy user_id data, to be added during migration
       user_id: {
@@ -678,6 +932,7 @@ module.exports = class User extends Model {
       },
       name: {
         type: String,
+        index: true,
         validate: {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in name'
@@ -729,6 +984,27 @@ module.exports = class User extends Model {
       password: {
         type: String
       },
+      // Last time the user reset his password
+      lastPasswordReset: {
+        type: Date,
+        readonly: true,
+        default: Date.now
+      },
+      passwordResetAlert30days: {
+        type: Boolean,
+        default: false,
+        readonly: true
+      },
+      passwordResetAlert7days: {
+        type: Boolean,
+        default: false,
+        readonly: true
+      },
+      passwordResetAlert: {
+        type: Boolean,
+        default: false,
+        readonly: true
+      },
       // Only admins can set this
       verified: {
         type: Boolean,
@@ -738,6 +1014,15 @@ module.exports = class User extends Model {
       verified_by: {
         type: Schema.ObjectId,
         ref: 'User',
+        readonly: true
+      },
+      verifiedOn: {
+        type: Date,
+        readonly: true
+      },
+      verificationExpiryEmail: {
+        type: Boolean,
+        default: false,
         readonly: true
       },
       // Makes sure it's a valid URL, and do not allow urls from other domains
@@ -789,7 +1074,7 @@ module.exports = class User extends Model {
           validator: function (v) {
             if (v.length) {
               let out = true;
-              const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
+              const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/;
               for (let i = 0, len = v.length; i < len; i++) {
                 if (!urlRegex.test(v[i].url)) {
                   out = false;
@@ -939,7 +1224,7 @@ module.exports = class User extends Model {
       },
       expires: {
         type: Date,
-        default: new Date() + 7 * 24 * 60 * 60 * 1000,
+        default: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         readonly: true
       },
       lastLogin: {
@@ -1035,6 +1320,20 @@ module.exports = class User extends Model {
       totpConf: {
         type: Schema.Types.Mixed,
         readonly: true
+      },
+      totpTrusted: {
+        type: [trustedDeviceSchema],
+        readonly: true
+      },
+      googleCredentials: {
+        type: Schema.Types.Mixed,
+        readonly: true,
+        default: false
+      },
+      outlookCredentials: {
+        type: Schema.Types.Mixed,
+        readonly: true,
+        default: false
       }
     };
   }

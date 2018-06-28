@@ -1,6 +1,7 @@
 'use strict';
 
 const Service = require('trails/service');
+const crypto = require('crypto');
 const _ = require('lodash');
 const queryOptions = [
   'populate',
@@ -14,7 +15,11 @@ const authorizedDomains = [
   'https://auth.humanitarian.id',
   'https://app2.dev.humanitarian.id',
   'https://api2.dev.humanitarian.id',
-  'https://api.humanitarian.id'
+  'https://api.humanitarian.id',
+  'https://auth.staging.humanitarian.id',
+  'https://api.staging.humanitarian.id',
+  'https://app.staging.humanitarian.id',
+  'https://api.hid.vm'
 ];
 
 /**
@@ -96,7 +101,18 @@ module.exports = class HelperService extends Service {
   getCriteriaFromQuery(query) {
     const criteria = _.omit(query, queryOptions);
     const keys = Object.keys(criteria);
+    const regex = new RegExp(/\[(.*?)\]/);
     for (let i = 0, len = keys.length; i < len; i++) {
+      if (keys[i].indexOf('[') !== -1) {
+        // Get what's inside the brackets
+        const match = keys[i].match(regex);
+        const ikey = keys[i].replace(regex, '');
+        if (typeof criteria[ikey] === 'undefined') {
+          criteria[ikey] = {};
+        }
+        criteria[ikey]['$' + match[1]] = criteria[keys[i]];
+        delete criteria[keys[i]];
+      }
       if (criteria[keys[i]] === 'true') {
         criteria[keys[i]] = true;
       }
@@ -107,11 +123,20 @@ module.exports = class HelperService extends Service {
     return criteria;
   }
 
+  generateRandom () {
+    const buffer = crypto.randomBytes(256);
+    return buffer.toString('hex').slice(0, 10);
+  }
+
   find (modelName, criteria, options) {
     const Model = this.app.orm[modelName];
     const query = Model.find(criteria);
     if (options.limit) {
       query.limit(parseInt(options.limit));
+    }
+    else {
+      // Set a default limit
+      query.limit(100);
     }
     if (options.offset) {
       query.skip(parseInt(options.offset));
@@ -136,5 +161,24 @@ module.exports = class HelperService extends Service {
       }
     }
     return out;
+  }
+
+  saveTOTPDevice (request, user) {
+    this.app.log.debug('Saving device as trusted');
+    const random = user.generateHash();
+    const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
+    if (tindex !== -1) {
+      user.totpTrusted[tindex].secret = random;
+      user.totpTrusted[tindex].date = Date.now();
+    }
+    else {
+      user.totpTrusted.push({
+        secret: random,
+        ua: request.headers['user-agent'],
+        date: Date.now()
+      });
+    }
+    user.markModified('totpTrusted');
+    return user.save();
   }
 };
