@@ -41,6 +41,10 @@ module.exports = class AuthPolicy extends Policy {
         return reply(Boom.unauthorized('Format is Authorization: Bearer [token]'));
       }
     }
+    else if (request.query.access_token) {
+      token = request.query.access_token;
+      delete request.query.access_token;
+    }
     else {
       this.log.warn('No authorization token was found', { security: true, fail: true, request: request});
       return reply(Boom.unauthorized('No Authorization header was found'));
