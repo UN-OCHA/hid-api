@@ -274,9 +274,25 @@ module.exports = class User extends Model {
                   }
                   return out;
                 }
+                else if (checkin.visibility === 'me') {
+                  let out = true;
+
+                  // Is user the owner of the list ?
+                  if (checkin.owner && checkin.owner.toString() === user._id.toString()) {
+                    out = false;
+                  }
+                  // Is user a manager of the list ?
+                  if (checkin.managers && checkin.managers.length) {
+                    for (let i = 0; i < checkin.managers.length; i++) {
+                      if (checkin.managers[i].toString() === user._id.toString()) {
+                        out = false;
+                      }
+                    }
+                  }
+                  return out;
+                }
                 else {
-                  return checkin.visibility === 'me' ||
-                    checkin.visibility === 'verified' && !user.verified;
+                  return checkin.visibility === 'verified' && !user.verified;
                 }
               });
             });
