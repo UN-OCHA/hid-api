@@ -700,6 +700,23 @@ module.exports = class User extends Model {
                 }
                 users[i].save();
               }
+            })
+            .then(() => {
+              // Reduce the number of contacts for each list of the user
+              let listIds = [];
+              listTypes.forEach(function (attr) {
+                user[attr + 's'].forEach(function (checkin) {
+                  listIds.push(checkin.list);
+                });
+              });
+              return this
+                .model('List')
+                .update(
+                  { _id: { $in: listIds}},
+                  { $inc: { count: -1 }}
+                );
+            })
+            .then(() => {
               next();
             })
             .catch(err => {
