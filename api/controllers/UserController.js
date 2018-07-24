@@ -468,7 +468,7 @@ module.exports = class UserController extends Controller{
 
       if (criteria.q) {
         if (validator.isEmail(criteria.q)) {
-          criteria['emails.email'] = criteria.q;
+          criteria['emails.email'] = new RegExp(criteria.q, 'i');
         }
         else {
           criteria.name = criteria.q;
