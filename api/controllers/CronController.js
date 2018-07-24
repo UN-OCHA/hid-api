@@ -390,7 +390,7 @@ module.exports = class CronController extends Controller {
     });
   }
 
-  /*setListCounts (request, reply) {
+  setListCounts (request, reply) {
     reply().code(204);
     const List = this.app.orm.list;
     const User = this.app.orm.User;
@@ -416,7 +416,7 @@ module.exports = class CronController extends Controller {
     });
   }
 
-  adjustEmailVerified (request, reply) {
+  /*adjustEmailVerified (request, reply) {
     const User = this.app.orm.User;
     const app = this.app;
     const stream = User.find({'email_verified': false}).cursor();
