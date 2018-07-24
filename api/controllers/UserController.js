@@ -669,7 +669,10 @@ module.exports = class UserController extends Controller{
     const that = this;
 
     User
-      .remove({ _id: request.params.id })
+      .findOne({ _id: request.params.id })
+      .then(user => {
+        return user.remove();
+      })
       .then(() => {
         return reply().code(204);
       })

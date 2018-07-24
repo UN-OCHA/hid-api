@@ -687,6 +687,7 @@ module.exports = class User extends Model {
           return this._id;
         });
         schema.pre('remove', function (next) {
+          const that = this;
           // Avoid null connections from being created when a user is removed
           this
             .model('User')
@@ -694,7 +695,7 @@ module.exports = class User extends Model {
             .then(users => {
               for (let i = 0; i < users.length; i++) {
                 for (let j = 0; j < users[i].connections.length; j++) {
-                  if (users[i].connections[j].user.toString() === this._id.toString()) {
+                  if (users[i].connections[j].user.toString() === that._id.toString()) {
                     users[i].connections.id(users[i].connections[j]._id).remove();
                   }
                 }
@@ -705,11 +706,11 @@ module.exports = class User extends Model {
               // Reduce the number of contacts for each list of the user
               let listIds = [];
               listTypes.forEach(function (attr) {
-                user[attr + 's'].forEach(function (checkin) {
+                that[attr + 's'].forEach(function (checkin) {
                   listIds.push(checkin.list);
                 });
               });
-              return this
+              return that
                 .model('List')
                 .update(
                   { _id: { $in: listIds}},
