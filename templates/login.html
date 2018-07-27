@@ -18,7 +18,7 @@
       <form method="post" action="/login">
         <div class="form-field">
           <label for="email" translate>Email</label>
-          <input type="email" name="email" id="email" placeholder="Your email address" required>
+          <input type="email" name="email" id="email" placeholder="Your email address" value="<%= query.email %>" required>
         </div>
         <div class="form-field">
           <label for="password"><span translate>Password</span></label>
