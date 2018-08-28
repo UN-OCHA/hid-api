@@ -175,11 +175,10 @@ module.exports = class ViewController extends Controller {
 
   register (request, reply) {
     const requestUrl = this._buildRequestUrl(request, 'verify2');
-    var recaptcha = new Recaptcha({siteKey: process.env.RECAPTCHA_PUBLIC_KEY, secretKey: process.env.RECAPTCHA_PRIVATE_KEY});
     reply.view('register', {
       title: 'Register in Humanitarian ID',
       requestUrl: requestUrl,
-      recaptcha: recaptcha.formElement()
+      recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY
     });
   }
 

@@ -1,5 +1,6 @@
 <% include header %>
 
+<script src='https://www.google.com/recaptcha/api.js'></script>
 <script type="text/javascript">
   function checkPassword(str)
   {
@@ -55,7 +56,7 @@
           <label for="confirm_password">Password (confirm)</label>
           <input type="password" name="confirm_password" id="confirm_password" placeholder="" required>
         </div>
-        <%= recaptcha %>
+        <div class="g-recaptcha" data-sitekey="<%= recaptcha_site_key %>"></div>
         <input type="hidden" name="crumb" value="<%= crumb %>" />
         <input type="hidden" name="app_verify_url" value="<%= requestUrl %>" />
         <button type="submit" class="btn-primary">Register</button>
