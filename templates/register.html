@@ -55,6 +55,7 @@
           <label for="confirm_password">Password (confirm)</label>
           <input type="password" name="confirm_password" id="confirm_password" placeholder="" required>
         </div>
+        <%= recaptcha %>
         <input type="hidden" name="crumb" value="<%= crumb %>" />
         <input type="hidden" name="app_verify_url" value="<%= requestUrl %>" />
         <button type="submit" class="btn-primary">Register</button>

@@ -2,6 +2,7 @@
 
 const Controller = require('trails/controller');
 const Boom = require('boom');
+const Recaptcha = require('recaptcha2');
 
 module.exports = class ViewController extends Controller {
 
@@ -174,9 +175,11 @@ module.exports = class ViewController extends Controller {
 
   register (request, reply) {
     const requestUrl = this._buildRequestUrl(request, 'verify2');
+    var recaptcha = new Recaptcha({siteKey: process.env.RECAPTCHA_PUBLIC_KEY, secretKey: process.env.RECAPTCHA_PRIVATE_KEY});
     reply.view('register', {
       title: 'Register in Humanitarian ID',
-      requestUrl: requestUrl
+      requestUrl: requestUrl,
+      recaptcha: recaptcha.formElement()
     });
   }
 
