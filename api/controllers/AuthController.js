@@ -424,7 +424,7 @@ module.exports = class AuthController extends Controller{
     const type = request.payload.code ? 'code' : 'refresh';
     const that = this;
     OauthToken
-      .findOne({token: code, type: type})
+      .findOne({token: token, type: type})
       .populate('client user')
       .then(ocode => {
         if (!ocode) {
