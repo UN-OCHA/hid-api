@@ -413,16 +413,18 @@ module.exports = class AuthController extends Controller{
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
     const OauthToken = this.app.orm.OauthToken;
     const code = request.payload.code;
-    if (!code) {
+    if (!code && request.payload.grant_type !== 'refresh_token') {
       this.log.warn(
         'Unsuccessful access token request due to missing authorization code.',
         { security: true, fail: true, request: request }
       );
       return reply(Boom.badRequest('Missing authorization code'));
     }
+    const token = request.payload.code ? request.payload.code : request.payload.refresh_token;
+    const type = request.payload.code ? 'code' : 'refresh';
     const that = this;
     OauthToken
-      .findOne({token: code, type: 'code'})
+      .findOne({token: code, type: type})
       .populate('client user')
       .then(ocode => {
         if (!ocode) {
