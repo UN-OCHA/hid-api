@@ -21,7 +21,7 @@
     "authenticator": "^1.1.2",
     "base64url": "^2.0.0",
     "bcryptjs": "^2.3.0",
-    "bson": "1.0.4",
+    "bson": "1.1.0",
     "crumb": "^6.0.3",
     "ejs": "^2.5.2",
     "email-templates": "^3.1.5",
