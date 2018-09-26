@@ -19,18 +19,46 @@ const userPopulate1 = [
 ];
 const verifiedDomains = [
   'un.org',
+  'unicef.org',
   'unhcr.org',
   'wfp.org',
-  'unicef.org',
-  'undp.org',
   'iom.int',
-  'icrc.org',
-  'oxfam.org',
   'savethechildren.org',
-  'fao.org',
   'who.int',
-  'ohchr.org',
-  'wvi.org'
+  'wvi.org',
+  'undp.org',
+  'fao.org',
+  'unfpa.org',
+  'nrc.no',
+  'oxfam.org',
+  'oxfam.org.uk',
+  'ifrc.org',
+  'crs.org',
+  'plan-international.org',
+  'rescue.org',
+  'icrc.org',
+  'acted.org',
+  'internationalmedicalcorps.org',
+  'hi-emergency.org',
+  'echofield.eu',
+  'mercycorps.org',
+  'immap.org',
+  'concern.net',
+  'unwomen.org',
+  'undss.org',
+  'usaid.gov',
+  'dfid.gov.uk',
+  'msb.se',
+  'medicalteams.org',
+  'unhabitat.org',
+  'nca.no',
+  'mapaction.org',
+  'christian-aid.org',
+  'tdh.ch',
+  'humanitarianresponse.info',
+  'humanitarian.id',
+  'reliefweb.int',
+  'ohchr.org'
 ];
 
 /**
@@ -246,9 +274,25 @@ module.exports = class User extends Model {
                   }
                   return out;
                 }
+                else if (checkin.visibility === 'me') {
+                  let out = true;
+
+                  // Is user the owner of the list ?
+                  if (checkin.owner && checkin.owner.toString() === user._id.toString()) {
+                    out = false;
+                  }
+                  // Is user a manager of the list ?
+                  if (checkin.managers && checkin.managers.length) {
+                    for (let i = 0; i < checkin.managers.length; i++) {
+                      if (checkin.managers[i].toString() === user._id.toString()) {
+                        out = false;
+                      }
+                    }
+                  }
+                  return out;
+                }
                 else {
-                  return checkin.visibility === 'me' ||
-                    checkin.visibility === 'verified' && !user.verified;
+                  return checkin.visibility === 'verified' && !user.verified;
                 }
               });
             });
@@ -643,6 +687,7 @@ module.exports = class User extends Model {
           return this._id;
         });
         schema.pre('remove', function (next) {
+          const that = this;
           // Avoid null connections from being created when a user is removed
           this
             .model('User')
@@ -650,12 +695,29 @@ module.exports = class User extends Model {
             .then(users => {
               for (let i = 0; i < users.length; i++) {
                 for (let j = 0; j < users[i].connections.length; j++) {
-                  if (users[i].connections[j].user.toString() === this._id.toString()) {
+                  if (users[i].connections[j].user.toString() === that._id.toString()) {
                     users[i].connections.id(users[i].connections[j]._id).remove();
                   }
                 }
                 users[i].save();
               }
+            })
+            .then(() => {
+              // Reduce the number of contacts for each list of the user
+              let listIds = [];
+              listTypes.forEach(function (attr) {
+                that[attr + 's'].forEach(function (checkin) {
+                  listIds.push(checkin.list);
+                });
+              });
+              return that
+                .model('List')
+                .update(
+                  { _id: { $in: listIds}},
+                  { $inc: { count: -1 }}
+                );
+            })
+            .then(() => {
               next();
             })
             .catch(err => {

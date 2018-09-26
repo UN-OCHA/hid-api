@@ -390,7 +390,7 @@ module.exports = class CronController extends Controller {
     });
   }
 
-  /*setListCounts (request, reply) {
+  setListCounts (request, reply) {
     reply().code(204);
     const List = this.app.orm.list;
     const User = this.app.orm.User;
@@ -416,7 +416,7 @@ module.exports = class CronController extends Controller {
     });
   }
 
-  adjustEmailVerified (request, reply) {
+  /*adjustEmailVerified (request, reply) {
     const User = this.app.orm.User;
     const app = this.app;
     const stream = User.find({'email_verified': false}).cursor();
@@ -553,6 +553,39 @@ module.exports = class CronController extends Controller {
     });
     stream.on('end', function () {
       reply().code(204);
+    });
+  }
+
+  verifyEmails (request, reply) {
+    const User = this.app.orm.User;
+    const stream = User.find({email_verified: false}).cursor();
+    stream.on('data', function (user) {
+      const sthat = this;
+      this.pause();
+      https.get('https://app.verify-email.org/api/v1/' + process.env.VERIFY_EMAILS_KEY + '/verify/' + user.email, (res) => {
+        let body = '';
+        res.on('data', function (d) {
+          body += d;
+        });
+        res.on('end', function() {
+          let parsed = {};
+          try {
+            parsed = JSON.parse(body);
+            if (parsed.status === 1) {
+              user.verifyEmail(user.email);
+              user.save(function (err) {
+                sthat.resume();
+              });
+            }
+            else {
+              sthat.resume();
+            }
+          }
+          catch(err) {
+            sthat.resume();
+          }
+        });
+      });
     });
   }
 

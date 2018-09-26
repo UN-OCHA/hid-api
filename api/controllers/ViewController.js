@@ -2,6 +2,7 @@
 
 const Controller = require('trails/controller');
 const Boom = require('boom');
+const Recaptcha = require('recaptcha2');
 
 module.exports = class ViewController extends Controller {
 
@@ -176,27 +177,42 @@ module.exports = class ViewController extends Controller {
     const requestUrl = this._buildRequestUrl(request, 'verify2');
     reply.view('register', {
       title: 'Register in Humanitarian ID',
-      requestUrl: requestUrl
+      requestUrl: requestUrl,
+      recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY
     });
   }
 
   registerPost (request, reply) {
+    // Check recaptcha
+    const recaptcha = new Recaptcha({siteKey: process.env.RECAPTCHA_PUBLIC_KEY, secretKey: process.env.RECAPTCHA_PRIVATE_KEY});
     const UserController = this.app.controllers.UserController;
     const that = this;
-    UserController.create(request, function (result) {
-      const al = that._getAlert(result,
-        'You registered successfully. Please confirm your email address',
-        'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.'
-      );
-      const registerLink = that._getRegisterLink(request.payload);
-      const passwordLink = that._getPasswordLink(request.payload);
-      return reply.view('login', {
-        alert: al,
-        query: request.query,
-        registerLink: registerLink,
-        passwordLink: passwordLink
+    const registerLink = that._getRegisterLink(request.payload);
+    const passwordLink = that._getPasswordLink(request.payload);
+    recaptcha
+      .validate(request.payload['g-recaptcha-response'])
+      .then(() => {
+        UserController.create(request, function (result) {
+          const al = that._getAlert(result,
+            'You registered successfully. Please confirm your email address',
+            'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.'
+          );
+          reply.view('login', {
+            alert: al,
+            query: request.query,
+            registerLink: registerLink,
+            passwordLink: passwordLink
+          });
+        });
+      })
+      .catch((err) => {
+        reply.view('login', {
+          alert: {type: 'danger', message: recaptcha.translateErrors(err)},
+          query: request.query,
+          registerLink: registerLink,
+          passwordLink: passwordLink
+        });
       });
-    });
   }
 
   verify (request, reply) {

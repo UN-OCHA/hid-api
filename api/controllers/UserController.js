@@ -467,8 +467,8 @@ module.exports = class UserController extends Controller{
       }
 
       if (criteria.q) {
-        if (validator.isEmail(criteria.q)) {
-          criteria['emails.email'] = criteria.q;
+        if (validator.isEmail(criteria.q) && request.params.currentUser.verified) {
+          criteria['emails.email'] = new RegExp(criteria.q, 'i');
         }
         else {
           criteria.name = criteria.q;
@@ -669,7 +669,10 @@ module.exports = class UserController extends Controller{
     const that = this;
 
     User
-      .remove({ _id: request.params.id })
+      .findOne({ _id: request.params.id })
+      .then(user => {
+        return user.remove();
+      })
       .then(() => {
         return reply().code(204);
       })

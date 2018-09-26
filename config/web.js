@@ -210,7 +210,7 @@ module.exports = {
           if (err) {
             return done(err);
           }
-          if (tok.client._id !== client._id) {
+          if (tok.client._id.toString() !== client._id.toString()) {
             return done(null, false, { message: 'This refresh token is for a different client'});
           }
           OauthToken.generate('access', tok.client, tok.user, tok.nonce, function (err, atoken) {
