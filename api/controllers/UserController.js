@@ -99,6 +99,9 @@ module.exports = class UserController extends Controller{
 
         if (user.email && notify === true) {
           if (!request.params.currentUser) {
+            if (process.env.NODE_ENV === 'local') {
+              return;
+            }
             return that.app.services.EmailService.sendRegister(user, appVerifyUrl);
           }
           else {
