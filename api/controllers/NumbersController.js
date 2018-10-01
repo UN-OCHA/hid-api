@@ -15,7 +15,8 @@ module.exports = class NumbersController extends Controller{
       numberAuth = 0,
       numberUsers = 0,
       numberOrphans = 0,
-      numberGhosts = 0;
+      numberGhosts = 0,
+      numberVerified = 0;
     List
       .count({type: 'list'})
       .then(number1 => {
@@ -36,12 +37,17 @@ module.exports = class NumbersController extends Controller{
       })
       .then(number5 => {
         numberGhosts = number5;
+        return User.count({'verified': true});
+      })
+      .then(number6 => {
+        numberVerified = number6;
         return reply({
           'numberCcls': numberCcls,
           'numberOrphans': numberOrphans,
           'numberGhosts': numberGhosts,
           'numberAuth': numberAuth,
-          'numberUsers': numberUsers
+          'numberUsers': numberUsers,
+          'numberVerified': numberVerified
         });
       })
       .catch(err => {
