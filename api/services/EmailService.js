@@ -163,7 +163,7 @@ module.exports = class EmailService extends Service {
       });
   }
 
-  sendForcedPasswordReset (user, appResetUrl, callback) {
+  sendForcedPasswordReset (user, callback) {
     const mailOptions = {
       to: user.email,
       locale: user.locale
