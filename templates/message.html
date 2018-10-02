@@ -12,7 +12,9 @@
           </div>
         </div>
       <% } %>
-      <p class="form-field"><%= message %></p>
+      <% if (isSuccess) { %>
+        <p class="form-field">Now you can login on <a href="https://humanitarian.id" target="_blank">Humanitarian ID</a> or one of our <a href="https://about.humanitarian.id/partners/" target="_blank">partner websites</a>.</p>
+      <% } %>
       </div>
     </div>
   </div>

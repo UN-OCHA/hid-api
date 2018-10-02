@@ -354,14 +354,10 @@ module.exports = class ViewController extends Controller {
             'Thank you for updating your password.',
             'There was an error resetting your password.'
           );
-          let message = '';
-          if (!result.isBoom) {
-            message = 'Now you can login on <a href="https://humanitarian.id">Humanitarian ID</a> or one of our <a href="https://about.humanitarian.id/partners/">partner websites</a>.';
-          }
           return reply.view('message', {
             alert: al,
             query: request.payload,
-            message: message,
+            isSuccess: !result.isBoom,
             title: 'Password update'
           });
         }
