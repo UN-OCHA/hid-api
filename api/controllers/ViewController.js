@@ -334,18 +334,37 @@ module.exports = class ViewController extends Controller {
 
     if (cookie && cookie.hash && cookie.totp) {
       UserController.resetPassword(request, function (result) {
-        const al = that._getAlert(result,
-          'Your password was successfully reset. You can now login.',
-          'There was an error resetting your password.'
-        );
-        const registerLink = that._getRegisterLink(request.payload);
-        const passwordLink = that._getPasswordLink(request.payload);
-        return reply.view('login', {
-          alert: al,
-          query: request.payload,
-          registerLink: registerLink,
-          passwordLink: passwordLink
-        });
+        const params = that.app.services.HelperService.getOauthParams(request.payload);
+        if (params) {
+          const al = that._getAlert(result,
+            'Your password was successfully reset. You can now login.',
+            'There was an error resetting your password.'
+          );
+          const registerLink = that._getRegisterLink(request.payload);
+          const passwordLink = that._getPasswordLink(request.payload);
+          return reply.view('login', {
+            alert: al,
+            query: request.payload,
+            registerLink: registerLink,
+            passwordLink: passwordLink
+          });
+        }
+        else {
+          const al = that._getAlert(result,
+            'Thank you for updating your password.',
+            'There was an error resetting your password.'
+          );
+          let message = '';
+          if (!result.isBoom) {
+            message = 'Now you can login on <a href="https://humanitarian.id">Humanitarian ID</a> or one of our <a href="https://about.humanitarian.id/partners/">partner websites</a>.';
+          }
+          return reply.view('message', {
+            alert: al,
+            query: request.payload,
+            message: message,
+            title: 'Password update'
+          });
+        }
       }, false);
     }
   }
