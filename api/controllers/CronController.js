@@ -336,7 +336,6 @@ module.exports = class CronController extends Controller {
     const stream = User.find({totp: false, passwordResetAlert7days: false, $or: [{lastPasswordReset: { $lte: fiveMonthsAnd23Days }}, {lastPasswordReset: null}]}).cursor();
     stream.on('data', function (user) {
       const sthat = this;
-      this.pause();
       EmailService.sendForcedPasswordResetAlert7(user, function () {
         User.collection.update(
           { _id: user._id },
@@ -344,7 +343,6 @@ module.exports = class CronController extends Controller {
             passwordResetAlert7days: true
           }}
         );
-        sthat.resume();
       });
     });
     stream.on('end', function () {
@@ -360,7 +358,6 @@ module.exports = class CronController extends Controller {
     const stream = User.find({totp: false, passwordResetAlert: false, $or: [{lastPasswordReset: { $lte: sixMonths }}, {lastPasswordReset: null}]}).cursor();
     stream.on('data', function (user) {
       const sthat = this;
-      this.pause();
       EmailService.sendForcedPasswordReset(user, function () {
         User.collection.update(
           { _id: user._id },
@@ -368,7 +365,6 @@ module.exports = class CronController extends Controller {
             passwordResetAlert: true
           }}
         );
-        sthat.resume();
       });
     });
     stream.on('end', function () {

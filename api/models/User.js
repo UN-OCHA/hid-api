@@ -58,7 +58,8 @@ const verifiedDomains = [
   'humanitarianresponse.info',
   'humanitarian.id',
   'reliefweb.int',
-  'ohchr.org'
+  'ohchr.org',
+  'brs.dk'
 ];
 
 /**
