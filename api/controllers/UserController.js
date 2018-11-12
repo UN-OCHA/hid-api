@@ -539,6 +539,8 @@ module.exports = class UserController extends Controller{
     if (request.payload.updatedAt) {
       delete request.payload.updatedAt;
     }
+    // Update lastModified manually
+    request.payload.lastModified = new Date();
     return User
       .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
       .exec()
@@ -709,6 +711,7 @@ module.exports = class UserController extends Controller{
         record.email = email;
         // If we are there, it means that the email has been validated, so make sure email_verified is set to true.
         record.verifyEmail(email);
+        record.lastModified = new Date();
         return record.save();
       })
       .then(record => {
@@ -766,6 +769,7 @@ module.exports = class UserController extends Controller{
                 record.verified_by = hidAccount;
                 record.verifiedOn = new Date();
               }
+              record.lastModified = new Date();
               return record.save();
             }
             else {
@@ -780,6 +784,7 @@ module.exports = class UserController extends Controller{
                 record.verified_by = hidAccount;
                 record.verifiedOn = new Date();
               }
+              record.lastModified = new Date();
               return record.save();
             }
           }
@@ -869,6 +874,7 @@ module.exports = class UserController extends Controller{
         that.log.warn('Updating user password', { request: request, security: true});
         if (user.validPassword(request.payload.old_password)) {
           user.password = UserModel.hashPassword(request.payload.new_password);
+          user.lastModified = new Date();
           that.log.warn('Successfully updated user password', { request: request, security: true});
           return user.save();
         }
@@ -943,6 +949,7 @@ module.exports = class UserController extends Controller{
             record.passwordResetAlert30days = false;
             record.passwordResetAlert7days = false;
             record.passwordResetAlert = false;
+            record.lastModified = new Date();
             return record.save();
           }
         }
@@ -1030,6 +1037,7 @@ module.exports = class UserController extends Controller{
         })
         .then(function (info) {
           guser.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + gmetadata.format;
+          guser.lastModified = new Date();
           return guser.save();
         })
         .then(record => {
@@ -1094,6 +1102,7 @@ module.exports = class UserController extends Controller{
         }
         const data = { email: request.payload.email, type: request.payload.type, validated: false };
         user.emails.push(data);
+        user.lastModified = new Date();
         return user.save();
       })
       .then(record => {
@@ -1132,6 +1141,7 @@ module.exports = class UserController extends Controller{
           throw Boom.badRequest('Email does not exist');
         }
         record.emails.splice(index, 1);
+        record.lastModified = new Date();
         return record.save();
       })
       .then(record => {
@@ -1160,6 +1170,7 @@ module.exports = class UserController extends Controller{
         }
         const data = { number: request.payload.number, type: request.payload.type };
         record.phone_numbers.push(data);
+        record.lastModified = new Date();
         return record.save();
       })
       .then(record => {
@@ -1201,6 +1212,7 @@ module.exports = class UserController extends Controller{
           throw Boom.badRequest('Can not remove primary phone number');
         }
         record.phone_numbers.splice(index, 1);
+        record.lastModified = new Date();
         return record.save();
       })
       .then(record => {
@@ -1242,6 +1254,7 @@ module.exports = class UserController extends Controller{
         }
         record.phone_number = record.phone_numbers[index].number;
         record.phone_number_type = record.phone_numbers[index].type;
+        record.lastModified = new Date();
         return record.save();
       })
       .then(user => {
@@ -1278,6 +1291,7 @@ module.exports = class UserController extends Controller{
           throw Boom.badRequest('Organization should be part of user organizations');
         }
         user.organization = checkin;
+        user.lastModified = new Date();
         return user.save();
       })
       .then(user => {
@@ -1365,6 +1379,7 @@ module.exports = class UserController extends Controller{
         }
 
         user.connections.push({pending: true, user: request.params.currentUser._id});
+        user.lastModified = new Date();
 
         return user.save();
       })
@@ -1401,6 +1416,7 @@ module.exports = class UserController extends Controller{
         }
         const connection = user.connections.id(request.params.cid);
         connection.pending = false;
+        user.lastModified = new Date();
         return user.save();
       })
       .then(user => {
@@ -1417,6 +1433,7 @@ module.exports = class UserController extends Controller{
         else {
           cuser.connections[cindex].pending = false;
         }
+        cuser.lastModified = new Date();
         return cuser.save();
       })
       .then(cuser => {
@@ -1450,6 +1467,7 @@ module.exports = class UserController extends Controller{
           throw Boom.notFound();
         }
         user.connections.id(request.params.cid).remove();
+        user.lastModified = new Date();
         return user.save();
       })
       .then(user => {

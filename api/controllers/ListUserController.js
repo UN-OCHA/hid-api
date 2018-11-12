@@ -116,6 +116,7 @@ module.exports = class ListUserController extends Controller{
         return {list: result.list, user: record};
       })
       .then((result) => {
+        result.user.lastModified = new Date();
         return result.user
           .save()
           .then(() => {
@@ -226,6 +227,7 @@ module.exports = class ListUserController extends Controller{
         const lu = record[childAttribute].id(checkInId);
         listuser = _.cloneDeep(lu);
         _.assign(lu, request.payload);
+        record.lastModified = new Date();
         return record
           .save()
           .then((user) => {
@@ -292,6 +294,7 @@ module.exports = class ListUserController extends Controller{
         if (childAttribute === 'organizations' && record.organization && lu.list.toString() === record.organization.list.toString()) {
           record.organization.remove();
         }
+        record.lastModified = new Date();
         return record
           .save()
           .then((user) => {

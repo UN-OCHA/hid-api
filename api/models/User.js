@@ -1398,6 +1398,11 @@ module.exports = class User extends Model {
         type: Schema.Types.Mixed,
         readonly: true,
         default: false
+      },
+      lastModified: {
+        type: Date,
+        default: Date.now,
+        readonly: true
       }
     };
   }
