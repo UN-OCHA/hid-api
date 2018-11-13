@@ -585,14 +585,4 @@ module.exports = class CronController extends Controller {
     });
   }
 
-  setLastModified (request, reply) {
-    const User = this.app.orm.user;
-    const that = this;
-    const now = new Date();
-    reply().code(204);
-    User
-      .update({}, {lastModified: now}, {multi: true})
-      .exec();
-  }
-
 };

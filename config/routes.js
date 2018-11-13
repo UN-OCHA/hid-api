@@ -599,12 +599,6 @@ module.exports = [
   },
 
   {
-    method: 'GET',
-    path: '/api/v2/cron/setLastModified',
-    handler: 'CronController.setLastModified'
-  },
-
-  {
     method: 'POST',
     path: '/api/v2/webhooks/hrinfo',
     handler: 'WebhooksController.hrinfo'

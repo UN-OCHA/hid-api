@@ -122,8 +122,7 @@ module.exports = {
     verificationExpiryEmail: ['CronPolicy.canRun'],
     unverifyAfterOneYear: ['CronPolicy.canRun'],
     setListCounts: ['CronPolicy.canRun'],
-    verifyEmails: ['CronPolicy.canRun'],
-    setLastModified: ['CronPolicy.canRun']
+    verifyEmails: ['CronPolicy.canRun']
   },
 
   WebhooksController: {
