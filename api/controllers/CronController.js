@@ -591,7 +591,8 @@ module.exports = class CronController extends Controller {
     const now = new Date();
     reply().code(204);
     User
-      .update({}, {lastModified: now}, {multi: true});
+      .update({}, {lastModified: now}, {multi: true})
+      .exec();
   }
 
 };
