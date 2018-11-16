@@ -596,7 +596,9 @@ module.exports = class CronController extends Controller {
           user.organization.acronymsOrNames[name.language] = name.text;
         });
         user.organization.acronyms.forEach(function (acronym) {
-          user.organization.acronymsOrNames[acronym.language] = acronym.text;
+          if (acronym.text !== '') {
+            user.organization.acronymsOrNames[acronym.language] = acronym.text;
+          }
         });
         user.save();
       }
