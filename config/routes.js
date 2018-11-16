@@ -599,6 +599,12 @@ module.exports = [
   },
 
   {
+    method: 'GET',
+    path: '/api/v2/cron/setAcronymsOrNames',
+    handler: 'CronController.setAcronymsOrNames'
+  },
+
+  {
     method: 'POST',
     path: '/api/v2/webhooks/hrinfo',
     handler: 'WebhooksController.hrinfo'

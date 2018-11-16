@@ -865,6 +865,9 @@ module.exports = class User extends Model {
       names: [translationSchema],
       acronym: { type: String},
       acronyms: [translationSchema],
+      acronymsOrNames: {
+        type: Schema.Types.Mixed
+      },
       owner: {
         type: Schema.ObjectId,
         ref: 'User'

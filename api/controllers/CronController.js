@@ -585,4 +585,19 @@ module.exports = class CronController extends Controller {
     });
   }
 
+  setAcronymsOrNames (request, reply) {
+    const User = this.app.orm.User;
+    reply().code(204);
+    const stream = User.find({organization: { $exists: true }}).cursor();
+    stream.on('data', function (user) {
+      user.organization.names.forEach(function (name) {
+        user.organization.acronymsOrNames[name.language] = name.text;
+      });
+      user.organization.acronyms.forEach(function (acronym) {
+        user.organization.acronymsOrNames[acronym.language] = acronym.text;
+      });
+      user.save();
+    });
+  }
+
 };
