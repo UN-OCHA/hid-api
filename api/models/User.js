@@ -1198,7 +1198,7 @@ module.exports = class User extends Model {
       },
       phone_number_type: {
         type: String,
-        enum: ['Mobile', 'Landline', 'Fax', 'Satellite'],
+        enum: ['Mobile', 'Landline', 'Fax', 'Satellite', ''],
       },
       // TODO: mark this as readonly when HID-1506 is fixed
       phone_numbers: {
