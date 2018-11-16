@@ -1209,7 +1209,8 @@ module.exports = class UserController extends Controller{
         }
         // Do not allow deletion of primary phone number
         if (record.phone_numbers[index].number === record.phone_number) {
-          throw Boom.badRequest('Can not remove primary phone number');
+          record.phone_number = '';
+          record.phone_number_type = '';
         }
         record.phone_numbers.splice(index, 1);
         record.lastModified = new Date();
