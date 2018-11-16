@@ -590,6 +590,7 @@ module.exports = class CronController extends Controller {
     reply().code(204);
     const stream = User.find({organization: { $exists: true }}).cursor();
     stream.on('data', function (user) {
+      user.organization.acronymsOrNames = {};
       user.organization.names.forEach(function (name) {
         user.organization.acronymsOrNames[name.language] = name.text;
       });
