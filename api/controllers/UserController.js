@@ -1200,7 +1200,7 @@ module.exports = class UserController extends Controller{
         }
         let index = -1;
         for (let i = 0, len = record.phone_numbers.length; i < len; i++) {
-          if (record.phone_numbers[i]._id === phoneId) {
+          if (record.phone_numbers[i]._id.toString() === phoneId) {
             index = i;
           }
         }
