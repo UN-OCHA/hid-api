@@ -16,3 +16,4 @@ exports.CronController = require('./CronController');
 exports.OutlookController = require('./OutlookController');
 exports.WebhooksController = require('./WebhooksController');
 exports.OperationController = require('./OperationController');
+exports.TrustedDomainController = require('./TrustedDomainController');

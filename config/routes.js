@@ -389,6 +389,24 @@ module.exports = [
   },
 
   {
+    method: 'POST',
+    path: '/api/v2/trustedDomain',
+    handler: 'TrustedDomainController.create'
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/trustedDomain/{id?}',
+    handler: 'TrustedDomainController.find'
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/trustedDomain/{id}',
+    handler: 'TrustedDomainController.destroy'
+  },
+
+  {
     method: 'GET',
     path: '/api/v2/notification/{id?}',
     handler: 'NotificationController.find'
