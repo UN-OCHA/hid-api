@@ -18,7 +18,7 @@ module.exports = class TrustedDomain extends Model {
       url: {
         type: String,
         trim: true,
-        required: [true, 'URL is invalid']
+        required: [true, 'URL is invalid'],
         validate: validate({
           validator: 'isURL',
           passIfEmpty: false,
