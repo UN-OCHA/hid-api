@@ -640,16 +640,25 @@ module.exports = class User extends Model {
             .findOne({url: domain});
         },
 
-        canBeVerifiedAutomatically: function () {
+        canBeVerifiedAutomatically: async function () {
           const that = this;
-          let out = false;
+          let out = false, promises = [];
           // Check all emails
           this.emails.forEach(function (email) {
-            if (email.validated && that.isVerifiableEmail(email.email)) {
-              out = true;
+            if (email.validated) {
+              promises.push(that.isVerifiableEmail(email.email));
             }
           });
-          return out;
+          return Promise.all(promises)
+            .then(values => {
+              let out = false;
+              values.forEach(function (val) {
+                if (val) {
+                  out = true;
+                }
+              });
+              return out;
+            });
         },
 
         toJSON: function () {
