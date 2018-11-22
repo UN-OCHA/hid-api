@@ -26,7 +26,7 @@ module.exports = class TrustedDomainController extends Controller{
   }
 
   find (request, reply) {
-    const TrustedDomain = this.app.orm.Client;
+    const TrustedDomain = this.app.orm.TrustedDomain;
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
     const that = this;
