@@ -739,60 +739,66 @@ module.exports = class UserController extends Controller{
     }
 
     // TODO: make sure current user can do this
-
-    if (request.payload.hash) {
-      query = Model.findOne({hash: request.payload.hash, hashAction: 'verify_email'});
-    }
-    else {
-      email = request.params.email;
-      query = Model.findOne({'emails.email': email});
-    }
-
     const that = this;
     let grecord = {};
-    query
-      .then(record => {
-        if (!record) {
-          throw Boom.notFound();
-        }
-        if (request.payload.hash) {
+
+    if (request.payload.hash) {
+      query = Model.findOne({hash: request.payload.hash, hashAction: 'verify_email'})
+        .then(record => {
+          if (!record) {
+            throw Boom.notFound();
+          }
+          grecord = record;
           // Verify hash
-          if (record.validHash(request.payload.hash) === true) {
+          if (grecord.validHash(request.payload.hash) === true) {
             // Verify user email
-            if (record.email === record.hashEmail) {
-              record.email_verified = true;
-              record.expires = new Date(0, 0, 1, 0, 0, 0);
-              record.emails[0].validated = true;
-              record.emails.set(0, record.emails[0]);
-              if (record.isVerifiableEmail(record.hashEmail)) {
-                record.verified = true;
-                record.verified_by = hidAccount;
-                record.verifiedOn = new Date();
-              }
-              record.lastModified = new Date();
-              return record.save();
+            if (grecord.email === grecord.hashEmail) {
+              grecord.email_verified = true;
+              grecord.expires = new Date(0, 0, 1, 0, 0, 0);
+              grecord.emails[0].validated = true;
+              grecord.emails.set(0, record.emails[0]);
+              grecord.lastModified = new Date();
+              return grecord.isVerifiableEmail(grecord.hashEmail);
             }
             else {
-              for (let i = 0, len = record.emails.length; i < len; i++) {
-                if (record.emails[i].email === record.hashEmail) {
-                  record.emails[i].validated = true;
-                  record.emails.set(i, record.emails[i]);
+              for (let i = 0, len = grecord.emails.length; i < len; i++) {
+                if (grecord.emails[i].email === grecord.hashEmail) {
+                  grecord.emails[i].validated = true;
+                  grecord.emails.set(i, grecord.emails[i]);
                 }
               }
-              if (record.isVerifiableEmail(record.hashEmail)) {
-                record.verified = true;
-                record.verified_by = hidAccount;
-                record.verifiedOn = new Date();
-              }
-              record.lastModified = new Date();
-              return record.save();
+              grecord.lastModified = new Date();
+              return grecord.isVerifiableEmail(grecord.hashEmail);
             }
           }
           else {
             throw Boom.badRequest('Invalid hash');
           }
-        }
-        else {
+        })
+        .then(domain => {
+          if (domain) {
+            grecord.verified = true;
+            grecord.verified_by = hidAccount;
+            grecord.verifiedOn = new Date();
+          }
+          return grecord.save();
+        })
+        .then(record => {
+          if (grecord.email === grecord.hashEmail) {
+            return that.app.services.EmailService.sendPostRegister(grecord);
+          }
+        })
+        .then(info => {
+          return reply(grecord);
+        });
+    }
+    else {
+      email = request.params.email;
+      query = Model.findOne({'emails.email': email})
+        .then(record => {
+          if (!record) {
+            throw Boom.notFound();
+          }
           // Send validation email again
           const appValidationUrl = request.payload.app_validation_url;
           if (!that.app.services.HelperService.isAuthorizedUrl(appValidationUrl)) {
@@ -800,22 +806,13 @@ module.exports = class UserController extends Controller{
             throw Boom.badRequest('Invalid app_validation_url');
           }
           return that.app.services.EmailService.sendValidationEmail(record, email, appValidationUrl);
-        }
-      })
-      .then(record => {
-        grecord = record;
-        if (request.payload.hash && record.email === record.hashEmail) {
-          return that.app.services.EmailService.sendPostRegister(record);
-        }
-      })
-      .then(info => {
-        if (request.payload.hash) {
-          return reply(grecord);
-        }
-        else {
+        })
+        .then(record => {
           return reply('Validation email sent successfully').code(202);
-        }
-      })
+        });
+    }
+
+    query
       .catch(err => {
         that._errorHandler(err, request, reply);
       });

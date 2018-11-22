@@ -635,7 +635,9 @@ module.exports = class User extends Model {
           let out = false;
           const ind = email.indexOf('@');
           const domain = email.substr((ind+1));
-          return verifiedDomains.indexOf(domain) !== -1;
+          return this
+            .model('TrustedDomain')
+            .findOne({url: domain});
         },
 
         canBeVerifiedAutomatically: function () {
