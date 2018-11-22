@@ -640,7 +640,7 @@ module.exports = class User extends Model {
             .findOne({url: domain});
         },
 
-        canBeVerifiedAutomatically: async function () {
+        canBeVerifiedAutomatically: function () {
           const that = this;
           let out = false, promises = [];
           // Check all emails
