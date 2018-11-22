@@ -479,19 +479,21 @@ module.exports = class CronController extends Controller {
     const stream = User.find({'verified': false}).cursor();
 
     stream.on('data', function(user) {
-      const canBeVerified = await user.canBeVerifiedAutomatically();
-      if (canBeVerified) {
-        User.collection.update(
-          { _id: user._id },
-          {
-            $set: {
-              verified: true,
-              verified_by: hidAccount,
-              verifiedOn: new Date()
-            }
+      user.canBeVerifiedAutomatically()
+        .then(out => {
+          if (out) {
+            User.collection.update(
+              { _id: user._id },
+              {
+                $set: {
+                  verified: true,
+                  verified_by: hidAccount,
+                  verifiedOn: new Date()
+                }
+              }
+            );
           }
-        );
-      }
+        });
     });
 
     stream.on('end', function () {
