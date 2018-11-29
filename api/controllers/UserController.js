@@ -885,6 +885,7 @@ module.exports = class UserController extends Controller{
     }
 
     this.log.warn('Resetting password', { security: true, request: request});
+    let grecord = {};
     Model
       .findOne({hash: request.payload.hash, hashAction: 'reset_password'})
       .then(record => {
@@ -913,6 +914,7 @@ module.exports = class UserController extends Controller{
           else {
             record.password = pwd;
             record.verifyEmail(record.email);
+            grecord = record;
             return record.isVerifiableEmail(record.email);
           }
         }
@@ -923,20 +925,20 @@ module.exports = class UserController extends Controller{
       .then(domain => {
         if (domain) {
           // Reset verifiedOn date as user was able to reset his password via an email from a trusted domain
-          record.verified = true;
-          record.verified_by = hidAccount;
-          record.verifiedOn = new Date();
+          grecord.verified = true;
+          grecord.verified_by = hidAccount;
+          grecord.verifiedOn = new Date();
         }
-        record.expires = new Date(0, 0, 1, 0, 0, 0);
-        record.is_orphan = false;
-        record.is_ghost = false;
-        record.hash = '';
-        record.lastPasswordReset = new Date();
-        record.passwordResetAlert30days = false;
-        record.passwordResetAlert7days = false;
-        record.passwordResetAlert = false;
-        record.lastModified = new Date();
-        return record.save();
+        grecord.expires = new Date(0, 0, 1, 0, 0, 0);
+        grecord.is_orphan = false;
+        grecord.is_ghost = false;
+        grecord.hash = '';
+        grecord.lastPasswordReset = new Date();
+        grecord.passwordResetAlert30days = false;
+        grecord.passwordResetAlert7days = false;
+        grecord.passwordResetAlert = false;
+        grecord.lastModified = new Date();
+        return grecord.save();
       })
       .then(() => {
         that.log.warn('Password updated successfully', { security: true, request: request});
