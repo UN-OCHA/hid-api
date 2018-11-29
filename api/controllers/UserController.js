@@ -599,64 +599,45 @@ module.exports = class UserController extends Controller{
     }
 
     const that = this;
-    if ((request.payload.old_password && request.payload.new_password) || request.payload.verified) {
-      this.log.debug('Updating user password or user is verified', { request: request });
-      // Check old password
-      Model
-        .findOne({_id: request.params.id})
-        .then((user) => {
-          if (!user) {
-            throw Boom.notFound();
-          }
-          // If verifying user, set verified_by
-          if (request.payload.verified && !user.verified) {
-            request.payload.verified_by = request.params.currentUser._id;
-            request.payload.verifiedOn = new Date();
-          }
-          if (request.payload.old_password) {
-            that.log.warn('Updating user password', { request: request, security: true});
-            if (user.validPassword(request.payload.old_password)) {
-              if (!UserModel.isStrongPassword(request.payload.new_password)) {
-                that.log.warn('Could not update user password. New password is not strong enough', { request: request, security: true, fail: true});
-                throw Boom.badRequest('Password is not strong enough');
-              }
-              request.payload.password = UserModel.hashPassword(request.payload.new_password);
-              request.payload.lastPasswordReset = new Date();
-              request.payload.passwordResetAlert30days = false;
-              request.payload.passwordResetAlert7days = false;
-              request.payload.passwordResetAlert = false;
-              that.log.warn('Successfully updated user password', { request: request, security: true});
-              return that._updateQuery(request, options);
+    // Check old password
+    Model
+      .findOne({_id: request.params.id})
+      .then((user) => {
+        if (!user) {
+          throw Boom.notFound();
+        }
+        // If verifying user, set verified_by
+        if (request.payload.verified && !user.verified) {
+          request.payload.verified_by = request.params.currentUser._id;
+          request.payload.verifiedOn = new Date();
+        }
+        if (request.payload.old_password && request.payload.new_password) {
+          that.log.warn('Updating user password', { request: request, security: true});
+          if (user.validPassword(request.payload.old_password)) {
+            if (!UserModel.isStrongPassword(request.payload.new_password)) {
+              that.log.warn('Could not update user password. New password is not strong enough', { request: request, security: true, fail: true});
+              throw Boom.badRequest('Password is not strong enough');
             }
-            else {
-              that.log.warn('Could not update user password. Old password is wrong', { request: request, security: true, fail: true});
-              throw Boom.badRequest('The old password is wrong');
-            }
+            request.payload.password = UserModel.hashPassword(request.payload.new_password);
+            request.payload.lastPasswordReset = new Date();
+            request.payload.passwordResetAlert30days = false;
+            request.payload.passwordResetAlert7days = false;
+            request.payload.passwordResetAlert = false;
+            that.log.warn('Successfully updated user password', { request: request, security: true});
           }
           else {
-            return that._updateQuery(request, options);
+            that.log.warn('Could not update user password. Old password is wrong', { request: request, security: true, fail: true});
+            throw Boom.badRequest('The old password is wrong');
           }
-        })
-        .then(user => {
-          return reply(user);
-        })
-        .catch(err => {
-          that._errorHandler(err, request, reply);
-        });
-    }
-    else {
-      if (!request.payload.verified) {
-        request.payload.verified_by = null;
-        request.payload.verifiedOn = null;
-      }
-      this._updateQuery(request, options)
-        .then(user => {
-          return reply(user);
-        })
-        .catch(err => {
-          that._errorHandler(err, request, reply);
-        });
-    }
+        }
+        return that._updateQuery(request, options);
+      })
+      .then(user => {
+        return reply(user);
+      })
+      .catch(err => {
+        that._errorHandler(err, request, reply);
+      });
   }
 
   destroy (request, reply) {
@@ -932,27 +913,30 @@ module.exports = class UserController extends Controller{
           else {
             record.password = pwd;
             record.verifyEmail(record.email);
-            if (record.isVerifiableEmail(record.email)) {
-              // Reset verifiedOn date as user was able to reset his password via an email from a trusted domain
-              record.verified = true;
-              record.verified_by = hidAccount;
-              record.verifiedOn = new Date();
-            }
-            record.expires = new Date(0, 0, 1, 0, 0, 0);
-            record.is_orphan = false;
-            record.is_ghost = false;
-            record.hash = '';
-            record.lastPasswordReset = new Date();
-            record.passwordResetAlert30days = false;
-            record.passwordResetAlert7days = false;
-            record.passwordResetAlert = false;
-            record.lastModified = new Date();
-            return record.save();
+            return record.isVerifiableEmail(record.email);
           }
         }
         else {
           throw Boom.badRequest('Reset password link is expired or invalid');
         }
+      })
+      .then(domain => {
+        if (domain) {
+          // Reset verifiedOn date as user was able to reset his password via an email from a trusted domain
+          record.verified = true;
+          record.verified_by = hidAccount;
+          record.verifiedOn = new Date();
+        }
+        record.expires = new Date(0, 0, 1, 0, 0, 0);
+        record.is_orphan = false;
+        record.is_ghost = false;
+        record.hash = '';
+        record.lastPasswordReset = new Date();
+        record.passwordResetAlert30days = false;
+        record.passwordResetAlert7days = false;
+        record.passwordResetAlert = false;
+        record.lastModified = new Date();
+        return record.save();
       })
       .then(() => {
         that.log.warn('Password updated successfully', { security: true, request: request});
