@@ -157,7 +157,8 @@ module.exports = class EmailService extends Service {
         const resetUrl = that._addHash(appResetUrl, hash);
         const context = {
           name: user.name,
-          reset_url: resetUrl
+          reset_url: resetUrl,
+          appResetUrl: appResetUrl
         };
         return that.send(mailOptions, 'reset_password', context);
       });
