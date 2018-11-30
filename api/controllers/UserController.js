@@ -627,7 +627,7 @@ module.exports = class UserController extends Controller{
           }
           else {
             that.log.warn('Could not update user password. Old password is wrong', { request: request, security: true, fail: true});
-            throw Boom.badRequest('The old password is wrong');
+            throw Boom.badRequest('The current password you entered is incorrect');
           }
         }
         return that._updateQuery(request, options);
