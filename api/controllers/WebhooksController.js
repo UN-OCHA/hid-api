@@ -120,6 +120,7 @@ module.exports = class WebhooksController extends Controller{
                     group.label = list.label + ': ' + group.label;
                     group.save();
                   });
+                });
             }
             return reply(list);
           })
