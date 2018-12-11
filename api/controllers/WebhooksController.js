@@ -237,12 +237,20 @@ module.exports = class WebhooksController extends Controller{
       list.labels.push({language: language, text: label});
     }
 
+    // Update acronymsOrNames
+    if (list.acronymsOrNames) {
+      list.acronymsOrNames[language] = label;
+    }
+
     let acronymFound = false;
     if (list.acronyms && list.acronyms.length) {
       for (let j = 0; j < list.acronyms.length; j++) {
         if (list.acronyms[j].language === language) {
           acronymFound = true;
           list.acronyms[j].text = acronym;
+          if (list.acronymsOrNames) {
+            list.acronymsOrNames[language] = acronym;
+          }
         }
       }
     }
@@ -251,6 +259,7 @@ module.exports = class WebhooksController extends Controller{
     }
     if (!acronymFound) {
       list.acronyms.push({language: language, text: acronym});
+      list.acronymsOrNames[language] = acronym;
     }
   }
 
