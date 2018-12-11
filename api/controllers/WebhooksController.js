@@ -109,6 +109,18 @@ module.exports = class WebhooksController extends Controller{
                   });
               }
             }
+            return list;
+          })
+          .then(list => {
+            if (list.type === 'operation') {
+              List
+                .find({'metadata.operation[0].id': list.remote_id})
+                .then(lists => {
+                  lists.forEach(function (group) {
+                    group.label = list.label + ': ' + group.label;
+                    group.save();
+                  });
+            }
             return reply(list);
           })
           .catch(err => {
