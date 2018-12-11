@@ -114,7 +114,7 @@ module.exports = class WebhooksController extends Controller{
           .then(list => {
             if (list.type === 'operation') {
               List
-                .find({'metadata.operation[0].id': list.remote_id})
+                .find({'metadata.operation.id': list.remote_id})
                 .then(lists => {
                   console.log(lists);
                   lists.forEach(function (group) {
