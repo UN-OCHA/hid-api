@@ -116,8 +116,10 @@ module.exports = class WebhooksController extends Controller{
               List
                 .find({'metadata.operation[0].id': list.remote_id})
                 .then(lists => {
+                  console.log(lists);
                   lists.forEach(function (group) {
                     group.label = list.label + ': ' + group.label;
+                    console.log(group.label);
                     group.save();
                   });
                 });
