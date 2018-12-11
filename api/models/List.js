@@ -16,6 +16,44 @@ module.exports = class List extends Model {
       schema: {
         timestamps: true
       },
+      onSchema(app, schema) {
+        schema.pre('save', function (next) {
+          if (this.acronym) {
+            this.name = this.label + ' (' + this.acronym + ')';
+          }
+          else {
+            this.name = this.label;
+          }
+          const that = this;
+          languages.forEach(function (lang) {
+            const labelIndex = that.languageIndex('labels', lang);
+            const nameIndex = that.languageIndex('names', lang);
+            const acronymIndex = that.languageIndex('acronyms', lang);
+            let name = '';
+            if (labelIndex !== -1) {
+              if (acronymIndex !== -1 && that.acronyms[acronymIndex].text !== '') {
+                name = that.labels[labelIndex].text + ' (' + that.acronyms[acronymIndex].text + ')';
+              }
+              else {
+                name = that.labels[labelIndex].text;
+              }
+              if (nameIndex !== -1) {
+                that.names[nameIndex].text = name;
+              }
+              else {
+                that.names.push({language: lang, text: name});
+              }
+            }
+          });
+          next ();
+        });
+        schema.post('findOneAndUpdate', function (list) {
+          // Calling list.save to go through the presave hook and update list name
+          list.save();
+        });
+
+        schema.index({ 'remote_id': 1, 'type': 1}, { unique: true, partialFilterExpression: { remote_id: { $exists: true } } });
+      },
       methods: {
         getAppUrl: function () {
           return process.env.APP_URL + '/lists/' + this._id;
@@ -104,44 +142,6 @@ module.exports = class List extends Model {
             return this[singularAttr];
           }
         }
-      },
-      onSchema(app, schema) {
-        schema.pre('save', function (next) {
-          if (this.acronym) {
-            this.name = this.label + ' (' + this.acronym + ')';
-          }
-          else {
-            this.name = this.label;
-          }
-          const that = this;
-          languages.forEach(function (lang) {
-            const labelIndex = that.languageIndex('labels', lang);
-            const nameIndex = that.languageIndex('names', lang);
-            const acronymIndex = that.languageIndex('acronyms', lang);
-            let name = '';
-            if (labelIndex !== -1) {
-              if (acronymIndex !== -1 && that.acronyms[acronymIndex].text !== '') {
-                name = that.labels[labelIndex].text + ' (' + that.acronyms[acronymIndex].text + ')';
-              }
-              else {
-                name = that.labels[labelIndex].text;
-              }
-              if (nameIndex !== -1) {
-                that.names[nameIndex].text = name;
-              }
-              else {
-                that.names.push({language: lang, text: name});
-              }
-            }
-          });
-          next ();
-        });
-        schema.post('findOneAndUpdate', function (list) {
-          // Calling list.save to go through the presave hook and update list name
-          list.save();
-        });
-
-        schema.index({ 'remote_id': 1, 'type': 1}, { unique: true, partialFilterExpression: { remote_id: { $exists: true } } });
       }
     };
   }
