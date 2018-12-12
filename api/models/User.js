@@ -132,6 +132,83 @@ module.exports = class User extends Model {
           virtuals: true
         }
       },
+      onSchema(app, schema) {
+        schema.virtual('sub').get(function () {
+          return this._id;
+        });
+        schema.pre('remove', function (next) {
+          const that = this;
+          // Avoid null connections from being created when a user is removed
+          this
+            .model('User')
+            .find({'connections.user': this._id})
+            .then(users => {
+              for (let i = 0; i < users.length; i++) {
+                for (let j = 0; j < users[i].connections.length; j++) {
+                  if (users[i].connections[j].user.toString() === that._id.toString()) {
+                    users[i].connections.id(users[i].connections[j]._id).remove();
+                  }
+                }
+                users[i].save();
+              }
+            })
+            .then(() => {
+              // Reduce the number of contacts for each list of the user
+              let listIds = [];
+              listTypes.forEach(function (attr) {
+                that[attr + 's'].forEach(function (checkin) {
+                  listIds.push(checkin.list);
+                });
+              });
+              return that
+                .model('List')
+                .update(
+                  { _id: { $in: listIds}},
+                  { $inc: { count: -1 }}
+                );
+            })
+            .then(() => {
+              next();
+            })
+            .catch(err => {
+              next(err);
+            });
+        });
+        schema.pre('save', function (next) {
+          if (this.middle_name) {
+            this.name = this.given_name + ' ' + this.middle_name + ' ' + this.family_name;
+          }
+          else {
+            this.name = this.given_name + ' ' + this.family_name;
+          }
+          if (this.is_orphan || this.is_ghost) {
+            this.authOnly = false;
+          }
+          if (!this.user_id) {
+            this.user_id = this._id;
+          }
+          next ();
+        });
+        schema.post('findOneAndUpdate', function (user) {
+          // Calling user.save to go through the presave hook and update user name
+          user.save();
+        });
+        schema.post('findOne', function (result, next) {
+          const that = this;
+          if (!result) {
+            return next();
+          }
+          result
+            .populate(userPopulate1)
+            .execPopulate()
+            .then(user => {
+              return next();
+            })
+            .catch(err => {
+              that.log.error('Error populating user', { error: err });
+            });
+        });
+      },
       statics: {
         explodeHash: function (hashLink) {
           const key = new Buffer(hashLink, 'base64').toString('ascii');
@@ -649,85 +726,8 @@ module.exports = class User extends Model {
           });
           return user;
         }
-      },
-      onSchema(app, schema) {
-        schema.virtual('sub').get(function () {
-          return this._id;
-        });
-        schema.pre('remove', function (next) {
-          const that = this;
-          // Avoid null connections from being created when a user is removed
-          this
-            .model('User')
-            .find({'connections.user': this._id})
-            .then(users => {
-              for (let i = 0; i < users.length; i++) {
-                for (let j = 0; j < users[i].connections.length; j++) {
-                  if (users[i].connections[j].user.toString() === that._id.toString()) {
-                    users[i].connections.id(users[i].connections[j]._id).remove();
-                  }
-                }
-                users[i].save();
-              }
-            })
-            .then(() => {
-              // Reduce the number of contacts for each list of the user
-              let listIds = [];
-              listTypes.forEach(function (attr) {
-                that[attr + 's'].forEach(function (checkin) {
-                  listIds.push(checkin.list);
-                });
-              });
-              return that
-                .model('List')
-                .update(
-                  { _id: { $in: listIds}},
-                  { $inc: { count: -1 }}
-                );
-            })
-            .then(() => {
-              next();
-            })
-            .catch(err => {
-              next(err);
-            });
-        });
-        schema.pre('save', function (next) {
-          if (this.middle_name) {
-            this.name = this.given_name + ' ' + this.middle_name + ' ' + this.family_name;
-          }
-          else {
-            this.name = this.given_name + ' ' + this.family_name;
-          }
-          if (this.is_orphan || this.is_ghost) {
-            this.authOnly = false;
-          }
-          if (!this.user_id) {
-            this.user_id = this._id;
-          }
-          next ();
-        });
-        schema.post('findOneAndUpdate', function (user) {
-          // Calling user.save to go through the presave hook and update user name
-          user.save();
-        });
-        schema.post('findOne', function (result, next) {
-          const that = this;
-          if (!result) {
-            return next();
-          }
-          result
-            .populate(userPopulate1)
-            .execPopulate()
-            .then(user => {
-              return next();
-            })
-            .catch(err => {
-              that.log.error('Error populating user', { error: err });
-            });
-        });
       }
-    };
+    }
   }
 
   static schema () {
