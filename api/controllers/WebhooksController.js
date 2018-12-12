@@ -119,7 +119,7 @@ module.exports = class WebhooksController extends Controller{
                   lists.forEach(function (group) {
                     const groupIndex = group.languageIndex('labels', language);
                     const listIndex = list.languageIndex('labels', language);
-                    group.labels[index].text = list.labels[listIndex].text + ': ' + group.metadata.label;
+                    group.labels[groupIndex].text = list.labels[listIndex].text + ': ' + group.metadata.label;
                     group.label = list.label + ': ' + group.metadata.label;
                     group.save();
                   });
