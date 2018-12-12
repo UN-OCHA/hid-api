@@ -17,12 +17,7 @@ module.exports = class List extends Model {
         timestamps: true
       },
       onSchema(app, schema) {
-        schema.pre('validate', function (next) {
-          console.log('calling pre validate');
-          next();
-        });
         schema.pre('save', function (next) {
-          console.log('calling presave');
           if (this.acronym) {
             this.name = this.label + ' (' + this.acronym + ')';
           }
