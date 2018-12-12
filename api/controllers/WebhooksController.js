@@ -118,6 +118,7 @@ module.exports = class WebhooksController extends Controller{
                 .then(lists => {
                   lists.forEach(function (group) {
                     group.label = list.label + ': ' + group.metadata.label;
+                    console.log('saving ' + group.label);
                     group.save();
                   });
                 });
