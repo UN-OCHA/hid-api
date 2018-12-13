@@ -228,7 +228,7 @@ module.exports = class AuthController extends Controller{
             passwordLink += '?' + params;
           }
 
-          let alertMessage = 'We could not log you in. Please check your email/pasword.';
+          let alertMessage = 'We could not log you in. The username or password you have entered are incorrect. Kindly try again.';
           if (result.message === 'password is expired') {
             alertMessage = 'We could not log you in because your password is expired. Following UN regulations, as a security measure passwords must be udpated every six months. Kindly reset your password by clicking on the "Forgot/Reset password" link below.';
           }
