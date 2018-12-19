@@ -167,6 +167,12 @@ module.exports = [
 
   {
     method: 'POST',
+    path: '/api/v2/signedRequest',
+    handler: 'AuthController.signRequest'
+  },
+
+  {
+    method: 'POST',
     path: '/api/v2/user',
     handler: 'UserController.create'
   },

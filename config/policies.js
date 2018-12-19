@@ -16,7 +16,8 @@ module.exports = {
 
   AuthController: {
     jwtTokens: ['AuthPolicy.isAuthenticated'],
-    blacklistJwt: ['AuthPolicy.isAuthenticated']
+    blacklistJwt: ['AuthPolicy.isAuthenticated'],
+    signRequest: ['AuthPolicy.isAuthenticated']
   },
 
   ClientController: {

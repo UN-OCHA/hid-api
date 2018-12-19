@@ -4,6 +4,7 @@ const Policy = require('trails/policy');
 const Boom = require('boom');
 const acceptLanguage = require('accept-language');
 const authenticator = require('authenticator');
+const hawk = require('hawk');
 
 /**
  * @module AuthPolicy
@@ -39,6 +40,24 @@ module.exports = class AuthPolicy extends Policy {
       else {
         this.log.warn('Wrong format for authorization header', {security: true, fail: true, request: request});
         return reply(Boom.unauthorized('Format is Authorization: Bearer [token]'));
+      }
+    }
+    else if (request.query.bewit) {
+      try {
+        const { credentials, attributes } = await hawk.uri.authenticate(request, function (id) {
+          const credentials = {
+            key: process.env.COOKIE_PASSWORD,
+            algorithm: 'sha256'
+          }
+          return credentials;
+        });
+        console.log(credentials);
+        console.log(attributes);
+        return reply();
+      }
+      catch (err) {
+        console.log(err);
+        return reply(Boom.unauthorized('Invalid Bewit !'));
       }
     }
     else if (request.query.access_token) {

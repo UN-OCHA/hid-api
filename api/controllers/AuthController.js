@@ -543,5 +543,24 @@ module.exports = class AuthController extends Controller{
     });
   }
 
+  // Sign Requests for file downloads
+  signRequest (request, reply) {
+    const hawk = require('hawk');
+    const url = request.payload ? request.payload.url : null;
+    if (!url) {
+      return reply(Boom.badRequest('Missing url'));
+    }
+    const credentials = {
+      id: request.params.currentUser._id.toString(),
+      key: process.env.COOKIE_PASSWORD,
+      algorithm: 'sha256'
+    };
+    const bewit = hawk.uri.getBewit(url, {
+      credentials: credentials,
+      ttlSec:      60 * 5
+    });
+    return reply({bewit: bewit});
+  }
+
 
 };
