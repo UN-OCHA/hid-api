@@ -4,7 +4,7 @@ const Policy = require('trails/policy');
 const Boom = require('boom');
 const acceptLanguage = require('accept-language');
 const authenticator = require('authenticator');
-const hawk = require('hawk');
+const Hawk = require('hawk');
 
 /**
  * @module AuthPolicy
@@ -44,7 +44,7 @@ module.exports = class AuthPolicy extends Policy {
     }
     else if (request.query.bewit) {
       try {
-        const { credentials, attributes } = await hawk.uri.authenticate(request, function (id) {
+        const { credentials, attributes } = await Hawk.uri.authenticate(request, function (id) {
           const credentials = {
             key: process.env.COOKIE_PASSWORD,
             algorithm: 'sha256'
