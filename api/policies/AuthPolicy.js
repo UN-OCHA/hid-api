@@ -50,7 +50,7 @@ module.exports = class AuthPolicy extends Policy {
         }
         return credentials;
       })
-      .then((credentials, attributes) {
+      .then((credentials, attributes) => {
         console.log(credentials);
         console.log(attributes);
         return reply();
