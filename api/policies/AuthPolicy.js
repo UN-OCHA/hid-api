@@ -46,7 +46,7 @@ module.exports = class AuthPolicy extends Policy {
       const req = {
         method: request.raw.req.method,
         url: request.raw.req.url,
-        host: request.raw.req.host,
+        host: request.raw.req.headers.host,
         port: request.raw.req.protocol === 'http:' ? 80 : 443,
         authorization: request.raw.req.authorization
       };
@@ -60,12 +60,18 @@ module.exports = class AuthPolicy extends Policy {
         localtimeOffsetMsec: 0
       }, function (err, credentials, artifacts) {
         if (err) {
-          console.log(err);
           return reply(err);
         }
-        console.log(credentials);
-        console.log(artifacts);
-        return reply();
+        User
+          .findOne({_id: artifacts.id})
+          .then(user => {
+            if (!user) {
+              return reply(Boom.unauthorized('No user found'));
+            }
+            request.params.currentUser = user;
+            that.log.warn('Successful authentication through bewit', { security: true, request: request});
+            reply();
+          });
       });
     }
     else if (request.query.access_token) {
