@@ -30,7 +30,7 @@
     "googleapis": "^23.0.0",
     "hapi-oauth2orize": "UN-OCHA/hapi-oauth2orize",
     "hapi-rate-limit": "1.4.0",
-    "hawk": "^7.0.10",
+    "hawk": "6.0.2",
     "is-html": "^1.1.0",
     "jsonwebtoken": "^8.1.0",
     "mailchimp-api-v3": "^1.7.0",
