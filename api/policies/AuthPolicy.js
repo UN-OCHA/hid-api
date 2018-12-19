@@ -25,7 +25,7 @@ module.exports = class AuthPolicy extends Policy {
       return reply();
     }
 
-    let token;
+    let token = '';
 
     if (request.headers && request.headers.authorization) {
       const parts = request.headers.authorization.split(' ');
@@ -67,7 +67,6 @@ module.exports = class AuthPolicy extends Policy {
         console.log(artifacts);
         return reply();
       });
-      return;
     }
     else if (request.query.access_token) {
       token = request.query.access_token;
@@ -78,60 +77,63 @@ module.exports = class AuthPolicy extends Policy {
       return reply(Boom.unauthorized('No Authorization header was found'));
     }
 
-    const that = this;
+    if (token !== '') {
 
-    this.app.services.JwtService.verify(token, function (err, jtoken) {
-      if (err) {
-        // Verify it's not an oauth access token
-        OauthToken
-          .findOne({token: token})
-          .populate('user client')
-          .then(tok => {
-            // TODO: make sure the token is not expired
-            if (!tok) {
-              that.log.warn('Invalid token', { security: true, fail: true, request: request});
-              return reply(Boom.unauthorized('Invalid Token!'));
-            }
-            if (tok.isExpired()) {
-              that.log.warn('Token is expired', { security: true, fail: true, request: request});
-              return reply(Boom.unauthorized('Expired token'));
-            }
-            request.params.currentUser = tok.user;
-            request.params.currentClient = tok.client;
-            reply();
-          })
-          .catch(err => {
-            that.app.services.ErrorService.handle(err, request, reply);
-          });
-      }
-      else {
-        // Make sure token is not blacklisted
-        JwtToken
-          .findOne({token: token, blacklist: true})
-          .then(tok => {
-            if (tok) {
-              that.log.warn('Tried to get authorization with a blacklisted token', { security: true, fail: true, request: request});
-              return reply(Boom.unauthorized('Invalid Token !'));
-            }
-            request.params.token = jtoken; // This is the decrypted token or the payload you provided
-            return User.findOne({_id: jtoken.id});
-          })
-          .then(user => {
-            if (user) {
-              request.params.currentUser = user;
-              that.log.warn('Successful authentication through JWT', { security: true, request: request});
+      const that = this;
+
+      this.app.services.JwtService.verify(token, function (err, jtoken) {
+        if (err) {
+          // Verify it's not an oauth access token
+          OauthToken
+            .findOne({token: token})
+            .populate('user client')
+            .then(tok => {
+              // TODO: make sure the token is not expired
+              if (!tok) {
+                that.log.warn('Invalid token', { security: true, fail: true, request: request});
+                return reply(Boom.unauthorized('Invalid Token!'));
+              }
+              if (tok.isExpired()) {
+                that.log.warn('Token is expired', { security: true, fail: true, request: request});
+                return reply(Boom.unauthorized('Expired token'));
+              }
+              request.params.currentUser = tok.user;
+              request.params.currentClient = tok.client;
               reply();
-            }
-            else {
-              that.log.warn('Could not find user linked to JWT', { security: true, fail: true, request: request });
-              reply(Boom.unauthorized('Invalid Token !'));
-            }
-          })
-          .catch(err => {
-            that.app.services.ErrorService.handle(err, request, reply);
-          });
-      }
-    });
+            })
+            .catch(err => {
+              that.app.services.ErrorService.handle(err, request, reply);
+            });
+        }
+        else {
+          // Make sure token is not blacklisted
+          JwtToken
+            .findOne({token: token, blacklist: true})
+            .then(tok => {
+              if (tok) {
+                that.log.warn('Tried to get authorization with a blacklisted token', { security: true, fail: true, request: request});
+                return reply(Boom.unauthorized('Invalid Token !'));
+              }
+              request.params.token = jtoken; // This is the decrypted token or the payload you provided
+              return User.findOne({_id: jtoken.id});
+            })
+            .then(user => {
+              if (user) {
+                request.params.currentUser = user;
+                that.log.warn('Successful authentication through JWT', { security: true, request: request});
+                reply();
+              }
+              else {
+                that.log.warn('Could not find user linked to JWT', { security: true, fail: true, request: request });
+                reply(Boom.unauthorized('Invalid Token !'));
+              }
+            })
+            .catch(err => {
+              that.app.services.ErrorService.handle(err, request, reply);
+            });
+        }
+      });
+    }
   }
 
   isTOTPEnabledAndValid (request, reply) {
