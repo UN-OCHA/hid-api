@@ -43,22 +43,22 @@ module.exports = class AuthPolicy extends Policy {
       }
     }
     else if (request.query.bewit) {
-      try {
-        const { credentials, attributes } = await Hawk.uri.authenticate(request, function (id) {
-          const credentials = {
-            key: process.env.COOKIE_PASSWORD,
-            algorithm: 'sha256'
-          }
-          return credentials;
-        });
+      Hawk.uri.authenticate(request, function (id) {
+        const credentials = {
+          key: process.env.COOKIE_PASSWORD,
+          algorithm: 'sha256'
+        }
+        return credentials;
+      })
+      .then((credentials, attributes) {
         console.log(credentials);
         console.log(attributes);
         return reply();
-      }
-      catch (err) {
+      })
+      .catch(err => {
         console.log(err);
         return reply(Boom.unauthorized('Invalid Bewit !'));
-      }
+      });
     }
     else if (request.query.access_token) {
       token = request.query.access_token;
