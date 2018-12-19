@@ -50,12 +50,12 @@ module.exports = class AuthPolicy extends Policy {
         port: request.info.remotePort,
         authorization: request.headers.authorization
       };
-      Hawk.uri.authenticate(request.raw.req, function (id) {
+      Hawk.uri.authenticate(request.raw.req, function (id, callback) {
         const credentials = {
           key: process.env.COOKIE_PASSWORD,
           algorithm: 'sha256'
         }
-        return credentials;
+        return callback(null, credentials);
       }, {
         localtimeOffsetMsec: 0
       }, function (err, credentials, artifacts) {
