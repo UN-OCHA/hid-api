@@ -50,7 +50,6 @@ module.exports = class AuthPolicy extends Policy {
         port: request.info.remotePort,
         authorization: request.headers.authorization
       };
-      console.log(request.raw.req);
       Hawk.uri.authenticate(request.raw.req, function (id) {
         const credentials = {
           key: process.env.COOKIE_PASSWORD,
@@ -62,12 +61,13 @@ module.exports = class AuthPolicy extends Policy {
       }, function (err, credentials, artifacts) {
         if (err) {
           console.log(err);
-          return reply(Boom.unauthorized('Invalid Bewit !'));
+          return reply(err);
         }
         console.log(credentials);
         console.log(artifacts);
         return reply();
       });
+      return;
     }
     else if (request.query.access_token) {
       token = request.query.access_token;
