@@ -43,21 +43,30 @@ module.exports = class AuthPolicy extends Policy {
       }
     }
     else if (request.query.bewit) {
-      Hawk.uri.authenticate(request, function (id) {
+      const req = {
+        method: request.method,
+        url: request.path,
+        host: request.info.hostname,
+        port: request.info.remotePort,
+        authorization: request.headers.authorization
+      };
+      console.log(req);
+      Hawk.uri.authenticate(req, function (id) {
         const credentials = {
           key: process.env.COOKIE_PASSWORD,
           algorithm: 'sha256'
         }
         return credentials;
-      })
-      .then((credentials, attributes) => {
+      }, {
+        localtimeOffsetMsec: 0
+      }, function (err, credentials, artifacts) {
+        if (err) {
+          console.log(err);
+          return reply(Boom.unauthorized('Invalid Bewit !'));
+        }
         console.log(credentials);
-        console.log(attributes);
+        console.log(artifacts);
         return reply();
-      })
-      .catch(err => {
-        console.log(err);
-        return reply(Boom.unauthorized('Invalid Bewit !'));
       });
     }
     else if (request.query.access_token) {
