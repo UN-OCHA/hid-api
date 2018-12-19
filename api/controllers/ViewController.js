@@ -252,7 +252,7 @@ module.exports = class ViewController extends Controller {
     UserController.resetPasswordEndpoint(request, function (result) {
       const al = that._getAlert(
         result,
-        'You should have received an email which will allow you to reset your password.',
+        'Your password reset instructions have been sent. Please check your email. If you do not receive an email, please check your spam folder or contact Humanitarian ID Support.',
         'There was an error resetting your password.'
       );
       const registerLink = that._getRegisterLink(request.payload);
