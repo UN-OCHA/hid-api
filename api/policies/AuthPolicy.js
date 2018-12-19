@@ -44,13 +44,13 @@ module.exports = class AuthPolicy extends Policy {
     }
     else if (request.query.bewit) {
       const req = {
-        method: request.method,
-        url: request.path,
-        host: request.info.hostname,
-        port: request.info.remotePort,
-        authorization: request.headers.authorization
+        method: request.raw.req.method,
+        url: request.raw.req.url,
+        host: request.raw.req.host,
+        port: request.raw.req.protocol === 'http:' ? 80 : 443,
+        authorization: request.raw.req.authorization
       };
-      Hawk.uri.authenticate(request.raw.req, function (id, callback) {
+      Hawk.uri.authenticate(req, function (id, callback) {
         const credentials = {
           key: process.env.COOKIE_PASSWORD,
           algorithm: 'sha256'
