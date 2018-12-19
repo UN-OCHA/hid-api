@@ -194,7 +194,7 @@ module.exports = class ViewController extends Controller {
       .then(() => {
         UserController.create(request, function (result) {
           const al = that._getAlert(result,
-            'You registered successfully. Please confirm your email address',
+            'Thank you for creating an account. You will soon receive a confirmation email to confirm your account.',
             'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.'
           );
           reply.view('login', {
