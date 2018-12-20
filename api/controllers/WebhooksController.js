@@ -254,9 +254,11 @@ module.exports = class WebhooksController extends Controller{
     }
 
     // Update acronymsOrNames
-    if (list.acronymsOrNames) {
-      list.acronymsOrNames[language] = label;
+    if (!list.acronymsOrNames) {
+      list.acronymsOrNames = {};
     }
+
+    list.acronymsOrNames[language] = label;
 
     let acronymFound = false;
     if (list.acronyms && list.acronyms.length) {
