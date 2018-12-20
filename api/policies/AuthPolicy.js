@@ -17,6 +17,7 @@ module.exports = class AuthPolicy extends Policy {
     const OauthToken = this.app.orm.OauthToken;
     const JwtToken = this.app.orm.JwtToken;
     const User = this.app.orm.User;
+    const that = this;
     // If we are creating a user and we are not authenticated, allow it
     if (request.path === '/api/v2/user' &&
       request.method === 'post' &&
@@ -84,8 +85,6 @@ module.exports = class AuthPolicy extends Policy {
     }
 
     if (token !== '') {
-
-      const that = this;
 
       this.app.services.JwtService.verify(token, function (err, jtoken) {
         if (err) {
