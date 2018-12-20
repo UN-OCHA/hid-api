@@ -70,6 +70,7 @@ module.exports = class AuthPolicy extends Policy {
               return reply(Boom.unauthorized('No user found'));
             }
             request.params.currentUser = user;
+            delete request.query.bewit;
             that.log.warn('Successful authentication through bewit', { security: true, request: request});
             reply();
           });
