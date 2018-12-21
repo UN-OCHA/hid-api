@@ -35,6 +35,7 @@ module.exports = class TrustedDomainController extends Controller{
       criteria._id = request.params.id;
       TrustedDomain
         .findOne(criteria)
+        .populate('list')
         .then(result => {
           if (!result) {
             throw Boom.notFound();
@@ -49,6 +50,7 @@ module.exports = class TrustedDomainController extends Controller{
       const query = this.app.services.HelperService.find('TrustedDomain', criteria, options);
       let gresults = {};
       query
+        .populate('list')
         .then((results) => {
           gresults = results;
           return TrustedDomain.count(criteria);
