@@ -1,6 +1,7 @@
 'use strict';
 
 const Model = require('trails/model');
+const Schema = require('mongoose').Schema;
 const isHTML = require('is-html');
 const validate = require('mongoose-validator');
 
@@ -35,6 +36,10 @@ module.exports = class TrustedDomain extends Model {
           validator: isHTMLValidator,
           message: 'HTML code is not allowed in description'
         }
+      },
+      list: {
+        type: Schema.ObjectId,
+        ref: 'List'
       }
     };
   }

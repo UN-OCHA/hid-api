@@ -233,10 +233,6 @@ module.exports = class List extends Model {
         readonly: true
       },
 
-      domains: {
-        type: [String]
-      },
-
       legacyId: {
         type: String,
         readonly: true
