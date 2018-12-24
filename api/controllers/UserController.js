@@ -779,7 +779,7 @@ module.exports = class UserController extends Controller{
               if (!isCheckedIn) {
                 const ListUserController = this.app.controllers.ListUserController;
                 return ListUserController
-                  ._checkinHelper(list, grecord, true, 'organizations', request.params.currentUser);
+                  ._checkinHelper(list, grecord, true, 'organizations', grecord);
               }
             }
           }
