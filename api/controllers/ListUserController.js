@@ -9,21 +9,119 @@ const async = require('async');
  * @module ListUserController
  * @description Generated Trails.js Controller.
  */
-module.exports = class ListUserController extends Controller{
+module.exports = class ListUserController extends Controller {
+
+  _checkinHelper (list, user, notify, childAttribute, currentUser) {
+    const GSSSyncService = this.app.services.GSSSyncService;
+    const OutlookService = this.app.services.OutlookService;
+    let payload = {
+      list: list._id.toString()
+    };
+    const that = this;
+    let gResult = {};
+
+    // Check that the list added corresponds to the right attribute
+    if (childAttribute !== list.type + 's' && childAttribute !== list.type) {
+      throw Boom.badRequest('Wrong list type');
+    }
+
+    //Set the proper pending attribute depending on list type
+    if (list.joinability === 'public' ||
+      list.joinability === 'private' ||
+      list.isOwner(currentUser)) {
+      payload.pending = false;
+    }
+    else {
+      payload.pending = true;
+    }
+
+    payload.name = list.name;
+    payload.acronym = list.acronym;
+    payload.owner = list.owner;
+    payload.managers = list.managers;
+    payload.visibility = list.visibility;
+
+    if (list.type === 'organization') {
+      payload.orgTypeId = list.metadata.type.id;
+      payload.orgTypeLabel = list.metadata.type.label;
+    }
+
+    if (childAttribute !== 'organization') {
+      if (!user[childAttribute]) {
+        user[childAttribute] = [];
+      }
+
+      // Make sure user is not already checked in this list
+      for (let i = 0, len = user[childAttribute].length; i < len; i++) {
+        if (user[childAttribute][i].list.equals(list._id) &&
+          user[childAttribute][i].deleted === false) {
+          throw Boom.badRequest('User is already checked in');
+        }
+      }
+    }
+
+    if (childAttribute !== 'organization') {
+      user[childAttribute].push(payload);
+    }
+    else {
+      record.organization = payload;
+    }
+    user.lastModified = new Date();
+    return user
+      .save()
+      .then(() => {
+        list.count = list.count + 1;
+        return list
+          .save();
+      })
+      .then(() => {
+        const managers = [];
+        list.managers.forEach(function (manager) {
+          if (manager.toString() !== currentUser._id.toString()) {
+            managers.push(manager);
+          }
+        });
+        // Notify list managers of the checkin
+        that.app.services.NotificationService.notifyMultiple(managers, {
+          type: 'checkin',
+          createdBy: user,
+          params: { list: list }
+        });
+        // Notify user if needed
+        if (currentUser.id !== userId && list.type !== 'list' && notify === true) {
+          that.log.debug('Checked in by a different user');
+          that.app.services.NotificationService.send({
+            type: 'admin_checkin',
+            createdBy: currentUser,
+            user: user,
+            params: { list: list }
+          }, () => { });
+        }
+        // Notify list owner and managers of the new checkin if needed
+        if (payload.pending) {
+          that.log.debug('Notifying list owners and manager of the new checkin');
+          that.app.services.NotificationService.sendMultiple(list.managers, {
+            type: 'pending_checkin',
+            params: { list: list, user: user }
+          }, () => { });
+        }
+        // Synchronize google spreadsheets
+        return GSSSyncService.addUserToSpreadsheets(list._id, user);
+      })
+      .then(data => {
+        return OutlookService.addUserToContactFolders(list._id, user);
+      });
+  }
 
   checkin (request, reply) {
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const userId = request.params.id;
     const childAttribute = request.params.childAttribute;
     const payload = request.payload;
-    const Model = this.app.orm.user;
-    const List = this.app.orm.list;
-    const childAttributes = Model.listAttributes();
-    const GSSSyncService = this.app.services.GSSSyncService;
-    const OutlookService = this.app.services.OutlookService;
+    const List = this.app.orm.List;
+    const User = this.app.orm.User;
+    const childAttributes = User.listAttributes();
 
-    this.log.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload,
-      'options =', options, { request: request});
+    this.log.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload, { request: request});
 
     if (childAttributes.indexOf(childAttribute) === -1 || childAttribute === 'organization') {
       return reply(Boom.notFound());
@@ -40,146 +138,26 @@ module.exports = class ListUserController extends Controller{
     }
     delete request.payload.notify;
 
-    const that = this;
-    let gResult = {};
-
+    let list = {}, user = {};
     List
-      .findOne({ '_id': payload.list })
-      .then((list) => {
-        // Check that the list added corresponds to the right attribute
-        if (childAttribute !== list.type + 's' && childAttribute !== list.type) {
-          throw Boom.badRequest('Wrong list type');
+      .findOne({_id: payload.list})
+      .then((llist) => {
+        if (!llist) {
+          throw Boom.notFound();
         }
-
-        //Set the proper pending attribute depending on list type
-        if (list.joinability === 'public' ||
-          list.joinability === 'private' ||
-          list.isOwner(request.params.currentUser)) {
-          payload.pending = false;
+        list = llist;
+        return User
+          .findOne({_id: userId});
+      })
+      .then((luser) => {
+        if (!luser) {
+          throw Boom.notFound();
         }
-        else {
-          payload.pending = true;
-        }
-
-        payload.name = list.name;
-        payload.acronym = list.acronym;
-        payload.owner = list.owner;
-        payload.managers = list.managers;
-        payload.visibility = list.visibility;
-
-        if (list.type === 'organization') {
-          payload.orgTypeId = list.metadata.type.id;
-          payload.orgTypeLabel = list.metadata.type.label;
-        }
-
-        that.log.debug('Looking for user with id ' + userId, { request: request});
-        return Model
-          .findOne({ '_id': userId })
-          .then((record) => {
-            if (!record) {
-              throw Boom.badRequest('User not found');
-            }
-            return {list: list, user: record};
-          });
+        user = luser;
+        return this._checkinHelper(list, user, notify, childAttribute, request.params.currentUser);
       })
-      .then((result) => {
-        const record = result.user,
-          list = result.list;
-        if (childAttribute !== 'organization') {
-          if (!record[childAttribute]) {
-            record[childAttribute] = [];
-          }
-
-          // Make sure user is not already checked in this list
-          for (let i = 0, len = record[childAttribute].length; i < len; i++) {
-            if (record[childAttribute][i].list.equals(list._id) &&
-              record[childAttribute][i].deleted === false) {
-              throw Boom.badRequest('User is already checked in');
-            }
-          }
-        }
-        return result;
-      })
-      .then((result) => {
-        that.log.debug('Setting the listUser to the correct attribute', {request: request});
-        const record = result.user;
-        if (childAttribute !== 'organization') {
-          if (!record[childAttribute]) {
-            record[childAttribute] = [];
-          }
-
-          record[childAttribute].push(payload);
-        }
-        else {
-          record.organization = payload;
-        }
-        return {list: result.list, user: record};
-      })
-      .then((result) => {
-        result.user.lastModified = new Date();
-        return result.user
-          .save()
-          .then(() => {
-            reply(result.user);
-            return result;
-          });
-      })
-      .then((result) => {
-        result.list.count = result.list.count + 1;
-        return result.list
-          .save()
-          .then(() => {
-            return result;
-          });
-      })
-      .then((result) => {
-        const managers = [];
-        result.list.managers.forEach(function (manager) {
-          if (manager.toString() !== request.params.currentUser._id.toString()) {
-            managers.push(manager);
-          }
-        });
-        // Notify list managers of the checkin
-        that.app.services.NotificationService.notifyMultiple(managers, {
-          type: 'checkin',
-          createdBy: result.user,
-          params: { list: result.list }
-        });
-        return result;
-      })
-      .then((result) => {
-        // Notify user if needed
-        if (request.params.currentUser.id !== userId && result.list.type !== 'list' && notify === true) {
-          that.log.debug('Checked in by a different user', {request: request});
-          that.app.services.NotificationService.send({
-            type: 'admin_checkin',
-            createdBy: request.params.currentUser,
-            user: result.user,
-            params: { list: result.list }
-          }, () => { });
-        }
-        return result;
-      })
-      .then((result) => {
-        // Notify list owner and managers of the new checkin if needed
-        const list = result.list,
-          user = result.user;
-        if (payload.pending) {
-          that.log.debug('Notifying list owners and manager of the new checkin', {request: request});
-          that.app.services.NotificationService.sendMultiple(list.managers, {
-            type: 'pending_checkin',
-            params: { list: list, user: user }
-          }, () => { });
-        }
-        return result;
-      })
-      .then((result) => {
-        gResult = result;
-        // Synchronize google spreadsheets
-        return GSSSyncService.addUserToSpreadsheets(result.list._id, result.user);
-      })
-      .then(data => {
-        return OutlookService.addUserToContactFolders(gResult.list._id, gResult.user);
+      .then(() => {
+        return reply(user);
       })
       .catch(err => {
         that.app.services.ErrorService.handle(err, request, reply);

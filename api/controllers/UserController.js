@@ -761,6 +761,27 @@ module.exports = class UserController extends Controller{
             grecord.verified = true;
             grecord.verified_by = hidAccount;
             grecord.verifiedOn = new Date();
+            // If the domain is associated to a list, check user in this list automatically
+            if (domain.list) {
+              if (!record.organizations) {
+                record.organizations = [];
+              }
+
+              let isCheckedIn = false;
+              // Make sure user is not already checked in this list
+              for (let i = 0, len = record.organizations.length; i < len; i++) {
+                if (record.organizations[i].list.equals(list._id) &&
+                  record.organizations[i].deleted === false) {
+                  isCheckedIn = true;
+                }
+              }
+
+              if (!isCheckedIn) {
+                const ListUserController = this.app.controllers.ListUserController;
+                return ListUserController
+                  ._checkinHelper(list, grecord, true, 'organizations', request.params.currentUser);
+              }
+            }
           }
           return grecord.save();
         })
