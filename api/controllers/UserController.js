@@ -770,7 +770,7 @@ module.exports = class UserController extends Controller{
               let isCheckedIn = false;
               // Make sure user is not already checked in this list
               for (let i = 0, len = grecord.organizations.length; i < len; i++) {
-                if (grecord.organizations[i].list.equals(list._id) &&
+                if (grecord.organizations[i].list.equals(domain.list._id) &&
                   grecord.organizations[i].deleted === false) {
                   isCheckedIn = true;
                 }
@@ -779,7 +779,7 @@ module.exports = class UserController extends Controller{
               if (!isCheckedIn) {
                 const ListUserController = this.app.controllers.ListUserController;
                 return ListUserController
-                  ._checkinHelper(list, grecord, true, 'organizations', grecord);
+                  ._checkinHelper(domain.list, grecord, true, 'organizations', grecord);
               }
             }
           }
