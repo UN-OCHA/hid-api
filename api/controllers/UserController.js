@@ -763,15 +763,15 @@ module.exports = class UserController extends Controller{
             grecord.verifiedOn = new Date();
             // If the domain is associated to a list, check user in this list automatically
             if (domain.list) {
-              if (!record.organizations) {
-                record.organizations = [];
+              if (!grecord.organizations) {
+                grecord.organizations = [];
               }
 
               let isCheckedIn = false;
               // Make sure user is not already checked in this list
-              for (let i = 0, len = record.organizations.length; i < len; i++) {
-                if (record.organizations[i].list.equals(list._id) &&
-                  record.organizations[i].deleted === false) {
+              for (let i = 0, len = grecord.organizations.length; i < len; i++) {
+                if (grecord.organizations[i].list.equals(list._id) &&
+                  grecord.organizations[i].deleted === false) {
                   isCheckedIn = true;
                 }
               }
