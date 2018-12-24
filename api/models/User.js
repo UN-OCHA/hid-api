@@ -669,7 +669,8 @@ module.exports = class User extends Model {
           const domain = email.substr((ind+1));
           return this
             .model('TrustedDomain')
-            .findOne({url: domain});
+            .findOne({url: domain})
+            .populate('list');
         },
 
         canBeVerifiedAutomatically: function () {
