@@ -359,9 +359,10 @@ module.exports = class User extends Model {
 
         generateHash: function (type) {
           if (type === 'reset_password') {
-            const value = Date.now() + ':' + this._id.toString() + ':' + this.password;
+            const now = Date.now();
+            const value = now + ':' + this._id.toString() + ':' + this.password;
             const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
-            return hash;
+            return now + ':' + hash;
           }
           else {
             const buffer = crypto.randomBytes(256);

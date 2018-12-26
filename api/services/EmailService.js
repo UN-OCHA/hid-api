@@ -147,13 +147,13 @@ module.exports = class EmailService extends Service {
       locale: user.locale
     };
     const hash = user.generateHash('reset_password');
-    const resetUrl = that._addHash(appResetUrl, hash);
+    const resetUrl = this._addHash(appResetUrl, hash);
     const context = {
       name: user.name,
       reset_url: resetUrl,
       appResetUrl: appResetUrl
     };
-    return that.send(mailOptions, 'reset_password', context);
+    return this.send(mailOptions, 'reset_password', context);
   }
 
   sendForcedPasswordReset (user, callback) {
