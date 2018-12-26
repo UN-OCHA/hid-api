@@ -43,6 +43,10 @@ module.exports = class AuthPolicy extends Policy {
         return reply(Boom.unauthorized('Format is Authorization: Bearer [token]'));
       }
     }
+    else if (request.query.access_token) {
+      token = request.query.access_token;
+      delete request.query.access_token;
+    }
     else if (request.query.bewit) {
       const req = {
         method: request.raw.req.method,
