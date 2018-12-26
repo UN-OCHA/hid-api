@@ -362,7 +362,7 @@ module.exports = class User extends Model {
             const now = Date.now();
             const value = now + ':' + this._id.toString() + ':' + this.password;
             const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
-            return now + ':' + hash;
+            return new Buffer(this._id.toString() + '/' + now + '/' + hash).toString('base64');
           }
           else {
             const buffer = crypto.randomBytes(256);
