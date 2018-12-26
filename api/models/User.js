@@ -357,11 +357,18 @@ module.exports = class User extends Model {
           }
         },
 
-        generateHash: function () {
-          const buffer = crypto.randomBytes(256);
-          const now = Date.now();
-          const hash = buffer.toString('hex').slice(0, 15);
-          return new Buffer(now + '/' + hash).toString('base64');
+        generateHash: function (type) {
+          if (type === 'reset_password') {
+            const value = Date.now() + ':' + this._id.toString() + ':' + this.password;
+            const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+            return hash;
+          }
+          else {
+            const buffer = crypto.randomBytes(256);
+            const now = Date.now();
+            const hash = buffer.toString('hex').slice(0, 15);
+            return new Buffer(now + '/' + hash).toString('base64');
+          }
         },
 
         // Validate the hash of a confirmation link
