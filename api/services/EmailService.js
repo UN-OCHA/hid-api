@@ -69,7 +69,7 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale || 'en'
     };
-    const hash = user.generateHash('verify_email');
+    const hash = user.generateHash('verify_email', user.email);
     let resetUrl = this._addUrlArgument(appVerifyUrl, 'email', user.email);
     resetUrl = this._addUrlArgument(resetUrl, 'time', hash.timestamp);
     resetUrl = this._addHash(resetUrl, hash.hash);
