@@ -92,22 +92,16 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale || 'en'
     };
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'reset_password';
-    user.hashEmail = user.email;
-    return user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appVerifyUrl, hash);
-        const context = {
-          user: user,
-          admin: admin,
-          reset_url: resetUrl
-        };
-        return that.send(mailOptions, 'register_orphan', context);
-      });
+    const hash = user.generateHash('reset_password');
+    let resetUrl = this._addUrlArgument(appVerifyUrl, 'id', user._id.toString());
+    resetUrl = this._addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = this._addHash(resetUrl, hash.hash);
+    const context = {
+      user: user,
+      admin: admin,
+      reset_url: resetUrl
+    };
+    return this.send(mailOptions, 'register_orphan', context);
   }
 
   sendRegisterKiosk(user, appVerifyUrl) {
@@ -115,22 +109,15 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale || 'en'
     };
-
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'reset_password';
-    user.hashEmail = user.email;
-    return user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appVerifyUrl, hash);
-        const context = {
-          user: user,
-          reset_url: resetUrl
-        };
-        return that.send(mailOptions, 'register_kiosk', context);
-      });
+    const hash = user.generateHash('reset_password');
+    let resetUrl = this._addUrlArgument(appVerifyUrl, 'id', user._id.toString());
+    resetUrl = this._addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = this._addHash(resetUrl, hash.hash);
+    const context = {
+      user: user,
+      reset_url: resetUrl
+    };
+    return this.send(mailOptions, 'register_kiosk', context);
   }
 
   sendPostRegister (user) {
@@ -200,21 +187,15 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale
     };
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'reset_password';
-    user.hashEmail = '';
-    return user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appResetUrl, hash);
-        const context = {
-          name: user.name,
-          reset_url: resetUrl
-        };
-        return that.send(mailOptions, 'claim', context);
-      });
+    const hash = user.generateHash('reset_password');
+    let resetUrl = this._addUrlArgument(appResetUrl, 'id', user._id.toString());
+    resetUrl = this._addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = this._addHash(resetUrl, hash.hash);
+    const context = {
+      name: user.name,
+      reset_url: resetUrl,
+    };
+    return this.send(mailOptions, 'claim', context);
   }
 
   sendValidationEmail (user, email, appValidationUrl) {
