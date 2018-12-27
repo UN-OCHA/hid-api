@@ -217,10 +217,10 @@ module.exports = class ViewController extends Controller {
 
   verify (request, reply) {
     const UserController = this.app.controllers.UserController;
-    if (!request.query.hash) {
+    if (!request.query.hash && !request.query.id && !request.query.time) {
       return reply(Boom.badRequest('Missing hash parameter'));
     }
-    request.payload = { hash: request.query.hash };
+    request.payload = { hash: request.query.hash, id: request.query.id, time: request.query.time };
     const that = this;
     UserController.validateEmail(request, function (result) {
       const al = that._getAlert(

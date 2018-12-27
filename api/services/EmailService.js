@@ -69,22 +69,15 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale || 'en'
     };
-
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'verify_email';
-    user.hashEmail = user.email;
-    return user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appVerifyUrl, hash);
-        const context = {
-          name: user.name,
-          reset_url: resetUrl
-        };
-        return that.send(mailOptions, 'register', context);
-      });
+    const hash = user.generateHash('reset_password');
+    let resetUrl = this._addUrlArgument(appVerifyUrl, 'id', user._id.toString());
+    resetUrl = this._addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = this._addHash(resetUrl, hash.hash);
+    const context = {
+      name: user.name,
+      reset_url: resetUrl
+    };
+    return this.send(mailOptions, 'register', context);
   }
 
   sendRegisterOrphan(user, admin, appVerifyUrl) {

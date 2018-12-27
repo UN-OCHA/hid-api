@@ -715,7 +715,7 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('[UserController] Verifying email ', { request: request });
 
-    if (!request.payload.hash && !request.params.email) {
+    if (!request.payload.hash && !request.params.email && !request.payload.id && !request.payload.time) {
       return reply(Boom.badRequest());
     }
 
@@ -724,14 +724,14 @@ module.exports = class UserController extends Controller{
     let grecord = {};
 
     if (request.payload.hash) {
-      query = Model.findOne({hash: request.payload.hash, hashAction: 'verify_email'})
+      query = Model.findOne({_id: request.payload.id})
         .then(record => {
           if (!record) {
             throw Boom.notFound();
           }
           grecord = record;
           // Verify hash
-          if (grecord.validHash(request.payload.hash) === true) {
+          if (grecord.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
             // Verify user email
             if (grecord.email === grecord.hashEmail) {
               grecord.email_verified = true;
