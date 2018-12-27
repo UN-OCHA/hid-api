@@ -357,10 +357,19 @@ module.exports = class User extends Model {
           }
         },
 
-        generateHash: function (type) {
+        generateHash: function (type, email) {
           if (type === 'reset_password') {
             const now = Date.now();
             const value = now + ':' + this._id.toString() + ':' + this.password;
+            const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+            return {
+              timestamp: now,
+              hash: hash
+            };
+          }
+          else if (type === 'verify_email') {
+            const now = Date.now();
+            const value = now + ':' + this._id.toString() + ':' + email;
             const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
             return {
               timestamp: now,
@@ -376,13 +385,22 @@ module.exports = class User extends Model {
         },
 
         // Validate the hash of a confirmation link
-        validHash: function (hashLink, type, time) {
+        validHash: function (hashLink, type, time, email) {
           if (type === 'reset_password') {
             const now = Date.now();
             if (now - time > 24 * 3600 * 1000) {
               return false;
             }
             const value = time + ':' + this._id.toString() + ':' + this.password;
+            const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+            return hash === hashLink;
+          }
+          else if (type === 'verify_email') {
+            const now = Date.now();
+            if (now - time > 24 * 3600 * 1000) {
+              return false;
+            }
+            const value = time + ':' + this._id.toString() + ':' + email;
             const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
             return hash === hashLink;
           }

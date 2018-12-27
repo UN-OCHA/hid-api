@@ -715,7 +715,7 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('[UserController] Verifying email ', { request: request });
 
-    if (!request.payload.hash && !request.params.email && !request.payload.id && !request.payload.time) {
+    if (!request.payload.hash && !request.payload.email && !request.payload.time) {
       return reply(Boom.badRequest());
     }
 
@@ -724,32 +724,32 @@ module.exports = class UserController extends Controller{
     let grecord = {};
 
     if (request.payload.hash) {
-      query = Model.findOne({_id: request.payload.id})
+      query = Model.findOne({'emails.email': request.payload.email})
         .then(record => {
           if (!record) {
             throw Boom.notFound();
           }
           grecord = record;
           // Verify hash
-          if (grecord.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
+          if (grecord.validHash(request.payload.hash, 'verify_email', request.payload.time, request.payload.email) === true) {
             // Verify user email
-            if (grecord.email === grecord.hashEmail) {
+            if (grecord.email === request.payload.email) {
               grecord.email_verified = true;
               grecord.expires = new Date(0, 0, 1, 0, 0, 0);
               grecord.emails[0].validated = true;
               grecord.emails.set(0, record.emails[0]);
               grecord.lastModified = new Date();
-              return grecord.isVerifiableEmail(grecord.hashEmail);
+              return grecord.isVerifiableEmail(request.payload.email);
             }
             else {
               for (let i = 0, len = grecord.emails.length; i < len; i++) {
-                if (grecord.emails[i].email === grecord.hashEmail) {
+                if (grecord.emails[i].email === request.payload.email) {
                   grecord.emails[i].validated = true;
                   grecord.emails.set(i, grecord.emails[i]);
                 }
               }
               grecord.lastModified = new Date();
-              return grecord.isVerifiableEmail(grecord.hashEmail);
+              return grecord.isVerifiableEmail(request.payload.email);
             }
           }
           else {
@@ -786,7 +786,7 @@ module.exports = class UserController extends Controller{
           return grecord.save();
         })
         .then(record => {
-          if (grecord.email === grecord.hashEmail) {
+          if (grecord.email === request.payload.email) {
             return that.app.services.EmailService.sendPostRegister(grecord);
           }
         })
