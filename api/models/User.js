@@ -362,29 +362,43 @@ module.exports = class User extends Model {
             const now = Date.now();
             const value = now + ':' + this._id.toString() + ':' + this.password;
             const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
-            return new Buffer(this._id.toString() + '/' + now + '/' + hash).toString('base64');
+            return {
+              timestamp: now,
+              hash: hash
+            };
           }
           else {
             const buffer = crypto.randomBytes(256);
             const now = Date.now();
             const hash = buffer.toString('hex').slice(0, 15);
-            return new Buffer(now + '/' + hash).toString('base64');
+            return Buffer.from(now + '/' + hash).toString('base64');
           }
         },
 
         // Validate the hash of a confirmation link
-        validHash: function (hashLink) {
-          const key = new Buffer(hashLink, 'base64').toString('ascii');
-          const parts = key.split('/');
-          const timestamp = parts[0];
-          const now = Date.now();
-
-          // Verify hash
-          // verify timestamp is not too old (allow up to 7 days in milliseconds)
-          if (timestamp < (now - 7 * 86400000) || timestamp > now) {
-            return false;
+        validHash: function (hashLink, type, time) {
+          if (type === 'reset_password') {
+            const now = Date.now();
+            if (now - time > 24 * 3600 * 1000) {
+              return false;
+            }
+            const value = time + ':' + this._id.toString() + ':' + this.password;
+            const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+            return hash === hashLink;
           }
-          return true;
+          else {
+            const key = new Buffer(hashLink, 'base64').toString('ascii');
+            const parts = key.split('/');
+            const timestamp = parts[0];
+            const now = Date.now();
+
+            // Verify hash
+            // verify timestamp is not too old (allow up to 7 days in milliseconds)
+            if (timestamp < (now - 7 * 86400000) || timestamp > now) {
+              return false;
+            }
+            return true;
+          }
         },
 
         emailIndex: function (email) {

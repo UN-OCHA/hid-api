@@ -12,16 +12,20 @@ const Transporter = Nodemailer.createTransport(TransporterUrl);
  */
 module.exports = class EmailService extends Service {
 
-  // Helper function to add hash to a link
-  _addHash(url, hash) {
+  _addUrlArgument (url, name, value) {
     let out = url;
     if (url.indexOf('?') !== -1) {
-      out += '&hash=' + hash;
+      out += '&' + name + '=' + value;
     }
     else {
-      out += '?hash=' + hash;
+      out += '?' + name + '=' + value;
     }
     return out;
+  }
+
+  // Helper function to add hash to a link
+  _addHash(url, hash) {
+    return this._addUrlArgument(url, 'hash', hash);
   }
 
   // Send an email
@@ -147,7 +151,9 @@ module.exports = class EmailService extends Service {
       locale: user.locale
     };
     const hash = user.generateHash('reset_password');
-    const resetUrl = this._addHash(appResetUrl, hash);
+    let resetUrl = this._addUrlArgument(appResetUrl, 'id', user._id.toString());
+    resetUrl = this._addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = this._addHash(resetUrl, hash.hash);
     const context = {
       name: user.name,
       reset_url: resetUrl,

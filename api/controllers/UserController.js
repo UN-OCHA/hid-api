@@ -896,7 +896,7 @@ module.exports = class UserController extends Controller{
     const that = this;
     const authPolicy = this.app.policies.AuthPolicy;
 
-    if (!request.payload.hash || !request.payload.password) {
+    if (!request.payload.hash || !request.payload.password || !request.payload.id || !request.payload.time) {
       return reply(Boom.badRequest('Wrong arguments'));
     }
 
@@ -908,10 +908,10 @@ module.exports = class UserController extends Controller{
     this.log.warn('Resetting password', { security: true, request: request});
     let grecord = {};
     Model
-      .findOne({hash: request.payload.hash, hashAction: 'reset_password'})
+      .findOne({_id: request.payload.id})
       .then(record => {
         if (!record) {
-          that.log.warn('Could not reset password. Hash not found', { security: true, fail: true, request: request});
+          that.log.warn('Could not reset password. User not found', { security: true, fail: true, request: request});
           throw Boom.badRequest('Reset password link is expired or invalid');
         }
         return record;
@@ -927,7 +927,7 @@ module.exports = class UserController extends Controller{
         }
       })
       .then(record => {
-        if (record.validHash(request.payload.hash) === true) {
+        if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
           const pwd = UserModel.hashPassword(request.payload.password);
           if (pwd === record.password) {
             throw Boom.badRequest('The new password can not be the same as the old one');
@@ -953,7 +953,6 @@ module.exports = class UserController extends Controller{
         grecord.expires = new Date(0, 0, 1, 0, 0, 0);
         grecord.is_orphan = false;
         grecord.is_ghost = false;
-        grecord.hash = '';
         grecord.lastPasswordReset = new Date();
         grecord.passwordResetAlert30days = false;
         grecord.passwordResetAlert7days = false;
