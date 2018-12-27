@@ -270,9 +270,9 @@ module.exports = class ViewController extends Controller {
     const that = this;
     const User = this.app.orm.User;
     request.yar.reset();
-    request.yar.set('session', { hash: request.query.hash, totp: false});
+    request.yar.set('session', { hash: request.query.hash, id: request.query.id, time: request.query.time, totp: false});
     User
-      .findOne(({hash: request.query.hash, hashAction: 'reset_password'}))
+      .findOne({_id: request.query.id})
       .then(user => {
         if (!user) {
           return reply.view('error');
@@ -285,10 +285,12 @@ module.exports = class ViewController extends Controller {
           });
         }
         else {
-          request.yar.set('session', { hash: request.query.hash, totp: true });
+          request.yar.set('session', { hash: request.query.hash, id: request.query.id, time: request.query.time, totp: true });
           return reply.view('new_password', {
             query: request.query,
-            hash: request.query.hash
+            hash: request.query.hash,
+            id: request.query.id,
+            time: request.query.time
           });
         }
       })
@@ -304,9 +306,9 @@ module.exports = class ViewController extends Controller {
     const cookie = request.yar.get('session');
     const authPolicy = this.app.policies.AuthPolicy;
 
-    if (cookie && cookie.hash && !cookie.totp) {
+    if (cookie && cookie.hash && cookie.id && cookie.time && !cookie.totp) {
       User
-        .findOne(({hash: cookie.hash, hashAction: 'reset_password'}))
+        .findOne({_id: cookie.id})
         .then(user => {
           const token = request.payload['x-hid-totp'];
           return authPolicy.isTOTPValid(user, token);
@@ -316,7 +318,9 @@ module.exports = class ViewController extends Controller {
           request.yar.set('session', cookie);
           return reply.view('new_password', {
             query: request.payload,
-            hash: cookie.hash
+            hash: cookie.hash,
+            id: cookie.id,
+            time: cookie.time
           });
         })
         .catch(err => {
