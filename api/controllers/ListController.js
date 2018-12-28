@@ -101,6 +101,12 @@ module.exports = class ListController extends Controller{
     }
     else {
       options.populate = [{path: 'owner', select: '_id name'}];
+      if (!request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
+        criteria.$or = [{visibility: 'all'}, {visibility: 'inlist'}, {$and: [{ visibility: 'me'}, {managers: request.params.currentUser._id}]}];
+        if (request.params.currentUser.verified) {
+          criteria.$or.push({visibility: 'verified'});
+        }
+      }
       const query = this.app.services.HelperService.find('List', criteria, options);
       query
         .then((results) => {
