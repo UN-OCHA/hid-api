@@ -5,7 +5,7 @@ const Schema = require('mongoose').Schema;
 const Mailchimp = require('mailchimp-api-v3');
 const crypto = require('crypto');
 const google = require('googleapis');
-const GoogleAuth = require('google-auth-library');
+const {OAuth2Client} = require('google-auth-library');
 const isHTML = require('is-html');
 
 /**
@@ -19,9 +19,8 @@ module.exports = class Service extends Model {
       const clientSecret = credentials.secrets.installed.client_secret;
       const clientId = credentials.secrets.installed.client_id;
       const redirectUrl = credentials.secrets.installed.redirect_uris[0];
-      const auth = new GoogleAuth();
-      const oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
-      oauth2Client.credentials = credentials.token;
+      const oauth2Client = new OAuth2Client(clientId, clientSecret, redirectUrl);
+      oauth2Client.setCredentials(credentials.token);
       cb(oauth2Client);
     };
     return {
