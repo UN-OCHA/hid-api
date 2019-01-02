@@ -704,9 +704,8 @@ module.exports = class User extends Model {
         },
 
         isVerifiableEmail: function (email) {
-          let out = false;
           const ind = email.indexOf('@');
-          const domain = email.substr((ind+1));
+          const domain = email.substr((ind + 1));
           return this
             .model('TrustedDomain')
             .findOne({url: domain})
@@ -715,7 +714,7 @@ module.exports = class User extends Model {
 
         canBeVerifiedAutomatically: function () {
           const that = this;
-          let out = false, promises = [];
+          let promises = [];
           // Check all emails
           this.emails.forEach(function (email) {
             if (email.validated) {
@@ -768,7 +767,7 @@ module.exports = class User extends Model {
           return user;
         }
       }
-    }
+    };
   }
 
   static schema () {

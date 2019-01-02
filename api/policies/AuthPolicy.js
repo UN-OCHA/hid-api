@@ -55,7 +55,7 @@ module.exports = class AuthPolicy extends Policy {
         const credentials = {
           key: process.env.COOKIE_PASSWORD,
           algorithm: 'sha256'
-        }
+        };
         return callback(null, credentials);
       }, {
         localtimeOffsetMsec: 0
