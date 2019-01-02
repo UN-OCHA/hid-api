@@ -23,7 +23,7 @@
     "bson": "1.1.0",
     "crumb": "^6.0.3",
     "ejs": "^2.5.2",
-    "email-templates": "^3.1.5",
+    "email-templates": "^5.0.2",
     "google-auth-library": "^0.12.0",
     "google-libphonenumber": "^3.1.6",
     "googleapis": "^23.0.0",
