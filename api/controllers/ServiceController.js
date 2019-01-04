@@ -43,14 +43,6 @@ module.exports = class ServiceController extends Controller{
       criteria.lists = {$in: criteria.lists.split(',')};
     }
 
-    if (criteria.name) {
-      if (criteria.name.length < 3) {
-        return reply(Boom.badRequest('Name must have at least 3 characters'));
-      }
-      criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/, '-');
-      criteria.name = new RegExp(criteria.name, 'i');
-    }
-
     const that = this;
 
     if (request.params.id) {
@@ -82,6 +74,14 @@ module.exports = class ServiceController extends Controller{
           });
           delete criteria.lists;
         }
+      }
+
+      if (criteria.name) {
+        if (criteria.name.length < 3) {
+          return reply(Boom.badRequest('Name must have at least 3 characters'));
+        }
+        criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/, '-');
+        criteria.name = new RegExp(criteria.name, 'i');
       }
 
       const that = this;
