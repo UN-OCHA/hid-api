@@ -462,6 +462,7 @@ module.exports = class CronController extends Controller {
     const User = this.app.orm.User;
     const ListUserController = this.app.controllers.ListUserController;
     this.app.log.info('automatically verify users');
+    const that = this;
     const stream = User.find({}).cursor();
 
     stream.on('data', function(user) {
@@ -497,7 +498,10 @@ module.exports = class CronController extends Controller {
 
                 if (!isCheckedIn) {
                   ListUserController
-                    ._checkinHelper(domain.list, user, true, 'organizations', user);
+                    ._checkinHelper(domain.list, user, true, 'organizations', user)
+                    .catch(err => {
+                      that.app.log.error(err);
+                    })
                 }
               }
             }
