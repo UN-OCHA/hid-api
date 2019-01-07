@@ -896,7 +896,7 @@ module.exports = class UserController extends Controller{
     const that = this;
     const authPolicy = this.app.policies.AuthPolicy;
 
-    if (!request.payload.hash || !request.payload.password || !request.payload.id || !request.payload.time) {
+    if (!request.payload.hash || !request.payload.password || !request.payload.id || !request.payload.time) {
       return reply(Boom.badRequest('Wrong arguments'));
     }
 
