@@ -501,7 +501,7 @@ module.exports = class CronController extends Controller {
                     ._checkinHelper(domain.list, user, true, 'organizations', user)
                     .catch(err => {
                       that.app.log.error(err);
-                    })
+                    });
                 }
               }
             }
