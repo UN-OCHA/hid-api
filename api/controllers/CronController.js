@@ -460,24 +460,48 @@ module.exports = class CronController extends Controller {
 
   verifyAutomatically (request, reply) {
     const User = this.app.orm.User;
+    const ListUserController = this.app.controllers.ListUserController;
     this.app.log.info('automatically verify users');
-    const stream = User.find({'verified': false}).cursor();
+    const stream = User.find({}).cursor();
 
     stream.on('data', function(user) {
-      user.canBeVerifiedAutomatically()
-        .then(out => {
-          if (out) {
-            User.collection.update(
-              { _id: user._id },
-              {
-                $set: {
-                  verified: true,
-                  verified_by: hidAccount,
-                  verifiedOn: new Date()
+      let promises = [];
+      user.emails.forEach(function (email) {
+        if (email.validated) {
+          promises.push(user.isVerifiableEmail(email.email));
+        }
+      });
+      Promise.all(promises)
+        .then(domains => {
+          domains.forEach(function (domain) {
+            if (domain) {
+              user.verified = true;
+              user.verified_by = hidAccount;
+              if (!user.verified) {
+                user.verifiedOn = new Date();
+              }
+              // If the domain is associated to a list, check user in this list automatically
+              if (domain.list) {
+                if (!user.organizations) {
+                  user.organizations = [];
+                }
+
+                let isCheckedIn = false;
+                // Make sure user is not already checked in this list
+                for (let i = 0, len = user.organizations.length; i < len; i++) {
+                  if (user.organizations[i].list.equals(domain.list._id) &&
+                    user.organizations[i].deleted === false) {
+                    isCheckedIn = true;
+                  }
+                }
+
+                if (!isCheckedIn) {
+                  ListUserController
+                    ._checkinHelper(domain.list, user, true, 'organizations', user);
                 }
               }
-            );
-          }
+            }
+          });
         });
     });
 
