@@ -6,11 +6,9 @@ db:
     DNSDOCK_NAME: db
     DNSDOCK_IMAGE: hid
 dev:
-  image: unocha/alpine-nodejs:3.6-201708-01-HID
+  image: unocha/nodejs:8.11.3
   volumes:
     - .:/srv/www
-  links:
-    - db
   environment:
     DNSDOCK_NAME: api
     DNSDOCK_IMAGE: hid
