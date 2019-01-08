@@ -557,7 +557,7 @@ module.exports = class AuthController extends Controller{
     };
     const bewit = hawk.uri.getBewit(url, {
       credentials: credentials,
-      ttlSec:      60 * 5
+      ttlSec: 60 * 5
     });
     return reply({bewit: bewit});
   }

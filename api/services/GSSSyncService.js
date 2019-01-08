@@ -2,7 +2,7 @@
 
 const Service = require('trails/service');
 const fs = require('fs');
-const GoogleAuth = require('google-auth-library');
+const {OAuth2Client} = require('google-auth-library');
 const Google = require('googleapis');
 const Boom = require('boom');
 
@@ -14,10 +14,9 @@ module.exports = class GSSSyncService extends Service {
 
   getAuthClient (user) {
     // Authenticate with Google
-    const auth = new GoogleAuth();
     const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
-    const authClient = new auth.OAuth2(creds.web.client_id, creds.web.client_secret, 'postmessage');
-    authClient.credentials = user.googleCredentials;
+    const authClient = new OAuth2Client(creds.web.client_id, creds.web.client_secret, 'postmessage');
+    authClient.setCredentials(user.googleCredentials);
     return authClient;
   }
 

@@ -51,13 +51,13 @@ module.exports = class ListController extends Controller{
       if (criteria.name.length < 3) {
         return reply(Boom.badRequest('Name must have at least 3 characters'));
       }
-      let name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|\<|\>|\/|\"/, '-');
+      let name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/, '-');
       name = new RegExp(name, 'i');
       criteria['names.text'] = name;
       delete criteria.name;
     }
     if (criteria.label) {
-      criteria.label = criteria.label.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|\<|\>|\/|\"/, '-');
+      criteria.label = criteria.label.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/, '-');
       criteria.label = new RegExp(criteria.label, 'i');
     }
 
@@ -101,6 +101,12 @@ module.exports = class ListController extends Controller{
     }
     else {
       options.populate = [{path: 'owner', select: '_id name'}];
+      if (!request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
+        criteria.$or = [{visibility: 'all'}, {visibility: 'inlist'}, {$and: [{ visibility: 'me'}, {managers: request.params.currentUser._id}]}];
+        if (request.params.currentUser.verified) {
+          criteria.$or.push({visibility: 'verified'});
+        }
+      }
       const query = this.app.services.HelperService.find('List', criteria, options);
       query
         .then((results) => {

@@ -12,16 +12,20 @@ const Transporter = Nodemailer.createTransport(TransporterUrl);
  */
 module.exports = class EmailService extends Service {
 
-  // Helper function to add hash to a link
-  _addHash(url, hash) {
+  _addUrlArgument (url, name, value) {
     let out = url;
     if (url.indexOf('?') !== -1) {
-      out += '&hash=' + hash;
+      out += '&' + name + '=' + value;
     }
     else {
-      out += '?hash=' + hash;
+      out += '?' + name + '=' + value;
     }
     return out;
+  }
+
+  // Helper function to add hash to a link
+  _addHash(url, hash) {
+    return this._addUrlArgument(url, 'hash', hash);
   }
 
   // Send an email
@@ -65,22 +69,15 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale || 'en'
     };
-
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'verify_email';
-    user.hashEmail = user.email;
-    return user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appVerifyUrl, hash);
-        const context = {
-          name: user.name,
-          reset_url: resetUrl
-        };
-        return that.send(mailOptions, 'register', context);
-      });
+    const hash = user.generateHash('verify_email', user.email);
+    let resetUrl = this._addUrlArgument(appVerifyUrl, 'email', user.email);
+    resetUrl = this._addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = this._addHash(resetUrl, hash.hash);
+    const context = {
+      name: user.name,
+      reset_url: resetUrl
+    };
+    return this.send(mailOptions, 'register', context);
   }
 
   sendRegisterOrphan(user, admin, appVerifyUrl) {
@@ -88,22 +85,16 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale || 'en'
     };
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'reset_password';
-    user.hashEmail = user.email;
-    return user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appVerifyUrl, hash);
-        const context = {
-          user: user,
-          admin: admin,
-          reset_url: resetUrl
-        };
-        return that.send(mailOptions, 'register_orphan', context);
-      });
+    const hash = user.generateHash('reset_password');
+    let resetUrl = this._addUrlArgument(appVerifyUrl, 'id', user._id.toString());
+    resetUrl = this._addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = this._addHash(resetUrl, hash.hash);
+    const context = {
+      user: user,
+      admin: admin,
+      reset_url: resetUrl
+    };
+    return this.send(mailOptions, 'register_orphan', context);
   }
 
   sendRegisterKiosk(user, appVerifyUrl) {
@@ -111,22 +102,15 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale || 'en'
     };
-
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'reset_password';
-    user.hashEmail = user.email;
-    return user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appVerifyUrl, hash);
-        const context = {
-          user: user,
-          reset_url: resetUrl
-        };
-        return that.send(mailOptions, 'register_kiosk', context);
-      });
+    const hash = user.generateHash('reset_password');
+    let resetUrl = this._addUrlArgument(appVerifyUrl, 'id', user._id.toString());
+    resetUrl = this._addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = this._addHash(resetUrl, hash.hash);
+    const context = {
+      user: user,
+      reset_url: resetUrl
+    };
+    return this.send(mailOptions, 'register_kiosk', context);
   }
 
   sendPostRegister (user) {
@@ -146,22 +130,16 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale
     };
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'reset_password';
-    user.hashEmail = '';
-    return user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appResetUrl, hash);
-        const context = {
-          name: user.name,
-          reset_url: resetUrl,
-          appResetUrl: appResetUrl
-        };
-        return that.send(mailOptions, 'reset_password', context);
-      });
+    const hash = user.generateHash('reset_password');
+    let resetUrl = this._addUrlArgument(appResetUrl, 'id', user._id.toString());
+    resetUrl = this._addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = this._addHash(resetUrl, hash.hash);
+    const context = {
+      name: user.name,
+      reset_url: resetUrl,
+      appResetUrl: appResetUrl
+    };
+    return this.send(mailOptions, 'reset_password', context);
   }
 
   sendForcedPasswordReset (user, callback) {
@@ -202,21 +180,15 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale
     };
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'reset_password';
-    user.hashEmail = '';
-    return user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appResetUrl, hash);
-        const context = {
-          name: user.name,
-          reset_url: resetUrl
-        };
-        return that.send(mailOptions, 'claim', context);
-      });
+    const hash = user.generateHash('reset_password');
+    let resetUrl = this._addUrlArgument(appResetUrl, 'id', user._id.toString());
+    resetUrl = this._addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = this._addHash(resetUrl, hash.hash);
+    const context = {
+      name: user.name,
+      reset_url: resetUrl,
+    };
+    return this.send(mailOptions, 'claim', context);
   }
 
   sendValidationEmail (user, email, appValidationUrl) {
@@ -224,21 +196,15 @@ module.exports = class EmailService extends Service {
       to: email,
       locale: user.locale
     };
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'verify_email';
-    user.hashEmail = email;
-    return user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appValidationUrl, hash);
-        const context = {
-          user: user,
-          reset_url: resetUrl
-        };
-        return that.send(mailOptions, 'email_validation', context);
-      });
+    const hash = user.generateHash('verify_email', email);
+    let resetUrl = this._addUrlArgument(appValidationUrl, 'email', email);
+    resetUrl = this._addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = this._addHash(resetUrl, hash.hash);
+    const context = {
+      user: user,
+      reset_url: resetUrl
+    };
+    return this.send(mailOptions, 'email_validation', context);
   }
 
   sendNotification(not) {
@@ -254,23 +220,15 @@ module.exports = class EmailService extends Service {
       to: user.email,
       locale: user.locale
     };
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'verify_email';
-    user.hashEmail = user.email;
-    user
-      .save()
-      .then(() => {
-        const context = {
-          user: user,
-          verifyLink: this._addHash(process.env.APP_URL, hash)
-        };
-        that.send(mailOptions, 'reminder_verify', context, callback);
-      })
-      .catch(err => {
-        callback(err);
-      });
+    const hash = user.generateHash('verify_email', user.email);
+    let resetUrl = this._addUrlArgument(process.env.APP_URL, 'email', user.email);
+    resetUrl = this._addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = this._addHash(resetUrl, hash.hash);
+    const context = {
+      user: user,
+      verifyLink: resetUrl
+    };
+    this.send(mailOptions, 'reminder_verify', context, callback);
   }
 
   sendReminderUpdate (user, callback) {

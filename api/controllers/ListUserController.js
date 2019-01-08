@@ -18,7 +18,6 @@ module.exports = class ListUserController extends Controller {
       list: list._id.toString()
     };
     const that = this;
-    let gResult = {};
 
     // Check that the list added corresponds to the right attribute
     if (childAttribute !== list.type + 's' && childAttribute !== list.type) {
@@ -64,7 +63,7 @@ module.exports = class ListUserController extends Controller {
       user[childAttribute].push(payload);
     }
     else {
-      record.organization = payload;
+      user.organization = payload;
     }
     user.lastModified = new Date();
     return user
@@ -160,7 +159,7 @@ module.exports = class ListUserController extends Controller {
         return reply(user);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        this.app.services.ErrorService.handle(err, request, reply);
       });
   }
 

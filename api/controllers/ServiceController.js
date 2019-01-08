@@ -76,6 +76,14 @@ module.exports = class ServiceController extends Controller{
         }
       }
 
+      if (criteria.name) {
+        if (criteria.name.length < 3) {
+          return reply(Boom.badRequest('Name must have at least 3 characters'));
+        }
+        criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/, '-');
+        criteria.name = new RegExp(criteria.name, 'i');
+      }
+
       const that = this;
       const query = this.app.services.HelperService.find('Service', criteria, options);
       let gresults = {};

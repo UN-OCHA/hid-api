@@ -2,9 +2,7 @@
 
 const Controller = require('trails/controller');
 const async = require('async');
-const _ = require('lodash');
 const https = require('https');
-const mongoose = require('mongoose');
 const listAttributes = [
   'lists',
   'operations',
@@ -12,14 +10,6 @@ const listAttributes = [
   'disasters',
   'organizations',
   'functional_roles'
-];
-const listTypes = [
-  'operation',
-  'bundle',
-  'disaster',
-  'organization',
-  'functional_role',
-  'office'
 ];
 const hidAccount = '5b2128e754a0d6046d6c69f2';
 
@@ -71,7 +61,6 @@ module.exports = class CronController extends Controller {
       this.pause();
       if (user.shouldSendReminderVerify()) {
 
-        const now = Date.now();
         EmailService.sendReminderVerify(user, function (err) {
           if (err) {
             app.log.error(err);
@@ -335,7 +324,6 @@ module.exports = class CronController extends Controller {
     const fiveMonthsAnd23Days = new Date(current - 173 * 24 * 3600 * 1000);
     const stream = User.find({totp: false, passwordResetAlert7days: false, $or: [{lastPasswordReset: { $lte: fiveMonthsAnd23Days }}, {lastPasswordReset: null}]}).cursor();
     stream.on('data', function (user) {
-      const sthat = this;
       EmailService.sendForcedPasswordResetAlert7(user, function () {
         User.collection.update(
           { _id: user._id },
@@ -357,7 +345,6 @@ module.exports = class CronController extends Controller {
     const sixMonths = new Date(current - 6 * 30 * 24 * 3600 * 1000);
     const stream = User.find({totp: false, passwordResetAlert: false, $or: [{lastPasswordReset: { $lte: sixMonths }}, {lastPasswordReset: null}]}).cursor();
     stream.on('data', function (user) {
-      const sthat = this;
       EmailService.sendForcedPasswordReset(user, function () {
         User.collection.update(
           { _id: user._id },
@@ -393,7 +380,6 @@ module.exports = class CronController extends Controller {
     const stream = List.find({deleted: false}).cursor();
     stream.on('data', function (list) {
       const sthat = this;
-      const listType = list.type;
       this.pause();
       let criteria = { };
       criteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false}};
@@ -474,25 +460,52 @@ module.exports = class CronController extends Controller {
 
   verifyAutomatically (request, reply) {
     const User = this.app.orm.User;
-    const app = this.app;
+    const ListUserController = this.app.controllers.ListUserController;
     this.app.log.info('automatically verify users');
-    const stream = User.find({'verified': false}).cursor();
+    const that = this;
+    const stream = User.find({}).cursor();
 
     stream.on('data', function(user) {
-      user.canBeVerifiedAutomatically()
-        .then(out => {
-          if (out) {
-            User.collection.update(
-              { _id: user._id },
-              {
-                $set: {
-                  verified: true,
-                  verified_by: hidAccount,
-                  verifiedOn: new Date()
+      let promises = [];
+      user.emails.forEach(function (email) {
+        if (email.validated) {
+          promises.push(user.isVerifiableEmail(email.email));
+        }
+      });
+      Promise.all(promises)
+        .then(domains => {
+          domains.forEach(function (domain) {
+            if (domain) {
+              user.verified = true;
+              user.verified_by = hidAccount;
+              if (!user.verified) {
+                user.verifiedOn = new Date();
+              }
+              // If the domain is associated to a list, check user in this list automatically
+              if (domain.list) {
+                if (!user.organizations) {
+                  user.organizations = [];
+                }
+
+                let isCheckedIn = false;
+                // Make sure user is not already checked in this list
+                for (let i = 0, len = user.organizations.length; i < len; i++) {
+                  if (user.organizations[i].list.equals(domain.list._id) &&
+                    user.organizations[i].deleted === false) {
+                    isCheckedIn = true;
+                  }
+                }
+
+                if (!isCheckedIn) {
+                  ListUserController
+                    ._checkinHelper(domain.list, user, true, 'organizations', user)
+                    .catch(err => {
+                      that.app.log.error(err);
+                    });
                 }
               }
-            );
-          }
+            }
+          });
         });
     });
 
@@ -527,7 +540,6 @@ module.exports = class CronController extends Controller {
 
   unverifyAfterOneYear (request, reply) {
     const User = this.app.orm.user;
-    const EmailService = this.app.services.EmailService;
     const current = Date.now();
     const oneYear = new Date(current - 365 * 24 * 3600 * 1000);
     const stream = User.find({verified: true, verifiedOn: { $lte: oneYear }, verificationExpiryEmail: true}).cursor();
@@ -574,7 +586,7 @@ module.exports = class CronController extends Controller {
               sthat.resume();
             }
           }
-          catch(err) {
+          catch (err) {
             sthat.resume();
           }
         });

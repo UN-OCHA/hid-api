@@ -357,26 +357,66 @@ module.exports = class User extends Model {
           }
         },
 
-        generateHash: function () {
-          const buffer = crypto.randomBytes(256);
-          const now = Date.now();
-          const hash = buffer.toString('hex').slice(0, 15);
-          return new Buffer(now + '/' + hash).toString('base64');
+        generateHash: function (type, email) {
+          if (type === 'reset_password') {
+            const now = Date.now();
+            const value = now + ':' + this._id.toString() + ':' + this.password;
+            const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+            return {
+              timestamp: now,
+              hash: hash
+            };
+          }
+          else if (type === 'verify_email') {
+            const now = Date.now();
+            const value = now + ':' + this._id.toString() + ':' + email;
+            const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+            return {
+              timestamp: now,
+              hash: hash
+            };
+          }
+          else {
+            const buffer = crypto.randomBytes(256);
+            const now = Date.now();
+            const hash = buffer.toString('hex').slice(0, 15);
+            return Buffer.from(now + '/' + hash).toString('base64');
+          }
         },
 
         // Validate the hash of a confirmation link
-        validHash: function (hashLink) {
-          const key = new Buffer(hashLink, 'base64').toString('ascii');
-          const parts = key.split('/');
-          const timestamp = parts[0];
-          const now = Date.now();
-
-          // Verify hash
-          // verify timestamp is not too old (allow up to 7 days in milliseconds)
-          if (timestamp < (now - 7 * 86400000) || timestamp > now) {
-            return false;
+        validHash: function (hashLink, type, time, email) {
+          if (type === 'reset_password') {
+            const now = Date.now();
+            if (now - time > 24 * 3600 * 1000) {
+              return false;
+            }
+            const value = time + ':' + this._id.toString() + ':' + this.password;
+            const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+            return hash === hashLink;
           }
-          return true;
+          else if (type === 'verify_email') {
+            const now = Date.now();
+            if (now - time > 24 * 3600 * 1000) {
+              return false;
+            }
+            const value = time + ':' + this._id.toString() + ':' + email;
+            const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+            return hash === hashLink;
+          }
+          else {
+            const key = new Buffer(hashLink, 'base64').toString('ascii');
+            const parts = key.split('/');
+            const timestamp = parts[0];
+            const now = Date.now();
+
+            // Verify hash
+            // verify timestamp is not too old (allow up to 7 days in milliseconds)
+            if (timestamp < (now - 7 * 86400000) || timestamp > now) {
+              return false;
+            }
+            return true;
+          }
         },
 
         emailIndex: function (email) {
@@ -664,9 +704,8 @@ module.exports = class User extends Model {
         },
 
         isVerifiableEmail: function (email) {
-          let out = false;
           const ind = email.indexOf('@');
-          const domain = email.substr((ind+1));
+          const domain = email.substr((ind + 1));
           return this
             .model('TrustedDomain')
             .findOne({url: domain})
@@ -675,7 +714,7 @@ module.exports = class User extends Model {
 
         canBeVerifiedAutomatically: function () {
           const that = this;
-          let out = false, promises = [];
+          let promises = [];
           // Check all emails
           this.emails.forEach(function (email) {
             if (email.validated) {
@@ -728,7 +767,7 @@ module.exports = class User extends Model {
           return user;
         }
       }
-    }
+    };
   }
 
   static schema () {

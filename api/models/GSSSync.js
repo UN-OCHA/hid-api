@@ -2,7 +2,7 @@
 
 const Model = require('trails/model');
 const Schema = require('mongoose').Schema;
-const GoogleAuth = require('google-auth-library');
+const {OAuth2Client} = require('google-auth-library');
 const fs = require('fs');
 
 /**
@@ -69,10 +69,9 @@ module.exports = class GSSSync extends Model {
 
         getAuthClient: function () {
           // Authenticate with Google
-          const auth = new GoogleAuth();
           const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
-          const authClient = new auth.OAuth2(creds.web.client_id, creds.web.client_secret, 'postmessage');
-          authClient.credentials = this.user.googleCredentials;
+          const authClient = new OAuth2Client(creds.web.client_id, creds.web.client_secret, 'postmessage');
+          authClient.setCredentials(this.user.googleCredentials);
           return authClient;
         },
 
