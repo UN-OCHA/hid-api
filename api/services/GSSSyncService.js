@@ -3,7 +3,7 @@
 const Service = require('trails/service');
 const fs = require('fs');
 const {OAuth2Client} = require('google-auth-library');
-const Google = require('googleapis');
+const {google} = require('googleapis');
 const Boom = require('boom');
 
 /**
@@ -22,7 +22,7 @@ module.exports = class GSSSyncService extends Service {
 
   deleteUser (gsssync, hid) {
     const ErrorService = this.app.services.ErrorService;
-    const sheets = Google.sheets('v4');
+    const sheets = google.sheets('v4');
     let authClient = {};
     return gsssync
       .populate('list user')
@@ -79,7 +79,7 @@ module.exports = class GSSSyncService extends Service {
 
   writeUser (gsssync, authClient, user, index) {
     const ErrorService = this.app.services.ErrorService;
-    const sheets = Google.sheets('v4');
+    const sheets = google.sheets('v4');
     const values = this.getRowFromUser(user);
     const body = {
       values: [values]
@@ -106,7 +106,7 @@ module.exports = class GSSSyncService extends Service {
     const GSSSync = this.app.orm.GSSSync;
     const ErrorService = this.app.services.ErrorService;
     const that = this;
-    const sheets = Google.sheets('v4');
+    const sheets = google.sheets('v4');
     let authClient = {};
     return gsssync
       .populate('list user')
@@ -294,7 +294,7 @@ module.exports = class GSSSyncService extends Service {
 
   updateUser (gsssync, user) {
     const ErrorService = this.app.services.ErrorService;
-    const sheets = Google.sheets('v4');
+    const sheets = google.sheets('v4');
     const that = this;
     let authClient = {};
     return gsssync
@@ -343,7 +343,7 @@ module.exports = class GSSSyncService extends Service {
           return callback(new Error('List not found'));
         }
         const authClient = this.getAuthClient(user);
-        const sheets = Google.sheets('v4');
+        const sheets = google.sheets('v4');
         let request = {
           resource: {
             properties: {
@@ -437,7 +437,7 @@ module.exports = class GSSSyncService extends Service {
           data: data,
           valueInputOption: 'RAW'
         };
-        const sheets = Google.sheets('v4');
+        const sheets = google.sheets('v4');
         return sheets.spreadsheets.values.batchUpdate({
           spreadsheetId: gsssync.spreadsheet,
           resource: body,
