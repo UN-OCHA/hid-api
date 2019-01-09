@@ -55,13 +55,13 @@ module.exports = {
     transports: [
       new winston.transports.DailyRotateFile({
         name: 'info-file',
-        filename: 'trails-info.log',
+        filename: 'trails/info.log',
         level: 'debug',
         timestamp: true
       }),
       new winston.transports.DailyRotateFile({
         name: 'error-file',
-        filename: 'trails-error.log',
+        filename: 'trails/error.log',
         level: 'error',
         timestamp: true
       })
