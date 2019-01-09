@@ -715,7 +715,7 @@ module.exports = class UserController extends Controller{
 
     this.log.debug('[UserController] Verifying email ', { request: request });
 
-    if (!request.payload.hash && !request.payload.email && !request.payload.time) {
+    if (!request.payload.hash && !request.params.email && !request.payload.time) {
       return reply(Boom.badRequest());
     }
 
