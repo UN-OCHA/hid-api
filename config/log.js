@@ -9,8 +9,15 @@
 
 const winston = require('winston');
 const os = require('os');
+const fs = require('fs');
 const _ = require('lodash');
 require('winston-daily-rotate-file');
+const logDir = 'trails';
+
+if ( !fs.existsSync( logDir ) ) {
+    // Create the directory if it does not exist
+    fs.mkdirSync( logDir );
+}
 
 module.exports = {
 
