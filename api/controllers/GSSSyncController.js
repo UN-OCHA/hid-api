@@ -55,7 +55,6 @@ module.exports = class GSSSyncController extends Controller{
 
   saveGoogleCredentials (request, reply) {
     const that = this;
-    const OAuth2 = Google.auth.OAuth2;
     if (request.payload.code) {
       const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
       const authClient = new OAuth2Client(creds.web.client_id, creds.web.client_secret, 'postmessage');
