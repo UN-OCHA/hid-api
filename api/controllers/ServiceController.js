@@ -4,7 +4,7 @@ const Controller = require('trails/controller');
 const Boom = require('boom');
 const async = require('async');
 const Mailchimp = require('mailchimp-api-v3');
-const google = require('googleapis');
+const {google} = require('googleapis');
 
 /**
  * @module ServiceController

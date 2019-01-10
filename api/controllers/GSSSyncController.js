@@ -2,7 +2,8 @@
 
 const Controller = require('trails/controller');
 const Boom = require('boom');
-const Google = require('googleapis');
+const {google} = require('googleapis');
+const {OAuth2Client} = require('google-auth-library');
 const fs = require('fs');
 
 /**
@@ -57,7 +58,7 @@ module.exports = class GSSSyncController extends Controller{
     const OAuth2 = Google.auth.OAuth2;
     if (request.payload.code) {
       const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
-      const authClient = new OAuth2(creds.web.client_id, creds.web.client_secret, 'postmessage');
+      const authClient = new OAuth2Client(creds.web.client_id, creds.web.client_secret, 'postmessage');
       authClient
         .getToken(request.payload.code, function (err, tokens) {
           if (err) {
