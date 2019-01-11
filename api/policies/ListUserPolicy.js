@@ -13,6 +13,9 @@ module.exports = class ListUserPolicy extends Policy {
     if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
       return reply();
     }
+    if (request.params.currentUser.hidden === true) {
+      return reply(Boom.unauthorized('You are not authorized to check into lists'));
+    }
     const that = this;
     List
       .findOne({_id: request.payload.list})
