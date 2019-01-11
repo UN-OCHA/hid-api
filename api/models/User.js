@@ -736,10 +736,6 @@ module.exports = class User extends Model {
         toJSON: function () {
           const user = this.toObject();
           delete user.password;
-          // DEPRECATED: these attributes are not used anymore and should be removed, they were replaced by cryptographic hashes
-          delete user.hash;
-          delete user.hashAction;
-          delete user.hashEmail;
           if (user.totpConf) {
             delete user.totpConf;
           }
@@ -1354,25 +1350,6 @@ module.exports = class User extends Model {
           passIfEmpty: true,
           message: 'appMetadata should be valid JSON'
         })*/
-      },
-      // DEPRECATED: these attributes are not used anymore and should be removed. They were replaced by cryptographic hashes
-      hash: {
-        type: String,
-        readonly: true
-      },
-      hashAction: {
-        type: String,
-        enum: ['verify_email', 'reset_password'],
-        readonly: true
-      },
-      hashEmail: {
-        type: String,
-        readonly: true,
-        validate: validate({
-          validator: 'isEmail',
-          passIfEmpty: true,
-          message: 'hashEmail should be a valid email'
-        })
       },
       deleted: {
         type: Boolean,

@@ -614,4 +614,19 @@ module.exports = class CronController extends Controller {
     });
   }
 
+  setHidden (request, reply) {
+    const User = this.app.orm.User;
+    User.collection.update({}, {
+      $set: {
+        hidden: false
+      },
+      $unset: {
+        hash: true,
+        hashAction: true,
+        hashEmail: true,
+      }
+    }, {multi: true, safe: true});
+    reply().code(204);
+  }
+
 };
