@@ -439,6 +439,10 @@ module.exports = class UserController extends Controller{
         criteria.is_orphan = false;
         criteria.is_ghost = false;
       }
+      // Do not show user if it is hidden
+      if (!request.params.currentUser.is_admin) {
+        criteria.hidden = false;
+      }
       User
         .findOne(criteria)
         .then((user) => {
@@ -464,6 +468,11 @@ module.exports = class UserController extends Controller{
       // Hide unconfirmed users which are not orphans
       if (request.params.currentUser && !request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
         criteria.$or = [{'email_verified': true}, {'is_orphan': true}, {'is_ghost': true}];
+      }
+
+      // Hide hidden profile to non-admins
+      if (request.params.currentUser && !request.params.currentUser.is_admin) {
+        criteria.hidden = false;
       }
 
       if (criteria.q) {
