@@ -1381,7 +1381,7 @@ module.exports = class User extends Model {
       hidden: {
         type: Boolean,
         default: false,
-        readonly: true
+        adminOnly: true
       },
       // Whether this user is only using auth
       authOnly: {
