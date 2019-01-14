@@ -440,7 +440,7 @@ module.exports = class UserController extends Controller{
         criteria.is_ghost = false;
       }
       // Do not show user if it is hidden
-      if (!request.params.currentUser.is_admin) {
+      if (!request.params.currentUser.is_admin && request.params.currentUser._id.toString() !== request.params.id) {
         criteria.hidden = false;
       }
       User
