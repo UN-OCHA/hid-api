@@ -3,6 +3,7 @@
 const Controller = require('trails/controller');
 const Boom = require('boom');
 const Recaptcha = require('recaptcha2');
+const Client = require('../models/Client');
 
 module.exports = class ViewController extends Controller {
 
@@ -40,7 +41,6 @@ module.exports = class ViewController extends Controller {
   }
 
   login (request, reply) {
-    const Client = this.app.orm.Client;
     const cookie = request.yar.get('session');
 
     if (!cookie || (cookie && !cookie.userId)) {
@@ -132,7 +132,6 @@ module.exports = class ViewController extends Controller {
       hostname = hostname.split(':')[0];
       //find & remove "?"
       hostname = hostname.split('?')[0];
-      const Client = this.app.orm.Client;
       const regex = new RegExp(hostname, 'i');
       const that = this;
       Client

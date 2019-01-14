@@ -70,7 +70,7 @@ module.exports = {
     const async = require('async');
     const oauth = this.packs.hapi.server.plugins['hapi-oauth2orize'];
     const oauth2orizeExt = require('oauth2orize-openid');
-    const Client = this.orm.Client;
+    const Client = require('../api/models/Client');
     const OauthToken = this.orm.OauthToken;
     const OauthExpiresIn = 7 * 24 * 3600;
 

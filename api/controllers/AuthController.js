@@ -2,6 +2,7 @@
 
 const Controller = require('trails/controller');
 const Boom = require('boom');
+const Client = require('../models/Client');
 
 /**
  * @module AuthController
@@ -287,7 +288,6 @@ module.exports = class AuthController extends Controller{
 
   authorizeDialogOauth2 (request, reply) {
     const User = this.app.orm.User;
-    const Client = this.app.orm.Client;
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
 
     // Check response_type
