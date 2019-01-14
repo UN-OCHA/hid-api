@@ -1101,7 +1101,7 @@ module.exports = class User extends Model {
         validate: validate({
           validator: 'isURL',
           passIfEmpty: true,
-          arguments: {host_whitelist: ['api.humanitarian.id', 'api.dev.humanitarian.id']},
+          arguments: {host_whitelist: ['api.humanitarian.id', 'api.dev.humanitarian.id', 'api.staging.humanitarian.id']},
           message: 'picture should be a valid URL'
         })
       },
