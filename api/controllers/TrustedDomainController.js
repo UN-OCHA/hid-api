@@ -47,7 +47,7 @@ module.exports = class TrustedDomainController extends Controller{
         });
     }
     else {
-      const query = this.app.services.HelperService.find('TrustedDomain', criteria, options);
+      const query = this.app.services.HelperService.find(TrustedDomain, criteria, options);
       let gresults = {};
       query
         .populate('list')

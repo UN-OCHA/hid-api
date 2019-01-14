@@ -13,7 +13,7 @@ const acceptLanguage = require('accept-language');
 module.exports = class ListController extends Controller{
 
   _removeForbiddenAttributes (request) {
-    this.app.services.HelperService.removeForbiddenAttributes('List', request, ['names']);
+    this.app.services.HelperService.removeForbiddenAttributes(this.app.orm.List, request, ['names']);
   }
 
   create (request, reply) {
@@ -107,7 +107,7 @@ module.exports = class ListController extends Controller{
           criteria.$or.push({visibility: 'verified'});
         }
       }
-      const query = this.app.services.HelperService.find('List', criteria, options);
+      const query = this.app.services.HelperService.find(List, criteria, options);
       query
         .then((results) => {
           return List

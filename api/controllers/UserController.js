@@ -19,7 +19,7 @@ module.exports = class UserController extends Controller{
 
   _removeForbiddenAttributes (request) {
     const childAttributes = this.app.orm.User.listAttributes();
-    this.app.services.HelperService.removeForbiddenAttributes('User', request, childAttributes);
+    this.app.services.HelperService.removeForbiddenAttributes(this.app.orm.User, request, childAttributes);
   }
 
   _errorHandler (err, request, reply) {
@@ -355,7 +355,7 @@ module.exports = class UserController extends Controller{
 
     const that = this;
     this.log.debug('[UserController] (find) criteria = ', criteria, ' options = ', options, { request: request });
-    const query = this.app.services.HelperService.find('User', criteria, options);
+    const query = this.app.services.HelperService.find(User, criteria, options);
     // HID-1561 - Set export limit to 2000
     if (!options.limit && request.params.extension) {
       query.limit(100000);

@@ -85,7 +85,7 @@ module.exports = class ServiceController extends Controller{
       }
 
       const that = this;
-      const query = this.app.services.HelperService.find('Service', criteria, options);
+      const query = this.app.services.HelperService.find(Service, criteria, options);
       let gresults = {};
       query
         .then((results) => {

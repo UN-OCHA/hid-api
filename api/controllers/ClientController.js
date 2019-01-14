@@ -45,7 +45,7 @@ module.exports = class ClientController extends Controller{
         });
     }
     else {
-      const query = this.app.services.HelperService.find('Client', criteria, options);
+      const query = this.app.services.HelperService.find(Client, criteria, options);
       let gresults = {};
       query
         .then((results) => {

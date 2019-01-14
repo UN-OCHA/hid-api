@@ -18,7 +18,7 @@ module.exports = class NotificationController extends Controller{
     criteria.user = request.params.currentUser.id;
 
     const that = this;
-    const query = this.app.services.HelperService.find('Notification', criteria, options);
+    const query = this.app.services.HelperService.find(Notification, criteria, options);
     let gresults = {};
     query
       .then((results) => {

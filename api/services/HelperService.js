@@ -63,10 +63,9 @@ module.exports = class HelperService extends Service {
 
   getSchemaAttributes (modelName, variableName, attributeName) {
     if (!this[variableName] || this[variableName].length === 0) {
-      const Model = this.app.orm[modelName];
       this[variableName] = [];
       const that = this;
-      Model.schema.eachPath(function (path, options) {
+      modelName.schema.eachPath(function (path, options) {
         if (options.options[attributeName]) {
           that[variableName].push(path);
         }
@@ -129,8 +128,7 @@ module.exports = class HelperService extends Service {
   }
 
   find (modelName, criteria, options) {
-    const Model = this.app.orm[modelName];
-    const query = Model.find(criteria);
+    const query = modelName.find(criteria);
     if (options.limit) {
       query.limit(parseInt(options.limit));
     }
