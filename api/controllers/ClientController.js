@@ -2,6 +2,7 @@
 
 const Controller = require('trails/controller');
 const Boom = require('boom');
+const Client = require('../models/Client');
 
 /**
  * @module ClientController
@@ -10,7 +11,6 @@ const Boom = require('boom');
 module.exports = class ClientController extends Controller{
 
   create (request, reply) {
-    const Client = this.app.orm.Client;
     const that = this;
     Client
       .create(request.payload)
@@ -26,7 +26,6 @@ module.exports = class ClientController extends Controller{
   }
 
   find (request, reply) {
-    const Client = this.app.orm.Client;
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
     const that = this;
@@ -63,9 +62,8 @@ module.exports = class ClientController extends Controller{
   }
 
   update (request, reply) {
-    const Model = this.app.orm.client,
-      that = this;
-    Model
+    const that = this;
+    Client
       .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
       .then((client) => {
         reply(client);
@@ -76,8 +74,13 @@ module.exports = class ClientController extends Controller{
   }
 
   destroy (request, reply) {
-    request.params.model = 'client';
-    const FootprintController = this.app.controllers.FootprintController;
-    FootprintController.destroy(request, reply);
+    Client
+      .remove({ _id: request.params.id })
+      .then(() => {
+        reply().code(204);
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 };
