@@ -572,10 +572,10 @@ module.exports = class UserController extends Controller{
         return user;
       })
       .then(user => {
-        if (nextAction === 'sendAuthToProfile') {
+        if (nextAction === 'sendAuthToProfile' && !user.hidden) {
           EmailService.sendAuthToProfile(user, request.params.currentUser, () => {});
         }
-        if (nextAction === 'notification') {
+        if (nextAction === 'notification' && !user.hidden) {
           const notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
           NotificationService.send(notification, () => {});
         }
