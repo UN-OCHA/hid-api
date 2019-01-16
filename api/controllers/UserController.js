@@ -475,6 +475,11 @@ module.exports = class UserController extends Controller{
         criteria.hidden = false;
       }
 
+      // Do not allow exports for hidden users
+      if (request.params.extension && request.params.currentUser.hidden) {
+        return reply(Boom.unauthorized());
+      }
+
       if (criteria.q) {
         if (validator.isEmail(criteria.q) && request.params.currentUser.verified) {
           criteria['emails.email'] = new RegExp(criteria.q, 'i');
