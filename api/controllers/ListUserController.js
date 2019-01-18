@@ -87,7 +87,7 @@ module.exports = class ListUserController extends Controller {
           params: { list: list }
         });
         // Notify user if needed
-        if (currentUser._id.toString() !== user._id.toString() && list.type !== 'list' && notify === true) {
+        if (currentUser._id.toString() !== user._id.toString() && list.type !== 'list' && notify === true && !user.hidden) {
           that.log.debug('Checked in by a different user');
           that.app.services.NotificationService.send({
             type: 'admin_checkin',
@@ -279,6 +279,7 @@ module.exports = class ListUserController extends Controller {
           });
       })
       .then((result) => {
+        gUser = result.user;
         reply(result.user);
         return List
           .findOne({ _id: result.listuser.list })
@@ -292,7 +293,7 @@ module.exports = class ListUserController extends Controller {
       })
       .then((result) => {
         // Send notification if needed
-        if (request.params.currentUser.id !== userId) {
+        if (request.params.currentUser.id !== userId && !result.user.hidden) {
           that.app.services.NotificationService.send({
             type: 'admin_checkout',
             createdBy: request.params.currentUser,
@@ -312,7 +313,6 @@ module.exports = class ListUserController extends Controller {
         return result;
       })
       .then((result) => {
-        gResult = result;
         // Synchronize google spreadsheets
         return GSSSyncService.deleteUserFromSpreadsheets(result.list._id, result.user.id);
       })
