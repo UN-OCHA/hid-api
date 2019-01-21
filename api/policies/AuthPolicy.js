@@ -5,6 +5,7 @@ const Boom = require('boom');
 const acceptLanguage = require('accept-language');
 const authenticator = require('authenticator');
 const Hawk = require('hawk');
+const JwtToken = require('../models/JwtToken');
 
 /**
  * @module AuthPolicy
@@ -15,7 +16,6 @@ module.exports = class AuthPolicy extends Policy {
   isAuthenticated (request, reply) {
     acceptLanguage.languages(['en', 'fr', 'es']);
     const OauthToken = this.app.orm.OauthToken;
-    const JwtToken = this.app.orm.JwtToken;
     const User = this.app.orm.User;
     const that = this;
     // If we are creating a user and we are not authenticated, allow it

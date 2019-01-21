@@ -4,6 +4,7 @@ const Controller = require('trails/controller');
 const Boom = require('boom');
 const Client = require('../models/Client');
 const Flood = require('../models/Flood');
+const JwtToken = require('../models/JwtToken');
 
 /**
  * @module AuthController
@@ -88,7 +89,6 @@ module.exports = class AuthController extends Controller{
 
   _authenticateHelper (result, request, reply) {
     const that = this;
-    const JwtToken = this.app.orm.JwtToken;
     const payload = {id: result._id};
     if (request.payload && request.payload.exp) {
       payload.exp = request.payload.exp;
@@ -493,7 +493,6 @@ module.exports = class AuthController extends Controller{
 
   // Provides a list of the json web tokens with no expiration date created by the current user
   jwtTokens (request, reply) {
-    const JwtToken = this.app.orm.JwtToken;
     const that = this;
     JwtToken
       .find({user: request.params.currentUser._id})
@@ -507,7 +506,6 @@ module.exports = class AuthController extends Controller{
 
   // Blacklist a JSON Web Token
   blacklistJwt (request, reply) {
-    const JwtToken = this.app.orm.JwtToken;
     const that = this;
     const token = request.payload ? request.payload.token : null;
     if (!token) {
