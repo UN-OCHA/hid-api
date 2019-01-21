@@ -79,8 +79,8 @@ const ClientSchema = new Schema({
       message: 'HTML code is not allowed in description'
     }
   }
+}, {
+  collection: 'client'
 });
-
-ClientSchema.set('collection', 'client');
 
 module.exports = mongoose.model('Client', ClientSchema);

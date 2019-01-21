@@ -2,6 +2,7 @@
 
 const Controller = require('trails/controller');
 const Boom = require('boom');
+const TrustedDomain = require('../models/TrustedDomain');
 
 /**
  * @module TrustedDomainController
@@ -10,7 +11,6 @@ const Boom = require('boom');
 module.exports = class TrustedDomainController extends Controller{
 
   create (request, reply) {
-    const TrustedDomain = this.app.orm.TrustedDomain;
     const that = this;
     TrustedDomain
       .create(request.payload)
@@ -26,7 +26,6 @@ module.exports = class TrustedDomainController extends Controller{
   }
 
   find (request, reply) {
-    const TrustedDomain = this.app.orm.TrustedDomain;
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
     const that = this;
@@ -65,8 +64,13 @@ module.exports = class TrustedDomainController extends Controller{
   }
 
   destroy (request, reply) {
-    request.params.model = 'TrustedDomain';
-    const FootprintController = this.app.controllers.FootprintController;
-    FootprintController.destroy(request, reply);
+    TrustedDomain
+      .remove({ _id: request.params.id })
+      .then(() => {
+        reply().code(204);
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 };

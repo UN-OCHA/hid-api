@@ -4,6 +4,7 @@ const Model = require('trails/model');
 const Schema = require('mongoose').Schema;
 const Bcrypt = require('bcryptjs');
 const Libphonenumber = require('google-libphonenumber');
+const TrustedDomain = require('./TrustedDomain');
 const https = require('https');
 const _ = require('lodash');
 const crypto = require('crypto');
@@ -706,8 +707,7 @@ module.exports = class User extends Model {
         isVerifiableEmail: function (email) {
           const ind = email.indexOf('@');
           const domain = email.substr((ind + 1));
-          return this
-            .model('TrustedDomain')
+          return TrustedDomain
             .findOne({url: domain})
             .populate('list');
         },
