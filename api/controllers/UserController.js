@@ -849,12 +849,12 @@ module.exports = class UserController extends Controller{
       .findOne({email: request.payload.email.toLowerCase()})
       .then(record => {
         if (!record) {
-          return that._errorHandler(Boom.badRequest('Email could not be found'), request, reply);
+          return reply().code(202);
         }
         return that.app.services.EmailService.sendResetPassword(record, appResetUrl);
       })
       .then(info => {
-        return reply('Password reset email sent successfully').code(202);
+        return reply().code(202);
       })
       .catch(err => {
         that._errorHandler(err, request, reply);
