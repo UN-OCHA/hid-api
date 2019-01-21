@@ -9,7 +9,7 @@ const Schema = mongoose.Schema;
  * @description Json Web Tokens
  */
 
-const JwtSchema = new Schema({
+const JwtTokenSchema = new Schema({
   token: {
     type: String,
     required: true,
