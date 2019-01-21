@@ -279,7 +279,6 @@ module.exports = class ListUserController extends Controller {
           });
       })
       .then((result) => {
-        gUser = result.user;
         reply(result.user);
         return List
           .findOne({ _id: result.listuser.list })
