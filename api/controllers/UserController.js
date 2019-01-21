@@ -475,6 +475,11 @@ module.exports = class UserController extends Controller{
         criteria.hidden = false;
       }
 
+      // Do not allow exports for hidden users
+      if (request.params.extension && request.params.currentUser.hidden) {
+        return reply(Boom.unauthorized());
+      }
+
       if (criteria.q) {
         if (validator.isEmail(criteria.q) && request.params.currentUser.verified) {
           criteria['emails.email'] = new RegExp(criteria.q, 'i');
@@ -572,10 +577,10 @@ module.exports = class UserController extends Controller{
         return user;
       })
       .then(user => {
-        if (nextAction === 'sendAuthToProfile') {
+        if (nextAction === 'sendAuthToProfile' && !user.hidden) {
           EmailService.sendAuthToProfile(user, request.params.currentUser, () => {});
         }
-        if (nextAction === 'notification') {
+        if (nextAction === 'notification' && !user.hidden) {
           const notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
           NotificationService.send(notification, () => {});
         }
