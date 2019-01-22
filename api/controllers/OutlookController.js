@@ -4,6 +4,7 @@ const Controller = require('trails/controller');
 const Boom = require('boom');
 const fs = require('fs');
 const microsoftGraph = require('@microsoft/microsoft-graph-client');
+const OutlookSync = require('../models/OutlookSync');
 
 /**
  * @module OutlookController
@@ -51,7 +52,6 @@ module.exports = class OutlookController extends Controller{
       const that = this;
       const List = this.app.orm.List;
       const User = this.app.orm.User;
-      const OutlookSync = this.app.orm.OutlookSync;
       let accessToken = '', client = {}, gList = {}, gOsync = {};
       OutlookSync
         .findOne({user: request.params.currentUser._id, list: request.payload.list})

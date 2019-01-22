@@ -9,6 +9,6 @@ exports.Service = require('./Service');
 //exports.JwtToken = require('./JwtToken');
 //exports.Flood = require('./Flood');
 //exports.GSSSync = require('./GSSSync');
-exports.OutlookSync = require('./OutlookSync');
+//exports.OutlookSync = require('./OutlookSync');
 //exports.Operation = require('./Operation');
 //exports.TrustedDomain = require('./TrustedDomain');

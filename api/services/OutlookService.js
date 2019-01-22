@@ -1,6 +1,7 @@
 'use strict';
 
 const Service = require('trails/service');
+const OutlookSync = require('../models/OutlookSync');
 
 /**
  * @module OutlookService
@@ -9,8 +10,6 @@ const Service = require('trails/service');
 module.exports = class OutlookService extends Service {
 
   findByList(listId) {
-    const OutlookSync = this.app.orm.OutlookSync;
-
     return OutlookSync
       .find({list: listId});
   }
@@ -46,7 +45,6 @@ module.exports = class OutlookService extends Service {
   synchronizeUser (user) {
     // Get all lists from user
     const listIds = user.getListIds();
-    const OutlookSync = this.app.orm.OutlookSync;
 
     // Find the gsssyncs associated to the lists
     return OutlookSync
