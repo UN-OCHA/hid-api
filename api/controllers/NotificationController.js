@@ -2,6 +2,7 @@
 
 const Controller = require('trails/controller');
 const Boom = require('boom');
+const Notification = require('../models/Notification');
 
 /**
  * @module NotificationController
@@ -10,7 +11,6 @@ const Boom = require('boom');
 module.exports = class NotificationController extends Controller{
 
   find (request, reply) {
-    const Notification = this.app.orm.Notification;
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
 
@@ -35,7 +35,6 @@ module.exports = class NotificationController extends Controller{
   }
 
   update (request, reply) {
-    const Notification = this.app.orm.Notification;
     const that = this;
 
     if (!request.payload || !request.payload.hasOwnProperty('read') || !request.payload.hasOwnProperty('notified')) {

@@ -1,89 +1,78 @@
 'use strict';
 
-const Model = require('trails/model');
-const Schema = require('mongoose').Schema;
+const mongoose = require('mongoose');
 const path = require('path');
 const ejs = require('ejs');
 
+const Schema = mongoose.Schema;
 
 /**
  * @module Notification
  * @description Notification
  */
-module.exports = class Notification extends Model {
 
-  static config () {
-    return {
-      schema: {
-        timestamps: true
-      },
-      onSchema(app, schema) {
+const NotificationSchema = new Schema({
+  createdBy: {
+    type: Schema.ObjectId,
+    ref: 'User'
+  },
 
-        schema.pre('save', function(next) {
-          if (!this.text) {
-            const that = this;
-            let templatePath = 'notifications/' + this.type;
-            if (this.user.locale && this.user.locale === 'fr') {
-              templatePath += '/fr';
-            }
-            templatePath += '/html.ejs';
-            const template = path.resolve(templatePath);
+  text: {
+    type: String
+  },
 
-            ejs.renderFile(template, {
-              createdBy: this.createdBy,
-              user: this.user,
-              params: this.params
-            }, {}, function (err, str) {
-              if (err) {
-                return next(err);
-              }
-              that.text = str;
-              next();
-            });
-          }
-          else {
-            next();
-          }
-        });
-      }
-    };
+  type: {
+    type: String
+  },
+
+  user: {
+    type: Schema.ObjectId,
+    ref: 'User'
+  },
+
+  params: {
+    type: Schema.Types.Mixed
+  },
+
+  read: {
+    type: Boolean,
+    default: false
+  },
+
+  notified: {
+    type: Boolean,
+    default: false
   }
+}, {
+  collection: 'notification',
+  timestamps: true
+});
 
-  static schema () {
-    return {
-      createdBy: {
-        type: Schema.ObjectId,
-        ref: 'User'
-      },
+NotificationSchema.pre('save', function(next) {
+  if (!this.text) {
+    const that = this;
+    let templatePath = 'notifications/' + this.type;
+    if (this.user.locale && this.user.locale === 'fr') {
+      templatePath += '/fr';
+    }
+    templatePath += '/html.ejs';
+    const template = path.resolve(templatePath);
 
-      text: {
-        type: String
-      },
-
-      type: {
-        type: String
-      },
-
-      user: {
-        type: Schema.ObjectId,
-        ref: 'User'
-      },
-
-      params: {
-        type: Schema.Types.Mixed
-      },
-
-      read: {
-        type: Boolean,
-        default: false
-      },
-
-      notified: {
-        type: Boolean,
-        default: false
+    ejs.renderFile(template, {
+      createdBy: this.createdBy,
+      user: this.user,
+      params: this.params
+    }, {}, function (err, str) {
+      if (err) {
+        return next(err);
       }
-    };
+      that.text = str;
+      next();
+    });
   }
+  else {
+    next();
+  }
+});
 
-
-};
+module.exports = mongoose.model('Notification', NotificationSchema);

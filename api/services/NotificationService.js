@@ -3,6 +3,7 @@
 const Service = require('trails/service');
 const Boom = require('boom');
 const async = require('async');
+const Notification = require('../models/Notification');
 
 /**
  * @module NotificationService
@@ -12,7 +13,6 @@ module.exports = class NotificationService extends Service {
 
   // Create notification and send email
   send (notification, callback) {
-    const Notification = this.app.orm.Notification;
     const that = this;
 
     this.log.debug('Sending a notification of type ' +
@@ -72,7 +72,6 @@ module.exports = class NotificationService extends Service {
 
   // Create only a notification, without sending an email
   notify(notification, callback) {
-    const Notification = this.app.orm.Notification;
     const that = this;
 
     this.log.debug('Sending a notification of type ' +
