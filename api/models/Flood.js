@@ -21,7 +21,7 @@ module.exports = class Flood extends Model {
     return {
       type: {
         type: String,
-        enum: ['login'],
+        enum: ['login', 'totp'],
         required: [true, 'Flood type is required']
       },
       email: {
