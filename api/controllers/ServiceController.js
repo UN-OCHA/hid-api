@@ -5,6 +5,7 @@ const Boom = require('boom');
 const async = require('async');
 const Mailchimp = require('mailchimp-api-v3');
 const {google} = require('googleapis');
+const ServiceCredentials = require('../models/ServiceCredentials');
 
 /**
  * @module ServiceController
@@ -172,7 +173,6 @@ module.exports = class ServiceController extends Controller{
 
   // Get google groups from a domain
   googleGroups(request, reply) {
-    const ServiceCredentials = this.app.orm.ServiceCredentials;
     const Service = this.app.orm.Service;
     const that = this;
     // Find service credentials associated to domain
@@ -206,7 +206,6 @@ module.exports = class ServiceController extends Controller{
   subscribe (request, reply) {
     const User = this.app.orm.User;
     const Service = this.app.orm.Service;
-    const ServiceCredentials = this.app.orm.ServiceCredentials;
     const NotificationService = this.app.services.NotificationService;
 
     const that = this;
@@ -350,7 +349,6 @@ module.exports = class ServiceController extends Controller{
   unsubscribe (request, reply) {
     const User = this.app.orm.User;
     const Service = this.app.orm.Service;
-    const ServiceCredentials = this.app.orm.ServiceCredentials;
     const NotificationService = this.app.services.NotificationService;
 
     this.log.debug(
