@@ -5,6 +5,7 @@ const Boom = require('boom');
 const Client = require('../models/Client');
 const Flood = require('../models/Flood');
 const JwtToken = require('../models/JwtToken');
+const OauthToken = require('../models/OauthToken');
 
 /**
  * @module AuthController
@@ -428,7 +429,6 @@ module.exports = class AuthController extends Controller{
 
   accessTokenOauth2 (request, reply) {
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
-    const OauthToken = this.app.orm.OauthToken;
     const code = request.payload.code;
     if (!code && request.payload.grant_type !== 'refresh_token') {
       this.log.warn(

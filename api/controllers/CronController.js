@@ -12,6 +12,7 @@ const listAttributes = [
   'functional_roles'
 ];
 const hidAccount = '5b2128e754a0d6046d6c69f2';
+const OauthToken = require('../models/OauthToken');
 
 /**
  * @module CronController
@@ -36,7 +37,6 @@ module.exports = class CronController extends Controller {
 
   deleteExpiredTokens (request, reply) {
     this.app.log.info('Deleting expired Oauth Tokens');
-    const OauthToken = this.app.orm.OauthToken;
     const that = this;
     const now = new Date();
     OauthToken

@@ -6,6 +6,7 @@
  *
  * @see {@link http://trailsjs.io/doc/config/web}
  */
+
 module.exports = {
 
   /**
@@ -71,7 +72,7 @@ module.exports = {
     const oauth = this.packs.hapi.server.plugins['hapi-oauth2orize'];
     const oauth2orizeExt = require('oauth2orize-openid');
     const Client = require('../api/models/Client');
-    const OauthToken = this.orm.OauthToken;
+    const OauthToken = require('../api/models/OauthToken');
     const OauthExpiresIn = 7 * 24 * 3600;
 
     const that = this;
