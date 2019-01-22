@@ -6,6 +6,7 @@ const async = require('async');
 const Mailchimp = require('mailchimp-api-v3');
 const {google} = require('googleapis');
 const ServiceCredentials = require('../models/ServiceCredentials');
+const Service = require('../models/Service');
 
 /**
  * @module ServiceController
@@ -14,16 +15,24 @@ const ServiceCredentials = require('../models/ServiceCredentials');
 module.exports = class ServiceController extends Controller{
 
   create (request, reply) {
-    request.params.model = 'service';
+    const that = this;
     request.payload.owner = request.params.currentUser._id;
-    const FootprintController = this.app.controllers.FootprintController;
-    FootprintController.create(request, reply);
+    Service
+      .create(request.payload)
+      .then((service) => {
+        if (!service) {
+          throw Boom.badRequest();
+        }
+        return reply(service);
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 
   find (request, reply) {
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
-    const Service = this.app.orm.Service;
 
     if (!request.params.currentUser.is_admin) {
       criteria.$or = [
@@ -62,7 +71,6 @@ module.exports = class ServiceController extends Controller{
         .catch(err => { that.app.services.ErrorService.handle(err, request, reply); });
     }
     else {
-      const Service = this.app.orm.Service;
       const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
       const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
 
@@ -106,13 +114,18 @@ module.exports = class ServiceController extends Controller{
   }
 
   update (request, reply) {
-    request.params.model = 'service';
-    const FootprintController = this.app.controllers.FootprintController;
-    FootprintController.update(request, reply);
+    const that = this;
+    Service
+      .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
+      .then((service) => {
+        reply(service);
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 
   destroy (request, reply) {
-    const Service = this.app.orm.Service;
     const User = this.app.orm.User;
 
     this.log.debug('[ServiceController] (destroy) model = service, query =', request.query, {request: request});
@@ -173,7 +186,6 @@ module.exports = class ServiceController extends Controller{
 
   // Get google groups from a domain
   googleGroups(request, reply) {
-    const Service = this.app.orm.Service;
     const that = this;
     // Find service credentials associated to domain
     ServiceCredentials
@@ -205,7 +217,6 @@ module.exports = class ServiceController extends Controller{
   // Subscribe a user to a service
   subscribe (request, reply) {
     const User = this.app.orm.User;
-    const Service = this.app.orm.Service;
     const NotificationService = this.app.services.NotificationService;
 
     const that = this;
@@ -348,7 +359,6 @@ module.exports = class ServiceController extends Controller{
 
   unsubscribe (request, reply) {
     const User = this.app.orm.User;
-    const Service = this.app.orm.Service;
     const NotificationService = this.app.services.NotificationService;
 
     this.log.debug(

@@ -2,6 +2,7 @@
 
 const Policy = require('trails/policy');
 const Boom = require('boom');
+const Service = require('../models/Service');
 
 /**
  * @module ServicePolicy
@@ -13,7 +14,7 @@ module.exports = class ServicePolicy extends Policy {
       return reply();
     }
     const that = this;
-    this.app.orm.Service
+    Service
       .findOne({_id: request.params.id})
       .populate('lists owner managers')
       .then((srv) => {
