@@ -2,7 +2,6 @@
 
 const mongoose = require('mongoose');
 const crypto = require('crypto');
-const validate = require('mongoose-validator');
 
 const Schema = mongoose.Schema;
 

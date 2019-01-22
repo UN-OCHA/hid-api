@@ -2,6 +2,7 @@
 
 const Policy = require('trails/policy');
 const Boom = require('boom');
+const Operation = require('../models/Operation');
 
 /**
  * @module OperationsPolicy
@@ -17,7 +18,7 @@ module.exports = class OperationsPolicy extends Policy {
 
     // Otherwise check if it is a manager of the operation list
     const that = this;
-    this.app.orm.Operation
+    Operation
       .findOne({_id: request.params.id})
       .populate('managers')
       .then((op) => {

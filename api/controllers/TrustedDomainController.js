@@ -64,6 +64,7 @@ module.exports = class TrustedDomainController extends Controller{
   }
 
   destroy (request, reply) {
+    const that = this;
     TrustedDomain
       .remove({ _id: request.params.id })
       .then(() => {

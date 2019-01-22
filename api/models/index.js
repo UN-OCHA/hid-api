@@ -10,5 +10,5 @@ exports.ServiceCredentials = require('./ServiceCredentials');
 //exports.Flood = require('./Flood');
 exports.GSSSync = require('./GSSSync');
 exports.OutlookSync = require('./OutlookSync');
-exports.Operation = require('./Operation');
+//exports.Operation = require('./Operation');
 //exports.TrustedDomain = require('./TrustedDomain');

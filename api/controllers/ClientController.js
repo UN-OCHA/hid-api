@@ -74,6 +74,7 @@ module.exports = class ClientController extends Controller{
   }
 
   destroy (request, reply) {
+    const that = this;
     Client
       .remove({ _id: request.params.id })
       .then(() => {
