@@ -2,6 +2,7 @@
 
 const Policy = require('trails/policy');
 const Boom = require('boom');
+const GSSSync = require('../models/GSSSync');
 
 /**
  * @module GSSSyncPolicy
@@ -13,7 +14,6 @@ module.exports = class GSSSyncPolicy extends Policy {
     if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
       return reply();
     }
-    const GSSSync = this.app.orm.GSSSync;
     const that = this;
     GSSSync
       .findOne({_id: request.params.id})

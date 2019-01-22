@@ -5,6 +5,7 @@ const fs = require('fs');
 const {OAuth2Client} = require('google-auth-library');
 const {google} = require('googleapis');
 const Boom = require('boom');
+const GSSSync = require('../models/GSSSync');
 
 /**
  * @module GSSSyncService
@@ -103,7 +104,6 @@ module.exports = class GSSSyncService extends Service {
 
   addUser (gsssync, user) {
     const User = this.app.orm.User;
-    const GSSSync = this.app.orm.GSSSync;
     const ErrorService = this.app.services.ErrorService;
     const that = this;
     const sheets = google.sheets('v4');
@@ -185,8 +185,6 @@ module.exports = class GSSSyncService extends Service {
   }
 
   findByList(listId) {
-    const GSSSync = this.app.orm.GSSSync;
-
     return GSSSync
       .find({list: listId});
   }
@@ -271,7 +269,6 @@ module.exports = class GSSSyncService extends Service {
   synchronizeUser (user) {
     // Get all lists from user
     const listIds = user.getListIds();
-    const GSSSync = this.app.orm.GSSSync;
     const that = this;
 
     // Find the gsssyncs associated to the lists
@@ -394,7 +391,6 @@ module.exports = class GSSSyncService extends Service {
 
   synchronizeAll (gsssync) {
     const User = this.app.orm.User;
-    const GSSSync = this.app.orm.GSSSync;
     const headers = GSSSync.getSpreadsheetHeaders();
     const that = this;
     let authClient = {};

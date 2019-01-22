@@ -5,6 +5,7 @@ const Boom = require('boom');
 const {google} = require('googleapis');
 const {OAuth2Client} = require('google-auth-library');
 const fs = require('fs');
+const GSSSync = require('../models/GSSSync');
 
 /**
  * @module GSSSyncController
@@ -13,7 +14,6 @@ const fs = require('fs');
 module.exports = class GSSSyncController extends Controller{
 
   createHelper (request, reply) {
-    const GSSSync = this.app.orm.GSSSync;
     const GSSSyncService = this.app.services.GSSSyncService;
     const that = this;
     let gsync = {};
@@ -80,8 +80,14 @@ module.exports = class GSSSyncController extends Controller{
   }
 
   destroy (request, reply) {
-    request.params.model = 'gsssync';
-    const FootprintController = this.app.controllers.FootprintController;
-    FootprintController.destroy(request, reply);
+    const that = this;
+    GSSSync
+      .remove({ _id: request.params.id })
+      .then(() => {
+        reply().code(204);
+      })
+      .catch(err => {
+        that.app.services.ErrorService.handle(err, request, reply);
+      });
   }
 };
