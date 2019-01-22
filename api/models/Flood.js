@@ -12,7 +12,7 @@ const Schema = mongoose.Schema;
 const FloodSchema = new Schema({
   type: {
     type: String,
-    enum: ['login'],
+    enum: ['login', 'totp'],
     required: [true, 'Flood type is required']
   },
   email: {

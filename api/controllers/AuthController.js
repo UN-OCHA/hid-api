@@ -42,7 +42,7 @@ module.exports = class AuthController extends Controller{
       const d5minutes = new Date(now - offset);
 
       Flood
-        .count({email: email, createdAt: {$gte: d5minutes.toISOString()}})
+        .count({type: 'login', email: email, createdAt: {$gte: d5minutes.toISOString()}})
         .then((number) => {
           if (number >= 5) {
             that.log.warn('Account locked for 5 minutes', {email: email, security: true, fail: true, request: request});
@@ -191,6 +191,7 @@ module.exports = class AuthController extends Controller{
     const that = this;
     const authPolicy = this.app.policies.AuthPolicy;
     const User = this.app.orm.User;
+    const Flood = this.app.orm.Flood;
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId)) {
       return this._loginHelper(request, function (result) {
@@ -247,9 +248,20 @@ module.exports = class AuthController extends Controller{
       });
     }
     if (cookie && cookie.userId && cookie.totp === false) {
-      User
-        .findOne({_id: cookie.userId})
+      let gUser = {};
+      Flood
+        .count({type: 'totp', email: cookie.userId, createdAt: {$gte: d5minutes.toISOString()}})
+        .then((number) => {
+          if (number >= 5) {
+            that.log.warn('Account locked for 5 minutes', {userId: cookie.userId, security: true, fail: true, request: request});
+            throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
+          }
+          else {
+            return User.findOne({_id: cookie.userId});
+          }
+        })
         .then((user) => {
+          gUser = user;
           const token = request.payload['x-hid-totp'];
           return authPolicy.isTOTPValid(user, token);
         })
@@ -269,6 +281,11 @@ module.exports = class AuthController extends Controller{
           }
         })
         .catch(err => {
+          if (err.output.statusCode === 401) {
+            // Create a flood entry
+            Flood
+              .create({type: 'totp', email: cookie.userId, user: gUser});
+          }
           const alert =  {
             type: 'danger',
             message: err.output.payload.message
