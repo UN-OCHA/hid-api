@@ -6,9 +6,9 @@ const assert = require('assert');
 describe('User Model', () => {
   let User;
   before(() => {
-    assert(global.app.models.User);
+    assert(global.app.orm.User);
 
-    User = global.app.models.User;
+    User = global.app.orm.User;
   });
 
   describe('#isStrongPassword', () => {

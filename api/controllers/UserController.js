@@ -28,8 +28,7 @@ module.exports = class UserController extends Controller{
   }
 
   _createHelper(request, reply) {
-    const Model = this.app.orm.User;
-    const UserModel = this.app.models.User;
+    const User = this.app.orm.User;
 
     this.log.debug('Preparing request for user creation', { request: request });
 
@@ -39,14 +38,14 @@ module.exports = class UserController extends Controller{
     }
 
     if (request.payload.password && request.payload.confirm_password) {
-      if (!UserModel.isStrongPassword(request.payload.password)) {
+      if (!User.isStrongPassword(request.payload.password)) {
         return reply(Boom.badRequest('The password is not strong enough'));
       }
-      request.payload.password = UserModel.hashPassword(request.payload.password);
+      request.payload.password = User.hashPassword(request.payload.password);
     }
     else {
       // Set a random password
-      request.payload.password = UserModel.hashPassword(UserModel.generateRandomPassword());
+      request.payload.password = User.hashPassword(User.generateRandomPassword());
     }
 
     const appVerifyUrl = request.payload.app_verify_url;
@@ -89,7 +88,7 @@ module.exports = class UserController extends Controller{
 
     const that = this;
     let guser = {};
-    Model
+    User
       .create(request.payload)
       .then((user) => {
         if (!user) {
@@ -387,7 +386,7 @@ module.exports = class UserController extends Controller{
         else {
           // Sanitize users and translate list names from a plain object
           for (let i = 0, len = results.results.length; i < len; i++) {
-            UserModel.sanitizeExportedUser(results.results[i], request.params.currentUser);
+            User.sanitizeExportedUser(results.results[i], request.params.currentUser);
             if (results.results[i].organization) {
               UserModel.translateCheckin(results.results[i].organization, reqLanguage);
             }
@@ -596,8 +595,7 @@ module.exports = class UserController extends Controller{
 
   update (request, reply) {
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const Model = this.app.orm.user;
-    const UserModel = this.app.models.User;
+    const User = this.app.orm.user;
 
     this.log.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
       ', values = ', request.payload, { request: request });
@@ -614,7 +612,7 @@ module.exports = class UserController extends Controller{
 
     const that = this;
     // Check old password
-    Model
+    User
       .findOne({_id: request.params.id})
       .then((user) => {
         if (!user) {
@@ -628,11 +626,11 @@ module.exports = class UserController extends Controller{
         if (request.payload.old_password && request.payload.new_password) {
           that.log.warn('Updating user password', { request: request, security: true});
           if (user.validPassword(request.payload.old_password)) {
-            if (!UserModel.isStrongPassword(request.payload.new_password)) {
+            if (!User.isStrongPassword(request.payload.new_password)) {
               that.log.warn('Could not update user password. New password is not strong enough', { request: request, security: true, fail: true});
               throw Boom.badRequest('Password is not strong enough');
             }
-            request.payload.password = UserModel.hashPassword(request.payload.new_password);
+            request.payload.password = User.hashPassword(request.payload.new_password);
             request.payload.lastPasswordReset = new Date();
             request.payload.passwordResetAlert30days = false;
             request.payload.passwordResetAlert7days = false;
@@ -863,7 +861,6 @@ module.exports = class UserController extends Controller{
 
   updatePassword (request, reply) {
     const User = this.app.orm.user;
-    const UserModel = this.app.models.User;
 
     this.log.debug('[UserController] Updating user password', { request: request });
 
@@ -871,7 +868,7 @@ module.exports = class UserController extends Controller{
       return reply(Boom.badRequest('Request is missing parameters (old or new password)'));
     }
 
-    if (!UserModel.isStrongPassword(request.payload.new_password)) {
+    if (!User.isStrongPassword(request.payload.new_password)) {
       this.log.warn('New password is not strong enough', { request: request, security: true, fail: true});
       return reply(Boom.badRequest('New password is not strong enough'));
     }
@@ -886,7 +883,7 @@ module.exports = class UserController extends Controller{
         }
         that.log.warn('Updating user password', { request: request, security: true});
         if (user.validPassword(request.payload.old_password)) {
-          user.password = UserModel.hashPassword(request.payload.new_password);
+          user.password = User.hashPassword(request.payload.new_password);
           user.lastModified = new Date();
           that.log.warn('Successfully updated user password', { request: request, security: true});
           return user.save();
@@ -905,8 +902,7 @@ module.exports = class UserController extends Controller{
   }
 
   resetPassword (request, reply, checkTotp = true) {
-    const Model = this.app.orm.User;
-    const UserModel = this.app.models.User;
+    const User = this.app.orm.User;
     const that = this;
     const authPolicy = this.app.policies.AuthPolicy;
 
@@ -914,14 +910,14 @@ module.exports = class UserController extends Controller{
       return reply(Boom.badRequest('Wrong arguments'));
     }
 
-    if (!UserModel.isStrongPassword(request.payload.password)) {
+    if (!User.isStrongPassword(request.payload.password)) {
       this.log.warn('Could not reset password. New password is not strong enough.', { security: true, fail: true, request: request});
       return reply(Boom.badRequest('New password is not strong enough'));
     }
 
     this.log.warn('Resetting password', { security: true, request: request});
     let grecord = {};
-    Model
+    User
       .findOne({_id: request.payload.id})
       .then(record => {
         if (!record) {
@@ -942,7 +938,7 @@ module.exports = class UserController extends Controller{
       })
       .then(record => {
         if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
-          const pwd = UserModel.hashPassword(request.payload.password);
+          const pwd = User.hashPassword(request.payload.password);
           if (pwd === record.password) {
             throw Boom.badRequest('The new password can not be the same as the old one');
           }

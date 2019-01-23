@@ -25,66 +25,7 @@ const userPopulate1 = [
  */
 module.exports = class User extends Model {
 
-  // Determines if a password is strong enough for HID
-  isStrongPassword (password) {
-    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
-    // At least 8 characters and at least one number, one uppercase and one lowercase.
-    return password.length > 7 && regex.test(password);
-  }
-
-  hashPassword (password) {
-    return Bcrypt.hashSync(password, 11);
-  }
-
-  // Generate a cryptographically strong random password.
-  generateRandomPassword () {
-    const buffer = crypto.randomBytes(256);
-    return buffer.toString('hex').slice(0, 10) + 'B';
-  }
-
   // TODO: try to remove this duplication after trails v3 is released
-
-  sanitizeExportedUser (user, requester) {
-    if (user._id.toString() !== requester._id.toString() && !requester.is_admin) {
-      if (user.emailsVisibility !== 'anyone') {
-        if ((user.emailsVisibility === 'verified' && !requester.verified) ||
-            (user.emailsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
-          user.email = null;
-          user.emails = [];
-        }
-      }
-
-      if (user.phonesVisibility !== 'anyone') {
-        if ((user.phonesVisibility === 'verified' && !requester.verified) ||
-            (user.phonesVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
-          user.phone_number = null;
-          user.phone_numbers = [];
-        }
-      }
-
-      if (user.locationsVisibility !== 'anyone') {
-        if ((user.locationsVisibility === 'verified' && !requester.verified) ||
-            (user.locationsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
-          user.location = null;
-          user.locations = [];
-        }
-      }
-    }
-  }
-
-  connectionsIndex (user, userId) {
-    let index = -1;
-    if (user.connections && user.connections.length) {
-      for (let i = 0, len = user.connections.length; i < len; i++) {
-        if (user.connections[i].pending === false &&
-          ((user.connections[i].user._id && user.connections[i].user._id.toString() === userId.toString()) ||
-          (!user.connections[i].user._id && user.connections[i].user.toString() === userId.toString()))) {
-          index = i;
-        }
-      }
-    }
-    return index;
-  }
 
   translateCheckin (checkin, language) {
     let name = '', nameEn = '', acronym = '', acronymEn = '';
@@ -231,6 +172,60 @@ module.exports = class User extends Model {
             'functional_roles',
             'offices'
           ];
+        },
+        sanitizeExportedUser: function (user, requester) {
+          if (user._id.toString() !== requester._id.toString() && !requester.is_admin) {
+            if (user.emailsVisibility !== 'anyone') {
+              if ((user.emailsVisibility === 'verified' && !requester.verified) ||
+                  (user.emailsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
+                user.email = null;
+                user.emails = [];
+              }
+            }
+
+            if (user.phonesVisibility !== 'anyone') {
+              if ((user.phonesVisibility === 'verified' && !requester.verified) ||
+                  (user.phonesVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
+                user.phone_number = null;
+                user.phone_numbers = [];
+              }
+            }
+
+            if (user.locationsVisibility !== 'anyone') {
+              if ((user.locationsVisibility === 'verified' && !requester.verified) ||
+                  (user.locationsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
+                user.location = null;
+                user.locations = [];
+              }
+            }
+          }
+        },
+        connectionsIndex: function (user, userId) {
+          let index = -1;
+          if (user.connections && user.connections.length) {
+            for (let i = 0, len = user.connections.length; i < len; i++) {
+              if (user.connections[i].pending === false &&
+                ((user.connections[i].user._id && user.connections[i].user._id.toString() === userId.toString()) ||
+                (!user.connections[i].user._id && user.connections[i].user.toString() === userId.toString()))) {
+                index = i;
+              }
+            }
+          }
+          return index;
+        },
+        // Determines if a password is strong enough for HID
+        isStrongPassword: function (password) {
+          const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+          // At least 8 characters and at least one number, one uppercase and one lowercase.
+          return password.length > 7 && regex.test(password);
+        },
+        hashPassword: function (password) {
+          return Bcrypt.hashSync(password, 11);
+        },
+        // Generate a cryptographically strong random password.
+        generateRandomPassword: function () {
+          const buffer = crypto.randomBytes(256);
+          return buffer.toString('hex').slice(0, 10) + 'B';
         }
       },
       methods: {
