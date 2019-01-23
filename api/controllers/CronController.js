@@ -619,7 +619,7 @@ module.exports = class CronController extends Controller {
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
     List
-      .remove({type: 'list', count: 0, $or: [{ createdAt: { $lte: threeMonthsAgo}}, {owner: '5c3f34f7463f3500bf20e800'}]})
+      .remove({type: 'list', owner: '5c3f34f7463f3500bf20e800'})
       .then(() => {
         reply().code(204);
       })
