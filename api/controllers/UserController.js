@@ -10,6 +10,7 @@ const acceptLanguage = require('accept-language');
 const sharp = require('sharp');
 const validator = require('validator');
 const hidAccount = '5b2128e754a0d6046d6c69f2';
+const List = require('../models/List');
 
 /**
  * @module UserController
@@ -462,7 +463,6 @@ module.exports = class UserController extends Controller{
     else {
       const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
       const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
-      const List = this.app.orm.List;
       const childAttributes = User.listAttributes();
 
       // Hide unconfirmed users which are not orphans

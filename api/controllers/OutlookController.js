@@ -5,6 +5,7 @@ const Boom = require('boom');
 const fs = require('fs');
 const microsoftGraph = require('@microsoft/microsoft-graph-client');
 const OutlookSync = require('../models/OutlookSync');
+const List = require('../models/List');
 
 /**
  * @module OutlookController
@@ -50,7 +51,6 @@ module.exports = class OutlookController extends Controller{
     const credentials = request.params.currentUser.outlookCredentials;
     if (request.payload && request.payload.list) {
       const that = this;
-      const List = this.app.orm.List;
       const User = this.app.orm.User;
       let accessToken = '', client = {}, gList = {}, gOsync = {};
       OutlookSync

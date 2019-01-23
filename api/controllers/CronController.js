@@ -13,6 +13,7 @@ const listAttributes = [
 ];
 const hidAccount = '5b2128e754a0d6046d6c69f2';
 const OauthToken = require('../models/OauthToken');
+const List = require('../models/List');
 
 /**
  * @module CronController
@@ -375,7 +376,6 @@ module.exports = class CronController extends Controller {
 
   setListCounts (request, reply) {
     reply().code(204);
-    const List = this.app.orm.list;
     const User = this.app.orm.User;
     const stream = List.find({deleted: false}).cursor();
     stream.on('data', function (list) {
@@ -615,7 +615,6 @@ module.exports = class CronController extends Controller {
   }
 
   deleteCustomLists(request, reply) {
-    const List = this.app.orm.List;
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
     List

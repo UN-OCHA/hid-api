@@ -2,6 +2,7 @@
 
 const Policy = require('trails/policy');
 const Boom = require('boom');
+const List = require('../models/List');
 
 /**
  * @module ListUserPolicy
@@ -9,7 +10,6 @@ const Boom = require('boom');
  */
 module.exports = class ListUserPolicy extends Policy {
   canCheckin (request, reply) {
-    const List = this.app.orm.List;
     if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
       return reply();
     }

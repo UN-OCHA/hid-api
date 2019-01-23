@@ -5,6 +5,7 @@ const Boom = require('boom');
 const _ = require('lodash');
 const async = require('async');
 const acceptLanguage = require('accept-language');
+const List = require('../models/List');
 
 /**
  * @module ListController
@@ -13,11 +14,10 @@ const acceptLanguage = require('accept-language');
 module.exports = class ListController extends Controller{
 
   _removeForbiddenAttributes (request) {
-    this.app.services.HelperService.removeForbiddenAttributes(this.app.orm.List, request, ['names']);
+    this.app.services.HelperService.removeForbiddenAttributes(List, request, ['names']);
   }
 
   create (request, reply) {
-    const List = this.app.orm.List;
     this._removeForbiddenAttributes(request);
     request.payload.owner = request.params.currentUser._id;
     if (!request.payload.managers) {
@@ -39,7 +39,6 @@ module.exports = class ListController extends Controller{
     const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
-    const List = this.app.orm.List;
     const User = this.app.orm.User;
 
     if (!options.sort) {
@@ -181,7 +180,6 @@ module.exports = class ListController extends Controller{
   }
 
   update (request, reply) {
-    const Model = this.app.orm.list;
     const User = this.app.orm.user;
 
     this._removeForbiddenAttributes(request);
@@ -197,10 +195,10 @@ module.exports = class ListController extends Controller{
 
     const that = this;
     let newlist = {};
-    Model
+    List
       .findOne({_id: request.params.id})
       .then(list => {
-        return Model
+        return List
           .findOneAndUpdate({_id: request.params.id}, request.payload, {runValidators: true, new: true});
       })
       .then((list2) => {
@@ -250,7 +248,6 @@ module.exports = class ListController extends Controller{
   }
 
   destroy (request, reply) {
-    const List = this.app.orm.List;
     const User = this.app.orm.User;
 
     this.log.debug('[ListController] (destroy) model = list, query =', request.query, { request: request});

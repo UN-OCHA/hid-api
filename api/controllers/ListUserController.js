@@ -4,6 +4,7 @@ const Controller = require('trails/controller');
 const Boom = require('boom');
 const _ = require('lodash');
 const async = require('async');
+const List = require('../models/List');
 
 /**
  * @module ListUserController
@@ -116,7 +117,6 @@ module.exports = class ListUserController extends Controller {
     const userId = request.params.id;
     const childAttribute = request.params.childAttribute;
     const payload = request.payload;
-    const List = this.app.orm.List;
     const User = this.app.orm.User;
     const childAttributes = User.listAttributes();
 
@@ -165,7 +165,6 @@ module.exports = class ListUserController extends Controller {
 
   update (request, reply) {
     const User = this.app.orm.User;
-    const List = this.app.orm.List;
     const NotificationService = this.app.services.NotificationService;
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
@@ -243,7 +242,6 @@ module.exports = class ListUserController extends Controller {
     const checkInId = request.params.checkInId;
     const payload = request.payload;
     const User = this.app.orm.user;
-    const List = this.app.orm.List;
     const GSSSyncService = this.app.services.GSSSyncService;
     const OutlookService = this.app.services.OutlookService;
     const childAttributes = User.listAttributes();

@@ -6,6 +6,7 @@ const {OAuth2Client} = require('google-auth-library');
 const {google} = require('googleapis');
 const Boom = require('boom');
 const GSSSync = require('../models/GSSSync');
+const List = require('../models/List');
 
 /**
  * @module GSSSyncService
@@ -332,7 +333,6 @@ module.exports = class GSSSyncService extends Service {
   }
 
   createSpreadsheet (user, listId, callback) {
-    const List = this.app.orm.List;
     List
       .findOne({ _id: listId })
       .then(list => {

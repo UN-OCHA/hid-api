@@ -3,6 +3,7 @@
 const Controller = require('trails/controller');
 const Boom = require('boom');
 const _ = require('lodash');
+const List = require('../models/List');
 
 /**
  * @module WebhooksController
@@ -20,7 +21,6 @@ module.exports = class WebhooksController extends Controller{
       'functional_role',
       'office'
     ];
-    const List = this.app.orm.List;
     const User = this.app.orm.User;
     const ListController = this.app.controllers.ListController;
     const that = this;
@@ -157,7 +157,6 @@ module.exports = class WebhooksController extends Controller{
   // Notify users of a new disaster
   _notifyNewDisaster (disaster) {
     const app = this.app;
-    const List = app.orm.list;
     const User = app.orm.User;
     const NotificationService = app.services.NotificationService;
     if (disaster.metadata.operation && disaster.metadata.operation.length) {
@@ -184,7 +183,6 @@ module.exports = class WebhooksController extends Controller{
   }
 
   _parseList (listType, language, item) {
-    const List = this.app.orm.List;
     let visibility = '', label = '', acronym = '', tmpList = {};
     visibility = 'all';
     if (item.hid_access && item.hid_access === 'closed') {

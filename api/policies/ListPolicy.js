@@ -2,6 +2,7 @@
 
 const Policy = require('trails/policy');
 const Boom = require('boom');
+const List = require('../models/List');
 
 /**
  * @module ListPolicy
@@ -19,7 +20,6 @@ module.exports = class ListPolicy extends Policy {
   }
 
   canUpdate (request, reply) {
-    const List = this.app.orm.List;
     const that = this;
     List
       .findOne({_id: request.params.id})
@@ -48,7 +48,6 @@ module.exports = class ListPolicy extends Policy {
     if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
       return reply();
     }
-    const List = this.app.orm.List;
     const that = this;
     List
       .findOne({_id: request.params.id})
