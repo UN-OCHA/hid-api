@@ -11,7 +11,7 @@ const TrailsApp = require('trails');
 const mongoose = require('mongoose');
 const server = new TrailsApp(app);
 
-const store = app.config.database.stores[process.env.NODE_ENV];
+const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
 mongoose.connect(store.uri, store.options);
 
 if (process.env.NODE_ENV !== 'testing') {
