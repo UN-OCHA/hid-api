@@ -2,6 +2,7 @@
 
 const Policy = require('trails/policy');
 const Boom = require('boom');
+const User = require('../models/User');
 
 /**
  * @module UserPolicy
@@ -34,7 +35,6 @@ module.exports = class UserPolicy extends Policy {
         request.params.currentUser.id !== request.params.id) {
         // If the user is a manager, make sure he is not trying to edit
         // an admin account.
-        const User = this.app.orm.User;
         const that = this;
         User
           .findById(request.params.id)
@@ -60,7 +60,6 @@ module.exports = class UserPolicy extends Policy {
   }
 
   canDestroy (request, reply) {
-    const User = this.app.orm.User;
     if (request.params.currentUser.is_admin ||
       request.params.currentUser.id === request.params.id) {
       return reply();

@@ -6,6 +6,7 @@ const Client = require('../models/Client');
 const Flood = require('../models/Flood');
 const JwtToken = require('../models/JwtToken');
 const OauthToken = require('../models/OauthToken');
+const User = require('../models/User');
 
 /**
  * @module AuthController
@@ -15,7 +16,6 @@ module.exports = class AuthController extends Controller{
 
   // Main helper function used for login. All logins go through this.
   _loginHelper (request, reply) {
-    const User = this.app.orm.User;
     const email = request.payload && request.payload.email ? request.payload.email.toLowerCase() : false;
     const password = request.payload ? request.payload.password : false;
     const authPolicy = this.app.policies.AuthPolicy;
@@ -191,7 +191,6 @@ module.exports = class AuthController extends Controller{
   login (request, reply) {
     const that = this;
     const authPolicy = this.app.policies.AuthPolicy;
-    const User = this.app.orm.User;
     const Flood = this.app.orm.Flood;
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId)) {
@@ -305,7 +304,6 @@ module.exports = class AuthController extends Controller{
   }
 
   authorizeDialogOauth2 (request, reply) {
-    const User = this.app.orm.User;
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
 
     // Check response_type
@@ -381,7 +379,6 @@ module.exports = class AuthController extends Controller{
   }
 
   authorizeOauth2 (request, reply) {
-    const User = this.app.orm.User;
     const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
     const cookie = request.yar.get('session');
 

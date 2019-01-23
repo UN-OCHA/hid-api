@@ -7,6 +7,7 @@ const {google} = require('googleapis');
 const Boom = require('boom');
 const GSSSync = require('../models/GSSSync');
 const List = require('../models/List');
+const User = require('../models/User');
 
 /**
  * @module GSSSyncService
@@ -104,7 +105,6 @@ module.exports = class GSSSyncService extends Service {
   }
 
   addUser (gsssync, user) {
-    const User = this.app.orm.User;
     const ErrorService = this.app.services.ErrorService;
     const that = this;
     const sheets = google.sheets('v4');
@@ -390,7 +390,6 @@ module.exports = class GSSSyncService extends Service {
   }
 
   synchronizeAll (gsssync) {
-    const User = this.app.orm.User;
     const headers = GSSSync.getSpreadsheetHeaders();
     const that = this;
     let authClient = {};

@@ -4,6 +4,7 @@ const Controller = require('trails/controller');
 const Boom = require('boom');
 const Recaptcha = require('recaptcha2');
 const Client = require('../models/Client');
+const User = require('../models/User');
 
 module.exports = class ViewController extends Controller {
 
@@ -267,7 +268,6 @@ module.exports = class ViewController extends Controller {
 
   newPassword (request, reply) {
     const that = this;
-    const User = this.app.orm.User;
     request.yar.reset();
     request.yar.set('session', { hash: request.query.hash, id: request.query.id, time: request.query.time, totp: false});
     User
@@ -300,7 +300,6 @@ module.exports = class ViewController extends Controller {
 
   newPasswordPost (request, reply) {
     const UserController = this.app.controllers.UserController;
-    const User = this.app.orm.User;
     const that = this;
     const cookie = request.yar.get('session');
     const authPolicy = this.app.policies.AuthPolicy;
@@ -371,7 +370,6 @@ module.exports = class ViewController extends Controller {
   // Display a default user page when user is logged in without OAuth
   user (request, reply) {
     // If the user is not authenticated, redirect to the login page
-    const User = this.app.orm.User;
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
       return reply.redirect('/');

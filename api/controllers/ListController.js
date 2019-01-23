@@ -6,6 +6,7 @@ const _ = require('lodash');
 const async = require('async');
 const acceptLanguage = require('accept-language');
 const List = require('../models/List');
+const User = require('../models/User');
 
 /**
  * @module ListController
@@ -39,7 +40,6 @@ module.exports = class ListController extends Controller{
     const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
     const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
-    const User = this.app.orm.User;
 
     if (!options.sort) {
       options.sort = 'name';
@@ -159,7 +159,6 @@ module.exports = class ListController extends Controller{
   }
 
   _notifyManagers(uids, type, request, list) {
-    const User = this.app.orm.user;
     const that = this;
     User
       .find({_id: {$in: uids}})
@@ -180,7 +179,6 @@ module.exports = class ListController extends Controller{
   }
 
   update (request, reply) {
-    const User = this.app.orm.user;
 
     this._removeForbiddenAttributes(request);
 
@@ -248,7 +246,6 @@ module.exports = class ListController extends Controller{
   }
 
   destroy (request, reply) {
-    const User = this.app.orm.User;
 
     this.log.debug('[ListController] (destroy) model = list, query =', request.query, { request: request});
     const that = this;

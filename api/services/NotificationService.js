@@ -4,6 +4,7 @@ const Service = require('trails/service');
 const Boom = require('boom');
 const async = require('async');
 const Notification = require('../models/Notification');
+const User = require('../models/User');
 
 /**
  * @module NotificationService
@@ -42,7 +43,6 @@ module.exports = class NotificationService extends Service {
 
   // Transform user IDs in users if needed
   _transformUsers (users, callback) {
-    const User = this.app.orm.User;
     let areUsers = true;
     for (let i = 0, len = users.length; i < len; i++) {
       if (users[i].constructor.name === 'ObjectID') {

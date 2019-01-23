@@ -3,6 +3,7 @@
 const Policy = require('trails/policy');
 const Boom = require('boom');
 const List = require('../models/List');
+const User = require('../models/User');
 
 /**
  * @module ListUserPolicy
@@ -36,7 +37,6 @@ module.exports = class ListUserPolicy extends Policy {
   }
 
   canCheckout(request, reply) {
-    const User = this.app.orm.User;
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
     if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
@@ -63,7 +63,6 @@ module.exports = class ListUserPolicy extends Policy {
   }
 
   canUpdate (request, reply) {
-    const User = this.app.orm.User;
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
 

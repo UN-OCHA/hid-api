@@ -2,6 +2,7 @@
 
 const Controller = require('trails/controller');
 const List = require('../models/List');
+const User = require('../models/User');
 
 /**
  * @module NumbersController
@@ -10,7 +11,6 @@ const List = require('../models/List');
 module.exports = class NumbersController extends Controller{
 
   numbers (request, reply) {
-    const User = this.app.orm.User;
     const that = this;
     let numberCcls = 0,
       numberAuth = 0,

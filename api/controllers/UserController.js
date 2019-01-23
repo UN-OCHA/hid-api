@@ -11,6 +11,7 @@ const sharp = require('sharp');
 const validator = require('validator');
 const hidAccount = '5b2128e754a0d6046d6c69f2';
 const List = require('../models/List');
+const User = require('../models/User');
 
 /**
  * @module UserController
@@ -19,8 +20,8 @@ const List = require('../models/List');
 module.exports = class UserController extends Controller{
 
   _removeForbiddenAttributes (request) {
-    const childAttributes = this.app.orm.User.listAttributes();
-    this.app.services.HelperService.removeForbiddenAttributes(this.app.orm.User, request, childAttributes);
+    const childAttributes = User.listAttributes();
+    this.app.services.HelperService.removeForbiddenAttributes(User, request, childAttributes);
   }
 
   _errorHandler (err, request, reply) {
@@ -28,7 +29,6 @@ module.exports = class UserController extends Controller{
   }
 
   _createHelper(request, reply) {
-    const User = this.app.orm.User;
 
     this.log.debug('Preparing request for user creation', { request: request });
 
@@ -122,7 +122,6 @@ module.exports = class UserController extends Controller{
 
   create (request, reply) {
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
-    const Model = this.app.orm.user;
 
     this.log.debug('[UserController] (create) payload =', request.payload, 'options =', options, { request: request });
 
@@ -138,7 +137,7 @@ module.exports = class UserController extends Controller{
 
     const that = this;
     if (request.payload.email) {
-      Model
+      User
         .findOne({'emails.email': request.payload.email})
         .then((record) => {
           if (!record) {
@@ -344,8 +343,6 @@ module.exports = class UserController extends Controller{
   }
 
   _findHelper(request, reply, criteria, options, lists) {
-    const User = this.app.orm.User;
-    const UserModel = this.app.models.User;
     const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
     let pdfFormat = '';
     if (criteria.format) {
@@ -388,7 +385,7 @@ module.exports = class UserController extends Controller{
           for (let i = 0, len = results.results.length; i < len; i++) {
             User.sanitizeExportedUser(results.results[i], request.params.currentUser);
             if (results.results[i].organization) {
-              UserModel.translateCheckin(results.results[i].organization, reqLanguage);
+              User.translateCheckin(results.results[i].organization, reqLanguage);
             }
           }
           if (request.params.extension === 'csv') {
@@ -430,7 +427,6 @@ module.exports = class UserController extends Controller{
 
   find (request, reply) {
     const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
-    const User = this.app.orm.User;
     const that = this;
 
     if (request.params.id) {
@@ -544,8 +540,7 @@ module.exports = class UserController extends Controller{
   }
 
   _updateQuery (request, options) {
-    const User = this.app.orm.user,
-      NotificationService = this.app.services.NotificationService,
+    const NotificationService = this.app.services.NotificationService,
       EmailService = this.app.services.EmailService,
       that = this;
     let nextAction = '';
@@ -595,7 +590,6 @@ module.exports = class UserController extends Controller{
 
   update (request, reply) {
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const User = this.app.orm.user;
 
     this.log.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
       ', values = ', request.payload, { request: request });
@@ -653,7 +647,6 @@ module.exports = class UserController extends Controller{
   }
 
   destroy (request, reply) {
-    const User = this.app.orm.User;
 
     if (!request.params.currentUser.is_admin && request.params.currentUser._id.toString() !== request.params.id) {
       return reply(Boom.forbidden('You are not allowed to delete this account'));
@@ -677,7 +670,6 @@ module.exports = class UserController extends Controller{
   }
 
   setPrimaryEmail (request, reply) {
-    const Model = this.app.orm.user;
     const email = request.payload.email;
     const that = this;
 
@@ -687,7 +679,7 @@ module.exports = class UserController extends Controller{
       return reply(Boom.badRequest());
     }
 
-    Model
+    User
       .findOne({ _id: request.params.id})
       .then(record => {
         if (!record) {
@@ -722,7 +714,6 @@ module.exports = class UserController extends Controller{
   }
 
   validateEmail (request, reply) {
-    const Model = this.app.orm.user;
     let email = '', query = {};
 
     this.log.debug('[UserController] Verifying email ', { request: request });
@@ -736,7 +727,7 @@ module.exports = class UserController extends Controller{
     let grecord = {};
 
     if (request.payload.hash) {
-      query = Model.findOne({'emails.email': request.payload.email})
+      query = User.findOne({'emails.email': request.payload.email})
         .then(record => {
           if (!record) {
             throw Boom.notFound();
@@ -808,7 +799,7 @@ module.exports = class UserController extends Controller{
     }
     else {
       email = request.params.email;
-      query = Model.findOne({'emails.email': email})
+      query = User.findOne({'emails.email': email})
         .then(record => {
           if (!record) {
             throw Boom.notFound();
@@ -835,7 +826,6 @@ module.exports = class UserController extends Controller{
   // Send a password reset email
   // TODO: make sure we control flood
   sendResetPassword (request, reply) {
-    const User = this.app.orm.User;
     const appResetUrl = request.payload.app_reset_url;
     const that = this;
 
@@ -860,7 +850,6 @@ module.exports = class UserController extends Controller{
   }
 
   updatePassword (request, reply) {
-    const User = this.app.orm.user;
 
     this.log.debug('[UserController] Updating user password', { request: request });
 
@@ -902,7 +891,6 @@ module.exports = class UserController extends Controller{
   }
 
   resetPassword (request, reply, checkTotp = true) {
-    const User = this.app.orm.User;
     const that = this;
     const authPolicy = this.app.policies.AuthPolicy;
 
@@ -989,7 +977,6 @@ module.exports = class UserController extends Controller{
   }
 
   claimEmail (request, reply) {
-    const Model = this.app.orm.User;
     const appResetUrl = request.payload.app_reset_url;
     const userId = request.params.id;
 
@@ -999,7 +986,7 @@ module.exports = class UserController extends Controller{
     }
 
     const that = this;
-    Model
+    User
       .findOne({_id: userId})
       .then(record => {
         if (!record) {
@@ -1016,7 +1003,6 @@ module.exports = class UserController extends Controller{
   }
 
   updatePicture (request, reply) {
-    const Model = this.app.orm.User;
     const userId = request.params.id;
     const that = this;
 
@@ -1026,7 +1012,7 @@ module.exports = class UserController extends Controller{
     if (data.file) {
       const image = sharp(data.file);
       let guser = {}, gmetadata = {};
-      Model
+      User
         .findOne({_id: userId})
         .then(record => {
           if (!record) {
@@ -1066,7 +1052,6 @@ module.exports = class UserController extends Controller{
   }
 
   addEmail (request, reply) {
-    const Model = this.app.orm.User;
     const appValidationUrl = request.payload.app_validation_url;
     const userId = request.params.id;
 
@@ -1083,7 +1068,7 @@ module.exports = class UserController extends Controller{
     // Make sure email added is unique
     const that = this;
     let user = {};
-    Model
+    User
       .findOne({'emails.email': request.payload.email})
       .then(erecord => {
         if (erecord) {
@@ -1130,7 +1115,6 @@ module.exports = class UserController extends Controller{
   }
 
   dropEmail (request, reply) {
-    const Model = this.app.orm.User;
     const userId = request.params.id;
     const that = this;
 
@@ -1139,7 +1123,7 @@ module.exports = class UserController extends Controller{
       return reply(Boom.badRequest());
     }
 
-    Model
+    User
       .findOne({_id: userId})
       .then(record => {
         if (!record) {
@@ -1169,13 +1153,12 @@ module.exports = class UserController extends Controller{
   }
 
   addPhone (request, reply) {
-    const Model = this.app.orm.User;
     const userId = request.params.id;
     const that = this;
 
     this.log.debug('[UserController] adding phone number', { request: request });
 
-    Model
+    User
       .findOne({_id: userId})
       .then(record => {
         if (!record) {
@@ -1198,14 +1181,13 @@ module.exports = class UserController extends Controller{
   }
 
   dropPhone (request, reply) {
-    const Model = this.app.orm.User;
     const userId = request.params.id;
     const phoneId = request.params.pid;
     const that = this;
 
     this.log.debug('[UserController] dropping phone number', { request: request });
 
-    Model
+    User
       .findOne({_id: userId})
       .then(record => {
         if (!record) {
@@ -1241,7 +1223,6 @@ module.exports = class UserController extends Controller{
   }
 
   setPrimaryPhone (request, reply) {
-    const Model = this.app.orm.user;
     const phone = request.payload.phone;
     const that = this;
 
@@ -1250,7 +1231,7 @@ module.exports = class UserController extends Controller{
     if (!request.payload.phone) {
       return reply(Boom.badRequest());
     }
-    Model
+    User
       .findOne({ _id: request.params.id})
       .then(record => {
         if (!record) {
@@ -1286,7 +1267,6 @@ module.exports = class UserController extends Controller{
   }
 
   setPrimaryOrganization (request, reply) {
-    const User = this.app.orm.user;
     if (!request.payload) {
       return reply(Boom.badRequest('Missing listUser id'));
     }
@@ -1345,12 +1325,11 @@ module.exports = class UserController extends Controller{
   }
 
   notify (request, reply) {
-    const Model = this.app.orm.User;
 
     this.log.debug('[UserController] Notifying user', { request: request });
 
     const that = this;
-    Model
+    User
       .findOne({ _id: request.params.id})
       .then(record => {
         if (!record) {
@@ -1372,7 +1351,6 @@ module.exports = class UserController extends Controller{
   }
 
   addConnection (request, reply) {
-    const User = this.app.orm.User;
 
     this.log.debug('[UserController] Adding connection', { request: request });
 
@@ -1415,7 +1393,6 @@ module.exports = class UserController extends Controller{
   }
 
   updateConnection (request, reply) {
-    const User = this.app.orm.User;
 
     this.log.debug('[UserController] Updating connection', { request: request });
 
@@ -1468,7 +1445,6 @@ module.exports = class UserController extends Controller{
   }
 
   deleteConnection (request, reply) {
-    const User = this.app.orm.User;
 
     this.log.debug('[UserController] Deleting connection', { request: request });
 

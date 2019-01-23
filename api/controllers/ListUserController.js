@@ -5,6 +5,7 @@ const Boom = require('boom');
 const _ = require('lodash');
 const async = require('async');
 const List = require('../models/List');
+const User = require('../models/User');
 
 /**
  * @module ListUserController
@@ -117,7 +118,6 @@ module.exports = class ListUserController extends Controller {
     const userId = request.params.id;
     const childAttribute = request.params.childAttribute;
     const payload = request.payload;
-    const User = this.app.orm.User;
     const childAttributes = User.listAttributes();
 
     this.log.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload, { request: request});
@@ -164,7 +164,6 @@ module.exports = class ListUserController extends Controller {
   }
 
   update (request, reply) {
-    const User = this.app.orm.User;
     const NotificationService = this.app.services.NotificationService;
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
@@ -241,7 +240,6 @@ module.exports = class ListUserController extends Controller {
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
     const payload = request.payload;
-    const User = this.app.orm.user;
     const GSSSyncService = this.app.services.GSSSyncService;
     const OutlookService = this.app.services.OutlookService;
     const childAttributes = User.listAttributes();
@@ -324,7 +322,6 @@ module.exports = class ListUserController extends Controller {
   updateListUsers(request, reply) {
     reply();
     const app = this;
-    const User = this.app.orm.User;
     const childAttributes = User.listAttributes();
     const stream = User
       .find({})

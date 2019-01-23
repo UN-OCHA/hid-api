@@ -7,6 +7,7 @@ const authenticator = require('authenticator');
 const Hawk = require('hawk');
 const JwtToken = require('../models/JwtToken');
 const OauthToken = require('../models/OauthToken');
+const User = require('../models/User');
 
 /**
  * @module AuthPolicy
@@ -16,7 +17,6 @@ module.exports = class AuthPolicy extends Policy {
 
   isAuthenticated (request, reply) {
     acceptLanguage.languages(['en', 'fr', 'es']);
-    const User = this.app.orm.User;
     const that = this;
     // If we are creating a user and we are not authenticated, allow it
     if (request.path === '/api/v2/user' &&

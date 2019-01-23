@@ -7,6 +7,7 @@ const Mailchimp = require('mailchimp-api-v3');
 const {google} = require('googleapis');
 const ServiceCredentials = require('../models/ServiceCredentials');
 const Service = require('../models/Service');
+const User = require('../models/User');
 
 /**
  * @module ServiceController
@@ -126,7 +127,6 @@ module.exports = class ServiceController extends Controller{
   }
 
   destroy (request, reply) {
-    const User = this.app.orm.User;
 
     this.log.debug('[ServiceController] (destroy) model = service, query =', request.query, {request: request});
     const that = this;
@@ -216,7 +216,6 @@ module.exports = class ServiceController extends Controller{
 
   // Subscribe a user to a service
   subscribe (request, reply) {
-    const User = this.app.orm.User;
     const NotificationService = this.app.services.NotificationService;
 
     const that = this;
@@ -358,7 +357,6 @@ module.exports = class ServiceController extends Controller{
   }
 
   unsubscribe (request, reply) {
-    const User = this.app.orm.User;
     const NotificationService = this.app.services.NotificationService;
 
     this.log.debug(

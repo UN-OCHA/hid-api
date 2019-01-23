@@ -14,6 +14,7 @@ const listAttributes = [
 const hidAccount = '5b2128e754a0d6046d6c69f2';
 const OauthToken = require('../models/OauthToken');
 const List = require('../models/List');
+const User = require('../models/User');
 
 /**
  * @module CronController
@@ -22,7 +23,6 @@ const List = require('../models/List');
 module.exports = class CronController extends Controller {
 
   deleteExpiredUsers (request, reply) {
-    const User = this.app.orm.user;
     const that = this;
     const now = new Date();
     const start = new Date(2016, 0, 1, 0, 0, 0);
@@ -51,7 +51,6 @@ module.exports = class CronController extends Controller {
   }
 
   sendReminderVerifyEmails (request, reply) {
-    const User = this.app.orm.User;
     const EmailService = this.app.services.EmailService;
     const app = this.app;
     this.app.log.info('sending reminder emails to verify addresses');
@@ -94,7 +93,6 @@ module.exports = class CronController extends Controller {
     app.log.info('Sending reminder update emails to contacts');
     const d = new Date(),
       sixMonthsAgo = d.valueOf() - 183 * 24 * 3600 * 1000,
-      User = app.orm.User,
       EmailService = app.services.EmailService;
 
     const stream = User.find({
@@ -136,8 +134,7 @@ module.exports = class CronController extends Controller {
   sendReminderCheckoutEmails (request, reply) {
     const app = this.app;
     app.log.info('Sending reminder checkout emails to contacts');
-    const User = app.orm.User,
-      NotificationService = app.services.NotificationService;
+    const NotificationService = app.services.NotificationService;
     let populate = '';
     const criteria = {};
     criteria.email_verified = true;
@@ -193,8 +190,7 @@ module.exports = class CronController extends Controller {
   doAutomatedCheckout (request, reply) {
     const app = this.app;
     app.log.info('Running automated checkouts');
-    const User = app.orm.User,
-      NotificationService = app.services.NotificationService;
+    const NotificationService = app.services.NotificationService;
 
     let populate = '';
     const criteria = {};
@@ -251,8 +247,7 @@ module.exports = class CronController extends Controller {
   sendReminderCheckinEmails (request, reply) {
     const app = this.app;
     app.log.info('Sending reminder checkin emails to contacts');
-    const User = app.orm.User,
-      NotificationService = app.services.NotificationService;
+    const NotificationService = app.services.NotificationService;
 
     reply().code(204);
 
@@ -295,7 +290,6 @@ module.exports = class CronController extends Controller {
   }
 
   forcedResetPasswordAlert (request, reply) {
-    const User = this.app.orm.user;
     const EmailService = this.app.services.EmailService;
     const current = Date.now();
     const fiveMonths = new Date(current - 5 * 30 * 24 * 3600 * 1000);
@@ -319,7 +313,6 @@ module.exports = class CronController extends Controller {
   }
 
   forcedResetPasswordAlert7 (request, reply) {
-    const User = this.app.orm.user;
     const EmailService = this.app.services.EmailService;
     const current = Date.now();
     const fiveMonthsAnd23Days = new Date(current - 173 * 24 * 3600 * 1000);
@@ -340,7 +333,6 @@ module.exports = class CronController extends Controller {
   }
 
   forceResetPassword (request, reply) {
-    const User = this.app.orm.user;
     const EmailService = this.app.services.EmailService;
     const current = Date.now();
     const sixMonths = new Date(current - 6 * 30 * 24 * 3600 * 1000);
@@ -362,7 +354,6 @@ module.exports = class CronController extends Controller {
 
   sendSpecialPasswordResetEmail (request, reply) {
     reply().code(204);
-    const User = this.app.orm.user;
     const EmailService = this.app.services.EmailService;
     const stream = User.find({deleted: false}).cursor();
     stream.on('data', function (user) {
@@ -376,7 +367,6 @@ module.exports = class CronController extends Controller {
 
   setListCounts (request, reply) {
     reply().code(204);
-    const User = this.app.orm.User;
     const stream = List.find({deleted: false}).cursor();
     stream.on('data', function (list) {
       const sthat = this;
@@ -399,7 +389,6 @@ module.exports = class CronController extends Controller {
   }
 
   /*adjustEmailVerified (request, reply) {
-    const User = this.app.orm.User;
     const app = this.app;
     const stream = User.find({'email_verified': false}).cursor();
 
@@ -424,7 +413,6 @@ module.exports = class CronController extends Controller {
   }
 
   adjustEmailDuplicates (request, reply) {
-    const User = this.app.orm.User;
     const app = this.app;
     const stream = User.find({}).cursor();
 
@@ -459,7 +447,6 @@ module.exports = class CronController extends Controller {
   }*/
 
   verifyAutomatically (request, reply) {
-    const User = this.app.orm.User;
     const ListUserController = this.app.controllers.ListUserController;
     this.app.log.info('automatically verify users');
     const that = this;
@@ -515,7 +502,6 @@ module.exports = class CronController extends Controller {
   }
 
   verificationExpiryEmail (request, reply) {
-    const User = this.app.orm.user;
     const EmailService = this.app.services.EmailService;
     const current = Date.now();
     const oneYear = new Date(current - 358 * 24 * 3600 * 1000);
@@ -539,7 +525,6 @@ module.exports = class CronController extends Controller {
   }
 
   unverifyAfterOneYear (request, reply) {
-    const User = this.app.orm.user;
     const current = Date.now();
     const oneYear = new Date(current - 365 * 24 * 3600 * 1000);
     const stream = User.find({verified: true, verifiedOn: { $lte: oneYear }, verificationExpiryEmail: true}).cursor();
@@ -562,7 +547,6 @@ module.exports = class CronController extends Controller {
   }
 
   verifyEmails (request, reply) {
-    const User = this.app.orm.User;
     const stream = User.find({email_verified: false}).cursor();
     stream.on('data', function (user) {
       const sthat = this;
@@ -595,7 +579,6 @@ module.exports = class CronController extends Controller {
   }
 
   setAcronymsOrNames (request, reply) {
-    const User = this.app.orm.User;
     reply().code(204);
     const stream = User.find({}).cursor();
     stream.on('data', function (user) {

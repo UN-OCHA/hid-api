@@ -6,6 +6,7 @@ const fs = require('fs');
 const microsoftGraph = require('@microsoft/microsoft-graph-client');
 const OutlookSync = require('../models/OutlookSync');
 const List = require('../models/List');
+const User = require('../models/User');
 
 /**
  * @module OutlookController
@@ -51,7 +52,6 @@ module.exports = class OutlookController extends Controller{
     const credentials = request.params.currentUser.outlookCredentials;
     if (request.payload && request.payload.list) {
       const that = this;
-      const User = this.app.orm.User;
       let accessToken = '', client = {}, gList = {}, gOsync = {};
       OutlookSync
         .findOne({user: request.params.currentUser._id, list: request.payload.list})

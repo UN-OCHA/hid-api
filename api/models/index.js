@@ -1,5 +1,5 @@
 'use strict';
-exports.User = require('./User');
+//exports.User = require('./User');
 //exports.List = require('./List');
 //exports.Client = require('./Client');
 //exports.OauthToken = require('./OauthToken');
