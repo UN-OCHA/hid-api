@@ -1,6 +1,5 @@
 'use strict';
 
-const Service = require('trails/service');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const rsa2jwk = require('rsa-pem-to-jwk');
@@ -9,10 +8,10 @@ const rsa2jwk = require('rsa-pem-to-jwk');
  * @module JwtService
  * @description Json Web Tokens Service
  */
-module.exports = class JwtService extends Service {
+module.exports = {
 
   // Generates a token from supplied payload
-  issue (payload) {
+  issue: function (payload) {
     const cert = fs.readFileSync('keys/hid.rsa');
     const options = { algorithm: 'RS256', header: { kid: 'hid-dev'} };
     return jwt.sign(
@@ -20,10 +19,10 @@ module.exports = class JwtService extends Service {
       cert,
       options
     );
-  }
+  },
 
   // Verifies token on a request
-  verify (token, callback) {
+  verify: function (token, callback) {
     const cert = fs.readFileSync('keys/hid.rsa.pub');
     return jwt.verify(
       token, // The token to be verified
@@ -31,14 +30,14 @@ module.exports = class JwtService extends Service {
       {}, // No Option, for more see https://github.com/auth0/node-jsonwebtoken#jwtverifytoken-secretorpublickey-options-callback
       callback //Pass errors or decoded token to callback
     );
-  }
+  },
 
-  public2jwk () {
+  public2jwk: function () {
     const cert = fs.readFileSync('keys/hid.rsa.pub');
     return rsa2jwk(cert, { use: 'sig', kid: 'hid-dev'}, 'public');
-  }
+  },
 
-  generateIdToken (client, user, nonce) {
+  generateIdToken: function (client, user, nonce) {
     const now = Math.floor(Date.now() / 1000);
     let sub = user._id;
     if (client.id === 'iasc-prod' || client.id === 'iasc-dev') {

@@ -73,6 +73,7 @@ module.exports = {
     const oauth2orizeExt = require('oauth2orize-openid');
     const Client = require('../api/models/Client');
     const OauthToken = require('../api/models/OauthToken');
+    const JwtService = require('../api/services/JwtService');
     const OauthExpiresIn = 7 * 24 * 3600;
 
     const that = this;
@@ -81,7 +82,7 @@ module.exports = {
     oauth.grant(oauth2orizeExt.extensions());
     // id_token grant type.
     oauth.grant(oauth2orizeExt.grant.idToken(function(client, user, done){
-      const out = that.services.JwtService.generateIdToken(client, user);
+      const out = JwtService.generateIdToken(client, user);
       done(null, out);
     }));
 
@@ -101,7 +102,7 @@ module.exports = {
         });
       },
       function(client, user, req, done){
-        const out = that.services.JwtService.generateIdToken(client, user);
+        const out = JwtService.generateIdToken(client, user);
         done (null, out);
       }
     ));
@@ -178,7 +179,7 @@ module.exports = {
               },
               idToken: function (callback) {
                 const out = {};
-                out.token = that.services.JwtService.generateIdToken(client, ocode.user, ocode.nonce);
+                out.token = JwtService.generateIdToken(client, ocode.user, ocode.nonce);
                 callback(null, out);
               },
               // Delete code token

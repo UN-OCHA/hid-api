@@ -7,6 +7,7 @@ const Flood = require('../models/Flood');
 const JwtToken = require('../models/JwtToken');
 const OauthToken = require('../models/OauthToken');
 const User = require('../models/User');
+const JwtService = require('../services/JwtService');
 
 /**
  * @module AuthController
@@ -94,7 +95,7 @@ module.exports = class AuthController extends Controller{
     if (request.payload && request.payload.exp) {
       payload.exp = request.payload.exp;
     }
-    const token = that.app.services.JwtService.issue(payload);
+    const token = JwtService.issue(payload);
     result.sanitize(result);
     if (!payload.exp) {
       // Creating an API key, store the token in the database
@@ -495,7 +496,7 @@ module.exports = class AuthController extends Controller{
   }
 
   jwks (request, reply) {
-    const key = this.app.services.JwtService.public2jwk();
+    const key = JwtService.public2jwk();
     key.alg = 'RS256';
     const out = {
       keys: [
@@ -526,7 +527,7 @@ module.exports = class AuthController extends Controller{
       return reply(Boom.badRequest('Missing token'));
     }
     // Check that blacklisted token belongs to current user
-    this.app.services.JwtService.verify(token, function (err, jtoken) {
+    JwtService.verify(token, function (err, jtoken) {
       if (err) {
         return that.app.services.ErrorService.handle(err, request, reply);
       }

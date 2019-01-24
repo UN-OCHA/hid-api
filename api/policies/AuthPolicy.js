@@ -8,6 +8,7 @@ const Hawk = require('hawk');
 const JwtToken = require('../models/JwtToken');
 const OauthToken = require('../models/OauthToken');
 const User = require('../models/User');
+const JwtService = require('../services/JwtService');
 
 /**
  * @module AuthPolicy
@@ -86,8 +87,7 @@ module.exports = class AuthPolicy extends Policy {
     }
 
     if (token !== '') {
-
-      this.app.services.JwtService.verify(token, function (err, jtoken) {
+      JwtService.verify(token, function (err, jtoken) {
         if (err) {
           // Verify it's not an oauth access token
           OauthToken
