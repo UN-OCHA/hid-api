@@ -5,6 +5,7 @@ const Boom = require('boom');
 const async = require('async');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
+const EmailService = require('./EmailService');
 
 /**
  * @module NotificationService
@@ -22,7 +23,7 @@ module.exports = class NotificationService extends Service {
     Notification
       .create(notification)
       .then(not => {
-        return that.app.services.EmailService.sendNotification(notification);
+        return EmailService.sendNotification(notification);
       })
       .then(info => {
         return callback();

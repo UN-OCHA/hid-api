@@ -10,7 +10,10 @@ const acceptLanguage = require('accept-language');
 const sharp = require('sharp');
 const validator = require('validator');
 const hidAccount = '5b2128e754a0d6046d6c69f2';
+const List = require('../models/List');
+const User = require('../models/User');
 const OutlookService = require('../services/OutlookService');
+const EmailService = require('../services/EmailService');
 
 /**
  * @module UserController
@@ -19,8 +22,8 @@ const OutlookService = require('../services/OutlookService');
 module.exports = class UserController extends Controller{
 
   _removeForbiddenAttributes (request) {
-    const childAttributes = this.app.orm.User.listAttributes();
-    this.app.services.HelperService.removeForbiddenAttributes('User', request, childAttributes);
+    const childAttributes = User.listAttributes();
+    this.app.services.HelperService.removeForbiddenAttributes(User, request, childAttributes);
   }
 
   _errorHandler (err, request, reply) {
@@ -28,8 +31,6 @@ module.exports = class UserController extends Controller{
   }
 
   _createHelper(request, reply) {
-    const Model = this.app.orm.User;
-    const UserModel = this.app.models.User;
 
     this.log.debug('Preparing request for user creation', { request: request });
 
@@ -39,14 +40,14 @@ module.exports = class UserController extends Controller{
     }
 
     if (request.payload.password && request.payload.confirm_password) {
-      if (!UserModel.isStrongPassword(request.payload.password)) {
+      if (!User.isStrongPassword(request.payload.password)) {
         return reply(Boom.badRequest('The password is not strong enough'));
       }
-      request.payload.password = UserModel.hashPassword(request.payload.password);
+      request.payload.password = User.hashPassword(request.payload.password);
     }
     else {
       // Set a random password
-      request.payload.password = UserModel.hashPassword(UserModel.generateRandomPassword());
+      request.payload.password = User.hashPassword(User.generateRandomPassword());
     }
 
     const appVerifyUrl = request.payload.app_verify_url;
@@ -89,7 +90,7 @@ module.exports = class UserController extends Controller{
 
     const that = this;
     let guser = {};
-    Model
+    User
       .create(request.payload)
       .then((user) => {
         if (!user) {
@@ -100,15 +101,15 @@ module.exports = class UserController extends Controller{
 
         if (user.email && notify === true) {
           if (!request.params.currentUser) {
-            return that.app.services.EmailService.sendRegister(user, appVerifyUrl);
+            return EmailService.sendRegister(user, appVerifyUrl);
           }
           else {
             // An admin is creating an orphan user or Kiosk registration
             if (registrationType === 'kiosk') {
-              return that.app.services.EmailService.sendRegisterKiosk(user, appVerifyUrl);
+              return EmailService.sendRegisterKiosk(user, appVerifyUrl);
             }
             else {
-              return that.app.services.EmailService.sendRegisterOrphan(user, request.params.currentUser, appVerifyUrl);
+              return EmailService.sendRegisterOrphan(user, request.params.currentUser, appVerifyUrl);
             }
           }
         }
@@ -123,7 +124,6 @@ module.exports = class UserController extends Controller{
 
   create (request, reply) {
     const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
-    const Model = this.app.orm.user;
 
     this.log.debug('[UserController] (create) payload =', request.payload, 'options =', options, { request: request });
 
@@ -139,7 +139,7 @@ module.exports = class UserController extends Controller{
 
     const that = this;
     if (request.payload.email) {
-      Model
+      User
         .findOne({'emails.email': request.payload.email})
         .then((record) => {
           if (!record) {
@@ -345,8 +345,6 @@ module.exports = class UserController extends Controller{
   }
 
   _findHelper(request, reply, criteria, options, lists) {
-    const User = this.app.orm.User;
-    const UserModel = this.app.models.User;
     const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
     let pdfFormat = '';
     if (criteria.format) {
@@ -356,7 +354,7 @@ module.exports = class UserController extends Controller{
 
     const that = this;
     this.log.debug('[UserController] (find) criteria = ', criteria, ' options = ', options, { request: request });
-    const query = this.app.services.HelperService.find('User', criteria, options);
+    const query = this.app.services.HelperService.find(User, criteria, options);
     // HID-1561 - Set export limit to 2000
     if (!options.limit && request.params.extension) {
       query.limit(100000);
@@ -387,9 +385,9 @@ module.exports = class UserController extends Controller{
         else {
           // Sanitize users and translate list names from a plain object
           for (let i = 0, len = results.results.length; i < len; i++) {
-            UserModel.sanitizeExportedUser(results.results[i], request.params.currentUser);
+            User.sanitizeExportedUser(results.results[i], request.params.currentUser);
             if (results.results[i].organization) {
-              UserModel.translateCheckin(results.results[i].organization, reqLanguage);
+              User.translateCheckin(results.results[i].organization, reqLanguage);
             }
           }
           if (request.params.extension === 'csv') {
@@ -431,7 +429,6 @@ module.exports = class UserController extends Controller{
 
   find (request, reply) {
     const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
-    const User = this.app.orm.User;
     const that = this;
 
     if (request.params.id) {
@@ -463,7 +460,6 @@ module.exports = class UserController extends Controller{
     else {
       const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
       const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
-      const List = this.app.orm.List;
       const childAttributes = User.listAttributes();
 
       // Hide unconfirmed users which are not orphans
@@ -546,9 +542,7 @@ module.exports = class UserController extends Controller{
   }
 
   _updateQuery (request, options) {
-    const User = this.app.orm.user,
-      NotificationService = this.app.services.NotificationService,
-      EmailService = this.app.services.EmailService,
+    const NotificationService = this.app.services.NotificationService,
       that = this;
     let nextAction = '';
     if (request.payload.updatedAt) {
@@ -597,8 +591,6 @@ module.exports = class UserController extends Controller{
 
   update (request, reply) {
     const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const Model = this.app.orm.user;
-    const UserModel = this.app.models.User;
 
     this.log.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
       ', values = ', request.payload, { request: request });
@@ -615,7 +607,7 @@ module.exports = class UserController extends Controller{
 
     const that = this;
     // Check old password
-    Model
+    User
       .findOne({_id: request.params.id})
       .then((user) => {
         if (!user) {
@@ -629,11 +621,11 @@ module.exports = class UserController extends Controller{
         if (request.payload.old_password && request.payload.new_password) {
           that.log.warn('Updating user password', { request: request, security: true});
           if (user.validPassword(request.payload.old_password)) {
-            if (!UserModel.isStrongPassword(request.payload.new_password)) {
+            if (!User.isStrongPassword(request.payload.new_password)) {
               that.log.warn('Could not update user password. New password is not strong enough', { request: request, security: true, fail: true});
               throw Boom.badRequest('Password is not strong enough');
             }
-            request.payload.password = UserModel.hashPassword(request.payload.new_password);
+            request.payload.password = User.hashPassword(request.payload.new_password);
             request.payload.lastPasswordReset = new Date();
             request.payload.passwordResetAlert30days = false;
             request.payload.passwordResetAlert7days = false;
@@ -656,7 +648,6 @@ module.exports = class UserController extends Controller{
   }
 
   destroy (request, reply) {
-    const User = this.app.orm.User;
 
     if (!request.params.currentUser.is_admin && request.params.currentUser._id.toString() !== request.params.id) {
       return reply(Boom.forbidden('You are not allowed to delete this account'));
@@ -680,7 +671,6 @@ module.exports = class UserController extends Controller{
   }
 
   setPrimaryEmail (request, reply) {
-    const Model = this.app.orm.user;
     const email = request.payload.email;
     const that = this;
 
@@ -690,7 +680,7 @@ module.exports = class UserController extends Controller{
       return reply(Boom.badRequest());
     }
 
-    Model
+    User
       .findOne({ _id: request.params.id})
       .then(record => {
         if (!record) {
@@ -725,7 +715,6 @@ module.exports = class UserController extends Controller{
   }
 
   validateEmail (request, reply) {
-    const Model = this.app.orm.user;
     let email = '', query = {};
 
     this.log.debug('[UserController] Verifying email ', { request: request });
@@ -739,7 +728,7 @@ module.exports = class UserController extends Controller{
     let grecord = {};
 
     if (request.payload.hash) {
-      query = Model.findOne({'emails.email': request.payload.email})
+      query = User.findOne({'emails.email': request.payload.email})
         .then(record => {
           if (!record) {
             throw Boom.notFound();
@@ -802,7 +791,7 @@ module.exports = class UserController extends Controller{
         })
         .then(record => {
           if (grecord.email === request.payload.email) {
-            return that.app.services.EmailService.sendPostRegister(grecord);
+            return EmailService.sendPostRegister(grecord);
           }
         })
         .then(info => {
@@ -811,7 +800,7 @@ module.exports = class UserController extends Controller{
     }
     else {
       email = request.params.email;
-      query = Model.findOne({'emails.email': email})
+      query = User.findOne({'emails.email': email})
         .then(record => {
           if (!record) {
             throw Boom.notFound();
@@ -822,7 +811,7 @@ module.exports = class UserController extends Controller{
             that.log.warn('Invalid app_validation_url', { security: true, fail: true, request: request});
             throw Boom.badRequest('Invalid app_validation_url');
           }
-          return that.app.services.EmailService.sendValidationEmail(record, email, appValidationUrl);
+          return EmailService.sendValidationEmail(record, email, appValidationUrl);
         })
         .then(record => {
           return reply('Validation email sent successfully').code(202);
@@ -838,7 +827,6 @@ module.exports = class UserController extends Controller{
   // Send a password reset email
   // TODO: make sure we control flood
   sendResetPassword (request, reply) {
-    const User = this.app.orm.User;
     const appResetUrl = request.payload.app_reset_url;
     const that = this;
 
@@ -852,7 +840,7 @@ module.exports = class UserController extends Controller{
         if (!record) {
           return reply().code(202);
         }
-        return that.app.services.EmailService.sendResetPassword(record, appResetUrl);
+        return EmailService.sendResetPassword(record, appResetUrl);
       })
       .then(info => {
         return reply().code(202);
@@ -863,8 +851,6 @@ module.exports = class UserController extends Controller{
   }
 
   updatePassword (request, reply) {
-    const User = this.app.orm.user;
-    const UserModel = this.app.models.User;
 
     this.log.debug('[UserController] Updating user password', { request: request });
 
@@ -872,7 +858,7 @@ module.exports = class UserController extends Controller{
       return reply(Boom.badRequest('Request is missing parameters (old or new password)'));
     }
 
-    if (!UserModel.isStrongPassword(request.payload.new_password)) {
+    if (!User.isStrongPassword(request.payload.new_password)) {
       this.log.warn('New password is not strong enough', { request: request, security: true, fail: true});
       return reply(Boom.badRequest('New password is not strong enough'));
     }
@@ -887,7 +873,7 @@ module.exports = class UserController extends Controller{
         }
         that.log.warn('Updating user password', { request: request, security: true});
         if (user.validPassword(request.payload.old_password)) {
-          user.password = UserModel.hashPassword(request.payload.new_password);
+          user.password = User.hashPassword(request.payload.new_password);
           user.lastModified = new Date();
           that.log.warn('Successfully updated user password', { request: request, security: true});
           return user.save();
@@ -906,8 +892,6 @@ module.exports = class UserController extends Controller{
   }
 
   resetPassword (request, reply, checkTotp = true) {
-    const Model = this.app.orm.User;
-    const UserModel = this.app.models.User;
     const that = this;
     const authPolicy = this.app.policies.AuthPolicy;
 
@@ -915,14 +899,14 @@ module.exports = class UserController extends Controller{
       return reply(Boom.badRequest('Wrong arguments'));
     }
 
-    if (!UserModel.isStrongPassword(request.payload.password)) {
+    if (!User.isStrongPassword(request.payload.password)) {
       this.log.warn('Could not reset password. New password is not strong enough.', { security: true, fail: true, request: request});
       return reply(Boom.badRequest('New password is not strong enough'));
     }
 
     this.log.warn('Resetting password', { security: true, request: request});
     let grecord = {};
-    Model
+    User
       .findOne({_id: request.payload.id})
       .then(record => {
         if (!record) {
@@ -943,7 +927,7 @@ module.exports = class UserController extends Controller{
       })
       .then(record => {
         if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
-          const pwd = UserModel.hashPassword(request.payload.password);
+          const pwd = User.hashPassword(request.payload.password);
           if (pwd === record.password) {
             throw Boom.badRequest('The new password can not be the same as the old one');
           }
@@ -994,7 +978,6 @@ module.exports = class UserController extends Controller{
   }
 
   claimEmail (request, reply) {
-    const Model = this.app.orm.User;
     const appResetUrl = request.payload.app_reset_url;
     const userId = request.params.id;
 
@@ -1004,13 +987,13 @@ module.exports = class UserController extends Controller{
     }
 
     const that = this;
-    Model
+    User
       .findOne({_id: userId})
       .then(record => {
         if (!record) {
           return reply(Boom.notFound());
         }
-        return that.app.services.EmailService.sendClaim(record, appResetUrl);
+        return EmailService.sendClaim(record, appResetUrl);
       })
       .then(info => {
         return reply('Claim email sent successfully').code(202);
@@ -1021,7 +1004,6 @@ module.exports = class UserController extends Controller{
   }
 
   updatePicture (request, reply) {
-    const Model = this.app.orm.User;
     const userId = request.params.id;
     const that = this;
 
@@ -1031,7 +1013,7 @@ module.exports = class UserController extends Controller{
     if (data.file) {
       const image = sharp(data.file);
       let guser = {}, gmetadata = {};
-      Model
+      User
         .findOne({_id: userId})
         .then(record => {
           if (!record) {
@@ -1070,51 +1052,7 @@ module.exports = class UserController extends Controller{
     }
   }
 
-  deletePicture (request, reply) {
-    const User = this.app.orm.User;
-    const userId = request.params.id;
-    const that = this;
-
-    this.log.debug('[UserController] Deleting picture ', { request: request });
-
-    const data = request.payload;
-    User
-      .findOne({_id: userId})
-      .then(record => {
-        if (!record) {
-          throw Boom.notFound();
-        }
-        record.picture = '';
-        return record.save();
-      })
-      .then(function(metadata) {
-        if (metadata.format !== 'jpeg' && metadata.format !== 'png') {
-          return reply(Boom.badRequest('Invalid image format. Only jpeg and png are accepted'));
-        }
-        gmetadata = metadata;
-        let path = __dirname + '/../../assets/pictures/' + userId + '.';
-        let ext = '';
-        ext = metadata.format;
-        path = path + ext;
-        return image
-          .resize(200, 200)
-          .toFile(path);
-      })
-      .then(function (info) {
-        guser.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + gmetadata.format;
-        guser.lastModified = new Date();
-        return guser.save();
-      })
-      .then(record => {
-        return reply(record);
-      })
-      .catch(err => {
-        that._errorHandler(err, request, reply);
-      });
-  }
-
   addEmail (request, reply) {
-    const Model = this.app.orm.User;
     const appValidationUrl = request.payload.app_validation_url;
     const userId = request.params.id;
 
@@ -1131,7 +1069,7 @@ module.exports = class UserController extends Controller{
     // Make sure email added is unique
     const that = this;
     let user = {};
-    Model
+    User
       .findOne({'emails.email': request.payload.email})
       .then(erecord => {
         if (erecord) {
@@ -1149,11 +1087,11 @@ module.exports = class UserController extends Controller{
         }
         user = record;
         // Send confirmation email
-        return that.app.services.EmailService.sendValidationEmail(record, email, appValidationUrl);
+        return EmailService.sendValidationEmail(record, email, appValidationUrl);
       })
       .then(info => {
         for (let i = 0; i < user.emails.length; i++) {
-          that.app.services.EmailService.sendEmailAlert(user, user.emails[i].email, request.payload.email);
+          EmailService.sendEmailAlert(user, user.emails[i].email, request.payload.email);
         }
         if (user.emails.length === 0 && user.is_ghost) {
           // Turn ghost into orphan and set main email address
@@ -1178,16 +1116,15 @@ module.exports = class UserController extends Controller{
   }
 
   dropEmail (request, reply) {
-    const Model = this.app.orm.User;
     const userId = request.params.id;
     const that = this;
 
-    this.log.debug('[UserController] dropping email', { request: request });
+    this.log.debug('[UserController] dropping email', { request: request });
     if (!request.params.email) {
       return reply(Boom.badRequest());
     }
 
-    Model
+    User
       .findOne({_id: userId})
       .then(record => {
         if (!record) {
@@ -1217,13 +1154,12 @@ module.exports = class UserController extends Controller{
   }
 
   addPhone (request, reply) {
-    const Model = this.app.orm.User;
     const userId = request.params.id;
     const that = this;
 
     this.log.debug('[UserController] adding phone number', { request: request });
 
-    Model
+    User
       .findOne({_id: userId})
       .then(record => {
         if (!record) {
@@ -1246,14 +1182,13 @@ module.exports = class UserController extends Controller{
   }
 
   dropPhone (request, reply) {
-    const Model = this.app.orm.User;
     const userId = request.params.id;
     const phoneId = request.params.pid;
     const that = this;
 
     this.log.debug('[UserController] dropping phone number', { request: request });
 
-    Model
+    User
       .findOne({_id: userId})
       .then(record => {
         if (!record) {
@@ -1289,7 +1224,6 @@ module.exports = class UserController extends Controller{
   }
 
   setPrimaryPhone (request, reply) {
-    const Model = this.app.orm.user;
     const phone = request.payload.phone;
     const that = this;
 
@@ -1298,7 +1232,7 @@ module.exports = class UserController extends Controller{
     if (!request.payload.phone) {
       return reply(Boom.badRequest());
     }
-    Model
+    User
       .findOne({ _id: request.params.id})
       .then(record => {
         if (!record) {
@@ -1334,7 +1268,6 @@ module.exports = class UserController extends Controller{
   }
 
   setPrimaryOrganization (request, reply) {
-    const User = this.app.orm.user;
     if (!request.payload) {
       return reply(Boom.badRequest('Missing listUser id'));
     }
@@ -1393,12 +1326,11 @@ module.exports = class UserController extends Controller{
   }
 
   notify (request, reply) {
-    const Model = this.app.orm.User;
 
     this.log.debug('[UserController] Notifying user', { request: request });
 
     const that = this;
-    Model
+    User
       .findOne({ _id: request.params.id})
       .then(record => {
         if (!record) {
@@ -1420,7 +1352,6 @@ module.exports = class UserController extends Controller{
   }
 
   addConnection (request, reply) {
-    const User = this.app.orm.User;
 
     this.log.debug('[UserController] Adding connection', { request: request });
 
@@ -1463,7 +1394,6 @@ module.exports = class UserController extends Controller{
   }
 
   updateConnection (request, reply) {
-    const User = this.app.orm.User;
 
     this.log.debug('[UserController] Updating connection', { request: request });
 
@@ -1516,7 +1446,6 @@ module.exports = class UserController extends Controller{
   }
 
   deleteConnection (request, reply) {
-    const User = this.app.orm.User;
 
     this.log.debug('[UserController] Deleting connection', { request: request });
 

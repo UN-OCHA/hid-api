@@ -15,6 +15,7 @@ const hidAccount = '5b2128e754a0d6046d6c69f2';
 const OauthToken = require('../models/OauthToken');
 const List = require('../models/List');
 const User = require('../models/User');
+const EmailService = require('../services/EmailService');
 
 /**
  * @module CronController
@@ -51,7 +52,6 @@ module.exports = class CronController extends Controller {
   }
 
   sendReminderVerifyEmails (request, reply) {
-    const EmailService = this.app.services.EmailService;
     const app = this.app;
     this.app.log.info('sending reminder emails to verify addresses');
     const stream = User.find({'email_verified': false}).cursor();
@@ -92,8 +92,7 @@ module.exports = class CronController extends Controller {
     const app = this.app;
     app.log.info('Sending reminder update emails to contacts');
     const d = new Date(),
-      sixMonthsAgo = d.valueOf() - 183 * 24 * 3600 * 1000,
-      EmailService = app.services.EmailService;
+      sixMonthsAgo = d.valueOf() - 183 * 24 * 3600 * 1000;
 
     const stream = User.find({
       'lastModified': { $lt: sixMonthsAgo },
@@ -290,7 +289,6 @@ module.exports = class CronController extends Controller {
   }
 
   forcedResetPasswordAlert (request, reply) {
-    const EmailService = this.app.services.EmailService;
     const current = Date.now();
     const fiveMonths = new Date(current - 5 * 30 * 24 * 3600 * 1000);
     const stream = User.find({totp: false, passwordResetAlert30days: false, $or: [{lastPasswordReset: { $lte: fiveMonths }}, {lastPasswordReset: null}]}).cursor();
@@ -313,7 +311,6 @@ module.exports = class CronController extends Controller {
   }
 
   forcedResetPasswordAlert7 (request, reply) {
-    const EmailService = this.app.services.EmailService;
     const current = Date.now();
     const fiveMonthsAnd23Days = new Date(current - 173 * 24 * 3600 * 1000);
     const stream = User.find({totp: false, passwordResetAlert7days: false, $or: [{lastPasswordReset: { $lte: fiveMonthsAnd23Days }}, {lastPasswordReset: null}]}).cursor();
@@ -333,7 +330,6 @@ module.exports = class CronController extends Controller {
   }
 
   forceResetPassword (request, reply) {
-    const EmailService = this.app.services.EmailService;
     const current = Date.now();
     const sixMonths = new Date(current - 6 * 30 * 24 * 3600 * 1000);
     const stream = User.find({totp: false, passwordResetAlert: false, $or: [{lastPasswordReset: { $lte: sixMonths }}, {lastPasswordReset: null}]}).cursor();
@@ -354,7 +350,6 @@ module.exports = class CronController extends Controller {
 
   sendSpecialPasswordResetEmail (request, reply) {
     reply().code(204);
-    const EmailService = this.app.services.EmailService;
     const stream = User.find({deleted: false}).cursor();
     stream.on('data', function (user) {
       const sthat = this;
@@ -502,7 +497,6 @@ module.exports = class CronController extends Controller {
   }
 
   verificationExpiryEmail (request, reply) {
-    const EmailService = this.app.services.EmailService;
     const current = Date.now();
     const oneYear = new Date(current - 358 * 24 * 3600 * 1000);
     const stream = User.find({verified: true, verifiedOn: { $lte: oneYear }}).cursor();
