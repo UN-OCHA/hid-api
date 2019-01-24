@@ -6,6 +6,7 @@ const _ = require('lodash');
 const async = require('async');
 const List = require('../models/List');
 const User = require('../models/User');
+const OutlookService = require('../services/OutlookService');
 
 /**
  * @module ListUserController
@@ -15,7 +16,6 @@ module.exports = class ListUserController extends Controller {
 
   _checkinHelper (list, user, notify, childAttribute, currentUser) {
     const GSSSyncService = this.app.services.GSSSyncService;
-    const OutlookService = this.app.services.OutlookService;
     let payload = {
       list: list._id.toString()
     };
@@ -241,7 +241,6 @@ module.exports = class ListUserController extends Controller {
     const checkInId = request.params.checkInId;
     const payload = request.payload;
     const GSSSyncService = this.app.services.GSSSyncService;
-    const OutlookService = this.app.services.OutlookService;
     const childAttributes = User.listAttributes();
 
     this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,

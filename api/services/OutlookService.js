@@ -1,20 +1,19 @@
 'use strict';
 
-const Service = require('trails/service');
 const OutlookSync = require('../models/OutlookSync');
 
 /**
  * @module OutlookService
  * @description Outlook Service
  */
-module.exports = class OutlookService extends Service {
+module.exports = {
 
-  findByList(listId) {
+  findByList: function (listId) {
     return OutlookSync
       .find({list: listId});
-  }
+  },
 
-  addUserToContactFolders(listId, user) {
+  addUserToContactFolders: function (listId, user) {
     return this
       .findByList(listId)
       .then(osyncs => {
@@ -26,9 +25,9 @@ module.exports = class OutlookService extends Service {
           return Promise.all(actions);
         }
       });
-  }
+  },
 
-  deleteUserFromContactFolders(listId, userId) {
+  deleteUserFromContactFolders: function (listId, userId) {
     return this
       .findByList(listId)
       .then(osyncs => {
@@ -40,9 +39,9 @@ module.exports = class OutlookService extends Service {
           return Promise.all(actions);
         }
       });
-  }
+  },
 
-  synchronizeUser (user) {
+  synchronizeUser: function (user) {
     // Get all lists from user
     const listIds = user.getListIds();
 
