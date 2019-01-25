@@ -7,6 +7,7 @@ const microsoftGraph = require('@microsoft/microsoft-graph-client');
 const OutlookSync = require('../models/OutlookSync');
 const List = require('../models/List');
 const User = require('../models/User');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module OutlookController
@@ -25,7 +26,7 @@ module.exports = class OutlookController extends Controller{
         scope: 'openid offline_access User.Read Contacts.ReadWrite'
       }, function (error, result) {
         if (error) {
-          that.app.services.ErrorService.handle(error, request, reply);
+          ErrorService.handle(error, request, reply);
         }
         else {
           const token = oauth2.accessToken.create(result);
@@ -36,7 +37,7 @@ module.exports = class OutlookController extends Controller{
           }
           else {
             const noRefreshToken = Boom.badRequest('No refresh token');
-            that.app.services.ErrorService.handle(noRefreshToken, request, reply);
+            ErrorService.handle(noRefreshToken, request, reply);
           }
         }
       });
@@ -130,7 +131,7 @@ module.exports = class OutlookController extends Controller{
           reply(gOsync);
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
     else {

@@ -3,6 +3,7 @@
 const Policy = require('trails/policy');
 const Boom = require('boom');
 const GSSSync = require('../models/GSSSync');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module GSSSyncPolicy
@@ -14,7 +15,6 @@ module.exports = class GSSSyncPolicy extends Policy {
     if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
       return reply();
     }
-    const that = this;
     GSSSync
       .findOne({_id: request.params.id})
       .populate('user')
@@ -27,7 +27,7 @@ module.exports = class GSSSyncPolicy extends Policy {
         }
       })
       .catch((err) => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 };

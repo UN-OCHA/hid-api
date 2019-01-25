@@ -4,6 +4,7 @@ const Controller = require('trails/controller');
 const Boom = require('boom');
 const Notification = require('../models/Notification');
 const HelperService = require('../services/HelperService');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module NotificationController
@@ -18,7 +19,6 @@ module.exports = class NotificationController extends Controller{
     // Force to display notifications of current user
     criteria.user = request.params.currentUser.id;
 
-    const that = this;
     const query = HelperService.find(Notification, criteria, options);
     let gresults = {};
     query
@@ -30,13 +30,12 @@ module.exports = class NotificationController extends Controller{
         return reply(gresults).header('X-Total-Count', number);
       })
       .catch((err) => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
 
   }
 
   update (request, reply) {
-    const that = this;
 
     if (!request.payload || !request.payload.hasOwnProperty('read') || !request.payload.hasOwnProperty('notified')) {
       return reply(Boom.badRequest());
@@ -60,7 +59,7 @@ module.exports = class NotificationController extends Controller{
           return reply(record);
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
     else {
@@ -70,7 +69,7 @@ module.exports = class NotificationController extends Controller{
           return reply();
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
   }

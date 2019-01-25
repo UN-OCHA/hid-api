@@ -16,6 +16,7 @@ const OutlookService = require('../services/OutlookService');
 const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
 const NotificationService = require('../services/NotificationService');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module UserController
@@ -29,7 +30,7 @@ module.exports = class UserController extends Controller{
   }
 
   _errorHandler (err, request, reply) {
-    return this.app.services.ErrorService.handle(err, request, reply);
+    return ErrorService.handle(err, request, reply);
   }
 
   _createHelper(request, reply) {
@@ -120,7 +121,7 @@ module.exports = class UserController extends Controller{
         return reply(guser);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
@@ -158,7 +159,7 @@ module.exports = class UserController extends Controller{
           }
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
     else {
@@ -667,7 +668,7 @@ module.exports = class UserController extends Controller{
         return reply().code(204);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 

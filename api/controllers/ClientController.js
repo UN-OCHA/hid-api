@@ -4,6 +4,7 @@ const Controller = require('trails/controller');
 const Boom = require('boom');
 const Client = require('../models/Client');
 const HelperService = require('../services/HelperService');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module ClientController
@@ -12,7 +13,6 @@ const HelperService = require('../services/HelperService');
 module.exports = class ClientController extends Controller{
 
   create (request, reply) {
-    const that = this;
     Client
       .create(request.payload)
       .then((client) => {
@@ -22,14 +22,13 @@ module.exports = class ClientController extends Controller{
         return reply(client);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
   find (request, reply) {
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
-    const that = this;
 
     if (request.params.id) {
       criteria._id = request.params.id;
@@ -42,7 +41,7 @@ module.exports = class ClientController extends Controller{
           return reply(result);
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
     else {
@@ -57,32 +56,30 @@ module.exports = class ClientController extends Controller{
           return reply(gresults).header('X-Total-Count', number);
         })
         .catch((err) => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
   }
 
   update (request, reply) {
-    const that = this;
     Client
       .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
       .then((client) => {
         reply(client);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
   destroy (request, reply) {
-    const that = this;
     Client
       .remove({ _id: request.params.id })
       .then(() => {
         reply().code(204);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 };

@@ -17,6 +17,7 @@ const List = require('../models/List');
 const User = require('../models/User');
 const EmailService = require('../services/EmailService');
 const NotificationService = require('../services/NotificationService');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module CronController
@@ -34,7 +35,7 @@ module.exports = class CronController extends Controller {
         reply().code(204);
       })
       .catch (err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
@@ -48,7 +49,7 @@ module.exports = class CronController extends Controller {
         reply().code(204);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
@@ -597,7 +598,7 @@ module.exports = class CronController extends Controller {
         reply().code(204);
       })
       .catch (err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 

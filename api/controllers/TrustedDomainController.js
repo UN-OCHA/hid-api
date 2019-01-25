@@ -4,6 +4,7 @@ const Controller = require('trails/controller');
 const Boom = require('boom');
 const TrustedDomain = require('../models/TrustedDomain');
 const HelperService = require('../services/HelperService');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module TrustedDomainController
@@ -12,7 +13,6 @@ const HelperService = require('../services/HelperService');
 module.exports = class TrustedDomainController extends Controller{
 
   create (request, reply) {
-    const that = this;
     TrustedDomain
       .create(request.payload)
       .then((domain) => {
@@ -22,14 +22,13 @@ module.exports = class TrustedDomainController extends Controller{
         return reply(domain);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
   find (request, reply) {
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
-    const that = this;
 
     if (request.params.id) {
       criteria._id = request.params.id;
@@ -43,7 +42,7 @@ module.exports = class TrustedDomainController extends Controller{
           return reply(result);
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
     else {
@@ -59,20 +58,19 @@ module.exports = class TrustedDomainController extends Controller{
           return reply(gresults).header('X-Total-Count', number);
         })
         .catch((err) => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
   }
 
   destroy (request, reply) {
-    const that = this;
     TrustedDomain
       .remove({ _id: request.params.id })
       .then(() => {
         reply().code(204);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 };

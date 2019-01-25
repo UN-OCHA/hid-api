@@ -3,6 +3,7 @@
 const Policy = require('trails/policy');
 const Boom = require('boom');
 const User = require('../models/User');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module UserPolicy
@@ -35,7 +36,6 @@ module.exports = class UserPolicy extends Policy {
         request.params.currentUser.id !== request.params.id) {
         // If the user is a manager, make sure he is not trying to edit
         // an admin account.
-        const that = this;
         User
           .findById(request.params.id)
           .then((user) => {
@@ -50,7 +50,7 @@ module.exports = class UserPolicy extends Policy {
             }
           })
           .catch(err => {
-            that.app.services.ErrorService.handle(err, request, reply);
+            ErrorService.handle(err, request, reply);
           });
       }
       else {
@@ -65,7 +65,6 @@ module.exports = class UserPolicy extends Policy {
       return reply();
     }
     else {
-      const that = this;
       User
         .findOne({_id: request.params.id})
         .populate('createdBy')
@@ -81,7 +80,7 @@ module.exports = class UserPolicy extends Policy {
           }
         })
         .catch((err) => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
   }

@@ -9,6 +9,7 @@ const List = require('../models/List');
 const User = require('../models/User');
 const HelperService = require('../services/HelperService');
 const NotificationService = require('../services/NotificationService');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module ListController
@@ -34,7 +35,7 @@ module.exports = class ListController extends Controller{
         return reply(list);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
@@ -98,7 +99,7 @@ module.exports = class ListController extends Controller{
           out.visible = result.isVisibleTo(request.params.currentUser);
           return reply(out);
         })
-        .catch(err => { that.app.services.ErrorService.handle(err, request, reply); });
+        .catch(err => { ErrorService.handle(err, request, reply); });
     }
     else {
       options.populate = [{path: 'owner', select: '_id name'}];
@@ -155,7 +156,7 @@ module.exports = class ListController extends Controller{
           });
         })
         .catch((err) => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
   }
@@ -243,14 +244,13 @@ module.exports = class ListController extends Controller{
         return Promise.all(actions);
       })
       .catch((err) => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
   destroy (request, reply) {
 
     this.log.debug('[ListController] (destroy) model = list, query =', request.query, { request: request});
-    const that = this;
 
     List
       .findOne({ _id: request.params.id })
@@ -286,7 +286,7 @@ module.exports = class ListController extends Controller{
           });
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 

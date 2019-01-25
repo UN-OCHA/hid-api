@@ -8,6 +8,7 @@ const List = require('../models/List');
 const User = require('../models/User');
 const OutlookService = require('../services/OutlookService');
 const NotificationService = require('../services/NotificationService');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module ListUserController
@@ -160,7 +161,7 @@ module.exports = class ListUserController extends Controller {
         return reply(user);
       })
       .catch(err => {
-        this.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
@@ -191,7 +192,6 @@ module.exports = class ListUserController extends Controller {
       delete request.payload.visibility;
     }
 
-    const that = this;
     let listuser = {};
     User
       .findOne({ _id: request.params.id })
@@ -230,7 +230,7 @@ module.exports = class ListUserController extends Controller {
         }
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
@@ -250,7 +250,6 @@ module.exports = class ListUserController extends Controller {
       return reply(Boom.notFound());
     }
 
-    const that = this;
     let gResult = {};
 
     User
@@ -314,7 +313,7 @@ module.exports = class ListUserController extends Controller {
         return OutlookService.deleteUserFromContactFolders(gResult.list._id, gResult.user.id);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 

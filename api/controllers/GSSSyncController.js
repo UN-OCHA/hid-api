@@ -6,6 +6,7 @@ const {google} = require('googleapis');
 const {OAuth2Client} = require('google-auth-library');
 const fs = require('fs');
 const GSSSync = require('../models/GSSSync');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module GSSSyncController
@@ -30,7 +31,7 @@ module.exports = class GSSSyncController extends Controller{
         reply (gsync);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
@@ -41,7 +42,7 @@ module.exports = class GSSSyncController extends Controller{
     if (!request.payload.spreadsheet) {
       GSSSyncService.createSpreadsheet(request.params.currentUser, request.payload.list, function (err, spreadsheet) {
         if (err) {
-          return that.app.services.ErrorService.handle(err, request, reply);
+          return ErrorService.handle(err, request, reply);
         }
         request.payload.spreadsheet = spreadsheet.data.spreadsheetId;
         request.payload.sheetId = spreadsheet.data.sheets[0].properties.sheetId;
@@ -61,7 +62,7 @@ module.exports = class GSSSyncController extends Controller{
       authClient
         .getToken(request.payload.code, function (err, tokens) {
           if (err) {
-            return that.app.services.ErrorService.handle(err, request, reply);
+            return ErrorService.handle(err, request, reply);
           }
           if (tokens && tokens.refresh_token) {
             request.params.currentUser.googleCredentials = tokens;
@@ -70,7 +71,7 @@ module.exports = class GSSSyncController extends Controller{
           }
           else {
             const noRefreshToken = Boom.badRequest('No refresh token');
-            that.app.services.ErrorService.handle(noRefreshToken, request, reply);
+            ErrorService.handle(noRefreshToken, request, reply);
           }
         });
     }
@@ -87,7 +88,7 @@ module.exports = class GSSSyncController extends Controller{
         reply().code(204);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 };

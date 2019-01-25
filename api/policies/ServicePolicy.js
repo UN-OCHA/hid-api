@@ -3,6 +3,7 @@
 const Policy = require('trails/policy');
 const Boom = require('boom');
 const Service = require('../models/Service');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module ServicePolicy
@@ -30,7 +31,7 @@ module.exports = class ServicePolicy extends Policy {
         }
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 

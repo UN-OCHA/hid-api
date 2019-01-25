@@ -6,6 +6,7 @@ const Recaptcha = require('recaptcha2');
 const Client = require('../models/Client');
 const User = require('../models/User');
 const HelperService = require('../services/HelperService');
+const ErrorService = require('../services/ErrorService');
 
 module.exports = class ViewController extends Controller {
 
@@ -295,7 +296,7 @@ module.exports = class ViewController extends Controller {
         }
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
@@ -385,7 +386,7 @@ module.exports = class ViewController extends Controller {
           });
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
   }

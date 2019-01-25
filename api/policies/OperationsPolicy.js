@@ -3,6 +3,7 @@
 const Policy = require('trails/policy');
 const Boom = require('boom');
 const Operation = require('../models/Operation');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module OperationsPolicy
@@ -17,7 +18,6 @@ module.exports = class OperationsPolicy extends Policy {
     }
 
     // Otherwise check if it is a manager of the operation list
-    const that = this;
     Operation
       .findOne({_id: request.params.id})
       .populate('managers')
@@ -33,7 +33,7 @@ module.exports = class OperationsPolicy extends Policy {
         }
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 

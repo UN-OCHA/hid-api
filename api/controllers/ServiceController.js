@@ -10,6 +10,7 @@ const Service = require('../models/Service');
 const User = require('../models/User');
 const HelperService = require('../services/HelperService');
 const NotificationService = require('../services/NotificationService');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module ServiceController
@@ -18,7 +19,6 @@ const NotificationService = require('../services/NotificationService');
 module.exports = class ServiceController extends Controller{
 
   create (request, reply) {
-    const that = this;
     request.payload.owner = request.params.currentUser._id;
     Service
       .create(request.payload)
@@ -29,7 +29,7 @@ module.exports = class ServiceController extends Controller{
         return reply(service);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
@@ -71,7 +71,7 @@ module.exports = class ServiceController extends Controller{
           result.sanitize(request.params.currentUser);
           return reply(result);
         })
-        .catch(err => { that.app.services.ErrorService.handle(err, request, reply); });
+        .catch(err => { ErrorService.handle(err, request, reply); });
     }
     else {
       const options = HelperService.getOptionsFromQuery(request.query);
@@ -96,7 +96,6 @@ module.exports = class ServiceController extends Controller{
         criteria.name = new RegExp(criteria.name, 'i');
       }
 
-      const that = this;
       const query = HelperService.find(Service, criteria, options);
       let gresults = {};
       query
@@ -111,27 +110,25 @@ module.exports = class ServiceController extends Controller{
           return reply(gresults).header('X-Total-Count', number);
         })
         .catch((err) => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
   }
 
   update (request, reply) {
-    const that = this;
     Service
       .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
       .then((service) => {
         reply(service);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
   destroy (request, reply) {
 
     this.log.debug('[ServiceController] (destroy) model = service, query =', request.query, {request: request});
-    const that = this;
 
     const criteria = {};
     criteria['subscriptions.service'] = request.params.id;
@@ -158,13 +155,12 @@ module.exports = class ServiceController extends Controller{
         reply().code(204);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
   mailchimpLists (request, reply) {
     if (request.query.apiKey) {
-      const that = this;
       try {
         const mc = new Mailchimp(request.query.apiKey);
         mc.get({
@@ -174,7 +170,7 @@ module.exports = class ServiceController extends Controller{
             reply(result);
           })
           .catch((err) => {
-            that.app.services.ErrorService.handle(err, request, reply);
+            ErrorService.handle(err, request, reply);
           });
       }
       catch (err) {
@@ -188,7 +184,6 @@ module.exports = class ServiceController extends Controller{
 
   // Get google groups from a domain
   googleGroups(request, reply) {
-    const that = this;
     // Find service credentials associated to domain
     ServiceCredentials
       .findOne({ type: 'googlegroup', 'googlegroup.domain': request.query.domain})
@@ -211,7 +206,7 @@ module.exports = class ServiceController extends Controller{
         });
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
@@ -309,7 +304,7 @@ module.exports = class ServiceController extends Controller{
                 });
               }
               else {
-                that.app.services.ErrorService.handle(err, request, reply);
+                ErrorService.handle(err, request, reply);
               }
             }
           );
@@ -351,7 +346,7 @@ module.exports = class ServiceController extends Controller{
           });
         }
         else {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         }
       });
   }
@@ -473,7 +468,7 @@ module.exports = class ServiceController extends Controller{
         }
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 };

@@ -9,6 +9,7 @@ const JwtToken = require('../models/JwtToken');
 const OauthToken = require('../models/OauthToken');
 const User = require('../models/User');
 const JwtService = require('../services/JwtService');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module AuthPolicy
@@ -108,7 +109,7 @@ module.exports = class AuthPolicy extends Policy {
               reply();
             })
             .catch(err => {
-              that.app.services.ErrorService.handle(err, request, reply);
+              ErrorService.handle(err, request, reply);
             });
         }
         else {
@@ -135,7 +136,7 @@ module.exports = class AuthPolicy extends Policy {
               }
             })
             .catch(err => {
-              that.app.services.ErrorService.handle(err, request, reply);
+              ErrorService.handle(err, request, reply);
             });
         }
       });

@@ -6,6 +6,7 @@ const _ = require('lodash');
 const List = require('../models/List');
 const User = require('../models/User');
 const NotificationService = require('../services/NotificationService');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module WebhooksController
@@ -129,7 +130,7 @@ module.exports = class WebhooksController extends Controller{
             return reply(list);
           })
           .catch(err => {
-            that.app.services.ErrorService.handle(err, request, reply);
+            ErrorService.handle(err, request, reply);
           });
       }
       else {
@@ -149,7 +150,7 @@ module.exports = class WebhooksController extends Controller{
           }
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
 

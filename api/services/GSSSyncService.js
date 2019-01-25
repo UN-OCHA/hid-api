@@ -8,6 +8,7 @@ const Boom = require('boom');
 const GSSSync = require('../models/GSSSync');
 const List = require('../models/List');
 const User = require('../models/User');
+const ErrorService = require('./ErrorService');
 
 /**
  * @module GSSSyncService
@@ -24,7 +25,6 @@ module.exports = class GSSSyncService extends Service {
   }
 
   deleteUser (gsssync, hid) {
-    const ErrorService = this.app.services.ErrorService;
     const sheets = google.sheets('v4');
     let authClient = {};
     return gsssync
@@ -81,7 +81,6 @@ module.exports = class GSSSyncService extends Service {
   }
 
   writeUser (gsssync, authClient, user, index) {
-    const ErrorService = this.app.services.ErrorService;
     const sheets = google.sheets('v4');
     const values = this.getRowFromUser(user);
     const body = {
@@ -105,7 +104,6 @@ module.exports = class GSSSyncService extends Service {
   }
 
   addUser (gsssync, user) {
-    const ErrorService = this.app.services.ErrorService;
     const that = this;
     const sheets = google.sheets('v4');
     let authClient = {};
@@ -291,7 +289,6 @@ module.exports = class GSSSyncService extends Service {
   }
 
   updateUser (gsssync, user) {
-    const ErrorService = this.app.services.ErrorService;
     const sheets = google.sheets('v4');
     const that = this;
     let authClient = {};

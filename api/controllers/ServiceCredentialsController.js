@@ -3,6 +3,7 @@
 const Controller = require('trails/controller');
 const ServiceCredentials = require('../models/ServiceCredentials');
 const HelperService = require('../services/HelperService');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module ServiceCredentialsController
@@ -26,7 +27,7 @@ module.exports = class ServiceCredentialsController extends Controller{
           return reply(result);
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
     else {
@@ -41,7 +42,7 @@ module.exports = class ServiceCredentialsController extends Controller{
           return reply(gresults).header('X-Total-Count', number);
         })
         .catch((err) => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
   }

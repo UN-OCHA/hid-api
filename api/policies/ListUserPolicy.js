@@ -4,6 +4,7 @@ const Policy = require('trails/policy');
 const Boom = require('boom');
 const List = require('../models/List');
 const User = require('../models/User');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module ListUserPolicy
@@ -32,7 +33,7 @@ module.exports = class ListUserPolicy extends Policy {
         }
       })
       .catch((err) => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
@@ -58,7 +59,7 @@ module.exports = class ListUserPolicy extends Policy {
         }
       })
       .catch((err) => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
@@ -90,7 +91,7 @@ module.exports = class ListUserPolicy extends Policy {
         reply();
       })
       .catch((err) => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 };

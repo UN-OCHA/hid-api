@@ -9,6 +9,7 @@ const OauthToken = require('../models/OauthToken');
 const User = require('../models/User');
 const JwtService = require('../services/JwtService');
 const HelperService = require('../services/HelperService');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module AuthController
@@ -85,7 +86,7 @@ module.exports = class AuthController extends Controller{
           }
         })
         .catch((err) => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
   }
@@ -115,7 +116,7 @@ module.exports = class AuthController extends Controller{
           });
         })
         .catch((err) => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
     else {
@@ -375,7 +376,7 @@ module.exports = class AuthController extends Controller{
         });
       })
       .catch((err) => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
@@ -421,7 +422,7 @@ module.exports = class AuthController extends Controller{
         }
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
@@ -508,20 +509,18 @@ module.exports = class AuthController extends Controller{
 
   // Provides a list of the json web tokens with no expiration date created by the current user
   jwtTokens (request, reply) {
-    const that = this;
     JwtToken
       .find({user: request.params.currentUser._id})
       .then((tokens) => {
         return reply(tokens);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
   // Blacklist a JSON Web Token
   blacklistJwt (request, reply) {
-    const that = this;
     const token = request.payload ? request.payload.token : null;
     if (!token) {
       return reply(Boom.badRequest('Missing token'));
@@ -529,7 +528,7 @@ module.exports = class AuthController extends Controller{
     // Check that blacklisted token belongs to current user
     JwtService.verify(token, function (err, jtoken) {
       if (err) {
-        return that.app.services.ErrorService.handle(err, request, reply);
+        return ErrorService.handle(err, request, reply);
       }
       if (jtoken.id === request.params.currentUser.id) {
         // Blacklist token
@@ -543,7 +542,7 @@ module.exports = class AuthController extends Controller{
             return reply(doc);
           })
           .catch(err => {
-            that.app.services.ErrorService.handle(err, request, reply);
+            ErrorService.handle(err, request, reply);
           });
       }
       else {

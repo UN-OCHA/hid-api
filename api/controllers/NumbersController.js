@@ -3,6 +3,7 @@
 const Controller = require('trails/controller');
 const List = require('../models/List');
 const User = require('../models/User');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module NumbersController
@@ -52,7 +53,7 @@ module.exports = class NumbersController extends Controller{
         });
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 

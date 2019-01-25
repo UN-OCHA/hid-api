@@ -6,6 +6,7 @@ const QRCode = require('qrcode');
 const Controller = require('trails/controller');
 const BCrypt = require('bcryptjs');
 const HelperService = require('../services/HelperService');
+const ErrorService = require('../services/ErrorService');
 
 /**
  * @module TOTPController
@@ -37,14 +38,14 @@ module.exports = class TOTPController extends Controller{
         const otpauthUrl = authenticator.generateTotpUri(secret, user.name, qrCodeName, 'SHA1', 6, 30);
         QRCode.toDataURL(otpauthUrl, function (err, qrcode) {
           if (err) {
-            that.app.services.ErrorService.handleError(err, request, reply);
+            ErrorService.handleError(err, request, reply);
             return;
           }
           reply({url: qrcode});
         });
       })
       .catch(err => {
-        that.app.services.ErrorService.handleError(err, request, reply);
+        ErrorService.handleError(err, request, reply);
       });
   }
 
@@ -74,7 +75,7 @@ module.exports = class TOTPController extends Controller{
         return reply(user);
       })
       .catch(err => {
-        that.app.services.ErrorService.handleError(err, request, reply);
+        ErrorService.handleError(err, request, reply);
       });
   }
 
@@ -95,7 +96,7 @@ module.exports = class TOTPController extends Controller{
         return reply(user);
       })
       .catch(err => {
-        that.app.services.ErrorService.handleError(err, request, reply);
+        ErrorService.handleError(err, request, reply);
       });
   }
 
@@ -108,7 +109,7 @@ module.exports = class TOTPController extends Controller{
         return reply({'x-hid-totp-trust': secret}).state('x-hid-totp-trust', secret, { ttl: 30 * 24 * 60 * 60 * 1000, domain: 'humanitarian.id', isSameSite: false, isHttpOnly: false});
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 
@@ -125,7 +126,7 @@ module.exports = class TOTPController extends Controller{
           return reply().code(204);
         })
         .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
+          ErrorService.handle(err, request, reply);
         });
     }
     else {
@@ -155,7 +156,7 @@ module.exports = class TOTPController extends Controller{
         return reply(codes);
       })
       .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+        ErrorService.handle(err, request, reply);
       });
   }
 };
