@@ -7,6 +7,7 @@ const {OAuth2Client} = require('google-auth-library');
 const fs = require('fs');
 const GSSSync = require('../models/GSSSync');
 const ErrorService = require('../services/ErrorService');
+const GSSSyncService = require('../services/GSSSyncService');
 
 /**
  * @module GSSSyncController
@@ -15,7 +16,6 @@ const ErrorService = require('../services/ErrorService');
 module.exports = class GSSSyncController extends Controller{
 
   createHelper (request, reply) {
-    const GSSSyncService = this.app.services.GSSSyncService;
     const that = this;
     let gsync = {};
     GSSSync
@@ -36,7 +36,6 @@ module.exports = class GSSSyncController extends Controller{
   }
 
   create (request, reply) {
-    const GSSSyncService = this.app.services.GSSSyncService;
     const that = this;
     request.payload.user = request.params.currentUser._id;
     if (!request.payload.spreadsheet) {

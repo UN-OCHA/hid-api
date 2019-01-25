@@ -9,6 +9,7 @@ const User = require('../models/User');
 const OutlookService = require('../services/OutlookService');
 const NotificationService = require('../services/NotificationService');
 const ErrorService = require('../services/ErrorService');
+const GSSSyncService = require('../services/GSSSyncService');
 
 /**
  * @module ListUserController
@@ -17,7 +18,6 @@ const ErrorService = require('../services/ErrorService');
 module.exports = class ListUserController extends Controller {
 
   _checkinHelper (list, user, notify, childAttribute, currentUser) {
-    const GSSSyncService = this.app.services.GSSSyncService;
     let payload = {
       list: list._id.toString()
     };
@@ -240,7 +240,6 @@ module.exports = class ListUserController extends Controller {
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
     const payload = request.payload;
-    const GSSSyncService = this.app.services.GSSSyncService;
     const childAttributes = User.listAttributes();
 
     this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,

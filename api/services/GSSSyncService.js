@@ -14,17 +14,17 @@ const ErrorService = require('./ErrorService');
  * @module GSSSyncService
  * @description GSSSync Service
  */
-module.exports = class GSSSyncService extends Service {
+module.exports = {
 
-  getAuthClient (user) {
+  getAuthClient: function (user) {
     // Authenticate with Google
     const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
     const authClient = new OAuth2Client(creds.web.client_id, creds.web.client_secret, 'postmessage');
     authClient.setCredentials(user.googleCredentials);
     return authClient;
-  }
+  },
 
-  deleteUser (gsssync, hid) {
+  deleteUser: function (gsssync, hid) {
     const sheets = google.sheets('v4');
     let authClient = {};
     return gsssync
@@ -78,9 +78,9 @@ module.exports = class GSSSyncService extends Service {
           }
         });
       });
-  }
+  },
 
-  writeUser (gsssync, authClient, user, index) {
+  writeUser: function (gsssync, authClient, user, index) {
     const sheets = google.sheets('v4');
     const values = this.getRowFromUser(user);
     const body = {
@@ -101,9 +101,9 @@ module.exports = class GSSSyncService extends Service {
         return ErrorService.handleWithoutReply(err);
       }
     });
-  }
+  },
 
-  addUser (gsssync, user) {
+  addUser: function (gsssync, user) {
     const that = this;
     const sheets = google.sheets('v4');
     let authClient = {};
@@ -181,14 +181,14 @@ module.exports = class GSSSyncService extends Service {
           }
         });
       });
-  }
+  },
 
-  findByList(listId) {
+  findByList: function (listId) {
     return GSSSync
       .find({list: listId});
-  }
+  },
 
-  addUserToSpreadsheets(listId, user) {
+  addUserToSpreadsheets: function (listId, user) {
     const that = this;
     return this
       .findByList(listId)
@@ -201,9 +201,9 @@ module.exports = class GSSSyncService extends Service {
           return Promise.all(actions);
         }
       });
-  }
+  },
 
-  deleteUserFromSpreadsheets(listId, hid) {
+  deleteUserFromSpreadsheets: function (listId, hid) {
     const that = this;
     return this
       .findByList(listId)
@@ -216,9 +216,9 @@ module.exports = class GSSSyncService extends Service {
           return Promise.all(actions);
         }
       });
-  }
+  },
 
-  getRowFromUser (elt) {
+  getRowFromUser: function (elt) {
     const organization = elt.organization ? elt.organization.name : '';
     let country = '',
       region = '',
@@ -263,9 +263,9 @@ module.exports = class GSSSyncService extends Service {
       elt.email,
       elt.status
     ];
-  }
+  },
 
-  synchronizeUser (user) {
+  synchronizeUser: function (user) {
     // Get all lists from user
     const listIds = user.getListIds();
     const that = this;
@@ -286,9 +286,9 @@ module.exports = class GSSSyncService extends Service {
       .then(values => {
         return user;
       });
-  }
+  },
 
-  updateUser (gsssync, user) {
+  updateUser: function (gsssync, user) {
     const sheets = google.sheets('v4');
     const that = this;
     let authClient = {};
@@ -327,9 +327,9 @@ module.exports = class GSSSyncService extends Service {
           }
         });
       });
-  }
+  },
 
-  createSpreadsheet (user, listId, callback) {
+  createSpreadsheet: function (user, listId, callback) {
     List
       .findOne({ _id: listId })
       .then(list => {
@@ -363,9 +363,9 @@ module.exports = class GSSSyncService extends Service {
       .catch(err => {
         return callback(err);
       });
-  }
+  },
 
-  getSheetId (gsssync, callback) {
+  getSheetId: function (gsssync, callback) {
     gsssync
       .populate('user')
       .execPopulate()
@@ -384,9 +384,9 @@ module.exports = class GSSSyncService extends Service {
           }
         });
       });
-  }
+  },
 
-  synchronizeAll (gsssync) {
+  synchronizeAll: function (gsssync) {
     const headers = GSSSync.getSpreadsheetHeaders();
     const that = this;
     let authClient = {};

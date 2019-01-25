@@ -17,6 +17,7 @@ const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
 const NotificationService = require('../services/NotificationService');
 const ErrorService = require('../services/ErrorService');
+const GSSSyncService = require('../services/GSSSyncService');
 
 /**
  * @module UserController
@@ -584,7 +585,7 @@ module.exports = class UserController extends Controller{
         return user;
       })
       .then(user => {
-        return that.app.services.GSSSyncService.synchronizeUser(user);
+        return GSSSyncService.synchronizeUser(user);
       })
       .then(user => {
         return OutlookService.synchronizeUser(user);
@@ -703,7 +704,7 @@ module.exports = class UserController extends Controller{
         return record.save();
       })
       .then(record => {
-        return that.app.services.GSSSyncService.synchronizeUser(record);
+        return GSSSyncService.synchronizeUser(record);
       })
       .then(record => {
         return OutlookService.synchronizeUser(record);
@@ -1256,7 +1257,7 @@ module.exports = class UserController extends Controller{
         return record.save();
       })
       .then(user => {
-        return that.app.services.GSSSyncService.synchronizeUser(user);
+        return GSSSyncService.synchronizeUser(user);
       })
       .then(user => {
         return OutlookService.synchronizeUser(user);
@@ -1292,7 +1293,7 @@ module.exports = class UserController extends Controller{
         return user.save();
       })
       .then(user => {
-        return that.app.services.GSSSyncService.synchronizeUser(user);
+        return GSSSyncService.synchronizeUser(user);
       })
       .then(user => {
         return OutlookService.synchronizeUser(user);
