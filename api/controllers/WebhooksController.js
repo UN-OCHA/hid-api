@@ -5,6 +5,7 @@ const Boom = require('boom');
 const _ = require('lodash');
 const List = require('../models/List');
 const User = require('../models/User');
+const NotificationService = require('../services/NotificationService');
 
 /**
  * @module WebhooksController
@@ -157,7 +158,6 @@ module.exports = class WebhooksController extends Controller{
   // Notify users of a new disaster
   _notifyNewDisaster (disaster) {
     const app = this.app;
-    const NotificationService = app.services.NotificationService;
     if (disaster.metadata.operation && disaster.metadata.operation.length) {
       let operation = {};
       for (let i = 0, len = disaster.metadata.operation.length; i < len; i++) {

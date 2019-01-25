@@ -15,6 +15,7 @@ const User = require('../models/User');
 const OutlookService = require('../services/OutlookService');
 const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
+const NotificationService = require('../services/NotificationService');
 
 /**
  * @module UserController
@@ -543,8 +544,7 @@ module.exports = class UserController extends Controller{
   }
 
   _updateQuery (request, options) {
-    const NotificationService = this.app.services.NotificationService,
-      that = this;
+    const that = this;
     let nextAction = '';
     if (request.payload.updatedAt) {
       delete request.payload.updatedAt;
@@ -1343,7 +1343,7 @@ module.exports = class UserController extends Controller{
           createdBy: request.params.currentUser,
           user: record
         };
-        that.app.services.NotificationService.send(notPayload, function (out) {
+        NotificationService.send(notPayload, function (out) {
           return reply(out);
         });
       })
@@ -1385,7 +1385,7 @@ module.exports = class UserController extends Controller{
           createdBy: request.params.currentUser,
           user: user
         };
-        that.app.services.NotificationService.send(notification, function () {
+        NotificationService.send(notification, function () {
 
         });
       })
@@ -1437,7 +1437,7 @@ module.exports = class UserController extends Controller{
           createdBy: guser,
           user: cuser
         };
-        that.app.services.NotificationService.send(notification, function () {
+        NotificationService.send(notification, function () {
 
         });
       })

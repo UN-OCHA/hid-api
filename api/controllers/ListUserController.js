@@ -7,6 +7,7 @@ const async = require('async');
 const List = require('../models/List');
 const User = require('../models/User');
 const OutlookService = require('../services/OutlookService');
+const NotificationService = require('../services/NotificationService');
 
 /**
  * @module ListUserController
@@ -83,7 +84,7 @@ module.exports = class ListUserController extends Controller {
           }
         });
         // Notify list managers of the checkin
-        that.app.services.NotificationService.notifyMultiple(managers, {
+        NotificationService.notifyMultiple(managers, {
           type: 'checkin',
           createdBy: user,
           params: { list: list }
@@ -91,7 +92,7 @@ module.exports = class ListUserController extends Controller {
         // Notify user if needed
         if (currentUser._id.toString() !== user._id.toString() && list.type !== 'list' && notify === true && !user.hidden) {
           that.log.debug('Checked in by a different user');
-          that.app.services.NotificationService.send({
+          NotificationService.send({
             type: 'admin_checkin',
             createdBy: currentUser,
             user: user,
@@ -101,7 +102,7 @@ module.exports = class ListUserController extends Controller {
         // Notify list owner and managers of the new checkin if needed
         if (payload.pending) {
           that.log.debug('Notifying list owners and manager of the new checkin');
-          that.app.services.NotificationService.sendMultiple(list.managers, {
+          NotificationService.sendMultiple(list.managers, {
             type: 'pending_checkin',
             params: { list: list, user: user }
           }, () => { });
@@ -164,7 +165,6 @@ module.exports = class ListUserController extends Controller {
   }
 
   update (request, reply) {
-    const NotificationService = this.app.services.NotificationService;
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
 
@@ -288,7 +288,7 @@ module.exports = class ListUserController extends Controller {
       .then((result) => {
         // Send notification if needed
         if (request.params.currentUser.id !== userId && !result.user.hidden) {
-          that.app.services.NotificationService.send({
+          NotificationService.send({
             type: 'admin_checkout',
             createdBy: request.params.currentUser,
             user: result.user,
@@ -299,7 +299,7 @@ module.exports = class ListUserController extends Controller {
       })
       .then((result) => {
         // Notify list managers of the checkin
-        that.app.services.NotificationService.notifyMultiple(result.list.managers, {
+        NotificationService.notifyMultiple(result.list.managers, {
           type: 'checkout',
           createdBy: result.user,
           params: { list: result.list }

@@ -9,6 +9,7 @@ const ServiceCredentials = require('../models/ServiceCredentials');
 const Service = require('../models/Service');
 const User = require('../models/User');
 const HelperService = require('../services/HelperService');
+const NotificationService = require('../services/NotificationService');
 
 /**
  * @module ServiceController
@@ -217,8 +218,6 @@ module.exports = class ServiceController extends Controller{
 
   // Subscribe a user to a service
   subscribe (request, reply) {
-    const NotificationService = this.app.services.NotificationService;
-
     const that = this;
     let user = {}, service = {};
     User
@@ -358,7 +357,6 @@ module.exports = class ServiceController extends Controller{
   }
 
   unsubscribe (request, reply) {
-    const NotificationService = this.app.services.NotificationService;
 
     this.log.debug(
       '[ServiceController] Unsubscribing user ' +

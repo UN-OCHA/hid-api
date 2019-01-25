@@ -11,14 +11,14 @@ const EmailService = require('./EmailService');
  * @module NotificationService
  * @description Service for notifications
  */
-module.exports = class NotificationService extends Service {
+module.exports = {
 
   // Create notification and send email
-  send (notification, callback) {
+  send: function (notification, callback) {
     const that = this;
 
-    this.log.debug('Sending a notification of type ' +
-      notification.type + ' to user ' + notification.user.email);
+    //this.log.debug('Sending a notification of type ' +
+    //  notification.type + ' to user ' + notification.user.email);
 
     Notification
       .create(notification)
@@ -29,21 +29,21 @@ module.exports = class NotificationService extends Service {
         return callback();
       })
       .catch(err => {
-        that.log.error('Error creating a notification', { error: err });
+        //that.log.error('Error creating a notification', { error: err });
         return callback(Boom.badImplementation());
       });
-  }
+  },
 
   // Create notification and send email to multiple users
-  sendMultiple(users, notification, callback) {
+  sendMultiple: function (users, notification, callback) {
     const that = this;
     this._transformUsers(users, function (items) {
       that._sendMultipleHelper(items, notification, callback);
     });
-  }
+  },
 
   // Transform user IDs in users if needed
-  _transformUsers (users, callback) {
+  _transformUsers: function (users, callback) {
     let areUsers = true;
     for (let i = 0, len = users.length; i < len; i++) {
       if (users[i].constructor.name === 'ObjectID') {
@@ -60,34 +60,34 @@ module.exports = class NotificationService extends Service {
     else {
       callback(users);
     }
-  }
+  },
 
   // Helper function to send multiple emails and notifications
-  _sendMultipleHelper(users, notification, callback) {
+  _sendMultipleHelper: function (users, notification, callback) {
     const that = this;
     async.eachSeries(users, function (user, next) {
       notification.user = user;
       that.send(notification, next);
     }, callback);
-  }
+  },
 
   // Create only a notification, without sending an email
-  notify(notification, callback) {
+  notify: function (notification, callback) {
     const that = this;
 
-    this.log.debug('Sending a notification of type ' +
-      notification.type + ' to user ' + notification.user.email);
+    //this.log.debug('Sending a notification of type ' +
+    //  notification.type + ' to user ' + notification.user.email);
 
     Notification.create(notification, function (err, not) {
       if (err) {
-        that.log.error('Error creating a notification.', { error: err });
+        //that.log.error('Error creating a notification.', { error: err });
         return callback(Boom.badImplementation());
       }
       return callback();
     });
-  }
+  },
 
-  notifyMultiple (users, notification, callback) {
+  notifyMultiple: function (users, notification, callback) {
     const that = this;
     this._transformUsers(users, function (items) {
       async.eachSeries(items, function(user, next) {

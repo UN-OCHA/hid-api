@@ -16,6 +16,7 @@ const OauthToken = require('../models/OauthToken');
 const List = require('../models/List');
 const User = require('../models/User');
 const EmailService = require('../services/EmailService');
+const NotificationService = require('../services/NotificationService');
 
 /**
  * @module CronController
@@ -133,7 +134,6 @@ module.exports = class CronController extends Controller {
   sendReminderCheckoutEmails (request, reply) {
     const app = this.app;
     app.log.info('Sending reminder checkout emails to contacts');
-    const NotificationService = app.services.NotificationService;
     let populate = '';
     const criteria = {};
     criteria.email_verified = true;
@@ -189,8 +189,6 @@ module.exports = class CronController extends Controller {
   doAutomatedCheckout (request, reply) {
     const app = this.app;
     app.log.info('Running automated checkouts');
-    const NotificationService = app.services.NotificationService;
-
     let populate = '';
     const criteria = {};
     criteria.email_verified = true;
@@ -246,7 +244,6 @@ module.exports = class CronController extends Controller {
   sendReminderCheckinEmails (request, reply) {
     const app = this.app;
     app.log.info('Sending reminder checkin emails to contacts');
-    const NotificationService = app.services.NotificationService;
 
     reply().code(204);
 

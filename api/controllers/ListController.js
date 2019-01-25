@@ -8,6 +8,7 @@ const acceptLanguage = require('accept-language');
 const List = require('../models/List');
 const User = require('../models/User');
 const HelperService = require('../services/HelperService');
+const NotificationService = require('../services/NotificationService');
 
 /**
  * @module ListController
@@ -165,7 +166,7 @@ module.exports = class ListController extends Controller{
       .find({_id: {$in: uids}})
       .then((users) => {
         for (let i = 0, len = users.length; i < len; i++) {
-          that.app.services.NotificationService
+          NotificationService
             .send({
               type: type,
               user: users[i],
