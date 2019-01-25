@@ -7,6 +7,7 @@ const async = require('async');
 const acceptLanguage = require('accept-language');
 const List = require('../models/List');
 const User = require('../models/User');
+const HelperService = require('../services/HelperService');
 
 /**
  * @module ListController
@@ -15,7 +16,7 @@ const User = require('../models/User');
 module.exports = class ListController extends Controller{
 
   _removeForbiddenAttributes (request) {
-    this.app.services.HelperService.removeForbiddenAttributes(List, request, ['names']);
+    HelperService.removeForbiddenAttributes(List, request, ['names']);
   }
 
   create (request, reply) {
@@ -38,8 +39,8 @@ module.exports = class ListController extends Controller{
 
   find (request, reply) {
     const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
+    const options = HelperService.getOptionsFromQuery(request.query);
+    const criteria = HelperService.getCriteriaFromQuery(request.query);
 
     if (!options.sort) {
       options.sort = 'name';
@@ -106,7 +107,7 @@ module.exports = class ListController extends Controller{
           criteria.$or.push({visibility: 'verified'});
         }
       }
-      const query = this.app.services.HelperService.find(List, criteria, options);
+      const query = HelperService.find(List, criteria, options);
       query
         .then((results) => {
           return List

@@ -8,6 +8,7 @@ const {google} = require('googleapis');
 const ServiceCredentials = require('../models/ServiceCredentials');
 const Service = require('../models/Service');
 const User = require('../models/User');
+const HelperService = require('../services/HelperService');
 
 /**
  * @module ServiceController
@@ -32,8 +33,8 @@ module.exports = class ServiceController extends Controller{
   }
 
   find (request, reply) {
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
+    const options = HelperService.getOptionsFromQuery(request.query);
+    const criteria = HelperService.getCriteriaFromQuery(request.query);
 
     if (!request.params.currentUser.is_admin) {
       criteria.$or = [
@@ -72,8 +73,8 @@ module.exports = class ServiceController extends Controller{
         .catch(err => { that.app.services.ErrorService.handle(err, request, reply); });
     }
     else {
-      const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-      const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
+      const options = HelperService.getOptionsFromQuery(request.query);
+      const criteria = HelperService.getCriteriaFromQuery(request.query);
 
       if (criteria.lists) {
         const lists = criteria.lists.split(',');
@@ -95,7 +96,7 @@ module.exports = class ServiceController extends Controller{
       }
 
       const that = this;
-      const query = this.app.services.HelperService.find(Service, criteria, options);
+      const query = HelperService.find(Service, criteria, options);
       let gresults = {};
       query
         .then((results) => {

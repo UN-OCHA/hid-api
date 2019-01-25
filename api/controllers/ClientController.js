@@ -3,6 +3,7 @@
 const Controller = require('trails/controller');
 const Boom = require('boom');
 const Client = require('../models/Client');
+const HelperService = require('../services/HelperService');
 
 /**
  * @module ClientController
@@ -26,8 +27,8 @@ module.exports = class ClientController extends Controller{
   }
 
   find (request, reply) {
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
+    const options = HelperService.getOptionsFromQuery(request.query);
+    const criteria = HelperService.getCriteriaFromQuery(request.query);
     const that = this;
 
     if (request.params.id) {
@@ -45,7 +46,7 @@ module.exports = class ClientController extends Controller{
         });
     }
     else {
-      const query = this.app.services.HelperService.find(Client, criteria, options);
+      const query = HelperService.find(Client, criteria, options);
       let gresults = {};
       query
         .then((results) => {

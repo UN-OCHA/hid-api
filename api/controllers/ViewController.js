@@ -5,6 +5,7 @@ const Boom = require('boom');
 const Recaptcha = require('recaptcha2');
 const Client = require('../models/Client');
 const User = require('../models/User');
+const HelperService = require('../services/HelperService');
 
 module.exports = class ViewController extends Controller {
 
@@ -24,7 +25,7 @@ module.exports = class ViewController extends Controller {
   }
 
   _getRegisterLink(args) {
-    const params = this.app.services.HelperService.getOauthParams(args);
+    const params = HelperService.getOauthParams(args);
     let registerLink = '/register';
     if (params) {
       registerLink += '?' + params;
@@ -33,7 +34,7 @@ module.exports = class ViewController extends Controller {
   }
 
   _getPasswordLink(args) {
-    const params = this.app.services.HelperService.getOauthParams(args);
+    const params = HelperService.getOauthParams(args);
     let registerLink = '/password';
     if (params) {
       registerLink += '?' + params;
@@ -336,7 +337,7 @@ module.exports = class ViewController extends Controller {
 
     if (cookie && cookie.hash && cookie.totp) {
       UserController.resetPassword(request, function (result) {
-        const params = that.app.services.HelperService.getOauthParams(request.payload);
+        const params = HelperService.getOauthParams(request.payload);
         if (params) {
           const al = that._getAlert(result,
             'Your password was successfully reset. You can now login.',

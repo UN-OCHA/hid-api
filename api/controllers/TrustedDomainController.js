@@ -3,6 +3,7 @@
 const Controller = require('trails/controller');
 const Boom = require('boom');
 const TrustedDomain = require('../models/TrustedDomain');
+const HelperService = require('../services/HelperService');
 
 /**
  * @module TrustedDomainController
@@ -26,8 +27,8 @@ module.exports = class TrustedDomainController extends Controller{
   }
 
   find (request, reply) {
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
+    const options = HelperService.getOptionsFromQuery(request.query);
+    const criteria = HelperService.getCriteriaFromQuery(request.query);
     const that = this;
 
     if (request.params.id) {
@@ -46,7 +47,7 @@ module.exports = class TrustedDomainController extends Controller{
         });
     }
     else {
-      const query = this.app.services.HelperService.find(TrustedDomain, criteria, options);
+      const query = HelperService.find(TrustedDomain, criteria, options);
       let gresults = {};
       query
         .populate('list')

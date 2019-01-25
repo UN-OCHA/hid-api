@@ -3,6 +3,7 @@
 const Controller = require('trails/controller');
 const Boom = require('boom');
 const Notification = require('../models/Notification');
+const HelperService = require('../services/HelperService');
 
 /**
  * @module NotificationController
@@ -11,14 +12,14 @@ const Notification = require('../models/Notification');
 module.exports = class NotificationController extends Controller{
 
   find (request, reply) {
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
+    const options = HelperService.getOptionsFromQuery(request.query);
+    const criteria = HelperService.getCriteriaFromQuery(request.query);
 
     // Force to display notifications of current user
     criteria.user = request.params.currentUser.id;
 
     const that = this;
-    const query = this.app.services.HelperService.find(Notification, criteria, options);
+    const query = HelperService.find(Notification, criteria, options);
     let gresults = {};
     query
       .then((results) => {

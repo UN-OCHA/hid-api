@@ -5,6 +5,7 @@ const Boom = require('boom');
 const QRCode = require('qrcode');
 const Controller = require('trails/controller');
 const BCrypt = require('bcryptjs');
+const HelperService = require('../services/HelperService');
 
 /**
  * @module TOTPController
@@ -100,7 +101,7 @@ module.exports = class TOTPController extends Controller{
 
   saveDevice (request, reply) {
     const that = this;
-    this.app.services.HelperService.saveTOTPDevice(request, request.params.currentUser)
+    HelperService.saveTOTPDevice(request, request.params.currentUser)
       .then(() => {
         const tindex = request.params.currentUser.trustedDeviceIndex(request.headers['user-agent']);
         const secret = request.params.currentUser.totpTrusted[tindex].secret;
@@ -137,7 +138,6 @@ module.exports = class TOTPController extends Controller{
     if (!user.totp) {
       return reply(Boom.badRequest('TOTP needs to be enabled'));
     }
-    const HelperService = this.app.services.HelperService;
     const codes = [], hashedCodes = [];
     for (let i = 0; i < 16; i++) {
       codes.push(HelperService.generateRandom());

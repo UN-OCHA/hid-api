@@ -14,6 +14,7 @@ const List = require('../models/List');
 const User = require('../models/User');
 const OutlookService = require('../services/OutlookService');
 const EmailService = require('../services/EmailService');
+const HelperService = require('../services/HelperService');
 
 /**
  * @module UserController
@@ -23,7 +24,7 @@ module.exports = class UserController extends Controller{
 
   _removeForbiddenAttributes (request) {
     const childAttributes = User.listAttributes();
-    this.app.services.HelperService.removeForbiddenAttributes(User, request, childAttributes);
+    HelperService.removeForbiddenAttributes(User, request, childAttributes);
   }
 
   _errorHandler (err, request, reply) {
@@ -132,7 +133,7 @@ module.exports = class UserController extends Controller{
     }
 
     const appVerifyUrl = request.payload.app_verify_url;
-    if (!this.app.services.HelperService.isAuthorizedUrl(appVerifyUrl)) {
+    if (!HelperService.isAuthorizedUrl(appVerifyUrl)) {
       this.log.warn('Invalid app_verify_url', { security: true, fail: true, request: request});
       return reply(Boom.badRequest('Invalid app_verify_url'));
     }
@@ -354,7 +355,7 @@ module.exports = class UserController extends Controller{
 
     const that = this;
     this.log.debug('[UserController] (find) criteria = ', criteria, ' options = ', options, { request: request });
-    const query = this.app.services.HelperService.find(User, criteria, options);
+    const query = HelperService.find(User, criteria, options);
     // HID-1561 - Set export limit to 2000
     if (!options.limit && request.params.extension) {
       query.limit(100000);
@@ -458,8 +459,8 @@ module.exports = class UserController extends Controller{
         });
     }
     else {
-      const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-      const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
+      const options = HelperService.getOptionsFromQuery(request.query);
+      const criteria = HelperService.getCriteriaFromQuery(request.query);
       const childAttributes = User.listAttributes();
 
       // Hide unconfirmed users which are not orphans
@@ -590,7 +591,7 @@ module.exports = class UserController extends Controller{
   }
 
   update (request, reply) {
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
+    const options = HelperService.getOptionsFromQuery(request.query);
 
     this.log.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
       ', values = ', request.payload, { request: request });
@@ -807,7 +808,7 @@ module.exports = class UserController extends Controller{
           }
           // Send validation email again
           const appValidationUrl = request.payload.app_validation_url;
-          if (!that.app.services.HelperService.isAuthorizedUrl(appValidationUrl)) {
+          if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
             that.log.warn('Invalid app_validation_url', { security: true, fail: true, request: request});
             throw Boom.badRequest('Invalid app_validation_url');
           }
@@ -830,7 +831,7 @@ module.exports = class UserController extends Controller{
     const appResetUrl = request.payload.app_reset_url;
     const that = this;
 
-    if (!this.app.services.HelperService.isAuthorizedUrl(appResetUrl)) {
+    if (!HelperService.isAuthorizedUrl(appResetUrl)) {
       this.log.warn('Invalid app_reset_url', { security: true, fail: true, request: request});
       return reply(Boom.badRequest('app_reset_url is invalid'));
     }
@@ -981,7 +982,7 @@ module.exports = class UserController extends Controller{
     const appResetUrl = request.payload.app_reset_url;
     const userId = request.params.id;
 
-    if (!this.app.services.HelperService.isAuthorizedUrl(appResetUrl)) {
+    if (!HelperService.isAuthorizedUrl(appResetUrl)) {
       this.log.warn('Invalid app_reset_url', { security: true, fail: true, request: request});
       return reply(Boom.badRequest('app_reset_url is invalid'));
     }
@@ -1061,7 +1062,7 @@ module.exports = class UserController extends Controller{
       return reply(Boom.badRequest());
     }
 
-    if (!this.app.services.HelperService.isAuthorizedUrl(appValidationUrl)) {
+    if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
       this.log.warn('Invalid app_validation_url', { security: true, fail: true, request: request});
       return reply(Boom.badRequest('Invalid app_validation_url'));
     }

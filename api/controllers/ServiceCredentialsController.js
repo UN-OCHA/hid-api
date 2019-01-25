@@ -2,6 +2,7 @@
 
 const Controller = require('trails/controller');
 const ServiceCredentials = require('../models/ServiceCredentials');
+const HelperService = require('../services/HelperService');
 
 /**
  * @module ServiceCredentialsController
@@ -10,8 +11,8 @@ const ServiceCredentials = require('../models/ServiceCredentials');
 module.exports = class ServiceCredentialsController extends Controller{
 
   find (request, reply) {
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
+    const options = HelperService.getOptionsFromQuery(request.query);
+    const criteria = HelperService.getCriteriaFromQuery(request.query);
     const that = this;
 
     if (request.params.id) {
@@ -29,7 +30,7 @@ module.exports = class ServiceCredentialsController extends Controller{
         });
     }
     else {
-      const query = this.app.services.HelperService.find(ServiceCredentials, criteria, options);
+      const query = HelperService.find(ServiceCredentials, criteria, options);
       let gresults = {};
       query
         .then((results) => {

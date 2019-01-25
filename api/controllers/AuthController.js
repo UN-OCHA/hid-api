@@ -8,6 +8,7 @@ const JwtToken = require('../models/JwtToken');
 const OauthToken = require('../models/OauthToken');
 const User = require('../models/User');
 const JwtService = require('../services/JwtService');
+const HelperService = require('../services/HelperService');
 
 /**
  * @module AuthController
@@ -218,7 +219,7 @@ module.exports = class AuthController extends Controller{
           }
         }
         else {
-          const params = that.app.services.HelperService.getOauthParams(request.payload);
+          const params = HelperService.getOauthParams(request.payload);
 
           let registerLink = '/register';
           if (params) {
@@ -269,7 +270,7 @@ module.exports = class AuthController extends Controller{
           cookie.totp = true;
           request.yar.set('session', cookie);
           if (request.payload['x-hid-totp-trust']) {
-            that.app.services.HelperService.saveTOTPDevice(request, user)
+            HelperService.saveTOTPDevice(request, user)
               .then(() => {
                 const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
                 const random = user.totpTrusted[tindex].secret;

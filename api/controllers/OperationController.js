@@ -3,6 +3,7 @@
 const Controller = require('trails/controller');
 const Boom = require('boom');
 const Operation = require('../models/Operation');
+const HelperService = require('../services/HelperService');
 
 /**
  * @module OperationController
@@ -26,8 +27,8 @@ module.exports = class OperationController extends Controller{
   }
 
   find (request, reply) {
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
+    const options = HelperService.getOptionsFromQuery(request.query);
+    const criteria = HelperService.getCriteriaFromQuery(request.query);
     const that = this;
 
     if (request.params.id) {
@@ -47,7 +48,7 @@ module.exports = class OperationController extends Controller{
     }
     else {
       options.populate = 'managers key_roles key_lists';
-      const query = this.app.services.HelperService.find(Operation, criteria, options);
+      const query = HelperService.find(Operation, criteria, options);
       let gresults = {};
       query
         .then((results) => {
