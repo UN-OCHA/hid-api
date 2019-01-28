@@ -19,6 +19,7 @@ const AuthPolicy = require('../api/policies/AuthPolicy');
 const OutlookController = require('../api/controllers/OutlookController');
 const NotificationController = require('../api/controller/NotificationController');
 const ClientController = require('../api/controllers/ClientController');
+const TrustedDomainController = require('../api/controllers/TrustedDomainController');
 
 module.exports = [
 
@@ -427,19 +428,31 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/trustedDomain',
-    handler: 'TrustedDomainController.create'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      AuthPolicy.isAdmin
+    ],
+    handler: TrustedDomainController.create
   },
 
   {
     method: 'GET',
     path: '/api/v2/trustedDomain/{id?}',
-    handler: 'TrustedDomainController.find'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      AuthPolicy.isAdmin
+    ],
+    handler: TrustedDomainController.find
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/trustedDomain/{id}',
-    handler: 'TrustedDomainController.destroy'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      AuthPolicy.isAdmin
+    ],
+    handler: TrustedDomainController.destroy
   },
 
   {

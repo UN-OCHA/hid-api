@@ -1,6 +1,5 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const Boom = require('boom');
 const TrustedDomain = require('../models/TrustedDomain');
 const HelperService = require('../services/HelperService');
@@ -10,9 +9,9 @@ const ErrorService = require('../services/ErrorService');
  * @module TrustedDomainController
  * @description Controller for Trusted Domains.
  */
-module.exports = class TrustedDomainController extends Controller{
+module.exports = {
 
-  create (request, reply) {
+  create: function (request, reply) {
     TrustedDomain
       .create(request.payload)
       .then((domain) => {
@@ -24,9 +23,9 @@ module.exports = class TrustedDomainController extends Controller{
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  find (request, reply) {
+  find: function (request, reply) {
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
 
@@ -61,9 +60,9 @@ module.exports = class TrustedDomainController extends Controller{
           ErrorService.handle(err, request, reply);
         });
     }
-  }
+  },
 
-  destroy (request, reply) {
+  destroy: function (request, reply) {
     TrustedDomain
       .remove({ _id: request.params.id })
       .then(() => {

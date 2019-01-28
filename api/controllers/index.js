@@ -16,4 +16,4 @@ exports.GSSSyncController = require('./GSSSyncController');
 //exports.OutlookController = require('./OutlookController');
 //exports.WebhooksController = require('./WebhooksController');
 exports.OperationController = require('./OperationController');
-exports.TrustedDomainController = require('./TrustedDomainController');
+//exports.TrustedDomainController = require('./TrustedDomainController');

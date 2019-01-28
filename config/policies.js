@@ -138,10 +138,10 @@ module.exports = {
     destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdminOrGlobalManager']
   },
 
-  TrustedDomainController: {
+  /*TrustedDomainController: {
     create: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
     find: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
     destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin']
-  }
+  }*/
 
 };
