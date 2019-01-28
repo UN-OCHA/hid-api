@@ -30,6 +30,7 @@ const ListUserController = require('../api/controllers/ListUserController');
 const ListUserPolicy = require('../api/policies/ListUserPolicy');
 const ServiceController = require('../api/controllers/ServiceController');
 const ServicePolicy = require('../api/policies/ServicePolicy');
+const NumbersController = require('../api/controllers/NumbersController');
 
 module.exports = [
 
@@ -184,7 +185,7 @@ module.exports = [
   {
     method: 'GET',
     path: '/api/v2/numbers',
-    handler: 'NumbersController.numbers'
+    handler: NumbersController.numbers
   },
 
   {

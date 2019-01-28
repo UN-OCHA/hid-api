@@ -1,6 +1,5 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const List = require('../models/List');
 const User = require('../models/User');
 const ErrorService = require('../services/ErrorService');
@@ -9,10 +8,9 @@ const ErrorService = require('../services/ErrorService');
  * @module NumbersController
  * @description Generated Trails.js Controller.
  */
-module.exports = class NumbersController extends Controller{
+module.exports = {
 
-  numbers (request, reply) {
-    const that = this;
+  numbers: function (request, reply) {
     let numberCcls = 0,
       numberAuth = 0,
       numberUsers = 0,
