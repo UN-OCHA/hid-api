@@ -106,7 +106,7 @@ module.exports = {
     create: ['AuthPolicy.isAuthenticated']
   },
 
-  CronController: {
+  /*CronController: {
     synchronizeGoogleSpreadsheets: ['CronPolicy.canRun'],
     deleteExpiredUsers: ['CronPolicy.canRun'],
     deleteExpiredTokens: ['CronPolicy.canRun'],
@@ -127,7 +127,7 @@ module.exports = {
     deleteCustomLists: ['CronPolicy.canRun']
   },
 
-  /*WebhooksController: {
+  WebhooksController: {
     hrinfo: ['WebhooksPolicy.canRun']
   },*/
 
