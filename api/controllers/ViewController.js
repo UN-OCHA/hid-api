@@ -7,6 +7,8 @@ const Client = require('../models/Client');
 const User = require('../models/User');
 const HelperService = require('../services/HelperService');
 const ErrorService = require('../services/ErrorService');
+const UserController = require('./UserController');
+const AuthPolicy = require('../policies/AuthPolicy');
 const config = require('../../config/env')[process.env.NODE_ENV];
 const logger = config.logger;
 
@@ -42,6 +44,23 @@ function _getPasswordLink (args) {
   }
   return registerLink;
 }
+
+function _buildRequestUrl (request, url) {
+  let requestUrl = 'https://' + request.info.host + '/' + url;
+  if (request.query.client_id) {
+    requestUrl += '?client_id=' + request.query.client_id;
+  }
+  if (request.query.redirect_uri) {
+    requestUrl += '&redirect_uri=' + request.query.redirect_uri;
+  }
+  if (request.query.response_type) {
+    requestUrl += '&response_type=' + request.query.response_type;
+  }
+  if (request.query.scope) {
+    requestUrl += '&scope=' + request.query.scope;
+  }
+  return requestUrl;
+},
 
 module.exports = {
 
@@ -138,7 +157,6 @@ module.exports = {
       //find & remove "?"
       hostname = hostname.split('?')[0];
       const regex = new RegExp(hostname, 'i');
-      const that = this;
       Client
         .count({redirectUri: regex})
         .then(count => {
@@ -160,25 +178,8 @@ module.exports = {
     }
   },
 
-  _buildRequestUrl: function (request, url) {
-    let requestUrl = 'https://' + request.info.host + '/' + url;
-    if (request.query.client_id) {
-      requestUrl += '?client_id=' + request.query.client_id;
-    }
-    if (request.query.redirect_uri) {
-      requestUrl += '&redirect_uri=' + request.query.redirect_uri;
-    }
-    if (request.query.response_type) {
-      requestUrl += '&response_type=' + request.query.response_type;
-    }
-    if (request.query.scope) {
-      requestUrl += '&scope=' + request.query.scope;
-    }
-    return requestUrl;
-  },
-
   register: function (request, reply) {
-    const requestUrl = this._buildRequestUrl(request, 'verify2');
+    const requestUrl = _buildRequestUrl(request, 'verify2');
     reply.view('register', {
       title: 'Register in Humanitarian ID',
       requestUrl: requestUrl,
@@ -189,8 +190,6 @@ module.exports = {
   registerPost: function (request, reply) {
     // Check recaptcha
     const recaptcha = new Recaptcha({siteKey: process.env.RECAPTCHA_PUBLIC_KEY, secretKey: process.env.RECAPTCHA_PRIVATE_KEY});
-    const UserController = this.app.controllers.UserController;
-    const that = this;
     const registerLink = _getRegisterLink(request.payload);
     const passwordLink = _getPasswordLink(request.payload);
     recaptcha
@@ -220,7 +219,6 @@ module.exports = {
   },
 
   verify: function (request, reply) {
-    const UserController = this.app.controllers.UserController;
     if (!request.query.hash && !request.query.email && !request.query.time) {
       return reply(Boom.badRequest('Missing hash parameter'));
     }
@@ -244,14 +242,13 @@ module.exports = {
   },
 
   password: function (request, reply) {
-    const requestUrl = this._buildRequestUrl(request, 'new_password');
+    const requestUrl = _buildRequestUrl(request, 'new_password');
     reply.view('password', {
       requestUrl: requestUrl
     });
   },
 
   passwordPost: function (request, reply) {
-    const UserController = this.app.controllers.UserController;
     const that = this;
     UserController.resetPasswordEndpoint(request, function (result) {
       const al = _getAlert(
@@ -303,17 +300,14 @@ module.exports = {
   },
 
   newPasswordPost: function (request, reply) {
-    const UserController = this.app.controllers.UserController;
-    const that = this;
     const cookie = request.yar.get('session');
-    const authPolicy = this.app.policies.AuthPolicy;
 
     if (cookie && cookie.hash && cookie.id && cookie.time && !cookie.totp) {
       User
         .findOne({_id: cookie.id})
         .then(user => {
           const token = request.payload['x-hid-totp'];
-          return authPolicy.isTOTPValid(user, token);
+          return AuthPolicy.isTOTPValid(user, token);
         })
         .then((user) => {
           cookie.totp = true;
@@ -379,7 +373,6 @@ module.exports = {
       return reply.redirect('/');
     }
     else {
-      const that = this;
       User
         .findOne({_id: cookie.userId})
         .then(user => {
