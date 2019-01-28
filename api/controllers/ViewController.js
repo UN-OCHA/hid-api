@@ -60,7 +60,7 @@ function _buildRequestUrl (request, url) {
     requestUrl += '&scope=' + request.query.scope;
   }
   return requestUrl;
-},
+}
 
 module.exports = {
 
