@@ -7,10 +7,12 @@ const Client = require('../models/Client');
 const User = require('../models/User');
 const HelperService = require('../services/HelperService');
 const ErrorService = require('../services/ErrorService');
+const config = require('../../config/env')[process.env.NODE_ENV];
+const logger = config.logger;
 
-module.exports = class ViewController extends Controller {
+module.exports = {
 
-  _getAlert(result, success, error) {
+  _getAlert: function (result, success, error) {
     if (!result || !result.isBoom) {
       return {
         type: 'success',
@@ -23,27 +25,27 @@ module.exports = class ViewController extends Controller {
         message: error
       };
     }
-  }
+  },
 
-  _getRegisterLink(args) {
+  _getRegisterLink: function (args) {
     const params = HelperService.getOauthParams(args);
     let registerLink = '/register';
     if (params) {
       registerLink += '?' + params;
     }
     return registerLink;
-  }
+  },
 
-  _getPasswordLink(args) {
+  _getPasswordLink: function (args) {
     const params = HelperService.getOauthParams(args);
     let registerLink = '/password';
     if (params) {
       registerLink += '?' + params;
     }
     return registerLink;
-  }
+  },
 
-  login (request, reply) {
+  login: function (request, reply) {
     const cookie = request.yar.get('session');
 
     if (!cookie || (cookie && !cookie.userId)) {
@@ -117,9 +119,9 @@ module.exports = class ViewController extends Controller {
         alert: false
       });
     }
-  }
+  },
 
-  logout (request, reply) {
+  logout: function (request, reply) {
     request.yar.reset();
     if (request.query.redirect) {
       // Validate redirect URL
@@ -144,21 +146,21 @@ module.exports = class ViewController extends Controller {
             return reply.redirect(request.query.redirect);
           }
           else {
-            that.log.warn('Redirecting to ' + request.query.redirect + ' is not allowed', { security: true, fail: true, request: request});
+            logger.warn('Redirecting to ' + request.query.redirect + ' is not allowed', { security: true, fail: true, request: request});
             return reply.redirect('/');
           }
         })
         .catch(err => {
-          that.log.error('Error logging user out', {request: request, error: err});
+          logger.error('Error logging user out', {request: request, error: err});
           return reply.redirect('/');
         });
     }
     else {
       return reply.redirect('/');
     }
-  }
+  },
 
-  _buildRequestUrl (request, url) {
+  _buildRequestUrl: function (request, url) {
     let requestUrl = 'https://' + request.info.host + '/' + url;
     if (request.query.client_id) {
       requestUrl += '?client_id=' + request.query.client_id;
@@ -173,18 +175,18 @@ module.exports = class ViewController extends Controller {
       requestUrl += '&scope=' + request.query.scope;
     }
     return requestUrl;
-  }
+  },
 
-  register (request, reply) {
+  register: function (request, reply) {
     const requestUrl = this._buildRequestUrl(request, 'verify2');
     reply.view('register', {
       title: 'Register in Humanitarian ID',
       requestUrl: requestUrl,
       recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY
     });
-  }
+  },
 
-  registerPost (request, reply) {
+  registerPost: function (request, reply) {
     // Check recaptcha
     const recaptcha = new Recaptcha({siteKey: process.env.RECAPTCHA_PUBLIC_KEY, secretKey: process.env.RECAPTCHA_PRIVATE_KEY});
     const UserController = this.app.controllers.UserController;
@@ -215,9 +217,9 @@ module.exports = class ViewController extends Controller {
           passwordLink: passwordLink
         });
       });
-  }
+  },
 
-  verify (request, reply) {
+  verify: function (request, reply) {
     const UserController = this.app.controllers.UserController;
     if (!request.query.hash && !request.query.email && !request.query.time) {
       return reply(Boom.badRequest('Missing hash parameter'));
@@ -239,16 +241,16 @@ module.exports = class ViewController extends Controller {
         passwordLink: passwordLink
       });
     });
-  }
+  },
 
-  password (request, reply) {
+  password: function (request, reply) {
     const requestUrl = this._buildRequestUrl(request, 'new_password');
     reply.view('password', {
       requestUrl: requestUrl
     });
-  }
+  },
 
-  passwordPost (request, reply) {
+  passwordPost: function (request, reply) {
     const UserController = this.app.controllers.UserController;
     const that = this;
     UserController.resetPasswordEndpoint(request, function (result) {
@@ -266,9 +268,9 @@ module.exports = class ViewController extends Controller {
         passwordLink: passwordLink
       });
     });
-  }
+  },
 
-  newPassword (request, reply) {
+  newPassword: function (request, reply) {
     const that = this;
     request.yar.reset();
     request.yar.set('session', { hash: request.query.hash, id: request.query.id, time: request.query.time, totp: false});
@@ -298,9 +300,9 @@ module.exports = class ViewController extends Controller {
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  newPasswordPost (request, reply) {
+  newPasswordPost: function (request, reply) {
     const UserController = this.app.controllers.UserController;
     const that = this;
     const cookie = request.yar.get('session');
@@ -367,10 +369,10 @@ module.exports = class ViewController extends Controller {
         }
       }, false);
     }
-  }
+  },
 
   // Display a default user page when user is logged in without OAuth
-  user (request, reply) {
+  user: function (request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {

@@ -9,6 +9,8 @@
 
 'use strict';
 
+const ViewController = require('../api/controllers/ViewController');
+
 module.exports = [
 
   /**
@@ -17,67 +19,67 @@ module.exports = [
   {
     method: 'GET',
     path: '/',
-    handler: 'ViewController.login'
+    handler: ViewController.login
   },
 
   {
     method: 'GET',
     path: '/register',
-    handler: 'ViewController.register'
+    handler: ViewController.register
   },
 
   {
     method: 'POST',
     path: '/register',
-    handler: 'ViewController.registerPost'
+    handler: ViewController.registerPost
   },
 
   {
     method: 'GET',
     path: '/verify',
-    handler: 'ViewController.newPassword'
+    handler: ViewController.newPassword
   },
 
   {
     method: 'GET',
     path: '/verify2',
-    handler: 'ViewController.verify'
+    handler: ViewController.verify
   },
 
   {
     method: 'GET',
     path: '/logout',
-    handler: 'ViewController.logout'
+    handler: ViewController.logout
   },
 
   {
     method: 'GET',
     path: '/password',
-    handler: 'ViewController.password'
+    handler: ViewController.password
   },
 
   {
     method: 'POST',
     path: '/password',
-    handler: 'ViewController.passwordPost'
+    handler: ViewController.passwordPost
   },
 
   {
     method: 'GET',
     path: '/new_password',
-    handler: 'ViewController.newPassword'
+    handler: ViewController.newPassword
   },
 
   {
     method: 'POST',
     path: '/new_password',
-    handler: 'ViewController.newPasswordPost'
+    handler: ViewController.newPasswordPost
   },
 
   {
     method: 'GET',
     path: '/user',
-    handler: 'ViewController.user'
+    handler: ViewController.user
   },
 
   {

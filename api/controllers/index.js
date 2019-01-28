@@ -1,6 +1,6 @@
 'use strict';
 
-exports.ViewController = require('./ViewController');
+//exports.ViewController = require('./ViewController');
 exports.AuthController = require('./AuthController');
 exports.UserController = require('./UserController');
 exports.ListController = require('./ListController');
