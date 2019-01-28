@@ -10,9 +10,9 @@ const ErrorService = require('../services/ErrorService');
  * @module NotificationController
  * @description Generated Trails.js Controller.
  */
-module.exports = class NotificationController extends Controller{
+module.exports = {
 
-  find (request, reply) {
+  find: function (request, reply) {
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
 
@@ -33,9 +33,9 @@ module.exports = class NotificationController extends Controller{
         ErrorService.handle(err, request, reply);
       });
 
-  }
+  },
 
-  update (request, reply) {
+  update: function (request, reply) {
 
     if (!request.payload || !request.payload.hasOwnProperty('read') || !request.payload.hasOwnProperty('notified')) {
       return reply(Boom.badRequest());

@@ -1,6 +1,5 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const Boom = require('boom');
 const fs = require('fs');
 const microsoftGraph = require('@microsoft/microsoft-graph-client');
@@ -13,12 +12,11 @@ const ErrorService = require('../services/ErrorService');
  * @module OutlookController
  * @description Generated Trails.js Controller.
  */
-module.exports = class OutlookController extends Controller{
+module.exports = {
 
-  saveOutlookCredentials (request, reply) {
+  saveOutlookCredentials: function (request, reply) {
     const credentials = JSON.parse(fs.readFileSync('keys/outlook.json'));
     const oauth2 = require('simple-oauth2').create(credentials);
-    const that = this;
     if (request.payload.code && request.payload.redirectUri) {
       oauth2.authorizationCode.getToken({
         code: request.payload.code,
@@ -45,14 +43,13 @@ module.exports = class OutlookController extends Controller{
     else {
       return reply(Boom.badRequest());
     }
-  }
+  },
 
-  create (request, reply) {
+  create: function (request, reply) {
     const appCreds = JSON.parse(fs.readFileSync('keys/outlook.json'));
     const oauth2 = require('simple-oauth2').create(appCreds);
     const credentials = request.params.currentUser.outlookCredentials;
     if (request.payload && request.payload.list) {
-      const that = this;
       let accessToken = '', client = {}, gList = {}, gOsync = {};
       OutlookSync
         .findOne({user: request.params.currentUser._id, list: request.payload.list})

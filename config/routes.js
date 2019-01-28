@@ -16,6 +16,8 @@ const CronController = require('../api/controllers/CronController');
 const CronPolicy = require('../api/policies/CronPolicy');
 const ServiceCredentialsController = require('../api/controllers/ServiceCredentialsController');
 const AuthPolicy = require('../api/policies/AuthPolicy');
+const OutlookController = require('../api/controllers/OutlookController');
+const NotificationController = require('../api/controller/NotificationController');
 
 module.exports = [
 
@@ -351,7 +353,10 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/user/{id}/outlookcredentials',
-    handler: 'OutlookController.saveOutlookCredentials'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: OutlookController.saveOutlookCredentials
   },
 
   {
@@ -423,13 +428,19 @@ module.exports = [
   {
     method: 'GET',
     path: '/api/v2/notification/{id?}',
-    handler: 'NotificationController.find'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: NotificationController.find
   },
 
   {
     method: 'PUT',
     path: '/api/v2/notification/{id?}',
-    handler: 'NotificationController.update'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: NotificationController.update
   },
 
   {
@@ -534,7 +545,10 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/outlookGroup',
-    handler: 'OutlookController.create'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: OutlookController.create
   },
 
   {

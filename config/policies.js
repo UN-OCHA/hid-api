@@ -83,10 +83,10 @@ module.exports = {
     update: ['AuthPolicy.isAuthenticated', 'ListUserPolicy.canUpdate']
   },
 
-  NotificationController: {
+  /*NotificationController: {
     find: ['AuthPolicy.isAuthenticated'],
     update: ['AuthPolicy.isAuthenticated']
-  },
+  },*/
 
   ListController: {
     create: ['AuthPolicy.isAuthenticated', 'ListPolicy.canCreate'],
@@ -101,12 +101,12 @@ module.exports = {
     saveGoogleCredentials: ['AuthPolicy.isAuthenticated']
   },
 
-  OutlookController: {
+  /*OutlookController: {
     saveOutlookCredentials: ['AuthPolicy.isAuthenticated'],
     create: ['AuthPolicy.isAuthenticated']
   },
 
-  /*CronController: {
+  CronController: {
     synchronizeGoogleSpreadsheets: ['CronPolicy.canRun'],
     deleteExpiredUsers: ['CronPolicy.canRun'],
     deleteExpiredTokens: ['CronPolicy.canRun'],
