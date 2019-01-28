@@ -28,6 +28,8 @@ const OperationController = require('../api/controllers/OperationController');
 const OperationsPolicy = require('../api/policies/OperationsPolicy');
 const ListUserController = require('../api/controllers/ListUserController');
 const ListUserPolicy = require('../api/policies/ListUserPolicy');
+const ServiceController = require('../api/controllers/ServiceController');
+const ServicePolicy = require('../api/policies/ServicePolicy');
 
 module.exports = [
 
@@ -357,13 +359,21 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/user/{id}/subscriptions',
-    handler: 'ServiceController.subscribe'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      ServicePolicy.canSubscribe
+    ],
+    handler: ServiceController.subscribe
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}/subscriptions/{serviceId}',
-    handler: 'ServiceController.unsubscribe'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      ServicePolicy.canUnsubscribe
+    ],
+    handler: ServiceController.unsubscribe
   },
 
   {
@@ -514,25 +524,37 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/service',
-    handler: 'ServiceController.create'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: ServiceController.create
   },
 
   {
     method: 'GET',
     path: '/api/v2/service/{id?}',
-    handler: 'ServiceController.find'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: ServiceController.find
   },
 
   {
     method: 'GET',
     path: '/api/v2/service/mailchimp/lists',
-    handler: 'ServiceController.mailchimpLists'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: ServiceController.mailchimpLists
   },
 
   {
     method: 'GET',
     path: '/api/v2/service/google/groups',
-    handler: 'ServiceController.googleGroups'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: ServiceController.googleGroups
   },
 
   {
@@ -547,13 +569,21 @@ module.exports = [
   {
     method: [ 'PUT', 'PATCH' ],
     path: '/api/v2/service/{id}',
-    handler: 'ServiceController.update'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      ServicePolicy.canUpdate
+    ],
+    handler: ServiceController.update
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/service/{id}',
-    handler: 'ServiceController.destroy'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      ServicePolicy.canDestroy
+    ],
+    handler: ServiceController.destroy
   },
 
   {

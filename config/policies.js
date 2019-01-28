@@ -25,7 +25,7 @@ module.exports = {
     find: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
     update: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
     destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin']
-  },*/
+  },
 
   ServiceController: {
     create: ['AuthPolicy.isAuthenticated'],
@@ -38,7 +38,7 @@ module.exports = {
     unsubscribe: ['AuthPolicy.isAuthenticated', 'ServicePolicy.canUnsubscribe']
   },
 
-  /*ServiceCredentialsController: {
+  ServiceCredentialsController: {
     find: ['AuthPolicy.isAuthenticated']
   },*/
 

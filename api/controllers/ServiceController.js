@@ -1,6 +1,5 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const Boom = require('boom');
 const async = require('async');
 const Mailchimp = require('mailchimp-api-v3');
@@ -16,9 +15,9 @@ const ErrorService = require('../services/ErrorService');
  * @module ServiceController
  * @description Controller for Services (Mailchimp, GGroup).
  */
-module.exports = class ServiceController extends Controller{
+module.exports = {
 
-  create (request, reply) {
+  create: function (request, reply) {
     request.payload.owner = request.params.currentUser._id;
     Service
       .create(request.payload)
@@ -31,9 +30,9 @@ module.exports = class ServiceController extends Controller{
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  find (request, reply) {
+  find: function (request, reply) {
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
 
@@ -113,9 +112,9 @@ module.exports = class ServiceController extends Controller{
           ErrorService.handle(err, request, reply);
         });
     }
-  }
+  },
 
-  update (request, reply) {
+  update: function (request, reply) {
     Service
       .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
       .then((service) => {
@@ -124,11 +123,9 @@ module.exports = class ServiceController extends Controller{
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  destroy (request, reply) {
-
-    this.log.debug('[ServiceController] (destroy) model = service, query =', request.query, {request: request});
+  destroy: function (request, reply) {
 
     const criteria = {};
     criteria['subscriptions.service'] = request.params.id;
@@ -157,9 +154,9 @@ module.exports = class ServiceController extends Controller{
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  mailchimpLists (request, reply) {
+  mailchimpLists: function (request, reply) {
     if (request.query.apiKey) {
       try {
         const mc = new Mailchimp(request.query.apiKey);
@@ -180,10 +177,10 @@ module.exports = class ServiceController extends Controller{
     else {
       reply(Boom.badRequest('missing Mailchimp API Key'));
     }
-  }
+  },
 
   // Get google groups from a domain
-  googleGroups(request, reply) {
+  googleGroups: function (request, reply) {
     // Find service credentials associated to domain
     ServiceCredentials
       .findOne({ type: 'googlegroup', 'googlegroup.domain': request.query.domain})
@@ -208,12 +205,11 @@ module.exports = class ServiceController extends Controller{
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
 
   // Subscribe a user to a service
-  subscribe (request, reply) {
-    const that = this;
+  subscribe: function (request, reply) {
     let user = {}, service = {};
     User
       .findOne({'_id': request.params.id})
@@ -349,19 +345,9 @@ module.exports = class ServiceController extends Controller{
           ErrorService.handle(err, request, reply);
         }
       });
-  }
+  },
 
-  unsubscribe (request, reply) {
-
-    this.log.debug(
-      '[ServiceController] Unsubscribing user ' +
-      request.params.id +
-      ' from ' +
-      request.params.serviceId,
-      { request: request }
-    );
-
-    const that = this;
+  unsubscribe: function (request, reply) {
     let user = {}, service = {};
     let sendNotification = true;
     User
