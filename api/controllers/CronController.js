@@ -1,6 +1,5 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const async = require('async');
 const https = require('https');
 const listAttributes = [
@@ -18,15 +17,17 @@ const User = require('../models/User');
 const EmailService = require('../services/EmailService');
 const NotificationService = require('../services/NotificationService');
 const ErrorService = require('../services/ErrorService');
+const ListUserController = require('./ListUserController');
+const config = require('../../config/env')[process.env.NODE_ENV];
+const logger = config.logger;
 
 /**
  * @module CronController
  * @description Generated Trails.js Controller.
  */
-module.exports = class CronController extends Controller {
+module.exports = {
 
-  deleteExpiredUsers (request, reply) {
-    const that = this;
+  deleteExpiredUsers: function (request, reply) {
     const now = new Date();
     const start = new Date(2016, 0, 1, 0, 0, 0);
     User
@@ -37,11 +38,10 @@ module.exports = class CronController extends Controller {
       .catch (err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  deleteExpiredTokens (request, reply) {
-    this.app.log.info('Deleting expired Oauth Tokens');
-    const that = this;
+  deleteExpiredTokens: function (request, reply) {
+    logger.info('Deleting expired Oauth Tokens');
     const now = new Date();
     OauthToken
       .remove({expires: {$lt: now }})
@@ -51,11 +51,10 @@ module.exports = class CronController extends Controller {
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  sendReminderVerifyEmails (request, reply) {
-    const app = this.app;
-    this.app.log.info('sending reminder emails to verify addresses');
+  sendReminderVerifyEmails: function (request, reply) {
+    logger.info('sending reminder emails to verify addresses');
     const stream = User.find({'email_verified': false}).cursor();
 
     stream.on('data', function(user) {
@@ -65,7 +64,7 @@ module.exports = class CronController extends Controller {
 
         EmailService.sendReminderVerify(user, function (err) {
           if (err) {
-            app.log.error(err);
+            logger.error(err);
             sthat.resume();
           }
           else {
@@ -88,11 +87,10 @@ module.exports = class CronController extends Controller {
     stream.on('end', function () {
       reply().code(204);
     });
-  }
+  },
 
-  sendReminderUpdateEmails (request, reply) {
-    const app = this.app;
-    app.log.info('Sending reminder update emails to contacts');
+  sendReminderUpdateEmails: function (request, reply) {
+    logger.info('Sending reminder update emails to contacts');
     const d = new Date(),
       sixMonthsAgo = d.valueOf() - 183 * 24 * 3600 * 1000;
 
@@ -108,7 +106,7 @@ module.exports = class CronController extends Controller {
       if (user.shouldSendReminderUpdate()) {
         EmailService.sendReminderUpdate(user, function (err) {
           if (err) {
-            app.log.error(err);
+            logger.error(err);
             that.resume();
           }
           else {
@@ -130,11 +128,10 @@ module.exports = class CronController extends Controller {
     stream.on('end', function () {
       reply().code(204);
     });
-  }
+  },
 
-  sendReminderCheckoutEmails (request, reply) {
-    const app = this.app;
-    app.log.info('Sending reminder checkout emails to contacts');
+  sendReminderCheckoutEmails: function (request, reply) {
+    logger.info('Sending reminder checkout emails to contacts');
     let populate = '';
     const criteria = {};
     criteria.email_verified = true;
@@ -155,7 +152,7 @@ module.exports = class CronController extends Controller {
 
     stream.on('data', function(user) {
       this.pause();
-      app.log.info('Checking ' + user.email);
+      logger.info('Checking ' + user.email);
       const that = this;
       const now = Date.now();
       async.eachSeries(listAttributes, function (attr, nextAttr) {
@@ -185,11 +182,10 @@ module.exports = class CronController extends Controller {
         that.resume();
       });
     });
-  }
+  },
 
-  doAutomatedCheckout (request, reply) {
-    const app = this.app;
-    app.log.info('Running automated checkouts');
+  doAutomatedCheckout: function (request, reply) {
+    logger.info('Running automated checkouts');
     let populate = '';
     const criteria = {};
     criteria.email_verified = true;
@@ -240,11 +236,10 @@ module.exports = class CronController extends Controller {
     stream.on('end', function () {
       reply().code(204);
     });
-  }
+  },
 
-  sendReminderCheckinEmails (request, reply) {
-    const app = this.app;
-    app.log.info('Sending reminder checkin emails to contacts');
+  sendReminderCheckinEmails: function (request, reply) {
+    logger.info('Sending reminder checkin emails to contacts');
 
     reply().code(204);
 
@@ -255,7 +250,7 @@ module.exports = class CronController extends Controller {
 
     stream.on('data', function(user) {
       this.pause();
-      app.log.info('Checking ' + user.email);
+      logger.info('Checking ' + user.email);
       const that = this;
       async.eachSeries(user.operations, function (lu, nextLu) {
         const d = new Date(),
@@ -284,9 +279,9 @@ module.exports = class CronController extends Controller {
         that.resume();
       });
     });
-  }
+  },
 
-  forcedResetPasswordAlert (request, reply) {
+  forcedResetPasswordAlert: function (request, reply) {
     const current = Date.now();
     const fiveMonths = new Date(current - 5 * 30 * 24 * 3600 * 1000);
     const stream = User.find({totp: false, passwordResetAlert30days: false, $or: [{lastPasswordReset: { $lte: fiveMonths }}, {lastPasswordReset: null}]}).cursor();
@@ -306,9 +301,9 @@ module.exports = class CronController extends Controller {
     stream.on('end', function () {
       reply().code(204);
     });
-  }
+  },
 
-  forcedResetPasswordAlert7 (request, reply) {
+  forcedResetPasswordAlert7: function (request, reply) {
     const current = Date.now();
     const fiveMonthsAnd23Days = new Date(current - 173 * 24 * 3600 * 1000);
     const stream = User.find({totp: false, passwordResetAlert7days: false, $or: [{lastPasswordReset: { $lte: fiveMonthsAnd23Days }}, {lastPasswordReset: null}]}).cursor();
@@ -325,9 +320,9 @@ module.exports = class CronController extends Controller {
     stream.on('end', function () {
       reply().code(204);
     });
-  }
+  },
 
-  forceResetPassword (request, reply) {
+  forceResetPassword: function (request, reply) {
     const current = Date.now();
     const sixMonths = new Date(current - 6 * 30 * 24 * 3600 * 1000);
     const stream = User.find({totp: false, passwordResetAlert: false, $or: [{lastPasswordReset: { $lte: sixMonths }}, {lastPasswordReset: null}]}).cursor();
@@ -344,9 +339,9 @@ module.exports = class CronController extends Controller {
     stream.on('end', function () {
       reply().code(204);
     });
-  }
+  },
 
-  sendSpecialPasswordResetEmail (request, reply) {
+  sendSpecialPasswordResetEmail: function (request, reply) {
     reply().code(204);
     const stream = User.find({deleted: false}).cursor();
     stream.on('data', function (user) {
@@ -356,9 +351,9 @@ module.exports = class CronController extends Controller {
         sthat.resume();
       });
     });
-  }
+  },
 
-  setListCounts (request, reply) {
+  setListCounts: function (request, reply) {
     reply().code(204);
     const stream = List.find({deleted: false}).cursor();
     stream.on('data', function (list) {
@@ -379,7 +374,7 @@ module.exports = class CronController extends Controller {
           sthat.resume();
         });
     });
-  }
+  },
 
   /*adjustEmailVerified (request, reply) {
     const app = this.app;
@@ -439,9 +434,8 @@ module.exports = class CronController extends Controller {
     });
   }*/
 
-  verifyAutomatically (request, reply) {
-    const ListUserController = this.app.controllers.ListUserController;
-    this.app.log.info('automatically verify users');
+  verifyAutomatically: function (request, reply) {
+    logger.info('automatically verify users');
     const that = this;
     const stream = User.find({}).cursor();
 
@@ -492,9 +486,9 @@ module.exports = class CronController extends Controller {
     stream.on('end', function () {
       reply().code(204);
     });
-  }
+  },
 
-  verificationExpiryEmail (request, reply) {
+  verificationExpiryEmail: function (request, reply) {
     const current = Date.now();
     const oneYear = new Date(current - 358 * 24 * 3600 * 1000);
     const stream = User.find({verified: true, verifiedOn: { $lte: oneYear }}).cursor();
@@ -514,9 +508,9 @@ module.exports = class CronController extends Controller {
     stream.on('end', function () {
       reply().code(204);
     });
-  }
+  },
 
-  unverifyAfterOneYear (request, reply) {
+  unverifyAfterOneYear: function (request, reply) {
     const current = Date.now();
     const oneYear = new Date(current - 365 * 24 * 3600 * 1000);
     const stream = User.find({verified: true, verifiedOn: { $lte: oneYear }, verificationExpiryEmail: true}).cursor();
@@ -536,9 +530,9 @@ module.exports = class CronController extends Controller {
     stream.on('end', function () {
       reply().code(204);
     });
-  }
+  },
 
-  verifyEmails (request, reply) {
+  verifyEmails: function (request, reply) {
     const stream = User.find({email_verified: false}).cursor();
     stream.on('data', function (user) {
       const sthat = this;
@@ -568,9 +562,9 @@ module.exports = class CronController extends Controller {
         });
       });
     });
-  }
+  },
 
-  setAcronymsOrNames (request, reply) {
+  setAcronymsOrNames: function (request, reply) {
     reply().code(204);
     const stream = User.find({}).cursor();
     stream.on('data', function (user) {
@@ -587,9 +581,9 @@ module.exports = class CronController extends Controller {
         user.save();
       }
     });
-  }
+  },
 
-  deleteCustomLists(request, reply) {
+  deleteCustomLists: function (request, reply) {
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
     List

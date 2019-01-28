@@ -137,7 +137,7 @@ function _parseListLanguage (list, label, acronym, language) {
 module.exports = {
 
   // Receive events from hrinfo and act upon it
-  hrinfo (request, reply) {
+  hrinfo: function (request, reply) {
     const listTypes = [
       'operation',
       'bundle',

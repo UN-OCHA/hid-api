@@ -12,6 +12,8 @@
 const ViewController = require('../api/controllers/ViewController');
 const WebhooksController = require('../api/controllers/WebhooksController');
 const WebhooksPolicy = require('../api/policies/WebhooksPolicy');
+const CronController = require('../api/controllers/CronController');
+const CronPolicy = require('../api/policies/CronPolicy');
 
 module.exports = [
 
@@ -533,109 +535,163 @@ module.exports = [
   {
     method: 'GET',
     path: '/api/v2/cron/deleteExpiredUsers',
-    handler: 'CronController.deleteExpiredUsers'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.deleteExpiredUsers
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/deleteExpiredTokens',
-    handler: 'CronController.deleteExpiredTokens'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.deleteExpiredTokens
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/sendReminderVerifyEmails',
-    handler: 'CronController.sendReminderVerifyEmails'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.sendReminderVerifyEmails
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/sendReminderUpdateEmails',
-    handler: 'CronController.sendReminderUpdateEmails'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.sendReminderUpdateEmails
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/sendReminderCheckoutEmails',
-    handler: 'CronController.sendReminderCheckoutEmails'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.sendReminderCheckoutEmails
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/sendReminderCheckinEmails',
-    handler: 'CronController.sendReminderCheckinEmails'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.sendReminderCheckinEmails
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/forcedResetPasswordAlert',
-    handler: 'CronController.forcedResetPasswordAlert'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.forcedResetPasswordAlert
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/forceResetPassword',
-    handler: 'CronController.forceResetPassword'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.forceResetPassword
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/forcedResetPasswordAlert7',
-    handler: 'CronController.forcedResetPasswordAlert7'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.forcedResetPasswordAlert7
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/doAutomatedCheckout',
-    handler: 'CronController.doAutomatedCheckout'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.doAutomatedCheckout
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/specialPasswordReset',
-    handler: 'CronController.sendSpecialPasswordResetEmail'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.sendSpecialPasswordResetEmail
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/verifyAutomatically',
-    handler: 'CronController.verifyAutomatically'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.verifyAutomatically
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/verificationExpiryEmail',
-    handler: 'CronController.verificationExpiryEmail'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.verificationExpiryEmail
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/unverifyAfterOneYear',
-    handler: 'CronController.unverifyAfterOneYear'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.unverifyAfterOneYear
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/setListCounts',
-    handler: 'CronController.setListCounts'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.setListCounts
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/verifyEmails',
-    handler: 'CronController.verifyEmails'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.verifyEmails
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/setAcronymsOrNames',
-    handler: 'CronController.setAcronymsOrNames'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.setAcronymsOrNames
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/deleteCustomLists',
-    handler: 'CronController.deleteCustomLists'
+    pre: [
+      CronPolicy.canRun
+    ],
+    handler: CronController.deleteCustomLists
   },
 
   {

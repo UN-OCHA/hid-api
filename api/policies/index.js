@@ -4,6 +4,6 @@ exports.ServicePolicy = require('./ServicePolicy');
 exports.ListUserPolicy = require('./ListUserPolicy');
 exports.ListPolicy = require('./ListPolicy');
 exports.GSSSyncPolicy = require('./GSSSyncPolicy');
-exports.CronPolicy = require('./CronPolicy');
+//exports.CronPolicy = require('./CronPolicy');
 //exports.WebhooksPolicy = require('./WebhooksPolicy');
 exports.OperationsPolicy = require('./OperationsPolicy');
