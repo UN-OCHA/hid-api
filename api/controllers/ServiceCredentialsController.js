@@ -1,6 +1,5 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const ServiceCredentials = require('../models/ServiceCredentials');
 const HelperService = require('../services/HelperService');
 const ErrorService = require('../services/ErrorService');
@@ -9,9 +8,9 @@ const ErrorService = require('../services/ErrorService');
  * @module ServiceCredentialsController
  * @description Generated Trails.js Controller.
  */
-module.exports = class ServiceCredentialsController extends Controller{
+module.exports = {
 
-  find (request, reply) {
+  find: function (request, reply) {
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
     const that = this;

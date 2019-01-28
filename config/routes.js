@@ -14,6 +14,8 @@ const WebhooksController = require('../api/controllers/WebhooksController');
 const WebhooksPolicy = require('../api/policies/WebhooksPolicy');
 const CronController = require('../api/controllers/CronController');
 const CronPolicy = require('../api/policies/CronPolicy');
+const ServiceCredentialsController = require('../api/controllers/ServiceCredentialsController');
+const AuthPolicy = require('../api/policies/AuthPolicy');
 
 module.exports = [
 
@@ -457,7 +459,10 @@ module.exports = [
   {
     method: 'GET',
     path: '/api/v2/servicecredentials',
-    handler: 'ServiceCredentialsController.find'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: ServiceCredentialsController.find
   },
 
   {

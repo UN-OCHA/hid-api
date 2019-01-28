@@ -38,9 +38,9 @@ module.exports = {
     unsubscribe: ['AuthPolicy.isAuthenticated', 'ServicePolicy.canUnsubscribe']
   },
 
-  ServiceCredentialsController: {
+  /*ServiceCredentialsController: {
     find: ['AuthPolicy.isAuthenticated']
-  },
+  },*/
 
   // Limit 2FA to admins for now
   TOTPController: {
