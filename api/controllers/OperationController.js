@@ -1,6 +1,5 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const Boom = require('boom');
 const Operation = require('../models/Operation');
 const HelperService = require('../services/HelperService');
@@ -10,9 +9,9 @@ const ErrorService = require('../services/ErrorService');
  * @module OperationController
  * @description Generated Trails.js Controller.
  */
-module.exports = class OperationController extends Controller{
+module.exports = {
 
-  create (request, reply) {
+  create: function (request, reply) {
     Operation
       .create(request.payload)
       .then((operation) => {
@@ -24,9 +23,9 @@ module.exports = class OperationController extends Controller{
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  find (request, reply) {
+  find: function (request, reply) {
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
 
@@ -61,9 +60,9 @@ module.exports = class OperationController extends Controller{
           ErrorService.handle(err, request, reply);
         });
     }
-  }
+  },
 
-  update (request, reply) {
+  update: function (request, reply) {
     Operation
       .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
       .then((client) => {
@@ -72,9 +71,9 @@ module.exports = class OperationController extends Controller{
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  destroy (request, reply) {
+  destroy: function (request, reply) {
     Operation
       .remove({ _id: request.params.id })
       .then(() => {

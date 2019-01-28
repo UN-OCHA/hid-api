@@ -1,6 +1,5 @@
 'use strict';
 
-const Policy = require('trails/policy');
 const Boom = require('boom');
 const Operation = require('../models/Operation');
 const ErrorService = require('../services/ErrorService');
@@ -9,9 +8,9 @@ const ErrorService = require('../services/ErrorService');
  * @module OperationsPolicy
  * @description Operations Policy
  */
-module.exports = class OperationsPolicy extends Policy {
+module.exports = {
 
-  canUpdateOperation (request, reply) {
+  canUpdateOperation: function (request, reply) {
     // If user is a global manager or admin, allow it
     if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
       return reply();

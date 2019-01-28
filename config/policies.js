@@ -129,7 +129,7 @@ module.exports = {
 
   WebhooksController: {
     hrinfo: ['WebhooksPolicy.canRun']
-  },*/
+  },
 
   OperationController: {
     create: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdminOrGlobalManager'],
@@ -138,7 +138,7 @@ module.exports = {
     destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdminOrGlobalManager']
   },
 
-  /*TrustedDomainController: {
+  TrustedDomainController: {
     create: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
     find: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
     destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin']

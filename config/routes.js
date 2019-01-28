@@ -24,6 +24,8 @@ const GSSSyncController = require('../api/controllers/GSSSyncController');
 const GSSSyncPolicy = require('../api/policies/GSSSyncPolicy');
 const ListController = require('../api/controllers/ListController');
 const ListPolicy = require('../api/policies/ListPolicy');
+const OperationController = require('../api/controllers/OperationController');
+const OperationsPolicy = require('../api/policies/OperationsPolicy');
 
 module.exports = [
 
@@ -784,24 +786,39 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/operation',
-    handler: 'OperationController.create'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      AuthPolicy.isAdminOrGlobalManager
+    ],
+    handler: OperationController.create
   },
 
   {
     method: 'GET',
     path: '/api/v2/operation/{id?}',
-    handler: 'OperationController.find'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: OperationController.find
   },
 
   {
     method: 'PUT',
     path: '/api/v2/operation/{id}',
-    handler: 'OperationController.update'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      OperationsPolicy.canUpdateOperation
+    ],
+    handler: OperationController.update
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/operation/{id}',
-    handler: 'OperationController.destroy'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      AuthPolicy.isAdminOrGlobalManager
+    ],
+    handler: OperationController.destroy
   },
 ];
