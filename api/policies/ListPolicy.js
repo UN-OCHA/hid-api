@@ -1,6 +1,5 @@
 'use strict';
 
-const Policy = require('trails/policy');
 const Boom = require('boom');
 const List = require('../models/List');
 const ErrorService = require('../services/ErrorService');
@@ -9,8 +8,9 @@ const ErrorService = require('../services/ErrorService');
  * @module ListPolicy
  * @description List Policy
  */
-module.exports = class ListPolicy extends Policy {
-  canCreate (request, reply) {
+module.exports = {
+
+  canCreate: function (request, reply) {
     if (request.payload.type !== 'list') {
       return reply(
         Boom.badRequest('You are not allowed to create lists ' +
@@ -18,10 +18,9 @@ module.exports = class ListPolicy extends Policy {
       );
     }
     reply();
-  }
+  },
 
-  canUpdate (request, reply) {
-    const that = this;
+  canUpdate: function (request, reply) {
     List
       .findOne({_id: request.params.id})
       .populate('owner managers')
@@ -43,13 +42,12 @@ module.exports = class ListPolicy extends Policy {
       .catch((err) => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  canDestroy (request, reply) {
+  canDestroy: function (request, reply) {
     if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
       return reply();
     }
-    const that = this;
     List
       .findOne({_id: request.params.id})
       .populate('owner managers')

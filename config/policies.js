@@ -86,7 +86,7 @@ module.exports = {
   /*NotificationController: {
     find: ['AuthPolicy.isAuthenticated'],
     update: ['AuthPolicy.isAuthenticated']
-  },*/
+  },
 
   ListController: {
     create: ['AuthPolicy.isAuthenticated', 'ListPolicy.canCreate'],
@@ -95,13 +95,13 @@ module.exports = {
     destroy: ['AuthPolicy.isAuthenticated', 'ListPolicy.canDestroy']
   },
 
-  /*GSSSyncController: {
+  GSSSyncController: {
     create: ['AuthPolicy.isAuthenticated'],
     destroy: ['AuthPolicy.isAuthenticated', 'GSSSyncPolicy.canDestroy'],
     saveGoogleCredentials: ['AuthPolicy.isAuthenticated']
-  },*/
+  },
 
-  /*OutlookController: {
+  OutlookController: {
     saveOutlookCredentials: ['AuthPolicy.isAuthenticated'],
     create: ['AuthPolicy.isAuthenticated']
   },

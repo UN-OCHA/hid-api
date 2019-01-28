@@ -22,6 +22,8 @@ const ClientController = require('../api/controllers/ClientController');
 const TrustedDomainController = require('../api/controllers/TrustedDomainController');
 const GSSSyncController = require('../api/controllers/GSSSyncController');
 const GSSSyncPolicy = require('../api/policies/GSSSyncPolicy');
+const ListController = require('../api/controllers/ListController');
+const ListPolicy = require('../api/policies/ListPolicy');
 
 module.exports = [
 
@@ -369,25 +371,40 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/list',
-    handler: 'ListController.create'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      ListPolicy.canCreate
+    ],
+    handler: ListController.create
   },
 
   {
     method: 'GET',
     path: '/api/v2/list/{id?}',
-    handler: 'ListController.find'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: ListController.find
   },
 
   {
     method: 'PUT',
     path: '/api/v2/list/{id}',
-    handler: 'ListController.update'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      ListPolicy.canUpdate
+    ],
+    handler: ListController.update
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/list/{id}',
-    handler: 'ListController.destroy'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      ListPolicy.canDestroy
+    ],
+    handler: ListController.destroy
   },
 
   {

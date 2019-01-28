@@ -1,6 +1,5 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const Boom = require('boom');
 const _ = require('lodash');
 const async = require('async');
@@ -10,25 +9,46 @@ const User = require('../models/User');
 const HelperService = require('../services/HelperService');
 const NotificationService = require('../services/NotificationService');
 const ErrorService = require('../services/ErrorService');
+const config = require('../../config/env')[process.env.NODE_ENV];
+const logger = config.logger;
 
 /**
  * @module ListController
  * @description Generated Trails.js Controller.
  */
-module.exports = class ListController extends Controller{
 
-  _removeForbiddenAttributes (request) {
-    HelperService.removeForbiddenAttributes(List, request, ['names']);
-  }
+function _removeForbiddenAttributes (request) {
+  HelperService.removeForbiddenAttributes(List, request, ['names']);
+}
 
-  create (request, reply) {
-    this._removeForbiddenAttributes(request);
+function _notifyManagers(uids, type, request, list) {
+  User
+    .find({_id: {$in: uids}})
+    .then((users) => {
+      for (let i = 0, len = users.length; i < len; i++) {
+        NotificationService
+          .send({
+            type: type,
+            user: users[i],
+            createdBy: request.params.currentUser,
+            params: { list: list }
+          }, () => {});
+      }
+    })
+    .catch((err) => {
+      logger.error('Unexpected error', {request: request, error: err});
+    });
+}
+
+module.exports = {
+
+  create: function (request, reply) {
+    _removeForbiddenAttributes(request);
     request.payload.owner = request.params.currentUser._id;
     if (!request.payload.managers) {
       request.payload.managers = [];
     }
     request.payload.managers.push(request.params.currentUser._id);
-    const that = this;
     List
       .create(request.payload)
       .then((list) => {
@@ -37,9 +57,9 @@ module.exports = class ListController extends Controller{
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  find (request, reply) {
+  find: function (request, reply) {
     const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
@@ -66,7 +86,7 @@ module.exports = class ListController extends Controller{
     // Do not show deleted lists
     criteria.deleted = false;
 
-    this.log.debug(
+    logger.debug(
       '[ListController] (find) model = list, criteria =',
       request.query,
       request.params.id,
@@ -159,33 +179,13 @@ module.exports = class ListController extends Controller{
           ErrorService.handle(err, request, reply);
         });
     }
-  }
+  },
 
-  _notifyManagers(uids, type, request, list) {
-    const that = this;
-    User
-      .find({_id: {$in: uids}})
-      .then((users) => {
-        for (let i = 0, len = users.length; i < len; i++) {
-          NotificationService
-            .send({
-              type: type,
-              user: users[i],
-              createdBy: request.params.currentUser,
-              params: { list: list }
-            }, () => {});
-        }
-      })
-      .catch((err) => {
-        that.log.error('Unexpected error', {request: request, error: err});
-      });
-  }
+  update: function (request, reply) {
 
-  update (request, reply) {
+    _removeForbiddenAttributes(request);
 
-    this._removeForbiddenAttributes(request);
-
-    this.log.debug(
+    logger.debug(
       '[ListController] (update) model = list, criteria =',
       request.query,
       request.params.id,
@@ -194,7 +194,6 @@ module.exports = class ListController extends Controller{
       { request: request }
     );
 
-    const that = this;
     let newlist = {};
     List
       .findOne({_id: request.params.id})
@@ -222,10 +221,10 @@ module.exports = class ListController extends Controller{
         const diffAdded = _.difference(payloadManagers, listManagers);
         const diffRemoved = _.difference(listManagers, payloadManagers);
         if (diffAdded.length) {
-          that._notifyManagers(diffAdded, 'added_list_manager', request, newlist);
+          _notifyManagers(diffAdded, 'added_list_manager', request, newlist);
         }
         if (diffRemoved.length) {
-          that._notifyManagers(diffRemoved, 'removed_list_manager', request, newlist);
+          _notifyManagers(diffRemoved, 'removed_list_manager', request, newlist);
         }
 
         // Update users
@@ -246,11 +245,11 @@ module.exports = class ListController extends Controller{
       .catch((err) => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  destroy (request, reply) {
+  destroy: function (request, reply) {
 
-    this.log.debug('[ListController] (destroy) model = list, query =', request.query, { request: request});
+    logger.debug('[ListController] (destroy) model = list, query =', request.query, { request: request});
 
     List
       .findOne({ _id: request.params.id })
