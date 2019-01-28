@@ -26,6 +26,8 @@ const ListController = require('../api/controllers/ListController');
 const ListPolicy = require('../api/policies/ListPolicy');
 const OperationController = require('../api/controllers/OperationController');
 const OperationsPolicy = require('../api/policies/OperationsPolicy');
+const ListUserController = require('../api/controllers/ListUserController');
+const ListUserPolicy = require('../api/policies/ListUserPolicy');
 
 module.exports = [
 
@@ -126,7 +128,7 @@ module.exports = [
   {
     method: 'GET',
     path: '/api/v2/updatelistusers',
-    handler: 'ListUserController.updateListUsers'
+    handler: ListUserController.updateListUsers
   },
 
   {
@@ -228,19 +230,31 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/user/{id}/{childAttribute}',
-    handler: 'ListUserController.checkin'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      ListUserPolicy.canCheckin
+    ],
+    handler: ListUserController.checkin
   },
 
   {
     method: ['PUT', 'PATCH'],
     path: '/api/v2/user/{id}/{childAttribute}/{checkInId}',
-    handler: 'ListUserController.update'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      ListUserPolicy.canUpdate
+    ],
+    handler: ListUserController.update
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}/{childAttribute}/{checkInId}',
-    handler: 'ListUserController.checkout'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      ListUserPolicy.canCheckout
+    ],
+    handler: ListUserController.checkout
   },
 
   {

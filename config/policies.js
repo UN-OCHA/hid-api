@@ -77,13 +77,13 @@ module.exports = {
     deleteConnection: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate']
   },
 
-  ListUserController: {
+  /*ListUserController: {
     checkin: ['AuthPolicy.isAuthenticated', 'ListUserPolicy.canCheckin'],
     checkout: ['AuthPolicy.isAuthenticated', 'ListUserPolicy.canCheckout'],
     update: ['AuthPolicy.isAuthenticated', 'ListUserPolicy.canUpdate']
   },
 
-  /*NotificationController: {
+  NotificationController: {
     find: ['AuthPolicy.isAuthenticated'],
     update: ['AuthPolicy.isAuthenticated']
   },

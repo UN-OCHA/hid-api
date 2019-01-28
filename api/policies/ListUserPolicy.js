@@ -1,6 +1,5 @@
 'use strict';
 
-const Policy = require('trails/policy');
 const Boom = require('boom');
 const List = require('../models/List');
 const User = require('../models/User');
@@ -10,8 +9,8 @@ const ErrorService = require('../services/ErrorService');
  * @module ListUserPolicy
  * @description ListUser Policy
  */
-module.exports = class ListUserPolicy extends Policy {
-  canCheckin (request, reply) {
+module.exports = {
+  canCheckin: function (request, reply) {
     if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
       return reply();
     }
@@ -35,16 +34,15 @@ module.exports = class ListUserPolicy extends Policy {
       .catch((err) => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  canCheckout(request, reply) {
+  canCheckout: function (request, reply) {
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
     if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
       return reply();
     }
     const populate = childAttribute + '.list';
-    const that = this;
     User
       .findOne({_id: request.params.id})
       .populate(populate)
@@ -61,14 +59,13 @@ module.exports = class ListUserPolicy extends Policy {
       .catch((err) => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  canUpdate (request, reply) {
+  canUpdate: function (request, reply) {
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
 
     const populate = childAttribute + '.list';
-    const that = this;
     User
       .findOne({_id: request.params.id})
       .populate(populate)

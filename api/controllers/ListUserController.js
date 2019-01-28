@@ -1,6 +1,5 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const Boom = require('boom');
 const _ = require('lodash');
 const async = require('async');
@@ -10,119 +9,121 @@ const OutlookService = require('../services/OutlookService');
 const NotificationService = require('../services/NotificationService');
 const ErrorService = require('../services/ErrorService');
 const GSSSyncService = require('../services/GSSSyncService');
+const config = require('../../config/env')[process.env.NODE_ENV];
+const logger = config.logger;
 
 /**
  * @module ListUserController
  * @description Generated Trails.js Controller.
  */
-module.exports = class ListUserController extends Controller {
+function _checkinHelper (list, user, notify, childAttribute, currentUser) {
+ let payload = {
+   list: list._id.toString()
+ };
+ const that = this;
 
-  _checkinHelper (list, user, notify, childAttribute, currentUser) {
-    let payload = {
-      list: list._id.toString()
-    };
-    const that = this;
+ // Check that the list added corresponds to the right attribute
+ if (childAttribute !== list.type + 's' && childAttribute !== list.type) {
+   throw Boom.badRequest('Wrong list type');
+ }
 
-    // Check that the list added corresponds to the right attribute
-    if (childAttribute !== list.type + 's' && childAttribute !== list.type) {
-      throw Boom.badRequest('Wrong list type');
-    }
+ //Set the proper pending attribute depending on list type
+ if (list.joinability === 'public' ||
+   list.joinability === 'private' ||
+   list.isOwner(currentUser)) {
+   payload.pending = false;
+ }
+ else {
+   payload.pending = true;
+ }
 
-    //Set the proper pending attribute depending on list type
-    if (list.joinability === 'public' ||
-      list.joinability === 'private' ||
-      list.isOwner(currentUser)) {
-      payload.pending = false;
-    }
-    else {
-      payload.pending = true;
-    }
+ payload.name = list.name;
+ payload.acronym = list.acronym;
+ payload.owner = list.owner;
+ payload.managers = list.managers;
+ payload.visibility = list.visibility;
 
-    payload.name = list.name;
-    payload.acronym = list.acronym;
-    payload.owner = list.owner;
-    payload.managers = list.managers;
-    payload.visibility = list.visibility;
+ if (list.type === 'organization') {
+   payload.orgTypeId = list.metadata.type.id;
+   payload.orgTypeLabel = list.metadata.type.label;
+ }
 
-    if (list.type === 'organization') {
-      payload.orgTypeId = list.metadata.type.id;
-      payload.orgTypeLabel = list.metadata.type.label;
-    }
+ if (childAttribute !== 'organization') {
+   if (!user[childAttribute]) {
+     user[childAttribute] = [];
+   }
 
-    if (childAttribute !== 'organization') {
-      if (!user[childAttribute]) {
-        user[childAttribute] = [];
-      }
+   // Make sure user is not already checked in this list
+   for (let i = 0, len = user[childAttribute].length; i < len; i++) {
+     if (user[childAttribute][i].list.equals(list._id) &&
+       user[childAttribute][i].deleted === false) {
+       throw Boom.badRequest('User is already checked in');
+     }
+   }
+ }
 
-      // Make sure user is not already checked in this list
-      for (let i = 0, len = user[childAttribute].length; i < len; i++) {
-        if (user[childAttribute][i].list.equals(list._id) &&
-          user[childAttribute][i].deleted === false) {
-          throw Boom.badRequest('User is already checked in');
-        }
-      }
-    }
+ if (childAttribute !== 'organization') {
+   user[childAttribute].push(payload);
+ }
+ else {
+   user.organization = payload;
+ }
+ user.lastModified = new Date();
+ return user
+   .save()
+   .then(() => {
+     list.count = list.count + 1;
+     return list
+       .save();
+   })
+   .then(() => {
+     const managers = [];
+     list.managers.forEach(function (manager) {
+       if (manager.toString() !== currentUser._id.toString()) {
+         managers.push(manager);
+       }
+     });
+     // Notify list managers of the checkin
+     NotificationService.notifyMultiple(managers, {
+       type: 'checkin',
+       createdBy: user,
+       params: { list: list }
+     });
+     // Notify user if needed
+     if (currentUser._id.toString() !== user._id.toString() && list.type !== 'list' && notify === true && !user.hidden) {
+       logger.debug('Checked in by a different user');
+       NotificationService.send({
+         type: 'admin_checkin',
+         createdBy: currentUser,
+         user: user,
+         params: { list: list }
+       }, () => { });
+     }
+     // Notify list owner and managers of the new checkin if needed
+     if (payload.pending) {
+       logger.debug('Notifying list owners and manager of the new checkin');
+       NotificationService.sendMultiple(list.managers, {
+         type: 'pending_checkin',
+         params: { list: list, user: user }
+       }, () => { });
+     }
+     // Synchronize google spreadsheets
+     return GSSSyncService.addUserToSpreadsheets(list._id, user);
+   })
+   .then(data => {
+     return OutlookService.addUserToContactFolders(list._id, user);
+   });
+}
 
-    if (childAttribute !== 'organization') {
-      user[childAttribute].push(payload);
-    }
-    else {
-      user.organization = payload;
-    }
-    user.lastModified = new Date();
-    return user
-      .save()
-      .then(() => {
-        list.count = list.count + 1;
-        return list
-          .save();
-      })
-      .then(() => {
-        const managers = [];
-        list.managers.forEach(function (manager) {
-          if (manager.toString() !== currentUser._id.toString()) {
-            managers.push(manager);
-          }
-        });
-        // Notify list managers of the checkin
-        NotificationService.notifyMultiple(managers, {
-          type: 'checkin',
-          createdBy: user,
-          params: { list: list }
-        });
-        // Notify user if needed
-        if (currentUser._id.toString() !== user._id.toString() && list.type !== 'list' && notify === true && !user.hidden) {
-          that.log.debug('Checked in by a different user');
-          NotificationService.send({
-            type: 'admin_checkin',
-            createdBy: currentUser,
-            user: user,
-            params: { list: list }
-          }, () => { });
-        }
-        // Notify list owner and managers of the new checkin if needed
-        if (payload.pending) {
-          that.log.debug('Notifying list owners and manager of the new checkin');
-          NotificationService.sendMultiple(list.managers, {
-            type: 'pending_checkin',
-            params: { list: list, user: user }
-          }, () => { });
-        }
-        // Synchronize google spreadsheets
-        return GSSSyncService.addUserToSpreadsheets(list._id, user);
-      })
-      .then(data => {
-        return OutlookService.addUserToContactFolders(list._id, user);
-      });
-  }
+module.exports = {
 
-  checkin (request, reply) {
+  checkin: function (request, reply) {
     const userId = request.params.id;
     const childAttribute = request.params.childAttribute;
     const payload = request.payload;
     const childAttributes = User.listAttributes();
 
-    this.log.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload, { request: request});
+    logger.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload, { request: request});
 
     if (childAttributes.indexOf(childAttribute) === -1 || childAttribute === 'organization') {
       return reply(Boom.notFound());
@@ -155,7 +156,7 @@ module.exports = class ListUserController extends Controller {
           throw Boom.notFound();
         }
         user = luser;
-        return this._checkinHelper(list, user, notify, childAttribute, request.params.currentUser);
+        return _checkinHelper(list, user, notify, childAttribute, request.params.currentUser);
       })
       .then(() => {
         return reply(user);
@@ -163,13 +164,13 @@ module.exports = class ListUserController extends Controller {
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  update (request, reply) {
+  update: function (request, reply) {
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
 
-    this.log.debug(
+    logger.debug(
       '[ListUserController] (update) model = list, criteria =',
       request.query,
       request.params.checkInId,
@@ -232,18 +233,14 @@ module.exports = class ListUserController extends Controller {
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  checkout (request, reply) {
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
+  checkout: function (request, reply) {
     const userId = request.params.id;
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
     const payload = request.payload;
     const childAttributes = User.listAttributes();
-
-    this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,
-      'options =', options, { request: request });
 
     if (childAttributes.indexOf(childAttribute) === -1) {
       return reply(Boom.notFound());
@@ -314,11 +311,10 @@ module.exports = class ListUserController extends Controller {
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  updateListUsers(request, reply) {
+  updateListUsers: function (request, reply) {
     reply();
-    const app = this;
     const childAttributes = User.listAttributes();
     const stream = User
       .find({})
@@ -341,13 +337,13 @@ module.exports = class ListUserController extends Controller {
           if (lu && lu.list && lu.list.owner) {
             lu.owner = lu.list.owner;
             lu.managers = lu.list.managers;
-            app.log.info('Updated list for ' + user._id.toString());
+            logger.info('Updated list for ' + user._id.toString());
             user.save(function (err) {
               nextLu();
             });
           }
           else {
-            app.log.info('No list for ' + user._id.toString());
+            logger.info('No list for ' + user._id.toString());
             nextLu();
           }
         }, function (err) {
@@ -359,7 +355,7 @@ module.exports = class ListUserController extends Controller {
     });
 
     stream.on('close', function () {
-      app.log.info('Finished updating listusers');
+      logger.info('Finished updating listusers');
     });
   }
 
