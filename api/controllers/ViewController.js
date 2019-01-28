@@ -10,48 +10,48 @@ const ErrorService = require('../services/ErrorService');
 const config = require('../../config/env')[process.env.NODE_ENV];
 const logger = config.logger;
 
+function _getAlert (result, success, error) {
+  if (!result || !result.isBoom) {
+    return {
+      type: 'success',
+      message: success
+    };
+  }
+  else {
+    return {
+      type: 'danger',
+      message: error
+    };
+  }
+}
+
+function _getRegisterLink(args) {
+  const params = HelperService.getOauthParams(args);
+  let registerLink = '/register';
+  if (params) {
+    registerLink += '?' + params;
+  }
+  return registerLink;
+}
+
+function _getPasswordLink (args) {
+  const params = HelperService.getOauthParams(args);
+  let registerLink = '/password';
+  if (params) {
+    registerLink += '?' + params;
+  }
+  return registerLink;
+}
+
 module.exports = {
-
-  _getAlert: function (result, success, error) {
-    if (!result || !result.isBoom) {
-      return {
-        type: 'success',
-        message: success
-      };
-    }
-    else {
-      return {
-        type: 'danger',
-        message: error
-      };
-    }
-  },
-
-  _getRegisterLink: function (args) {
-    const params = HelperService.getOauthParams(args);
-    let registerLink = '/register';
-    if (params) {
-      registerLink += '?' + params;
-    }
-    return registerLink;
-  },
-
-  _getPasswordLink: function (args) {
-    const params = HelperService.getOauthParams(args);
-    let registerLink = '/password';
-    if (params) {
-      registerLink += '?' + params;
-    }
-    return registerLink;
-  },
 
   login: function (request, reply) {
     const cookie = request.yar.get('session');
 
     if (!cookie || (cookie && !cookie.userId)) {
       // Show the login form
-      const registerLink = this._getRegisterLink(request.query);
-      const passwordLink = this._getPasswordLink(request.query);
+      const registerLink = _getRegisterLink(request.query);
+      const passwordLink = _getPasswordLink(request.query);
       const loginArgs = {
         title: 'Log into Humanitarian ID',
         query: request.query,
@@ -191,13 +191,13 @@ module.exports = {
     const recaptcha = new Recaptcha({siteKey: process.env.RECAPTCHA_PUBLIC_KEY, secretKey: process.env.RECAPTCHA_PRIVATE_KEY});
     const UserController = this.app.controllers.UserController;
     const that = this;
-    const registerLink = that._getRegisterLink(request.payload);
-    const passwordLink = that._getPasswordLink(request.payload);
+    const registerLink = _getRegisterLink(request.payload);
+    const passwordLink = _getPasswordLink(request.payload);
     recaptcha
       .validate(request.payload['g-recaptcha-response'])
       .then(() => {
         UserController.create(request, function (result) {
-          const al = that._getAlert(result,
+          const al = _getAlert(result,
             'Thank you for creating an account. You will soon receive a confirmation email to confirm your account.',
             'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.'
           );
@@ -227,13 +227,13 @@ module.exports = {
     request.payload = { hash: request.query.hash, email: request.query.email, time: request.query.time };
     const that = this;
     UserController.validateEmail(request, function (result) {
-      const al = that._getAlert(
+      const al = _getAlert(
         result,
         'Thank you for confirming your email address. You can now log in',
         'There was an error confirming your email address.'
       );
-      const registerLink = that._getRegisterLink(request.query);
-      const passwordLink = that._getPasswordLink(request.query);
+      const registerLink = _getRegisterLink(request.query);
+      const passwordLink = _getPasswordLink(request.query);
       return reply.view('login', {
         alert: al,
         query: request.query,
@@ -254,13 +254,13 @@ module.exports = {
     const UserController = this.app.controllers.UserController;
     const that = this;
     UserController.resetPasswordEndpoint(request, function (result) {
-      const al = that._getAlert(
+      const al = _getAlert(
         result,
         'Password reset was sent to ' + request.payload.email + '. Please make sure the email address is correct. If not, please reset your password again.',
         'There was an error resetting your password.'
       );
-      const registerLink = that._getRegisterLink(request.payload);
-      const passwordLink = that._getPasswordLink(request.payload);
+      const registerLink = _getRegisterLink(request.payload);
+      const passwordLink = _getPasswordLink(request.payload);
       return reply.view('login', {
         alert: al,
         query: request.query,
@@ -342,12 +342,12 @@ module.exports = {
       UserController.resetPassword(request, function (result) {
         const params = HelperService.getOauthParams(request.payload);
         if (params) {
-          const al = that._getAlert(result,
+          const al = _getAlert(result,
             'Your password was successfully reset. You can now login.',
             'There was an error resetting your password.'
           );
-          const registerLink = that._getRegisterLink(request.payload);
-          const passwordLink = that._getPasswordLink(request.payload);
+          const registerLink = _getRegisterLink(request.payload);
+          const passwordLink = _getPasswordLink(request.payload);
           return reply.view('login', {
             alert: al,
             query: request.payload,
@@ -356,7 +356,7 @@ module.exports = {
           });
         }
         else {
-          const al = that._getAlert(result,
+          const al = _getAlert(result,
             'Thank you for updating your password.',
             'There was an error resetting your password.'
           );
