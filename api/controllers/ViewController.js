@@ -1,6 +1,5 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const Boom = require('boom');
 const Recaptcha = require('recaptcha2');
 const Client = require('../models/Client');

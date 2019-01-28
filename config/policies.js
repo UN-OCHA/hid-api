@@ -127,9 +127,9 @@ module.exports = {
     deleteCustomLists: ['CronPolicy.canRun']
   },
 
-  WebhooksController: {
+  /*WebhooksController: {
     hrinfo: ['WebhooksPolicy.canRun']
-  },
+  },*/
 
   OperationController: {
     create: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdminOrGlobalManager'],

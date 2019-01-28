@@ -1,18 +1,140 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const Boom = require('boom');
 const _ = require('lodash');
 const List = require('../models/List');
 const User = require('../models/User');
 const NotificationService = require('../services/NotificationService');
 const ErrorService = require('../services/ErrorService');
+const ListController = require('./ListController');
 
 /**
  * @module WebhooksController
  * @description Generated Trails.js Controller.
  */
-module.exports = class WebhooksController extends Controller{
+
+// Notify users of a new disaster
+function _notifyNewDisaster (disaster) {
+ if (disaster.metadata.operation && disaster.metadata.operation.length) {
+   let operation = {};
+   for (let i = 0, len = disaster.metadata.operation.length; i < len; i++) {
+     operation = disaster.metadata.operation[i];
+     List
+       .findOne({remote_id: operation.id})
+       .then((list) => {
+         if (!list) {
+           throw new Error('List not found');
+         }
+         return User
+           .find({operations: { $elemMatch: { list: list._id, deleted: false }} });
+       })
+       .then((users) => {
+         const notification = {type: 'new_disaster', params: {list: disaster}};
+         NotificationService.sendMultiple(users, notification, () => { });
+       })
+       .catch((err) => {});
+   }
+ }
+}
+
+function _parseList (listType, language, item) {
+ let visibility = '', label = '', acronym = '', tmpList = {};
+ visibility = 'all';
+ if (item.hid_access && item.hid_access === 'closed') {
+   visibility = 'verified';
+ }
+ label = item.label;
+ if (listType === 'bundle' || listType === 'office') {
+   if (item.operation[0].label) {
+     label = item.operation[0].label + ': ' + item.label;
+   }
+   else {
+     label = 'Global: ' + item.label;
+   }
+ }
+ if (listType === 'organization' && item.acronym) {
+   acronym = item.acronym;
+ }
+ tmpList = {
+   label: label,
+   acronym: acronym,
+   type: listType,
+   visibility: visibility,
+   joinability: 'public',
+   remote_id: item.id,
+   metadata: item
+ };
+
+ if (listType === 'bundle') {
+   return List
+     .findOne({type: 'operation', remote_id: item.operation[0].id})
+     .then((op) => {
+       if (op) {
+         if (op.metadata.hid_access) {
+           if (op.metadata.hid_access === 'open') {
+             tmpList.visibility = 'all';
+           }
+           else if (op.metadata.hid_access === 'closed') {
+             tmpList.visibility = 'verified';
+           }
+         }
+       }
+       return tmpList;
+     });
+ }
+ else {
+   return new Promise((resolve, reject) => {
+     resolve(tmpList);
+   });
+ }
+}
+
+function _parseListLanguage (list, label, acronym, language) {
+ let labelFound = false;
+ if (list.labels && list.labels.length) {
+   for (let i = 0; i < list.labels.length; i++) {
+     if (list.labels[i].language === language) {
+       labelFound = true;
+       list.labels[i].text = label;
+     }
+   }
+ }
+ else {
+   list.labels = [];
+ }
+ if (!labelFound) {
+   list.labels.push({language: language, text: label});
+ }
+
+ // Update acronymsOrNames
+ if (!list.acronymsOrNames) {
+   list.acronymsOrNames = {};
+ }
+
+ list.acronymsOrNames[language] = label;
+
+ let acronymFound = false;
+ if (list.acronyms && list.acronyms.length) {
+   for (let j = 0; j < list.acronyms.length; j++) {
+     if (list.acronyms[j].language === language) {
+       acronymFound = true;
+       list.acronyms[j].text = acronym;
+       if (list.acronymsOrNames) {
+         list.acronymsOrNames[language] = acronym;
+       }
+     }
+   }
+ }
+ else {
+   list.acronyms = [];
+ }
+ if (!acronymFound) {
+   list.acronyms.push({language: language, text: acronym});
+   list.acronymsOrNames[language] = acronym;
+ }
+}
+
+module.exports = {
 
   // Receive events from hrinfo and act upon it
   hrinfo (request, reply) {
@@ -24,8 +146,6 @@ module.exports = class WebhooksController extends Controller{
       'functional_role',
       'office'
     ];
-    const ListController = this.app.controllers.ListController;
-    const that = this;
     const event = request.headers['x-hrinfo-event'] ? request.headers['x-hrinfo-event'] : '';
     const entity = request.payload.entity ? request.payload.entity : '';
     const resource = request.payload.type ? request.payload.type : '';
@@ -56,11 +176,11 @@ module.exports = class WebhooksController extends Controller{
           .findOne({type: listType, remote_id: entity.id})
           .then(list => {
             gList = list;
-            return that._parseList(listType, language, entity);
+            return _parseList(listType, language, entity);
           })
           .then(newList => {
             if (!gList) {
-              that._parseListLanguage(newList, newList.label, newList.acronym, language);
+              _parseListLanguage(newList, newList.label, newList.acronym, language);
               return List.create(newList);
             }
             else {
@@ -70,7 +190,7 @@ module.exports = class WebhooksController extends Controller{
               // Do not change list visibility or joinability if the list is already there
               delete newList.visibility;
               delete newList.joinability;
-              that._parseListLanguage(gList, newList.label, newList.acronym, language);
+              _parseListLanguage(gList, newList.label, newList.acronym, language);
               if (language !== 'en') {
                 delete newList.label;
                 delete newList.acronym;
@@ -79,7 +199,7 @@ module.exports = class WebhooksController extends Controller{
               if (gList.names.length) {
                 gList.names.forEach(function (elt) {
                   if (translations.indexOf(elt.language) === -1) {
-                    that._parseListLanguage(gList, newList.label, newList.acronym, elt.language);
+                    _parseListLanguage(gList, newList.label, newList.acronym, elt.language);
                   }
                 });
               }
@@ -93,7 +213,7 @@ module.exports = class WebhooksController extends Controller{
           })
           .then(list => {
             if (!gList && list.type === 'disaster' && event === 'create') {
-              that._notifyNewDisaster(list);
+              _notifyNewDisaster(list);
             }
             else {
               if (updateUsers) {
@@ -154,129 +274,6 @@ module.exports = class WebhooksController extends Controller{
         });
     }
 
-  }
-
-  // Notify users of a new disaster
-  _notifyNewDisaster (disaster) {
-    const app = this.app;
-    if (disaster.metadata.operation && disaster.metadata.operation.length) {
-      let operation = {};
-      for (let i = 0, len = disaster.metadata.operation.length; i < len; i++) {
-        operation = disaster.metadata.operation[i];
-        List
-          .findOne({remote_id: operation.id})
-          .then((list) => {
-            if (!list) {
-              throw new Error('List not found');
-            }
-            return User
-              .find({operations: { $elemMatch: { list: list._id, deleted: false }} });
-          })
-          .then((users) => {
-            const notification = {type: 'new_disaster', params: {list: disaster}};
-            app.log.debug('Notifying ' + users.length + ' users of a new disaster: ' + disaster.label);
-            NotificationService.sendMultiple(users, notification, () => { });
-          })
-          .catch((err) => {});
-      }
-    }
-  }
-
-  _parseList (listType, language, item) {
-    let visibility = '', label = '', acronym = '', tmpList = {};
-    visibility = 'all';
-    if (item.hid_access && item.hid_access === 'closed') {
-      visibility = 'verified';
-    }
-    label = item.label;
-    if (listType === 'bundle' || listType === 'office') {
-      if (item.operation[0].label) {
-        label = item.operation[0].label + ': ' + item.label;
-      }
-      else {
-        label = 'Global: ' + item.label;
-      }
-    }
-    if (listType === 'organization' && item.acronym) {
-      acronym = item.acronym;
-    }
-    tmpList = {
-      label: label,
-      acronym: acronym,
-      type: listType,
-      visibility: visibility,
-      joinability: 'public',
-      remote_id: item.id,
-      metadata: item
-    };
-
-    if (listType === 'bundle') {
-      return List
-        .findOne({type: 'operation', remote_id: item.operation[0].id})
-        .then((op) => {
-          if (op) {
-            if (op.metadata.hid_access) {
-              if (op.metadata.hid_access === 'open') {
-                tmpList.visibility = 'all';
-              }
-              else if (op.metadata.hid_access === 'closed') {
-                tmpList.visibility = 'verified';
-              }
-            }
-          }
-          return tmpList;
-        });
-    }
-    else {
-      return new Promise((resolve, reject) => {
-        resolve(tmpList);
-      });
-    }
-  }
-
-  _parseListLanguage (list, label, acronym, language) {
-    let labelFound = false;
-    if (list.labels && list.labels.length) {
-      for (let i = 0; i < list.labels.length; i++) {
-        if (list.labels[i].language === language) {
-          labelFound = true;
-          list.labels[i].text = label;
-        }
-      }
-    }
-    else {
-      list.labels = [];
-    }
-    if (!labelFound) {
-      list.labels.push({language: language, text: label});
-    }
-
-    // Update acronymsOrNames
-    if (!list.acronymsOrNames) {
-      list.acronymsOrNames = {};
-    }
-
-    list.acronymsOrNames[language] = label;
-
-    let acronymFound = false;
-    if (list.acronyms && list.acronyms.length) {
-      for (let j = 0; j < list.acronyms.length; j++) {
-        if (list.acronyms[j].language === language) {
-          acronymFound = true;
-          list.acronyms[j].text = acronym;
-          if (list.acronymsOrNames) {
-            list.acronymsOrNames[language] = acronym;
-          }
-        }
-      }
-    }
-    else {
-      list.acronyms = [];
-    }
-    if (!acronymFound) {
-      list.acronyms.push({language: language, text: acronym});
-      list.acronymsOrNames[language] = acronym;
-    }
   }
 
 };

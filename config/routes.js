@@ -10,6 +10,8 @@
 'use strict';
 
 const ViewController = require('../api/controllers/ViewController');
+const WebhooksController = require('../api/controllers/WebhooksController');
+const WebhooksPolicy = require('../api/policies/WebhooksPolicy');
 
 module.exports = [
 
@@ -639,7 +641,10 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/webhooks/hrinfo',
-    handler: 'WebhooksController.hrinfo'
+    pre: [
+      WebhooksPolicy.canRun
+    ],
+    handler: WebhooksController.hrinfo
   },
 
   {
