@@ -1,6 +1,5 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const Boom = require('boom');
 const {google} = require('googleapis');
 const {OAuth2Client} = require('google-auth-library');
@@ -13,30 +12,28 @@ const GSSSyncService = require('../services/GSSSyncService');
  * @module GSSSyncController
  * @description Generated Trails.js Controller.
  */
-module.exports = class GSSSyncController extends Controller{
+function createHelper (request, reply) {
+ let gsync = {};
+ GSSSync
+   .create(request.payload)
+   .then((gsssync) => {
+     if (!gsssync) {
+       throw Boom.badRequest();
+     }
+     gsync = gsssync;
+     return GSSSyncService.synchronizeAll(gsssync);
+   })
+   .then((resp) => {
+     reply (gsync);
+   })
+   .catch(err => {
+     ErrorService.handle(err, request, reply);
+   });
+}
 
-  createHelper (request, reply) {
-    const that = this;
-    let gsync = {};
-    GSSSync
-      .create(request.payload)
-      .then((gsssync) => {
-        if (!gsssync) {
-          throw Boom.badRequest();
-        }
-        gsync = gsssync;
-        return GSSSyncService.synchronizeAll(gsssync);
-      })
-      .then((resp) => {
-        reply (gsync);
-      })
-      .catch(err => {
-        ErrorService.handle(err, request, reply);
-      });
-  }
+module.exports = {
 
-  create (request, reply) {
-    const that = this;
+  create: function (request, reply) {
     request.payload.user = request.params.currentUser._id;
     if (!request.payload.spreadsheet) {
       GSSSyncService.createSpreadsheet(request.params.currentUser, request.payload.list, function (err, spreadsheet) {
@@ -45,16 +42,15 @@ module.exports = class GSSSyncController extends Controller{
         }
         request.payload.spreadsheet = spreadsheet.data.spreadsheetId;
         request.payload.sheetId = spreadsheet.data.sheets[0].properties.sheetId;
-        that.createHelper(request, reply);
+        createHelper(request, reply);
       });
     }
     else {
-      this.createHelper(request, reply);
+      createHelper(request, reply);
     }
-  }
+  },
 
-  saveGoogleCredentials (request, reply) {
-    const that = this;
+  saveGoogleCredentials: function (request, reply) {
     if (request.payload.code) {
       const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
       const authClient = new OAuth2Client(creds.web.client_id, creds.web.client_secret, 'postmessage');
@@ -77,10 +73,9 @@ module.exports = class GSSSyncController extends Controller{
     else {
       return reply(Boom.badRequest());
     }
-  }
+  },
 
-  destroy (request, reply) {
-    const that = this;
+  destroy: function (request, reply) {
     GSSSync
       .remove({ _id: request.params.id })
       .then(() => {

@@ -95,11 +95,11 @@ module.exports = {
     destroy: ['AuthPolicy.isAuthenticated', 'ListPolicy.canDestroy']
   },
 
-  GSSSyncController: {
+  /*GSSSyncController: {
     create: ['AuthPolicy.isAuthenticated'],
     destroy: ['AuthPolicy.isAuthenticated', 'GSSSyncPolicy.canDestroy'],
     saveGoogleCredentials: ['AuthPolicy.isAuthenticated']
-  },
+  },*/
 
   /*OutlookController: {
     saveOutlookCredentials: ['AuthPolicy.isAuthenticated'],

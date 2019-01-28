@@ -20,6 +20,8 @@ const OutlookController = require('../api/controllers/OutlookController');
 const NotificationController = require('../api/controller/NotificationController');
 const ClientController = require('../api/controllers/ClientController');
 const TrustedDomainController = require('../api/controllers/TrustedDomainController');
+const GSSSyncController = require('../api/controllers/GSSSyncController');
+const GSSSyncPolicy = require('../api/policies/GSSSyncPolicy');
 
 module.exports = [
 
@@ -349,7 +351,10 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/user/{id}/googlecredentials',
-    handler: 'GSSSyncController.saveGoogleCredentials'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: GSSSyncController.saveGoogleCredentials
   },
 
   {
@@ -563,13 +568,20 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/gsssync',
-    handler: 'GSSSyncController.create'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: GSSSyncController.create
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/gsssync',
-    handler: 'GSSSyncController.destroy'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      GSSSyncPolicy.canDestroy
+    ],
+    handler: GSSSyncController.destroy
   },
 
   {

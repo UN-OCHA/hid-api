@@ -1,6 +1,5 @@
 'use strict';
 
-const Policy = require('trails/policy');
 const Boom = require('boom');
 const GSSSync = require('../models/GSSSync');
 const ErrorService = require('../services/ErrorService');
@@ -9,9 +8,9 @@ const ErrorService = require('../services/ErrorService');
  * @module GSSSyncPolicy
  * @description GSSSyncPolicy
  */
-module.exports = class GSSSyncPolicy extends Policy {
+module.exports = {
 
-  canDestroy (request, reply) {
+  canDestroy: function (request, reply) {
     if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
       return reply();
     }
