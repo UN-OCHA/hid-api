@@ -20,12 +20,12 @@ module.exports = {
     signRequest: ['AuthPolicy.isAuthenticated']
   },
 
-  ClientController: {
+  /*ClientController: {
     create: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
     find: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
     update: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
     destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin']
-  },
+  },*/
 
   ServiceController: {
     create: ['AuthPolicy.isAuthenticated'],

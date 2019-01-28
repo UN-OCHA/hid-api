@@ -18,6 +18,7 @@ const ServiceCredentialsController = require('../api/controllers/ServiceCredenti
 const AuthPolicy = require('../api/policies/AuthPolicy');
 const OutlookController = require('../api/controllers/OutlookController');
 const NotificationController = require('../api/controller/NotificationController');
+const ClientController = require('../api/controllers/ClientController');
 
 module.exports = [
 
@@ -386,25 +387,41 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/client',
-    handler: 'ClientController.create'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      AuthPolicy.isAdmin
+    ],
+    handler: ClientController.create
   },
 
   {
     method: 'GET',
     path: '/api/v2/client/{id?}',
-    handler: 'ClientController.find'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      AuthPolicy.isAdmin
+    ],
+    handler: ClientController.find
   },
 
   {
     method: 'PUT',
     path: '/api/v2/client/{id}',
-    handler: 'ClientController.update'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      AuthPolicy.isAdmin
+    ],
+    handler: ClientController.update
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/client/{id}',
-    handler: 'ClientController.destroy'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      AuthPolicy.isAdmin
+    ],
+    handler: ClientController.destroy
   },
 
   {

@@ -1,6 +1,5 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const Boom = require('boom');
 const Client = require('../models/Client');
 const HelperService = require('../services/HelperService');
@@ -10,9 +9,9 @@ const ErrorService = require('../services/ErrorService');
  * @module ClientController
  * @description Controller for Clients.
  */
-module.exports = class ClientController extends Controller{
+module.exports = {
 
-  create (request, reply) {
+  create: function (request, reply) {
     Client
       .create(request.payload)
       .then((client) => {
@@ -24,9 +23,9 @@ module.exports = class ClientController extends Controller{
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  find (request, reply) {
+  find: function (request, reply) {
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
 
@@ -59,9 +58,9 @@ module.exports = class ClientController extends Controller{
           ErrorService.handle(err, request, reply);
         });
     }
-  }
+  },
 
-  update (request, reply) {
+  update: function (request, reply) {
     Client
       .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
       .then((client) => {
@@ -70,9 +69,9 @@ module.exports = class ClientController extends Controller{
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  destroy (request, reply) {
+  destroy: function (request, reply) {
     Client
       .remove({ _id: request.params.id })
       .then(() => {
