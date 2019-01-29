@@ -51,7 +51,7 @@ module.exports = {
     saveDevice: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid'],
     destroyDevice: ['AuthPolicy.isAuthenticated'],
     generateBackupCodes: ['AuthPolicy.isAuthenticated'],
-  },*/
+  },
 
   UserController: {
     showAccount: [ 'AuthPolicy.isAuthenticated'],
@@ -77,7 +77,7 @@ module.exports = {
     deleteConnection: ['AuthPolicy.isAuthenticated', 'UserPolicy.canUpdate']
   },
 
-  /*ListUserController: {
+  ListUserController: {
     checkin: ['AuthPolicy.isAuthenticated', 'ListUserPolicy.canCheckin'],
     checkout: ['AuthPolicy.isAuthenticated', 'ListUserPolicy.canCheckout'],
     update: ['AuthPolicy.isAuthenticated', 'ListUserPolicy.canUpdate']

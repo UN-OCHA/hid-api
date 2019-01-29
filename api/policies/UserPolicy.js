@@ -1,6 +1,5 @@
 'use strict';
 
-const Policy = require('trails/policy');
 const Boom = require('boom');
 const User = require('../models/User');
 const ErrorService = require('../services/ErrorService');
@@ -9,9 +8,43 @@ const ErrorService = require('../services/ErrorService');
  * @module UserPolicy
  * @description User Policy
  */
-module.exports = class UserPolicy extends Policy {
+function _canUpdate (request, reply) {
+ if (!request.params.currentUser.is_admin &&
+   !request.params.currentUser.isManager &&
+   request.params.currentUser.id !== request.params.id) {
+   return reply(Boom.forbidden('You need to be an admin or a manager or the current user'));
+ }
+ else {
+   if (request.params.currentUser.isManager &&
+     request.params.currentUser.id !== request.params.id) {
+     // If the user is a manager, make sure he is not trying to edit
+     // an admin account.
+     User
+       .findById(request.params.id)
+       .then((user) => {
+         if (!user) {
+           return reply(Boom.notFound());
+         }
+         if (user.is_admin) {
+           return reply(Boom.forbidden('You are not authorized to edit an admin account'));
+         }
+         else {
+           return reply();
+         }
+       })
+       .catch(err => {
+         ErrorService.handle(err, request, reply);
+       });
+   }
+   else {
+     reply();
+   }
+ }
+}
 
-  canCreate (request, reply) {
+module.exports = {
+
+  canCreate: function (request, reply) {
     if (!request.params.currentUser) {
       if (!request.payload.email) {
         return reply(Boom.badRequest('You need to register with an email address'));
@@ -23,43 +56,11 @@ module.exports = class UserPolicy extends Policy {
       }
     }
     reply();
-  }
+  },
 
-  canUpdate (request, reply) {
-    if (!request.params.currentUser.is_admin &&
-      !request.params.currentUser.isManager &&
-      request.params.currentUser.id !== request.params.id) {
-      return reply(Boom.forbidden('You need to be an admin or a manager or the current user'));
-    }
-    else {
-      if (request.params.currentUser.isManager &&
-        request.params.currentUser.id !== request.params.id) {
-        // If the user is a manager, make sure he is not trying to edit
-        // an admin account.
-        User
-          .findById(request.params.id)
-          .then((user) => {
-            if (!user) {
-              return reply(Boom.notFound());
-            }
-            if (user.is_admin) {
-              return reply(Boom.forbidden('You are not authorized to edit an admin account'));
-            }
-            else {
-              return reply();
-            }
-          })
-          .catch(err => {
-            ErrorService.handle(err, request, reply);
-          });
-      }
-      else {
-        reply();
-      }
-    }
-  }
+  canUpdate: _canUpdate,
 
-  canDestroy (request, reply) {
+  canDestroy: function (request, reply) {
     if (request.params.currentUser.is_admin ||
       request.params.currentUser.id === request.params.id) {
       return reply();
@@ -83,9 +84,7 @@ module.exports = class UserPolicy extends Policy {
           ErrorService.handle(err, request, reply);
         });
     }
-  }
+  },
 
-  canClaim (request, reply) {
-    this.canUpdate(request, reply);
-  }
+  canClaim: _canUpdate
 };

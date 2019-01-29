@@ -32,6 +32,8 @@ const ServiceController = require('../api/controllers/ServiceController');
 const ServicePolicy = require('../api/policies/ServicePolicy');
 const NumbersController = require('../api/controllers/NumbersController');
 const TOTPController = require('../api/controllers/TOTPController');
+const UserController = require('../api/controllers/UserController');
+const UserPolicy = require('../api/policies/UserPolicy');
 
 module.exports = [
 
@@ -180,7 +182,10 @@ module.exports = [
   {
     method: ['GET', 'POST'],
     path: '/account.json',
-    handler: 'UserController.showAccount'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: UserController.showAccount
   },
 
   {
@@ -198,37 +203,58 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/user',
-    handler: 'UserController.create'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      UserPolicy.canCreate
+    ],
+    handler: UserController.create
   },
 
   {
     method: 'GET',
     path: '/api/v2/user/{id?}',
-    handler: 'UserController.find'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: UserController.find
   },
 
   {
     method: 'GET',
     path: '/api/v2/user.{extension}',
-    handler: 'UserController.find'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: UserController.find
   },
 
   {
     method: [ 'PUT', 'PATCH' ],
     path: '/api/v2/user/{id}',
-    handler: 'UserController.update'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      UserPolicy.canUpdate
+    ],
+    handler: UserController.update
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}',
-    handler: 'UserController.destroy'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      AuthPolicy.isTOTPEnabledAndValid
+    ],
+    handler: UserController.destroy
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/notification',
-    handler: 'UserController.notify'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: UserController.notify
   },
 
   {
@@ -264,25 +290,37 @@ module.exports = [
   {
     method: 'PUT',
     path: '/api/v2/user/password',
-    handler: 'UserController.resetPasswordEndpoint'
+    handler: UserController.resetPasswordEndpoint
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/password',
-    handler: 'UserController.updatePassword'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      AuthPolicy.isTOTPEnabledAndValid
+    ],
+    handler: UserController.updatePassword
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/orphan',
-    handler: 'UserController.claimEmail'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      UserPolicy.canClaim
+    ],
+    handler: UserController.claimEmail
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/picture',
-    handler: 'UserController.updatePicture',
+    pre: [
+      AuthPolicy.isAuthenticated,
+      UserPolicy.canUpdate
+    ],
+    handler: UserController.updatePicture,
     config: {
       payload: {
         output: 'data',
@@ -295,67 +333,107 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/user/{id}/emails',
-    handler: 'UserController.addEmail'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      UserPolicy.canUpdate
+    ],
+    handler: UserController.addEmail
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/email',
-    handler: 'UserController.setPrimaryEmail'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      UserPolicy.canUpdate,
+      AuthPolicy.isTOTPEnabledAndValid
+    ],
+    handler: UserController.setPrimaryEmail
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/emails/{email?}',
-    handler: 'UserController.validateEmail'
+    handler: UserController.validateEmail
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}/emails/{email}',
-    handler: 'UserController.dropEmail'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      UserPolicy.canUpdate
+    ],
+    handler: UserController.dropEmail
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/phone_numbers',
-    handler: 'UserController.addPhone'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      UserPolicy.canUpdate
+    ],
+    handler: UserController.addPhone
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}/phone_numbers/{pid}',
-    handler: 'UserController.dropPhone'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      UserPolicy.canUpdate
+    ],
+    handler: UserController.dropPhone
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/phone_number',
-    handler: 'UserController.setPrimaryPhone'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      UserPolicy.canUpdate
+    ],
+    handler: UserController.setPrimaryPhone
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/organization',
-    handler: 'UserController.setPrimaryOrganization'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      UserPolicy.canUpdate
+    ],
+    handler: UserController.setPrimaryOrganization
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/connections',
-    handler: 'UserController.addConnection'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: UserController.addConnection
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/connections/{cid}',
-    handler: 'UserController.updateConnection'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      UserPolicy.canUpdate
+    ],
+    handler: UserController.updateConnection
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}/connections/{cid}',
-    handler: 'UserController.deleteConnection'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      UserPolicy.canUpdate
+    ],
+    handler: UserController.deleteConnection
   },
 
   {
