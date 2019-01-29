@@ -40,7 +40,7 @@ module.exports = {
 
   ServiceCredentialsController: {
     find: ['AuthPolicy.isAuthenticated']
-  },*/
+  },
 
   // Limit 2FA to admins for now
   TOTPController: {
@@ -51,7 +51,7 @@ module.exports = {
     saveDevice: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isTOTPEnabledAndValid'],
     destroyDevice: ['AuthPolicy.isAuthenticated'],
     generateBackupCodes: ['AuthPolicy.isAuthenticated'],
-  },
+  },*/
 
   UserController: {
     showAccount: [ 'AuthPolicy.isAuthenticated'],

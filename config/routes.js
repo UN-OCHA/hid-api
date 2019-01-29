@@ -31,6 +31,7 @@ const ListUserPolicy = require('../api/policies/ListUserPolicy');
 const ServiceController = require('../api/controllers/ServiceController');
 const ServicePolicy = require('../api/policies/ServicePolicy');
 const NumbersController = require('../api/controllers/NumbersController');
+const TOTPController = require('../api/controllers/TOTPController');
 
 module.exports = [
 
@@ -590,43 +591,68 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/totp/qrcode',
-    handler: 'TOTPController.generateQRCode'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: TOTPController.generateQRCode
   },
 
   {
     method: 'POST',
     path: '/api/v2/totp/codes',
-    handler: 'TOTPController.generateBackupCodes'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: TOTPController.generateBackupCodes
   },
 
   {
     method: 'POST',
     path: '/api/v2/totp/device',
-    handler: 'TOTPController.saveDevice'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      AuthPolicy.isTOTPEnabledAndValid
+    ],
+    handler: TOTPController.saveDevice
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/totp/device/{id}',
-    handler: 'TOTPController.destroyDevice'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: TOTPController.destroyDevice
   },
 
   {
     method: 'POST',
     path: '/api/v2/totp',
-    handler: 'TOTPController.enable'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      AuthPolicy.isTOTPValidPolicy
+    ],
+    handler: TOTPController.enable
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/totp',
-    handler: 'TOTPController.disable'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      AuthPolicy.isTOTPEnabledAndValid
+    ],
+    handler: TOTPController.disable
   },
 
   {
     method: 'GET',
     path: '/api/v2/totp',
-    handler: 'TOTPController.verifyTOTPToken'
+    pre: [
+      AuthPolicy.isAuthenticated,
+      AuthPolicy.isTOTPValidPolicy
+    ],
+    handler: TOTPController.verifyTOTPToken
   },
 
   {
