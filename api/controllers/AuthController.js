@@ -248,6 +248,11 @@ module.exports = class AuthController extends Controller{
     }
     if (cookie && cookie.userId && cookie.totp === false) {
       let gUser = {};
+      // If there has been 5 failed login attempts in the last 5 minutes, return
+      // unauthorized.
+      const now = Date.now();
+      const offset = 5 * 60 * 1000;
+      const d5minutes = new Date(now - offset);
       Flood
         .count({type: 'totp', email: cookie.userId, createdAt: {$gte: d5minutes.toISOString()}})
         .then((number) => {
