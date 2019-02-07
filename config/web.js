@@ -28,6 +28,9 @@ module.exports = {
 
   plugins: [
     {
+      plugin: require('inert')
+    },
+    {
       plugin: require('yar'),
       options: {
         cache: {
