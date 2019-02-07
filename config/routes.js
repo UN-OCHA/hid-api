@@ -34,6 +34,7 @@ const NumbersController = require('../api/controllers/NumbersController');
 const TOTPController = require('../api/controllers/TOTPController');
 const UserController = require('../api/controllers/UserController');
 const UserPolicy = require('../api/policies/UserPolicy');
+const AuthController = require('../api/controllers/AuthController');
 
 module.exports = [
 
@@ -122,13 +123,13 @@ module.exports = [
   {
     method: 'GET',
     path: '/.well-known/openid-configuration',
-    handler: 'AuthController.openIdConfiguration'
+    handler: AuthController.openIdConfiguration
   },
 
   {
     method: 'GET',
     path: '/oauth/jwks',
-    handler: 'AuthController.jwks'
+    handler: AuthController.jwks
   },
 
   {
@@ -140,43 +141,49 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/jsonwebtoken',
-    handler: 'AuthController.authenticate'
+    handler: AuthController.authenticate
   },
 
   {
     method: 'GET',
     path: '/api/v2/jsonwebtoken',
-    handler: 'AuthController.jwtTokens'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: AuthController.jwtTokens
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/jsonwebtoken',
-    handler: 'AuthController.blacklistJwt'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: AuthController.blacklistJwt
   },
 
   {
     method: 'POST',
     path: '/login',
-    handler: 'AuthController.login'
+    handler: AuthController.login
   },
 
   {
     method: 'GET',
     path: '/oauth/authorize',
-    handler: 'AuthController.authorizeDialogOauth2'
+    handler: AuthController.authorizeDialogOauth2
   },
 
   {
     method: 'POST',
     path: '/oauth/authorize',
-    handler: 'AuthController.authorizeOauth2'
+    handler: AuthController.authorizeOauth2
   },
 
   {
     method: ['GET', 'POST'],
     path: '/oauth/access_token',
-    handler: 'AuthController.accessTokenOauth2'
+    handler: AuthController.accessTokenOauth2
   },
 
   {
@@ -197,7 +204,10 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/signedRequest',
-    handler: 'AuthController.signRequest'
+    pre: [
+      AuthPolicy.isAuthenticated
+    ],
+    handler: AuthController.signRequest
   },
 
   {

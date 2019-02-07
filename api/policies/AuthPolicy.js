@@ -1,6 +1,5 @@
 'use strict';
 
-const Policy = require('trails/policy');
 const Boom = require('boom');
 const acceptLanguage = require('accept-language');
 const authenticator = require('authenticator');
@@ -15,11 +14,54 @@ const ErrorService = require('../services/ErrorService');
  * @module AuthPolicy
  * @description Is the request authenticated
  */
-module.exports = class AuthPolicy extends Policy {
 
-  isAuthenticated (request, reply) {
+function isTOTPValid (user, token) {
+ return new Promise(function (resolve, reject) {
+   if (!user.totpConf || !user.totpConf.secret) {
+     return reject(Boom.unauthorized('TOTP was not configured for this user', 'totp'));
+   }
+
+   if (!token) {
+     return reject(Boom.unauthorized('No TOTP token', 'totp'));
+   }
+
+   if (token.length === 6) {
+     const success = authenticator.verifyToken(user.totpConf.secret, token);
+
+     if (success) {
+       return resolve(user);
+     }
+     else {
+       return reject(Boom.unauthorized('Invalid TOTP token !', 'totp'));
+     }
+   }
+   else {
+     // Using backup code
+     const index = user.backupCodeIndex(token);
+     if (index === -1) {
+       return reject(Boom.unauthorized('Invalid backup code !', 'totp'));
+     }
+     else {
+       // remove backup code so it can't be reused
+       user.totpConf.backupCodes.slice(index, 1);
+       user.markModified('totpConf');
+       user
+         .save()
+         .then(() => {
+           return resolve(user);
+         })
+         .catch(err => {
+           return reject(Boom.badImplementation());
+         });
+     }
+   }
+ });
+}
+
+module.exports = {
+
+  isAuthenticated: function (request, reply) {
     acceptLanguage.languages(['en', 'fr', 'es']);
-    const that = this;
     // If we are creating a user and we are not authenticated, allow it
     if (request.path === '/api/v2/user' &&
       request.method === 'post' &&
@@ -41,7 +83,7 @@ module.exports = class AuthPolicy extends Policy {
         }
       }
       else {
-        this.log.warn('Wrong format for authorization header', {security: true, fail: true, request: request});
+        logger.warn('Wrong format for authorization header', {security: true, fail: true, request: request});
         return reply(Boom.unauthorized('Format is Authorization: Bearer [token]'));
       }
     }
@@ -77,13 +119,13 @@ module.exports = class AuthPolicy extends Policy {
             }
             request.params.currentUser = user;
             delete request.query.bewit;
-            that.log.warn('Successful authentication through bewit', { security: true, request: request});
+            logger.warn('Successful authentication through bewit', { security: true, request: request});
             reply();
           });
       });
     }
     else {
-      this.log.warn('No authorization token was found', { security: true, fail: true, request: request});
+      logger.warn('No authorization token was found', { security: true, fail: true, request: request});
       return reply(Boom.unauthorized('No Authorization header was found'));
     }
 
@@ -97,11 +139,11 @@ module.exports = class AuthPolicy extends Policy {
             .then(tok => {
               // TODO: make sure the token is not expired
               if (!tok) {
-                that.log.warn('Invalid token', { security: true, fail: true, request: request});
+                logger.warn('Invalid token', { security: true, fail: true, request: request});
                 return reply(Boom.unauthorized('Invalid Token!'));
               }
               if (tok.isExpired()) {
-                that.log.warn('Token is expired', { security: true, fail: true, request: request});
+                logger.warn('Token is expired', { security: true, fail: true, request: request});
                 return reply(Boom.unauthorized('Expired token'));
               }
               request.params.currentUser = tok.user;
@@ -118,7 +160,7 @@ module.exports = class AuthPolicy extends Policy {
             .findOne({token: token, blacklist: true})
             .then(tok => {
               if (tok) {
-                that.log.warn('Tried to get authorization with a blacklisted token', { security: true, fail: true, request: request});
+                logger.warn('Tried to get authorization with a blacklisted token', { security: true, fail: true, request: request});
                 return reply(Boom.unauthorized('Invalid Token !'));
               }
               request.params.token = jtoken; // This is the decrypted token or the payload you provided
@@ -127,11 +169,11 @@ module.exports = class AuthPolicy extends Policy {
             .then(user => {
               if (user) {
                 request.params.currentUser = user;
-                that.log.warn('Successful authentication through JWT', { security: true, request: request});
+                logger.warn('Successful authentication through JWT', { security: true, request: request});
                 reply();
               }
               else {
-                that.log.warn('Could not find user linked to JWT', { security: true, fail: true, request: request });
+                logger.warn('Could not find user linked to JWT', { security: true, fail: true, request: request });
                 reply(Boom.unauthorized('Invalid Token !'));
               }
             })
@@ -141,9 +183,9 @@ module.exports = class AuthPolicy extends Policy {
         }
       });
     }
-  }
+  },
 
-  isTOTPEnabledAndValid (request, reply) {
+  isTOTPEnabledAndValid: function (request, reply) {
     const user = request.params.currentUser;
 
     if (!user.totp) {
@@ -151,8 +193,7 @@ module.exports = class AuthPolicy extends Policy {
       return reply();
     }
     else {
-      this
-        .isTOTPValid(request.params.currentUser, request.headers['x-hid-totp'])
+      isTOTPValid(request.params.currentUser, request.headers['x-hid-totp'])
         .then(() => {
           return reply();
         })
@@ -160,75 +201,31 @@ module.exports = class AuthPolicy extends Policy {
           return reply(err);
         });
     }
-  }
+  },
 
-  isTOTPValidPolicy (request, reply) {
+  isTOTPValidPolicy: function (request, reply) {
     const user = request.params.currentUser;
     const token = request.headers['x-hid-totp'];
-    this
-      .isTOTPValid(user, token)
+    isTOTPValid(user, token)
       .then(() => {
         return reply();
       })
       .catch(err => {
         return reply(err);
       });
-  }
+  },
 
-  isTOTPValid (user, token) {
-    return new Promise(function (resolve, reject) {
-      if (!user.totpConf || !user.totpConf.secret) {
-        return reject(Boom.unauthorized('TOTP was not configured for this user', 'totp'));
-      }
-
-      if (!token) {
-        return reject(Boom.unauthorized('No TOTP token', 'totp'));
-      }
-
-      if (token.length === 6) {
-        const success = authenticator.verifyToken(user.totpConf.secret, token);
-
-        if (success) {
-          return resolve(user);
-        }
-        else {
-          return reject(Boom.unauthorized('Invalid TOTP token !', 'totp'));
-        }
-      }
-      else {
-        // Using backup code
-        const index = user.backupCodeIndex(token);
-        if (index === -1) {
-          return reject(Boom.unauthorized('Invalid backup code !', 'totp'));
-        }
-        else {
-          // remove backup code so it can't be reused
-          user.totpConf.backupCodes.slice(index, 1);
-          user.markModified('totpConf');
-          user
-            .save()
-            .then(() => {
-              return resolve(user);
-            })
-            .catch(err => {
-              return reject(Boom.badImplementation());
-            });
-        }
-      }
-    });
-  }
-
-  isAdmin (request, reply) {
+  isAdmin: function (request, reply) {
     if (!request.params.currentUser.is_admin) {
-      this.log.warn('User is not an admin', { security: true, fail: true, request: request});
+      logger.warn('User is not an admin', { security: true, fail: true, request: request});
       return reply(Boom.forbidden('You need to be an admin'));
     }
     reply();
-  }
+  },
 
-  isAdminOrGlobalManager (request, reply) {
+  isAdminOrGlobalManager: function (request, reply) {
     if (!request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
-      this.log.warn('User is neither an admin nor a global manager', { security: true, fail: true, request: request});
+      logger.warn('User is neither an admin nor a global manager', { security: true, fail: true, request: request});
       return reply(Boom.forbidden('You need to be an admin or a global manager'));
     }
     reply();

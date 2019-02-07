@@ -1,6 +1,5 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const Boom = require('boom');
 const Client = require('../models/Client');
 const Flood = require('../models/Flood');
@@ -10,197 +9,195 @@ const User = require('../models/User');
 const JwtService = require('../services/JwtService');
 const HelperService = require('../services/HelperService');
 const ErrorService = require('../services/ErrorService');
+const AuthPolicy = require('../policies/AuthPolicy');
+const config = require('../../config/env')[process.env.NODE_ENV];
+const logger = config.logger;
 
 /**
  * @module AuthController
  * @description Controller for Auth.
  */
-module.exports = class AuthController extends Controller{
 
-  // Main helper function used for login. All logins go through this.
-  _loginHelper (request, reply) {
-    const email = request.payload && request.payload.email ? request.payload.email.toLowerCase() : false;
-    const password = request.payload ? request.payload.password : false;
-    const authPolicy = this.app.policies.AuthPolicy;
+// Main helper function used for login. All logins go through this.
+function _loginHelper (request, reply) {
+ const email = request.payload && request.payload.email ? request.payload.email.toLowerCase() : false;
+ const password = request.payload ? request.payload.password : false;
+ const authPolicy = this.app.policies.AuthPolicy;
 
-    this.log.debug('Entering _loginHelper');
+ logger.debug('Entering _loginHelper');
 
-    if (!email || !password) {
-      authPolicy.isAuthenticated(request, function (err) {
-        if (err && err.isBoom) {
-          return reply(err);
-        }
-        else {
-          const cuser = request.params.currentUser;
-          cuser.sanitize(cuser);
-          return reply(cuser);
-        }
+ if (!email || !password) {
+   authPolicy.isAuthenticated(request, function (err) {
+     if (err && err.isBoom) {
+       return reply(err);
+     }
+     else {
+       const cuser = request.params.currentUser;
+       cuser.sanitize(cuser);
+       return reply(cuser);
+     }
+   });
+ }
+ else {
+   // If there has been 5 failed login attempts in the last 5 minutes, return
+   // unauthorized.
+   const now = Date.now();
+   const offset = 5 * 60 * 1000;
+   const d5minutes = new Date(now - offset);
+
+   Flood
+     .count({type: 'login', email: email, createdAt: {$gte: d5minutes.toISOString()}})
+     .then((number) => {
+       if (number >= 5) {
+         logger.warn('Account locked for 5 minutes', {email: email, security: true, fail: true, request: request});
+         throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
+       }
+       else {
+         return User.findOne({email: email});
+       }
+     })
+     .then((user) => {
+       if (!user) {
+         logger.warn('Unsuccessful login attempt due to invalid email address', {email: email, security: true, fail: true, request: request});
+         return reply(Boom.unauthorized('invalid email or password'));
+       }
+
+       if (!user.email_verified) {
+         logger.warn('Unsuccessful login attempt due to unverified email', {email: email, security: true, fail: true, request: request});
+         return reply(Boom.unauthorized('Please verify your email address'));
+       }
+
+       if (user.isPasswordExpired()) {
+         logger.warn('Unsuccessful login attempt due to expired password', {email: email, security: true, fail: true, request: request});
+         return reply(Boom.unauthorized('password is expired'));
+       }
+
+       if (!user.validPassword(password)) {
+         logger.warn('Unsuccessful login attempt due to invalid password', {email: email, security: true, fail: true, request: request});
+         // Create a flood entry
+         Flood
+           .create({type: 'login', email: email, user: user})
+           .then(() => {
+             return reply(Boom.unauthorized('invalid email or password'));
+           });
+       }
+       else {
+         return reply(user);
+       }
+     })
+     .catch((err) => {
+       ErrorService.handle(err, request, reply);
+     });
+ }
+}
+
+function _authenticateHelper (result, request, reply) {
+  const payload = {id: result._id};
+  if (request.payload && request.payload.exp) {
+    payload.exp = request.payload.exp;
+  }
+  const token = JwtService.issue(payload);
+  result.sanitize(result);
+  if (!payload.exp) {
+    // Creating an API key, store the token in the database
+    JwtToken
+      .create({
+        token: token,
+        user: result._id,
+        blacklist: false
+        // TODO: add expires
+      })
+      .then(() => {
+        logger.warn('Created an API key', {email: result.email, security: true, request: request});
+        reply({
+          user: result,
+          token: token
+        });
+      })
+      .catch((err) => {
+        ErrorService.handle(err, request, reply);
       });
+  }
+  else {
+    logger.info('Successful user authentication. Returning JWT.', {email: result.email, security: true, request: request});
+    return reply({ user: result, token: token});
+  }
+}
+
+function _loginRedirect (request, reply, cookie = false) {
+  let redirect = '';
+  if (request.payload.response_type) {
+    redirect = request.payload.redirect || '/oauth/authorize';
+    redirect += '?client_id=' + request.payload.client_id;
+    redirect += '&redirect_uri=' + request.payload.redirect_uri;
+    redirect += '&response_type=' + request.payload.response_type;
+    redirect += '&scope=' + request.payload.scope;
+    if (request.payload.state) {
+      redirect += '&state=' + request.payload.state;
     }
-    else {
-      const that = this;
-      // If there has been 5 failed login attempts in the last 5 minutes, return
-      // unauthorized.
-      const now = Date.now();
-      const offset = 5 * 60 * 1000;
-      const d5minutes = new Date(now - offset);
-
-      Flood
-        .count({type: 'login', email: email, createdAt: {$gte: d5minutes.toISOString()}})
-        .then((number) => {
-          if (number >= 5) {
-            that.log.warn('Account locked for 5 minutes', {email: email, security: true, fail: true, request: request});
-            throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
-          }
-          else {
-            return User.findOne({email: email});
-          }
-        })
-        .then((user) => {
-          if (!user) {
-            that.log.warn('Unsuccessful login attempt due to invalid email address', {email: email, security: true, fail: true, request: request});
-            return reply(Boom.unauthorized('invalid email or password'));
-          }
-
-          if (!user.email_verified) {
-            that.log.warn('Unsuccessful login attempt due to unverified email', {email: email, security: true, fail: true, request: request});
-            return reply(Boom.unauthorized('Please verify your email address'));
-          }
-
-          if (user.isPasswordExpired()) {
-            that.log.warn('Unsuccessful login attempt due to expired password', {email: email, security: true, fail: true, request: request});
-            return reply(Boom.unauthorized('password is expired'));
-          }
-
-          if (!user.validPassword(password)) {
-            that.log.warn('Unsuccessful login attempt due to invalid password', {email: email, security: true, fail: true, request: request});
-            // Create a flood entry
-            Flood
-              .create({type: 'login', email: email, user: user})
-              .then(() => {
-                return reply(Boom.unauthorized('invalid email or password'));
-              });
-          }
-          else {
-            return reply(user);
-          }
-        })
-        .catch((err) => {
-          ErrorService.handle(err, request, reply);
-        });
+    if (request.payload.nonce) {
+      redirect += '&nonce=' + request.payload.nonce;
     }
   }
-
-  _authenticateHelper (result, request, reply) {
-    const that = this;
-    const payload = {id: result._id};
-    if (request.payload && request.payload.exp) {
-      payload.exp = request.payload.exp;
-    }
-    const token = JwtService.issue(payload);
-    result.sanitize(result);
-    if (!payload.exp) {
-      // Creating an API key, store the token in the database
-      JwtToken
-        .create({
-          token: token,
-          user: result._id,
-          blacklist: false
-          // TODO: add expires
-        })
-        .then(() => {
-          that.log.warn('Created an API key', {email: result.email, security: true, request: request});
-          reply({
-            user: result,
-            token: token
-          });
-        })
-        .catch((err) => {
-          ErrorService.handle(err, request, reply);
-        });
-    }
-    else {
-      that.log.info('Successful user authentication. Returning JWT.', {email: result.email, security: true, request: request});
-      return reply({ user: result, token: token});
-    }
+  else {
+    redirect = '/user';
   }
+
+  if (!cookie) {
+    reply.redirect(redirect);
+  }
+  else {
+    reply.redirect(redirect).state(cookie.name, cookie.value, cookie.options);
+  }
+  logger.info('Successful user authentication. Redirecting.', {client_id: request.payload.client_id, email: request.payload.email, security: true, request: request});
+}
+
+module.exports = {
   /**
    * Authenticate user through JWT
    */
-  authenticate (request, reply) {
-    const that = this;
-    const authPolicy = this.app.policies.AuthPolicy;
-    this._loginHelper(request, function (result) {
+  authenticate: function (request, reply) {
+    _loginHelper(request, function (result) {
       if (!result.isBoom) {
         if (result.totp === true) {
           // Check to see if device is not a trusted device
           const trusted = request.state['x-hid-totp-trust'];
           if (!trusted || (trusted && !result.isTrustedDevice(request.headers['user-agent'], trusted))) {
             const token = request.headers['x-hid-totp'];
-            authPolicy
+            AuthPolicy
               .isTOTPValid(result, token)
               .then(() => {
-                return that._authenticateHelper(result, request, reply);
+                return _authenticateHelper(result, request, reply);
               })
               .catch(err => {
                 return reply(err);
               });
           }
           else {
-            return that._authenticateHelper(result, request, reply);
+            return _authenticateHelper(result, request, reply);
           }
         }
         else {
-          return that._authenticateHelper(result, request, reply);
+          return _authenticateHelper(result, request, reply);
         }
       }
       else {
         return reply(result);
       }
     });
-  }
-
-  _loginRedirect (request, reply, cookie = false) {
-    let redirect = '';
-    if (request.payload.response_type) {
-      redirect = request.payload.redirect || '/oauth/authorize';
-      redirect += '?client_id=' + request.payload.client_id;
-      redirect += '&redirect_uri=' + request.payload.redirect_uri;
-      redirect += '&response_type=' + request.payload.response_type;
-      redirect += '&scope=' + request.payload.scope;
-      if (request.payload.state) {
-        redirect += '&state=' + request.payload.state;
-      }
-      if (request.payload.nonce) {
-        redirect += '&nonce=' + request.payload.nonce;
-      }
-    }
-    else {
-      redirect = '/user';
-    }
-
-    if (!cookie) {
-      reply.redirect(redirect);
-    }
-    else {
-      reply.redirect(redirect).state(cookie.name, cookie.value, cookie.options);
-    }
-    this.log.info('Successful user authentication. Redirecting.', {client_id: request.payload.client_id, email: request.payload.email, security: true, request: request});
-  }
+  },
 
   /**
    * Create a session and redirect to /oauth/authorize
    */
-  login (request, reply) {
-    const that = this;
-    const authPolicy = this.app.policies.AuthPolicy;
+  login: function (request, reply) {
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId)) {
-      return this._loginHelper(request, function (result) {
+      return _loginHelper(request, function (result) {
         if (!result.isBoom) {
           if (!result.totp) {
             request.yar.set('session', { userId: result._id, totp: true });
-            return that._loginRedirect(request, reply);
+            return _loginRedirect(request, reply);
           }
           else {
             // Check to see if device is not a trusted device
@@ -208,7 +205,7 @@ module.exports = class AuthController extends Controller{
             if (trusted && result.isTrustedDevice(request.headers['user-agent'], trusted)) {
               // If trusted device, go on
               request.yar.set('session', { userId: result._id, totp: true });
-              return that._loginRedirect(request, reply);
+              return _loginRedirect(request, reply);
             }
             request.yar.set('session', { userId: result._id, totp: false });
             return reply.view('totp', {
@@ -251,11 +248,14 @@ module.exports = class AuthController extends Controller{
     }
     if (cookie && cookie.userId && cookie.totp === false) {
       let gUser = {};
+      const now = Date.now();
+      const offset = 5 * 60 * 1000;
+      const d5minutes = new Date(now - offset);
       Flood
         .count({type: 'totp', email: cookie.userId, createdAt: {$gte: d5minutes.toISOString()}})
         .then((number) => {
           if (number >= 5) {
-            that.log.warn('Account locked for 5 minutes', {userId: cookie.userId, security: true, fail: true, request: request});
+            logger.warn('Account locked for 5 minutes', {userId: cookie.userId, security: true, fail: true, request: request});
             throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
           }
           else {
@@ -265,7 +265,7 @@ module.exports = class AuthController extends Controller{
         .then((user) => {
           gUser = user;
           const token = request.payload['x-hid-totp'];
-          return authPolicy.isTOTPValid(user, token);
+          return AuthPolicy.isTOTPValid(user, token);
         })
         .then((user) => {
           cookie.totp = true;
@@ -275,11 +275,11 @@ module.exports = class AuthController extends Controller{
               .then(() => {
                 const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
                 const random = user.totpTrusted[tindex].secret;
-                return that._loginRedirect(request, reply, { name: 'x-hid-totp-trust', value: random, options: {ttl: 30 * 24 * 60 * 60 * 1000, domain: 'humanitarian.id', isSameSite: false, isHttpOnly: false}});
+                return _loginRedirect(request, reply, { name: 'x-hid-totp-trust', value: random, options: {ttl: 30 * 24 * 60 * 60 * 1000, domain: 'humanitarian.id', isSameSite: false, isHttpOnly: false}});
               });
           }
           else {
-            return that._loginRedirect(request, reply);
+            return _loginRedirect(request, reply);
           }
         })
         .catch(err => {
@@ -301,16 +301,17 @@ module.exports = class AuthController extends Controller{
         });
     }
     if (cookie && cookie.userId && cookie.totp === true) {
-      return this._loginRedirect(request, reply);
+      return _loginRedirect(request, reply);
     }
-  }
+  },
 
-  authorizeDialogOauth2 (request, reply) {
-    const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
+  authorizeDialogOauth2: function (request, reply) {
+    //const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
+    const oauth = require('hapi-oauth2orize');
 
     // Check response_type
     if (!request.query.response_type) {
-      this.log.warn('Unsuccessful OAuth2 authorization due to missing response_type', {client_id: request.query.client_id, security: true, fail: true, request: request});
+      logger.warn('Unsuccessful OAuth2 authorization due to missing response_type', {client_id: request.query.client_id, security: true, fail: true, request: request});
       return reply(Boom.badRequest('Missing response_type'));
     }
 
@@ -318,7 +319,7 @@ module.exports = class AuthController extends Controller{
     // all relevant query parameters.
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
-      this.log.info('Get request to /oauth/authorize without session. Redirecting to the login page.', {client_id: request.query.client_id, request: request});
+      logger.info('Get request to /oauth/authorize without session. Redirecting to the login page.', {client_id: request.query.client_id, request: request});
       return reply.redirect(
         '/?redirect=/oauth/authorize&client_id=' + request.query.client_id +
         '&redirect_uri=' + request.query.redirect_uri +
@@ -331,7 +332,6 @@ module.exports = class AuthController extends Controller{
 
     // If the user is authenticated, then check whether the user has confirmed
     // authorization for this client/scope combination.
-    const that = this;
     User
       .findOne({_id: cookie.userId})
       .populate({path: 'authorizedClients', select: 'id name'})
@@ -365,7 +365,7 @@ module.exports = class AuthController extends Controller{
             }
             // Verify redirect uri
             if (client.redirectUri !== redirect) {
-              that.log.warn(
+              logger.warn(
                 'Unsuccessful OAuth2 authorization due to wrong redirect URI',
                 { security: true, fail: true, request: request}
               );
@@ -378,14 +378,15 @@ module.exports = class AuthController extends Controller{
       .catch((err) => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  authorizeOauth2 (request, reply) {
-    const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
+  authorizeOauth2: function (request, reply) {
+    //const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
+    const oauth = require('hapi-oauth2orize');
     const cookie = request.yar.get('session');
 
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
-      this.log.info('Got request to /oauth/authorize without session. Redirecting to the login page.', {client_id: request.query.client_id, request: request});
+      logger.info('Got request to /oauth/authorize without session. Redirecting to the login page.', {client_id: request.query.client_id, request: request});
       return reply.redirect('/?redirect=/oauth/authorize&client_id=' + request.query.client_id +
         '&redirect_uri=' + request.query.redirect_uri +
         '&response_type=' + request.query.response_type +
@@ -395,12 +396,11 @@ module.exports = class AuthController extends Controller{
       );
     }
 
-    const that = this;
     User
       .findOne({_id: cookie.userId})
       .then((user) => {
         if (!user) {
-          that.log.warn(
+          logger.warn(
             'Unsuccessful OAuth2 authorization attempt. Could not find user with ID ' + cookie.userId,
             {security: true, fail: true, request: request}
           );
@@ -424,13 +424,14 @@ module.exports = class AuthController extends Controller{
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
-  accessTokenOauth2 (request, reply) {
-    const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
+  accessTokenOauth2: function (request, reply) {
+    //const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
+    const oauth = require('hapi-oauth2orize');
     const code = request.payload.code;
     if (!code && request.payload.grant_type !== 'refresh_token') {
-      this.log.warn(
+      logger.warn(
         'Unsuccessful access token request due to missing authorization code.',
         { security: true, fail: true, request: request }
       );
@@ -438,7 +439,6 @@ module.exports = class AuthController extends Controller{
     }
     const token = request.payload.code ? request.payload.code : request.payload.refresh_token;
     const type = request.payload.code ? 'code' : 'refresh';
-    const that = this;
     OauthToken
       .findOne({token: token, type: type})
       .populate('client user')
@@ -447,21 +447,21 @@ module.exports = class AuthController extends Controller{
           throw new Error();
         }
         else {
-          that.log.info('Successful access token request', { security: true, request: request});
+          logger.info('Successful access token request', { security: true, request: request});
           request.auth.credentials = ocode.client;
           oauth.token(request, reply);
         }
       })
       .catch(err => {
-        that.log.warn(
+        logger.warn(
           'Unsuccessful access token request due to wrong authorization code.',
           { security: true, fail: true, request: request, code: code}
         );
         return reply(Boom.badRequest('Wrong authorization code'));
       });
-  }
+  },
 
-  openIdConfiguration (request, reply) {
+  openIdConfiguration: function (request, reply) {
     const root = process.env.ROOT_URL;
     const out = {
       issuer: root,
@@ -494,9 +494,9 @@ module.exports = class AuthController extends Controller{
       ]
     };
     reply(out);
-  }
+  },
 
-  jwks (request, reply) {
+  jwks: function (request, reply) {
     const key = JwtService.public2jwk();
     key.alg = 'RS256';
     const out = {
@@ -505,10 +505,10 @@ module.exports = class AuthController extends Controller{
       ]
     };
     reply (out);
-  }
+  },
 
   // Provides a list of the json web tokens with no expiration date created by the current user
-  jwtTokens (request, reply) {
+  jwtTokens: function (request, reply) {
     JwtToken
       .find({user: request.params.currentUser._id})
       .then((tokens) => {
@@ -517,10 +517,10 @@ module.exports = class AuthController extends Controller{
       .catch(err => {
         ErrorService.handle(err, request, reply);
       });
-  }
+  },
 
   // Blacklist a JSON Web Token
-  blacklistJwt (request, reply) {
+  blacklistJwt: function (request, reply) {
     const token = request.payload ? request.payload.token : null;
     if (!token) {
       return reply(Boom.badRequest('Missing token'));
@@ -546,17 +546,17 @@ module.exports = class AuthController extends Controller{
           });
       }
       else {
-        that.log.warn(
+        logger.warn(
           'Tried to blacklist a token by a user who does not have the permission',
           { security: true, fail: true, request: request}
         );
         return reply(Boom.badRequest('Could not blacklist this token because you did not generate it'));
       }
     });
-  }
+  },
 
   // Sign Requests for file downloads
-  signRequest (request, reply) {
+  signRequest: function (request, reply) {
     const hawk = require('hawk');
     const url = request.payload ? request.payload.url : null;
     if (!url) {

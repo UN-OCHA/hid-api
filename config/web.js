@@ -69,7 +69,7 @@ module.exports = {
 
   onPluginsLoaded: function (err) {
     const async = require('async');
-    const oauth = this.packs.hapi.server.plugins['hapi-oauth2orize'];
+    const oauth = require('hapi-oauth2orize');
     const oauth2orizeExt = require('oauth2orize-openid');
     const Client = require('../api/models/Client');
     const OauthToken = require('../api/models/OauthToken');
