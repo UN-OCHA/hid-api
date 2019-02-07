@@ -28,7 +28,7 @@
     "googleapis": "^36.0.0",
     "hapi": "^16.7.0",
     "hapi-oauth2orize": "UN-OCHA/hapi-oauth2orize",
-    "hapi-rate-limit": "^3.1.1",
+    "hapi-rate-limit": "^1.4.1",
     "hawk": "^7.0.10",
     "inert": "^5.1.2",
     "is-html": "^1.1.0",
@@ -47,7 +47,7 @@
     "vision": "^5.4.4",
     "winston": "^2.2",
     "winston-daily-rotate-file": "^1.4.6",
-    "yar": "^9.0.1"
+    "yar": "^8.1.0"
   },
   "devDependencies": {
     "eslint": "^4.12.0",

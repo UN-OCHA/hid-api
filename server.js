@@ -27,7 +27,8 @@ _.defaultsDeep(webConfig.options, {
   }
 });
 
-const server = Hapi.server(webConfig.options);
+const server = new Hapi.Server();
+server.connection(webConfig.options);
 const init = async () => {
 
   // Plugins
