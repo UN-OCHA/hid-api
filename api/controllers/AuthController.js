@@ -22,12 +22,11 @@ const logger = config.logger;
 function _loginHelper (request, reply) {
  const email = request.payload && request.payload.email ? request.payload.email.toLowerCase() : false;
  const password = request.payload ? request.payload.password : false;
- const authPolicy = this.app.policies.AuthPolicy;
 
  logger.debug('Entering _loginHelper');
 
  if (!email || !password) {
-   authPolicy.isAuthenticated(request, function (err) {
+   AuthPolicy.isAuthenticated(request, function (err) {
      if (err && err.isBoom) {
        return reply(err);
      }
