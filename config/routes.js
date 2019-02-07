@@ -147,19 +147,23 @@ module.exports = [
   {
     method: 'GET',
     path: '/api/v2/jsonwebtoken',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: AuthController.jwtTokens
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: AuthController.jwtTokens
+    }
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/jsonwebtoken',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: AuthController.blacklistJwt
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: AuthController.blacklistJwt
+    }
   },
 
   {
@@ -189,10 +193,12 @@ module.exports = [
   {
     method: ['GET', 'POST'],
     path: '/account.json',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: UserController.showAccount
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: UserController.showAccount
+    }
   },
 
   {
@@ -204,97 +210,117 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/signedRequest',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: AuthController.signRequest
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: AuthController.signRequest
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/user',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      UserPolicy.canCreate
-    ],
-    handler: UserController.create
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        UserPolicy.canCreate
+      ],
+      handler: UserController.create
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/user/{id?}',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: UserController.find
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: UserController.find
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/user.{extension}',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: UserController.find
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: UserController.find
+    }
   },
 
   {
     method: [ 'PUT', 'PATCH' ],
     path: '/api/v2/user/{id}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      UserPolicy.canUpdate
-    ],
-    handler: UserController.update
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        UserPolicy.canUpdate
+      ],
+      handler: UserController.update
+    }
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      AuthPolicy.isTOTPEnabledAndValid
-    ],
-    handler: UserController.destroy
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        AuthPolicy.isTOTPEnabledAndValid
+      ],
+      handler: UserController.destroy
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/notification',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: UserController.notify
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: UserController.notify
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/{childAttribute}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      ListUserPolicy.canCheckin
-    ],
-    handler: ListUserController.checkin
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        ListUserPolicy.canCheckin
+      ],
+      handler: ListUserController.checkin
+    }
   },
 
   {
     method: ['PUT', 'PATCH'],
     path: '/api/v2/user/{id}/{childAttribute}/{checkInId}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      ListUserPolicy.canUpdate
-    ],
-    handler: ListUserController.update
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        ListUserPolicy.canUpdate
+      ],
+      handler: ListUserController.update
+    }
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}/{childAttribute}/{checkInId}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      ListUserPolicy.canCheckout
-    ],
-    handler: ListUserController.checkout
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        ListUserPolicy.canCheckout
+      ],
+      handler: ListUserController.checkout
+    }
   },
 
   {
@@ -306,32 +332,36 @@ module.exports = [
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/password',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      AuthPolicy.isTOTPEnabledAndValid
-    ],
-    handler: UserController.updatePassword
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        AuthPolicy.isTOTPEnabledAndValid
+      ],
+      handler: UserController.updatePassword
+    }
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/orphan',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      UserPolicy.canClaim
-    ],
-    handler: UserController.claimEmail
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        UserPolicy.canClaim
+      ],
+      handler: UserController.claimEmail
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/picture',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      UserPolicy.canUpdate
-    ],
-    handler: UserController.updatePicture,
     config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        UserPolicy.canUpdate
+      ],
+      handler: UserController.updatePicture,
       payload: {
         output: 'data',
         parse: true,
@@ -343,22 +373,26 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/user/{id}/emails',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      UserPolicy.canUpdate
-    ],
-    handler: UserController.addEmail
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        UserPolicy.canUpdate
+      ],
+      handler: UserController.addEmail
+    }
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/email',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      UserPolicy.canUpdate,
-      AuthPolicy.isTOTPEnabledAndValid
-    ],
-    handler: UserController.setPrimaryEmail
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        UserPolicy.canUpdate,
+        AuthPolicy.isTOTPEnabledAndValid
+      ],
+      handler: UserController.setPrimaryEmail
+    }
   },
 
   {
@@ -370,614 +404,744 @@ module.exports = [
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}/emails/{email}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      UserPolicy.canUpdate
-    ],
-    handler: UserController.dropEmail
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        UserPolicy.canUpdate
+      ],
+      handler: UserController.dropEmail
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/phone_numbers',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      UserPolicy.canUpdate
-    ],
-    handler: UserController.addPhone
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        UserPolicy.canUpdate
+      ],
+      handler: UserController.addPhone
+    }
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}/phone_numbers/{pid}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      UserPolicy.canUpdate
-    ],
-    handler: UserController.dropPhone
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        UserPolicy.canUpdate
+      ],
+      handler: UserController.dropPhone
+    }
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/phone_number',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      UserPolicy.canUpdate
-    ],
-    handler: UserController.setPrimaryPhone
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        UserPolicy.canUpdate
+      ],
+      handler: UserController.setPrimaryPhone
+    }
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/organization',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      UserPolicy.canUpdate
-    ],
-    handler: UserController.setPrimaryOrganization
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        UserPolicy.canUpdate
+      ],
+      handler: UserController.setPrimaryOrganization
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/connections',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: UserController.addConnection
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: UserController.addConnection
+    }
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/connections/{cid}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      UserPolicy.canUpdate
-    ],
-    handler: UserController.updateConnection
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        UserPolicy.canUpdate
+      ],
+      handler: UserController.updateConnection
+    }
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}/connections/{cid}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      UserPolicy.canUpdate
-    ],
-    handler: UserController.deleteConnection
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        UserPolicy.canUpdate
+      ],
+      handler: UserController.deleteConnection
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/subscriptions',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      ServicePolicy.canSubscribe
-    ],
-    handler: ServiceController.subscribe
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        ServicePolicy.canSubscribe
+      ],
+      handler: ServiceController.subscribe
+    }
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}/subscriptions/{serviceId}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      ServicePolicy.canUnsubscribe
-    ],
-    handler: ServiceController.unsubscribe
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        ServicePolicy.canUnsubscribe
+      ],
+      handler: ServiceController.unsubscribe
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/googlecredentials',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: GSSSyncController.saveGoogleCredentials
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: GSSSyncController.saveGoogleCredentials
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/outlookcredentials',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: OutlookController.saveOutlookCredentials
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: OutlookController.saveOutlookCredentials
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/list',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      ListPolicy.canCreate
-    ],
-    handler: ListController.create
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        ListPolicy.canCreate
+      ],
+      handler: ListController.create
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/list/{id?}',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: ListController.find
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: ListController.find
+    }
   },
 
   {
     method: 'PUT',
     path: '/api/v2/list/{id}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      ListPolicy.canUpdate
-    ],
-    handler: ListController.update
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        ListPolicy.canUpdate
+      ],
+      handler: ListController.update
+    }
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/list/{id}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      ListPolicy.canDestroy
-    ],
-    handler: ListController.destroy
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        ListPolicy.canDestroy
+      ],
+      handler: ListController.destroy
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/client',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      AuthPolicy.isAdmin
-    ],
-    handler: ClientController.create
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        AuthPolicy.isAdmin
+      ],
+      handler: ClientController.create
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/client/{id?}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      AuthPolicy.isAdmin
-    ],
-    handler: ClientController.find
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        AuthPolicy.isAdmin
+      ],
+      handler: ClientController.find
+    }
   },
 
   {
     method: 'PUT',
     path: '/api/v2/client/{id}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      AuthPolicy.isAdmin
-    ],
-    handler: ClientController.update
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        AuthPolicy.isAdmin
+      ],
+      handler: ClientController.update
+    }
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/client/{id}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      AuthPolicy.isAdmin
-    ],
-    handler: ClientController.destroy
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        AuthPolicy.isAdmin
+      ],
+      handler: ClientController.destroy
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/trustedDomain',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      AuthPolicy.isAdmin
-    ],
-    handler: TrustedDomainController.create
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        AuthPolicy.isAdmin
+      ],
+      handler: TrustedDomainController.create
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/trustedDomain/{id?}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      AuthPolicy.isAdmin
-    ],
-    handler: TrustedDomainController.find
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        AuthPolicy.isAdmin
+      ],
+      handler: TrustedDomainController.find
+    }
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/trustedDomain/{id}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      AuthPolicy.isAdmin
-    ],
-    handler: TrustedDomainController.destroy
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        AuthPolicy.isAdmin
+      ],
+      handler: TrustedDomainController.destroy
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/notification/{id?}',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: NotificationController.find
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: NotificationController.find
+    }
   },
 
   {
     method: 'PUT',
     path: '/api/v2/notification/{id?}',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: NotificationController.update
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: NotificationController.update
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/service',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: ServiceController.create
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: ServiceController.create
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/service/{id?}',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: ServiceController.find
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: ServiceController.find
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/service/mailchimp/lists',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: ServiceController.mailchimpLists
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: ServiceController.mailchimpLists
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/service/google/groups',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: ServiceController.googleGroups
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: ServiceController.googleGroups
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/servicecredentials',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: ServiceCredentialsController.find
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: ServiceCredentialsController.find
+    }
   },
 
   {
     method: [ 'PUT', 'PATCH' ],
     path: '/api/v2/service/{id}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      ServicePolicy.canUpdate
-    ],
-    handler: ServiceController.update
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        ServicePolicy.canUpdate
+      ],
+      handler: ServiceController.update
+    }
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/service/{id}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      ServicePolicy.canDestroy
-    ],
-    handler: ServiceController.destroy
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        ServicePolicy.canDestroy
+      ],
+      handler: ServiceController.destroy
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/totp/qrcode',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: TOTPController.generateQRCode
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: TOTPController.generateQRCode
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/totp/codes',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: TOTPController.generateBackupCodes
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: TOTPController.generateBackupCodes
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/totp/device',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      AuthPolicy.isTOTPEnabledAndValid
-    ],
-    handler: TOTPController.saveDevice
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        AuthPolicy.isTOTPEnabledAndValid
+      ],
+      handler: TOTPController.saveDevice
+    }
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/totp/device/{id}',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: TOTPController.destroyDevice
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: TOTPController.destroyDevice
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/totp',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      AuthPolicy.isTOTPValidPolicy
-    ],
-    handler: TOTPController.enable
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        AuthPolicy.isTOTPValidPolicy
+      ],
+      handler: TOTPController.enable
+    }
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/totp',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      AuthPolicy.isTOTPEnabledAndValid
-    ],
-    handler: TOTPController.disable
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        AuthPolicy.isTOTPEnabledAndValid
+      ],
+      handler: TOTPController.disable
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/totp',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      AuthPolicy.isTOTPValidPolicy
-    ],
-    handler: TOTPController.verifyTOTPToken
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        AuthPolicy.isTOTPValidPolicy
+      ],
+      handler: TOTPController.verifyTOTPToken
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/gsssync',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: GSSSyncController.create
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: GSSSyncController.create
+    }
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/gsssync',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      GSSSyncPolicy.canDestroy
-    ],
-    handler: GSSSyncController.destroy
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        GSSSyncPolicy.canDestroy
+      ],
+      handler: GSSSyncController.destroy
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/outlookGroup',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: OutlookController.create
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: OutlookController.create
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/deleteExpiredUsers',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.deleteExpiredUsers
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.deleteExpiredUsers
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/deleteExpiredTokens',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.deleteExpiredTokens
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.deleteExpiredTokens
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/sendReminderVerifyEmails',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.sendReminderVerifyEmails
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.sendReminderVerifyEmails
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/sendReminderUpdateEmails',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.sendReminderUpdateEmails
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.sendReminderUpdateEmails
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/sendReminderCheckoutEmails',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.sendReminderCheckoutEmails
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.sendReminderCheckoutEmails
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/sendReminderCheckinEmails',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.sendReminderCheckinEmails
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.sendReminderCheckinEmails
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/forcedResetPasswordAlert',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.forcedResetPasswordAlert
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.forcedResetPasswordAlert
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/forceResetPassword',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.forceResetPassword
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.forceResetPassword
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/forcedResetPasswordAlert7',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.forcedResetPasswordAlert7
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.forcedResetPasswordAlert7
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/doAutomatedCheckout',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.doAutomatedCheckout
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.doAutomatedCheckout
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/specialPasswordReset',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.sendSpecialPasswordResetEmail
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.sendSpecialPasswordResetEmail
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/verifyAutomatically',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.verifyAutomatically
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.verifyAutomatically
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/verificationExpiryEmail',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.verificationExpiryEmail
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.verificationExpiryEmail
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/unverifyAfterOneYear',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.unverifyAfterOneYear
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.unverifyAfterOneYear
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/setListCounts',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.setListCounts
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.setListCounts
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/verifyEmails',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.verifyEmails
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.verifyEmails
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/setAcronymsOrNames',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.setAcronymsOrNames
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.setAcronymsOrNames
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/cron/deleteCustomLists',
-    pre: [
-      CronPolicy.canRun
-    ],
-    handler: CronController.deleteCustomLists
+    config: {
+      pre: [
+        CronPolicy.canRun
+      ],
+      handler: CronController.deleteCustomLists
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/webhooks/hrinfo',
-    pre: [
-      WebhooksPolicy.canRun
-    ],
-    handler: WebhooksController.hrinfo
+    config: {
+      pre: [
+        WebhooksPolicy.canRun
+      ],
+      handler: WebhooksController.hrinfo
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/operation',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      AuthPolicy.isAdminOrGlobalManager
-    ],
-    handler: OperationController.create
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        AuthPolicy.isAdminOrGlobalManager
+      ],
+      handler: OperationController.create
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/operation/{id?}',
-    pre: [
-      AuthPolicy.isAuthenticated
-    ],
-    handler: OperationController.find
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated
+      ],
+      handler: OperationController.find
+    }
   },
 
   {
     method: 'PUT',
     path: '/api/v2/operation/{id}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      OperationsPolicy.canUpdateOperation
-    ],
-    handler: OperationController.update
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        OperationsPolicy.canUpdateOperation
+      ],
+      handler: OperationController.update
+    }
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/operation/{id}',
-    pre: [
-      AuthPolicy.isAuthenticated,
-      AuthPolicy.isAdminOrGlobalManager
-    ],
-    handler: OperationController.destroy
+    config: {
+      pre: [
+        AuthPolicy.isAuthenticated,
+        AuthPolicy.isAdminOrGlobalManager
+      ],
+      handler: OperationController.destroy
+    }
   },
 ];
