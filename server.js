@@ -7,6 +7,7 @@
 'use strict';
 
 const app = require('./');
+const path = require('path');
 const _ = require('lodash');
 const mongoose = require('mongoose');
 const Hapi = require('hapi');
