@@ -1,6 +1,5 @@
 'use strict';
 
-const Service = require('trails/service');
 const Boom = require('boom');
 const config = require('../../config/env')[process.env.NODE_ENV];
 const logger = config.logger;

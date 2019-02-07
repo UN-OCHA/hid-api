@@ -1,6 +1,5 @@
 'use strict';
 
-const Service = require('trails/service');
 const fs = require('fs');
 const {OAuth2Client} = require('google-auth-library');
 const {google} = require('googleapis');

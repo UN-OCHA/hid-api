@@ -1,6 +1,5 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const Boom = require('boom');
 const Notification = require('../models/Notification');
 const HelperService = require('../services/HelperService');

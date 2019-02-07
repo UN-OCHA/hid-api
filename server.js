@@ -14,7 +14,7 @@ const Hapi = require('hapi');
 const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
 mongoose.connect(store.uri, store.options);
 
-const webConfig = app.config.env[process.env.NODE_ENV].web;
+const webConfig = app.config.web;
 webConfig.views.relativeTo = app.config.main.paths.root
 
 _.defaultsDeep(webConfig.options, {

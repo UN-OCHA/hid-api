@@ -1,6 +1,5 @@
 'use strict';
 
-const Service = require('trails/service');
 const Boom = require('boom');
 const async = require('async');
 const Notification = require('../models/Notification');
