@@ -31,6 +31,9 @@ module.exports = {
       plugin: require('inert')
     },
     {
+      plugin: require('vision')
+    },
+    {
       plugin: require('yar'),
       options: {
         cache: {

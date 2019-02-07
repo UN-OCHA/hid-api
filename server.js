@@ -16,14 +16,13 @@ const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.N
 mongoose.connect(store.uri, store.options);
 
 const webConfig = app.config.web;
-webConfig.views.relativeTo = app.config.main.paths.root
 
 _.defaultsDeep(webConfig.options, {
   host: webConfig.host,
   port: webConfig.port,
   routes: {
     files: {
-      relativeTo: webConfig.views.relativeTo
+      relativeTo: app.config.main.paths.root
     }
   }
 });
@@ -67,7 +66,13 @@ const init = async () => {
   }
 
   // Views
-  server.views(app.config.views);
+  server.views({
+    engines: {
+      html: require('ejs')
+    },
+    relativeTo: __dirname,
+    path: 'templates'
+  });
 
   await server.start();
   console.log(`Server running at: ${server.info.uri}`);
