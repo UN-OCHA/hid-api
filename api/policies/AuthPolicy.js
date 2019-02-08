@@ -62,7 +62,7 @@ function isTOTPValid (user, token) {
 
 module.exports = {
 
-  isAuthenticated: function (request, reply) {
+  isAuthenticated: async function (request, reply) {
     acceptLanguage.languages(['en', 'fr', 'es']);
     // If we are creating a user and we are not authenticated, allow it
     if (request.path === '/api/v2/user' &&
@@ -101,30 +101,28 @@ module.exports = {
         port: request.raw.req.protocol === 'http:' ? 80 : 443,
         authorization: request.raw.req.authorization
       };
-      Hawk.uri.authenticate(req, function (id, callback) {
+      const credentialsFunc = function (id) {
         const credentials = {
           key: process.env.COOKIE_PASSWORD,
           algorithm: 'sha256'
         };
-        return callback(null, credentials);
-      }, {
-        localtimeOffsetMsec: 0
-      }, function (err, credentials, artifacts) {
-        if (err) {
-          return reply(err);
+        return credentials;
+      };
+      try {
+        const {creds, attributes} = await Hawk.uri.authenticate(req, credentialsFunc);
+        const user = await User.findOne({_id: attributes.id});
+        if (!user) {
+          return reply(Boom.unauthorized('No user found'));
         }
-        User
-          .findOne({_id: artifacts.id})
-          .then(user => {
-            if (!user) {
-              return reply(Boom.unauthorized('No user found'));
-            }
-            request.params.currentUser = user;
-            delete request.query.bewit;
-            logger.warn('Successful authentication through bewit', { security: true, request: request});
-            reply();
-          });
-      });
+        request.params.currentUser = user;
+        delete request.query.bewit;
+        logger.warn('Successful authentication through bewit', { security: true, request: request});
+        reply();
+      }
+      catch (err) {
+        logger.error(err);
+        return reply(err);
+      }
     }
     else {
       logger.warn('No authorization token was found', { security: true, fail: true, request: request});
@@ -132,58 +130,45 @@ module.exports = {
     }
 
     if (token !== '') {
-      JwtService.verify(token, function (err, jtoken) {
-        if (err) {
-          // Verify it's not an oauth access token
-          OauthToken
-            .findOne({token: token})
-            .populate('user client')
-            .then(tok => {
-              // TODO: make sure the token is not expired
-              if (!tok) {
-                logger.warn('Invalid token', { security: true, fail: true, request: request});
-                return reply(Boom.unauthorized('Invalid Token!'));
-              }
-              if (tok.isExpired()) {
-                logger.warn('Token is expired', { security: true, fail: true, request: request});
-                return reply(Boom.unauthorized('Expired token'));
-              }
-              request.params.currentUser = tok.user;
-              request.params.currentClient = tok.client;
-              reply();
-            })
-            .catch(err => {
-              ErrorService.handle(err, request, reply);
-            });
+      try {
+        const jtoken = JwtService.verify(token);
+        // Make sure token is not blacklisted
+        const tok = await JwtToken.findOne({token: token, blacklist: true});
+        if (tok) {
+          logger.warn('Tried to get authorization with a blacklisted token', { security: true, fail: true, request: request});
+          return reply(Boom.unauthorized('Invalid Token !'));
+        }
+        request.params.token = jtoken; // This is the decrypted token or the payload you provided
+        const user = await User.findOne({_id: jtoken.id});
+        if (user) {
+          request.params.currentUser = user;
+          logger.warn('Successful authentication through JWT', { security: true, request: request});
+          reply();
         }
         else {
-          // Make sure token is not blacklisted
-          JwtToken
-            .findOne({token: token, blacklist: true})
-            .then(tok => {
-              if (tok) {
-                logger.warn('Tried to get authorization with a blacklisted token', { security: true, fail: true, request: request});
-                return reply(Boom.unauthorized('Invalid Token !'));
-              }
-              request.params.token = jtoken; // This is the decrypted token or the payload you provided
-              return User.findOne({_id: jtoken.id});
-            })
-            .then(user => {
-              if (user) {
-                request.params.currentUser = user;
-                logger.warn('Successful authentication through JWT', { security: true, request: request});
-                reply();
-              }
-              else {
-                logger.warn('Could not find user linked to JWT', { security: true, fail: true, request: request });
-                reply(Boom.unauthorized('Invalid Token !'));
-              }
-            })
-            .catch(err => {
-              ErrorService.handle(err, request, reply);
-            });
+          logger.warn('Could not find user linked to JWT', { security: true, fail: true, request: request });
+          reply(Boom.unauthorized('Invalid Token !'));
         }
-      });
+      }
+      catch (err) {
+        try {
+          const tok = await OauthToken.findOne({token: token}).populate('user client');
+          if (!tok) {
+            logger.warn('Invalid token', { security: true, fail: true, request: request});
+            return reply(Boom.unauthorized('Invalid Token!'));
+          }
+          if (tok.isExpired()) {
+            logger.warn('Token is expired', { security: true, fail: true, request: request});
+            return reply(Boom.unauthorized('Expired token'));
+          }
+          request.params.currentUser = tok.user;
+          request.params.currentClient = tok.client;
+          reply();
+        }
+        catch (err) {
+          ErrorService.handle(err, request, reply);
+        }
+      }
     }
   },
 

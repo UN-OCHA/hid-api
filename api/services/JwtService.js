@@ -22,14 +22,9 @@ module.exports = {
   },
 
   // Verifies token on a request
-  verify: function (token, callback) {
+  verify: function (token) {
     const cert = fs.readFileSync('keys/hid.rsa.pub');
-    return jwt.verify(
-      token, // The token to be verified
-      cert, // Same token we used to sign
-      {}, // No Option, for more see https://github.com/auth0/node-jsonwebtoken#jwtverifytoken-secretorpublickey-options-callback
-      callback //Pass errors or decoded token to callback
-    );
+    return jwt.verify(token, cert);
   },
 
   public2jwk: function () {

@@ -516,30 +516,22 @@ module.exports = {
   },
 
   // Blacklist a JSON Web Token
-  blacklistJwt: function (request, reply) {
+  blacklistJwt: async function (request, reply) {
     const token = request.payload ? request.payload.token : null;
     if (!token) {
       return reply(Boom.badRequest('Missing token'));
     }
     // Check that blacklisted token belongs to current user
-    JwtService.verify(token, function (err, jtoken) {
-      if (err) {
-        return ErrorService.handle(err, request, reply);
-      }
+    try {
+      const jtoken = JwtService.verify(token);
       if (jtoken.id === request.params.currentUser.id) {
         // Blacklist token
-        JwtToken
-          .findOneAndUpdate({token: token}, {
+        const doc = await JwtToken.findOneAndUpdate({token: token}, {
             token: token,
             user: request.params.currentUser._id,
             blacklist: true
-          }, {upsert: true, new: true})
-          .then(doc => {
-            return reply(doc);
-          })
-          .catch(err => {
-            ErrorService.handle(err, request, reply);
-          });
+          }, {upsert: true, new: true});
+        return reply(doc);
       }
       else {
         logger.warn(
@@ -548,7 +540,10 @@ module.exports = {
         );
         return reply(Boom.badRequest('Could not blacklist this token because you did not generate it'));
       }
-    });
+    }
+    catch (err) {
+      return ErrorService.handle(err, request, reply);
+    }
   },
 
   // Sign Requests for file downloads
