@@ -10,49 +10,26 @@ const ErrorService = require('../services/ErrorService');
  */
 module.exports = {
 
-  numbers: function (request, reply) {
-    let numberCcls = 0,
-      numberAuth = 0,
-      numberUsers = 0,
-      numberOrphans = 0,
-      numberGhosts = 0,
-      numberVerified = 0;
-    List
-      .count({type: 'list'})
-      .then(number1 => {
-        numberCcls = number1;
-        return User.count({'authOnly': true});
-      })
-      .then(number2 => {
-        numberAuth = number2;
-        return User.count({});
-      })
-      .then(number3 => {
-        numberUsers = number3;
-        return User.count({'is_orphan': true});
-      })
-      .then(number4 => {
-        numberOrphans = number4;
-        return User.count({'is_ghost': true});
-      })
-      .then(number5 => {
-        numberGhosts = number5;
-        return User.count({'verified': true});
-      })
-      .then(number6 => {
-        numberVerified = number6;
-        return reply({
-          'numberCcls': numberCcls,
-          'numberOrphans': numberOrphans,
-          'numberGhosts': numberGhosts,
-          'numberAuth': numberAuth,
-          'numberUsers': numberUsers,
-          'numberVerified': numberVerified
-        });
-      })
-      .catch(err => {
-        ErrorService.handle(err, request, reply);
+  numbers: async function (request, reply) {
+    try {
+      const numberCcls = await List.countDocuments({type: 'list'});
+      const numberAuth = await User.countDocuments({authOnly: true});
+      const numberUsers = await User.countDocuments({});
+      const numberOrphans = await User.countDocuments({'is_orphan': true});
+      const numberGhosts = await User.countDocuments({'verified': true});
+      const numberVerified = await User.countDocuments({'verified': true});
+      return reply({
+        'numberCcls': numberCcls,
+        'numberOrphans': numberOrphans,
+        'numberGhosts': numberGhosts,
+        'numberAuth': numberAuth,
+        'numberUsers': numberUsers,
+        'numberVerified': numberVerified
       });
+    }
+    catch (err) {
+      ErrorService.handle(err, request, reply);
+    }
   }
 
 };
