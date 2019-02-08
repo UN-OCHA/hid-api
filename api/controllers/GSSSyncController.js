@@ -12,77 +12,60 @@ const GSSSyncService = require('../services/GSSSyncService');
  * @module GSSSyncController
  * @description Generated Trails.js Controller.
  */
-function createHelper (request, reply) {
- let gsync = {};
- GSSSync
-   .create(request.payload)
-   .then((gsssync) => {
-     if (!gsssync) {
-       throw Boom.badRequest();
-     }
-     gsync = gsssync;
-     return GSSSyncService.synchronizeAll(gsssync);
-   })
-   .then((resp) => {
-     reply (gsync);
-   })
-   .catch(err => {
-     ErrorService.handle(err, request, reply);
-   });
-}
 
 module.exports = {
 
-  create: function (request, reply) {
+  create: async function (request, reply) {
     request.payload.user = request.params.currentUser._id;
-    if (!request.payload.spreadsheet) {
-      GSSSyncService.createSpreadsheet(request.params.currentUser, request.payload.list, function (err, spreadsheet) {
-        if (err) {
-          return ErrorService.handle(err, request, reply);
-        }
+    try {
+      if (!request.payload.spreadsheet) {
+        const spreadsheet = await GSSSyncService.createSpreadsheet(request.params.currentUser, request.payload.list);
         request.payload.spreadsheet = spreadsheet.data.spreadsheetId;
         request.payload.sheetId = spreadsheet.data.sheets[0].properties.sheetId;
-        createHelper(request, reply);
-      });
+      }
+      const gsssync = await GSSSync.create(request.payload);
+      if (!gsssync) {
+        throw Boom.badRequest();
+      }
+      await GSSSyncService.synchronizeAll(gsssync);
+      return reply(gsssync);
     }
-    else {
-      createHelper(request, reply);
-    }
-  },
-
-  saveGoogleCredentials: function (request, reply) {
-    if (request.payload.code) {
-      const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
-      const authClient = new OAuth2Client(creds.web.client_id, creds.web.client_secret, 'postmessage');
-      authClient
-        .getToken(request.payload.code, function (err, tokens) {
-          if (err) {
-            return ErrorService.handle(err, request, reply);
-          }
-          if (tokens && tokens.refresh_token) {
-            request.params.currentUser.googleCredentials = tokens;
-            request.params.currentUser.save();
-            reply().code(204);
-          }
-          else {
-            const noRefreshToken = Boom.badRequest('No refresh token');
-            ErrorService.handle(noRefreshToken, request, reply);
-          }
-        });
-    }
-    else {
-      return reply(Boom.badRequest());
+    catch (err) {
+      ErrorService.handle(err, request, reply);
     }
   },
 
-  destroy: function (request, reply) {
-    GSSSync
-      .remove({ _id: request.params.id })
-      .then(() => {
-        reply().code(204);
-      })
-      .catch(err => {
-        ErrorService.handle(err, request, reply);
-      });
+  saveGoogleCredentials: async function (request, reply) {
+    try {
+      if (request.payload.code) {
+        const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
+        const authClient = new OAuth2Client(creds.web.client_id, creds.web.client_secret, 'postmessage');
+        const tokens = await authClient.getToken(request.payload.code);
+        if (tokens && tokens.refresh_token) {
+          request.params.currentUser.googleCredentials = tokens;
+          request.params.currentUser.save();
+          return reply().code(204);
+        }
+        else {
+          throw Boom.badRequest('No refresh token');
+        }
+      }
+      else {
+        throw Boom.badRequest();
+      }
+    }
+    catch (err) {
+      ErrorService.handle(err, request, reply);
+    }
+  },
+
+  destroy: async function (request, reply) {
+    try {
+      await GSSSync.remove({ _id: request.params.id });
+      reply().code(204);
+    }
+    catch (err) {
+      ErrorService.handle(err, request, reply);
+    }
   }
 };

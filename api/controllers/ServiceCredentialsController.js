@@ -10,39 +10,27 @@ const ErrorService = require('../services/ErrorService');
  */
 module.exports = {
 
-  find: function (request, reply) {
+  find: async function (request, reply) {
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
-    const that = this;
 
-    if (request.params.id) {
-      criteria._id = request.params.id;
-      ServiceCredentials
-        .findOne(criteria)
-        .then(result => {
-          if (!result) {
-            throw Boom.notFound();
-          }
-          return reply(result);
-        })
-        .catch(err => {
-          ErrorService.handle(err, request, reply);
-        });
+    try {
+      if (request.params.id) {
+        criteria._id = request.params.id;
+        const result = await ServiceCredentials.findOne(criteria);
+        if (!result) {
+          throw Boom.notFound();
+        }
+        return reply(result);
+      }
+      else {
+        const results = await HelperService.find(ServiceCredentials, criteria, options);
+        const number = await ServiceCredentials.count(criteria);
+        return reply(results).header('X-Total-Count', number);
+      }
     }
-    else {
-      const query = HelperService.find(ServiceCredentials, criteria, options);
-      let gresults = {};
-      query
-        .then((results) => {
-          gresults = results;
-          return ServiceCredentials.count(criteria);
-        })
-        .then((number) => {
-          return reply(gresults).header('X-Total-Count', number);
-        })
-        .catch((err) => {
-          ErrorService.handle(err, request, reply);
-        });
+    catch (err) {
+      ErrorService.handle(err, request, reply);
     }
   }
 

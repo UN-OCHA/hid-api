@@ -328,40 +328,30 @@ module.exports = {
       });
   },
 
-  createSpreadsheet: function (user, listId, callback) {
-    List
-      .findOne({ _id: listId })
-      .then(list => {
-        if (!list) {
-          return callback(new Error('List not found'));
-        }
-        const authClient = this.getAuthClient(user);
-        const sheets = google.sheets('v4');
-        let request = {
-          resource: {
-            properties: {
-              title: list.name
-            },
-            sheets: [{
-              properties: {
-                gridProperties: {
-                  rowCount: 10000
-                }
-              }
-            }]
-          },
-          auth: authClient
-        };
-        sheets.spreadsheets.create(request, function (err, response) {
-          if (err) {
-            return callback(err);
+  createSpreadsheet: async function (user, listId, callback) {
+    const list = await List.findOne({ _id: listId });
+    if (!list) {
+      throw new Error('List not found');
+    }
+    const authClient = this.getAuthClient(user);
+    const sheets = google.sheets('v4');
+    let request = {
+      resource: {
+        properties: {
+          title: list.name
+        },
+        sheets: [{
+          properties: {
+            gridProperties: {
+              rowCount: 10000
+            }
           }
-          callback(null, response);
-        });
-      })
-      .catch(err => {
-        return callback(err);
-      });
+        }]
+      },
+      auth: authClient
+    };
+    const response = await sheets.spreadsheets.create(request);
+    return response;
   },
 
   getSheetId: function (gsssync, callback) {
