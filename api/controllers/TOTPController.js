@@ -121,7 +121,7 @@ module.exports = {
     }
   },
 
-  generateBackupCodes: function (request, reply) {
+  generateBackupCodes: async function (request, reply) {
     try {
       const user = request.params.currentUser;
       if (!user.totp) {
