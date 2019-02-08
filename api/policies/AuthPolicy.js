@@ -9,6 +9,8 @@ const OauthToken = require('../models/OauthToken');
 const User = require('../models/User');
 const JwtService = require('../services/JwtService');
 const ErrorService = require('../services/ErrorService');
+const config = require('../../config/env')[process.env.NODE_ENV];
+const logger = config.logger;
 
 /**
  * @module AuthPolicy
