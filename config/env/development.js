@@ -13,12 +13,8 @@ module.exports = {
         migrate: 'create',
         uri: 'mongodb://db:27017/development',
         options: {
-          server: {
-            socketOptions: {
-              keepAlive: 600000,
-              connectTimeoutMS: 60000
-            }
-          }
+          keepAlive: 600000,
+          connectTimeoutMS: 60000
         }
       }
     },
