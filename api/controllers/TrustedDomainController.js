@@ -40,7 +40,7 @@ module.exports = {
       else {
         const results = await HelperService.find(TrustedDomain, criteria, options).populate('list');
         const number = await TrustedDomain.countDocuments(criteria);
-        return reply(gresults).header('X-Total-Count', number);
+        return reply(results).header('X-Total-Count', number);
       }
     }
     catch (err) {

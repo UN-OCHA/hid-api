@@ -41,7 +41,7 @@ module.exports = {
         options.populate = 'managers key_roles key_lists';
         const results = await HelperService.find(Operation, criteria, options);
         const number = await Operation.countDocuments(criteria);
-        return reply(gresults).header('X-Total-Count', number);
+        return reply(results).header('X-Total-Count', number);
       }
     }
     catch (err) {

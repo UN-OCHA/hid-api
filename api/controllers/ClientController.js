@@ -40,7 +40,7 @@ module.exports = {
       else {
         const results = await HelperService.find(Client, criteria, options);
         const number = await Client.countDocuments(criteria);
-        return reply(gresults).header('X-Total-Count', number);
+        return reply(results).header('X-Total-Count', number);
       }
     }
     catch (err) {
