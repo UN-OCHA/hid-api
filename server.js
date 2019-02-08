@@ -33,7 +33,7 @@ const init = async () => {
 
   // Plugins
   await server.register(webConfig.plugins);
-  webConfig.onPluginsLoaded();
+  webConfig.onPluginsLoaded(server);
 
   // Routes
   server.route(app.config.routes);

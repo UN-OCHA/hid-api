@@ -305,8 +305,7 @@ module.exports = {
   },
 
   authorizeDialogOauth2: function (request, reply) {
-    //const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
-    const oauth = require('hapi-oauth2orize');
+    const oauth = request.server.plugins['hapi-oauth2orize'];
 
     // Check response_type
     if (!request.query.response_type) {
@@ -380,8 +379,7 @@ module.exports = {
   },
 
   authorizeOauth2: function (request, reply) {
-    //const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
-    const oauth = require('hapi-oauth2orize');
+    const oauth = request.server.plugins['hapi-oauth2orize']
     const cookie = request.yar.get('session');
 
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
@@ -426,8 +424,7 @@ module.exports = {
   },
 
   accessTokenOauth2: function (request, reply) {
-    //const oauth = this.app.packs.hapi.server.plugins['hapi-oauth2orize'];
-    const oauth = require('hapi-oauth2orize');
+    const oauth = request.server.plugins['hapi-oauth2orize']
     const code = request.payload.code;
     if (!code && request.payload.grant_type !== 'refresh_token') {
       logger.warn(
