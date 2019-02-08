@@ -14,7 +14,8 @@ module.exports = {
         uri: 'mongodb://db:27017/development',
         options: {
           keepAlive: 600000,
-          connectTimeoutMS: 60000
+          connectTimeoutMS: 60000,
+          useNewUrlParser: true
         }
       }
     },

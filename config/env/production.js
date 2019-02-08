@@ -14,7 +14,8 @@ module.exports = {
         uri: process.env.DATABASE,
         options: {
           keepAlive: 600000,
-          connectTimeoutMS: 60000
+          connectTimeoutMS: 60000,
+          useNewUrlParser: true
         }
       }
     },
