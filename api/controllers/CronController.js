@@ -567,19 +567,6 @@ module.exports = {
         user.save();
       }
     });
-  },
-
-  deleteCustomLists: function (request, reply) {
-    const threeMonthsAgo = new Date();
-    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-    List
-      .remove({type: 'list', count: 0, $or: [{ createdAt: { $lte: threeMonthsAgo}}, {owner: '5c3f34f7463f3500bf20e800'}]})
-      .then(() => {
-        reply().code(204);
-      })
-      .catch (err => {
-        ErrorService.handle(err, request, reply);
-      });
   }
 
 };

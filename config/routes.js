@@ -1077,17 +1077,6 @@ module.exports = [
   },
 
   {
-    method: 'GET',
-    path: '/api/v2/cron/deleteCustomLists',
-    config: {
-      pre: [
-        CronPolicy.canRun
-      ],
-      handler: CronController.deleteCustomLists
-    }
-  },
-
-  {
     method: 'POST',
     path: '/api/v2/webhooks/hrinfo',
     config: {
