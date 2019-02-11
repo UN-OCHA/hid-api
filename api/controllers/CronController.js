@@ -27,66 +27,52 @@ const logger = config.logger;
  */
 module.exports = {
 
-  deleteExpiredUsers: function (request, reply) {
+  deleteExpiredUsers: async function (request, reply) {
     const now = new Date();
     const start = new Date(2016, 0, 1, 0, 0, 0);
-    User
-      .remove({expires: {$gt: start, $lt: now}})
-      .then(() => {
-        reply().code(204);
-      })
-      .catch (err => {
-        ErrorService.handle(err, request, reply);
-      });
+    try {
+      await User.remove({expires: {$gt: start, $lt: now}});
+      reply().code(204);
+    }
+    catch (err) {
+      ErrorService.handle(err, request, reply);
+    }
   },
 
-  deleteExpiredTokens: function (request, reply) {
+  deleteExpiredTokens: async function (request, reply) {
     logger.info('Deleting expired Oauth Tokens');
     const now = new Date();
-    OauthToken
-      .remove({expires: {$lt: now }})
-      .then(() => {
-        reply().code(204);
-      })
-      .catch(err => {
-        ErrorService.handle(err, request, reply);
-      });
+    try {
+      await OauthToken.remove({expires: {$lt: now }});
+      reply().code(204);
+    }
+    catch (err) {
+      ErrorService.handle(err, request, reply);
+    }
   },
 
-  sendReminderVerifyEmails: function (request, reply) {
+  sendReminderVerifyEmails: async function (request, reply) {
     logger.info('sending reminder emails to verify addresses');
-    const stream = User.find({'email_verified': false}).cursor();
+    const cursor = User.find({'email_verified': false}).cursor();
 
-    stream.on('data', function(user) {
-      const sthat = this;
-      this.pause();
-      if (user.shouldSendReminderVerify()) {
-
-        EmailService.sendReminderVerify(user, function (err) {
-          if (err) {
-            logger.error(err);
-            sthat.resume();
-          }
-          else {
-            User.collection.update(
-              { _id: user._id },
-              { $set: {
-                remindedVerify: new Date(),
-                timesRemindedVerify: user.timesRemindedVerify + 1
-              }}
-            );
-            sthat.resume();
-          }
-        });
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      try {
+        if (user.shouldSendReminderVerify()) {
+          await EmailService.sendReminderVerify(user);
+          await User.collection.update(
+            { _id: user._id },
+            { $set: {
+              remindedVerify: new Date(),
+              timesRemindedVerify: user.timesRemindedVerify + 1
+            }}
+          );
+        }
+        catch (err) {
+          logger.error(err);
+        }
       }
-      else {
-        this.resume();
-      }
-    });
-
-    stream.on('end', function () {
-      reply().code(204);
-    });
+    }
+    reply().code(204);
   },
 
   sendReminderUpdateEmails: function (request, reply) {
