@@ -136,7 +136,7 @@ module.exports = {
       }
       delete request.payload.notify;
 
-      const [list, user] = await Promise.all(List.findOne({_id: payload.list}).populate('managers'), User.findOne({_id: userId}));
+      const [list, user] = await Promise.all([List.findOne({_id: payload.list}).populate('managers'), User.findOne({_id: userId})]);
       if (!list || !user) {
         throw Boom.notFound();
       }
@@ -275,36 +275,23 @@ module.exports = {
         {path: 'functional_roles.list'},
         {path: 'offices.list'}
       ])
-      .stream();
+      .cursor();
 
-    stream.on('data', function(user) {
-      this.pause();
-      const that = this;
-      async.eachSeries(childAttributes, function (attr, nextAttr) {
-        async.eachSeries(user[attr], function (lu, nextLu) {
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      for (const childAttribute of childAttributes) {
+        for (lu in user[childAttribute]) {
           if (lu && lu.list && lu.list.owner) {
             lu.owner = lu.list.owner;
             lu.managers = lu.list.managers;
             logger.info('Updated list for ' + user._id.toString());
-            user.save(function (err) {
-              nextLu();
-            });
+            await user.save();
           }
           else {
             logger.info('No list for ' + user._id.toString());
-            nextLu();
           }
-        }, function (err) {
-          nextAttr();
-        });
-      }, function (err) {
-        that.resume();
-      });
-    });
-
-    stream.on('close', function () {
-      logger.info('Finished updating listusers');
-    });
+        }
+      }
+    }
   }
 
 };

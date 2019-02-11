@@ -91,15 +91,14 @@ module.exports = {
             criteria.$or.push({visibility: 'verified'});
           }
         }
-        const results = await HelperService.find(List, criteria, options);
-        const number = await List.count(criteria);
+        const [results, number] = await Promise.all([HelperService.find(List, criteria, options), List.count(criteria)]);
         const out = [];
         let tmp = {};
         let optionsArray = [];
         if (options.fields) {
           optionsArray = options.fields.split(' ');
         }
-        async.each(results, async function (list, next) {
+        for (const result in results) {
           tmp = list.toJSON();
           tmp.visible = list.isVisibleTo(request.params.currentUser);
           if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('names') !== -1)) {
@@ -113,14 +112,11 @@ module.exports = {
             ucriteria[list.type + 's'] = {
               $elemMatch: {list: list._id, deleted: false, pending: false}
             };
-            const count = await User.count(ucriteria);
-            tmp.count = count;
+            tmp.count = await User.countDocuments(ucriteria);
           }
           out.push(tmp);
-          next();
-        }, function (err) {
-          reply(out).header('X-Total-Count', result.number);
-        });
+        }
+        reply(out).header('X-Total-Count', number);
       }
     }
     catch (err) {
