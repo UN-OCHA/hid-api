@@ -77,7 +77,7 @@ module.exports = {
     reply().code(204);
   },
 
-  sendReminderUpdateEmails: function (request, reply) {
+  sendReminderUpdateEmails: async function (request, reply) {
     logger.info('Sending reminder update emails to contacts');
     const d = new Date(),
       sixMonthsAgo = d.valueOf() - 183 * 24 * 3600 * 1000;
@@ -108,7 +108,7 @@ module.exports = {
     reply().code(204);
   },
 
-  sendReminderCheckoutEmails: function (request, reply) {
+  sendReminderCheckoutEmails: async function (request, reply) {
     logger.info('Sending reminder checkout emails to contacts');
     let populate = '';
     const criteria = {};
@@ -146,7 +146,7 @@ module.exports = {
     reply().code(204);
   },
 
-  doAutomatedCheckout: function (request, reply) {
+  doAutomatedCheckout: async function (request, reply) {
     logger.info('Running automated checkouts');
     let populate = '';
     const criteria = {};
@@ -185,7 +185,7 @@ module.exports = {
     reply().code(204);
   },
 
-  sendReminderCheckinEmails: function (request, reply) {
+  sendReminderCheckinEmails: async function (request, reply) {
     logger.info('Sending reminder checkin emails to contacts');
 
     const cursor = User
@@ -216,7 +216,7 @@ module.exports = {
 
   },
 
-  forcedResetPasswordAlert: function (request, reply) {
+  forcedResetPasswordAlert: async function (request, reply) {
     const current = Date.now();
     const fiveMonths = new Date(current - 5 * 30 * 24 * 3600 * 1000);
     const cursor = User.find({totp: false, passwordResetAlert30days: false, $or: [{lastPasswordReset: { $lte: fiveMonths }}, {lastPasswordReset: null}]}).cursor();
@@ -233,7 +233,7 @@ module.exports = {
     reply().code(204);
   },
 
-  forcedResetPasswordAlert7: function (request, reply) {
+  forcedResetPasswordAlert7: async function (request, reply) {
     const current = Date.now();
     const fiveMonthsAnd23Days = new Date(current - 173 * 24 * 3600 * 1000);
     const cursor = User.find({totp: false, passwordResetAlert7days: false, $or: [{lastPasswordReset: { $lte: fiveMonthsAnd23Days }}, {lastPasswordReset: null}]}).cursor();
@@ -250,7 +250,7 @@ module.exports = {
     reply().code(204);
   },
 
-  forceResetPassword: function (request, reply) {
+  forceResetPassword: async function (request, reply) {
     const current = Date.now();
     const sixMonths = new Date(current - 6 * 30 * 24 * 3600 * 1000);
     const cursor = User.find({totp: false, passwordResetAlert: false, $or: [{lastPasswordReset: { $lte: sixMonths }}, {lastPasswordReset: null}]}).cursor();
@@ -267,7 +267,7 @@ module.exports = {
     reply().code(204);
   },
 
-  sendSpecialPasswordResetEmail: function (request, reply) {
+  sendSpecialPasswordResetEmail: async function (request, reply) {
     const cursor = User.find({deleted: false}).cursor();
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
@@ -276,7 +276,7 @@ module.exports = {
     reply().code(204);
   },
 
-  setListCounts: function (request, reply) {
+  setListCounts: async function (request, reply) {
     const cursor = List.find({deleted: false}).cursor();
 
     for (let list = await cursor.next(); list != null; list = await cursor.next()) {
@@ -396,7 +396,7 @@ module.exports = {
     reply().code(204);
   },
 
-  verificationExpiryEmail: function (request, reply) {
+  verificationExpiryEmail: async function (request, reply) {
     const current = Date.now();
     const oneYear = new Date(current - 358 * 24 * 3600 * 1000);
     const cursor = User.find({verified: true, verifiedOn: { $lte: oneYear }}).cursor();
@@ -413,7 +413,7 @@ module.exports = {
     reply().code(204);
   },
 
-  unverifyAfterOneYear: function (request, reply) {
+  unverifyAfterOneYear: async function (request, reply) {
     const current = Date.now();
     const oneYear = new Date(current - 365 * 24 * 3600 * 1000);
     const cursor = User.find({verified: true, verifiedOn: { $lte: oneYear }, verificationExpiryEmail: true}).cursor();
