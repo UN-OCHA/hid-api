@@ -16,39 +16,38 @@ const logger = config.logger;
  * @module ListUserController
  * @description Generated Trails.js Controller.
  */
-function _checkinHelper (list, user, notify, childAttribute, currentUser) {
- let payload = {
+const checkinHelper = function (list, user, notify, childAttribute, currentUser) {
+  let payload = {
    list: list._id.toString()
- };
- const that = this;
+  };
 
- // Check that the list added corresponds to the right attribute
- if (childAttribute !== list.type + 's' && childAttribute !== list.type) {
+  // Check that the list added corresponds to the right attribute
+  if (childAttribute !== list.type + 's' && childAttribute !== list.type) {
    throw Boom.badRequest('Wrong list type');
- }
+  }
 
- //Set the proper pending attribute depending on list type
- if (list.joinability === 'public' ||
+  //Set the proper pending attribute depending on list type
+  if (list.joinability === 'public' ||
    list.joinability === 'private' ||
    list.isOwner(currentUser)) {
    payload.pending = false;
- }
- else {
+  }
+  else {
    payload.pending = true;
- }
+  }
 
- payload.name = list.name;
- payload.acronym = list.acronym;
- payload.owner = list.owner;
- payload.managers = list.managers;
- payload.visibility = list.visibility;
+  payload.name = list.name;
+  payload.acronym = list.acronym;
+  payload.owner = list.owner;
+  payload.managers = list.managers;
+  payload.visibility = list.visibility;
 
- if (list.type === 'organization') {
+  if (list.type === 'organization') {
    payload.orgTypeId = list.metadata.type.id;
    payload.orgTypeLabel = list.metadata.type.label;
- }
+  }
 
- if (childAttribute !== 'organization') {
+  if (childAttribute !== 'organization') {
    if (!user[childAttribute]) {
      user[childAttribute] = [];
    }
@@ -60,64 +59,60 @@ function _checkinHelper (list, user, notify, childAttribute, currentUser) {
        throw Boom.badRequest('User is already checked in');
      }
    }
- }
+  }
 
- if (childAttribute !== 'organization') {
+  if (childAttribute !== 'organization') {
    user[childAttribute].push(payload);
- }
- else {
+  }
+  else {
    user.organization = payload;
- }
- user.lastModified = new Date();
- return user
-   .save()
-   .then(() => {
-     list.count = list.count + 1;
-     return list
-       .save();
-   })
-   .then(() => {
-     const managers = [];
-     list.managers.forEach(function (manager) {
-       if (manager.toString() !== currentUser._id.toString()) {
-         managers.push(manager);
-       }
-     });
-     // Notify list managers of the checkin
-     NotificationService.notifyMultiple(managers, {
-       type: 'checkin',
-       createdBy: user,
-       params: { list: list }
-     });
-     // Notify user if needed
-     if (currentUser._id.toString() !== user._id.toString() && list.type !== 'list' && notify === true && !user.hidden) {
-       logger.debug('Checked in by a different user');
-       NotificationService.send({
-         type: 'admin_checkin',
-         createdBy: currentUser,
-         user: user,
-         params: { list: list }
-       }, () => { });
-     }
-     // Notify list owner and managers of the new checkin if needed
-     if (payload.pending) {
-       logger.debug('Notifying list owners and manager of the new checkin');
-       NotificationService.sendMultiple(list.managers, {
-         type: 'pending_checkin',
-         params: { list: list, user: user }
-       }, () => { });
-     }
-     // Synchronize google spreadsheets
-     return GSSSyncService.addUserToSpreadsheets(list._id, user);
-   })
-   .then(data => {
-     return OutlookService.addUserToContactFolders(list._id, user);
-   });
+  }
+  user.lastModified = new Date();
+  list.count = list.count + 1;
+  const managers = [];
+  list.managers.forEach(function (manager) {
+   if (manager.toString() !== currentUser._id.toString()) {
+     managers.push(manager);
+   }
+  });
+  let promises = [];
+  promises.push(user.save());
+  promises.push(list.save());
+  // Notify list managers of the checkin
+  promises.push(NotificationService.notifyMultiple(managers, {
+    type: 'checkin',
+    createdBy: user,
+    params: { list: list }
+  }));
+  // Notify user if needed
+  if (currentUser._id.toString() !== user._id.toString() && list.type !== 'list' && notify === true && !user.hidden) {
+   logger.debug('Checked in by a different user');
+   promises.push(NotificationService.send({
+     type: 'admin_checkin',
+     createdBy: currentUser,
+     user: user,
+     params: { list: list }
+   }));
+  }
+  // Notify list owner and managers of the new checkin if needed
+  if (payload.pending) {
+   logger.debug('Notifying list owners and manager of the new checkin');
+   promises.push(NotificationService.sendMultiple(list.managers, {
+     type: 'pending_checkin',
+     params: { list: list, user: user }
+   }));
+  }
+  // Synchronize google spreadsheets
+  promises.push(GSSSyncService.addUserToSpreadsheets(list._id, user));
+  promises.push(OutlookService.addUserToContactFolders(list._id, user));
+  return Promise.all(promises);
 }
 
 module.exports = {
 
-  checkin: function (request, reply) {
+  checkinHelper: checkinHelper,
+
+  checkin: async function (request, reply) {
     const userId = request.params.id;
     const childAttribute = request.params.childAttribute;
     const payload = request.payload;
@@ -125,48 +120,35 @@ module.exports = {
 
     logger.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload, { request: request});
 
-    if (childAttributes.indexOf(childAttribute) === -1 || childAttribute === 'organization') {
-      return reply(Boom.notFound());
-    }
+    try {
+      if (childAttributes.indexOf(childAttribute) === -1 || childAttribute === 'organization') {
+        throw Boom.notFound();
+      }
 
-    // Make sure there is a list in the payload
-    if (!payload.list) {
-      return reply(Boom.badRequest('Missing list attribute'));
-    }
+      // Make sure there is a list in the payload
+      if (!payload.list) {
+        throw Boom.badRequest('Missing list attribute');
+      }
 
-    let notify = true;
-    if (typeof request.payload.notify !== 'undefined') {
-      notify = request.payload.notify;
-    }
-    delete request.payload.notify;
+      let notify = true;
+      if (typeof request.payload.notify !== 'undefined') {
+        notify = request.payload.notify;
+      }
+      delete request.payload.notify;
 
-    let list = {}, user = {};
-    List
-      .findOne({_id: payload.list})
-      .then((llist) => {
-        if (!llist) {
-          throw Boom.notFound();
-        }
-        list = llist;
-        return User
-          .findOne({_id: userId});
-      })
-      .then((luser) => {
-        if (!luser) {
-          throw Boom.notFound();
-        }
-        user = luser;
-        return _checkinHelper(list, user, notify, childAttribute, request.params.currentUser);
-      })
-      .then(() => {
-        return reply(user);
-      })
-      .catch(err => {
-        ErrorService.handle(err, request, reply);
-      });
+      const [list, user] = await Promise.all(List.findOne({_id: payload.list}).populate('managers'), User.findOne({_id: userId}));
+      if (!list || !user) {
+        throw Boom.notFound();
+      }
+      await checkinHelper(list, user, notify, childAttribute, request.params.currentUser);
+      return reply(user);
+    }
+    catch (err) {
+      ErrorService.handle(err, request, reply);
+    }
   },
 
-  update: function (request, reply) {
+  update: async function (request, reply) {
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
 
@@ -194,126 +176,92 @@ module.exports = {
     }
 
     let listuser = {};
-    User
-      .findOne({ _id: request.params.id })
-      .then(record => {
-        if (!record) {
-          throw Boom.notFound();
-        }
-        const lu = record[childAttribute].id(checkInId);
-        listuser = _.cloneDeep(lu);
-        _.assign(lu, request.payload);
-        record.lastModified = new Date();
-        return record
-          .save()
-          .then((user) => {
-            reply(user);
-            return {user: user, listuser: lu};
-          });
-      })
-      .then(result => {
-        return List
-          .findOne({_id: result.listuser.list})
-          .then(list => {
-            return {user: result.user, listuser: result.listuser, list: list};
-          });
-      })
-      .then(result => {
-        if (listuser.pending === true && request.payload.pending === false) {
-          // Send a notification to inform user that his checkin is not pending anymore
-          const notification = {
-            type: 'approved_checkin',
-            user: result.user,
-            createdBy: request.params.currentUser,
-            params: { list: result.list}
-          };
-          NotificationService.send(notification, () => {});
-        }
-      })
-      .catch(err => {
-        ErrorService.handle(err, request, reply);
-      });
+    try {
+      const record = await User.findOne({ _id: request.params.id });
+      if (!record) {
+        throw Boom.notFound();
+      }
+      const lu = record[childAttribute].id(checkInId);
+      listuser = _.cloneDeep(lu);
+      _.assign(lu, request.payload);
+      record.lastModified = new Date();
+      let promises = [];
+      promises.push(record.save());
+      promises.push(List.findOne({_id: lu.list}));
+      const [user, list] = await Promise.all(promises);
+      if (listuser.pending === true && request.payload.pending === false) {
+        // Send a notification to inform user that his checkin is not pending anymore
+        const notification = {
+          type: 'approved_checkin',
+          user: user,
+          createdBy: request.params.currentUser,
+          params: { list: list}
+        };
+        await NotificationService.send(notification);
+      }
+      return reply(user);
+    }
+    catch (err) {
+      ErrorService.handle(err, request, reply);
+    }
   },
 
-  checkout: function (request, reply) {
+  checkout: async function (request, reply) {
     const userId = request.params.id;
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
     const payload = request.payload;
     const childAttributes = User.listAttributes();
 
-    if (childAttributes.indexOf(childAttribute) === -1) {
-      return reply(Boom.notFound());
+    try {
+      if (childAttributes.indexOf(childAttribute) === -1) {
+        throw Boom.notFound();
+      }
+
+      const user = await User.findOne({ _id: request.params.id });
+      if (!user) {
+        throw Boom.notFound();
+      }
+      const lu = user[childAttribute].id(checkInId);
+      // Set deleted to true
+      lu.deleted = true;
+      // If user is checking out of his primary organization, remove the listuser from the organization attribute
+      if (childAttribute === 'organizations' && record.organization && lu.list.toString() === user.organization.list.toString()) {
+        user.organization.remove();
+      }
+      user.lastModified = new Date();
+      let list = await List.findOne({ _id: lu.list });
+      list.count = list.count - 1;
+      let promises = [];
+      promises.push(user.save());
+      promises.push(list.save());
+      // Send notification if needed
+      if (request.params.currentUser.id !== userId && !user.hidden) {
+        promises.push(NotificationService.send({
+          type: 'admin_checkout',
+          createdBy: request.params.currentUser,
+          user: user,
+          params: { list: list }
+        }));
+      }
+      // Notify list managers of the checkin
+      promises.push(NotificationService.notifyMultiple(list.managers, {
+        type: 'checkout',
+        createdBy: user,
+        params: { list: list }
+      }));
+      // Synchronize google spreadsheets
+      promises.push(GSSSyncService.deleteUserFromSpreadsheets(list._id, user.id));
+      promises.push(OutlookService.deleteUserFromContactFolders(list._id, user.id));
+      await Promise.all(promises);
+      return reply(user);
     }
-
-    let gResult = {};
-
-    User
-      .findOne({ _id: request.params.id })
-      .then(record => {
-        if (!record) {
-          throw Boom.notFound();
-        }
-        const lu = record[childAttribute].id(checkInId);
-        // Set deleted to true
-        lu.deleted = true;
-        // If user is checking out of his primary organization, remove the listuser from the organization attribute
-        if (childAttribute === 'organizations' && record.organization && lu.list.toString() === record.organization.list.toString()) {
-          record.organization.remove();
-        }
-        record.lastModified = new Date();
-        return record
-          .save()
-          .then((user) => {
-            return {user: user, listuser: lu};
-          });
-      })
-      .then((result) => {
-        reply(result.user);
-        return List
-          .findOne({ _id: result.listuser.list })
-          .then(list => {
-            list.count = list.count - 1;
-            return list.save();
-          })
-          .then(list => {
-            return {user: result.user, listuser: result.listuser, list: list};
-          });
-      })
-      .then((result) => {
-        // Send notification if needed
-        if (request.params.currentUser.id !== userId && !result.user.hidden) {
-          NotificationService.send({
-            type: 'admin_checkout',
-            createdBy: request.params.currentUser,
-            user: result.user,
-            params: { list: result.list }
-          }, () => { });
-        }
-        return result;
-      })
-      .then((result) => {
-        // Notify list managers of the checkin
-        NotificationService.notifyMultiple(result.list.managers, {
-          type: 'checkout',
-          createdBy: result.user,
-          params: { list: result.list }
-        });
-        return result;
-      })
-      .then((result) => {
-        // Synchronize google spreadsheets
-        return GSSSyncService.deleteUserFromSpreadsheets(result.list._id, result.user.id);
-      })
-      .then(data => {
-        return OutlookService.deleteUserFromContactFolders(gResult.list._id, gResult.user.id);
-      })
-      .catch(err => {
-        ErrorService.handle(err, request, reply);
-      });
+    catch (err) {
+      ErrorService.handle(err, request, reply);
+    }
   },
 
-  updateListUsers: function (request, reply) {
+  updateListUsers: async function (request, reply) {
     reply();
     const childAttributes = User.listAttributes();
     const stream = User

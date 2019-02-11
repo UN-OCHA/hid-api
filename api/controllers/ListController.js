@@ -17,29 +17,6 @@ const logger = config.logger;
  * @description Generated Trails.js Controller.
  */
 
-function _removeForbiddenAttributes (request) {
-  HelperService.removeForbiddenAttributes(List, request, ['names']);
-}
-
-function _notifyManagers(uids, type, request, list) {
-  User
-    .find({_id: {$in: uids}})
-    .then((users) => {
-      for (let i = 0, len = users.length; i < len; i++) {
-        NotificationService
-          .send({
-            type: type,
-            user: users[i],
-            createdBy: request.params.currentUser,
-            params: { list: list }
-          }, () => {});
-      }
-    })
-    .catch((err) => {
-      logger.error('Unexpected error', {request: request, error: err});
-    });
-}
-
 module.exports = {
 
   create: async function (request, reply) {
@@ -172,10 +149,28 @@ module.exports = {
       const diffAdded = _.difference(payloadManagers, listManagers);
       const diffRemoved = _.difference(listManagers, payloadManagers);
       if (diffAdded.length) {
-        _notifyManagers(diffAdded, 'added_list_manager', request, newlist);
+        const users = await User.find({_id: {$in: diffAdded}});
+        for (const user of users) {
+          await NotificationService
+            .send({
+              type: 'added_list_manager',
+              user: user,
+              createdBy: request.params.currentUser,
+              params: { list: newlist }
+            }, () => {});
+        }
       }
       if (diffRemoved.length) {
-        _notifyManagers(diffRemoved, 'removed_list_manager', request, newlist);
+        const users = await User.find({_id: {$in: diffRemoved}});
+        for (const user of users) {
+          await NotificationService
+            .send({
+              type: 'removed_list_manager',
+              user: user,
+              createdBy: request.params.currentUser,
+              params: { list: newlist }
+            }, () => {});
+        }
       }
 
       // Update users
