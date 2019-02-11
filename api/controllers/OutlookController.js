@@ -17,122 +17,99 @@ module.exports = {
   saveOutlookCredentials: function (request, reply) {
     const credentials = JSON.parse(fs.readFileSync('keys/outlook.json'));
     const oauth2 = require('simple-oauth2').create(credentials);
-    if (request.payload.code && request.payload.redirectUri) {
-      oauth2.authorizationCode.getToken({
-        code: request.payload.code,
-        redirect_uri: request.payload.redirectUri,
-        scope: 'openid offline_access User.Read Contacts.ReadWrite'
-      }, function (error, result) {
-        if (error) {
-          ErrorService.handle(error, request, reply);
+    try {
+      if (request.payload.code && request.payload.redirectUri) {
+        const result = await oauth2.authorizationCode.getToken({
+          code: request.payload.code,
+          redirect_uri: request.payload.redirectUri,
+          scope: 'openid offline_access User.Read Contacts.ReadWrite'
+        });
+        const token = oauth2.accessToken.create(result);
+        if (token && token.token && token.token.refresh_token) {
+          request.params.currentUser.outlookCredentials = token.token;
+          await request.params.currentUser.save();
+          reply().code(204);
         }
         else {
-          const token = oauth2.accessToken.create(result);
-          if (token && token.token && token.token.refresh_token) {
-            request.params.currentUser.outlookCredentials = token.token;
-            request.params.currentUser.save();
-            reply().code(204);
-          }
-          else {
-            const noRefreshToken = Boom.badRequest('No refresh token');
-            ErrorService.handle(noRefreshToken, request, reply);
-          }
+          throw Boom.badRequest('No refresh token');
         }
-      });
+      }
+      else {
+        throw Boom.badRequest();
+      }
     }
-    else {
-      return reply(Boom.badRequest());
+    catch (err) {
+      ErrorService.handle(error, request, reply);
     }
   },
 
-  create: function (request, reply) {
+  create: async function (request, reply) {
     const appCreds = JSON.parse(fs.readFileSync('keys/outlook.json'));
     const oauth2 = require('simple-oauth2').create(appCreds);
     const credentials = request.params.currentUser.outlookCredentials;
-    if (request.payload && request.payload.list) {
-      let accessToken = '', client = {}, gList = {}, gOsync = {};
-      OutlookSync
-        .findOne({user: request.params.currentUser._id, list: request.payload.list})
-        .then(sync => {
-          if (sync) {
-            throw Boom.conflict('Contact folder already exists');
+    try {
+      if (request.payload && request.payload.list) {
+        let accessToken = '', client = {}, gList = {}, gOsync = {};
+        const sync = await OutlookSync.findOne({user: request.params.currentUser._id, list: request.payload.list});
+        if (sync) {
+          throw Boom.conflict('Contact folder already exists');
+        }
+        const res = await oauth2.accessToken.create({refresh_token: credentials.refresh_token}).refresh();
+        accessToken = res.token.access_token;
+        // Create a Graph client
+        client = microsoftGraph.Client.init({
+          authProvider: (done) => {
+            // Just return the token
+            done(null, accessToken);
           }
-          return oauth2.accessToken.create({refresh_token: credentials.refresh_token}).refresh();
-        })
-        .then(res => {
-          accessToken = res.token.access_token;
-          // Create a Graph client
-          client = microsoftGraph.Client.init({
-            authProvider: (done) => {
-              // Just return the token
-              done(null, accessToken);
-            }
-          });
-        })
-        .then(() => {
-          return List.findOne({_id: request.payload.list});
-        })
-        .then(list => {
-          if (!list) {
-            throw Boom.notFound();
-          }
-          gList = list;
-
-          return client
-            .api('/me/contactFolders')
-            .post({
-              displayName: gList.name
-            });
-        })
-        .then(res => {
-          // Create OutlookSync
-          return OutlookSync
-            .create({
-              list: gList._id,
-              user: request.params.currentUser._id,
-              folder: res.id
-            });
-        })
-        .then(osync => {
-          const criteria = {};
-          if (gList.isVisibleTo(request.params.currentUser)) {
-            criteria[gList.type + 's'] = {$elemMatch: {list: gList._id, deleted: false}};
-            if (!gList.isOwner(request.params.currentUser)) {
-              criteria[gList.type + 's'].$elemMatch.pending = false;
-            }
-          }
-          gOsync = osync;
-          return User
-            .find(criteria)
-            .sort('name')
-            .lean();
-        })
-        .then(users => {
-          let promises = [];
-          users.forEach(function (elt) {
-            let emails = [];
-            elt.emails.forEach(function (email) {
-              emails.push({
-                address: email.email,
-                name: elt.name
-              });
-            });
-            promises.push(client
-              .api('/me/contactFolders/' + gOsync.folder + '/contacts')
-              .post(gOsync.getContact(elt))
-            );
-          });
-          return Promise.all(promises);
-        })
-        .then(data => {
-          reply(gOsync);
-        })
-        .catch(err => {
-          ErrorService.handle(err, request, reply);
         });
+        const list = await List.findOne({_id: request.payload.list});
+        if (!list) {
+          throw Boom.notFound();
+        }
+        const cRes = await client
+          .api('/me/contactFolders')
+          .post({
+            displayName: gList.name
+          });
+        const osync = await OutlookSync
+          .create({
+            list: gList._id,
+            user: request.params.currentUser._id,
+            folder: cRes.id
+          });
+
+        const criteria = {};
+        if (gList.isVisibleTo(request.params.currentUser)) {
+          criteria[gList.type + 's'] = {$elemMatch: {list: gList._id, deleted: false}};
+          if (!gList.isOwner(request.params.currentUser)) {
+            criteria[gList.type + 's'].$elemMatch.pending = false;
+          }
+        }
+        const users = await User.find(criteria).sort('name').lean();
+        let promises = [];
+        users.forEach(function (elt) {
+          let emails = [];
+          elt.emails.forEach(function (email) {
+            emails.push({
+              address: email.email,
+              name: elt.name
+            });
+          });
+          promises.push(client
+            .api('/me/contactFolders/' + gOsync.folder + '/contacts')
+            .post(gOsync.getContact(elt))
+          );
+        });
+        await Promise.all(promises);
+        reply(osync);
+      }
+      else {
+        throw Boom.badRequest();
+      }
     }
-    else {
-      return reply(Boom.badRequest());
+    catch (err) {
+      ErrorService.handle(err, request, reply);
     }
   }
 

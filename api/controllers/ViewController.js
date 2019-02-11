@@ -63,7 +63,7 @@ function _buildRequestUrl (request, url) {
 
 module.exports = {
 
-  login: function (request, reply) {
+  login: async function (request, reply) {
     const cookie = request.yar.get('session');
 
     if (!cookie || (cookie && !cookie.userId)) {
@@ -80,25 +80,24 @@ module.exports = {
 
       // Check client ID and redirect URI at this stage, so we can send an error message if needed.
       if (request.query.client_id) {
-        Client
-          .findOne({id: request.query.client_id})
-          .then(client => {
-            if (!client || (client && client.redirectUri !== request.query.redirect_uri)) {
-              loginArgs.alert = {
-                type: 'danger',
-                message: 'The configuration of the client application is invalid. We can not log you in.'
-              };
-              return reply.view('login', loginArgs);
-            }
-            return reply.view('login', loginArgs);
-          })
-          .catch(err => {
+        try {
+          const client = await Client.findOne({id: request.query.client_id});
+          if (!client || (client && client.redirectUri !== request.query.redirect_uri)) {
             loginArgs.alert = {
               type: 'danger',
-              message: 'Internal server error. We can not log you in. Please let us know at info@humanitarian.id'
+              message: 'The configuration of the client application is invalid. We can not log you in.'
             };
             return reply.view('login', loginArgs);
-          });
+          }
+          return reply.view('login', loginArgs);
+        }
+        catch (err) {
+          loginArgs.alert = {
+            type: 'danger',
+            message: 'Internal server error. We can not log you in. Please let us know at info@humanitarian.id'
+          };
+          return reply.view('login', loginArgs);
+        }
       }
       else {
         return reply.view('login', loginArgs);
@@ -139,7 +138,7 @@ module.exports = {
     }
   },
 
-  logout: function (request, reply) {
+  logout: async function (request, reply) {
     request.yar.reset();
     if (request.query.redirect) {
       // Validate redirect URL
@@ -156,21 +155,20 @@ module.exports = {
       //find & remove "?"
       hostname = hostname.split('?')[0];
       const regex = new RegExp(hostname, 'i');
-      Client
-        .count({redirectUri: regex})
-        .then(count => {
-          if (count > 0) {
-            return reply.redirect(request.query.redirect);
-          }
-          else {
-            logger.warn('Redirecting to ' + request.query.redirect + ' is not allowed', { security: true, fail: true, request: request});
-            return reply.redirect('/');
-          }
-        })
-        .catch(err => {
-          logger.error('Error logging user out', {request: request, error: err});
+      try {
+        const count = await Client.countDocuments({redirectUri: regex});
+        if (count > 0) {
+          return reply.redirect(request.query.redirect);
+        }
+        else {
+          logger.warn('Redirecting to ' + request.query.redirect + ' is not allowed', { security: true, fail: true, request: request});
           return reply.redirect('/');
-        });
+        }
+      }
+      catch (err) {
+        logger.error('Error logging user out', {request: request, error: err});
+        return reply.redirect('/');
+      }
     }
     else {
       return reply.redirect('/');
@@ -186,35 +184,34 @@ module.exports = {
     });
   },
 
-  registerPost: function (request, reply) {
+  registerPost: async function (request, reply) {
     // Check recaptcha
     const recaptcha = new Recaptcha({siteKey: process.env.RECAPTCHA_PUBLIC_KEY, secretKey: process.env.RECAPTCHA_PRIVATE_KEY});
     const registerLink = _getRegisterLink(request.payload);
     const passwordLink = _getPasswordLink(request.payload);
-    recaptcha
-      .validate(request.payload['g-recaptcha-response'])
-      .then(() => {
-        UserController.create(request, function (result) {
-          const al = _getAlert(result,
-            'Thank you for creating an account. You will soon receive a confirmation email to confirm your account.',
-            'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.'
-          );
-          reply.view('login', {
-            alert: al,
-            query: request.query,
-            registerLink: registerLink,
-            passwordLink: passwordLink
-          });
-        });
-      })
-      .catch((err) => {
+    try {
+      await recaptcha.validate(request.payload['g-recaptcha-response']);
+      UserController.create(request, function (result) {
+        const al = _getAlert(result,
+          'Thank you for creating an account. You will soon receive a confirmation email to confirm your account.',
+          'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.'
+        );
         reply.view('login', {
-          alert: {type: 'danger', message: recaptcha.translateErrors(err)},
+          alert: al,
           query: request.query,
           registerLink: registerLink,
           passwordLink: passwordLink
         });
       });
+    }
+    catch (err) {
+      reply.view('login', {
+        alert: {type: 'danger', message: recaptcha.translateErrors(err)},
+        query: request.query,
+        registerLink: registerLink,
+        passwordLink: passwordLink
+      });
+    }
   },
 
   verify: function (request, reply) {
@@ -266,69 +263,64 @@ module.exports = {
     });
   },
 
-  newPassword: function (request, reply) {
-    const that = this;
+  newPassword: async function (request, reply) {
     request.yar.reset();
     request.yar.set('session', { hash: request.query.hash, id: request.query.id, time: request.query.time, totp: false});
-    User
-      .findOne({_id: request.query.id})
-      .then(user => {
-        if (!user) {
-          return reply.view('error');
-        }
-        if (user.totp) {
-          return reply.view('totp', {
-            query: request.query,
-            destination: '/new_password',
-            alert: false
-          });
-        }
-        else {
-          request.yar.set('session', { hash: request.query.hash, id: request.query.id, time: request.query.time, totp: true });
-          return reply.view('new_password', {
-            query: request.query,
-            hash: request.query.hash,
-            id: request.query.id,
-            time: request.query.time
-          });
-        }
-      })
-      .catch(err => {
-        ErrorService.handle(err, request, reply);
-      });
+    try {
+      const user = await User.findOne({_id: request.query.id});
+      if (!user) {
+        return reply.view('error');
+      }
+      if (user.totp) {
+        return reply.view('totp', {
+          query: request.query,
+          destination: '/new_password',
+          alert: false
+        });
+      }
+      else {
+        request.yar.set('session', { hash: request.query.hash, id: request.query.id, time: request.query.time, totp: true });
+        return reply.view('new_password', {
+          query: request.query,
+          hash: request.query.hash,
+          id: request.query.id,
+          time: request.query.time
+        });
+      }
+    }
+    catch (err) {
+      ErrorService.handle(err, request, reply);
+    }
   },
 
-  newPasswordPost: function (request, reply) {
+  newPasswordPost: async function (request, reply) {
     const cookie = request.yar.get('session');
 
     if (cookie && cookie.hash && cookie.id && cookie.time && !cookie.totp) {
-      User
-        .findOne({_id: cookie.id})
-        .then(user => {
-          const token = request.payload['x-hid-totp'];
-          return AuthPolicy.isTOTPValid(user, token);
-        })
-        .then((user) => {
-          cookie.totp = true;
-          request.yar.set('session', cookie);
-          return reply.view('new_password', {
-            query: request.payload,
-            hash: cookie.hash,
-            id: cookie.id,
-            time: cookie.time
-          });
-        })
-        .catch(err => {
-          const alert =  {
-            type: 'danger',
-            message: err.output.payload.message
-          };
-          return reply.view('totp', {
-            query: request.payload,
-            destination: '/new_password',
-            alert: alert
-          });
+      try {
+        const user = await User.findOne({_id: cookie.id});
+        const token = request.payload['x-hid-totp'];
+        const user = await AuthPolicy.isTOTPValid(user, token);
+        cookie.totp = true;
+        request.yar.set('session', cookie);
+        return reply.view('new_password', {
+          query: request.payload,
+          hash: cookie.hash,
+          id: cookie.id,
+          time: cookie.time
         });
+      }
+      catch (err) {
+        const alert =  {
+          type: 'danger',
+          message: err.output.payload.message
+        };
+        return reply.view('totp', {
+          query: request.payload,
+          destination: '/new_password',
+          alert: alert
+        });
+      }
     }
 
     if (cookie && cookie.hash && cookie.totp) {
@@ -365,23 +357,22 @@ module.exports = {
   },
 
   // Display a default user page when user is logged in without OAuth
-  user: function (request, reply) {
+  user: async function (request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
       return reply.redirect('/');
     }
     else {
-      User
-        .findOne({_id: cookie.userId})
-        .then(user => {
-          return reply.view('user', {
-            user: user
-          });
-        })
-        .catch(err => {
-          ErrorService.handle(err, request, reply);
+      try {
+        const user = await User.findOne({_id: cookie.userId});
+        return reply.view('user', {
+          user: user
         });
+      }
+      catch (err) {
+        ErrorService.handle(err, request, reply);
+      }
     }
   }
 };
