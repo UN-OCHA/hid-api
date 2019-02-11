@@ -19,8 +19,7 @@ module.exports = {
       // Force to display notifications of current user
       criteria.user = request.params.currentUser.id;
 
-      const results = await HelperService.find(Notification, criteria, options);
-      const number = await Notification.countDocuments(criteria);
+      const [results, number] = await Promise.all([HelperService.find(Notification, criteria, options), Notification.countDocuments(criteria)]);
       return reply(results).header('X-Total-Count', number);
     }
     catch (err) {

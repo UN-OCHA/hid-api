@@ -24,8 +24,7 @@ module.exports = {
         return reply(result);
       }
       else {
-        const results = await HelperService.find(ServiceCredentials, criteria, options);
-        const number = await ServiceCredentials.count(criteria);
+        const [results, number] = await Promise.all([HelperService.find(ServiceCredentials, criteria, options), ServiceCredentials.count(criteria)]);
         return reply(results).header('X-Total-Count', number);
       }
     }

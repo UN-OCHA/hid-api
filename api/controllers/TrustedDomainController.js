@@ -38,8 +38,7 @@ module.exports = {
         return reply(result);
       }
       else {
-        const results = await HelperService.find(TrustedDomain, criteria, options).populate('list');
-        const number = await TrustedDomain.countDocuments(criteria);
+        const [results, number] = await Promise.all([HelperService.find(TrustedDomain, criteria, options).populate('list'), TrustedDomain.countDocuments(criteria)]);
         return reply(results).header('X-Total-Count', number);
       }
     }

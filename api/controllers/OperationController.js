@@ -39,8 +39,7 @@ module.exports = {
       }
       else {
         options.populate = 'managers key_roles key_lists';
-        const results = await HelperService.find(Operation, criteria, options);
-        const number = await Operation.countDocuments(criteria);
+        const [results, number] = await Promise.all([HelperService.find(Operation, criteria, options), Operation.countDocuments(criteria)]);
         return reply(results).header('X-Total-Count', number);
       }
     }
