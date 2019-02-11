@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const Bcrypt = require('bcryptjs');
 const Libphonenumber = require('google-libphonenumber');
 const TrustedDomain = require('./TrustedDomain');
-const https = require('https');
+const axios = require('axios');
 const _ = require('lodash');
 const crypto = require('crypto');
 const isHTML = require('is-html');
@@ -1169,36 +1169,12 @@ UserSchema.methods = {
   },
 
   // Whether the contact is in country or not
-  isInCountry: function (pcode, callback) {
+  isInCountry: async function (pcode) {
     const hrinfoId = this.location.country.id.replace('hrinfo_loc_', '');
-    const path = '/api/v1.0/locations/' + hrinfoId,
-      that = this;
-    https.get({
-      host: 'www.humanitarianresponse.info',
-      port: 443,
-      path: path
-    }, function (response) {
-      let body = '';
-      response.on('data', function (d) {
-        body += d;
-      });
-      response.on('end', function() {
-        let parsed = {};
-        try {
-          parsed = JSON.parse(body);
-          if (parsed.data[0].pcode === pcode) {
-            return callback(null, true);
-          }
-          else {
-            return callback(null, false);
-          }
-        }
-        catch (e) {
-          that.log.error('Error parsing hrinfo API', { error: e});
-          return callback(e);
-        }
-      });
-    });
+    const url = 'https://www.humanitarianresponse.info/api/v1.0/locations/' + hrinfoId;
+    const response = await axios.get(url);
+    const parsed = JSON.parse(response.data);
+    return parsed.data[0].pcode === pcode;
   },
 
   translateCheckin: function (checkin, language) {

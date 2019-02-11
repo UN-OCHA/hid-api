@@ -19,6 +19,7 @@
     "accept-language": "^3.0.15",
     "async": "^2.1.2",
     "authenticator": "^1.1.2",
+    "axios": "^0.18.0",
     "bcryptjs": "^2.3.0",
     "crumb": "^6.0.3",
     "ejs": "^2.5.2",

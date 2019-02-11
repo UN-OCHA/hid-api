@@ -55,23 +55,25 @@ module.exports = {
     logger.info('sending reminder emails to verify addresses');
     const cursor = User.find({'email_verified': false}).cursor();
 
+    let promises = [];
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
       try {
         if (user.shouldSendReminderVerify()) {
-          await EmailService.sendReminderVerify(user);
-          await User.collection.update(
+          promises.push(EmailService.sendReminderVerify(user));
+          promises.push(User.collection.update(
             { _id: user._id },
             { $set: {
               remindedVerify: new Date(),
               timesRemindedVerify: user.timesRemindedVerify + 1
             }}
-          );
+          ));
         }
       }
       catch (err) {
         logger.error(err);
       }
     }
+    await Promise.all(promises);
     reply().code(204);
   },
 
@@ -80,40 +82,30 @@ module.exports = {
     const d = new Date(),
       sixMonthsAgo = d.valueOf() - 183 * 24 * 3600 * 1000;
 
-    const stream = User.find({
+    const cursor = User.find({
       'lastModified': { $lt: sixMonthsAgo },
       'authOnly': false
-    }).stream();
+    }).cursor();
 
-    stream.on('data', function(user) {
-      this.pause();
-      const that = this,
-        now = new Date();
-      if (user.shouldSendReminderUpdate()) {
-        EmailService.sendReminderUpdate(user, function (err) {
-          if (err) {
-            logger.error(err);
-            that.resume();
-          }
-          else {
-            User.collection.update(
-              { _id: user._id },
-              { $set: {
-                remindedUpdate: now
-              }}
-            );
-            that.resume();
-          }
-        });
+    let promises = [];
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      try {
+        if (user.shouldSendReminderUpdate()) {
+          promises.push(EmailService.sendReminderUpdate(user));
+          promises.push(User.collection.update(
+            { _id: user._id },
+            { $set: {
+              remindedUpdate: new Date()
+            }}
+          ));
+        }
       }
-      else {
-        this.resume();
+      catch (err) {
+        logger.error(err);
       }
-    });
-
-    stream.on('end', function () {
-      reply().code(204);
-    });
+    }
+    await Promise.all(promises);
+    reply().code(204);
   },
 
   sendReminderCheckoutEmails: function (request, reply) {
@@ -129,45 +121,29 @@ module.exports = {
       populate += ' ' + attr + '.list';
     });
 
-    reply().code(204);
+    const cursor = User.find(criteria).populate(populate).cursor();
 
-    const stream = User
-      .find(criteria)
-      .populate(populate)
-      .cursor();
-
-    stream.on('data', function(user) {
-      this.pause();
-      logger.info('Checking ' + user.email);
-      const that = this;
-      const now = Date.now();
-      async.eachSeries(listAttributes, function (attr, nextAttr) {
-        async.eachSeries(user[attr], function (lu, nextLu) {
-          if (lu.checkoutDate && lu.remindedCheckout === false && !lu.deleted) {
-            const dep = new Date(lu.checkoutDate);
-            if (now.valueOf() - dep.valueOf() > 48 * 3600 * 1000) {
-              const notification = {type: 'reminder_checkout', user: user, params: {listUser: lu, list: lu.list}};
-              NotificationService.send(notification, () => {
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      for (const listAttribute of listAttributes) {
+        for (lu in user[listAttribute]) {
+          try {
+            if (lu.checkoutDate && lu.remindedCheckout === false && !lu.deleted) {
+              const dep = new Date(lu.checkoutDate);
+              if (now.valueOf() - dep.valueOf() > 48 * 3600 * 1000) {
+                const notification = {type: 'reminder_checkout', user: user, params: {listUser: lu, list: lu.list}};
+                await NotificationService.send(notification);
                 lu.remindedCheckout = true;
-                user.save(function (err) {
-                  nextLu();
-                });
-              });
-            }
-            else {
-              nextLu();
+                await user.save();
+              }
             }
           }
-          else {
-            nextLu();
+          catch (err) {
+            logger.error(err);
           }
-        }, function (err) {
-          nextAttr();
-        });
-      }, function (err) {
-        that.resume();
-      });
-    });
+        }
+      }
+    }
+    reply().code(204);
   },
 
   doAutomatedCheckout: function (request, reply) {
@@ -183,183 +159,134 @@ module.exports = {
       populate += ' ' + attr + '.list';
     });
 
-    const stream = User
-      .find(criteria)
-      .populate(populate)
-      .cursor();
+    const now = Date.now();
+    const cursor = User.find(criteria).populate(populate).cursor();
 
-    stream.on('data', function(user) {
-      this.pause();
-      const that = this;
-      const now = Date.now();
-      async.eachSeries(listAttributes, function (attr, nextAttr) {
-        async.eachSeries(user[attr], function (lu, nextLu) {
-          if (lu.checkoutDate && lu.remindedCheckout === true && !lu.deleted) {
-            const dep = new Date(lu.checkoutDate);
-            if (now.valueOf() - dep.valueOf() > 14 * 24 * 3600 * 1000) {
-              const notification = {type: 'automated_checkout', user: user, params: {listUser: lu, list: lu.list}};
-              NotificationService.send(notification, () => {
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      for (const listAttribute of listAttributes) {
+        for (lu in user[listAttribute]) {
+          try {
+            if (lu.checkoutDate && lu.remindedCheckout === true && !lu.deleted) {
+              const dep = new Date(lu.checkoutDate);
+              if (now.valueOf() - dep.valueOf() > 14 * 24 * 3600 * 1000) {
+                const notification = {type: 'automated_checkout', user: user, params: {listUser: lu, list: lu.list}};
+                await NotificationService.send(notification);
                 lu.deleted = true;
-                user.save(function (err) {
-                  nextLu();
-                });
-              });
-            }
-            else {
-              nextLu();
+                await user.save();
+              }
             }
           }
-          else {
-            nextLu();
+          catch (err) {
+            logger.error(err);
           }
-        }, function (err) {
-          nextAttr();
-        });
-      }, function (err) {
-        that.resume();
-      });
-    });
-    stream.on('end', function () {
-      reply().code(204);
-    });
+        }
+      }
+    }
+    reply().code(204);
   },
 
   sendReminderCheckinEmails: function (request, reply) {
     logger.info('Sending reminder checkin emails to contacts');
 
-    reply().code(204);
-
-    const stream = User
+    const cursor = User
       .find({'operations.remindedCheckin': false })
       .populate('operations.list')
       .cursor();
 
-    stream.on('data', function(user) {
-      this.pause();
-      logger.info('Checking ' + user.email);
-      const that = this;
-      async.eachSeries(user.operations, function (lu, nextLu) {
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      for (lu in user.operations) {
         const d = new Date(),
           offset = d.valueOf() - lu.valueOf();
 
         if (!lu.remindedCheckin && offset > 48 * 3600 * 1000 && offset < 72 * 3600 * 1000 && !lu.deleted) {
           const hasLocalPhoneNumber = user.hasLocalPhoneNumber(lu.list.metadata.country.pcode);
-          user.isInCountry(lu.list.metadata.country.pcode, function (err, inCountry) {
-            const notification = {
-              type: 'reminder_checkin',
-              user: user,
-              params: {listUser: lu, list: lu.list, hasLocalPhoneNumber: hasLocalPhoneNumber, inCountry: inCountry}
-            };
-            NotificationService.send(notification, () => {
-              lu.remindedCheckin = true;
-              user.save(function (err) {
-                nextLu();
-              });
-            });
-          });
+          const inCountry = await user.isInCountry(lu.list.metadata.country.pcode);
+          const notification = {
+            type: 'reminder_checkin',
+            user: user,
+            params: {listUser: lu, list: lu.list, hasLocalPhoneNumber: hasLocalPhoneNumber, inCountry: inCountry}
+          };
+          await NotificationService.send(notification);
+          lu.remindedCheckin = true;
+          await user.save();
         }
-        else {
-          nextLu();
-        }
-      }, function (err) {
-        that.resume();
-      });
-    });
+      }
+    }
+    reply().code(204);
+
   },
 
   forcedResetPasswordAlert: function (request, reply) {
     const current = Date.now();
     const fiveMonths = new Date(current - 5 * 30 * 24 * 3600 * 1000);
-    const stream = User.find({totp: false, passwordResetAlert30days: false, $or: [{lastPasswordReset: { $lte: fiveMonths }}, {lastPasswordReset: null}]}).cursor();
-    stream.on('data', function (user) {
-      const sthat = this;
-      this.pause();
-      EmailService.sendForcedPasswordResetAlert(user, function () {
-        User.collection.update(
-          { _id: user._id },
-          { $set: {
-            passwordResetAlert30days: true
-          }}
-        );
-        sthat.resume();
-      });
-    });
-    stream.on('end', function () {
-      reply().code(204);
-    });
+    const cursor = User.find({totp: false, passwordResetAlert30days: false, $or: [{lastPasswordReset: { $lte: fiveMonths }}, {lastPasswordReset: null}]}).cursor();
+
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      await EmailService.sendForcedPasswordResetAlert(user);
+      await User.collection.update(
+        { _id: user._id },
+        { $set: {
+          passwordResetAlert30days: true
+        }}
+      );
+    }
+    reply().code(204);
   },
 
   forcedResetPasswordAlert7: function (request, reply) {
     const current = Date.now();
     const fiveMonthsAnd23Days = new Date(current - 173 * 24 * 3600 * 1000);
-    const stream = User.find({totp: false, passwordResetAlert7days: false, $or: [{lastPasswordReset: { $lte: fiveMonthsAnd23Days }}, {lastPasswordReset: null}]}).cursor();
-    stream.on('data', function (user) {
-      EmailService.sendForcedPasswordResetAlert7(user, function () {
-        User.collection.update(
-          { _id: user._id },
-          { $set: {
-            passwordResetAlert7days: true
-          }}
-        );
-      });
-    });
-    stream.on('end', function () {
-      reply().code(204);
-    });
+    const cursor = User.find({totp: false, passwordResetAlert7days: false, $or: [{lastPasswordReset: { $lte: fiveMonthsAnd23Days }}, {lastPasswordReset: null}]}).cursor();
+
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      await EmailService.sendForcedPasswordResetAlert7(user);
+      await User.collection.update(
+        { _id: user._id },
+        { $set: {
+          passwordResetAlert7days: true
+        }}
+      );
+    }
+    reply().code(204);
   },
 
   forceResetPassword: function (request, reply) {
     const current = Date.now();
     const sixMonths = new Date(current - 6 * 30 * 24 * 3600 * 1000);
-    const stream = User.find({totp: false, passwordResetAlert: false, $or: [{lastPasswordReset: { $lte: sixMonths }}, {lastPasswordReset: null}]}).cursor();
-    stream.on('data', function (user) {
-      EmailService.sendForcedPasswordReset(user, function () {
-        User.collection.update(
-          { _id: user._id },
-          { $set: {
-            passwordResetAlert: true
-          }}
-        );
-      });
-    });
-    stream.on('end', function () {
-      reply().code(204);
-    });
+    const cursor = User.find({totp: false, passwordResetAlert: false, $or: [{lastPasswordReset: { $lte: sixMonths }}, {lastPasswordReset: null}]}).cursor();
+
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      await EmailService.sendForcedPasswordReset(user);
+      await User.collection.update(
+        { _id: user._id },
+        { $set: {
+          passwordResetAlert: true
+        }}
+      );
+    }
+    reply().code(204);
   },
 
   sendSpecialPasswordResetEmail: function (request, reply) {
+    const cursor = User.find({deleted: false}).cursor();
+
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      await EmailService.sendSpecialPasswordReset(user);
+    }
     reply().code(204);
-    const stream = User.find({deleted: false}).cursor();
-    stream.on('data', function (user) {
-      const sthat = this;
-      this.pause();
-      EmailService.sendSpecialPasswordReset(user, function () {
-        sthat.resume();
-      });
-    });
   },
 
   setListCounts: function (request, reply) {
-    reply().code(204);
-    const stream = List.find({deleted: false}).cursor();
-    stream.on('data', function (list) {
-      const sthat = this;
-      this.pause();
+    const cursor = List.find({deleted: false}).cursor();
+
+    for (let list = await cursor.next(); list != null; list = await cursor.next()) {
       let criteria = { };
       criteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false}};
-      User
-        .count(criteria)
-        .then(number => {
-          list.count = number;
-          return list.save();
-        })
-        .then(() => {
-          sthat.resume();
-        })
-        .catch(err => {
-          sthat.resume();
-        });
-    });
+      const number = await User.countDocuments(criteria);
+      list.count = number;
+      await list.save();
+    }
+    reply().code(204);
   },
 
   /*adjustEmailVerified (request, reply) {
@@ -420,90 +347,79 @@ module.exports = {
     });
   }*/
 
-  verifyAutomatically: function (request, reply) {
+  verifyAutomatically: async function (request, reply) {
     logger.info('automatically verify users');
-    const that = this;
-    const stream = User.find({}).cursor();
+    const cursor = User.find({}).cursor();
 
-    stream.on('data', function(user) {
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
       let promises = [];
       user.emails.forEach(function (email) {
         if (email.validated) {
           promises.push(user.isVerifiableEmail(email.email));
         }
       });
-      Promise.all(promises)
-        .then(domains => {
-          domains.forEach(function (domain) {
-            if (domain) {
-              user.verified = true;
-              user.verified_by = hidAccount;
-              if (!user.verified) {
-                user.verifiedOn = new Date();
-              }
-              // If the domain is associated to a list, check user in this list automatically
-              if (domain.list) {
-                if (!user.organizations) {
-                  user.organizations = [];
-                }
+      const domains = await Promise.all(promises);
+      for (let domain in domains) {
+        if (domain) {
+          user.verified = true;
+          user.verified_by = hidAccount;
+          if (!user.verified) {
+            user.verifiedOn = new Date();
+          }
+          // If the domain is associated to a list, check user in this list automatically
+          if (domain.list) {
+            if (!user.organizations) {
+              user.organizations = [];
+            }
 
-                let isCheckedIn = false;
-                // Make sure user is not already checked in this list
-                for (let i = 0, len = user.organizations.length; i < len; i++) {
-                  if (user.organizations[i].list.equals(domain.list._id) &&
-                    user.organizations[i].deleted === false) {
-                    isCheckedIn = true;
-                  }
-                }
-
-                if (!isCheckedIn) {
-                  ListUserController
-                    ._checkinHelper(domain.list, user, true, 'organizations', user)
-                    .catch(err => {
-                      that.app.log.error(err);
-                    });
-                }
+            let isCheckedIn = false;
+            // Make sure user is not already checked in this list
+            for (let i = 0, len = user.organizations.length; i < len; i++) {
+              if (user.organizations[i].list.equals(domain.list._id) &&
+                user.organizations[i].deleted === false) {
+                isCheckedIn = true;
               }
             }
-          });
-        });
-    });
 
-    stream.on('end', function () {
-      reply().code(204);
-    });
+            if (!isCheckedIn) {
+              try {
+                await ListUserController.checkinHelper(domain.list, user, true, 'organizations', user);
+              }
+              catch (err) {
+                logger.error(err);
+              }
+            }
+          }
+        }
+      }
+    }
+    reply().code(204);
   },
 
   verificationExpiryEmail: function (request, reply) {
     const current = Date.now();
     const oneYear = new Date(current - 358 * 24 * 3600 * 1000);
-    const stream = User.find({verified: true, verifiedOn: { $lte: oneYear }}).cursor();
-    stream.on('data', function (user) {
-      const sthat = this;
-      this.pause();
-      EmailService.sendVerificationExpiryEmail(user, function () {
-        User.collection.update(
+    const cursor = User.find({verified: true, verifiedOn: { $lte: oneYear }}).cursor();
+
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      await EmailService.sendVerificationExpiryEmail(user);
+      await User.collection.update(
           { _id: user._id },
           { $set: {
             verificationExpiryEmail: true
           }}
         );
-        sthat.resume();
-      });
-    });
-    stream.on('end', function () {
-      reply().code(204);
-    });
+    }
+    reply().code(204);
   },
 
   unverifyAfterOneYear: function (request, reply) {
     const current = Date.now();
     const oneYear = new Date(current - 365 * 24 * 3600 * 1000);
-    const stream = User.find({verified: true, verifiedOn: { $lte: oneYear }, verificationExpiryEmail: true}).cursor();
-    stream.on('data', function (user) {
-      const sthat = this;
-      this.pause();
-      User.collection.update(
+    const cursor = User.find({verified: true, verifiedOn: { $lte: oneYear }, verificationExpiryEmail: true}).cursor();
+
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      await User.collection.update(
         { _id: user._id },
         { $set: {
           verified: false,
@@ -511,14 +427,11 @@ module.exports = {
           verified_by: null
         }}
       );
-      sthat.resume();
-    });
-    stream.on('end', function () {
-      reply().code(204);
-    });
+    }
+    reply().code(204);
   },
 
-  verifyEmails: function (request, reply) {
+  /*verifyEmails: function (request, reply) {
     const stream = User.find({email_verified: false}).cursor();
     stream.on('data', function (user) {
       const sthat = this;
@@ -567,6 +480,6 @@ module.exports = {
         user.save();
       }
     });
-  }
+  }*/
 
 };

@@ -1054,7 +1054,7 @@ module.exports = [
     }
   },
 
-  {
+  /*{
     method: 'GET',
     path: '/api/v2/cron/verifyEmails',
     config: {
@@ -1074,7 +1074,7 @@ module.exports = [
       ],
       handler: CronController.setAcronymsOrNames
     }
-  },
+  },*/
 
   {
     method: 'POST',
