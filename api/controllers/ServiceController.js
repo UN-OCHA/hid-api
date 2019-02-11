@@ -192,7 +192,7 @@ module.exports = class ServiceController extends Controller{
             if (err) {
               throw err;
             }
-            return reply(response.groups);
+            return reply(response.data.groups);
           });
         });
       })
