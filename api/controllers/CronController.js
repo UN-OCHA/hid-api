@@ -67,9 +67,9 @@ module.exports = {
             }}
           );
         }
-        catch (err) {
-          logger.error(err);
-        }
+      }
+      catch (err) {
+        logger.error(err);
       }
     }
     reply().code(204);
