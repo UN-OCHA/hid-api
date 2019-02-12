@@ -300,7 +300,7 @@ module.exports = {
       try {
         const user = await User.findOne({_id: cookie.id});
         const token = request.payload['x-hid-totp'];
-        const user = await AuthPolicy.isTOTPValid(user, token);
+        const record = await AuthPolicy.isTOTPValid(user, token);
         cookie.totp = true;
         request.yar.set('session', cookie);
         return reply.view('new_password', {

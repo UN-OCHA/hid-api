@@ -48,7 +48,7 @@ async function _pdfExport (users, number, lists, req, format, callback) {
   let data = {
     lists: lists,
     number: number,
-    users: users
+    users: users,
     dateGenerated: moment().format('LL'),
     filters: filters
   };
@@ -749,7 +749,7 @@ module.exports = {
 
         if (!HelperService.isAuthorizedUrl(appResetUrl)) {
           logger.warn('Invalid app_reset_url', { security: true, fail: true, request: request});
-          throw Boom.badRequest('app_reset_url is invalid'));
+          throw Boom.badRequest('app_reset_url is invalid');
         }
         const record = await User.findOne({email: request.payload.email.toLowerCase()});
         if (!record) {
@@ -1166,7 +1166,7 @@ module.exports = {
     }
   },
 
-  updateConnection: function (request, reply) {
+  updateConnection: async function (request, reply) {
 
     logger.debug('[UserController] Updating connection', { request: request });
 
@@ -1179,7 +1179,6 @@ module.exports = {
       connection.pending = false;
       user.lastModified = new Date();
       await user.save();
-      const connection = user.connections.id(request.params.cid);
       const cuser = await User.findOne({_id: connection.user});
       // Create connection with current user
       const cindex = cuser.connectionsIndex(guser._id);
@@ -1205,7 +1204,7 @@ module.exports = {
     }
   },
 
-  deleteConnection: function (request, reply) {
+  deleteConnection: async function (request, reply) {
 
     logger.debug('[UserController] Deleting connection', { request: request });
 

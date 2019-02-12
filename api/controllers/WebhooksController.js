@@ -218,13 +218,13 @@ module.exports = {
           }
           if (list2.type === 'operation') {
             const lists = await List.find({'metadata.operation.id': list2.remote_id.toString()});
-            lists.forEach(function (group) {
+            for (let group of lists) {
               const groupIndex = group.languageIndex('labels', language);
               const listIndex = list2.languageIndex('labels', language);
               group.labels[groupIndex].text = list2.labels[listIndex].text + ': ' + group.metadata.label;
               group.label = list2.label + ': ' + group.metadata.label;
               await group.save();
-            });
+            }
           }
           return reply(list2);
         }

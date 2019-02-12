@@ -14,7 +14,7 @@ const ErrorService = require('../services/ErrorService');
  */
 module.exports = {
 
-  saveOutlookCredentials: function (request, reply) {
+  saveOutlookCredentials: async function (request, reply) {
     const credentials = JSON.parse(fs.readFileSync('keys/outlook.json'));
     const oauth2 = require('simple-oauth2').create(credentials);
     try {

@@ -17,7 +17,7 @@ const logger = config.logger;
  * @description Is the request authenticated
  */
 
-function isTOTPValid (user, token) {
+const isTOTPValid = function isTOTPValid (user, token) {
  return new Promise(function (resolve, reject) {
    if (!user.totpConf || !user.totpConf.secret) {
      return reject(Boom.unauthorized('TOTP was not configured for this user', 'totp'));
@@ -62,6 +62,8 @@ function isTOTPValid (user, token) {
 
 module.exports = {
 
+  isTOTPValid: isTOTPValid,
+  
   isAuthenticated: async function (request, reply) {
     acceptLanguage.languages(['en', 'fr', 'es']);
     // If we are creating a user and we are not authenticated, allow it
