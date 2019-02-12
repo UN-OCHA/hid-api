@@ -14,25 +14,18 @@ const ListController = require('./ListController');
  */
 
 // Notify users of a new disaster
-function _notifyNewDisaster (disaster) {
+async function _notifyNewDisaster (disaster) {
  if (disaster.metadata.operation && disaster.metadata.operation.length) {
    let operation = {};
    for (let i = 0, len = disaster.metadata.operation.length; i < len; i++) {
      operation = disaster.metadata.operation[i];
-     List
-       .findOne({remote_id: operation.id})
-       .then((list) => {
-         if (!list) {
-           throw new Error('List not found');
-         }
-         return User
-           .find({operations: { $elemMatch: { list: list._id, deleted: false }} });
-       })
-       .then((users) => {
-         const notification = {type: 'new_disaster', params: {list: disaster}};
-         NotificationService.sendMultiple(users, notification, () => { });
-       })
-       .catch((err) => {});
+     const list = await List.findOne({remote_id: operation.id});
+     if (!list) {
+       throw new Error('List not found');
+     }
+     const users = await User.find({operations: { $elemMatch: { list: list._id, deleted: false }} });
+     const notification = {type: 'new_disaster', params: {list: disaster}};
+     await NotificationService.sendMultiple(users, notification);
    }
  }
 }
