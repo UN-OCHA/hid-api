@@ -91,14 +91,14 @@ module.exports = {
             criteria.$or.push({visibility: 'verified'});
           }
         }
-        const [results, number] = await Promise.all([HelperService.find(List, criteria, options), List.count(criteria)]);
+        const [results, number] = await Promise.all([HelperService.find(List, criteria, options), List.countDocuments(criteria)]);
         const out = [];
         let tmp = {};
         let optionsArray = [];
         if (options.fields) {
           optionsArray = options.fields.split(' ');
         }
-        for (const result in results) {
+        for (const list of results) {
           tmp = list.toJSON();
           tmp.visible = list.isVisibleTo(request.params.currentUser);
           if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('names') !== -1)) {

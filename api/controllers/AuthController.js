@@ -72,7 +72,7 @@ async function _loginHelper (request, reply) {
      logger.warn('Unsuccessful login attempt due to invalid password', {email: email, security: true, fail: true, request: request});
      // Create a flood entry
      await Flood.create({type: 'login', email: email, user: user});
-     throw Boom.unauthorized('invalid email or password'));
+     throw Boom.unauthorized('invalid email or password');
    }
    return user;
  }
@@ -112,7 +112,7 @@ module.exports = {
    */
   authenticate: async function (request, reply) {
     try {
-      const result = _loginHelper(request);
+      const result = await _loginHelper(request);
       if (result.totp === true) {
         // Check to see if device is not a trusted device
         const trusted = request.state['x-hid-totp-trust'];
@@ -158,7 +158,7 @@ module.exports = {
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId)) {
       try {
-        const result = _loginHelper(request);
+        const result = await _loginHelper(request);
         if (!result.totp) {
           request.yar.set('session', { userId: result._id, totp: true });
           return _loginRedirect(request, reply);
@@ -194,7 +194,7 @@ module.exports = {
         }
 
         let alertMessage = 'We could not log you in. The username or password you have entered are incorrect. Kindly try again.';
-        if (result.message === 'password is expired') {
+        if (err.message === 'password is expired') {
           alertMessage = 'We could not log you in because your password is expired. Following UN regulations, as a security measure passwords must be udpated every six months. Kindly reset your password by clicking on the "Forgot/Reset password" link below.';
         }
         return reply.view('login', {
