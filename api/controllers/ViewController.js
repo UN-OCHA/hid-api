@@ -5,7 +5,6 @@ const Recaptcha = require('recaptcha2');
 const Client = require('../models/Client');
 const User = require('../models/User');
 const HelperService = require('../services/HelperService');
-const ErrorService = require('../services/ErrorService');
 const UserController = require('./UserController');
 const AuthPolicy = require('../policies/AuthPolicy');
 const config = require('../../config/env')[process.env.NODE_ENV];
@@ -266,30 +265,25 @@ module.exports = {
   newPassword: async function (request, reply) {
     request.yar.reset();
     request.yar.set('session', { hash: request.query.hash, id: request.query.id, time: request.query.time, totp: false});
-    try {
-      const user = await User.findOne({_id: request.query.id});
-      if (!user) {
-        return reply.view('error');
-      }
-      if (user.totp) {
-        return reply.view('totp', {
-          query: request.query,
-          destination: '/new_password',
-          alert: false
-        });
-      }
-      else {
-        request.yar.set('session', { hash: request.query.hash, id: request.query.id, time: request.query.time, totp: true });
-        return reply.view('new_password', {
-          query: request.query,
-          hash: request.query.hash,
-          id: request.query.id,
-          time: request.query.time
-        });
-      }
+    const user = await User.findOne({_id: request.query.id});
+    if (!user) {
+      return reply.view('error');
     }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
+    if (user.totp) {
+      return reply.view('totp', {
+        query: request.query,
+        destination: '/new_password',
+        alert: false
+      });
+    }
+    else {
+      request.yar.set('session', { hash: request.query.hash, id: request.query.id, time: request.query.time, totp: true });
+      return reply.view('new_password', {
+        query: request.query,
+        hash: request.query.hash,
+        id: request.query.id,
+        time: request.query.time
+      });
     }
   },
 
@@ -364,15 +358,10 @@ module.exports = {
       return reply.redirect('/');
     }
     else {
-      try {
-        const user = await User.findOne({_id: cookie.userId});
-        return reply.view('user', {
-          user: user
-        });
-      }
-      catch (err) {
-        ErrorService.handle(err, request, reply);
-      }
+      const user = await User.findOne({_id: cookie.userId});
+      return reply.view('user', {
+        user: user
+      });
     }
   }
 };

@@ -16,7 +16,6 @@ const List = require('../models/List');
 const User = require('../models/User');
 const EmailService = require('../services/EmailService');
 const NotificationService = require('../services/NotificationService');
-const ErrorService = require('../services/ErrorService');
 const ListUserController = require('./ListUserController');
 const config = require('../../config/env')[process.env.NODE_ENV];
 const logger = config.logger;
@@ -30,25 +29,15 @@ module.exports = {
   deleteExpiredUsers: async function (request, reply) {
     const now = new Date();
     const start = new Date(2016, 0, 1, 0, 0, 0);
-    try {
-      await User.remove({expires: {$gt: start, $lt: now}});
-      reply().code(204);
-    }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
-    }
+    await User.remove({expires: {$gt: start, $lt: now}});
+    reply().code(204);
   },
 
   deleteExpiredTokens: async function (request, reply) {
     logger.info('Deleting expired Oauth Tokens');
     const now = new Date();
-    try {
-      await OauthToken.remove({expires: {$lt: now }});
-      reply().code(204);
-    }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
-    }
+    await OauthToken.remove({expires: {$lt: now }});
+    reply().code(204);
   },
 
   sendReminderVerifyEmails: async function (request, reply) {

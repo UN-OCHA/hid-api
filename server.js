@@ -10,7 +10,10 @@ const app = require('./');
 const path = require('path');
 const _ = require('lodash');
 const mongoose = require('mongoose');
+const Boom = require('boom');
 const Hapi = require('hapi');
+const config = require('./config/env')[process.env.NODE_ENV];
+const logger = config.logger;
 
 const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
 mongoose.connect(store.uri, store.options);
@@ -26,6 +29,28 @@ _.defaultsDeep(webConfig.options, {
     }
   }
 });
+
+const preResponse = function (request, reply) {
+  const response = request.response;
+  if (!response.isBoom) {
+    return reply.continue();
+  }
+  else {
+    if (response.name && response.name === 'ValidationError') {
+      logger.error('Validation error', {request: request, error: response.toString()});
+      return reply(Boom.badRequest(response.message));
+    }
+    if (response.output.statusCode === 500) {
+      logger.error('Unexpected error', {request: request, error: response.toString()});
+      if (process.env.NODE_ENV !== 'testing') {
+        const newrelic = require('newrelic');
+        // Send the error to newrelic
+        newrelic.noticeError(response.toString());
+      }
+    }
+    return reply.continue();
+  }
+};
 
 const server = new Hapi.Server();
 server.connection(webConfig.options);
@@ -74,6 +99,8 @@ const init = async () => {
     relativeTo: __dirname,
     path: 'templates'
   });
+
+  server.ext('onPreResponse', preResponse);
 
   await server.start();
   console.log(`Server running at: ${server.info.uri}`);

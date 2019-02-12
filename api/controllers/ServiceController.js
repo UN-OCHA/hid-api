@@ -9,7 +9,6 @@ const Service = require('../models/Service');
 const User = require('../models/User');
 const HelperService = require('../services/HelperService');
 const NotificationService = require('../services/NotificationService');
-const ErrorService = require('../services/ErrorService');
 
 /**
  * @module ServiceController
@@ -19,16 +18,11 @@ module.exports = {
 
   create: async function (request, reply) {
     request.payload.owner = request.params.currentUser._id;
-    try {
-      const service = await Service.create(request.payload);
-      if (!service) {
-        throw Boom.badRequest();
-      }
-      return reply(service);
+    const service = await Service.create(request.payload);
+    if (!service) {
+      throw Boom.badRequest();
     }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
-    }
+    return reply(service);
   },
 
   find: async function (request, reply) {
@@ -54,125 +48,100 @@ module.exports = {
       criteria.lists = {$in: criteria.lists.split(',')};
     }
 
-    try {
-      if (request.params.id) {
-        criteria._id = request.params.id;
-        const result = await Service.findOne(criteria).populate(options.populate);
-        if (!result) {
-          throw Boom.notFound();
-        }
-
-        result.sanitize(request.params.currentUser);
-        return reply(result);
+    if (request.params.id) {
+      criteria._id = request.params.id;
+      const result = await Service.findOne(criteria).populate(options.populate);
+      if (!result) {
+        throw Boom.notFound();
       }
-      else {
-        const options = HelperService.getOptionsFromQuery(request.query);
-        const criteria = HelperService.getCriteriaFromQuery(request.query);
 
-        if (criteria.lists) {
-          const lists = criteria.lists.split(',');
-          if (lists.length > 1) {
-            criteria.$or = [];
-            lists.forEach(function (id) {
-              criteria.$or.push({lists: id});
-            });
-            delete criteria.lists;
-          }
-        }
-
-        if (criteria.name) {
-          if (criteria.name.length < 3) {
-            return reply(Boom.badRequest('Name must have at least 3 characters'));
-          }
-          criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/, '-');
-          criteria.name = new RegExp(criteria.name, 'i');
-        }
-
-        const [results, number] = await Promise.all([
-          HelperService.find(Service, criteria, options),
-          Service.countDocuments(criteria)
-        ]);
-
-        for (let i = 0; i < gresults.length; i++) {
-          results[i].sanitize(request.params.currentUser);
-        }
-        return reply(results).header('X-Total-Count', number);
-      }
+      result.sanitize(request.params.currentUser);
+      return reply(result);
     }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
+    else {
+      const options = HelperService.getOptionsFromQuery(request.query);
+      const criteria = HelperService.getCriteriaFromQuery(request.query);
+
+      if (criteria.lists) {
+        const lists = criteria.lists.split(',');
+        if (lists.length > 1) {
+          criteria.$or = [];
+          lists.forEach(function (id) {
+            criteria.$or.push({lists: id});
+          });
+          delete criteria.lists;
+        }
+      }
+
+      if (criteria.name) {
+        if (criteria.name.length < 3) {
+          return reply(Boom.badRequest('Name must have at least 3 characters'));
+        }
+        criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/, '-');
+        criteria.name = new RegExp(criteria.name, 'i');
+      }
+
+      const [results, number] = await Promise.all([
+        HelperService.find(Service, criteria, options),
+        Service.countDocuments(criteria)
+      ]);
+
+      for (let i = 0; i < gresults.length; i++) {
+        results[i].sanitize(request.params.currentUser);
+      }
+      return reply(results).header('X-Total-Count', number);
     }
   },
 
   update: async function (request, reply) {
-    try {
-      const service = await Service
-        .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true});
-      return reply(service);
-    }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
-    }
+    const service = await Service
+      .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true});
+    return reply(service);
   },
 
   destroy: async function (request, reply) {
     const criteria = {};
     criteria['subscriptions.service'] = request.params.id;
-    try {
-      const users = await User.find(criteria);
-      for (const user of users) {
-        for (let j = user.subscriptions.length; j--; ) {
-          if (user.subscriptions[j] && user.subscriptions[j].service && user.subscriptions[j].service.toString() === request.params.id) {
-            user.subscriptions.splice(j, 1);
-          }
+    const users = await User.find(criteria);
+    for (const user of users) {
+      for (let j = user.subscriptions.length; j--; ) {
+        if (user.subscriptions[j] && user.subscriptions[j].service && user.subscriptions[j].service.toString() === request.params.id) {
+          user.subscriptions.splice(j, 1);
         }
-        user.markModified('subscriptions');
-        await user.save();
       }
-      await Service.remove({ _id: request.params.id });
-      return reply().code(204);
+      user.markModified('subscriptions');
+      await user.save();
     }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
-    }
+    await Service.remove({ _id: request.params.id });
+    return reply().code(204);
   },
 
   mailchimpLists: async function (request, reply) {
-    try {
-      if (request.query.apiKey) {
-        const mc = new Mailchimp(request.query.apiKey);
-        const result = await mc.get({path: '/lists'});
-        return reply(result);
-      }
-      else {
-        throw Boom.badRequest();
-      }
+    if (request.query.apiKey) {
+      const mc = new Mailchimp(request.query.apiKey);
+      const result = await mc.get({path: '/lists'});
+      return reply(result);
     }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
+    else {
+      throw Boom.badRequest();
     }
   },
 
   // Get google groups from a domain
   googleGroups: async function (request, reply) {
     // Find service credentials associated to domain
-    try {
-      const creds = await ServiceCredentials.findOne({ type: 'googlegroup', 'googlegroup.domain': request.query.domain});
-      if (!creds) {
-        throw Boom.badRequest();
-      }
-      const auth = Service.googleGroupsAuthorize(creds.googlegroup);
-      const service = google.admin('directory_v1');
-      const response = await service.groups.list({
-        auth: auth,
-        customer: 'my_customer',
-        maxResults: 200
-      });
-      return reply(response.groups);
+    const creds = await ServiceCredentials.findOne({ type: 'googlegroup', 'googlegroup.domain': request.query.domain});
+    if (!creds) {
+      throw Boom.badRequest();
     }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
-    }
+    const auth = Service.googleGroupsAuthorize(creds.googlegroup);
+    const service = google.admin('directory_v1');
+    const response = await service.groups.list({
+      auth: auth,
+      customer: 'my_customer',
+      maxResults: 200
+    });
+    return reply(response.groups);
   },
 
 
@@ -227,31 +196,25 @@ module.exports = {
       if (err.title && err.title === 'Member Exists') {
         // Member already exists in mailchimp
         user.subscriptions.push({email: request.payload.email, service: service});
-        try {
-          await user.save();
-          if (user.id !== request.params.currentUser.id) {
-            const notification = {
-              type: 'service_subscription',
-              user: user,
-              createdBy: request.params.currentUser,
-              params: { service: service}
-            };
-            await NotificationService.send(notification);
-          }
-          reply(user);
+        await user.save();
+        if (user.id !== request.params.currentUser.id) {
+          const notification = {
+            type: 'service_subscription',
+            user: user,
+            createdBy: request.params.currentUser,
+            params: { service: service}
+          };
+          await NotificationService.send(notification);
         }
-        catch (err) {
-          ErrorService.handle(err, request, reply);
-        }
+        reply(user);
       }
       else {
-        ErrorService.handle(err, request, reply);
+        throw err;
       }
     }
   },
 
   unsubscribe: async function (request, reply) {
-    try {
       let sendNotification = true;
       const user = await User.findOne({'_id': request.params.id});
       if (!user) {
@@ -320,9 +283,5 @@ module.exports = {
         await NotificationService.send(notification);
       }
       return reply(user);
-    }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
-    }
   }
 };

@@ -5,7 +5,6 @@ const _ = require('lodash');
 const List = require('../models/List');
 const User = require('../models/User');
 const NotificationService = require('../services/NotificationService');
-const ErrorService = require('../services/ErrorService');
 const ListController = require('./ListController');
 
 /**
@@ -144,107 +143,102 @@ module.exports = {
     const resource = request.payload.type ? request.payload.type : '';
     const language = request.payload.language ? request.payload.language : 'en';
     const translations = request.payload.translations ? request.payload.translations : ['en'];
-    try {
-      if (!event || !entity || !resource) {
-        throw Boom.badRequest();
-      }
-      const listType = resource.substring(0, resource.length - 1);
-      if (listTypes.indexOf(listType) === -1) {
-        throw Boom.badRequest();
-      }
-      if (event !== 'create' && event !== 'update' && event !== 'delete') {
-        throw Boom.badRequest();
-      }
-      if (event === 'create' || event === 'update') {
-        const inactiveOps = [2782,2785,2791,38230];
-        if ((listType === 'operation' &&
-          entity.status !== 'inactive' &&
-          inactiveOps.indexOf(entity.id) === -1 &&
-          entity.hid_access !== 'inactive') ||
-          (listType === 'bundle' &&
-          entity.hid_access !== 'no_list') ||
-          (listType !== 'operation' &&
-          listType !== 'bundle')) {
-          let gList = {}, list2 = {}, updateUsers = false;
-          const list = await List.findOne({type: listType, remote_id: entity.id});
-          gList = list;
-          const newList = await _parseList(listType, language, entity);
-          if (!gList) {
-            _parseListLanguage(newList, newList.label, newList.acronym, language);
-            list2 = await List.create(newList);
-          }
-          else {
-            if (newList.name !== gList.name || newList.visibility !== gList.visibility) {
-              updateUsers = true;
-            }
-            // Do not change list visibility or joinability if the list is already there
-            delete newList.visibility;
-            delete newList.joinability;
-            _parseListLanguage(gList, newList.label, newList.acronym, language);
-            if (language !== 'en') {
-              delete newList.label;
-              delete newList.acronym;
-            }
-            // Handle translations for lists with no translation in hrinfo
-            if (gList.names.length) {
-              gList.names.forEach(function (elt) {
-                if (translations.indexOf(elt.language) === -1) {
-                  _parseListLanguage(gList, newList.label, newList.acronym, elt.language);
-                }
-              });
-            }
-            _.merge(gList, newList);
-            if (gList.deleted) {
-              gList.deleted = false;
-            }
-            gList.markModified('metadata');
-            list2 = await gList.save();
-          }
-          if (!gList && list2.type === 'disaster' && event === 'create') {
-            _notifyNewDisaster(list2);
-          }
-          else {
-            if (updateUsers) {
-              const criteria = {};
-              criteria[list2.type + 's.list'] = list2._id.toString();
-              const users = await User.find(criteria);
-              let user = {};
-              for (let i = 0; i < users.length; i++) {
-                user = users[i];
-                user.updateCheckins(list);
-                await user.save();
-              }
-            }
-          }
-          if (list2.type === 'operation') {
-            const lists = await List.find({'metadata.operation.id': list2.remote_id.toString()});
-            for (let group of lists) {
-              const groupIndex = group.languageIndex('labels', language);
-              const listIndex = list2.languageIndex('labels', language);
-              group.labels[groupIndex].text = list2.labels[listIndex].text + ': ' + group.metadata.label;
-              group.label = list2.label + ': ' + group.metadata.label;
-              await group.save();
-            }
-          }
-          return reply(list2);
-        }
-        else {
-          throw Boom.badRequest();
-        }
-      }
-      else if (event === 'delete') {
+    if (!event || !entity || !resource) {
+      throw Boom.badRequest();
+    }
+    const listType = resource.substring(0, resource.length - 1);
+    if (listTypes.indexOf(listType) === -1) {
+      throw Boom.badRequest();
+    }
+    if (event !== 'create' && event !== 'update' && event !== 'delete') {
+      throw Boom.badRequest();
+    }
+    if (event === 'create' || event === 'update') {
+      const inactiveOps = [2782,2785,2791,38230];
+      if ((listType === 'operation' &&
+        entity.status !== 'inactive' &&
+        inactiveOps.indexOf(entity.id) === -1 &&
+        entity.hid_access !== 'inactive') ||
+        (listType === 'bundle' &&
+        entity.hid_access !== 'no_list') ||
+        (listType !== 'operation' &&
+        listType !== 'bundle')) {
+        let gList = {}, list2 = {}, updateUsers = false;
         const list = await List.findOne({type: listType, remote_id: entity.id});
-        if (!list) {
-          throw Boom.badRequest();
+        gList = list;
+        const newList = await _parseList(listType, language, entity);
+        if (!gList) {
+          _parseListLanguage(newList, newList.label, newList.acronym, language);
+          list2 = await List.create(newList);
         }
         else {
-          request.params.id = list._id.toString();
-          ListController.destroy(request, reply);
+          if (newList.name !== gList.name || newList.visibility !== gList.visibility) {
+            updateUsers = true;
+          }
+          // Do not change list visibility or joinability if the list is already there
+          delete newList.visibility;
+          delete newList.joinability;
+          _parseListLanguage(gList, newList.label, newList.acronym, language);
+          if (language !== 'en') {
+            delete newList.label;
+            delete newList.acronym;
+          }
+          // Handle translations for lists with no translation in hrinfo
+          if (gList.names.length) {
+            gList.names.forEach(function (elt) {
+              if (translations.indexOf(elt.language) === -1) {
+                _parseListLanguage(gList, newList.label, newList.acronym, elt.language);
+              }
+            });
+          }
+          _.merge(gList, newList);
+          if (gList.deleted) {
+            gList.deleted = false;
+          }
+          gList.markModified('metadata');
+          list2 = await gList.save();
         }
+        if (!gList && list2.type === 'disaster' && event === 'create') {
+          _notifyNewDisaster(list2);
+        }
+        else {
+          if (updateUsers) {
+            const criteria = {};
+            criteria[list2.type + 's.list'] = list2._id.toString();
+            const users = await User.find(criteria);
+            let user = {};
+            for (let i = 0; i < users.length; i++) {
+              user = users[i];
+              user.updateCheckins(list);
+              await user.save();
+            }
+          }
+        }
+        if (list2.type === 'operation') {
+          const lists = await List.find({'metadata.operation.id': list2.remote_id.toString()});
+          for (let group of lists) {
+            const groupIndex = group.languageIndex('labels', language);
+            const listIndex = list2.languageIndex('labels', language);
+            group.labels[groupIndex].text = list2.labels[listIndex].text + ': ' + group.metadata.label;
+            group.label = list2.label + ': ' + group.metadata.label;
+            await group.save();
+          }
+        }
+        return reply(list2);
+      }
+      else {
+        throw Boom.badRequest();
       }
     }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
+    else if (event === 'delete') {
+      const list = await List.findOne({type: listType, remote_id: entity.id});
+      if (!list) {
+        throw Boom.badRequest();
+      }
+      else {
+        request.params.id = list._id.toString();
+        ListController.destroy(request, reply);
+      }
     }
 
   }

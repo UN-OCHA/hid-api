@@ -5,7 +5,6 @@ const {google} = require('googleapis');
 const {OAuth2Client} = require('google-auth-library');
 const fs = require('fs');
 const GSSSync = require('../models/GSSSync');
-const ErrorService = require('../services/ErrorService');
 const GSSSyncService = require('../services/GSSSyncService');
 
 /**
@@ -17,55 +16,40 @@ module.exports = {
 
   create: async function (request, reply) {
     request.payload.user = request.params.currentUser._id;
-    try {
-      if (!request.payload.spreadsheet) {
-        const spreadsheet = await GSSSyncService.createSpreadsheet(request.params.currentUser, request.payload.list);
-        request.payload.spreadsheet = spreadsheet.data.spreadsheetId;
-        request.payload.sheetId = spreadsheet.data.sheets[0].properties.sheetId;
-      }
-      const gsssync = await GSSSync.create(request.payload);
-      if (!gsssync) {
-        throw Boom.badRequest();
-      }
-      await GSSSyncService.synchronizeAll(gsssync);
-      return reply(gsssync);
+    if (!request.payload.spreadsheet) {
+      const spreadsheet = await GSSSyncService.createSpreadsheet(request.params.currentUser, request.payload.list);
+      request.payload.spreadsheet = spreadsheet.data.spreadsheetId;
+      request.payload.sheetId = spreadsheet.data.sheets[0].properties.sheetId;
     }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
+    const gsssync = await GSSSync.create(request.payload);
+    if (!gsssync) {
+      throw Boom.badRequest();
     }
+    await GSSSyncService.synchronizeAll(gsssync);
+    return reply(gsssync);
   },
 
   saveGoogleCredentials: async function (request, reply) {
-    try {
-      if (request.payload.code) {
-        const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
-        const authClient = new OAuth2Client(creds.web.client_id, creds.web.client_secret, 'postmessage');
-        const tokens = await authClient.getToken(request.payload.code);
-        if (tokens && tokens.refresh_token) {
-          request.params.currentUser.googleCredentials = tokens;
-          request.params.currentUser.save();
-          return reply().code(204);
-        }
-        else {
-          throw Boom.badRequest('No refresh token');
-        }
+    if (request.payload.code) {
+      const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
+      const authClient = new OAuth2Client(creds.web.client_id, creds.web.client_secret, 'postmessage');
+      const tokens = await authClient.getToken(request.payload.code);
+      if (tokens && tokens.refresh_token) {
+        request.params.currentUser.googleCredentials = tokens;
+        request.params.currentUser.save();
+        return reply().code(204);
       }
       else {
-        throw Boom.badRequest();
+        throw Boom.badRequest('No refresh token');
       }
     }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
+    else {
+      throw Boom.badRequest();
     }
   },
 
   destroy: async function (request, reply) {
-    try {
-      await GSSSync.remove({ _id: request.params.id });
-      reply().code(204);
-    }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
-    }
+    await GSSSync.remove({ _id: request.params.id });
+    reply().code(204);
   }
 };

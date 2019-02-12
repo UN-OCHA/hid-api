@@ -8,7 +8,6 @@ const OauthToken = require('../models/OauthToken');
 const User = require('../models/User');
 const JwtService = require('../services/JwtService');
 const HelperService = require('../services/HelperService');
-const ErrorService = require('../services/ErrorService');
 const AuthPolicy = require('../policies/AuthPolicy');
 const config = require('../../config/env')[process.env.NODE_ENV];
 const logger = config.logger;
@@ -111,43 +110,38 @@ module.exports = {
    * Authenticate user through JWT
    */
   authenticate: async function (request, reply) {
-    try {
-      const result = await _loginHelper(request);
-      if (result.totp === true) {
-        // Check to see if device is not a trusted device
-        const trusted = request.state['x-hid-totp-trust'];
-        if (!trusted || (trusted && !result.isTrustedDevice(request.headers['user-agent'], trusted))) {
-          const token = request.headers['x-hid-totp'];
-          await AuthPolicy.isTOTPValid(result, token);
-        }
-      }
-      const payload = {id: result._id};
-      if (request.payload && request.payload.exp) {
-        payload.exp = request.payload.exp;
-      }
-      const token = JwtService.issue(payload);
-      result.sanitize(result);
-      if (!payload.exp) {
-        // Creating an API key, store the token in the database
-        await JwtToken.create({
-            token: token,
-            user: result._id,
-            blacklist: false
-            // TODO: add expires
-          });
-          logger.warn('Created an API key', {email: result.email, security: true, request: request});
-          reply({
-            user: result,
-            token: token
-          });
-      }
-      else {
-        logger.info('Successful user authentication. Returning JWT.', {email: result.email, security: true, request: request});
-        return reply({ user: result, token: token});
+    const result = await _loginHelper(request);
+    if (result.totp === true) {
+      // Check to see if device is not a trusted device
+      const trusted = request.state['x-hid-totp-trust'];
+      if (!trusted || (trusted && !result.isTrustedDevice(request.headers['user-agent'], trusted))) {
+        const token = request.headers['x-hid-totp'];
+        await AuthPolicy.isTOTPValid(result, token);
       }
     }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
+    const payload = {id: result._id};
+    if (request.payload && request.payload.exp) {
+      payload.exp = request.payload.exp;
+    }
+    const token = JwtService.issue(payload);
+    result.sanitize(result);
+    if (!payload.exp) {
+      // Creating an API key, store the token in the database
+      await JwtToken.create({
+          token: token,
+          user: result._id,
+          blacklist: false
+          // TODO: add expires
+        });
+        logger.warn('Created an API key', {email: result.email, security: true, request: request});
+        reply({
+          user: result,
+          token: token
+        });
+    }
+    else {
+      logger.info('Successful user authentication. Returning JWT.', {email: result.email, security: true, request: request});
+      return reply({ user: result, token: token});
     }
   },
 
@@ -332,7 +326,8 @@ module.exports = {
       });
     }
     catch (err) {
-      ErrorService.handle(err, request, reply);
+      // TODO: display the error in a view
+      return reply(err);
     }
   },
 
@@ -372,7 +367,8 @@ module.exports = {
       oauth.decision(request, reply);
     }
     catch (err) {
-      ErrorService.handle(err, request, reply);
+      // TODO: display error in a view
+      return reply(err);
     }
   },
 
@@ -404,7 +400,8 @@ module.exports = {
       }
     }
     catch (err) {
-      ErrorService.handle(err, request, reply);
+      // TODO: display error in a view
+      return reply(err);
     }
   },
 
@@ -456,43 +453,33 @@ module.exports = {
 
   // Provides a list of the json web tokens with no expiration date created by the current user
   jwtTokens: async function (request, reply) {
-    try {
-      const tokens = await JwtToken.find({user: request.params.currentUser._id});
-      return reply(tokens);
-    }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
-    }
+    const tokens = await JwtToken.find({user: request.params.currentUser._id});
+    return reply(tokens);
   },
 
   // Blacklist a JSON Web Token
   blacklistJwt: async function (request, reply) {
-    try {
-      const token = request.payload ? request.payload.token : null;
-      if (!token) {
-        throw Boom.badRequest('Missing token');
-      }
-      // Check that blacklisted token belongs to current user
-      const jtoken = JwtService.verify(token);
-      if (jtoken.id === request.params.currentUser.id) {
-        // Blacklist token
-        const doc = await JwtToken.findOneAndUpdate({token: token}, {
-            token: token,
-            user: request.params.currentUser._id,
-            blacklist: true
-          }, {upsert: true, new: true});
-        return reply(doc);
-      }
-      else {
-        logger.warn(
-          'Tried to blacklist a token by a user who does not have the permission',
-          { security: true, fail: true, request: request}
-        );
-        throw Boom.badRequest('Could not blacklist this token because you did not generate it');
-      }
+    const token = request.payload ? request.payload.token : null;
+    if (!token) {
+      throw Boom.badRequest('Missing token');
     }
-    catch (err) {
-      return ErrorService.handle(err, request, reply);
+    // Check that blacklisted token belongs to current user
+    const jtoken = JwtService.verify(token);
+    if (jtoken.id === request.params.currentUser.id) {
+      // Blacklist token
+      const doc = await JwtToken.findOneAndUpdate({token: token}, {
+          token: token,
+          user: request.params.currentUser._id,
+          blacklist: true
+        }, {upsert: true, new: true});
+      return reply(doc);
+    }
+    else {
+      logger.warn(
+        'Tried to blacklist a token by a user who does not have the permission',
+        { security: true, fail: true, request: request}
+      );
+      throw Boom.badRequest('Could not blacklist this token because you did not generate it');
     }
   },
 

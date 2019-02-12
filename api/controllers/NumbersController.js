@@ -2,7 +2,6 @@
 
 const List = require('../models/List');
 const User = require('../models/User');
-const ErrorService = require('../services/ErrorService');
 
 /**
  * @module NumbersController
@@ -11,32 +10,27 @@ const ErrorService = require('../services/ErrorService');
 module.exports = {
 
   numbers: async function (request, reply) {
-    try {
-      const [numberCcls,
-        numberAuth,
-        numberUsers,
-        numberOrphans,
-        numberGhosts,
-        numberVerified] = await Promise.all([
-          List.countDocuments({type: 'list'}),
-          User.countDocuments({authOnly: true}),
-          User.countDocuments({}),
-          User.countDocuments({'is_orphan': true}),
-          User.countDocuments({'verified': true}),
-          User.countDocuments({'verified': true})
-        ]);
-      return reply({
-        'numberCcls': numberCcls,
-        'numberOrphans': numberOrphans,
-        'numberGhosts': numberGhosts,
-        'numberAuth': numberAuth,
-        'numberUsers': numberUsers,
-        'numberVerified': numberVerified
-      });
-    }
-    catch (err) {
-      ErrorService.handle(err, request, reply);
-    }
+    const [numberCcls,
+      numberAuth,
+      numberUsers,
+      numberOrphans,
+      numberGhosts,
+      numberVerified] = await Promise.all([
+        List.countDocuments({type: 'list'}),
+        User.countDocuments({authOnly: true}),
+        User.countDocuments({}),
+        User.countDocuments({'is_orphan': true}),
+        User.countDocuments({'verified': true}),
+        User.countDocuments({'verified': true})
+      ]);
+    return reply({
+      'numberCcls': numberCcls,
+      'numberOrphans': numberOrphans,
+      'numberGhosts': numberGhosts,
+      'numberAuth': numberAuth,
+      'numberUsers': numberUsers,
+      'numberVerified': numberVerified
+    });
   }
 
 };
