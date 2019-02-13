@@ -22,7 +22,7 @@ module.exports = {
     if (!service) {
       throw Boom.badRequest();
     }
-    return reply(service);
+    return service;
   },
 
   find: async function (request, reply) {
@@ -56,7 +56,7 @@ module.exports = {
       }
 
       result.sanitize(request.params.currentUser);
-      return reply(result);
+      return result;
     }
     else {
       const options = HelperService.getOptionsFromQuery(request.query);
@@ -89,14 +89,14 @@ module.exports = {
       for (let i = 0; i < gresults.length; i++) {
         results[i].sanitize(request.params.currentUser);
       }
-      return reply(results).header('X-Total-Count', number);
+      return reply.response(results).header('X-Total-Count', number);
     }
   },
 
   update: async function (request, reply) {
     const service = await Service
       .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true});
-    return reply(service);
+    return service;
   },
 
   destroy: async function (request, reply) {
@@ -113,14 +113,14 @@ module.exports = {
       await user.save();
     }
     await Service.remove({ _id: request.params.id });
-    return reply().code(204);
+    return reply.response().code(204);
   },
 
   mailchimpLists: async function (request, reply) {
     if (request.query.apiKey) {
       const mc = new Mailchimp(request.query.apiKey);
       const result = await mc.get({path: '/lists'});
-      return reply(result);
+      return result;
     }
     else {
       throw Boom.badRequest();
@@ -141,7 +141,7 @@ module.exports = {
       customer: 'my_customer',
       maxResults: 200
     });
-    return reply(response.groups);
+    return response.groups;
   },
 
 
@@ -191,6 +191,7 @@ module.exports = {
         };
         await NotificationService.send(notification);
       }
+      return user;
     }
     catch (err) {
       if (err.title && err.title === 'Member Exists') {
@@ -206,7 +207,7 @@ module.exports = {
           };
           await NotificationService.send(notification);
         }
-        reply(user);
+        return user;
       }
       else {
         throw err;
@@ -215,73 +216,73 @@ module.exports = {
   },
 
   unsubscribe: async function (request, reply) {
-      let sendNotification = true;
-      const user = await User.findOne({'_id': request.params.id});
-      if (!user) {
-        throw Boom.notFound();
+    let sendNotification = true;
+    const user = await User.findOne({'_id': request.params.id});
+    if (!user) {
+      throw Boom.notFound();
+    }
+    if (user.subscriptionsIndex(request.params.serviceId) === -1) {
+      throw Boom.notFound();
+    }
+    const srv = await Service.findOne({'_id': request.params.serviceId, deleted: false});
+    if (!srv) {
+      throw Boom.badRequest();
+    }
+    const index = user.subscriptionsIndex(request.params.serviceId);
+    if (service.type === 'googlegroup') {
+      const creds = await ServiceCredentials.findOne({type: 'googlegroup', 'googlegroup.domain': service.googlegroup.domain});
+      if (!creds) {
+        throw new Error('Could not find service credentials');
       }
-      if (user.subscriptionsIndex(request.params.serviceId) === -1) {
-        throw Boom.notFound();
+      try {
+        const response = await service.unsubscribeGoogleGroup(user, creds);
+        user.subscriptions.splice(index, 1);
+        await user.save();
       }
-      const srv = await Service.findOne({'_id': request.params.serviceId, deleted: false});
-      if (!srv) {
-        throw Boom.badRequest();
-      }
-      const index = user.subscriptionsIndex(request.params.serviceId);
-      if (service.type === 'googlegroup') {
-        const creds = await ServiceCredentials.findOne({type: 'googlegroup', 'googlegroup.domain': service.googlegroup.domain});
-        if (!creds) {
-          throw new Error('Could not find service credentials');
-        }
-        try {
-          const response = await service.unsubscribeGoogleGroup(user, creds);
+      catch (err) {
+        if (err.status === 404) {
+          sendNotification = false;
           user.subscriptions.splice(index, 1);
           await user.save();
         }
-        catch (err) {
-          if (err.status === 404) {
-            sendNotification = false;
-            user.subscriptions.splice(index, 1);
-            await user.save();
-          }
-          else {
-            throw err;
-          }
+        else {
+          throw err;
         }
       }
-      if (service.type === 'mailchimp') {
-        try {
-          const output = await service.unsubscribeMailchimp(user);
-          if (output.statusCode === 204) {
-            user.subscriptions.splice(index, 1);
-            await user.save();
-          }
-          else {
-            throw new Error(output);
-          }
+    }
+    if (service.type === 'mailchimp') {
+      try {
+        const output = await service.unsubscribeMailchimp(user);
+        if (output.statusCode === 204) {
+          user.subscriptions.splice(index, 1);
+          await user.save();
         }
-        catch (err) {
-          if (err.status === 404) {
-            sendNotification = false;
-            user.subscriptions.splice(index, 1);
-            await user.save();
-          }
-          else {
-            throw err;
-          }
+        else {
+          throw new Error(output);
         }
       }
+      catch (err) {
+        if (err.status === 404) {
+          sendNotification = false;
+          user.subscriptions.splice(index, 1);
+          await user.save();
+        }
+        else {
+          throw err;
+        }
+      }
+    }
 
-      // Send notification to user that he was subscribed to a service
-      if (sendNotification && user.id !== request.params.currentUser.id) {
-        const notification = {
-          type: 'service_unsubscription',
-          user: user,
-          createdBy: request.params.currentUser,
-          params: { service: service}
-        };
-        await NotificationService.send(notification);
-      }
-      return reply(user);
+    // Send notification to user that he was subscribed to a service
+    if (sendNotification && user.id !== request.params.currentUser.id) {
+      const notification = {
+        type: 'service_unsubscription',
+        user: user,
+        createdBy: request.params.currentUser,
+        params: { service: service}
+      };
+      await NotificationService.send(notification);
+    }
+    return user;
   }
 };

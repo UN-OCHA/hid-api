@@ -30,14 +30,14 @@ module.exports = {
     const now = new Date();
     const start = new Date(2016, 0, 1, 0, 0, 0);
     await User.remove({expires: {$gt: start, $lt: now}});
-    reply().code(204);
+    return reply.response().code(204);
   },
 
   deleteExpiredTokens: async function (request, reply) {
     logger.info('Deleting expired Oauth Tokens');
     const now = new Date();
     await OauthToken.remove({expires: {$lt: now }});
-    reply().code(204);
+    return reply.response().code(204);
   },
 
   sendReminderVerifyEmails: async function (request, reply) {
@@ -63,7 +63,7 @@ module.exports = {
       }
     }
     await Promise.all(promises);
-    reply().code(204);
+    return reply.response().code(204);
   },
 
   sendReminderUpdateEmails: async function (request, reply) {
@@ -94,7 +94,7 @@ module.exports = {
       }
     }
     await Promise.all(promises);
-    reply().code(204);
+    return reply.response().code(204);
   },
 
   sendReminderCheckoutEmails: async function (request, reply) {
@@ -132,7 +132,7 @@ module.exports = {
         }
       }
     }
-    reply().code(204);
+    return reply.response().code(204);
   },
 
   doAutomatedCheckout: async function (request, reply) {
@@ -171,7 +171,7 @@ module.exports = {
         }
       }
     }
-    reply().code(204);
+    return reply.response().code(204);
   },
 
   sendReminderCheckinEmails: async function (request, reply) {
@@ -201,7 +201,7 @@ module.exports = {
         }
       }
     }
-    reply().code(204);
+    return reply.response().code(204);
 
   },
 
@@ -219,7 +219,7 @@ module.exports = {
         }}
       );
     }
-    reply().code(204);
+    return reply.response().code(204);
   },
 
   forcedResetPasswordAlert7: async function (request, reply) {
@@ -236,7 +236,7 @@ module.exports = {
         }}
       );
     }
-    reply().code(204);
+    return reply.response().code(204);
   },
 
   forceResetPassword: async function (request, reply) {
@@ -253,7 +253,7 @@ module.exports = {
         }}
       );
     }
-    reply().code(204);
+    return reply.response().code(204);
   },
 
   sendSpecialPasswordResetEmail: async function (request, reply) {
@@ -262,7 +262,7 @@ module.exports = {
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
       await EmailService.sendSpecialPasswordReset(user);
     }
-    reply().code(204);
+    return reply.response().code(204);
   },
 
   setListCounts: async function (request, reply) {
@@ -275,7 +275,7 @@ module.exports = {
       list.count = number;
       await list.save();
     }
-    reply().code(204);
+    return reply.response().code(204);
   },
 
   /*adjustEmailVerified (request, reply) {
@@ -382,7 +382,7 @@ module.exports = {
         }
       }
     }
-    reply().code(204);
+    return reply.response().code(204);
   },
 
   verificationExpiryEmail: async function (request, reply) {
@@ -399,7 +399,7 @@ module.exports = {
           }}
         );
     }
-    reply().code(204);
+    return reply.response().code(204);
   },
 
   unverifyAfterOneYear: async function (request, reply) {
@@ -417,7 +417,7 @@ module.exports = {
         }}
       );
     }
-    reply().code(204);
+    return reply.response().code(204);
   },
 
   /*verifyEmails: function (request, reply) {

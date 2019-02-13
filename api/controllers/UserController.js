@@ -297,7 +297,7 @@ module.exports = {
           }
         }
       }
-      return reply(user);
+      return user;
     }
     else {
       if (!request.params.currentUser) {
@@ -329,7 +329,7 @@ module.exports = {
       else {
         user.sanitize(request.params.currentUser);
         user.translateListNames(reqLanguage);
-        return reply(user);
+        return user;
       }
     }
     else {

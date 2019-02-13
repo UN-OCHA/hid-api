@@ -139,7 +139,7 @@ module.exports = {
       throw Boom.notFound();
     }
     await checkinHelper(list, user, notify, childAttribute, request.params.currentUser);
-    return reply(user);
+    return user;
   },
 
   update: async function (request, reply) {
@@ -192,7 +192,7 @@ module.exports = {
       };
       await NotificationService.send(notification);
     }
-    return reply(user);
+    return user;
   },
 
   checkout: async function (request, reply) {
@@ -242,11 +242,10 @@ module.exports = {
     promises.push(GSSSyncService.deleteUserFromSpreadsheets(list._id, user.id));
     promises.push(OutlookService.deleteUserFromContactFolders(list._id, user.id));
     await Promise.all(promises);
-    return reply(user);
+    return user;
   },
 
   updateListUsers: async function (request, reply) {
-    reply();
     const childAttributes = User.listAttributes();
     const stream = User
       .find({})
@@ -276,6 +275,7 @@ module.exports = {
         }
       }
     }
+    return reply.response().code(204);
   }
 
 };

@@ -26,7 +26,7 @@ module.exports = {
       if (token && token.token && token.token.refresh_token) {
         request.params.currentUser.outlookCredentials = token.token;
         await request.params.currentUser.save();
-        reply().code(204);
+        return reply.response().code(204);
       }
       else {
         throw Boom.badRequest('No refresh token');
@@ -95,7 +95,7 @@ module.exports = {
         );
       });
       await Promise.all(promises);
-      reply(osync);
+      return osync;
     }
     else {
       throw Boom.badRequest();

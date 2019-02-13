@@ -26,7 +26,7 @@ module.exports = {
       throw Boom.badRequest();
     }
     await GSSSyncService.synchronizeAll(gsssync);
-    return reply(gsssync);
+    return gsssync;
   },
 
   saveGoogleCredentials: async function (request, reply) {
@@ -37,7 +37,7 @@ module.exports = {
       if (tokens && tokens.refresh_token) {
         request.params.currentUser.googleCredentials = tokens;
         request.params.currentUser.save();
-        return reply().code(204);
+        return reply.response().code(204);
       }
       else {
         throw Boom.badRequest('No refresh token');
@@ -50,6 +50,6 @@ module.exports = {
 
   destroy: async function (request, reply) {
     await GSSSync.remove({ _id: request.params.id });
-    reply().code(204);
+    return reply.response().code(204);
   }
 };

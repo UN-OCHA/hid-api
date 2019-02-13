@@ -15,7 +15,7 @@ module.exports = {
     if (!domain) {
       throw Boom.badRequest();
     }
-    return reply(domain);
+    return domain;
   },
 
   find: async function (request, reply) {
@@ -28,16 +28,16 @@ module.exports = {
       if (!result) {
         throw Boom.notFound();
       }
-      return reply(result);
+      return result;
     }
     else {
       const [results, number] = await Promise.all([HelperService.find(TrustedDomain, criteria, options).populate('list'), TrustedDomain.countDocuments(criteria)]);
-      return reply(results).header('X-Total-Count', number);
+      return reply.response(results).header('X-Total-Count', number);
     }
   },
 
   destroy: async function (request, reply) {
     await TrustedDomain.remove({ _id: request.params.id });
-    return reply().code(204);
+    return reply.response().code(204);
   }
 };

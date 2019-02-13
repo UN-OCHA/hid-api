@@ -15,7 +15,7 @@ module.exports = {
     if (!client) {
       throw Boom.badRequest();
     }
-    return reply(client);
+    return client;
   },
 
   find: async function (request, reply) {
@@ -28,22 +28,22 @@ module.exports = {
       if (!result) {
         throw Boom.notFound();
       }
-      return reply(result);
+      return result;
     }
     else {
       const results = await HelperService.find(Client, criteria, options);
       const number = await Client.countDocuments(criteria);
-      return reply(results).header('X-Total-Count', number);
+      return reply.response(results).header('X-Total-Count', number);
     }
   },
 
   update: async function (request, reply) {
     const client = await Client.findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true});
-    return reply(client);
+    return client;
   },
 
   destroy: async function (request, reply) {
     await Client.remove({ _id: request.params.id });
-    return reply().code(204);
+    return reply.response().code(204);
   }
 };

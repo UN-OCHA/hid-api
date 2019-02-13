@@ -44,67 +44,100 @@ module.exports = [
   {
     method: 'GET',
     path: '/',
-    handler: ViewController.login
+    handler: ViewController.login,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'GET',
     path: '/register',
-    handler: ViewController.register
+    handler: ViewController.register,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'POST',
     path: '/register',
-    handler: ViewController.registerPost
+    handler: ViewController.registerPost,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'GET',
     path: '/verify',
-    handler: ViewController.newPassword
+    handler: ViewController.newPassword,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'GET',
     path: '/verify2',
-    handler: ViewController.verify
+    handler: ViewController.verify,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'GET',
     path: '/logout',
-    handler: ViewController.logout
+    handler: ViewController.logout,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'GET',
     path: '/password',
-    handler: ViewController.password
+    handler: ViewController.password,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'POST',
     path: '/password',
-    handler: ViewController.passwordPost
+    handler: ViewController.passwordPost,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'GET',
     path: '/new_password',
-    handler: ViewController.newPassword
+    handler: ViewController.newPassword,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'POST',
     path: '/new_password',
-    handler: ViewController.newPasswordPost
+    handler: ViewController.newPasswordPost,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'GET',
     path: '/user',
-    handler: ViewController.user
+    handler: ViewController.user,
+    config: {
+      auth: false
+    }
   },
 
   {
@@ -114,6 +147,9 @@ module.exports = [
       directory: {
         path: 'docs'
       }
+    },
+    config: {
+      auth: false
     }
   },
 
@@ -123,99 +159,106 @@ module.exports = [
   {
     method: 'GET',
     path: '/.well-known/openid-configuration',
-    handler: AuthController.openIdConfiguration
+    handler: AuthController.openIdConfiguration,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'GET',
     path: '/oauth/jwks',
-    handler: AuthController.jwks
+    handler: AuthController.jwks,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/updatelistusers',
-    handler: ListUserController.updateListUsers
+    handler: ListUserController.updateListUsers,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/jsonwebtoken',
-    handler: AuthController.authenticate
+    handler: AuthController.authenticate,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'GET',
     path: '/api/v2/jsonwebtoken',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: AuthController.jwtTokens
-    }
+    handler: AuthController.jwtTokens
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/jsonwebtoken',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: AuthController.blacklistJwt
-    }
+    handler: AuthController.blacklistJwt
   },
 
   {
     method: 'POST',
     path: '/login',
-    handler: AuthController.login
+    handler: AuthController.login,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'GET',
     path: '/oauth/authorize',
-    handler: AuthController.authorizeDialogOauth2
+    handler: AuthController.authorizeDialogOauth2,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'POST',
     path: '/oauth/authorize',
-    handler: AuthController.authorizeOauth2
+    handler: AuthController.authorizeOauth2,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: ['GET', 'POST'],
     path: '/oauth/access_token',
-    handler: AuthController.accessTokenOauth2
+    handler: AuthController.accessTokenOauth2,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: ['GET', 'POST'],
     path: '/account.json',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: UserController.showAccount
-    }
+    handler: UserController.showAccount
   },
 
   {
     method: 'GET',
     path: '/api/v2/numbers',
-    handler: NumbersController.numbers
+    handler: NumbersController.numbers,
+    config: {
+      auth: false
+    }
   },
 
   {
     method: 'POST',
     path: '/api/v2/signedRequest',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: AuthController.signRequest
-    }
+    handler: AuthController.signRequest
   },
 
   {
@@ -223,7 +266,6 @@ module.exports = [
     path: '/api/v2/user',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         UserPolicy.canCreate
       ],
       handler: UserController.create
@@ -233,23 +275,13 @@ module.exports = [
   {
     method: 'GET',
     path: '/api/v2/user/{id?}',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: UserController.find
-    }
+    handler: UserController.find
   },
 
   {
     method: 'GET',
     path: '/api/v2/user.{extension}',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: UserController.find
-    }
+    handler: UserController.find
   },
 
   {
@@ -257,7 +289,6 @@ module.exports = [
     path: '/api/v2/user/{id}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         UserPolicy.canUpdate
       ],
       handler: UserController.update
@@ -269,7 +300,6 @@ module.exports = [
     path: '/api/v2/user/{id}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         AuthPolicy.isTOTPEnabledAndValid
       ],
       handler: UserController.destroy
@@ -279,12 +309,7 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/user/{id}/notification',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: UserController.notify
-    }
+    handler: UserController.notify
   },
 
   {
@@ -292,7 +317,6 @@ module.exports = [
     path: '/api/v2/user/{id}/{childAttribute}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         ListUserPolicy.canCheckin
       ],
       handler: ListUserController.checkin
@@ -304,7 +328,6 @@ module.exports = [
     path: '/api/v2/user/{id}/{childAttribute}/{checkInId}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         ListUserPolicy.canUpdate
       ],
       handler: ListUserController.update
@@ -316,7 +339,6 @@ module.exports = [
     path: '/api/v2/user/{id}/{childAttribute}/{checkInId}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         ListUserPolicy.canCheckout
       ],
       handler: ListUserController.checkout
@@ -326,7 +348,10 @@ module.exports = [
   {
     method: 'PUT',
     path: '/api/v2/user/password',
-    handler: UserController.resetPasswordEndpoint
+    handler: UserController.resetPasswordEndpoint,
+    config: {
+      auth: false
+    }
   },
 
   {
@@ -334,7 +359,6 @@ module.exports = [
     path: '/api/v2/user/{id}/password',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         AuthPolicy.isTOTPEnabledAndValid
       ],
       handler: UserController.updatePassword
@@ -346,7 +370,6 @@ module.exports = [
     path: '/api/v2/user/{id}/orphan',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         UserPolicy.canClaim
       ],
       handler: UserController.claimEmail
@@ -358,7 +381,6 @@ module.exports = [
     path: '/api/v2/user/{id}/picture',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         UserPolicy.canUpdate
       ],
       handler: UserController.updatePicture,
@@ -375,7 +397,6 @@ module.exports = [
     path: '/api/v2/user/{id}/emails',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         UserPolicy.canUpdate
       ],
       handler: UserController.addEmail
@@ -387,7 +408,6 @@ module.exports = [
     path: '/api/v2/user/{id}/email',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         UserPolicy.canUpdate,
         AuthPolicy.isTOTPEnabledAndValid
       ],
@@ -398,7 +418,10 @@ module.exports = [
   {
     method: 'PUT',
     path: '/api/v2/user/emails/{email?}',
-    handler: UserController.validateEmail
+    handler: UserController.validateEmail,
+    config: {
+      auth: false
+    }
   },
 
   {
@@ -406,7 +429,6 @@ module.exports = [
     path: '/api/v2/user/{id}/emails/{email}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         UserPolicy.canUpdate
       ],
       handler: UserController.dropEmail
@@ -418,7 +440,6 @@ module.exports = [
     path: '/api/v2/user/{id}/phone_numbers',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         UserPolicy.canUpdate
       ],
       handler: UserController.addPhone
@@ -430,7 +451,6 @@ module.exports = [
     path: '/api/v2/user/{id}/phone_numbers/{pid}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         UserPolicy.canUpdate
       ],
       handler: UserController.dropPhone
@@ -893,6 +913,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/deleteExpiredUsers',
     config: {
+      auth: false,
       pre: [
         CronPolicy.canRun
       ],
@@ -904,6 +925,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/deleteExpiredTokens',
     config: {
+      auth: false,
       pre: [
         CronPolicy.canRun
       ],
@@ -915,6 +937,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/sendReminderVerifyEmails',
     config: {
+      auth: false,
       pre: [
         CronPolicy.canRun
       ],
@@ -926,6 +949,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/sendReminderUpdateEmails',
     config: {
+      auth: false,
       pre: [
         CronPolicy.canRun
       ],
@@ -937,6 +961,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/sendReminderCheckoutEmails',
     config: {
+      auth: false,
       pre: [
         CronPolicy.canRun
       ],
@@ -948,6 +973,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/sendReminderCheckinEmails',
     config: {
+      auth: false,
       pre: [
         CronPolicy.canRun
       ],
@@ -959,6 +985,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/forcedResetPasswordAlert',
     config: {
+      auth: false,
       pre: [
         CronPolicy.canRun
       ],
@@ -970,6 +997,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/forceResetPassword',
     config: {
+      auth: false,
       pre: [
         CronPolicy.canRun
       ],
@@ -981,6 +1009,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/forcedResetPasswordAlert7',
     config: {
+      auth: false,
       pre: [
         CronPolicy.canRun
       ],
@@ -992,6 +1021,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/doAutomatedCheckout',
     config: {
+      auth: false,
       pre: [
         CronPolicy.canRun
       ],
@@ -1003,6 +1033,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/specialPasswordReset',
     config: {
+      auth: false,
       pre: [
         CronPolicy.canRun
       ],
@@ -1014,6 +1045,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/verifyAutomatically',
     config: {
+      auth: false,
       pre: [
         CronPolicy.canRun
       ],
@@ -1025,6 +1057,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/verificationExpiryEmail',
     config: {
+      auth: false,
       pre: [
         CronPolicy.canRun
       ],
@@ -1036,6 +1069,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/unverifyAfterOneYear',
     config: {
+      auth: false,
       pre: [
         CronPolicy.canRun
       ],
@@ -1047,6 +1081,7 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/cron/setListCounts',
     config: {
+      auth: false,
       pre: [
         CronPolicy.canRun
       ],
@@ -1080,6 +1115,7 @@ module.exports = [
     method: 'POST',
     path: '/api/v2/webhooks/hrinfo',
     config: {
+      auth: false,
       pre: [
         WebhooksPolicy.canRun
       ],

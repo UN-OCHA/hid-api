@@ -34,12 +34,12 @@ module.exports = {
     }
     const otpauthUrl = authenticator.generateTotpUri(secret, user.name, qrCodeName, 'SHA1', 6, 30);
     const qrcode = await QRCode.toDataURL(otpauthUrl);
-    return reply({url: qrcode});
+    return {url: qrcode};
   },
 
   // Empty endpoint to verify a TOTP token
   verifyTOTPToken: function (request, reply) {
-    reply();
+    return reply.response().code(204);
   },
 
   // Enables TOTP for current user
@@ -57,7 +57,7 @@ module.exports = {
     user.totpMethod = request.payload.method;
     user.totp = true;
     await user.save();
-    return reply(user);
+    return user;
   },
 
   // Disables TOTP for current user
@@ -71,14 +71,15 @@ module.exports = {
     user.totp = false;
     user.totpConf = {};
     await user.save();
-    return reply(user);
+    return user;
   },
 
   saveDevice: async function (request, reply) {
     await HelperService.saveTOTPDevice(request, request.params.currentUser);
     const tindex = request.params.currentUser.trustedDeviceIndex(request.headers['user-agent']);
     const secret = request.params.currentUser.totpTrusted[tindex].secret;
-    return reply({'x-hid-totp-trust': secret}).state('x-hid-totp-trust', secret, { ttl: 30 * 24 * 60 * 60 * 1000, domain: 'humanitarian.id', isSameSite: false, isHttpOnly: false});
+    return reply.response({'x-hid-totp-trust': secret})
+      .state('x-hid-totp-trust', secret, { ttl: 30 * 24 * 60 * 60 * 1000, domain: 'humanitarian.id', isSameSite: false, isHttpOnly: false});
   },
 
   destroyDevice: async function (request, reply) {
@@ -88,7 +89,7 @@ module.exports = {
     if (device) {
       user.totpTrusted.id(deviceId).remove();
       await user.save();
-      return reply().code(204);
+      return reply.response().code(204);
     }
     else {
       throw Boom.notFound();
@@ -111,6 +112,6 @@ module.exports = {
     user.totpConf.backupCodes = hashedCodes;
     user.markModified('totpConf');
     await user.save();
-    return reply(codes);
+    return codes;
   }
 };

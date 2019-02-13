@@ -19,11 +19,11 @@ module.exports = {
       if (!result) {
         throw Boom.notFound();
       }
-      return reply(result);
+      return result;
     }
     else {
       const [results, number] = await Promise.all([HelperService.find(ServiceCredentials, criteria, options), ServiceCredentials.count(criteria)]);
-      return reply(results).header('X-Total-Count', number);
+      return reply.response(results).header('X-Total-Count', number);
     }
   }
 

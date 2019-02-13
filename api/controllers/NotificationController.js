@@ -18,14 +18,14 @@ module.exports = {
     criteria.user = request.params.currentUser.id;
 
     const [results, number] = await Promise.all([HelperService.find(Notification, criteria, options), Notification.countDocuments(criteria)]);
-    return reply(results).header('X-Total-Count', number);
+    return reply.response(results).header('X-Total-Count', number);
 
   },
 
   update: async function (request, reply) {
 
     if (!request.payload || !request.payload.hasOwnProperty('read') || !request.payload.hasOwnProperty('notified')) {
-      return reply(Boom.badRequest());
+      throw Boom.badRequest();
     }
 
     if (request.params.id) {
@@ -39,11 +39,11 @@ module.exports = {
       record.notified = request.payload.notified;
       record.read = request.payload.read;
       record = await record.save();
-      return reply(record);
+      return record;
     }
     else {
       await Notification.update({user: request.params.currentUser.id}, { read: request.payload.read, notified: request.payload.notified }, { multi: true});
-      return reply();
+      return reply.response().code(204);
     }
   }
 

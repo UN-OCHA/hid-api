@@ -25,7 +25,7 @@ module.exports = {
 
 internals.implementation = (server, options) => {
   return {
-    authenticate: async function (request, h) {
+    authenticate: async function (request, reply) {
       acceptLanguage.languages(['en', 'fr', 'es']);
       // If we are creating a user and we are not authenticated, allow it
       /*if (request.path === '/api/v2/user' &&
@@ -121,6 +121,7 @@ internals.implementation = (server, options) => {
             artifacts: tok.client
           });
         }
+      }
     }
   }
 }

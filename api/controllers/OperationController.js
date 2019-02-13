@@ -15,7 +15,7 @@ module.exports = {
     if (!operation) {
       throw Boom.badRequest();
     }
-    return reply(operation);
+    return operation;
   },
 
   find: async function (request, reply) {
@@ -28,23 +28,23 @@ module.exports = {
       if (!result) {
         throw Boom.notFound();
       }
-      return reply(result);
+      return result;
     }
     else {
       options.populate = 'managers key_roles key_lists';
       const [results, number] = await Promise.all([HelperService.find(Operation, criteria, options), Operation.countDocuments(criteria)]);
-      return reply(results).header('X-Total-Count', number);
+      return reply.response(results).header('X-Total-Count', number);
     }
   },
 
   update: async function (request, reply) {
     const client = await Operation.findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true});
-    return reply(client);
+    return client;
   },
 
   destroy: async function (request, reply) {
     await Operation.remove({ _id: request.params.id});
-    return reply().code(204);
+    return reply.response().code(204);
   }
 
 };

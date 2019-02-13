@@ -59,15 +59,12 @@ const init = async () => {
   await server.register(webConfig.plugins);
   //webConfig.onPluginsLoaded(server);
 
-  server.route(app.config.routes.unauthenticated);
-  server.route(app.config.routes.cron);
-
   server.auth.strategy('hid', 'hapi-auth-hid');
 
   server.auth.default('hid');
 
   // Routes
-  server.route(app.config.routes.authenticated);
+  server.route(app.config.routes);
   if (Array.isArray(app.config.main.paths.www)) {
     app.config.main.paths.www.map(item =>{
       const staticDir = path.relative(app.config.main.paths.root, item.path)

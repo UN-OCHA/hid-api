@@ -23,14 +23,14 @@ module.exports = {
         User.countDocuments({'verified': true}),
         User.countDocuments({'verified': true})
       ]);
-    return reply({
+    return {
       'numberCcls': numberCcls,
       'numberOrphans': numberOrphans,
       'numberGhosts': numberGhosts,
       'numberAuth': numberAuth,
       'numberUsers': numberUsers,
       'numberVerified': numberVerified
-    });
+    };
   }
 
 };

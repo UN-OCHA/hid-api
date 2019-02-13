@@ -26,7 +26,7 @@ module.exports = {
     }
     request.payload.managers.push(request.params.currentUser._id);
     await List.create(request.payload);
-    reply(list);
+    return list;
   },
 
   find: async function (request, reply) {
@@ -74,7 +74,7 @@ module.exports = {
       out.name = result.translatedAttribute('names', reqLanguage);
       out.acronym = result.translatedAttribute('acronyms', reqLanguage);
       out.visible = result.isVisibleTo(request.params.currentUser);
-      return reply(out);
+      return out;
     }
     else {
       options.populate = [{path: 'owner', select: '_id name'}];
@@ -109,7 +109,7 @@ module.exports = {
         }
         out.push(tmp);
       }
-      reply(out).header('X-Total-Count', number);
+      return reply.response(out).header('X-Total-Count', number);
     }
   },
 
@@ -168,7 +168,7 @@ module.exports = {
       actions.push(user.save());
     }
     await Promise.all(actions);
-    return reply(list);
+    return list;
   },
 
   destroy: async function (request, reply) {
@@ -191,7 +191,7 @@ module.exports = {
       }
       await user.save();
     }
-    return reply(newRecord);
+    return newRecord;
   }
 
 };
