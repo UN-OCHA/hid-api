@@ -2,7 +2,6 @@
 
 const Boom = require('boom');
 const GSSSync = require('../models/GSSSync');
-const ErrorService = require('../services/ErrorService');
 
 /**
  * @module GSSSyncPolicy
@@ -10,23 +9,16 @@ const ErrorService = require('../services/ErrorService');
  */
 module.exports = {
 
-  canDestroy: function (request, reply) {
-    if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
-      return reply();
+  canDestroy: async function (request, reply) {
+    if (request.auth.credentials.is_admin || request.auth.credentials.isManager) {
+      return true;
     }
-    GSSSync
-      .findOne({_id: request.params.id})
-      .populate('user')
-      .then((gsssync) => {
-        if (gsssync.user._id.toString() === request.params.currentUser._id.toString()) {
-          return reply();
-        }
-        else {
-          return reply(Boom.unauthorized('You are not allowed to delete this item'));
-        }
-      })
-      .catch((err) => {
-        ErrorService.handle(err, request, reply);
-      });
+    const gsssync = await GSSSync.findOne({_id: request.params.id}).populate('user');
+    if (gsssync.user._id.toString() === request.auth.credentials._id.toString()) {
+      return true;
+    }
+    else {
+      throw Boom.unauthorized('You are not allowed to delete this item');
+    }
   }
 };

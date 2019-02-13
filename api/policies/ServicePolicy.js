@@ -9,37 +9,30 @@ const ErrorService = require('../services/ErrorService');
  * @description Service Policy
  */
 
-function _canUpdate(request, reply) {
-  if (request.params.currentUser.is_admin) {
-    return reply();
+async function _canUpdate(request, reply) {
+  if (request.auth.credentials.is_admin) {
+    return true;
   }
-  Service
-    .findOne({_id: request.params.id})
-    .populate('lists owner managers')
-    .then((srv) => {
-      if (!srv) {
-        throw Boom.notFound();
-      }
-      if (srv.managersIndex(request.params.currentUser) !== -1 ||
-        srv.owner.id === request.params.currentUser.id) {
-        return reply();
-      }
-      else {
-        throw Boom.forbidden();
-      }
-    })
-    .catch(err => {
-      ErrorService.handle(err, request, reply);
-    });
+  const srv = await Service.findOne({_id: request.params.id}).populate('lists owner managers');
+  if (!srv) {
+    throw Boom.notFound();
+  }
+  if (srv.managersIndex(request.auth.credentials) !== -1 ||
+    srv.owner.id === request.auth.credentials.id) {
+    return true;
+  }
+  else {
+    throw Boom.forbidden();
+  }
 }
 
 function _canSubscribe (request, reply) {
-  if (!request.params.currentUser.is_admin &&
-      !request.params.currentUser.isManager &&
-      request.params.currentUser.id !== request.params.id) {
-    return reply(Boom.unauthorized('You need to be an admin or a manager or the current user'));
+  if (!request.auth.credentials.is_admin &&
+      !request.auth.credentials.isManager &&
+      request.auth.credentials.id !== request.params.id) {
+    throw Boom.unauthorized('You need to be an admin or a manager or the current user');
   }
-  reply();
+  return true;
 }
 
 module.exports = {

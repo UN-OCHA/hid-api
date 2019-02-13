@@ -25,6 +25,21 @@ const authorizedDomains = [
  * @module HelperService
  * @description General Helper Service
  */
+
+ function getSchemaAttributes (modelName, variableName, attributeName) {
+   if (!this[variableName] || this[variableName].length === 0) {
+     this[variableName] = [];
+     const that = this;
+     modelName.schema.eachPath(function (path, options) {
+       if (options.options[attributeName]) {
+         that[variableName].push(path);
+       }
+     });
+   }
+   return this[variableName];
+ };
+
+
 module.exports = {
 
   getOauthParams: function (args) {
@@ -47,41 +62,16 @@ module.exports = {
     return params;
   },
 
-  getManagerOnlyAttributes: function (modelName) {
-    return this.getSchemaAttributes(modelName, 'managerOnlyAttributes', 'managerOnly');
-  },
-
-  getReadonlyAttributes: function (modelName, extras) {
-    const attrs = this.getSchemaAttributes(modelName, 'readonlyAttributes', 'readonly');
-    return _.union(attrs, extras);
-  },
-
-  getAdminOnlyAttributes: function (modelName) {
-    return this.getSchemaAttributes(modelName, 'adminOnlyAttributes', 'adminOnly');
-  },
-
-  getSchemaAttributes: function (modelName, variableName, attributeName) {
-    if (!this[variableName] || this[variableName].length === 0) {
-      this[variableName] = [];
-      const that = this;
-      modelName.schema.eachPath(function (path, options) {
-        if (options.options[attributeName]) {
-          that[variableName].push(path);
-        }
-      });
-    }
-    return this[variableName];
-  },
-
   removeForbiddenAttributes: function (modelName, request, extras) {
     let forbiddenAttributes = [];
-    forbiddenAttributes = this.getReadonlyAttributes(modelName);
-    if (!request.params.currentUser || !request.params.currentUser.is_admin) {
-      forbiddenAttributes = forbiddenAttributes.concat(this.getAdminOnlyAttributes(modelName));
+    const attrs = getSchemaAttributes(modelName, 'readonlyAttributes', 'readonly');
+    forbiddenAttributes = _.union(attrs, extras);
+    if (!request.auth.credentials || !request.auth.credentials.is_admin) {
+      forbiddenAttributes = forbiddenAttributes.concat(getSchemaAttributes(modelName, 'adminOnlyAttributes', 'adminOnly'));
     }
-    if (!request.params.currentUser ||
-      (!request.params.currentUser.is_admin && !request.params.currentUser.isManager)) {
-      forbiddenAttributes = forbiddenAttributes.concat(this.getManagerOnlyAttributes(modelName));
+    if (!request.auth.credentials ||
+      (!request.auth.credentials.is_admin && !request.auth.credentials.isManager)) {
+      forbiddenAttributes = forbiddenAttributes.concat(getSchemaAttributes(modelName, 'managerOnlyAttributes', 'managerOnly'));
     }
     forbiddenAttributes = forbiddenAttributes.concat(extras);
     // Do not allow forbiddenAttributes to be updated directly

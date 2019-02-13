@@ -10,10 +10,10 @@ module.exports = {
 
   canRun (request, reply) {
     if (request.headers && request.headers.authorization && request.headers.authorization === process.env.CRON_KEY) {
-      return reply();
+      return true;
     }
     else {
-      return reply(Boom.unauthorized('Missing or wrong secret'));
+      throw Boom.unauthorized('Missing or wrong secret');
     }
   }
 

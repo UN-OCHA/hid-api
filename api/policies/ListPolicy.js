@@ -2,7 +2,6 @@
 
 const Boom = require('boom');
 const List = require('../models/List');
-const ErrorService = require('../services/ErrorService');
 
 /**
  * @module ListPolicy
@@ -12,57 +11,46 @@ module.exports = {
 
   canCreate: function (request, reply) {
     if (request.payload.type !== 'list') {
-      return reply(
+      throw
         Boom.badRequest('You are not allowed to create lists ' +
-        'of a type other than custom contact list')
-      );
+        'of a type other than custom contact list');
     }
-    reply();
+    return true;
   },
 
-  canUpdate: function (request, reply) {
-    List
+  canUpdate: async function (request, reply) {
+    const list = await List
       .findOne({_id: request.params.id})
-      .populate('owner managers')
-      .then((list) => {
-        if (request.payload.type && request.payload.type !== list.type) {
-          return reply(Boom.unauthorized('You are not allowed to modify the list type'));
-        }
+      .populate('owner managers');
 
-        if (request.params.currentUser.is_admin ||
-          request.params.currentUser.isManager ||
-          list.isOwner(request.params.currentUser)) {
-          return reply();
-        }
-        else {
-          return reply(Boom.unauthorized('You are not allowed to update this list'));
-        }
+    if (request.payload.type && request.payload.type !== list.type) {
+      throw Boom.unauthorized('You are not allowed to modify the list type');
+    }
 
-      })
-      .catch((err) => {
-        ErrorService.handle(err, request, reply);
-      });
+    if (request.auth.credentials.is_admin ||
+      request.auth.credentials.isManager ||
+      list.isOwner(request.auth.credentials)) {
+      return true;
+    }
+    else {
+      throw Boom.unauthorized('You are not allowed to update this list');
+    }
   },
 
-  canDestroy: function (request, reply) {
-    if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
-      return reply();
+  canDestroy: async function (request, reply) {
+    if (request.auth.credentials.is_admin || request.auth.credentials.isManager) {
+      return true;
     }
-    List
+    const list = await List
       .findOne({_id: request.params.id})
-      .populate('owner managers')
-      .then((list) => {
-        if (list.isOwner(request.params.currentUser)) {
-          return reply();
-        }
-        else {
-          return reply(Boom.unauthorized('You are not allowed to delete this list'));
-        }
+      .populate('owner managers');
 
-      })
-      .catch((err) => {
-        ErrorService.handle(err, request, reply);
-      });
+    if (list.isOwner(request.auth.credentials)) {
+      return true;
+    }
+    else {
+      throw Boom.unauthorized('You are not allowed to delete this list');
+    }
 
   }
 };
