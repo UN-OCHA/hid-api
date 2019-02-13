@@ -52,13 +52,12 @@ const preResponse = function (request, reply) {
   }
 };
 
-const server = new Hapi.Server();
-server.connection(webConfig.options);
+const server = Hapi.Server(webConfig.options);
 const init = async () => {
 
   // Plugins
   await server.register(webConfig.plugins);
-  webConfig.onPluginsLoaded(server);
+  //webConfig.onPluginsLoaded(server);
 
   // Routes
   server.route(app.config.routes);

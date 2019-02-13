@@ -28,13 +28,13 @@ module.exports = {
 
   plugins: [
     {
-      register: require('inert')
+      plugin: require('inert')
     },
     {
-      register: require('vision')
+      plugin: require('vision')
     },
     {
-      register: require('yar'),
+      plugin: require('yar'),
       options: {
         cache: {
           expiresIn: 4 * 60 * 60 * 1000 // 4 hours sessions
@@ -47,7 +47,7 @@ module.exports = {
       }
     },
     {
-      register: require('crumb'),
+      plugin: require('crumb'),
       options: {
         skip: function (request, reply) {
           const paths = ['/', '/login', '/oauth/authorize',
@@ -59,12 +59,12 @@ module.exports = {
         }
       }
     },
-    {
-      register: require('hapi-oauth2orize'),
+    /*{
+      plugin: require('hapi-oauth2orize'),
       options: { }
-    },
+    },*/
     {
-      register: require('hapi-rate-limit'),
+      plugin: require('hapi-rate-limit'),
       options: {
         userLimit: 100000,
         trustProxy: true,
