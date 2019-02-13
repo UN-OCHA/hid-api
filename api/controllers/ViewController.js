@@ -176,7 +176,7 @@ module.exports = {
 
   register: function (request, reply) {
     const requestUrl = _buildRequestUrl(request, 'verify2');
-    reply.view('register', {
+    return reply.view('register', {
       title: 'Register in Humanitarian ID',
       requestUrl: requestUrl,
       recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY
@@ -195,7 +195,7 @@ module.exports = {
           'Thank you for creating an account. You will soon receive a confirmation email to confirm your account.',
           'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.'
         );
-        reply.view('login', {
+        return reply.view('login', {
           alert: al,
           query: request.query,
           registerLink: registerLink,
@@ -204,7 +204,7 @@ module.exports = {
       });
     }
     catch (err) {
-      reply.view('login', {
+      return reply.view('login', {
         alert: {type: 'danger', message: recaptcha.translateErrors(err)},
         query: request.query,
         registerLink: registerLink,
@@ -215,10 +215,9 @@ module.exports = {
 
   verify: function (request, reply) {
     if (!request.query.hash && !request.query.email && !request.query.time) {
-      return reply(Boom.badRequest('Missing hash parameter'));
+      throw Boom.badRequest('Missing hash parameter');
     }
     request.payload = { hash: request.query.hash, email: request.query.email, time: request.query.time };
-    const that = this;
     UserController.validateEmail(request, function (result) {
       const al = _getAlert(
         result,
@@ -238,13 +237,12 @@ module.exports = {
 
   password: function (request, reply) {
     const requestUrl = _buildRequestUrl(request, 'new_password');
-    reply.view('password', {
+    return reply.view('password', {
       requestUrl: requestUrl
     });
   },
 
   passwordPost: function (request, reply) {
-    const that = this;
     UserController.resetPasswordEndpoint(request, function (result) {
       const al = _getAlert(
         result,
