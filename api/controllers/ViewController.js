@@ -190,18 +190,6 @@ module.exports = {
     const passwordLink = _getPasswordLink(request.payload);
     try {
       await recaptcha.validate(request.payload['g-recaptcha-response']);
-      UserController.create(request, function (result) {
-        const al = _getAlert(result,
-          'Thank you for creating an account. You will soon receive a confirmation email to confirm your account.',
-          'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.'
-        );
-        return reply.view('login', {
-          alert: al,
-          query: request.query,
-          registerLink: registerLink,
-          passwordLink: passwordLink
-        });
-      });
     }
     catch (err) {
       return reply.view('login', {
@@ -211,28 +199,49 @@ module.exports = {
         passwordLink: passwordLink
       });
     }
-  },
-
-  verify: function (request, reply) {
-    if (!request.query.hash && !request.query.email && !request.query.time) {
-      throw Boom.badRequest('Missing hash parameter');
-    }
-    request.payload = { hash: request.query.hash, email: request.query.email, time: request.query.time };
-    UserController.validateEmail(request, function (result) {
-      const al = _getAlert(
-        result,
-        'Thank you for confirming your email address. You can now log in',
-        'There was an error confirming your email address.'
-      );
-      const registerLink = _getRegisterLink(request.query);
-      const passwordLink = _getPasswordLink(request.query);
+    try {
+      const user = await UserController.create(request);
       return reply.view('login', {
-        alert: al,
+        alert: {type: 'success', message: 'Thank you for creating an account. You will soon receive a confirmation email to confirm your account.'},
         query: request.query,
         registerLink: registerLink,
         passwordLink: passwordLink
       });
-    });
+    }
+    catch (err) {
+      return reply.view('login', {
+        alert: {type: 'danger', message: 'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.'},
+        query: request.query,
+        registerLink: registerLink,
+        passwordLink: passwordLink
+      });
+    }
+  },
+
+  verify: async function (request, reply) {
+    if (!request.query.hash && !request.query.email && !request.query.time) {
+      throw Boom.badRequest('Missing hash parameter');
+    }
+    request.payload = { hash: request.query.hash, email: request.query.email, time: request.query.time };
+    const registerLink = _getRegisterLink(request.query);
+    const passwordLink = _getPasswordLink(request.query);
+    try {
+      const record = await UserController.validateEmail(request);
+      return reply.view('login', {
+        alert: {type: 'success', message: 'Thank you for confirming your email address. You can now log in'},
+        query: request.query,
+        registerLink: registerLink,
+        passwordLink: passwordLink
+      });
+    }
+    catch (err) {
+      return reply.view('login', {
+        alert: {type: 'danger', message: 'There was an error confirming your email address.'},
+        query: request.query,
+        registerLink: registerLink,
+        passwordLink: passwordLink
+      });
+    }
   },
 
   password: function (request, reply) {
@@ -242,22 +251,26 @@ module.exports = {
     });
   },
 
-  passwordPost: function (request, reply) {
-    UserController.resetPasswordEndpoint(request, function (result) {
-      const al = _getAlert(
-        result,
-        'Password reset was sent to ' + request.payload.email + '. Please make sure the email address is correct. If not, please reset your password again.',
-        'There was an error resetting your password.'
-      );
-      const registerLink = _getRegisterLink(request.payload);
-      const passwordLink = _getPasswordLink(request.payload);
+  passwordPost: async function (request, reply) {
+    const registerLink = _getRegisterLink(request.payload);
+    const passwordLink = _getPasswordLink(request.payload);
+    try {
+      const response = await UserController.resetPasswordEndpoint(request);
       return reply.view('login', {
-        alert: al,
+        alert: {type: 'success', message: 'Password reset was sent to ' + request.payload.email + '. Please make sure the email address is correct. If not, please reset your password again.'},
         query: request.query,
         registerLink: registerLink,
         passwordLink: passwordLink
       });
-    });
+    }
+    catch (err) {
+      return reply.view('login', {
+        alert: {type: 'danger', message: 'There was an error resetting your password.'},
+        query: request.query,
+        registerLink: registerLink,
+        passwordLink: passwordLink
+      });
+    }
   },
 
   newPassword: async function (request, reply) {
@@ -316,35 +329,46 @@ module.exports = {
     }
 
     if (cookie && cookie.hash && cookie.totp) {
-      UserController.resetPassword(request, function (result) {
-        const params = HelperService.getOauthParams(request.payload);
+      const params = HelperService.getOauthParams(request.payload);
+      const registerLink = _getRegisterLink(request.payload);
+      const passwordLink = _getPasswordLink(request.payload);
+      try {
+        const response = await UserController.resetPasswordEndpoint(request);
         if (params) {
-          const al = _getAlert(result,
-            'Your password was successfully reset. You can now login.',
-            'There was an error resetting your password.'
-          );
-          const registerLink = _getRegisterLink(request.payload);
-          const passwordLink = _getPasswordLink(request.payload);
           return reply.view('login', {
-            alert: al,
+            alert: {type: 'success', message: 'Your password was successfully reset. You can now login.'},
             query: request.payload,
             registerLink: registerLink,
             passwordLink: passwordLink
           });
         }
         else {
-          const al = _getAlert(result,
-            'Thank you for updating your password.',
-            'There was an error resetting your password.'
-          );
           return reply.view('message', {
-            alert: al,
+            alert: {type: 'success', message: 'Thank you for updating your password.'},
             query: request.payload,
             isSuccess: !result.isBoom,
             title: 'Password update'
           });
         }
-      }, false);
+      }
+      catch (err) {
+        if (params) {
+          return reply.view('login', {
+            alert: {type: 'danger', message: 'There was an error resetting your password.'},
+            query: request.payload,
+            registerLink: registerLink,
+            passwordLink: passwordLink
+          });
+        }
+        else {
+          return reply.view('message', {
+            alert: {type: 'danger', message: 'There was an error resetting your password.'},
+            query: request.payload,
+            isSuccess: !err.isBoom,
+            title: 'Password update'
+          });
+        }
+      }
     }
   },
 

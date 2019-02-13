@@ -224,7 +224,7 @@ module.exports = {
             await group.save();
           }
         }
-        return reply(list2);
+        return list2;
       }
       else {
         throw Boom.badRequest();
@@ -237,7 +237,7 @@ module.exports = {
       }
       else {
         request.params.id = list._id.toString();
-        ListController.destroy(request, reply);
+        return ListController.destroy(request, reply);
       }
     }
 

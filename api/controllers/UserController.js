@@ -420,7 +420,7 @@ module.exports = {
           results[i].sanitize(request.params.currentUser);
           results[i].translateListNames(reqLanguage);
         }
-        return reply(results).header('X-Total-Count', number);
+        return reply.response(results).header('X-Total-Count', number);
       }
       else {
         // Sanitize users and translate list names from a plain object
@@ -438,12 +438,12 @@ module.exports = {
           else {
             csvExport = _csvExport(results, false);
           }
-          return reply(csvExport)
+          return reply.response(csvExport)
             .type('text/csv')
             .header('Content-Disposition', 'attachment; filename="Humanitarian ID Contacts ' + moment().format('YYYYMMDD') + '.csv"');
         }
         else if (request.params.extension === 'txt') {
-          return reply(_txtExport(results))
+          return reply.response(_txtExport(results))
             .type('text/plain');
         }
         else if (request.params.extension === 'pdf') {
@@ -453,7 +453,7 @@ module.exports = {
             delete criteria.format;
           }
           const [buffer, bytes] = _pdfExport(results, number, lists, request, pdfFormat);
-          reply(buffer)
+          return reply.response(buffer)
             .type('application/pdf')
             .bytes(bytes)
             .header('Content-Disposition', 'attachment; filename="Humanitarian ID Contacts ' + moment().format('YYYYMMDD') + '.pdf"');
@@ -537,7 +537,7 @@ module.exports = {
     promises.push(GSSSyncService.synchronizeUser(user));
     promises.push(OutlookService.synchronizeUser(user));
     await Promise.all(promises);
-    return reply(user);
+    return user;
   },
 
   destroy: async function (request, reply) {
@@ -549,7 +549,7 @@ module.exports = {
     logger.debug('[UserController] (destroy) model = user, query =', request.query, { request: request });
 
     await User.remove({ _id: request.params.id });
-    return reply().code(204);
+    return reply.response().code(204);
   },
 
   setPrimaryEmail: async function (request, reply) {
@@ -582,7 +582,7 @@ module.exports = {
     promises.push(GSSSyncService.synchronizeUser(record));
     promises.push(OutlookService.synchronizeUser(record));
     await Promise.all(promises);
-    return reply(record);
+    return record;
   },
 
   validateEmail: async function (request, reply) {
@@ -655,7 +655,7 @@ module.exports = {
       if (record.email === request.payload.email) {
         await EmailService.sendPostRegister(record);
       }
-      return reply(record);
+      return record;
     }
     else {
       email = request.params.email;
@@ -670,7 +670,7 @@ module.exports = {
         throw Boom.badRequest('Invalid app_validation_url');
       }
       await EmailService.sendValidationEmail(record, email, appValidationUrl);
-      return reply('Validation email sent successfully').code(202);
+      return 'Validation email sent successfully';
     }
   },
 
@@ -703,7 +703,7 @@ module.exports = {
       logger.warn('Could not update user password. Old password is wrong', { request: request, security: true, fail: true});
       throw Boom.badRequest('The old password is wrong');
     }
-    return reply().code(204);
+    return reply.response().code(204);
   },
 
   resetPasswordEndpoint: async function (request, reply) {
@@ -716,10 +716,10 @@ module.exports = {
       }
       const record = await User.findOne({email: request.payload.email.toLowerCase()});
       if (!record) {
-        return reply().code(202);
+        return '';
       }
       await EmailService.sendResetPassword(record, appResetUrl);
-      return reply().code(202);
+      return '';
     }
     else {
       if (!request.payload.hash || !request.payload.password || !request.payload.id || !request.payload.time) {
@@ -773,7 +773,7 @@ module.exports = {
       record.lastModified = new Date();
       await record.save();
       logger.warn('Password updated successfully', { security: true, request: request});
-      return reply('Password reset successfully');
+      return 'Password reset successfully';
     }
   },
 
@@ -791,7 +791,7 @@ module.exports = {
       throw Boom.notFound();
     }
     await EmailService.sendClaim(record, appResetUrl);
-    return reply('Claim email sent successfully').code(202);
+    return reply.response('Claim email sent successfully').code(202);
   },
 
   updatePicture: async function (request, reply) {
@@ -818,7 +818,7 @@ module.exports = {
       record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + metadata.format;
       record.lastModified = new Date();
       await record.save();
-      return reply(record);
+      return record;
     }
     else {
       throw Boom.badRequest('No file found');
@@ -872,7 +872,7 @@ module.exports = {
     await record.save();
     promises.push(OutlookService.synchronizeUser(record));
     await Promise.all(promises);
-    return reply(user);
+    return user;
   },
 
   dropEmail: async function (request, reply) {
@@ -900,7 +900,7 @@ module.exports = {
     record.lastModified = new Date();
     await record.save();
     await OutlookService.synchronizeUser(record);
-    return reply(record);
+    return record;
   },
 
   addPhone: async function (request, reply) {
@@ -917,7 +917,7 @@ module.exports = {
     record.lastModified = new Date();
     await record.save();
     await OutlookService.synchronizeUser(record);
-    return reply(record);
+    return record;
   },
 
   dropPhone: async function (request, reply) {
@@ -948,7 +948,7 @@ module.exports = {
     record.lastModified = new Date();
     await record.save();
     await OutlookService.synchronizeUser(record);
-    return reply(record);
+    return record;
   },
 
   setPrimaryPhone: async function (request, reply) {
@@ -979,7 +979,7 @@ module.exports = {
     await record.save();
     await GSSSyncService.synchronizeUser(user);
     await OutlookService.synchronizeUser(user);
-    return reply(user);
+    return user;
   },
 
   setPrimaryOrganization: async function (request, reply) {
@@ -1003,7 +1003,7 @@ module.exports = {
     await user.save();
     await GSSSyncService.synchronizeUser(user);
     await OutlookService.synchronizeUser(user);
-    return reply(user);
+    return user;
 
   },
 
@@ -1025,7 +1025,7 @@ module.exports = {
         request.params.currentClient.id === 'deep-prod')) {
       user.active = !user.deleted;
     }
-    reply(user);
+    return user;
   },
 
   notify: async function (request, reply) {
@@ -1043,6 +1043,8 @@ module.exports = {
       user: record
     };
     await NotificationService.send(notPayload);
+
+    return user;
   },
 
   addConnection: async function (request, reply) {
@@ -1072,7 +1074,7 @@ module.exports = {
       user: user
     };
     await NotificationService.send(notification);
-    return reply(user);
+    return user;
   },
 
   updateConnection: async function (request, reply) {
@@ -1105,7 +1107,7 @@ module.exports = {
       user: cuser
     };
     await NotificationService.send(notification);
-    reply(user);
+    return user;
   },
 
   deleteConnection: async function (request, reply) {
@@ -1119,6 +1121,6 @@ module.exports = {
     user.connections.id(request.params.cid).remove();
     user.lastModified = new Date();
     await user.save();
-    reply(user);
+    return user;
   }
 };
