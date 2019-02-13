@@ -114,7 +114,7 @@ module.exports = {
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
       for (const listAttribute of listAttributes) {
-        for (lu in user[listAttribute]) {
+        for (const lu of user[listAttribute]) {
           try {
             if (lu.checkoutDate && lu.remindedCheckout === false && !lu.deleted) {
               const dep = new Date(lu.checkoutDate);
@@ -153,7 +153,7 @@ module.exports = {
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
       for (const listAttribute of listAttributes) {
-        for (lu in user[listAttribute]) {
+        for (const lu of user[listAttribute]) {
           try {
             if (lu.checkoutDate && lu.remindedCheckout === true && !lu.deleted) {
               const dep = new Date(lu.checkoutDate);
@@ -183,7 +183,7 @@ module.exports = {
       .cursor();
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      for (lu in user.operations) {
+      for (const lu of user.operations) {
         const d = new Date(),
           offset = d.valueOf() - lu.valueOf();
 
