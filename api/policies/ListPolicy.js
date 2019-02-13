@@ -11,9 +11,7 @@ module.exports = {
 
   canCreate: function (request, reply) {
     if (request.payload.type !== 'list') {
-      throw
-        Boom.badRequest('You are not allowed to create lists ' +
-        'of a type other than custom contact list');
+      throw Boom.badRequest('You are not allowed to create lists of a type other than custom contact list');
     }
     return true;
   },

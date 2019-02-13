@@ -269,7 +269,7 @@ module.exports = {
     }
   },
 
-  deleteUserFromSpreadsheets: function (listId, hid) {
+  deleteUserFromSpreadsheets: async function (listId, hid) {
     const gsssyncs = await GSSSync.find({list: listId});
     if (gsssyncs.length) {
       const fn = async function (gsssync) {
