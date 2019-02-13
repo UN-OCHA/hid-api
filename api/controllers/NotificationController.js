@@ -15,7 +15,7 @@ module.exports = {
     const criteria = HelperService.getCriteriaFromQuery(request.query);
 
     // Force to display notifications of current user
-    criteria.user = request.params.currentUser.id;
+    criteria.user = request.auth.credentials.id;
 
     const [results, number] = await Promise.all([HelperService.find(Notification, criteria, options), Notification.countDocuments(criteria)]);
     return reply.response(results).header('X-Total-Count', number);
@@ -33,7 +33,7 @@ module.exports = {
       if (!record) {
         throw Boom.notFound();
       }
-      if (record.user.toString() !== request.params.currentUser.id) {
+      if (record.user.toString() !== request.auth.credentials.id) {
         throw Boom.forbidden();
       }
       record.notified = request.payload.notified;
@@ -42,7 +42,7 @@ module.exports = {
       return record;
     }
     else {
-      await Notification.update({user: request.params.currentUser.id}, { read: request.payload.read, notified: request.payload.notified }, { multi: true});
+      await Notification.update({user: request.auth.credentials.id}, { read: request.payload.read, notified: request.payload.notified }, { multi: true});
       return reply.response().code(204);
     }
   }

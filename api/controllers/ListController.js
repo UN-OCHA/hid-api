@@ -20,11 +20,11 @@ module.exports = {
 
   create: async function (request, reply) {
     HelperService.removeForbiddenAttributes(List, request, ['names']);
-    request.payload.owner = request.params.currentUser._id;
+    request.payload.owner = request.auth.credentials._id;
     if (!request.payload.managers) {
       request.payload.managers = [];
     }
-    request.payload.managers.push(request.params.currentUser._id);
+    request.payload.managers.push(request.auth.credentials._id);
     await List.create(request.payload);
     return list;
   },
@@ -73,14 +73,14 @@ module.exports = {
       const out = result.toJSON();
       out.name = result.translatedAttribute('names', reqLanguage);
       out.acronym = result.translatedAttribute('acronyms', reqLanguage);
-      out.visible = result.isVisibleTo(request.params.currentUser);
+      out.visible = result.isVisibleTo(request.auth.credentials);
       return out;
     }
     else {
       options.populate = [{path: 'owner', select: '_id name'}];
-      if (!request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
-        criteria.$or = [{visibility: 'all'}, {visibility: 'inlist'}, {$and: [{ visibility: 'me'}, {managers: request.params.currentUser._id}]}];
-        if (request.params.currentUser.verified) {
+      if (!request.auth.credentials.is_admin && !request.auth.credentials.isManager) {
+        criteria.$or = [{visibility: 'all'}, {visibility: 'inlist'}, {$and: [{ visibility: 'me'}, {managers: request.auth.credentials._id}]}];
+        if (request.auth.credentials.verified) {
           criteria.$or.push({visibility: 'verified'});
         }
       }
@@ -93,7 +93,7 @@ module.exports = {
       }
       for (const list of results) {
         tmp = list.toJSON();
-        tmp.visible = list.isVisibleTo(request.params.currentUser);
+        tmp.visible = list.isVisibleTo(request.auth.credentials);
         if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('names') !== -1)) {
           tmp.name = list.translatedAttribute('names', reqLanguage);
         }
@@ -139,7 +139,7 @@ module.exports = {
           .send({
             type: 'added_list_manager',
             user: user,
-            createdBy: request.params.currentUser,
+            createdBy: request.auth.credentials,
             params: { list: newlist }
           }, () => {});
       }
@@ -151,7 +151,7 @@ module.exports = {
           .send({
             type: 'removed_list_manager',
             user: user,
-            createdBy: request.params.currentUser,
+            createdBy: request.auth.credentials,
             params: { list: newlist }
           }, () => {});
       }

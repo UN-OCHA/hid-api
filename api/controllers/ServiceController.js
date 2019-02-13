@@ -17,7 +17,7 @@ const NotificationService = require('../services/NotificationService');
 module.exports = {
 
   create: async function (request, reply) {
-    request.payload.owner = request.params.currentUser._id;
+    request.payload.owner = request.auth.credentials._id;
     const service = await Service.create(request.payload);
     if (!service) {
       throw Boom.badRequest();
@@ -29,11 +29,11 @@ module.exports = {
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
 
-    if (!request.params.currentUser.is_admin) {
+    if (!request.auth.credentials.is_admin) {
       criteria.$or = [
         {'hidden': false},
-        {'owner': request.params.currentUser._id},
-        {'managers': request.params.currentUser._id}
+        {'owner': request.auth.credentials._id},
+        {'managers': request.auth.credentials._id}
       ];
     }
 
@@ -55,7 +55,7 @@ module.exports = {
         throw Boom.notFound();
       }
 
-      result.sanitize(request.params.currentUser);
+      result.sanitize(request.auth.credentials);
       return result;
     }
     else {
@@ -87,7 +87,7 @@ module.exports = {
       ]);
 
       for (let i = 0; i < gresults.length; i++) {
-        results[i].sanitize(request.params.currentUser);
+        results[i].sanitize(request.auth.credentials);
       }
       return reply.response(results).header('X-Total-Count', number);
     }
@@ -182,11 +182,11 @@ module.exports = {
         }
       }
       // Send notification to user that he was subscribed to a service
-      if (user.id !== request.params.currentUser.id) {
+      if (user.id !== request.auth.credentials.id) {
         const notification = {
           type: 'service_subscription',
           user: user,
-          createdBy: request.params.currentUser,
+          createdBy: request.auth.credentials,
           params: { service: service}
         };
         await NotificationService.send(notification);
@@ -198,11 +198,11 @@ module.exports = {
         // Member already exists in mailchimp
         user.subscriptions.push({email: request.payload.email, service: service});
         await user.save();
-        if (user.id !== request.params.currentUser.id) {
+        if (user.id !== request.auth.credentials.id) {
           const notification = {
             type: 'service_subscription',
             user: user,
-            createdBy: request.params.currentUser,
+            createdBy: request.auth.credentials,
             params: { service: service}
           };
           await NotificationService.send(notification);
@@ -274,11 +274,11 @@ module.exports = {
     }
 
     // Send notification to user that he was subscribed to a service
-    if (sendNotification && user.id !== request.params.currentUser.id) {
+    if (sendNotification && user.id !== request.auth.credentials.id) {
       const notification = {
         type: 'service_unsubscription',
         user: user,
-        createdBy: request.params.currentUser,
+        createdBy: request.auth.credentials,
         params: { service: service}
       };
       await NotificationService.send(notification);

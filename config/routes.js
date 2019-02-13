@@ -462,7 +462,6 @@ module.exports = [
     path: '/api/v2/user/{id}/phone_number',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         UserPolicy.canUpdate
       ],
       handler: UserController.setPrimaryPhone
@@ -474,7 +473,6 @@ module.exports = [
     path: '/api/v2/user/{id}/organization',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         UserPolicy.canUpdate
       ],
       handler: UserController.setPrimaryOrganization
@@ -484,12 +482,7 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/user/{id}/connections',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: UserController.addConnection
-    }
+    handler: UserController.addConnection
   },
 
   {
@@ -497,7 +490,6 @@ module.exports = [
     path: '/api/v2/user/{id}/connections/{cid}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         UserPolicy.canUpdate
       ],
       handler: UserController.updateConnection
@@ -509,7 +501,6 @@ module.exports = [
     path: '/api/v2/user/{id}/connections/{cid}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         UserPolicy.canUpdate
       ],
       handler: UserController.deleteConnection
@@ -521,7 +512,6 @@ module.exports = [
     path: '/api/v2/user/{id}/subscriptions',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         ServicePolicy.canSubscribe
       ],
       handler: ServiceController.subscribe
@@ -533,7 +523,6 @@ module.exports = [
     path: '/api/v2/user/{id}/subscriptions/{serviceId}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         ServicePolicy.canUnsubscribe
       ],
       handler: ServiceController.unsubscribe
@@ -543,23 +532,13 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/user/{id}/googlecredentials',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: GSSSyncController.saveGoogleCredentials
-    }
+    handler: GSSSyncController.saveGoogleCredentials
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/outlookcredentials',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: OutlookController.saveOutlookCredentials
-    }
+    handler: OutlookController.saveOutlookCredentials
   },
 
   {
@@ -567,7 +546,6 @@ module.exports = [
     path: '/api/v2/list',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         ListPolicy.canCreate
       ],
       handler: ListController.create
@@ -577,12 +555,7 @@ module.exports = [
   {
     method: 'GET',
     path: '/api/v2/list/{id?}',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: ListController.find
-    }
+    handler: ListController.find
   },
 
   {
@@ -590,7 +563,6 @@ module.exports = [
     path: '/api/v2/list/{id}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         ListPolicy.canUpdate
       ],
       handler: ListController.update
@@ -602,7 +574,6 @@ module.exports = [
     path: '/api/v2/list/{id}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         ListPolicy.canDestroy
       ],
       handler: ListController.destroy
@@ -614,7 +585,6 @@ module.exports = [
     path: '/api/v2/client',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         AuthPolicy.isAdmin
       ],
       handler: ClientController.create
@@ -626,7 +596,6 @@ module.exports = [
     path: '/api/v2/client/{id?}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         AuthPolicy.isAdmin
       ],
       handler: ClientController.find
@@ -638,7 +607,6 @@ module.exports = [
     path: '/api/v2/client/{id}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         AuthPolicy.isAdmin
       ],
       handler: ClientController.update
@@ -650,7 +618,6 @@ module.exports = [
     path: '/api/v2/client/{id}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         AuthPolicy.isAdmin
       ],
       handler: ClientController.destroy
@@ -662,7 +629,6 @@ module.exports = [
     path: '/api/v2/trustedDomain',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         AuthPolicy.isAdmin
       ],
       handler: TrustedDomainController.create
@@ -674,7 +640,6 @@ module.exports = [
     path: '/api/v2/trustedDomain/{id?}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         AuthPolicy.isAdmin
       ],
       handler: TrustedDomainController.find
@@ -686,7 +651,6 @@ module.exports = [
     path: '/api/v2/trustedDomain/{id}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         AuthPolicy.isAdmin
       ],
       handler: TrustedDomainController.destroy
@@ -696,78 +660,43 @@ module.exports = [
   {
     method: 'GET',
     path: '/api/v2/notification/{id?}',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: NotificationController.find
-    }
+    handler: NotificationController.find
   },
 
   {
     method: 'PUT',
     path: '/api/v2/notification/{id?}',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: NotificationController.update
-    }
+    handler: NotificationController.update
   },
 
   {
     method: 'POST',
     path: '/api/v2/service',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: ServiceController.create
-    }
+    handler: ServiceController.create
   },
 
   {
     method: 'GET',
     path: '/api/v2/service/{id?}',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: ServiceController.find
-    }
+    handler: ServiceController.find
   },
 
   {
     method: 'GET',
     path: '/api/v2/service/mailchimp/lists',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: ServiceController.mailchimpLists
-    }
+    handler: ServiceController.mailchimpLists
   },
 
   {
     method: 'GET',
     path: '/api/v2/service/google/groups',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: ServiceController.googleGroups
-    }
+    handler: ServiceController.googleGroups
   },
 
   {
     method: 'GET',
     path: '/api/v2/servicecredentials',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: ServiceCredentialsController.find
-    }
+    handler: ServiceCredentialsController.find
   },
 
   {
@@ -775,7 +704,6 @@ module.exports = [
     path: '/api/v2/service/{id}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         ServicePolicy.canUpdate
       ],
       handler: ServiceController.update
@@ -787,7 +715,6 @@ module.exports = [
     path: '/api/v2/service/{id}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         ServicePolicy.canDestroy
       ],
       handler: ServiceController.destroy
@@ -797,23 +724,13 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/totp/qrcode',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: TOTPController.generateQRCode
-    }
+    handler: TOTPController.generateQRCode
   },
 
   {
     method: 'POST',
     path: '/api/v2/totp/codes',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: TOTPController.generateBackupCodes
-    }
+    handler: TOTPController.generateBackupCodes
   },
 
   {
@@ -821,7 +738,6 @@ module.exports = [
     path: '/api/v2/totp/device',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         AuthPolicy.isTOTPEnabledAndValid
       ],
       handler: TOTPController.saveDevice
@@ -831,12 +747,7 @@ module.exports = [
   {
     method: 'DELETE',
     path: '/api/v2/totp/device/{id}',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: TOTPController.destroyDevice
-    }
+    handler: TOTPController.destroyDevice
   },
 
   {
@@ -844,7 +755,6 @@ module.exports = [
     path: '/api/v2/totp',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         AuthPolicy.isTOTPValidPolicy
       ],
       handler: TOTPController.enable
@@ -856,7 +766,6 @@ module.exports = [
     path: '/api/v2/totp',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         AuthPolicy.isTOTPEnabledAndValid
       ],
       handler: TOTPController.disable
@@ -868,7 +777,6 @@ module.exports = [
     path: '/api/v2/totp',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         AuthPolicy.isTOTPValidPolicy
       ],
       handler: TOTPController.verifyTOTPToken
@@ -878,12 +786,7 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/gsssync',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: GSSSyncController.create
-    }
+    handler: GSSSyncController.create
   },
 
   {
@@ -891,7 +794,6 @@ module.exports = [
     path: '/api/v2/gsssync',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         GSSSyncPolicy.canDestroy
       ],
       handler: GSSSyncController.destroy
@@ -901,12 +803,7 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v2/outlookGroup',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: OutlookController.create
-    }
+    handler: OutlookController.create
   },
 
   {
@@ -1128,7 +1025,6 @@ module.exports = [
     path: '/api/v2/operation',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         AuthPolicy.isAdminOrGlobalManager
       ],
       handler: OperationController.create
@@ -1138,12 +1034,7 @@ module.exports = [
   {
     method: 'GET',
     path: '/api/v2/operation/{id?}',
-    config: {
-      pre: [
-        AuthPolicy.isAuthenticated
-      ],
-      handler: OperationController.find
-    }
+    handler: OperationController.find
   },
 
   {
@@ -1151,7 +1042,6 @@ module.exports = [
     path: '/api/v2/operation/{id}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         OperationsPolicy.canUpdateOperation
       ],
       handler: OperationController.update
@@ -1163,7 +1053,6 @@ module.exports = [
     path: '/api/v2/operation/{id}',
     config: {
       pre: [
-        AuthPolicy.isAuthenticated,
         AuthPolicy.isAdminOrGlobalManager
       ],
       handler: OperationController.destroy

@@ -24,8 +24,8 @@ module.exports = {
       });
       const token = oauth2.accessToken.create(result);
       if (token && token.token && token.token.refresh_token) {
-        request.params.currentUser.outlookCredentials = token.token;
-        await request.params.currentUser.save();
+        request.auth.credentials.outlookCredentials = token.token;
+        await request.auth.credentials.save();
         return reply.response().code(204);
       }
       else {
@@ -40,10 +40,10 @@ module.exports = {
   create: async function (request, reply) {
     const appCreds = JSON.parse(fs.readFileSync('keys/outlook.json'));
     const oauth2 = require('simple-oauth2').create(appCreds);
-    const credentials = request.params.currentUser.outlookCredentials;
+    const credentials = request.auth.credentials.outlookCredentials;
     if (request.payload && request.payload.list) {
       let accessToken = '', client = {}, gList = {}, gOsync = {};
-      const sync = await OutlookSync.findOne({user: request.params.currentUser._id, list: request.payload.list});
+      const sync = await OutlookSync.findOne({user: request.auth.credentials._id, list: request.payload.list});
       if (sync) {
         throw Boom.conflict('Contact folder already exists');
       }
@@ -68,14 +68,14 @@ module.exports = {
       const osync = await OutlookSync
         .create({
           list: gList._id,
-          user: request.params.currentUser._id,
+          user: request.auth.credentials._id,
           folder: cRes.id
         });
 
       const criteria = {};
-      if (gList.isVisibleTo(request.params.currentUser)) {
+      if (gList.isVisibleTo(request.auth.credentials)) {
         criteria[gList.type + 's'] = {$elemMatch: {list: gList._id, deleted: false}};
-        if (!gList.isOwner(request.params.currentUser)) {
+        if (!gList.isOwner(request.auth.credentials)) {
           criteria[gList.type + 's'].$elemMatch.pending = false;
         }
       }

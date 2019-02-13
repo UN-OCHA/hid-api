@@ -138,7 +138,7 @@ module.exports = {
     if (!list || !user) {
       throw Boom.notFound();
     }
-    await checkinHelper(list, user, notify, childAttribute, request.params.currentUser);
+    await checkinHelper(list, user, notify, childAttribute, request.auth.credentials);
     return user;
   },
 
@@ -187,7 +187,7 @@ module.exports = {
       const notification = {
         type: 'approved_checkin',
         user: user,
-        createdBy: request.params.currentUser,
+        createdBy: request.auth.credentials,
         params: { list: list}
       };
       await NotificationService.send(notification);
@@ -224,10 +224,10 @@ module.exports = {
     promises.push(user.save());
     promises.push(list.save());
     // Send notification if needed
-    if (request.params.currentUser.id !== userId && !user.hidden) {
+    if (request.auth.credentials.id !== userId && !user.hidden) {
       promises.push(NotificationService.send({
         type: 'admin_checkout',
-        createdBy: request.params.currentUser,
+        createdBy: request.auth.credentials,
         user: user,
         params: { list: list }
       }));

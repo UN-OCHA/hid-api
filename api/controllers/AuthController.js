@@ -25,7 +25,7 @@ async function _loginHelper (request, reply) {
  logger.debug('Entering _loginHelper');
 
  if (!email || !password) {
-   const cuser = request.params.currentUser;
+   const cuser = request.auth.credentials;
    cuser.sanitize(cuser);
    return cuser;
    /*AuthPolicy.isAuthenticated(request, function (err) {
@@ -33,7 +33,7 @@ async function _loginHelper (request, reply) {
        return reply(err);
      }
      else {
-       const cuser = request.params.currentUser;
+       const cuser = request.auth.credentials;
        cuser.sanitize(cuser);
        return reply(cuser);
      }
@@ -453,7 +453,7 @@ module.exports = {
 
   // Provides a list of the json web tokens with no expiration date created by the current user
   jwtTokens: async function (request, reply) {
-    const tokens = await JwtToken.find({user: request.params.currentUser._id});
+    const tokens = await JwtToken.find({user: request.auth.credentials._id});
     return tokens;
   },
 
@@ -465,11 +465,11 @@ module.exports = {
     }
     // Check that blacklisted token belongs to current user
     const jtoken = JwtService.verify(token);
-    if (jtoken.id === request.params.currentUser.id) {
+    if (jtoken.id === request.auth.credentials.id) {
       // Blacklist token
       const doc = await JwtToken.findOneAndUpdate({token: token}, {
           token: token,
-          user: request.params.currentUser._id,
+          user: request.auth.credentials._id,
           blacklist: true
         }, {upsert: true, new: true});
       return doc;
@@ -491,7 +491,7 @@ module.exports = {
       return reply(Boom.badRequest('Missing url'));
     }
     const credentials = {
-      id: request.params.currentUser._id.toString(),
+      id: request.auth.credentials._id.toString(),
       key: process.env.COOKIE_PASSWORD,
       algorithm: 'sha256'
     };

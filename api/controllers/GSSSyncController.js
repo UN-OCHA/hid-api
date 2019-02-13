@@ -15,9 +15,9 @@ const GSSSyncService = require('../services/GSSSyncService');
 module.exports = {
 
   create: async function (request, reply) {
-    request.payload.user = request.params.currentUser._id;
+    request.payload.user = request.auth.credentials._id;
     if (!request.payload.spreadsheet) {
-      const spreadsheet = await GSSSyncService.createSpreadsheet(request.params.currentUser, request.payload.list);
+      const spreadsheet = await GSSSyncService.createSpreadsheet(request.auth.credentials, request.payload.list);
       request.payload.spreadsheet = spreadsheet.data.spreadsheetId;
       request.payload.sheetId = spreadsheet.data.sheets[0].properties.sheetId;
     }
@@ -35,8 +35,8 @@ module.exports = {
       const authClient = new OAuth2Client(creds.web.client_id, creds.web.client_secret, 'postmessage');
       const tokens = await authClient.getToken(request.payload.code);
       if (tokens && tokens.refresh_token) {
-        request.params.currentUser.googleCredentials = tokens;
-        request.params.currentUser.save();
+        request.auth.credentials.googleCredentials = tokens;
+        await request.auth.credentials.save();
         return reply.response().code(204);
       }
       else {

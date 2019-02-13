@@ -16,7 +16,7 @@ module.exports = {
 
   // Creates a shared secret and generates a QRCode based on this shared secret
   generateQRCode: async function (request, reply) {
-    const user = request.params.currentUser;
+    const user = request.auth.credentials;
     if (user.totp === true) {
       // TOTP is already enabled, user needs to disable it first
       logger.warn('2FA already enabled. Can not generate QRCode.', { security: true, fail: true, request: request});
@@ -44,7 +44,7 @@ module.exports = {
 
   // Enables TOTP for current user
   enable: async function (request, reply) {
-    const user = request.params.currentUser;
+    const user = request.auth.credentials;
     if (user.totp === true) {
       // TOTP is already enabled, user needs to disable it first
       logger.warn('2FA already enabled. No need to reenable.', { security: true, fail: true, request: request});
@@ -62,7 +62,7 @@ module.exports = {
 
   // Disables TOTP for current user
   disable: async function (request, reply) {
-    const user = request.params.currentUser;
+    const user = request.auth.credentials;
     if (user.totp !== true) {
       // TOTP is already disabled
       logger.warn('2FA already disabled.', { security: true, fail: true, request: request});
@@ -75,15 +75,15 @@ module.exports = {
   },
 
   saveDevice: async function (request, reply) {
-    await HelperService.saveTOTPDevice(request, request.params.currentUser);
-    const tindex = request.params.currentUser.trustedDeviceIndex(request.headers['user-agent']);
-    const secret = request.params.currentUser.totpTrusted[tindex].secret;
+    await HelperService.saveTOTPDevice(request, request.auth.credentials);
+    const tindex = request.auth.credentials.trustedDeviceIndex(request.headers['user-agent']);
+    const secret = request.auth.credentials.totpTrusted[tindex].secret;
     return reply.response({'x-hid-totp-trust': secret})
       .state('x-hid-totp-trust', secret, { ttl: 30 * 24 * 60 * 60 * 1000, domain: 'humanitarian.id', isSameSite: false, isHttpOnly: false});
   },
 
   destroyDevice: async function (request, reply) {
-    const user = request.params.currentUser;
+    const user = request.auth.credentials;
     const deviceId = request.params.id;
     const device = user.totpTrusted.id(deviceId);
     if (device) {
@@ -97,7 +97,7 @@ module.exports = {
   },
 
   generateBackupCodes: async function (request, reply) {
-    const user = request.params.currentUser;
+    const user = request.auth.credentials;
     if (!user.totp) {
       throw Boom.badRequest('TOTP needs to be enabled');
     }

@@ -256,9 +256,9 @@ module.exports = {
       const childAttributes = User.listAttributes();
       HelperService.removeForbiddenAttributes(User, request, childAttributes);
 
-      if (request.params.currentUser && registrationType === '') {
+      if (request.auth.credentials && registrationType === '') {
         // Creating an orphan user
-        request.payload.createdBy = request.params.currentUser._id;
+        request.payload.createdBy = request.auth.credentials._id;
         // If an orphan is being created, do not expire
         request.payload.expires = new Date(0, 0, 1, 0, 0, 0);
         if (request.payload.email) {
@@ -284,7 +284,7 @@ module.exports = {
       logger.debug('User ' + user._id.toString() + ' successfully created', { request: request });
 
       if (user.email && notify === true) {
-        if (!request.params.currentUser) {
+        if (!request.auth.credentials) {
           await EmailService.sendRegister(user, appVerifyUrl);
         }
         else {
@@ -293,14 +293,14 @@ module.exports = {
             await EmailService.sendRegisterKiosk(user, appVerifyUrl);
           }
           else {
-            await EmailService.sendRegisterOrphan(user, request.params.currentUser, appVerifyUrl);
+            await EmailService.sendRegisterOrphan(user, request.auth.credentials, appVerifyUrl);
           }
         }
       }
       return user;
     }
     else {
-      if (!request.params.currentUser) {
+      if (!request.auth.credentials) {
         throw Boom.badRequest('This email address is already registered. If you can not remember your password, please reset it');
       }
       else {
@@ -314,12 +314,12 @@ module.exports = {
 
     if (request.params.id) {
       const criteria = {_id: request.params.id};
-      if (!request.params.currentUser.verified) {
+      if (!request.auth.credentials.verified) {
         criteria.is_orphan = false;
         criteria.is_ghost = false;
       }
       // Do not show user if it is hidden
-      if (!request.params.currentUser.is_admin && request.params.currentUser._id.toString() !== request.params.id) {
+      if (!request.auth.credentials.is_admin && request.auth.credentials._id.toString() !== request.params.id) {
         criteria.hidden = false;
       }
       const user = await User.findOne(criteria);
@@ -327,7 +327,7 @@ module.exports = {
         throw Boom.notFound();
       }
       else {
-        user.sanitize(request.params.currentUser);
+        user.sanitize(request.auth.credentials);
         user.translateListNames(reqLanguage);
         return user;
       }
@@ -338,22 +338,22 @@ module.exports = {
       const childAttributes = User.listAttributes();
 
       // Hide unconfirmed users which are not orphans
-      if (request.params.currentUser && !request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
+      if (request.auth.credentials && !request.auth.credentials.is_admin && !request.auth.credentials.isManager) {
         criteria.$or = [{'email_verified': true}, {'is_orphan': true}, {'is_ghost': true}];
       }
 
       // Hide hidden profile to non-admins
-      if (request.params.currentUser && !request.params.currentUser.is_admin) {
+      if (request.auth.credentials && !request.auth.credentials.is_admin) {
         criteria.hidden = false;
       }
 
       // Do not allow exports for hidden users
-      if (request.params.extension && request.params.currentUser.hidden) {
+      if (request.params.extension && request.auth.credentials.hidden) {
         throw Boom.unauthorized();
       }
 
       if (criteria.q) {
-        if (validator.isEmail(criteria.q) && request.params.currentUser.verified) {
+        if (validator.isEmail(criteria.q) && request.auth.credentials.verified) {
           criteria['emails.email'] = new RegExp(criteria.q, 'i');
         }
         else {
@@ -375,7 +375,7 @@ module.exports = {
         delete criteria.country;
       }
 
-      if (!request.params.currentUser.verified) {
+      if (!request.auth.credentials.verified) {
         criteria.is_orphan = false;
         criteria.is_ghost = false;
       }
@@ -389,9 +389,9 @@ module.exports = {
       if (listIds.length) {
         lists = await List.find({_id: { $in: listIds}});
         lists.forEach(function (list) {
-          if (list.isVisibleTo(request.params.currentUser)) {
+          if (list.isVisibleTo(request.auth.credentials)) {
             criteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false}};
-            if (!list.isOwner(request.params.currentUser)) {
+            if (!list.isOwner(request.auth.credentials)) {
               criteria[list.type + 's'].$elemMatch.pending = false;
             }
           }
@@ -417,7 +417,7 @@ module.exports = {
       }
       if (!request.params.extension) {
         for (let i = 0, len = results.length; i < len; i++) {
-          results[i].sanitize(request.params.currentUser);
+          results[i].sanitize(request.auth.credentials);
           results[i].translateListNames(reqLanguage);
         }
         return reply.response(results).header('X-Total-Count', number);
@@ -425,14 +425,14 @@ module.exports = {
       else {
         // Sanitize users and translate list names from a plain object
         for (let i = 0, len = results.length; i < len; i++) {
-          User.sanitizeExportedUser(results[i], request.params.currentUser);
+          User.sanitizeExportedUser(results[i], request.auth.credentials);
           if (results[i].organization) {
             User.translateCheckin(results[i].organization, reqLanguage);
           }
         }
         if (request.params.extension === 'csv') {
           let csvExport = '';
-          if (request.params.currentUser.is_admin) {
+          if (request.auth.credentials.is_admin) {
             csvExport = _csvExport(results, true);
           }
           else {
@@ -486,7 +486,7 @@ module.exports = {
     }
     // If verifying user, set verified_by
     if (request.payload.verified && !user.verified) {
-      request.payload.verified_by = request.params.currentUser._id;
+      request.payload.verified_by = request.auth.credentials._id;
       request.payload.verifiedOn = new Date();
     }
     if (request.payload.old_password && request.payload.new_password) {
@@ -517,19 +517,19 @@ module.exports = {
       .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true});
     user = user.defaultPopulate()
     let promises = [];
-    if (request.params.currentUser._id.toString() !== user._id.toString()) {
+    if (request.auth.credentials._id.toString() !== user._id.toString()) {
       // User is being edited by someone else
       // If it's an auth account, surface it
       if (user.authOnly) {
         user.authOnly = false;
         promises.push(user.save());
         if (!user.hidden) {
-          promises.push(EmailService.sendAuthToProfile(user, request.params.currentUser));
+          promises.push(EmailService.sendAuthToProfile(user, request.auth.credentials));
         }
       }
       else {
         if (!user.hidden) {
-          const notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
+          const notification = {type: 'admin_edit', user: user, createdBy: request.auth.credentials};
           promises.push(NotificationService.send(notification));
         }
       }
@@ -542,7 +542,7 @@ module.exports = {
 
   destroy: async function (request, reply) {
 
-    if (!request.params.currentUser.is_admin && request.params.currentUser._id.toString() !== request.params.id) {
+    if (!request.auth.credentials.is_admin && request.auth.credentials._id.toString() !== request.params.id) {
       return reply(Boom.forbidden('You are not allowed to delete this account'));
     }
 
@@ -1008,8 +1008,8 @@ module.exports = {
   },
 
   showAccount: function (request, reply) {
-    logger.info('calling /account.json for ' + request.params.currentUser.email, { request: request });
-    const user = JSON.parse(JSON.stringify(request.params.currentUser));
+    logger.info('calling /account.json for ' + request.auth.credentials.email, { request: request });
+    const user = JSON.parse(JSON.stringify(request.auth.credentials));
     if (request.params.currentClient && (request.params.currentClient.id === 'iasc-prod' || request.params.currentClient.id === 'iasc-dev')) {
       user.sub = user.email;
     }
@@ -1039,7 +1039,7 @@ module.exports = {
 
     const notPayload = {
       type: 'contact_needs_update',
-      createdBy: request.params.currentUser,
+      createdBy: request.auth.credentials,
       user: record
     };
     await NotificationService.send(notPayload);
@@ -1059,18 +1059,18 @@ module.exports = {
     if (!user.connections) {
       user.connections = [];
     }
-    if (user.connectionsIndex(request.params.currentUser._id) !== -1) {
+    if (user.connectionsIndex(request.auth.credentials._id) !== -1) {
       throw Boom.badRequest('User is already a connection');
     }
 
-    user.connections.push({pending: true, user: request.params.currentUser._id});
+    user.connections.push({pending: true, user: request.auth.credentials._id});
     user.lastModified = new Date();
 
     await user.save();
 
     const notification = {
       type: 'connection_request',
-      createdBy: request.params.currentUser,
+      createdBy: request.auth.credentials,
       user: user
     };
     await NotificationService.send(notification);
