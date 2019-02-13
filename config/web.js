@@ -70,6 +70,9 @@ module.exports = {
         trustProxy: true,
         pathLimit: false
       }
+    },
+    {
+      plugin: require('../plugins/hapi-auth-hid')
     }
   ],
 

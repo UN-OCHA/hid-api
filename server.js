@@ -33,12 +33,12 @@ _.defaultsDeep(webConfig.options, {
 const preResponse = function (request, reply) {
   const response = request.response;
   if (!response.isBoom) {
-    return reply.continue();
+    return reply.continue;
   }
   else {
     if (response.name && response.name === 'ValidationError') {
       logger.error('Validation error', {request: request, error: response.toString()});
-      return reply(Boom.badRequest(response.message));
+      throw Boom.badRequest(response.message);
     }
     if (response.output.statusCode === 500) {
       logger.error('Unexpected error', {request: request, error: response.toString()});
@@ -48,7 +48,7 @@ const preResponse = function (request, reply) {
         newrelic.noticeError(response.toString());
       }
     }
-    return reply.continue();
+    return reply.continue;
   }
 };
 
@@ -59,8 +59,15 @@ const init = async () => {
   await server.register(webConfig.plugins);
   //webConfig.onPluginsLoaded(server);
 
+  server.route(app.config.routes.unauthenticated);
+  server.route(app.config.routes.cron);
+
+  server.auth.strategy('hid', 'hapi-auth-hid');
+
+  server.auth.default('hid');
+
   // Routes
-  server.route(app.config.routes);
+  server.route(app.config.routes.authenticated);
   if (Array.isArray(app.config.main.paths.www)) {
     app.config.main.paths.www.map(item =>{
       const staticDir = path.relative(app.config.main.paths.root, item.path)
