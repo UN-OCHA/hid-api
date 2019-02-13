@@ -346,7 +346,7 @@ module.exports = {
           return reply.view('message', {
             alert: {type: 'success', message: 'Thank you for updating your password.'},
             query: request.payload,
-            isSuccess: !result.isBoom,
+            isSuccess: true,
             title: 'Password update'
           });
         }
@@ -364,7 +364,7 @@ module.exports = {
           return reply.view('message', {
             alert: {type: 'danger', message: 'There was an error resetting your password.'},
             query: request.payload,
-            isSuccess: !err.isBoom,
+            isSuccess: false,
             title: 'Password update'
           });
         }

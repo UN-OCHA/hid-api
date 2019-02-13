@@ -93,6 +93,9 @@ const init = async () => {
         file: function(request) {
           return path.join(staticDir, request.params.filename)
         }
+      },
+      config: {
+        auth: false
       }
     })
   }

@@ -515,7 +515,7 @@ module.exports = {
     request.payload.lastModified = new Date();
     user = await User
       .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true});
-    user = user.defaultPopulate()
+    user = await user.defaultPopulate();
     let promises = [];
     if (request.auth.credentials._id.toString() !== user._id.toString()) {
       // User is being edited by someone else
@@ -651,10 +651,12 @@ module.exports = {
           }
         }
       }
-      record = await record.save();
+      let promises = [];
+      promises.push(record.save());
       if (record.email === request.payload.email) {
-        await EmailService.sendPostRegister(record);
+        promises.push(EmailService.sendPostRegister(record));
       }
+      await Promise.all(promises);
       return record;
     }
     else {
@@ -722,6 +724,7 @@ module.exports = {
       return '';
     }
     else {
+      const cookie = request.yar.get('session');
       if (!request.payload.hash || !request.payload.password || !request.payload.id || !request.payload.time) {
         throw Boom.badRequest('Wrong arguments');
       }
@@ -737,7 +740,7 @@ module.exports = {
         logger.warn('Could not reset password. User not found', { security: true, fail: true, request: request});
         throw Boom.badRequest('Reset password link is expired or invalid');
       }
-      if (record.totp && checkTotp) {
+      if (record.totp && !cookie) {
         // Check that there is a TOTP token and that it is valid
         const token = request.headers['x-hid-totp'];
         record = await AuthPolicy.isTOTPValid(record, token);
@@ -857,7 +860,7 @@ module.exports = {
     // Send confirmation email
     let promises = [];
     promises.push(EmailService.sendValidationEmail(record, email, appValidationUrl));
-    for (let i = 0; i < user.emails.length; i++) {
+    for (let i = 0; i < record.emails.length; i++) {
       promises.push(EmailService.sendEmailAlert(record, record.emails[i].email, request.payload.email));
     }
     if (record.emails.length === 0 && record.is_ghost) {
@@ -872,7 +875,7 @@ module.exports = {
     await record.save();
     promises.push(OutlookService.synchronizeUser(record));
     await Promise.all(promises);
-    return user;
+    return record;
   },
 
   dropEmail: async function (request, reply) {
@@ -915,8 +918,10 @@ module.exports = {
     const data = { number: request.payload.number, type: request.payload.type };
     record.phone_numbers.push(data);
     record.lastModified = new Date();
-    await record.save();
-    await OutlookService.synchronizeUser(record);
+    await Promise.all([
+      record.save(),
+      OutlookService.synchronizeUser(record)
+    ]);
     return record;
   },
 
@@ -946,8 +951,10 @@ module.exports = {
     }
     record.phone_numbers.splice(index, 1);
     record.lastModified = new Date();
-    await record.save();
-    await OutlookService.synchronizeUser(record);
+    await Promise.all([
+      record.save(),
+      OutlookService.synchronizeUser(record)
+    ]);
     return record;
   },
 
@@ -976,10 +983,12 @@ module.exports = {
     record.phone_number = record.phone_numbers[index].number;
     record.phone_number_type = record.phone_numbers[index].type;
     record.lastModified = new Date();
-    await record.save();
-    await GSSSyncService.synchronizeUser(user);
-    await OutlookService.synchronizeUser(user);
-    return user;
+    await Promise.all([
+      record.save(),
+      GSSSyncService.synchronizeUser(record),
+      OutlookService.synchronizeUser(record)
+    ]);
+    return record;
   },
 
   setPrimaryOrganization: async function (request, reply) {
@@ -1000,9 +1009,11 @@ module.exports = {
     }
     user.organization = checkin;
     user.lastModified = new Date();
-    await user.save();
-    await GSSSyncService.synchronizeUser(user);
-    await OutlookService.synchronizeUser(user);
+    await Promise.all([
+      user.save(),
+      GSSSyncService.synchronizeUser(user),
+      OutlookService.synchronizeUser(user)
+    ]);
     return user;
 
   },
@@ -1044,7 +1055,7 @@ module.exports = {
     };
     await NotificationService.send(notPayload);
 
-    return user;
+    return record;
   },
 
   addConnection: async function (request, reply) {
@@ -1066,14 +1077,15 @@ module.exports = {
     user.connections.push({pending: true, user: request.auth.credentials._id});
     user.lastModified = new Date();
 
-    await user.save();
-
     const notification = {
       type: 'connection_request',
       createdBy: request.auth.credentials,
       user: user
     };
-    await NotificationService.send(notification);
+    await Promise.all([
+      user.save(),
+      NotificationService.send(notification)
+    ]);
     return user;
   },
 

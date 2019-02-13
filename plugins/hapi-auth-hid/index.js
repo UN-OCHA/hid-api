@@ -28,12 +28,11 @@ internals.implementation = (server, options) => {
     authenticate: async function (request, reply) {
       acceptLanguage.languages(['en', 'fr', 'es']);
       // If we are creating a user and we are not authenticated, allow it
-      /*if (request.path === '/api/v2/user' &&
+      if (request.path === '/api/v2/user' &&
         request.method === 'post' &&
-        !request.headers.authorization &&
-        !request.params.token) {
-        return reply();
-      }*/
+        !request.headers.authorization) {
+        return reply.continue;
+      }
 
       let token = '';
 
