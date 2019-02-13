@@ -86,7 +86,7 @@ module.exports = {
         Service.countDocuments(criteria)
       ]);
 
-      for (let i = 0; i < gresults.length; i++) {
+      for (let i = 0; i < results.length; i++) {
         results[i].sanitize(request.auth.credentials);
       }
       return reply.response(results).header('X-Total-Count', number);

@@ -27,16 +27,13 @@ const authorizedDomains = [
  */
 
  function getSchemaAttributes (modelName, variableName, attributeName) {
-   if (!this[variableName] || this[variableName].length === 0) {
-     this[variableName] = [];
-     const that = this;
-     modelName.schema.eachPath(function (path, options) {
-       if (options.options[attributeName]) {
-         that[variableName].push(path);
-       }
-     });
-   }
-   return this[variableName];
+   let output = [];
+   modelName.schema.eachPath(function (path, options) {
+     if (options.options[attributeName]) {
+       output.push(path);
+     }
+   });
+   return output;
  };
 
 

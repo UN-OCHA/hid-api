@@ -25,7 +25,7 @@ module.exports = {
       request.payload.managers = [];
     }
     request.payload.managers.push(request.auth.credentials._id);
-    await List.create(request.payload);
+    const list = await List.create(request.payload);
     return list;
   },
 
