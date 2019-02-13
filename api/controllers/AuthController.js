@@ -96,13 +96,13 @@ function _loginRedirect (request, reply, cookie = false) {
     redirect = '/user';
   }
 
+  logger.info('Successful user authentication. Redirecting.', {client_id: request.payload.client_id, email: request.payload.email, security: true, request: request});
   if (!cookie) {
-    reply.redirect(redirect);
+    return reply.redirect(redirect);
   }
   else {
-    reply.redirect(redirect).state(cookie.name, cookie.value, cookie.options);
+    return reply.redirect(redirect).state(cookie.name, cookie.value, cookie.options);
   }
-  logger.info('Successful user authentication. Redirecting.', {client_id: request.payload.client_id, email: request.payload.email, security: true, request: request});
 }
 
 module.exports = {
@@ -134,14 +134,14 @@ module.exports = {
           // TODO: add expires
         });
         logger.warn('Created an API key', {email: result.email, security: true, request: request});
-        reply({
+        return {
           user: result,
           token: token
-        });
+        };
     }
     else {
       logger.info('Successful user authentication. Returning JWT.', {email: result.email, security: true, request: request});
-      return reply({ user: result, token: token});
+      return { user: result, token: token};
     }
   },
 
@@ -327,7 +327,7 @@ module.exports = {
     }
     catch (err) {
       // TODO: display the error in a view
-      return reply(err);
+      return err;
     }
   },
 
@@ -368,7 +368,7 @@ module.exports = {
     }
     catch (err) {
       // TODO: display error in a view
-      return reply(err);
+      return err;
     }
   },
 
@@ -401,7 +401,7 @@ module.exports = {
     }
     catch (err) {
       // TODO: display error in a view
-      return reply(err);
+      return err;
     }
   },
 
@@ -437,7 +437,7 @@ module.exports = {
         'updated_at'
       ]
     };
-    reply(out);
+    return out;
   },
 
   jwks: function (request, reply) {
@@ -448,13 +448,13 @@ module.exports = {
         key
       ]
     };
-    reply (out);
+    return out;
   },
 
   // Provides a list of the json web tokens with no expiration date created by the current user
   jwtTokens: async function (request, reply) {
     const tokens = await JwtToken.find({user: request.params.currentUser._id});
-    return reply(tokens);
+    return tokens;
   },
 
   // Blacklist a JSON Web Token
@@ -472,7 +472,7 @@ module.exports = {
           user: request.params.currentUser._id,
           blacklist: true
         }, {upsert: true, new: true});
-      return reply(doc);
+      return doc;
     }
     else {
       logger.warn(
@@ -499,7 +499,7 @@ module.exports = {
       credentials: credentials,
       ttlSec: 60 * 5
     });
-    return reply({bewit: bewit});
+    return {bewit: bewit};
   }
 
 
