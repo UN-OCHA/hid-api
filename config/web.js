@@ -96,53 +96,44 @@ module.exports = {
 
     // 'id_token token' grant type.
     oauth.grant(oauth2orizeExt.grant.idTokenToken(
-      function(client, user, done){
-        OauthToken.generate('access', client, user, '', function (err, token) {
-          if (err) {
-            return done(err);
-          }
-          OauthToken.create(token, function (err, tok) {
-            if (err) {
-              done(err);
-            }
-            done (null, tok.token);
-          });
-        });
+      async function(client, user, done){
+        try  {
+          const token = OauthToken.generate('access', client, user, '');
+          const tok = await OauthToken.create(token);
+          return done(null, tok.token);
+        }
+        catch (err) {
+          return done(err);
+        }
       },
       function(client, user, req, done){
         const out = JwtService.generateIdToken(client, user);
-        done (null, out);
+        return done (null, out);
       }
     ));
 
     // Implicit Grant Flow
     oauth.grant(oauth.grants.token(function (client, user, ares, done) {
-      OauthToken.generate('access', client, user, '', function (err, token) {
-        if (err) {
-          return done(err);
-        }
-        OauthToken.create(token, function (err, tok) {
-          if (err) {
-            done(err);
-          }
-          done(null, tok.token, {expires_in: OauthExpiresIn});
-        });
-      });
+      try  {
+        const token = OauthToken.generate('access', client, user, '');
+        const tok = await OauthToken.create(token);
+        return done(null, tok.token, {expires_in: OauthExpiresIn});
+      }
+      catch (err) {
+        return done(err);
+      }
     }));
     // Authorization code exchange flow
     oauth.grant(oauth.grants.code(function (client, redirectURI, user, res, req, done) {
       const nonce = req.nonce ? req.nonce : '';
-      OauthToken.generate('code', client, user, nonce, function (err, code) {
-        if (err) {
-          return done(err);
-        }
-        OauthToken.create(code, function (err, tok) {
-          if (err) {
-            done (err);
-          }
-          done(null, tok.token);
-        });
-      });
+      try  {
+        const token = OauthToken.generate('code', client, user, nonce);
+        const tok = await OauthToken.create(token);
+        return done(null, tok.token);
+      }
+      catch (err) {
+        return done(err);
+      }
     }));
 
     oauth.exchange(

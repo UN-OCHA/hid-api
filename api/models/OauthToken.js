@@ -50,29 +50,23 @@ OauthTokenSchema
 
 OauthTokenSchema
   .statics
-  .generate = function (type, client, user, nonce, callback) {
-    crypto.randomBytes(256, function (ex, buffer) {
-      if (ex) {
-        return callback('server_error');
-      }
+  .generate = function (type, client, user, nonce) {
+    const buf = crypto.randomBytes(256);
+    const token = crypto
+      .createHash('sha1')
+      .update(buffer)
+      .digest('hex');
 
-      const token = crypto
-        .createHash('sha1')
-        .update(buffer)
-        .digest('hex');
-
-      const now = Date.now();
-      const ftoken = {
-        type: type,
-        token: token,
-        client: client._id,
-        user: user._id,
-        nonce: nonce,
-        expires: now + 7 * 24 * 3600 * 1000
-      };
-
-      callback(false, ftoken);
-    });
+    const now = Date.now();
+    const ftoken = {
+      type: type,
+      token: token,
+      client: client._id,
+      user: user._id,
+      nonce: nonce,
+      expires: now + 7 * 24 * 3600 * 1000
+    };
+    return ftoken;
   };
 
 module.exports = mongoose.model('OauthToken', OauthTokenSchema);

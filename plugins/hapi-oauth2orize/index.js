@@ -61,12 +61,11 @@ internals.decision = async function (request, reply, options, parse) {
 
     options = options || {};
 
-    const decisionAsync = util.promisify(internals.OauthServer.decision(options, parse));
-
     if (options && options.loadTransaction === false) {
-        await decisionAsync(express.req, express.res);
+      const decisionAsync = util.promisify(internals.OauthServer.decision(options, parse));
+      await decisionAsync(express.req, express.res);
     } else {
-        result = await decisionAsync(express.req, express.res);
+        const result = internals.OauthServer.decision(options, parse);
         const transactionLoaderAsync = util.promisify(result[0]);
         const middlewareAsync = util.promisify(result[1]);
         //try {
