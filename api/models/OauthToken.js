@@ -51,7 +51,7 @@ OauthTokenSchema
 OauthTokenSchema
   .statics
   .generate = function (type, client, user, nonce) {
-    const buf = crypto.randomBytes(256);
+    const buffer = crypto.randomBytes(256);
     const token = crypto
       .createHash('sha1')
       .update(buffer)

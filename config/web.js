@@ -113,7 +113,7 @@ module.exports = {
     ));
 
     // Implicit Grant Flow
-    oauth.grant(oauth.grants.token(function (client, user, ares, done) {
+    oauth.grant(oauth.grants.token(async function (client, user, ares, done) {
       try  {
         const token = OauthToken.generate('access', client, user, '');
         const tok = await OauthToken.create(token);
@@ -124,7 +124,7 @@ module.exports = {
       }
     }));
     // Authorization code exchange flow
-    oauth.grant(oauth.grants.code(function (client, redirectURI, user, res, req, done) {
+    oauth.grant(oauth.grants.code(async function (client, redirectURI, user, res, req, done) {
       const nonce = req.nonce ? req.nonce : '';
       try  {
         const token = OauthToken.generate('code', client, user, nonce);
