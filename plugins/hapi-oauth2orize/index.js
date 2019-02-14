@@ -29,14 +29,15 @@ internals.errorHandler = function (options) {
     return internals.OauthServer.errorHandler(options);
 };
 
-internals.authorize = function (request, reply, options, validate, immediate) {
+internals.authorize = async function (request, reply, options, validate, immediate) {
 
     var express = internals.convertToExpress(request, reply);
 
     const authorizeAsync = util.promisify(internals.OauthServer.authorize(options, validate, immediate));
 
     //try {
-    return authorizeAsync(express.req, express.res);
+    await authorizeAsync(express.req, express.res);
+    return [express.req, express.res];
     /*}
     catch (err) {
       internals.errorHandler({ mode: 'indirect' })(err, express.req, express.res,

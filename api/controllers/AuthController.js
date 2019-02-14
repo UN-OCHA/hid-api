@@ -287,7 +287,7 @@ module.exports = {
       request.auth.credentials = user;
       const [req, res] = await oauth.authorize(request, reply, {}, async function (clientID, redirect, done) {
         try {
-          const client = Client.findOne({id: clientID});
+          const client = await Client.findOne({id: clientID});
           if (!client || !client.id) {
             return done(
               'An error occurred while processing the request. Please try logging in again.'
