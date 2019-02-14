@@ -285,24 +285,7 @@ module.exports = {
       const clientId = request.query.client_id;
       user.sanitize(user);
       request.auth.credentials = user;
-      oauth.authorize(request, reply, function (req, res) {
-        if (!request.response || (request.response && !request.response.isBoom)) {
-          if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
-            request.payload = {transaction_id: req.oauth2.transactionID };
-            oauth.decision(request, reply);
-          }
-          else {
-            // The user has not confirmed authorization, so present the
-            // authorization page.
-            return reply.view('authorize', {
-              user: user,
-              client: req.oauth2.client,
-              transactionID: req.oauth2.transactionID
-              //csrf: req.csrfToken()
-            });
-          }
-        }
-      }, {}, async function (clientID, redirect, done) {
+      const [req, res] = await oauth.authorize(request, reply, {}, async function (clientID, redirect, done) {
         try {
           const client = Client.findOne({id: clientID});
           if (!client || !client.id) {
@@ -324,6 +307,22 @@ module.exports = {
           return done('An error occurred while processing the request. Please try logging in again.');
         }
       });
+      if (!request.response || (request.response && !request.response.isBoom)) {
+        if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
+          request.payload = {transaction_id: req.oauth2.transactionID };
+          await oauth.decision(request, reply);
+        }
+        else {
+          // The user has not confirmed authorization, so present the
+          // authorization page.
+          return reply.view('authorize', {
+            user: user,
+            client: req.oauth2.client,
+            transactionID: req.oauth2.transactionID
+            //csrf: req.csrfToken()
+          });
+        }
+      }
     }
     catch (err) {
       // TODO: display the error in a view
@@ -364,7 +363,7 @@ module.exports = {
         user.markModified('authorizedClients');
         await user.save;
       }
-      oauth.decision(request, reply);
+      await oauth.decision(request, reply);
     }
     catch (err) {
       // TODO: display error in a view

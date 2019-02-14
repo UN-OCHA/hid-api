@@ -2,6 +2,7 @@ var Oauth2orize = require('oauth2orize');
 var Boom = require('boom');
 var Hoek = require('hoek');
 var Url = require('url');
+const util = require('util');
 
 var internals = {
     defaults: {
@@ -28,26 +29,25 @@ internals.errorHandler = function (options) {
     return internals.OauthServer.errorHandler(options);
 };
 
-internals.authorize = function (request, reply, callback, options, validate, immediate) {
+internals.authorize = function (request, reply, options, validate, immediate) {
 
     var express = internals.convertToExpress(request, reply);
 
-    internals.OauthServer.authorize(options, validate, immediate)(express.req, express.res, function (err) {
+    const authorizeAsync = util.promisify(internals.OauthServer.authorize(options, validate, immediate));
 
-        if (err) {
-            internals.errorHandler({ mode: 'indirect' })(err, express.req, express.res,
-            function () {
+    //try {
+    return authorizeAsync(express.req, express.res);
+    /*}
+    catch (err) {
+      internals.errorHandler({ mode: 'indirect' })(err, express.req, express.res,
+      function () {
 
-                internals.errorHandler({ mode: 'direct' })(err, express.req, express.res, console.log);
-            });
-        }
-
-        callback(express.req, express.res);
-    });
-
+          internals.errorHandler({ mode: 'direct' })(err, express.req, express.res, console.log);
+      });
+    }*/
 };
 
-internals.decision = function (request, reply, options, parse) {
+internals.decision = async function (request, reply, options, parse) {
 
     var result;
     var express = internals.convertToExpress(request, reply);
@@ -60,17 +60,21 @@ internals.decision = function (request, reply, options, parse) {
 
     options = options || {};
 
-    if (options && options.loadTransaction === false) {
-        internals.OauthServer.decision(options, parse)(express.req, express.res, handler);
-    } else {
-        result = internals.OauthServer.decision(options, parse);
-        result[0](express.req, express.res, function (err) {
+    const decisionAsync = util.promisify(internals.OauthServer.decision(options, parse));
 
-            if (err) {
-                console.log('Err2: ' + err);
-            }
-            result[1](express.req, express.res, handler);
-        });
+    if (options && options.loadTransaction === false) {
+        await decisionAsync(express.req, express.res);
+    } else {
+        result = await decisionAsync(express.req, express.res);
+        const transactionLoaderAsync = util.promisify(result[0]);
+        const middlewareAsync = util.promisify(result[1]);
+        //try {
+          await transactionLoaderAsync(express.req, express.res);
+          await middlewareAsync(express.req, express.res)
+        /*}
+        catch (err) {
+          console.log('Err2: ' + err);
+        }*/
     }
 };
 
