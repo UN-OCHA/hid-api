@@ -57,7 +57,7 @@ const init = async () => {
 
   // Plugins
   await server.register(webConfig.plugins);
-  //webConfig.onPluginsLoaded(server);
+  webConfig.onPluginsLoaded(server);
 
   server.auth.strategy('hid', 'hapi-auth-hid');
 

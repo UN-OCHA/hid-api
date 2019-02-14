@@ -59,10 +59,9 @@ module.exports = {
         }
       }
     },
-    /*{
-      plugin: require('hapi-oauth2orize'),
-      options: { }
-    },*/
+    {
+      plugin: require('../plugins/hapi-oauth2orize'),
+    },
     {
       plugin: require('hapi-rate-limit'),
       options: {
