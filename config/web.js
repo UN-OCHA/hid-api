@@ -136,8 +136,7 @@ module.exports = {
       }
     }));
 
-    oauth.exchange(
-      oauth.exchanges.code(async function (client, code, redirectURI, payload, authInfo, done) {
+    oauth.exchange(oauth.exchanges.code(async function (client, code, redirectURI, payload, authInfo, done) {
         try {
           const ocode = OauthToken
             .findOne({token: code, type: 'code'})
@@ -166,7 +165,7 @@ module.exports = {
         catch (err) {
           return done(err);
         }
-    );
+    }));
 
     oauth.exchange(oauth.exchanges.refreshToken(async function (client, refreshToken, scope, done) {
       try {
