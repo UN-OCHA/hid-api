@@ -1,52 +1,74 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const Boom = require('boom');
 const Recaptcha = require('recaptcha2');
+const Client = require('../models/Client');
+const User = require('../models/User');
+const HelperService = require('../services/HelperService');
+const UserController = require('./UserController');
+const AuthPolicy = require('../policies/AuthPolicy');
+const config = require('../../config/env')[process.env.NODE_ENV];
+const logger = config.logger;
 
-module.exports = class ViewController extends Controller {
-
-  _getAlert(result, success, error) {
-    if (!result || !result.isBoom) {
-      return {
-        type: 'success',
-        message: success
-      };
-    }
-    else {
-      return {
-        type: 'danger',
-        message: error
-      };
-    }
+function _getAlert (result, success, error) {
+  if (!result || !result.isBoom) {
+    return {
+      type: 'success',
+      message: success
+    };
   }
-
-  _getRegisterLink(args) {
-    const params = this.app.services.HelperService.getOauthParams(args);
-    let registerLink = '/register';
-    if (params) {
-      registerLink += '?' + params;
-    }
-    return registerLink;
+  else {
+    return {
+      type: 'danger',
+      message: error
+    };
   }
+}
 
-  _getPasswordLink(args) {
-    const params = this.app.services.HelperService.getOauthParams(args);
-    let registerLink = '/password';
-    if (params) {
-      registerLink += '?' + params;
-    }
-    return registerLink;
+function _getRegisterLink(args) {
+  const params = HelperService.getOauthParams(args);
+  let registerLink = '/register';
+  if (params) {
+    registerLink += '?' + params;
   }
+  return registerLink;
+}
 
-  login (request, reply) {
-    const Client = this.app.orm.Client;
+function _getPasswordLink (args) {
+  const params = HelperService.getOauthParams(args);
+  let registerLink = '/password';
+  if (params) {
+    registerLink += '?' + params;
+  }
+  return registerLink;
+}
+
+function _buildRequestUrl (request, url) {
+  let requestUrl = 'https://' + request.info.host + '/' + url;
+  if (request.query.client_id) {
+    requestUrl += '?client_id=' + request.query.client_id;
+  }
+  if (request.query.redirect_uri) {
+    requestUrl += '&redirect_uri=' + request.query.redirect_uri;
+  }
+  if (request.query.response_type) {
+    requestUrl += '&response_type=' + request.query.response_type;
+  }
+  if (request.query.scope) {
+    requestUrl += '&scope=' + request.query.scope;
+  }
+  return requestUrl;
+}
+
+module.exports = {
+
+  login: async function (request, reply) {
     const cookie = request.yar.get('session');
 
     if (!cookie || (cookie && !cookie.userId)) {
       // Show the login form
-      const registerLink = this._getRegisterLink(request.query);
-      const passwordLink = this._getPasswordLink(request.query);
+      const registerLink = _getRegisterLink(request.query);
+      const passwordLink = _getPasswordLink(request.query);
       const loginArgs = {
         title: 'Log into Humanitarian ID',
         query: request.query,
@@ -57,25 +79,24 @@ module.exports = class ViewController extends Controller {
 
       // Check client ID and redirect URI at this stage, so we can send an error message if needed.
       if (request.query.client_id) {
-        Client
-          .findOne({id: request.query.client_id})
-          .then(client => {
-            if (!client || (client && client.redirectUri !== request.query.redirect_uri)) {
-              loginArgs.alert = {
-                type: 'danger',
-                message: 'The configuration of the client application is invalid. We can not log you in.'
-              };
-              return reply.view('login', loginArgs);
-            }
-            return reply.view('login', loginArgs);
-          })
-          .catch(err => {
+        try {
+          const client = await Client.findOne({id: request.query.client_id});
+          if (!client || (client && client.redirectUri !== request.query.redirect_uri)) {
             loginArgs.alert = {
               type: 'danger',
-              message: 'Internal server error. We can not log you in. Please let us know at info@humanitarian.id'
+              message: 'The configuration of the client application is invalid. We can not log you in.'
             };
             return reply.view('login', loginArgs);
-          });
+          }
+          return reply.view('login', loginArgs);
+        }
+        catch (err) {
+          loginArgs.alert = {
+            type: 'danger',
+            message: 'Internal server error. We can not log you in. Please let us know at info@humanitarian.id'
+          };
+          return reply.view('login', loginArgs);
+        }
       }
       else {
         return reply.view('login', loginArgs);
@@ -114,9 +135,9 @@ module.exports = class ViewController extends Controller {
         alert: false
       });
     }
-  }
+  },
 
-  logout (request, reply) {
+  logout: async function (request, reply) {
     request.yar.reset();
     if (request.query.redirect) {
       // Validate redirect URL
@@ -132,263 +153,237 @@ module.exports = class ViewController extends Controller {
       hostname = hostname.split(':')[0];
       //find & remove "?"
       hostname = hostname.split('?')[0];
-      const Client = this.app.orm.Client;
       const regex = new RegExp(hostname, 'i');
-      const that = this;
-      Client
-        .count({redirectUri: regex})
-        .then(count => {
-          if (count > 0) {
-            return reply.redirect(request.query.redirect);
-          }
-          else {
-            that.log.warn('Redirecting to ' + request.query.redirect + ' is not allowed', { security: true, fail: true, request: request});
-            return reply.redirect('/');
-          }
-        })
-        .catch(err => {
-          that.log.error('Error logging user out', {request: request, error: err});
+      try {
+        const count = await Client.countDocuments({redirectUri: regex});
+        if (count > 0) {
+          return reply.redirect(request.query.redirect);
+        }
+        else {
+          logger.warn('Redirecting to ' + request.query.redirect + ' is not allowed', { security: true, fail: true, request: request});
           return reply.redirect('/');
-        });
+        }
+      }
+      catch (err) {
+        logger.error('Error logging user out', {request: request, error: err});
+        return reply.redirect('/');
+      }
     }
     else {
       return reply.redirect('/');
     }
-  }
+  },
 
-  _buildRequestUrl (request, url) {
-    let requestUrl = 'https://' + request.info.host + '/' + url;
-    if (request.query.client_id) {
-      requestUrl += '?client_id=' + request.query.client_id;
-    }
-    if (request.query.redirect_uri) {
-      requestUrl += '&redirect_uri=' + request.query.redirect_uri;
-    }
-    if (request.query.response_type) {
-      requestUrl += '&response_type=' + request.query.response_type;
-    }
-    if (request.query.scope) {
-      requestUrl += '&scope=' + request.query.scope;
-    }
-    return requestUrl;
-  }
-
-  register (request, reply) {
-    const requestUrl = this._buildRequestUrl(request, 'verify2');
-    reply.view('register', {
+  register: function (request, reply) {
+    const requestUrl = _buildRequestUrl(request, 'verify2');
+    return reply.view('register', {
       title: 'Register in Humanitarian ID',
       requestUrl: requestUrl,
       recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY
     });
-  }
+  },
 
-  registerPost (request, reply) {
+  registerPost: async function (request, reply) {
     // Check recaptcha
     const recaptcha = new Recaptcha({siteKey: process.env.RECAPTCHA_PUBLIC_KEY, secretKey: process.env.RECAPTCHA_PRIVATE_KEY});
-    const UserController = this.app.controllers.UserController;
-    const that = this;
-    const registerLink = that._getRegisterLink(request.payload);
-    const passwordLink = that._getPasswordLink(request.payload);
-    recaptcha
-      .validate(request.payload['g-recaptcha-response'])
-      .then(() => {
-        UserController.create(request, function (result) {
-          const al = that._getAlert(result,
-            'Thank you for creating an account. You will soon receive a confirmation email to confirm your account.',
-            'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.'
-          );
-          reply.view('login', {
-            alert: al,
-            query: request.query,
-            registerLink: registerLink,
-            passwordLink: passwordLink
-          });
-        });
-      })
-      .catch((err) => {
-        reply.view('login', {
-          alert: {type: 'danger', message: recaptcha.translateErrors(err)},
-          query: request.query,
-          registerLink: registerLink,
-          passwordLink: passwordLink
-        });
+    const registerLink = _getRegisterLink(request.payload);
+    const passwordLink = _getPasswordLink(request.payload);
+    try {
+      await recaptcha.validate(request.payload['g-recaptcha-response']);
+    }
+    catch (err) {
+      return reply.view('login', {
+        alert: {type: 'danger', message: recaptcha.translateErrors(err)},
+        query: request.query,
+        registerLink: registerLink,
+        passwordLink: passwordLink
       });
-  }
+    }
+    try {
+      const user = await UserController.create(request);
+      return reply.view('login', {
+        alert: {type: 'success', message: 'Thank you for creating an account. You will soon receive a confirmation email to confirm your account.'},
+        query: request.query,
+        registerLink: registerLink,
+        passwordLink: passwordLink
+      });
+    }
+    catch (err) {
+      return reply.view('login', {
+        alert: {type: 'danger', message: 'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.'},
+        query: request.query,
+        registerLink: registerLink,
+        passwordLink: passwordLink
+      });
+    }
+  },
 
-  verify (request, reply) {
-    const UserController = this.app.controllers.UserController;
+  verify: async function (request, reply) {
     if (!request.query.hash && !request.query.email && !request.query.time) {
-      return reply(Boom.badRequest('Missing hash parameter'));
+      throw Boom.badRequest('Missing hash parameter');
     }
     request.payload = { hash: request.query.hash, email: request.query.email, time: request.query.time };
-    const that = this;
-    UserController.validateEmail(request, function (result) {
-      const al = that._getAlert(
-        result,
-        'Thank you for confirming your email address. You can now log in',
-        'There was an error confirming your email address.'
-      );
-      const registerLink = that._getRegisterLink(request.query);
-      const passwordLink = that._getPasswordLink(request.query);
+    const registerLink = _getRegisterLink(request.query);
+    const passwordLink = _getPasswordLink(request.query);
+    try {
+      const record = await UserController.validateEmail(request);
       return reply.view('login', {
-        alert: al,
+        alert: {type: 'success', message: 'Thank you for confirming your email address. You can now log in'},
         query: request.query,
         registerLink: registerLink,
         passwordLink: passwordLink
       });
-    });
-  }
+    }
+    catch (err) {
+      return reply.view('login', {
+        alert: {type: 'danger', message: 'There was an error confirming your email address.'},
+        query: request.query,
+        registerLink: registerLink,
+        passwordLink: passwordLink
+      });
+    }
+  },
 
-  password (request, reply) {
-    const requestUrl = this._buildRequestUrl(request, 'new_password');
-    reply.view('password', {
+  password: function (request, reply) {
+    const requestUrl = _buildRequestUrl(request, 'new_password');
+    return reply.view('password', {
       requestUrl: requestUrl
     });
-  }
+  },
 
-  passwordPost (request, reply) {
-    const UserController = this.app.controllers.UserController;
-    const that = this;
-    UserController.resetPasswordEndpoint(request, function (result) {
-      const al = that._getAlert(
-        result,
-        'Password reset was sent to ' + request.payload.email + '. Please make sure the email address is correct. If not, please reset your password again.',
-        'There was an error resetting your password.'
-      );
-      const registerLink = that._getRegisterLink(request.payload);
-      const passwordLink = that._getPasswordLink(request.payload);
+  passwordPost: async function (request, reply) {
+    const registerLink = _getRegisterLink(request.payload);
+    const passwordLink = _getPasswordLink(request.payload);
+    try {
+      const response = await UserController.resetPasswordEndpoint(request);
       return reply.view('login', {
-        alert: al,
+        alert: {type: 'success', message: 'Password reset was sent to ' + request.payload.email + '. Please make sure the email address is correct. If not, please reset your password again.'},
         query: request.query,
         registerLink: registerLink,
         passwordLink: passwordLink
       });
-    });
-  }
+    }
+    catch (err) {
+      return reply.view('login', {
+        alert: {type: 'danger', message: 'There was an error resetting your password.'},
+        query: request.query,
+        registerLink: registerLink,
+        passwordLink: passwordLink
+      });
+    }
+  },
 
-  newPassword (request, reply) {
-    const that = this;
-    const User = this.app.orm.User;
+  newPassword: async function (request, reply) {
     request.yar.reset();
     request.yar.set('session', { hash: request.query.hash, id: request.query.id, time: request.query.time, totp: false});
-    User
-      .findOne({_id: request.query.id})
-      .then(user => {
-        if (!user) {
-          return reply.view('error');
-        }
-        if (user.totp) {
-          return reply.view('totp', {
-            query: request.query,
-            destination: '/new_password',
-            alert: false
-          });
-        }
-        else {
-          request.yar.set('session', { hash: request.query.hash, id: request.query.id, time: request.query.time, totp: true });
-          return reply.view('new_password', {
-            query: request.query,
-            hash: request.query.hash,
-            id: request.query.id,
-            time: request.query.time
-          });
-        }
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+    const user = await User.findOne({_id: request.query.id});
+    if (!user) {
+      return reply.view('error');
+    }
+    if (user.totp) {
+      return reply.view('totp', {
+        query: request.query,
+        destination: '/new_password',
+        alert: false
       });
-  }
+    }
+    else {
+      request.yar.set('session', { hash: request.query.hash, id: request.query.id, time: request.query.time, totp: true });
+      return reply.view('new_password', {
+        query: request.query,
+        hash: request.query.hash,
+        id: request.query.id,
+        time: request.query.time
+      });
+    }
+  },
 
-  newPasswordPost (request, reply) {
-    const UserController = this.app.controllers.UserController;
-    const User = this.app.orm.User;
-    const that = this;
+  newPasswordPost: async function (request, reply) {
     const cookie = request.yar.get('session');
-    const authPolicy = this.app.policies.AuthPolicy;
 
     if (cookie && cookie.hash && cookie.id && cookie.time && !cookie.totp) {
-      User
-        .findOne({_id: cookie.id})
-        .then(user => {
-          const token = request.payload['x-hid-totp'];
-          return authPolicy.isTOTPValid(user, token);
-        })
-        .then((user) => {
-          cookie.totp = true;
-          request.yar.set('session', cookie);
-          return reply.view('new_password', {
-            query: request.payload,
-            hash: cookie.hash,
-            id: cookie.id,
-            time: cookie.time
-          });
-        })
-        .catch(err => {
-          const alert =  {
-            type: 'danger',
-            message: err.output.payload.message
-          };
-          return reply.view('totp', {
-            query: request.payload,
-            destination: '/new_password',
-            alert: alert
-          });
+      try {
+        const user = await User.findOne({_id: cookie.id});
+        const token = request.payload['x-hid-totp'];
+        const record = await AuthPolicy.isTOTPValid(user, token);
+        cookie.totp = true;
+        request.yar.set('session', cookie);
+        return reply.view('new_password', {
+          query: request.payload,
+          hash: cookie.hash,
+          id: cookie.id,
+          time: cookie.time
         });
+      }
+      catch (err) {
+        const alert =  {
+          type: 'danger',
+          message: err.output.payload.message
+        };
+        return reply.view('totp', {
+          query: request.payload,
+          destination: '/new_password',
+          alert: alert
+        });
+      }
     }
 
     if (cookie && cookie.hash && cookie.totp) {
-      UserController.resetPassword(request, function (result) {
-        const params = that.app.services.HelperService.getOauthParams(request.payload);
+      const params = HelperService.getOauthParams(request.payload);
+      const registerLink = _getRegisterLink(request.payload);
+      const passwordLink = _getPasswordLink(request.payload);
+      try {
+        const response = await UserController.resetPasswordEndpoint(request);
         if (params) {
-          const al = that._getAlert(result,
-            'Your password was successfully reset. You can now login.',
-            'There was an error resetting your password.'
-          );
-          const registerLink = that._getRegisterLink(request.payload);
-          const passwordLink = that._getPasswordLink(request.payload);
           return reply.view('login', {
-            alert: al,
+            alert: {type: 'success', message: 'Your password was successfully reset. You can now login.'},
             query: request.payload,
             registerLink: registerLink,
             passwordLink: passwordLink
           });
         }
         else {
-          const al = that._getAlert(result,
-            'Thank you for updating your password.',
-            'There was an error resetting your password.'
-          );
           return reply.view('message', {
-            alert: al,
+            alert: {type: 'success', message: 'Thank you for updating your password.'},
             query: request.payload,
-            isSuccess: !result.isBoom,
+            isSuccess: true,
             title: 'Password update'
           });
         }
-      }, false);
+      }
+      catch (err) {
+        if (params) {
+          return reply.view('login', {
+            alert: {type: 'danger', message: 'There was an error resetting your password.'},
+            query: request.payload,
+            registerLink: registerLink,
+            passwordLink: passwordLink
+          });
+        }
+        else {
+          return reply.view('message', {
+            alert: {type: 'danger', message: 'There was an error resetting your password.'},
+            query: request.payload,
+            isSuccess: false,
+            title: 'Password update'
+          });
+        }
+      }
     }
-  }
+  },
 
   // Display a default user page when user is logged in without OAuth
-  user (request, reply) {
+  user: async function (request, reply) {
     // If the user is not authenticated, redirect to the login page
-    const User = this.app.orm.User;
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
       return reply.redirect('/');
     }
     else {
-      const that = this;
-      User
-        .findOne({_id: cookie.userId})
-        .then(user => {
-          return reply.view('user', {
-            user: user
-          });
-        })
-        .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
-        });
+      const user = await User.findOne({_id: cookie.userId});
+      return reply.view('user', {
+        user: user
+      });
     }
   }
 };

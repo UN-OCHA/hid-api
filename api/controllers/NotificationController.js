@@ -1,77 +1,49 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const Boom = require('boom');
+const Notification = require('../models/Notification');
+const HelperService = require('../services/HelperService');
 
 /**
  * @module NotificationController
  * @description Generated Trails.js Controller.
  */
-module.exports = class NotificationController extends Controller{
+module.exports = {
 
-  find (request, reply) {
-    const Notification = this.app.orm.Notification;
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
+  find: async function (request, reply) {
+    const options = HelperService.getOptionsFromQuery(request.query);
+    const criteria = HelperService.getCriteriaFromQuery(request.query);
 
     // Force to display notifications of current user
-    criteria.user = request.params.currentUser.id;
+    criteria.user = request.auth.credentials.id;
 
-    const that = this;
-    const query = this.app.services.HelperService.find('Notification', criteria, options);
-    let gresults = {};
-    query
-      .then((results) => {
-        gresults = results;
-        return Notification.count(criteria);
-      })
-      .then((number) => {
-        return reply(gresults).header('X-Total-Count', number);
-      })
-      .catch((err) => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
+    const [results, number] = await Promise.all([HelperService.find(Notification, criteria, options), Notification.countDocuments(criteria)]);
+    return reply.response(results).header('X-Total-Count', number);
 
-  }
+  },
 
-  update (request, reply) {
-    const Notification = this.app.orm.Notification;
-    const that = this;
+  update: async function (request, reply) {
 
     if (!request.payload || !request.payload.hasOwnProperty('read') || !request.payload.hasOwnProperty('notified')) {
-      return reply(Boom.badRequest());
+      throw Boom.badRequest();
     }
 
     if (request.params.id) {
-      Notification
-        .findOne({_id: request.params.id})
-        .then((record) => {
-          if (!record) {
-            throw Boom.notFound();
-          }
-          if (record.user.toString() !== request.params.currentUser.id) {
-            throw Boom.forbidden();
-          }
-          record.notified = request.payload.notified;
-          record.read = request.payload.read;
-          return record.save();
-        })
-        .then(record => {
-          return reply(record);
-        })
-        .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
-        });
+      let record = await Notification.findOne({_id: request.params.id});
+      if (!record) {
+        throw Boom.notFound();
+      }
+      if (record.user.toString() !== request.auth.credentials.id) {
+        throw Boom.forbidden();
+      }
+      record.notified = request.payload.notified;
+      record.read = request.payload.read;
+      record = await record.save();
+      return record;
     }
     else {
-      Notification
-        .update({user: request.params.currentUser.id}, { read: request.payload.read, notified: request.payload.notified }, { multi: true})
-        .then(() => {
-          return reply();
-        })
-        .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
-        });
+      await Notification.update({user: request.auth.credentials.id}, { read: request.payload.read, notified: request.payload.notified }, { multi: true});
+      return reply.response().code(204);
     }
   }
 

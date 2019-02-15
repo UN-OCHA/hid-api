@@ -1,83 +1,49 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const Boom = require('boom');
+const Client = require('../models/Client');
+const HelperService = require('../services/HelperService');
 
 /**
  * @module ClientController
  * @description Controller for Clients.
  */
-module.exports = class ClientController extends Controller{
+module.exports = {
 
-  create (request, reply) {
-    const Client = this.app.orm.Client;
-    const that = this;
-    Client
-      .create(request.payload)
-      .then((client) => {
-        if (!client) {
-          throw Boom.badRequest();
-        }
-        return reply(client);
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
+  create: async function (request, reply) {
+    const client = await Client.create(request.payload);
+    if (!client) {
+      throw Boom.badRequest();
+    }
+    return client;
+  },
 
-  find (request, reply) {
-    const Client = this.app.orm.Client;
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
-    const that = this;
+  find: async function (request, reply) {
+    const options = HelperService.getOptionsFromQuery(request.query);
+    const criteria = HelperService.getCriteriaFromQuery(request.query);
 
     if (request.params.id) {
       criteria._id = request.params.id;
-      Client
-        .findOne(criteria)
-        .then(result => {
-          if (!result) {
-            throw Boom.notFound();
-          }
-          return reply(result);
-        })
-        .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
-        });
+      const result = await Client.findOne(criteria);
+      if (!result) {
+        throw Boom.notFound();
+      }
+      return result;
     }
     else {
-      const query = this.app.services.HelperService.find('Client', criteria, options);
-      let gresults = {};
-      query
-        .then((results) => {
-          gresults = results;
-          return Client.count(criteria);
-        })
-        .then((number) => {
-          return reply(gresults).header('X-Total-Count', number);
-        })
-        .catch((err) => {
-          that.app.services.ErrorService.handle(err, request, reply);
-        });
+      const results = await HelperService.find(Client, criteria, options);
+      const number = await Client.countDocuments(criteria);
+      return reply.response(results).header('X-Total-Count', number);
     }
-  }
+  },
 
-  update (request, reply) {
-    const Model = this.app.orm.client,
-      that = this;
-    Model
-      .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
-      .then((client) => {
-        reply(client);
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
+  update: async function (request, reply) {
+    const client = await Client.findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true});
+    return client;
+  },
 
-  destroy (request, reply) {
-    request.params.model = 'client';
-    const FootprintController = this.app.controllers.FootprintController;
-    FootprintController.destroy(request, reply);
+  destroy: async function (request, reply) {
+    await Client.remove({ _id: request.params.id });
+    return reply.response().code(204);
   }
 };

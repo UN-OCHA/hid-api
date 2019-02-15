@@ -1,17 +1,30 @@
 'use strict';
 
-const Controller = require('trails/controller');
+const ServiceCredentials = require('../models/ServiceCredentials');
+const HelperService = require('../services/HelperService');
 
 /**
  * @module ServiceCredentialsController
  * @description Generated Trails.js Controller.
  */
-module.exports = class ServiceCredentialsController extends Controller{
+module.exports = {
 
-  find (request, reply) {
-    request.params.model = 'servicecredentials';
-    const FootprintController = this.app.controllers.FootprintController;
-    FootprintController.find(request, reply);
+  find: async function (request, reply) {
+    const options = HelperService.getOptionsFromQuery(request.query);
+    const criteria = HelperService.getCriteriaFromQuery(request.query);
+
+    if (request.params.id) {
+      criteria._id = request.params.id;
+      const result = await ServiceCredentials.findOne(criteria);
+      if (!result) {
+        throw Boom.notFound();
+      }
+      return result;
+    }
+    else {
+      const [results, number] = await Promise.all([HelperService.find(ServiceCredentials, criteria, options), ServiceCredentials.count(criteria)]);
+      return reply.response(results).header('X-Total-Count', number);
+    }
   }
 
 };

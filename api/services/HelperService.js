@@ -1,6 +1,5 @@
 'use strict';
 
-const Service = require('trails/service');
 const crypto = require('crypto');
 const _ = require('lodash');
 const queryOptions = [
@@ -26,9 +25,21 @@ const authorizedDomains = [
  * @module HelperService
  * @description General Helper Service
  */
-module.exports = class HelperService extends Service {
 
-  getOauthParams(args) {
+ function getSchemaAttributes (modelName, variableName, attributeName) {
+   let output = [];
+   modelName.schema.eachPath(function (path, options) {
+     if (options.options[attributeName]) {
+       output.push(path);
+     }
+   });
+   return output;
+ };
+
+
+module.exports = {
+
+  getOauthParams: function (args) {
     let params = '';
     if (args.redirect) {
       params += 'redirect=' + args.redirect;
@@ -46,44 +57,18 @@ module.exports = class HelperService extends Service {
       params += '&scope=' + args.scope;
     }
     return params;
-  }
+  },
 
-  getManagerOnlyAttributes (modelName) {
-    return this.getSchemaAttributes(modelName, 'managerOnlyAttributes', 'managerOnly');
-  }
-
-  getReadonlyAttributes (modelName, extras) {
-    const attrs = this.getSchemaAttributes(modelName, 'readonlyAttributes', 'readonly');
-    return _.union(attrs, extras);
-  }
-
-  getAdminOnlyAttributes (modelName) {
-    return this.getSchemaAttributes(modelName, 'adminOnlyAttributes', 'adminOnly');
-  }
-
-  getSchemaAttributes (modelName, variableName, attributeName) {
-    if (!this[variableName] || this[variableName].length === 0) {
-      const Model = this.app.orm[modelName];
-      this[variableName] = [];
-      const that = this;
-      Model.schema.eachPath(function (path, options) {
-        if (options.options[attributeName]) {
-          that[variableName].push(path);
-        }
-      });
-    }
-    return this[variableName];
-  }
-
-  removeForbiddenAttributes (modelName, request, extras) {
+  removeForbiddenAttributes: function (modelName, request, extras) {
     let forbiddenAttributes = [];
-    forbiddenAttributes = this.getReadonlyAttributes(modelName);
-    if (!request.params.currentUser || !request.params.currentUser.is_admin) {
-      forbiddenAttributes = forbiddenAttributes.concat(this.getAdminOnlyAttributes(modelName));
+    const attrs = getSchemaAttributes(modelName, 'readonlyAttributes', 'readonly');
+    forbiddenAttributes = _.union(attrs, extras);
+    if (!request.auth.credentials || !request.auth.credentials.is_admin) {
+      forbiddenAttributes = forbiddenAttributes.concat(getSchemaAttributes(modelName, 'adminOnlyAttributes', 'adminOnly'));
     }
-    if (!request.params.currentUser ||
-      (!request.params.currentUser.is_admin && !request.params.currentUser.isManager)) {
-      forbiddenAttributes = forbiddenAttributes.concat(this.getManagerOnlyAttributes(modelName));
+    if (!request.auth.credentials ||
+      (!request.auth.credentials.is_admin && !request.auth.credentials.isManager)) {
+      forbiddenAttributes = forbiddenAttributes.concat(getSchemaAttributes(modelName, 'managerOnlyAttributes', 'managerOnly'));
     }
     forbiddenAttributes = forbiddenAttributes.concat(extras);
     // Do not allow forbiddenAttributes to be updated directly
@@ -92,13 +77,13 @@ module.exports = class HelperService extends Service {
         delete request.payload[forbiddenAttributes[i]];
       }
     }
-  }
+  },
 
-  getOptionsFromQuery(query) {
+  getOptionsFromQuery: function (query) {
     return _.pick(query, queryOptions);
-  }
+  },
 
-  getCriteriaFromQuery(query) {
+  getCriteriaFromQuery: function (query) {
     const criteria = _.omit(query, queryOptions);
     const keys = Object.keys(criteria);
     const regex = new RegExp(/\[(.*?)\]/);
@@ -121,16 +106,15 @@ module.exports = class HelperService extends Service {
       }
     }
     return criteria;
-  }
+  },
 
-  generateRandom () {
+  generateRandom: function () {
     const buffer = crypto.randomBytes(256);
     return buffer.toString('hex').slice(0, 10);
-  }
+  },
 
-  find (modelName, criteria, options) {
-    const Model = this.app.orm[modelName];
-    const query = Model.find(criteria);
+  find: function (modelName, criteria, options) {
+    const query = modelName.find(criteria);
     if (options.limit) {
       query.limit(parseInt(options.limit));
     }
@@ -151,9 +135,9 @@ module.exports = class HelperService extends Service {
       query.select(options.fields);
     }
     return query;
-  }
+  },
 
-  isAuthorizedUrl (url) {
+  isAuthorizedUrl: function (url) {
     let out = false;
     for (let i = 0; i < authorizedDomains.length; i++) {
       if (url.indexOf(authorizedDomains[i]) === 0) {
@@ -161,10 +145,10 @@ module.exports = class HelperService extends Service {
       }
     }
     return out;
-  }
+  },
 
-  saveTOTPDevice (request, user) {
-    this.app.log.debug('Saving device as trusted');
+  saveTOTPDevice: function (request, user) {
+    //this.app.log.debug('Saving device as trusted');
     const random = user.generateHash();
     const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
     if (tindex !== -1) {

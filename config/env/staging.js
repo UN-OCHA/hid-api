@@ -8,12 +8,9 @@ module.exports = {
         migrate: 'create',
         uri: 'mongodb://db:27017/staging',
         options: {
-          server: {
-            socketOptions: {
-              keepAlive: 600000,
-              connectTimeoutMS: 60000
-            }
-          }
+          keepAlive: 600000,
+          connectTimeoutMS: 60000,
+          useNewUrlParser: true
         }
       }
     },

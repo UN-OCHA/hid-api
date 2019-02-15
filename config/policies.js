@@ -14,7 +14,7 @@
 
 module.exports = {
 
-  AuthController: {
+  /*AuthController: {
     jwtTokens: ['AuthPolicy.isAuthenticated'],
     blacklistJwt: ['AuthPolicy.isAuthenticated'],
     signRequest: ['AuthPolicy.isAuthenticated']
@@ -142,6 +142,6 @@ module.exports = {
     create: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
     find: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin'],
     destroy: ['AuthPolicy.isAuthenticated', 'AuthPolicy.isAdmin']
-  }
+  }*/
 
 };

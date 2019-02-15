@@ -6,6 +6,7 @@
  *
  * @see {@link http://trailsjs.io/doc/config/web}
  */
+
 module.exports = {
 
   /**
@@ -27,7 +28,13 @@ module.exports = {
 
   plugins: [
     {
-      register: require('yar'),
+      plugin: require('inert')
+    },
+    {
+      plugin: require('vision')
+    },
+    {
+      plugin: require('yar'),
       options: {
         cache: {
           expiresIn: 4 * 60 * 60 * 1000 // 4 hours sessions
@@ -40,7 +47,7 @@ module.exports = {
       }
     },
     {
-      register: require('crumb'),
+      plugin: require('crumb'),
       options: {
         skip: function (request, reply) {
           const paths = ['/', '/login', '/oauth/authorize',
@@ -53,25 +60,28 @@ module.exports = {
       }
     },
     {
-      register: require('hapi-oauth2orize'),
-      options: { }
+      plugin: require('../plugins/hapi-oauth2orize'),
     },
     {
-      register: require('hapi-rate-limit'),
+      plugin: require('hapi-rate-limit'),
       options: {
         userLimit: 100000,
         trustProxy: true,
         pathLimit: false
       }
+    },
+    {
+      plugin: require('../plugins/hapi-auth-hid')
     }
   ],
 
-  onPluginsLoaded: function (err) {
+  onPluginsLoaded: function (server) {
     const async = require('async');
-    const oauth = this.packs.hapi.server.plugins['hapi-oauth2orize'];
+    const oauth = server.plugins['hapi-oauth2orize'];
     const oauth2orizeExt = require('oauth2orize-openid');
-    const Client = this.orm.Client;
-    const OauthToken = this.orm.OauthToken;
+    const Client = require('../api/models/Client');
+    const OauthToken = require('../api/models/OauthToken');
+    const JwtService = require('../api/services/JwtService');
     const OauthExpiresIn = 7 * 24 * 3600;
 
     const that = this;
@@ -80,151 +90,92 @@ module.exports = {
     oauth.grant(oauth2orizeExt.extensions());
     // id_token grant type.
     oauth.grant(oauth2orizeExt.grant.idToken(function(client, user, done){
-      const out = that.services.JwtService.generateIdToken(client, user);
+      const out = JwtService.generateIdToken(client, user);
       done(null, out);
     }));
 
     // 'id_token token' grant type.
     oauth.grant(oauth2orizeExt.grant.idTokenToken(
-      function(client, user, done){
-        OauthToken.generate('access', client, user, '', function (err, token) {
-          if (err) {
-            return done(err);
-          }
-          OauthToken.create(token, function (err, tok) {
-            if (err) {
-              done(err);
-            }
-            done (null, tok.token);
-          });
-        });
+      async function(client, user, done){
+        try  {
+          const token = OauthToken.generate('access', client, user, '');
+          const tok = await OauthToken.create(token);
+          return done(null, tok.token);
+        }
+        catch (err) {
+          return done(err);
+        }
       },
       function(client, user, req, done){
-        const out = that.services.JwtService.generateIdToken(client, user);
-        done (null, out);
+        const out = JwtService.generateIdToken(client, user);
+        return done (null, out);
       }
     ));
 
     // Implicit Grant Flow
-    oauth.grant(oauth.grants.token(function (client, user, ares, done) {
-      OauthToken.generate('access', client, user, '', function (err, token) {
-        if (err) {
-          return done(err);
-        }
-        OauthToken.create(token, function (err, tok) {
-          if (err) {
-            done(err);
-          }
-          done(null, tok.token, {expires_in: OauthExpiresIn});
-        });
-      });
+    oauth.grant(oauth.grants.token(async function (client, user, ares, done) {
+      try  {
+        const token = OauthToken.generate('access', client, user, '');
+        const tok = await OauthToken.create(token);
+        return done(null, tok.token, {expires_in: OauthExpiresIn});
+      }
+      catch (err) {
+        return done(err);
+      }
     }));
     // Authorization code exchange flow
-    oauth.grant(oauth.grants.code(function (client, redirectURI, user, res, req, done) {
+    oauth.grant(oauth.grants.code(async function (client, redirectURI, user, res, req, done) {
       const nonce = req.nonce ? req.nonce : '';
-      OauthToken.generate('code', client, user, nonce, function (err, code) {
-        if (err) {
-          return done(err);
-        }
-        OauthToken.create(code, function (err, tok) {
-          if (err) {
-            done (err);
-          }
-          done(null, tok.token);
-        });
-      });
+      try  {
+        const token = OauthToken.generate('code', client, user, nonce);
+        const tok = await OauthToken.create(token);
+        return done(null, tok.token);
+      }
+      catch (err) {
+        return done(err);
+      }
     }));
 
-    oauth.exchange(
-      oauth.exchanges.code(function (client, code, redirectURI, payload, authInfo, done) {
-        OauthToken
-          .findOne({token: code, type: 'code'})
-          .populate('client user')
-          .exec(function (err, ocode) {
-            if (err ||
-              !ocode.client._id.equals(client._id)) {
-              //redirectURI !== ocode.client.redirectUri) {
-              return done(null, false);
-            }
-            async.auto({
-              // Create refresh token
-              refreshToken: function (callback) {
-                OauthToken.generate('refresh', client, ocode.user, ocode.nonce, function (err, token) {
-                  if (err) {
-                    return callback(err);
-                  }
-                  OauthToken.create(token, function (err, tok) {
-                    if (err) {
-                      return callback(err);
-                    }
-                    callback(null, tok);
-                  });
-                });
-              },
-              // Create access token
-              accessToken: function (callback) {
-                OauthToken.generate('access', client, ocode.user, ocode.nonce, function (err, token) {
-                  if (err) {
-                    return callback(err);
-                  }
-                  OauthToken.create(token, function (err, tok) {
-                    if (err) {
-                      return callback(err);
-                    }
-                    callback(null, tok);
-                  });
-                });
-              },
-              idToken: function (callback) {
-                const out = {};
-                out.token = that.services.JwtService.generateIdToken(client, ocode.user, ocode.nonce);
-                callback(null, out);
-              },
-              // Delete code token
-              deleteCode: function (callback) {
-                OauthToken.remove({type: 'code', token: code}, function (err) {
-                  if (err) {
-                    return callback(err);
-                  }
-                  callback();
-                });
-              }
-            }, function (err, results) {
-              if (err) {
-                return done(err);
-              }
-              done(null, results.accessToken.token, results.refreshToken.token, {
-                expires_in: OauthExpiresIn,
-                id_token: results.idToken.token
-              });
-            });
+    oauth.exchange(oauth.exchanges.code(async function (client, code, redirectURI, payload, authInfo, done) {
+        try {
+          const ocode = await OauthToken
+            .findOne({token: code, type: 'code'})
+            .populate('client user');
+          if (!ocode.client._id.equals(client._id)) {
+            return done(null, false);
+          }
+          let promises = [];
+          const refreshToken = OauthToken.generate('refresh', client, ocode.user, ocode.nonce);
+          const accessToken = OauthToken.generate('access', client, ocode.user, ocode.nonce);
+          promises.push(OauthToken.create(refreshToken));
+          promises.push(OauthToken.create(accessToken));
+          promises.push(OauthToken.remove({type: 'code', token: code}));
+          const tokens = await Promise.all(promises);
+          return done(null, tokens[1].token, tokens[0].token, {
+            expires_in: OauthExpiresIn,
+            id_token: JwtService.generateIdToken(client, ocode.user, ocode.nonce)
           });
-      })
-    );
+        }
+        catch (err) {
+          return done(err);
+        }
+    }));
 
-    oauth.exchange(oauth.exchanges.refreshToken(function (client, refreshToken, scope, done) {
-      OauthToken
-        .findOne({type: 'refresh', token: refreshToken})
-        .populate('client user')
-        .exec(function (err, tok) {
-          if (err) {
-            return done(err);
-          }
-          if (tok.client._id.toString() !== client._id.toString()) {
-            return done(null, false, { message: 'This refresh token is for a different client'});
-          }
-          OauthToken.generate('access', tok.client, tok.user, tok.nonce, function (err, atoken) {
-            if (err) {
-              return done(err);
-            }
-            OauthToken.create(atoken, function (err, ctok) {
-              if (err) {
-                return done(err);
-              }
-              done(null, ctok.token, null, {expires_in: OauthExpiresIn});
-            });
-          });
-        });
+    oauth.exchange(oauth.exchanges.refreshToken(async function (client, refreshToken, scope, done) {
+      try {
+        const tok = await OauthToken
+          .findOne({type: 'refresh', token: refreshToken})
+          .populate('client user');
+        if (tok.client._id.toString() !== client._id.toString()) {
+          return done(null, false, { message: 'This refresh token is for a different client'});
+        }
+        const atoken = OauthToken.generate('access', tok.client, tok.user, tok.nonce);
+        const ctok = await OauthToken.create(atoken);
+        return done(null, ctok.token, null, {expires_in: OauthExpiresIn});
+      }
+      catch (err) {
+        return done(err);
+      }
     }));
 
     // Client Serializers
@@ -232,13 +183,14 @@ module.exports = {
       done(null, client._id);
     });
 
-    oauth.deserializeClient(function (id, done) {
-      Client.findOne({_id: id}, function (err, client) {
-        if (err) {
-          return done(err);
-        }
-        done(null, client);
-      });
+    oauth.deserializeClient(async function (id, done) {
+      try {
+        const client = await Client.findOne({_id: id});
+        return done(null, client);
+      }
+      catch (err) {
+        return done(err);
+      }
     });
   },
 

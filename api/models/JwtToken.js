@@ -1,34 +1,31 @@
 'use strict';
 
-const Model = require('trails/model');
-const Schema = require('mongoose').Schema;
+const mongoose = require('mongoose');
+
+const Schema = mongoose.Schema;
 
 /**
  * @module JwtToken
- * @description Json Web Token
+ * @description Json Web Tokens
  */
-module.exports = class JwtToken extends Model {
 
-  static config () {
+const JwtTokenSchema = new Schema({
+  token: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  user: {
+    type: Schema.ObjectId,
+    ref: 'User'
+  },
+  blacklist: {
+    type: Boolean,
+    default: false,
+    required: true
   }
+}, {
+  collection: 'jwttoken'
+});
 
-  static schema () {
-    return {
-      token: {
-        type: String,
-        required: true,
-        unique: true
-      },
-      user: {
-        type: Schema.ObjectId,
-        ref: 'User'
-      },
-      blacklist: {
-        type: Boolean,
-        default: false,
-        required: true
-      }
-    };
-
-  }
-};
+module.exports = mongoose.model('JwtToken', JwtTokenSchema);

@@ -1,6 +1,5 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const async = require('async');
 const https = require('https');
 const listAttributes = [
@@ -12,131 +11,94 @@ const listAttributes = [
   'functional_roles'
 ];
 const hidAccount = '5b2128e754a0d6046d6c69f2';
+const OauthToken = require('../models/OauthToken');
+const List = require('../models/List');
+const User = require('../models/User');
+const EmailService = require('../services/EmailService');
+const NotificationService = require('../services/NotificationService');
+const ListUserController = require('./ListUserController');
+const config = require('../../config/env')[process.env.NODE_ENV];
+const logger = config.logger;
 
 /**
  * @module CronController
  * @description Generated Trails.js Controller.
  */
-module.exports = class CronController extends Controller {
+module.exports = {
 
-  deleteExpiredUsers (request, reply) {
-    const User = this.app.orm.user;
-    const that = this;
+  deleteExpiredUsers: async function (request, reply) {
     const now = new Date();
     const start = new Date(2016, 0, 1, 0, 0, 0);
-    User
-      .remove({expires: {$gt: start, $lt: now}})
-      .then(() => {
-        reply().code(204);
-      })
-      .catch (err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
+    await User.remove({expires: {$gt: start, $lt: now}});
+    return reply.response().code(204);
+  },
 
-  deleteExpiredTokens (request, reply) {
-    this.app.log.info('Deleting expired Oauth Tokens');
-    const OauthToken = this.app.orm.OauthToken;
-    const that = this;
+  deleteExpiredTokens: async function (request, reply) {
+    logger.info('Deleting expired Oauth Tokens');
     const now = new Date();
-    OauthToken
-      .remove({expires: {$lt: now }})
-      .then(() => {
-        reply().code(204);
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
+    await OauthToken.remove({expires: {$lt: now }});
+    return reply.response().code(204);
+  },
 
-  sendReminderVerifyEmails (request, reply) {
-    const User = this.app.orm.User;
-    const EmailService = this.app.services.EmailService;
-    const app = this.app;
-    this.app.log.info('sending reminder emails to verify addresses');
-    const stream = User.find({'email_verified': false}).cursor();
+  sendReminderVerifyEmails: async function (request, reply) {
+    logger.info('sending reminder emails to verify addresses');
+    const cursor = User.find({'email_verified': false}).cursor();
 
-    stream.on('data', function(user) {
-      const sthat = this;
-      this.pause();
-      if (user.shouldSendReminderVerify()) {
-
-        EmailService.sendReminderVerify(user, function (err) {
-          if (err) {
-            app.log.error(err);
-            sthat.resume();
-          }
-          else {
-            User.collection.update(
-              { _id: user._id },
-              { $set: {
-                remindedVerify: new Date(),
-                timesRemindedVerify: user.timesRemindedVerify + 1
-              }}
-            );
-            sthat.resume();
-          }
-        });
+    let promises = [];
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      try {
+        if (user.shouldSendReminderVerify()) {
+          promises.push(EmailService.sendReminderVerify(user));
+          promises.push(User.collection.update(
+            { _id: user._id },
+            { $set: {
+              remindedVerify: new Date(),
+              timesRemindedVerify: user.timesRemindedVerify + 1
+            }}
+          ));
+        }
       }
-      else {
-        this.resume();
+      catch (err) {
+        logger.error(err);
       }
-    });
+    }
+    await Promise.all(promises);
+    return reply.response().code(204);
+  },
 
-    stream.on('end', function () {
-      reply().code(204);
-    });
-  }
-
-  sendReminderUpdateEmails (request, reply) {
-    const app = this.app;
-    app.log.info('Sending reminder update emails to contacts');
+  sendReminderUpdateEmails: async function (request, reply) {
+    logger.info('Sending reminder update emails to contacts');
     const d = new Date(),
-      sixMonthsAgo = d.valueOf() - 183 * 24 * 3600 * 1000,
-      User = app.orm.User,
-      EmailService = app.services.EmailService;
+      sixMonthsAgo = d.valueOf() - 183 * 24 * 3600 * 1000;
 
-    const stream = User.find({
+    const cursor = User.find({
       'lastModified': { $lt: sixMonthsAgo },
       'authOnly': false
-    }).stream();
+    }).cursor();
 
-    stream.on('data', function(user) {
-      this.pause();
-      const that = this,
-        now = new Date();
-      if (user.shouldSendReminderUpdate()) {
-        EmailService.sendReminderUpdate(user, function (err) {
-          if (err) {
-            app.log.error(err);
-            that.resume();
-          }
-          else {
-            User.collection.update(
-              { _id: user._id },
-              { $set: {
-                remindedUpdate: now
-              }}
-            );
-            that.resume();
-          }
-        });
+    let promises = [];
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      try {
+        if (user.shouldSendReminderUpdate()) {
+          promises.push(EmailService.sendReminderUpdate(user));
+          promises.push(User.collection.update(
+            { _id: user._id },
+            { $set: {
+              remindedUpdate: new Date()
+            }}
+          ));
+        }
       }
-      else {
-        this.resume();
+      catch (err) {
+        logger.error(err);
       }
-    });
+    }
+    await Promise.all(promises);
+    return reply.response().code(204);
+  },
 
-    stream.on('end', function () {
-      reply().code(204);
-    });
-  }
-
-  sendReminderCheckoutEmails (request, reply) {
-    const app = this.app;
-    app.log.info('Sending reminder checkout emails to contacts');
-    const User = app.orm.User,
-      NotificationService = app.services.NotificationService;
+  sendReminderCheckoutEmails: async function (request, reply) {
+    logger.info('Sending reminder checkout emails to contacts');
     let populate = '';
     const criteria = {};
     criteria.email_verified = true;
@@ -148,53 +110,33 @@ module.exports = class CronController extends Controller {
       populate += ' ' + attr + '.list';
     });
 
-    reply().code(204);
+    const cursor = User.find(criteria).populate(populate).cursor();
 
-    const stream = User
-      .find(criteria)
-      .populate(populate)
-      .cursor();
-
-    stream.on('data', function(user) {
-      this.pause();
-      app.log.info('Checking ' + user.email);
-      const that = this;
-      const now = Date.now();
-      async.eachSeries(listAttributes, function (attr, nextAttr) {
-        async.eachSeries(user[attr], function (lu, nextLu) {
-          if (lu.checkoutDate && lu.remindedCheckout === false && !lu.deleted) {
-            const dep = new Date(lu.checkoutDate);
-            if (now.valueOf() - dep.valueOf() > 48 * 3600 * 1000) {
-              const notification = {type: 'reminder_checkout', user: user, params: {listUser: lu, list: lu.list}};
-              NotificationService.send(notification, () => {
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      for (const listAttribute of listAttributes) {
+        for (const lu of user[listAttribute]) {
+          try {
+            if (lu.checkoutDate && lu.remindedCheckout === false && !lu.deleted) {
+              const dep = new Date(lu.checkoutDate);
+              if (now.valueOf() - dep.valueOf() > 48 * 3600 * 1000) {
+                const notification = {type: 'reminder_checkout', user: user, params: {listUser: lu, list: lu.list}};
+                await NotificationService.send(notification);
                 lu.remindedCheckout = true;
-                user.save(function (err) {
-                  nextLu();
-                });
-              });
-            }
-            else {
-              nextLu();
+                await user.save();
+              }
             }
           }
-          else {
-            nextLu();
+          catch (err) {
+            logger.error(err);
           }
-        }, function (err) {
-          nextAttr();
-        });
-      }, function (err) {
-        that.resume();
-      });
-    });
-  }
+        }
+      }
+    }
+    return reply.response().code(204);
+  },
 
-  doAutomatedCheckout (request, reply) {
-    const app = this.app;
-    app.log.info('Running automated checkouts');
-    const User = app.orm.User,
-      NotificationService = app.services.NotificationService;
-
+  doAutomatedCheckout: async function (request, reply) {
+    logger.info('Running automated checkouts');
     let populate = '';
     const criteria = {};
     criteria.email_verified = true;
@@ -206,200 +148,137 @@ module.exports = class CronController extends Controller {
       populate += ' ' + attr + '.list';
     });
 
-    const stream = User
-      .find(criteria)
-      .populate(populate)
-      .cursor();
+    const now = Date.now();
+    const cursor = User.find(criteria).populate(populate).cursor();
 
-    stream.on('data', function(user) {
-      this.pause();
-      const that = this;
-      const now = Date.now();
-      async.eachSeries(listAttributes, function (attr, nextAttr) {
-        async.eachSeries(user[attr], function (lu, nextLu) {
-          if (lu.checkoutDate && lu.remindedCheckout === true && !lu.deleted) {
-            const dep = new Date(lu.checkoutDate);
-            if (now.valueOf() - dep.valueOf() > 14 * 24 * 3600 * 1000) {
-              const notification = {type: 'automated_checkout', user: user, params: {listUser: lu, list: lu.list}};
-              NotificationService.send(notification, () => {
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      for (const listAttribute of listAttributes) {
+        for (const lu of user[listAttribute]) {
+          try {
+            if (lu.checkoutDate && lu.remindedCheckout === true && !lu.deleted) {
+              const dep = new Date(lu.checkoutDate);
+              if (now.valueOf() - dep.valueOf() > 14 * 24 * 3600 * 1000) {
+                const notification = {type: 'automated_checkout', user: user, params: {listUser: lu, list: lu.list}};
+                await NotificationService.send(notification);
                 lu.deleted = true;
-                user.save(function (err) {
-                  nextLu();
-                });
-              });
-            }
-            else {
-              nextLu();
+                await user.save();
+              }
             }
           }
-          else {
-            nextLu();
+          catch (err) {
+            logger.error(err);
           }
-        }, function (err) {
-          nextAttr();
-        });
-      }, function (err) {
-        that.resume();
-      });
-    });
-    stream.on('end', function () {
-      reply().code(204);
-    });
-  }
+        }
+      }
+    }
+    return reply.response().code(204);
+  },
 
-  sendReminderCheckinEmails (request, reply) {
-    const app = this.app;
-    app.log.info('Sending reminder checkin emails to contacts');
-    const User = app.orm.User,
-      NotificationService = app.services.NotificationService;
+  sendReminderCheckinEmails: async function (request, reply) {
+    logger.info('Sending reminder checkin emails to contacts');
 
-    reply().code(204);
-
-    const stream = User
+    const cursor = User
       .find({'operations.remindedCheckin': false })
       .populate('operations.list')
       .cursor();
 
-    stream.on('data', function(user) {
-      this.pause();
-      app.log.info('Checking ' + user.email);
-      const that = this;
-      async.eachSeries(user.operations, function (lu, nextLu) {
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      for (const lu of user.operations) {
         const d = new Date(),
           offset = d.valueOf() - lu.valueOf();
 
         if (!lu.remindedCheckin && offset > 48 * 3600 * 1000 && offset < 72 * 3600 * 1000 && !lu.deleted) {
           const hasLocalPhoneNumber = user.hasLocalPhoneNumber(lu.list.metadata.country.pcode);
-          user.isInCountry(lu.list.metadata.country.pcode, function (err, inCountry) {
-            const notification = {
-              type: 'reminder_checkin',
-              user: user,
-              params: {listUser: lu, list: lu.list, hasLocalPhoneNumber: hasLocalPhoneNumber, inCountry: inCountry}
-            };
-            NotificationService.send(notification, () => {
-              lu.remindedCheckin = true;
-              user.save(function (err) {
-                nextLu();
-              });
-            });
-          });
+          const inCountry = await user.isInCountry(lu.list.metadata.country.pcode);
+          const notification = {
+            type: 'reminder_checkin',
+            user: user,
+            params: {listUser: lu, list: lu.list, hasLocalPhoneNumber: hasLocalPhoneNumber, inCountry: inCountry}
+          };
+          await NotificationService.send(notification);
+          lu.remindedCheckin = true;
+          await user.save();
         }
-        else {
-          nextLu();
-        }
-      }, function (err) {
-        that.resume();
-      });
-    });
-  }
+      }
+    }
+    return reply.response().code(204);
 
-  forcedResetPasswordAlert (request, reply) {
-    const User = this.app.orm.user;
-    const EmailService = this.app.services.EmailService;
+  },
+
+  forcedResetPasswordAlert: async function (request, reply) {
     const current = Date.now();
     const fiveMonths = new Date(current - 5 * 30 * 24 * 3600 * 1000);
-    const stream = User.find({totp: false, passwordResetAlert30days: false, $or: [{lastPasswordReset: { $lte: fiveMonths }}, {lastPasswordReset: null}]}).cursor();
-    stream.on('data', function (user) {
-      const sthat = this;
-      this.pause();
-      EmailService.sendForcedPasswordResetAlert(user, function () {
-        User.collection.update(
-          { _id: user._id },
-          { $set: {
-            passwordResetAlert30days: true
-          }}
-        );
-        sthat.resume();
-      });
-    });
-    stream.on('end', function () {
-      reply().code(204);
-    });
-  }
+    const cursor = User.find({totp: false, passwordResetAlert30days: false, $or: [{lastPasswordReset: { $lte: fiveMonths }}, {lastPasswordReset: null}]}).cursor();
 
-  forcedResetPasswordAlert7 (request, reply) {
-    const User = this.app.orm.user;
-    const EmailService = this.app.services.EmailService;
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      await EmailService.sendForcedPasswordResetAlert(user);
+      await User.collection.update(
+        { _id: user._id },
+        { $set: {
+          passwordResetAlert30days: true
+        }}
+      );
+    }
+    return reply.response().code(204);
+  },
+
+  forcedResetPasswordAlert7: async function (request, reply) {
     const current = Date.now();
     const fiveMonthsAnd23Days = new Date(current - 173 * 24 * 3600 * 1000);
-    const stream = User.find({totp: false, passwordResetAlert7days: false, $or: [{lastPasswordReset: { $lte: fiveMonthsAnd23Days }}, {lastPasswordReset: null}]}).cursor();
-    stream.on('data', function (user) {
-      EmailService.sendForcedPasswordResetAlert7(user, function () {
-        User.collection.update(
-          { _id: user._id },
-          { $set: {
-            passwordResetAlert7days: true
-          }}
-        );
-      });
-    });
-    stream.on('end', function () {
-      reply().code(204);
-    });
-  }
+    const cursor = User.find({totp: false, passwordResetAlert7days: false, $or: [{lastPasswordReset: { $lte: fiveMonthsAnd23Days }}, {lastPasswordReset: null}]}).cursor();
 
-  forceResetPassword (request, reply) {
-    const User = this.app.orm.user;
-    const EmailService = this.app.services.EmailService;
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      await EmailService.sendForcedPasswordResetAlert7(user);
+      await User.collection.update(
+        { _id: user._id },
+        { $set: {
+          passwordResetAlert7days: true
+        }}
+      );
+    }
+    return reply.response().code(204);
+  },
+
+  forceResetPassword: async function (request, reply) {
     const current = Date.now();
     const sixMonths = new Date(current - 6 * 30 * 24 * 3600 * 1000);
-    const stream = User.find({totp: false, passwordResetAlert: false, $or: [{lastPasswordReset: { $lte: sixMonths }}, {lastPasswordReset: null}]}).cursor();
-    stream.on('data', function (user) {
-      EmailService.sendForcedPasswordReset(user, function () {
-        User.collection.update(
-          { _id: user._id },
-          { $set: {
-            passwordResetAlert: true
-          }}
-        );
-      });
-    });
-    stream.on('end', function () {
-      reply().code(204);
-    });
-  }
+    const cursor = User.find({totp: false, passwordResetAlert: false, $or: [{lastPasswordReset: { $lte: sixMonths }}, {lastPasswordReset: null}]}).cursor();
 
-  sendSpecialPasswordResetEmail (request, reply) {
-    reply().code(204);
-    const User = this.app.orm.user;
-    const EmailService = this.app.services.EmailService;
-    const stream = User.find({deleted: false}).cursor();
-    stream.on('data', function (user) {
-      const sthat = this;
-      this.pause();
-      EmailService.sendSpecialPasswordReset(user, function () {
-        sthat.resume();
-      });
-    });
-  }
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      await EmailService.sendForcedPasswordReset(user);
+      await User.collection.update(
+        { _id: user._id },
+        { $set: {
+          passwordResetAlert: true
+        }}
+      );
+    }
+    return reply.response().code(204);
+  },
 
-  setListCounts (request, reply) {
-    reply().code(204);
-    const List = this.app.orm.list;
-    const User = this.app.orm.User;
-    const stream = List.find({deleted: false}).cursor();
-    stream.on('data', function (list) {
-      const sthat = this;
-      this.pause();
+  sendSpecialPasswordResetEmail: async function (request, reply) {
+    const cursor = User.find({deleted: false}).cursor();
+
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      await EmailService.sendSpecialPasswordReset(user);
+    }
+    return reply.response().code(204);
+  },
+
+  setListCounts: async function (request, reply) {
+    const cursor = List.find({deleted: false}).cursor();
+
+    for (let list = await cursor.next(); list != null; list = await cursor.next()) {
       let criteria = { };
       criteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false}};
-      User
-        .count(criteria)
-        .then(number => {
-          list.count = number;
-          return list.save();
-        })
-        .then(() => {
-          sthat.resume();
-        })
-        .catch(err => {
-          sthat.resume();
-        });
-    });
-  }
+      const number = await User.countDocuments(criteria);
+      list.count = number;
+      await list.save();
+    }
+    return reply.response().code(204);
+  },
 
   /*adjustEmailVerified (request, reply) {
-    const User = this.app.orm.User;
     const app = this.app;
     const stream = User.find({'email_verified': false}).cursor();
 
@@ -424,7 +303,6 @@ module.exports = class CronController extends Controller {
   }
 
   adjustEmailDuplicates (request, reply) {
-    const User = this.app.orm.User;
     const app = this.app;
     const stream = User.find({}).cursor();
 
@@ -458,95 +336,79 @@ module.exports = class CronController extends Controller {
     });
   }*/
 
-  verifyAutomatically (request, reply) {
-    const User = this.app.orm.User;
-    const ListUserController = this.app.controllers.ListUserController;
-    this.app.log.info('automatically verify users');
-    const that = this;
-    const stream = User.find({}).cursor();
+  verifyAutomatically: async function (request, reply) {
+    logger.info('automatically verify users');
+    const cursor = User.find({}).cursor();
 
-    stream.on('data', function(user) {
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
       let promises = [];
       user.emails.forEach(function (email) {
         if (email.validated) {
           promises.push(user.isVerifiableEmail(email.email));
         }
       });
-      Promise.all(promises)
-        .then(domains => {
-          domains.forEach(function (domain) {
-            if (domain) {
-              user.verified = true;
-              user.verified_by = hidAccount;
-              if (!user.verified) {
-                user.verifiedOn = new Date();
-              }
-              // If the domain is associated to a list, check user in this list automatically
-              if (domain.list) {
-                if (!user.organizations) {
-                  user.organizations = [];
-                }
+      const domains = await Promise.all(promises);
+      for (let domain in domains) {
+        if (domain) {
+          user.verified = true;
+          user.verified_by = hidAccount;
+          if (!user.verified) {
+            user.verifiedOn = new Date();
+          }
+          // If the domain is associated to a list, check user in this list automatically
+          if (domain.list) {
+            if (!user.organizations) {
+              user.organizations = [];
+            }
 
-                let isCheckedIn = false;
-                // Make sure user is not already checked in this list
-                for (let i = 0, len = user.organizations.length; i < len; i++) {
-                  if (user.organizations[i].list.equals(domain.list._id) &&
-                    user.organizations[i].deleted === false) {
-                    isCheckedIn = true;
-                  }
-                }
-
-                if (!isCheckedIn) {
-                  ListUserController
-                    ._checkinHelper(domain.list, user, true, 'organizations', user)
-                    .catch(err => {
-                      that.app.log.error(err);
-                    });
-                }
+            let isCheckedIn = false;
+            // Make sure user is not already checked in this list
+            for (let i = 0, len = user.organizations.length; i < len; i++) {
+              if (user.organizations[i].list.equals(domain.list._id) &&
+                user.organizations[i].deleted === false) {
+                isCheckedIn = true;
               }
             }
-          });
-        });
-    });
 
-    stream.on('end', function () {
-      reply().code(204);
-    });
-  }
+            if (!isCheckedIn) {
+              try {
+                await ListUserController.checkinHelper(domain.list, user, true, 'organizations', user);
+              }
+              catch (err) {
+                logger.error(err);
+              }
+            }
+          }
+        }
+      }
+    }
+    return reply.response().code(204);
+  },
 
-  verificationExpiryEmail (request, reply) {
-    const User = this.app.orm.user;
-    const EmailService = this.app.services.EmailService;
+  verificationExpiryEmail: async function (request, reply) {
     const current = Date.now();
     const oneYear = new Date(current - 358 * 24 * 3600 * 1000);
-    const stream = User.find({verified: true, verifiedOn: { $lte: oneYear }}).cursor();
-    stream.on('data', function (user) {
-      const sthat = this;
-      this.pause();
-      EmailService.sendVerificationExpiryEmail(user, function () {
-        User.collection.update(
+    const cursor = User.find({verified: true, verifiedOn: { $lte: oneYear }}).cursor();
+
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      await EmailService.sendVerificationExpiryEmail(user);
+      await User.collection.update(
           { _id: user._id },
           { $set: {
             verificationExpiryEmail: true
           }}
         );
-        sthat.resume();
-      });
-    });
-    stream.on('end', function () {
-      reply().code(204);
-    });
-  }
+    }
+    return reply.response().code(204);
+  },
 
-  unverifyAfterOneYear (request, reply) {
-    const User = this.app.orm.user;
+  unverifyAfterOneYear: async function (request, reply) {
     const current = Date.now();
     const oneYear = new Date(current - 365 * 24 * 3600 * 1000);
-    const stream = User.find({verified: true, verifiedOn: { $lte: oneYear }, verificationExpiryEmail: true}).cursor();
-    stream.on('data', function (user) {
-      const sthat = this;
-      this.pause();
-      User.collection.update(
+    const cursor = User.find({verified: true, verifiedOn: { $lte: oneYear }, verificationExpiryEmail: true}).cursor();
+
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      await User.collection.update(
         { _id: user._id },
         { $set: {
           verified: false,
@@ -554,15 +416,11 @@ module.exports = class CronController extends Controller {
           verified_by: null
         }}
       );
-      sthat.resume();
-    });
-    stream.on('end', function () {
-      reply().code(204);
-    });
-  }
+    }
+    return reply.response().code(204);
+  },
 
-  verifyEmails (request, reply) {
-    const User = this.app.orm.User;
+  /*verifyEmails: function (request, reply) {
     const stream = User.find({email_verified: false}).cursor();
     stream.on('data', function (user) {
       const sthat = this;
@@ -592,10 +450,9 @@ module.exports = class CronController extends Controller {
         });
       });
     });
-  }
+  },
 
-  setAcronymsOrNames (request, reply) {
-    const User = this.app.orm.User;
+  setAcronymsOrNames: function (request, reply) {
     reply().code(204);
     const stream = User.find({}).cursor();
     stream.on('data', function (user) {
@@ -612,20 +469,6 @@ module.exports = class CronController extends Controller {
         user.save();
       }
     });
-  }
-
-  deleteCustomLists(request, reply) {
-    const List = this.app.orm.List;
-    const threeMonthsAgo = new Date();
-    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-    List
-      .remove({type: 'list', owner: '5c3f34f7463f3500bf20e800'})
-      .then(() => {
-        reply().code(204);
-      })
-      .catch (err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
+  }*/
 
 };

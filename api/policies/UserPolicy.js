@@ -1,93 +1,71 @@
 'use strict';
 
-const Policy = require('trails/policy');
 const Boom = require('boom');
+const User = require('../models/User');
 
 /**
  * @module UserPolicy
  * @description User Policy
  */
-module.exports = class UserPolicy extends Policy {
+async function _canUpdate (request, reply) {
+ if (!request.auth.credentials.is_admin &&
+   !request.auth.credentials.isManager &&
+   request.auth.credentials.id !== request.params.id) {
+   throw Boom.forbidden('You need to be an admin or a manager or the current user');
+ }
+ else {
+   if (request.auth.credentials.isManager &&
+     request.auth.credentials.id !== request.params.id) {
+     // If the user is a manager, make sure he is not trying to edit
+     // an admin account.
+     const user = await User.findById(request.params.id);
+     if (!user) {
+       throw Boom.notFound();
+     }
+     if (user.is_admin) {
+       throw Boom.forbidden('You are not authorized to edit an admin account');
+     }
+   }
+   return true;
+ }
+}
 
-  canCreate (request, reply) {
-    if (!request.params.currentUser) {
+module.exports = {
+
+  canCreate: function (request, reply) {
+    if (!request.auth.credentials) {
       if (!request.payload.email) {
-        return reply(Boom.badRequest('You need to register with an email address'));
+        throw Boom.badRequest('You need to register with an email address');
       }
     }
     else {
-      if (!request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
-        return reply(Boom.forbidden('Only administrators and managers can create users'));
+      if (!request.auth.credentials.is_admin && !request.auth.credentials.isManager) {
+        throw Boom.forbidden('Only administrators and managers can create users');
       }
     }
-    reply();
-  }
+    return true;
+  },
 
-  canUpdate (request, reply) {
-    if (!request.params.currentUser.is_admin &&
-      !request.params.currentUser.isManager &&
-      request.params.currentUser.id !== request.params.id) {
-      return reply(Boom.forbidden('You need to be an admin or a manager or the current user'));
+  canUpdate: _canUpdate,
+
+  canDestroy: async function (request, reply) {
+    if (request.auth.credentials.is_admin ||
+      request.auth.credentials.id === request.params.id) {
+      return true;
     }
     else {
-      if (request.params.currentUser.isManager &&
-        request.params.currentUser.id !== request.params.id) {
-        // If the user is a manager, make sure he is not trying to edit
-        // an admin account.
-        const User = this.app.orm.User;
-        const that = this;
-        User
-          .findById(request.params.id)
-          .then((user) => {
-            if (!user) {
-              return reply(Boom.notFound());
-            }
-            if (user.is_admin) {
-              return reply(Boom.forbidden('You are not authorized to edit an admin account'));
-            }
-            else {
-              return reply();
-            }
-          })
-          .catch(err => {
-            that.app.services.ErrorService.handle(err, request, reply);
-          });
+      const user = await User.findOne({_id: request.params.id}).populate('createdBy');
+      if (user.createdBy &&
+        user.createdBy.id === request.auth.credentials.id &&
+        user.email_verified === false &&
+        request.auth.credentials.isManager) {
+        return true;
       }
       else {
-        reply();
+        throw Boom.unauthorized('You are not allowed to do this operation');
       }
     }
-  }
+  },
 
-  canDestroy (request, reply) {
-    const User = this.app.orm.User;
-    if (request.params.currentUser.is_admin ||
-      request.params.currentUser.id === request.params.id) {
-      return reply();
-    }
-    else {
-      const that = this;
-      User
-        .findOne({_id: request.params.id})
-        .populate('createdBy')
-        .then((user) => {
-          if (user.createdBy &&
-            user.createdBy.id === request.params.currentUser.id &&
-            user.email_verified === false &&
-            request.params.currentUser.isManager) {
-            return reply();
-          }
-          else {
-            return reply(Boom.unauthorized('You are not allowed to do this operation'));
-          }
-        })
-        .catch((err) => {
-          that.app.services.ErrorService.handle(err, request, reply);
-        });
-    }
-  }
-
-  canClaim (request, reply) {
-    this.canUpdate(request, reply);
-  }
+  canClaim: _canUpdate
 };

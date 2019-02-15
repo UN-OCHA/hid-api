@@ -1,46 +1,38 @@
 'use strict';
 
-const Controller = require('trails/controller');
 const Boom = require('boom');
 const _ = require('lodash');
 const async = require('async');
 const acceptLanguage = require('accept-language');
+const List = require('../models/List');
+const User = require('../models/User');
+const HelperService = require('../services/HelperService');
+const NotificationService = require('../services/NotificationService');
+const config = require('../../config/env')[process.env.NODE_ENV];
+const logger = config.logger;
 
 /**
  * @module ListController
  * @description Generated Trails.js Controller.
  */
-module.exports = class ListController extends Controller{
 
-  _removeForbiddenAttributes (request) {
-    this.app.services.HelperService.removeForbiddenAttributes('List', request, ['names']);
-  }
+module.exports = {
 
-  create (request, reply) {
-    const List = this.app.orm.List;
-    this._removeForbiddenAttributes(request);
-    request.payload.owner = request.params.currentUser._id;
+  create: async function (request, reply) {
+    HelperService.removeForbiddenAttributes(List, request, ['names']);
+    request.payload.owner = request.auth.credentials._id;
     if (!request.payload.managers) {
       request.payload.managers = [];
     }
-    request.payload.managers.push(request.params.currentUser._id);
-    const that = this;
-    List
-      .create(request.payload)
-      .then((list) => {
-        return reply(list);
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
+    request.payload.managers.push(request.auth.credentials._id);
+    const list = await List.create(request.payload);
+    return list;
+  },
 
-  find (request, reply) {
+  find: async function (request, reply) {
     const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
-    const List = this.app.orm.List;
-    const User = this.app.orm.User;
+    const options = HelperService.getOptionsFromQuery(request.query);
+    const criteria = HelperService.getCriteriaFromQuery(request.query);
 
     if (!options.sort) {
       options.sort = 'name';
@@ -64,17 +56,7 @@ module.exports = class ListController extends Controller{
     // Do not show deleted lists
     criteria.deleted = false;
 
-    this.log.debug(
-      '[ListController] (find) model = list, criteria =',
-      request.query,
-      request.params.id,
-      'options =',
-      options,
-      { request: request}
-    );
-
     // List visiblity
-    const that = this;
 
     if (request.params.id) {
       if (!options.populate) {
@@ -83,215 +65,133 @@ module.exports = class ListController extends Controller{
           {path: 'managers', select: '_id name'}
         ];
       }
-      List
-        .findOne({_id: request.params.id, deleted: criteria.deleted })
-        .populate(options.populate)
-        .then(result => {
-          if (!result) {
-            throw Boom.notFound();
-          }
+      const result = await List.findOne({_id: request.params.id, deleted: criteria.deleted }).populate(options.populate);
+      if (!result) {
+        throw Boom.notFound();
+      }
 
-          const out = result.toJSON();
-          out.name = result.translatedAttribute('names', reqLanguage);
-          out.acronym = result.translatedAttribute('acronyms', reqLanguage);
-          out.visible = result.isVisibleTo(request.params.currentUser);
-          return reply(out);
-        })
-        .catch(err => { that.app.services.ErrorService.handle(err, request, reply); });
+      const out = result.toJSON();
+      out.name = result.translatedAttribute('names', reqLanguage);
+      out.acronym = result.translatedAttribute('acronyms', reqLanguage);
+      out.visible = result.isVisibleTo(request.auth.credentials);
+      return out;
     }
     else {
       options.populate = [{path: 'owner', select: '_id name'}];
-      if (!request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
-        criteria.$or = [{visibility: 'all'}, {visibility: 'inlist'}, {$and: [{ visibility: 'me'}, {managers: request.params.currentUser._id}]}];
-        if (request.params.currentUser.verified) {
+      if (!request.auth.credentials.is_admin && !request.auth.credentials.isManager) {
+        criteria.$or = [{visibility: 'all'}, {visibility: 'inlist'}, {$and: [{ visibility: 'me'}, {managers: request.auth.credentials._id}]}];
+        if (request.auth.credentials.verified) {
           criteria.$or.push({visibility: 'verified'});
         }
       }
-      const query = this.app.services.HelperService.find('List', criteria, options);
-      query
-        .then((results) => {
-          return List
-            .count(criteria)
-            .then((number) => {
-              return {result: results, number: number};
-            });
-        })
-        .then((result) => {
-          const out = [];
-          let tmp = {};
-          let optionsArray = [];
-          if (options.fields) {
-            optionsArray = options.fields.split(' ');
-          }
-          async.eachSeries(result.result, function (list, next) {
-            tmp = list.toJSON();
-            tmp.visible = list.isVisibleTo(request.params.currentUser);
-            if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('names') !== -1)) {
-              tmp.name = list.translatedAttribute('names', reqLanguage);
-            }
-            if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('acronyms') !== -1)) {
-              tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
-            }
-            if (optionsArray.indexOf('count') !== -1) {
-              const ucriteria = {};
-              ucriteria[list.type + 's'] = {
-                $elemMatch: {list: list._id, deleted: false, pending: false}
-              };
-              User
-                .count(ucriteria)
-                .then((count) => {
-                  tmp.count = count;
-                  out.push(tmp);
-                  next();
-                });
-            }
-            else {
-              out.push(tmp);
-              next();
-            }
-          }, function (err) {
-            reply(out).header('X-Total-Count', result.number);
-          });
-        })
-        .catch((err) => {
-          that.app.services.ErrorService.handle(err, request, reply);
-        });
+      const [results, number] = await Promise.all([HelperService.find(List, criteria, options), List.countDocuments(criteria)]);
+      const out = [];
+      let tmp = {};
+      let optionsArray = [];
+      if (options.fields) {
+        optionsArray = options.fields.split(' ');
+      }
+      for (const list of results) {
+        tmp = list.toJSON();
+        tmp.visible = list.isVisibleTo(request.auth.credentials);
+        if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('names') !== -1)) {
+          tmp.name = list.translatedAttribute('names', reqLanguage);
+        }
+        if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('acronyms') !== -1)) {
+          tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
+        }
+        if (optionsArray.indexOf('count') !== -1) {
+          const ucriteria = {};
+          ucriteria[list.type + 's'] = {
+            $elemMatch: {list: list._id, deleted: false, pending: false}
+          };
+          tmp.count = await User.countDocuments(ucriteria);
+        }
+        out.push(tmp);
+      }
+      return reply.response(out).header('X-Total-Count', number);
     }
-  }
+  },
 
-  _notifyManagers(uids, type, request, list) {
-    const User = this.app.orm.user;
-    const that = this;
-    User
-      .find({_id: {$in: uids}})
-      .then((users) => {
-        for (let i = 0, len = users.length; i < len; i++) {
-          that.app.services.NotificationService
-            .send({
-              type: type,
-              user: users[i],
-              createdBy: request.params.currentUser,
-              params: { list: list }
-            }, () => {});
-        }
-      })
-      .catch((err) => {
-        that.log.error('Unexpected error', {request: request, error: err});
+  update: async function (request, reply) {
+
+    HelperService.removeForbiddenAttributes(List, request, ['names']);
+
+    const newlist = await List.findOneAndUpdate({_id: request.params.id}, request.payload, {runValidators: true, new: true})
+    const payloadManagers = [];
+    if (request.payload.managers) {
+      request.payload.managers.forEach(function (man) {
+        payloadManagers.push(man.toString());
       });
-  }
-
-  update (request, reply) {
-    const Model = this.app.orm.list;
-    const User = this.app.orm.user;
-
-    this._removeForbiddenAttributes(request);
-
-    this.log.debug(
-      '[ListController] (update) model = list, criteria =',
-      request.query,
-      request.params.id,
-      ', values = ',
-      request.payload,
-      { request: request }
-    );
-
-    const that = this;
-    let newlist = {};
-    Model
-      .findOne({_id: request.params.id})
-      .then(list => {
-        return Model
-          .findOneAndUpdate({_id: request.params.id}, request.payload, {runValidators: true, new: true});
-      })
-      .then((list2) => {
-        newlist = list2;
-        reply(list2);
-      })
-      .then(() => {
-        const payloadManagers = [];
-        if (request.payload.managers) {
-          request.payload.managers.forEach(function (man) {
-            payloadManagers.push(man.toString());
-          });
-        }
-        const listManagers = [];
-        if (newlist.managers) {
-          newlist.managers.forEach(function (man) {
-            listManagers.push(man.toString());
-          });
-        }
-        const diffAdded = _.difference(payloadManagers, listManagers);
-        const diffRemoved = _.difference(listManagers, payloadManagers);
-        if (diffAdded.length) {
-          that._notifyManagers(diffAdded, 'added_list_manager', request, newlist);
-        }
-        if (diffRemoved.length) {
-          that._notifyManagers(diffRemoved, 'removed_list_manager', request, newlist);
-        }
-
-        // Update users
-        const criteria = {};
-        criteria[newlist.type + 's.list'] = newlist._id.toString();
-        return User
-          .find(criteria);
-      })
-      .then(users => {
-        let actions = [];
-        for (let i = 0; i < users.length; i++) {
-          const user = users[i];
-          user.updateCheckins(newlist);
-          actions.push(user.save());
-        }
-        return Promise.all(actions);
-      })
-      .catch((err) => {
-        that.app.services.ErrorService.handle(err, request, reply);
+    }
+    const listManagers = [];
+    if (newlist.managers) {
+      newlist.managers.forEach(function (man) {
+        listManagers.push(man.toString());
       });
-  }
+    }
+    const diffAdded = _.difference(payloadManagers, listManagers);
+    const diffRemoved = _.difference(listManagers, payloadManagers);
+    if (diffAdded.length) {
+      const users = await User.find({_id: {$in: diffAdded}});
+      for (const user of users) {
+        await NotificationService
+          .send({
+            type: 'added_list_manager',
+            user: user,
+            createdBy: request.auth.credentials,
+            params: { list: newlist }
+          }, () => {});
+      }
+    }
+    if (diffRemoved.length) {
+      const users = await User.find({_id: {$in: diffRemoved}});
+      for (const user of users) {
+        await NotificationService
+          .send({
+            type: 'removed_list_manager',
+            user: user,
+            createdBy: request.auth.credentials,
+            params: { list: newlist }
+          }, () => {});
+      }
+    }
 
-  destroy (request, reply) {
-    const List = this.app.orm.List;
-    const User = this.app.orm.User;
+    // Update users
+    const criteria = {};
+    criteria[newlist.type + 's.list'] = newlist._id.toString();
+    const users = await User.find(criteria);
+    let actions = [];
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+      user.updateCheckins(newlist);
+      actions.push(user.save());
+    }
+    await Promise.all(actions);
+    return list;
+  },
 
-    this.log.debug('[ListController] (destroy) model = list, query =', request.query, { request: request});
-    const that = this;
-
-    List
-      .findOne({ _id: request.params.id })
-      .then(record => {
-        if (!record) {
-          throw Boom.notFound();
+  destroy: async function (request, reply) {
+    const record = await List.findOne({ _id: request.params.id });
+    if (!record) {
+      throw Boom.notFound();
+    }
+    // Set deleted to true
+    record.deleted = true;
+    const newRecord = await record.save();
+    // Remove all checkins from users in this list
+    const criteria = {};
+    criteria[record.type + 's.list'] = record._id.toString();
+    const users = await User.find(criteria);
+    for (const user of users) {
+      for (let j = 0; j < user[record.type + 's'].length; j++) {
+        if (user[record.type + 's'][j].list.toString() === record._id.toString()) {
+          user[record.type + 's'][j].deleted = true;
         }
-        // Set deleted to true
-        record.deleted = true;
-        return record
-          .save()
-          .then(() => {
-            return record;
-          });
-      })
-      .then((record) => {
-        reply(record);
-        // Remove all checkins from users in this list
-        const criteria = {};
-        criteria[record.type + 's.list'] = record._id.toString();
-        return User
-          .find(criteria)
-          .then(users => {
-            for (let i = 0; i < users.length; i++) {
-              const user = users[i];
-              for (let j = 0; j < user[record.type + 's'].length; j++) {
-                if (user[record.type + 's'][j].list.toString() === record._id.toString()) {
-                  user[record.type + 's'][j].deleted = true;
-                }
-              }
-              user.save();
-            }
-          });
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
+      }
+      await user.save();
+    }
+    return newRecord;
   }
 
 };

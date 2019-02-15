@@ -1,39 +1,31 @@
 'use strict';
 
-const Policy = require('trails/policy');
 const Boom = require('boom');
+const Operation = require('../models/Operation');
 
 /**
  * @module OperationsPolicy
  * @description Operations Policy
  */
-module.exports = class OperationsPolicy extends Policy {
+module.exports = {
 
-  canUpdateOperation (request, reply) {
+  canUpdateOperation: async function (request, reply) {
     // If user is a global manager or admin, allow it
-    if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
-      return reply();
+    if (request.auth.credentials.is_admin || request.auth.credentials.isManager) {
+      return true;
     }
 
     // Otherwise check if it is a manager of the operation list
-    const that = this;
-    this.app.orm.Operation
-      .findOne({_id: request.params.id})
-      .populate('managers')
-      .then((op) => {
-        if (!op) {
-          throw Boom.notFound();
-        }
-        if (op.managersIndex(request.params.currentUser) !== -1) {
-          return reply();
-        }
-        else {
-          throw Boom.forbidden();
-        }
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
+    const op = await Operation.findOne({_id: request.params.id}).populate('managers');
+    if (!op) {
+      throw Boom.notFound();
+    }
+    if (op.managersIndex(request.auth.credentials) !== -1) {
+      return true;
+    }
+    else {
+      throw Boom.forbidden();
+    }
   }
 
 
