@@ -137,95 +137,52 @@ module.exports = {
     }));
 
     oauth.exchange(
-      oauth.exchanges.code(function (client, code, redirectURI, payload, authInfo, done) {
-        OauthToken
-          .findOne({token: code, type: 'code'})
-          .populate('client user')
-          .exec(function (err, ocode) {
-            if (err ||
-              !ocode.client._id.equals(client._id)) {
-              //redirectURI !== ocode.client.redirectUri) {
-              return done(null, false);
-            }
-            async.auto({
-              // Create refresh token
-              refreshToken: function (callback) {
-                OauthToken.generate('refresh', client, ocode.user, ocode.nonce, function (err, token) {
-                  if (err) {
-                    return callback(err);
-                  }
-                  OauthToken.create(token, function (err, tok) {
-                    if (err) {
-                      return callback(err);
-                    }
-                    callback(null, tok);
-                  });
-                });
-              },
-              // Create access token
-              accessToken: function (callback) {
-                OauthToken.generate('access', client, ocode.user, ocode.nonce, function (err, token) {
-                  if (err) {
-                    return callback(err);
-                  }
-                  OauthToken.create(token, function (err, tok) {
-                    if (err) {
-                      return callback(err);
-                    }
-                    callback(null, tok);
-                  });
-                });
-              },
-              idToken: function (callback) {
-                const out = {};
-                out.token = JwtService.generateIdToken(client, ocode.user, ocode.nonce);
-                callback(null, out);
-              },
-              // Delete code token
-              deleteCode: function (callback) {
-                OauthToken.remove({type: 'code', token: code}, function (err) {
-                  if (err) {
-                    return callback(err);
-                  }
-                  callback();
-                });
-              }
-            }, function (err, results) {
-              if (err) {
-                return done(err);
-              }
-              done(null, results.accessToken.token, results.refreshToken.token, {
-                expires_in: OauthExpiresIn,
-                id_token: results.idToken.token
-              });
-            });
+      oauth.exchanges.code(async function (client, code, redirectURI, payload, authInfo, done) {
+        try {
+          const ocode = OauthToken
+            .findOne({token: code, type: 'code'})
+            .populate('client user');
+          if (!ocode.client._id.equals(client._id)) {
+            return done(null, false);
+          }
+          let promises = [];
+          promises.push(async function () {
+            const token = OauthToken.generate('refresh', client, ocode.user, ocode.nonce);
+            const tok = await OauthToken.create(token);
+            return tok;
           });
-      })
+          promises.push(async function () {
+            const token = OauthToken.generate('access', client, ocode.user, ocode.nonce);
+            const tok = await OauthToken.create(token);
+            return tok;
+          });
+          promises.push(OauthToken.remove({type: 'code', token: code}));
+          const tokens = await Promise.all(promises);
+          return done(null, tokens[1].token, tokens[0].token, {
+            expires_in: OauthExpiresIn,
+            id_token: JwtService.generateIdToken(client, ocode.user, ocode.nonce)
+          });
+        }
+        catch (err) {
+          return done(err);
+        }
     );
 
-    oauth.exchange(oauth.exchanges.refreshToken(function (client, refreshToken, scope, done) {
-      OauthToken
-        .findOne({type: 'refresh', token: refreshToken})
-        .populate('client user')
-        .exec(function (err, tok) {
-          if (err) {
-            return done(err);
-          }
-          if (tok.client._id.toString() !== client._id.toString()) {
-            return done(null, false, { message: 'This refresh token is for a different client'});
-          }
-          OauthToken.generate('access', tok.client, tok.user, tok.nonce, function (err, atoken) {
-            if (err) {
-              return done(err);
-            }
-            OauthToken.create(atoken, function (err, ctok) {
-              if (err) {
-                return done(err);
-              }
-              done(null, ctok.token, null, {expires_in: OauthExpiresIn});
-            });
-          });
-        });
+    oauth.exchange(oauth.exchanges.refreshToken(async function (client, refreshToken, scope, done) {
+      try {
+        const tok = await OauthToken
+          .findOne({type: 'refresh', token: refreshToken})
+          .populate('client user');
+        if (tok.client._id.toString() !== client._id.toString()) {
+          return done(null, false, { message: 'This refresh token is for a different client'});
+        }
+        const atoken = OauthToken.generate('access', tok.client, tok.user, tok.nonce);
+        const ctok = await OauthToken.create(atoken);
+        return done(null, ctok.token, null, {expires_in: OauthExpiresIn});
+      }
+      catch (err) {
+        return done(err);
+      }
     }));
 
     // Client Serializers
@@ -233,13 +190,14 @@ module.exports = {
       done(null, client._id);
     });
 
-    oauth.deserializeClient(function (id, done) {
-      Client.findOne({_id: id}, function (err, client) {
-        if (err) {
-          return done(err);
-        }
-        done(null, client);
-      });
+    oauth.deserializeClient(async function (id, done) {
+      try {
+        Client.findOne({_id: id});
+        return done(null, client);
+      }
+      catch (err) {
+        return done(err);
+      }
     });
   },
 

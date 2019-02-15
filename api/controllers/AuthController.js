@@ -397,7 +397,8 @@ module.exports = {
       else {
         logger.info('Successful access token request', { security: true, request: request});
         request.auth.credentials = ocode.client;
-        oauth.token(request, reply);
+        const response = await oauth.token(request, reply);
+        return response;
       }
     }
     catch (err) {

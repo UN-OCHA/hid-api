@@ -35,17 +35,8 @@ internals.authorize = async function (request, reply, options, validate, immedia
 
     const authorizeAsync = util.promisify(internals.OauthServer.authorize(options, validate, immediate));
 
-    //try {
     await authorizeAsync(express.req, express.res);
     return [express.req, express.res];
-    /*}
-    catch (err) {
-      internals.errorHandler({ mode: 'indirect' })(err, express.req, express.res,
-      function () {
-
-          internals.errorHandler({ mode: 'direct' })(err, express.req, express.res, console.log);
-      });
-    }*/
 };
 
 internals.decision = async function (request, reply, options, parse) {
@@ -85,14 +76,9 @@ internals.deserializeClient = function (fn) {
 };
 
 internals.token = function (request, reply, options) {
-
     var express = internals.convertToExpress(request, reply);
-    internals.OauthServer.token(options)(express.req, express.res, function (err) {
-
-        if (err) {
-            internals.errorHandler()(err, express.req, express.res, console.log);
-        }
-    });
+    const tokenAsync = util.promisify(internals.OauthServer.token(options));
+    return tokenAsync(express.req, express.res);
 };
 
 // Takes in a Boom error and a oauth2orize error, and makes a custom Boom error to spec.
