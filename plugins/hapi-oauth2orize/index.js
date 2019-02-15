@@ -126,7 +126,7 @@ internals.oauthToBoom = function (oauthError) {
     }
 
     // These little bits of code Boomify raw OAuth2 style errors
-    newResponse = Boom.create(oauthError.status, null, newResponse);
+    newResponse = Boom.boomify(oauthError, { statusCode: oauthError.status });
     internals.transformBoomError(newResponse);
 
     return newResponse;

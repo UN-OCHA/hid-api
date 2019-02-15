@@ -138,23 +138,17 @@ module.exports = {
 
     oauth.exchange(oauth.exchanges.code(async function (client, code, redirectURI, payload, authInfo, done) {
         try {
-          const ocode = OauthToken
+          const ocode = await OauthToken
             .findOne({token: code, type: 'code'})
             .populate('client user');
           if (!ocode.client._id.equals(client._id)) {
             return done(null, false);
           }
           let promises = [];
-          promises.push(async function () {
-            const token = OauthToken.generate('refresh', client, ocode.user, ocode.nonce);
-            const tok = await OauthToken.create(token);
-            return tok;
-          });
-          promises.push(async function () {
-            const token = OauthToken.generate('access', client, ocode.user, ocode.nonce);
-            const tok = await OauthToken.create(token);
-            return tok;
-          });
+          const refreshToken = OauthToken.generate('refresh', client, ocode.user, ocode.nonce);
+          const accessToken = OauthToken.generate('access', client, ocode.user, ocode.nonce);
+          promises.push(OauthToken.create(refreshToken));
+          promises.push(OauthToken.create(accessToken));
           promises.push(OauthToken.remove({type: 'code', token: code}));
           const tokens = await Promise.all(promises);
           return done(null, tokens[1].token, tokens[0].token, {
