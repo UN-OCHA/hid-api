@@ -2,7 +2,6 @@
 
 const Boom = require('boom');
 const Service = require('../models/Service');
-const ErrorService = require('../services/ErrorService');
 
 /**
  * @module ServicePolicy

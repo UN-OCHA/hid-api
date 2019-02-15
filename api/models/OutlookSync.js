@@ -37,7 +37,7 @@ OutlookSyncSchema.methods = {
   },
 
   getContact: function (user) {
-    let emails = [];
+    const emails = [];
     user.emails.forEach(function (email) {
       if (email.validated) {
         emails.push({
@@ -46,7 +46,7 @@ OutlookSyncSchema.methods = {
         });
       }
     });
-    let businessPhones = [];
+    const businessPhones = [];
     user.phone_numbers.forEach(function (phone) {
       businessPhones.push(phone.number);
     });

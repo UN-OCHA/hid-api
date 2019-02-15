@@ -1,9 +1,6 @@
 'use strict';
 
-const Boom = require('boom');
-const async = require('async');
 const Notification = require('../models/Notification');
-const User = require('../models/User');
 const EmailService = require('./EmailService');
 
 /**

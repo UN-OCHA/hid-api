@@ -1,9 +1,9 @@
 /**
- * Logging Configuration
- * (app.config.log)
- *
- * @see http://trailsjs.io/doc/config/log
- */
+* Logging Configuration
+* (app.config.log)
+*
+* @see http://trailsjs.io/doc/config/log
+*/
 
 'use strict';
 
@@ -15,18 +15,18 @@ require('winston-daily-rotate-file');
 const logDir = 'trails';
 
 if ( !fs.existsSync( logDir ) ) {
-    // Create the directory if it does not exist
-    fs.mkdirSync( logDir );
+  // Create the directory if it does not exist
+  fs.mkdirSync( logDir );
 }
 
 module.exports = {
 
   /**
-   * Specify the logger to use.
-   * @see https://github.com/winstonjs/winston#instantiating-your-own-logger
-   *
-   * Exposed on app.log
-   */
+  * Specify the logger to use.
+  * @see https://github.com/winstonjs/winston#instantiating-your-own-logger
+  *
+  * Exposed on app.log
+  */
   logger: new winston.Logger({
     level: 'debug',
     exitOnError: false,

@@ -42,7 +42,8 @@ module.exports = {
     const oauth2 = require('simple-oauth2').create(appCreds);
     const credentials = request.auth.credentials.outlookCredentials;
     if (request.payload && request.payload.list) {
-      let accessToken = '', client = {}, gList = {}, gOsync = {};
+      let accessToken = '', client = {};
+      const gList = {}, gOsync = {};
       const sync = await OutlookSync.findOne({user: request.auth.credentials._id, list: request.payload.list});
       if (sync) {
         throw Boom.conflict('Contact folder already exists');
@@ -80,9 +81,9 @@ module.exports = {
         }
       }
       const users = await User.find(criteria).sort('name').lean();
-      let promises = [];
+      const promises = [];
       users.forEach(function (elt) {
-        let emails = [];
+        const emails = [];
         elt.emails.forEach(function (email) {
           emails.push({
             address: email.email,

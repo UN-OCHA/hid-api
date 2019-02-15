@@ -16,13 +16,13 @@ module.exports = {
       numberOrphans,
       numberGhosts,
       numberVerified] = await Promise.all([
-        List.countDocuments({type: 'list'}),
-        User.countDocuments({authOnly: true}),
-        User.countDocuments({}),
-        User.countDocuments({'is_orphan': true}),
-        User.countDocuments({'verified': true}),
-        User.countDocuments({'verified': true})
-      ]);
+      List.countDocuments({type: 'list'}),
+      User.countDocuments({authOnly: true}),
+      User.countDocuments({}),
+      User.countDocuments({'is_orphan': true}),
+      User.countDocuments({'verified': true}),
+      User.countDocuments({'verified': true})
+    ]);
     return {
       'numberCcls': numberCcls,
       'numberOrphans': numberOrphans,

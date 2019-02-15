@@ -2,14 +2,11 @@
 
 const Boom = require('boom');
 const _ = require('lodash');
-const async = require('async');
 const acceptLanguage = require('accept-language');
 const List = require('../models/List');
 const User = require('../models/User');
 const HelperService = require('../services/HelperService');
 const NotificationService = require('../services/NotificationService');
-const config = require('../../config/env')[process.env.NODE_ENV];
-const logger = config.logger;
 
 /**
  * @module ListController
@@ -117,7 +114,7 @@ module.exports = {
 
     HelperService.removeForbiddenAttributes(List, request, ['names']);
 
-    const newlist = await List.findOneAndUpdate({_id: request.params.id}, request.payload, {runValidators: true, new: true})
+    const newlist = await List.findOneAndUpdate({_id: request.params.id}, request.payload, {runValidators: true, new: true});
     const payloadManagers = [];
     if (request.payload.managers) {
       request.payload.managers.forEach(function (man) {
@@ -161,14 +158,14 @@ module.exports = {
     const criteria = {};
     criteria[newlist.type + 's.list'] = newlist._id.toString();
     const users = await User.find(criteria);
-    let actions = [];
+    const actions = [];
     for (let i = 0; i < users.length; i++) {
       const user = users[i];
       user.updateCheckins(newlist);
       actions.push(user.save());
     }
     await Promise.all(actions);
-    return list;
+    return newlist;
   },
 
   destroy: async function (request, reply) {

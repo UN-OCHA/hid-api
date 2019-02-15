@@ -10,21 +10,6 @@ const AuthPolicy = require('../policies/AuthPolicy');
 const config = require('../../config/env')[process.env.NODE_ENV];
 const logger = config.logger;
 
-function _getAlert (result, success, error) {
-  if (!result || !result.isBoom) {
-    return {
-      type: 'success',
-      message: success
-    };
-  }
-  else {
-    return {
-      type: 'danger',
-      message: error
-    };
-  }
-}
-
 function _getRegisterLink(args) {
   const params = HelperService.getOauthParams(args);
   let registerLink = '/register';

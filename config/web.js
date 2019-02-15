@@ -1,22 +1,22 @@
 /**
- * Server Configuration
- * (app.config.web)
- *
- * Configure the Web Server
- *
- * @see {@link http://trailsjs.io/doc/config/web}
- */
+* Server Configuration
+* (app.config.web)
+*
+* Configure the Web Server
+*
+* @see {@link http://trailsjs.io/doc/config/web}
+*/
 
 module.exports = {
 
   /**
-   * The port to bind the web server to
-   */
+  * The port to bind the web server to
+  */
   port: process.env.PORT || 3000,
 
   /**
-   * The host to bind the web server to
-   */
+  * The host to bind the web server to
+  */
   host: process.env.HOST || '0.0.0.0',
 
   views: {
@@ -51,7 +51,7 @@ module.exports = {
       options: {
         skip: function (request, reply) {
           const paths = ['/', '/login', '/oauth/authorize',
-            '/register', '/verify', '/verify2', '/password', '/new_password'];
+          '/register', '/verify', '/verify2', '/password', '/new_password'];
           if (paths.indexOf(request.path) === -1) {
             return true;
           }
@@ -76,7 +76,6 @@ module.exports = {
   ],
 
   onPluginsLoaded: function (server) {
-    const async = require('async');
     const oauth = server.plugins['hapi-oauth2orize'];
     const oauth2orizeExt = require('oauth2orize-openid');
     const Client = require('../api/models/Client');
@@ -84,7 +83,6 @@ module.exports = {
     const JwtService = require('../api/services/JwtService');
     const OauthExpiresIn = 7 * 24 * 3600;
 
-    const that = this;
     // Register supported OpenID Connect 1.0 grant types.
 
     oauth.grant(oauth2orizeExt.extensions());
@@ -137,35 +135,35 @@ module.exports = {
     }));
 
     oauth.exchange(oauth.exchanges.code(async function (client, code, redirectURI, payload, authInfo, done) {
-        try {
-          const ocode = await OauthToken
-            .findOne({token: code, type: 'code'})
-            .populate('client user');
-          if (!ocode.client._id.equals(client._id)) {
-            return done(null, false);
-          }
-          let promises = [];
-          const refreshToken = OauthToken.generate('refresh', client, ocode.user, ocode.nonce);
-          const accessToken = OauthToken.generate('access', client, ocode.user, ocode.nonce);
-          promises.push(OauthToken.create(refreshToken));
-          promises.push(OauthToken.create(accessToken));
-          promises.push(OauthToken.remove({type: 'code', token: code}));
-          const tokens = await Promise.all(promises);
-          return done(null, tokens[1].token, tokens[0].token, {
-            expires_in: OauthExpiresIn,
-            id_token: JwtService.generateIdToken(client, ocode.user, ocode.nonce)
-          });
+      try {
+        const ocode = await OauthToken
+        .findOne({token: code, type: 'code'})
+        .populate('client user');
+        if (!ocode.client._id.equals(client._id)) {
+          return done(null, false);
         }
-        catch (err) {
-          return done(err);
-        }
+        const promises = [];
+        const refreshToken = OauthToken.generate('refresh', client, ocode.user, ocode.nonce);
+        const accessToken = OauthToken.generate('access', client, ocode.user, ocode.nonce);
+        promises.push(OauthToken.create(refreshToken));
+        promises.push(OauthToken.create(accessToken));
+        promises.push(OauthToken.remove({type: 'code', token: code}));
+        const tokens = await Promise.all(promises);
+        return done(null, tokens[1].token, tokens[0].token, {
+          expires_in: OauthExpiresIn,
+          id_token: JwtService.generateIdToken(client, ocode.user, ocode.nonce)
+        });
+      }
+      catch (err) {
+        return done(err);
+      }
     }));
 
     oauth.exchange(oauth.exchanges.refreshToken(async function (client, refreshToken, scope, done) {
       try {
         const tok = await OauthToken
-          .findOne({type: 'refresh', token: refreshToken})
-          .populate('client user');
+        .findOne({type: 'refresh', token: refreshToken})
+        .populate('client user');
         if (tok.client._id.toString() !== client._id.toString()) {
           return done(null, false, { message: 'This refresh token is for a different client'});
         }

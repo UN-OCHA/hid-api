@@ -11,21 +11,21 @@ const isHTML = require('is-html');
  */
 
 const isHTMLValidator = function (v) {
- return !isHTML(v);
+  return !isHTML(v);
 };
 
 const translationSchema = new Schema({
- language: {
-   type: String,
-   enum: ['en', 'fr', 'es']
- },
- text: {
-   type: String,
-   validate: {
-     validator: isHTMLValidator,
-     message: 'HTML code is not allowed in text'
-   }
- }
+  language: {
+    type: String,
+    enum: ['en', 'fr', 'es']
+  },
+  text: {
+    type: String,
+    validate: {
+      validator: isHTMLValidator,
+      message: 'HTML code is not allowed in text'
+    }
+  }
 });
 
 const ListSchema = new Schema({

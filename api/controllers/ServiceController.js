@@ -1,7 +1,6 @@
 'use strict';
 
 const Boom = require('boom');
-const async = require('async');
 const Mailchimp = require('mailchimp-api-v3');
 const {google} = require('googleapis');
 const ServiceCredentials = require('../models/ServiceCredentials');
@@ -146,32 +145,32 @@ module.exports = {
 
   // Subscribe a user to a service
   subscribe: async function (request, reply) {
-    try {
-      const user = await User.findOne({'_id': request.params.id});
-      if (!user) {
-        throw Boom.notFound();
+    const user = await User.findOne({'_id': request.params.id});
+    if (!user) {
+      throw Boom.notFound();
+    }
+    if (user.subscriptionsIndex(request.payload.service) !== -1) {
+      throw Boom.badRequest('User is already subscribed');
+    }
+    if (user.emailIndex(request.payload.email) === -1) {
+      throw Boom.badRequest('Wrong email');
+    }
+    const service = await Service.findOne({'_id': request.payload.service, deleted: false});
+    if (!service) {
+      throw Boom.badRequest();
+    }
+    if (service.type === 'googlegroup') {
+      const creds = await ServiceCredentials.findOne({type: 'googlegroup', 'googlegroup.domain': service.googlegroup.domain});
+      if (!creds) {
+        throw new Error('Could not find service credentials');
       }
-      if (user.subscriptionsIndex(request.payload.service) !== -1) {
-        throw Boom.badRequest('User is already subscribed');
-      }
-      if (user.emailIndex(request.payload.email) === -1) {
-        throw Boom.badRequest('Wrong email');
-      }
-      const service = await Service.findOne({'_id': request.payload.service, deleted: false});
-      if (!service) {
-        throw Boom.badRequest();
-      }
-      if (service.type === 'googlegroup') {
-        const creds = await ServiceCredentials.findOne({type: 'googlegroup', 'googlegroup.domain': service.googlegroup.domain});
-        if (!creds) {
-          throw new Error('Could not find service credentials');
-        }
-        const response = await service.subscribeGoogleGroup(user, request.payload.email, creds);
-        user.subscriptions.push({email: request.payload.email, service: service});
-        await user.save();
-      }
-      if (service.type === 'mailchimp') {
-        const output = await service.subscribeMailchimp(results.user, request.payload.email);
+      await service.subscribeGoogleGroup(user, request.payload.email, creds);
+      user.subscriptions.push({email: request.payload.email, service: service});
+      await user.save();
+    }
+    if (service.type === 'mailchimp') {
+      try {
+        const output = await service.subscribeMailchimp(user, request.payload.email);
         if (output.statusCode === 200) {
           user.subscriptions.push({email: request.payload.email, service: service});
           await user.save();
@@ -180,38 +179,37 @@ module.exports = {
           throw new Error(output);
         }
       }
-      // Send notification to user that he was subscribed to a service
-      if (user.id !== request.auth.credentials.id) {
-        const notification = {
-          type: 'service_subscription',
-          user: user,
-          createdBy: request.auth.credentials,
-          params: { service: service}
-        };
-        await NotificationService.send(notification);
-      }
-      return user;
-    }
-    catch (err) {
-      if (err.title && err.title === 'Member Exists') {
-        // Member already exists in mailchimp
-        user.subscriptions.push({email: request.payload.email, service: service});
-        await user.save();
-        if (user.id !== request.auth.credentials.id) {
-          const notification = {
-            type: 'service_subscription',
-            user: user,
-            createdBy: request.auth.credentials,
-            params: { service: service}
-          };
-          await NotificationService.send(notification);
+      catch (err) {
+        if (err.title && err.title === 'Member Exists') {
+          // Member already exists in mailchimp
+          user.subscriptions.push({email: request.payload.email, service: service});
+          await user.save();
+          if (user.id !== request.auth.credentials.id) {
+            const notification = {
+              type: 'service_subscription',
+              user: user,
+              createdBy: request.auth.credentials,
+              params: { service: service}
+            };
+            await NotificationService.send(notification);
+          }
         }
-        return user;
-      }
-      else {
-        throw err;
+        else {
+          throw err;
+        }
       }
     }
+    // Send notification to user that he was subscribed to a service
+    if (user.id !== request.auth.credentials.id) {
+      const notification = {
+        type: 'service_subscription',
+        user: user,
+        createdBy: request.auth.credentials,
+        params: { service: service}
+      };
+      await NotificationService.send(notification);
+    }
+    return user;
   },
 
   unsubscribe: async function (request, reply) {
@@ -223,8 +221,8 @@ module.exports = {
     if (user.subscriptionsIndex(request.params.serviceId) === -1) {
       throw Boom.notFound();
     }
-    const srv = await Service.findOne({'_id': request.params.serviceId, deleted: false});
-    if (!srv) {
+    const service = await Service.findOne({'_id': request.params.serviceId, deleted: false});
+    if (!service) {
       throw Boom.badRequest();
     }
     const index = user.subscriptionsIndex(request.params.serviceId);
@@ -234,7 +232,7 @@ module.exports = {
         throw new Error('Could not find service credentials');
       }
       try {
-        const response = await service.unsubscribeGoogleGroup(user, creds);
+        await service.unsubscribeGoogleGroup(user, creds);
         user.subscriptions.splice(index, 1);
         await user.save();
       }

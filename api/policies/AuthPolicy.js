@@ -1,63 +1,57 @@
 'use strict';
 
 const Boom = require('boom');
-const acceptLanguage = require('accept-language');
 const authenticator = require('authenticator');
-const Hawk = require('hawk');
-const JwtToken = require('../models/JwtToken');
-const OauthToken = require('../models/OauthToken');
-const User = require('../models/User');
-const JwtService = require('../services/JwtService');
 const config = require('../../config/env')[process.env.NODE_ENV];
 const logger = config.logger;
 
 /**
- * @module AuthPolicy
- * @description Is the request authenticated
- */
+* @module AuthPolicy
+* @description Is the request authenticated
+*/
 
 const isTOTPValid = function isTOTPValid (user, token) {
- return new Promise(function (resolve, reject) {
-   if (!user.totpConf || !user.totpConf.secret) {
-     return reject(Boom.unauthorized('TOTP was not configured for this user', 'totp'));
-   }
+  return new Promise(function (resolve, reject) {
+    if (!user.totpConf || !user.totpConf.secret) {
+      return reject(Boom.unauthorized('TOTP was not configured for this user', 'totp'));
+    }
 
-   if (!token) {
-     return reject(Boom.unauthorized('No TOTP token', 'totp'));
-   }
+    if (!token) {
+      return reject(Boom.unauthorized('No TOTP token', 'totp'));
+    }
 
-   if (token.length === 6) {
-     const success = authenticator.verifyToken(user.totpConf.secret, token);
+    if (token.length === 6) {
+      const success = authenticator.verifyToken(user.totpConf.secret, token);
 
-     if (success) {
-       return resolve(user);
-     }
-     else {
-       return reject(Boom.unauthorized('Invalid TOTP token !', 'totp'));
-     }
-   }
-   else {
-     // Using backup code
-     const index = user.backupCodeIndex(token);
-     if (index === -1) {
-       return reject(Boom.unauthorized('Invalid backup code !', 'totp'));
-     }
-     else {
-       // remove backup code so it can't be reused
-       user.totpConf.backupCodes.slice(index, 1);
-       user.markModified('totpConf');
-       user
-         .save()
-         .then(() => {
-           return resolve(user);
-         })
-         .catch(err => {
-           return reject(Boom.badImplementation());
-         });
-     }
-   }
- });
-}
+      if (success) {
+        return resolve(user);
+      }
+      else {
+        return reject(Boom.unauthorized('Invalid TOTP token !', 'totp'));
+      }
+    }
+    else {
+      // Using backup code
+      const index = user.backupCodeIndex(token);
+      if (index === -1) {
+        return reject(Boom.unauthorized('Invalid backup code !', 'totp'));
+      }
+      else {
+        // remove backup code so it can't be reused
+        user.totpConf.backupCodes.slice(index, 1);
+        user.markModified('totpConf');
+        user
+        .save()
+        .then(() => {
+          return resolve(user);
+        })
+        .catch(err => {
+          return reject(Boom.badImplementation());
+        });
+      }
+    }
+  });
+};
 
 module.exports = {
 

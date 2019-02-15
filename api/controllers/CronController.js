@@ -1,7 +1,5 @@
 'use strict';
 
-const async = require('async');
-const https = require('https');
 const listAttributes = [
   'lists',
   'operations',
@@ -99,6 +97,7 @@ module.exports = {
 
   sendReminderCheckoutEmails: async function (request, reply) {
     logger.info('Sending reminder checkout emails to contacts');
+    const now = new Date();
     let populate = '';
     const criteria = {};
     criteria.email_verified = true;
@@ -269,7 +268,7 @@ module.exports = {
     const cursor = List.find({deleted: false}).cursor();
 
     for (let list = await cursor.next(); list != null; list = await cursor.next()) {
-      let criteria = { };
+      const criteria = { };
       criteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false}};
       const number = await User.countDocuments(criteria);
       list.count = number;
@@ -341,14 +340,14 @@ module.exports = {
     const cursor = User.find({}).cursor();
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      let promises = [];
+      const promises = [];
       user.emails.forEach(function (email) {
         if (email.validated) {
           promises.push(user.isVerifiableEmail(email.email));
         }
       });
       const domains = await Promise.all(promises);
-      for (let domain in domains) {
+      for (const domain in domains) {
         if (domain) {
           user.verified = true;
           user.verified_by = hidAccount;
@@ -393,11 +392,11 @@ module.exports = {
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
       await EmailService.sendVerificationExpiryEmail(user);
       await User.collection.update(
-          { _id: user._id },
-          { $set: {
-            verificationExpiryEmail: true
-          }}
-        );
+        { _id: user._id },
+        { $set: {
+          verificationExpiryEmail: true
+        }}
+      );
     }
     return reply.response().code(204);
   },

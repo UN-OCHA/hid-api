@@ -2,7 +2,6 @@
 
 const Boom = require('boom');
 const _ = require('lodash');
-const async = require('async');
 const List = require('../models/List');
 const User = require('../models/User');
 const OutlookService = require('../services/OutlookService');
@@ -17,22 +16,22 @@ const logger = config.logger;
  */
 const checkinHelper = function (list, user, notify, childAttribute, currentUser) {
   let payload = {
-   list: list._id.toString()
+    list: list._id.toString()
   };
 
   // Check that the list added corresponds to the right attribute
   if (childAttribute !== list.type + 's' && childAttribute !== list.type) {
-   throw Boom.badRequest('Wrong list type');
+    throw Boom.badRequest('Wrong list type');
   }
 
   //Set the proper pending attribute depending on list type
   if (list.joinability === 'public' ||
-   list.joinability === 'private' ||
-   list.isOwner(currentUser)) {
-   payload.pending = false;
+    list.joinability === 'private' ||
+    list.isOwner(currentUser)) {
+      payload.pending = false;
   }
   else {
-   payload.pending = true;
+    payload.pending = true;
   }
 
   payload.name = list.name;
@@ -42,39 +41,39 @@ const checkinHelper = function (list, user, notify, childAttribute, currentUser)
   payload.visibility = list.visibility;
 
   if (list.type === 'organization') {
-   payload.orgTypeId = list.metadata.type.id;
-   payload.orgTypeLabel = list.metadata.type.label;
+    payload.orgTypeId = list.metadata.type.id;
+    payload.orgTypeLabel = list.metadata.type.label;
   }
 
   if (childAttribute !== 'organization') {
-   if (!user[childAttribute]) {
-     user[childAttribute] = [];
-   }
+    if (!user[childAttribute]) {
+      user[childAttribute] = [];
+    }
 
-   // Make sure user is not already checked in this list
-   for (let i = 0, len = user[childAttribute].length; i < len; i++) {
-     if (user[childAttribute][i].list.equals(list._id) &&
-       user[childAttribute][i].deleted === false) {
-       throw Boom.badRequest('User is already checked in');
-     }
-   }
+    // Make sure user is not already checked in this list
+    for (let i = 0, len = user[childAttribute].length; i < len; i++) {
+      if (user[childAttribute][i].list.equals(list._id) &&
+        user[childAttribute][i].deleted === false) {
+          throw Boom.badRequest('User is already checked in');
+      }
+    }
   }
 
   if (childAttribute !== 'organization') {
-   user[childAttribute].push(payload);
+    user[childAttribute].push(payload);
   }
   else {
-   user.organization = payload;
+    user.organization = payload;
   }
   user.lastModified = new Date();
   list.count = list.count + 1;
   const managers = [];
   list.managers.forEach(function (manager) {
-   if (manager.toString() !== currentUser._id.toString()) {
-     managers.push(manager);
-   }
+    if (manager.toString() !== currentUser._id.toString()) {
+      managers.push(manager);
+    }
   });
-  let promises = [];
+  const promises = [];
   promises.push(user.save());
   promises.push(list.save());
   // Notify list managers of the checkin
@@ -85,27 +84,27 @@ const checkinHelper = function (list, user, notify, childAttribute, currentUser)
   }));
   // Notify user if needed
   if (currentUser._id.toString() !== user._id.toString() && list.type !== 'list' && notify === true && !user.hidden) {
-   logger.debug('Checked in by a different user');
-   promises.push(NotificationService.send({
-     type: 'admin_checkin',
-     createdBy: currentUser,
-     user: user,
-     params: { list: list }
-   }));
+    logger.debug('Checked in by a different user');
+    promises.push(NotificationService.send({
+      type: 'admin_checkin',
+      createdBy: currentUser,
+      user: user,
+      params: { list: list }
+    }));
   }
   // Notify list owner and managers of the new checkin if needed
   if (payload.pending) {
-   logger.debug('Notifying list owners and manager of the new checkin');
-   promises.push(NotificationService.sendMultiple(list.managers, {
-     type: 'pending_checkin',
-     params: { list: list, user: user }
-   }));
+    logger.debug('Notifying list owners and manager of the new checkin');
+    promises.push(NotificationService.sendMultiple(list.managers, {
+      type: 'pending_checkin',
+      params: { list: list, user: user }
+    }));
   }
   // Synchronize google spreadsheets
   promises.push(GSSSyncService.addUserToSpreadsheets(list._id, user));
   promises.push(OutlookService.addUserToContactFolders(list._id, user));
   return Promise.all(promises);
-}
+};
 
 module.exports = {
 
@@ -178,7 +177,7 @@ module.exports = {
     listuser = _.cloneDeep(lu);
     _.assign(lu, request.payload);
     record.lastModified = new Date();
-    let promises = [];
+    const promises = [];
     promises.push(record.save());
     promises.push(List.findOne({_id: lu.list}));
     const [user, list] = await Promise.all(promises);
@@ -199,7 +198,6 @@ module.exports = {
     const userId = request.params.id;
     const childAttribute = request.params.childAttribute;
     const checkInId = request.params.checkInId;
-    const payload = request.payload;
     const childAttributes = User.listAttributes();
 
     if (childAttributes.indexOf(childAttribute) === -1) {
@@ -214,13 +212,13 @@ module.exports = {
     // Set deleted to true
     lu.deleted = true;
     // If user is checking out of his primary organization, remove the listuser from the organization attribute
-    if (childAttribute === 'organizations' && record.organization && lu.list.toString() === user.organization.list.toString()) {
+    if (childAttribute === 'organizations' && user.organization && lu.list.toString() === user.organization.list.toString()) {
       user.organization.remove();
     }
     user.lastModified = new Date();
-    let list = await List.findOne({ _id: lu.list });
+    const list = await List.findOne({ _id: lu.list });
     list.count = list.count - 1;
-    let promises = [];
+    const promises = [];
     promises.push(user.save());
     promises.push(list.save());
     // Send notification if needed
@@ -247,7 +245,7 @@ module.exports = {
 
   updateListUsers: async function (request, reply) {
     const childAttributes = User.listAttributes();
-    const stream = User
+    const cursor = User
       .find({})
       .populate([{path: 'lists.list'},
         {path: 'operations.list'},
@@ -262,7 +260,7 @@ module.exports = {
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
       for (const childAttribute of childAttributes) {
-        for (lu in user[childAttribute]) {
+        for (const lu in user[childAttribute]) {
           if (lu && lu.list && lu.list.owner) {
             lu.owner = lu.list.owner;
             lu.managers = lu.list.managers;

@@ -1,7 +1,6 @@
 'use strict';
 
 const Boom = require('boom');
-const {google} = require('googleapis');
 const {OAuth2Client} = require('google-auth-library');
 const fs = require('fs');
 const GSSSync = require('../models/GSSSync');

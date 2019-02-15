@@ -11,7 +11,7 @@ const path = require('path');
 const _ = require('lodash');
 const mongoose = require('mongoose');
 const Boom = require('boom');
-const Hapi = require('hapi');
+const hapi = require('hapi');
 const config = require('./config/env')[process.env.NODE_ENV];
 const logger = config.logger;
 
@@ -52,7 +52,7 @@ const preResponse = function (request, reply) {
   }
 };
 
-const server = Hapi.Server(webConfig.options);
+const server = hapi.Server(webConfig.options);
 const init = async () => {
 
   // Plugins
@@ -67,7 +67,7 @@ const init = async () => {
   server.route(app.config.routes);
   if (Array.isArray(app.config.main.paths.www)) {
     app.config.main.paths.www.map(item =>{
-      const staticDir = path.relative(app.config.main.paths.root, item.path)
+      const staticDir = path.relative(app.config.main.paths.root, item.path);
       server.route({
         method: 'GET',
         path: item.humanUrl ?
@@ -75,29 +75,29 @@ const init = async () => {
           '/'.concat(staticDir.replace(/\\/g, '/'), '/{filename*}'),
         handler: {
           file: function(request) {
-            return path.join(staticDir, request.params.filename)
+            return path.join(staticDir, request.params.filename);
           }
         },
         config: {
           auth: false
         }
-      })
-    })
+      });
+    });
   }
   else {
-    const staticDir = path.relative(app.config.main.paths.root, app.config.main.paths.www)
+    const staticDir = path.relative(app.config.main.paths.root, app.config.main.paths.www);
     server.route({
       method: 'GET',
       path: '/'.concat(staticDir.replace(/\\/g, '/'), '/{filename*}'),
       handler: {
         file: function(request) {
-          return path.join(staticDir, request.params.filename)
+          return path.join(staticDir, request.params.filename);
         }
       },
       config: {
         auth: false
       }
-    })
+    });
   }
 
   // Views
@@ -112,7 +112,7 @@ const init = async () => {
   server.ext('onPreResponse', preResponse);
 
   await server.start();
-  console.log(`Server running at: ${server.info.uri}`);
+  //console.log(`Server running at: ${server.info.uri}`);
 };
 
 process.on('unhandledRejection', (err) => {
@@ -120,7 +120,7 @@ process.on('unhandledRejection', (err) => {
     const newrelic = require('newrelic');
     newrelic.noticeError(err);
   }
-  console.log(err);
+  //console.log(err);
   process.exit(1);
 });
 

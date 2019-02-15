@@ -14,33 +14,33 @@ const Schema = mongoose.Schema;
  */
 
 const isHTMLValidator = function (v) {
- return !isHTML(v);
+  return !isHTML(v);
 };
 
 const mailchimpSchema = new Schema({
- apiKey: {
-   type: String,
-   validate: {
-     validator: isHTMLValidator,
-     message: 'HTML code is not allowed in apiKey'
-   }
- },
- list: {
-   id: {
-     type: String,
-     validate: {
-       validator: isHTMLValidator,
-       message: 'HTML code is not allowed in list id'
-     }
-   },
-   name: {
-     type: String,
-     validate: {
-       validator: isHTMLValidator,
-       message: 'HTML code is not allowed in name'
-     }
-   }
- }
+  apiKey: {
+    type: String,
+    validate: {
+      validator: isHTMLValidator,
+      message: 'HTML code is not allowed in apiKey'
+    }
+  },
+  list: {
+    id: {
+      type: String,
+      validate: {
+        validator: isHTMLValidator,
+        message: 'HTML code is not allowed in list id'
+      }
+    },
+    name: {
+      type: String,
+      validate: {
+        validator: isHTMLValidator,
+        message: 'HTML code is not allowed in name'
+      }
+    }
+  }
 });
 
 const googlegroupSchema = new Schema({
@@ -175,7 +175,7 @@ ServiceSchema.methods = {
     const gservice = google.admin('directory_v1');
     return gservice.members.insert({
       auth: auth,
-      groupKey: that.googlegroup.group.id,
+      groupKey: this.googlegroup.group.id,
       resource: { 'email': email, 'role': 'MEMBER' }
     });
   },
@@ -187,7 +187,7 @@ ServiceSchema.methods = {
     const gservice = google.admin('directory_v1');
     return gservice.members.delete({
       auth: auth,
-      groupKey: that.googlegroup.group.id,
+      groupKey: this.googlegroup.group.id,
       memberKey: email
     });
   },

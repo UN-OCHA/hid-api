@@ -59,19 +59,6 @@ async function _pdfExport (users, number, lists, req, format, callback) {
     template = 'templates/pdf/printMeetingComfortable.html';
   }
   const str = await ejs.renderFile(template, data, {});
-  const postData = qs.stringify({
-      'html': str
-    }),
-    options = {
-      hostname: process.env.WKHTMLTOPDF_HOST,
-      port: process.env.WKHTMLTOPDF_PORT || 80,
-      path: '/htmltopdf',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Content-Length': postData.length
-      }
-    };
 
   // Send the HTML to the wkhtmltopdf service to generate a PDF, and
   // return the output.

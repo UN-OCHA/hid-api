@@ -1,5 +1,6 @@
 'use strict';
 
+const Boom = require('boom');
 const ServiceCredentials = require('../models/ServiceCredentials');
 const HelperService = require('../services/HelperService');
 

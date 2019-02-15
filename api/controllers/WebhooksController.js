@@ -14,116 +14,116 @@ const ListController = require('./ListController');
 
 // Notify users of a new disaster
 async function _notifyNewDisaster (disaster) {
- if (disaster.metadata.operation && disaster.metadata.operation.length) {
-   let operation = {};
-   for (let i = 0, len = disaster.metadata.operation.length; i < len; i++) {
-     operation = disaster.metadata.operation[i];
-     const list = await List.findOne({remote_id: operation.id});
-     if (!list) {
-       throw new Error('List not found');
-     }
-     const users = await User.find({operations: { $elemMatch: { list: list._id, deleted: false }} });
-     const notification = {type: 'new_disaster', params: {list: disaster}};
-     await NotificationService.sendMultiple(users, notification);
-   }
- }
+  if (disaster.metadata.operation && disaster.metadata.operation.length) {
+    let operation = {};
+    for (let i = 0, len = disaster.metadata.operation.length; i < len; i++) {
+      operation = disaster.metadata.operation[i];
+      const list = await List.findOne({remote_id: operation.id});
+      if (!list) {
+        throw new Error('List not found');
+      }
+      const users = await User.find({operations: { $elemMatch: { list: list._id, deleted: false }} });
+      const notification = {type: 'new_disaster', params: {list: disaster}};
+      await NotificationService.sendMultiple(users, notification);
+    }
+  }
 }
 
 function _parseList (listType, language, item) {
- let visibility = '', label = '', acronym = '', tmpList = {};
- visibility = 'all';
- if (item.hid_access && item.hid_access === 'closed') {
-   visibility = 'verified';
- }
- label = item.label;
- if (listType === 'bundle' || listType === 'office') {
-   if (item.operation[0].label) {
-     label = item.operation[0].label + ': ' + item.label;
-   }
-   else {
-     label = 'Global: ' + item.label;
-   }
- }
- if (listType === 'organization' && item.acronym) {
-   acronym = item.acronym;
- }
- tmpList = {
-   label: label,
-   acronym: acronym,
-   type: listType,
-   visibility: visibility,
-   joinability: 'public',
-   remote_id: item.id,
-   metadata: item
- };
+  let visibility = '', label = '', acronym = '', tmpList = {};
+  visibility = 'all';
+  if (item.hid_access && item.hid_access === 'closed') {
+    visibility = 'verified';
+  }
+  label = item.label;
+  if (listType === 'bundle' || listType === 'office') {
+    if (item.operation[0].label) {
+      label = item.operation[0].label + ': ' + item.label;
+    }
+    else {
+      label = 'Global: ' + item.label;
+    }
+  }
+  if (listType === 'organization' && item.acronym) {
+    acronym = item.acronym;
+  }
+  tmpList = {
+    label: label,
+    acronym: acronym,
+    type: listType,
+    visibility: visibility,
+    joinability: 'public',
+    remote_id: item.id,
+    metadata: item
+  };
 
- if (listType === 'bundle') {
-   return List
-     .findOne({type: 'operation', remote_id: item.operation[0].id})
-     .then((op) => {
-       if (op) {
-         if (op.metadata.hid_access) {
-           if (op.metadata.hid_access === 'open') {
-             tmpList.visibility = 'all';
-           }
-           else if (op.metadata.hid_access === 'closed') {
-             tmpList.visibility = 'verified';
-           }
-         }
-       }
-       return tmpList;
-     });
- }
- else {
-   return new Promise((resolve, reject) => {
-     resolve(tmpList);
-   });
- }
+  if (listType === 'bundle') {
+    return List
+      .findOne({type: 'operation', remote_id: item.operation[0].id})
+      .then((op) => {
+        if (op) {
+          if (op.metadata.hid_access) {
+            if (op.metadata.hid_access === 'open') {
+              tmpList.visibility = 'all';
+            }
+            else if (op.metadata.hid_access === 'closed') {
+              tmpList.visibility = 'verified';
+            }
+          }
+        }
+        return tmpList;
+      });
+  }
+  else {
+    return new Promise((resolve, reject) => {
+      resolve(tmpList);
+    });
+  }
 }
 
 function _parseListLanguage (list, label, acronym, language) {
- let labelFound = false;
- if (list.labels && list.labels.length) {
-   for (let i = 0; i < list.labels.length; i++) {
-     if (list.labels[i].language === language) {
-       labelFound = true;
-       list.labels[i].text = label;
-     }
-   }
- }
- else {
-   list.labels = [];
- }
- if (!labelFound) {
-   list.labels.push({language: language, text: label});
- }
+  let labelFound = false;
+  if (list.labels && list.labels.length) {
+    for (let i = 0; i < list.labels.length; i++) {
+      if (list.labels[i].language === language) {
+        labelFound = true;
+        list.labels[i].text = label;
+      }
+    }
+  }
+  else {
+    list.labels = [];
+  }
+  if (!labelFound) {
+    list.labels.push({language: language, text: label});
+  }
 
- // Update acronymsOrNames
- if (!list.acronymsOrNames) {
-   list.acronymsOrNames = {};
- }
+  // Update acronymsOrNames
+  if (!list.acronymsOrNames) {
+    list.acronymsOrNames = {};
+  }
 
- list.acronymsOrNames[language] = label;
+  list.acronymsOrNames[language] = label;
 
- let acronymFound = false;
- if (list.acronyms && list.acronyms.length) {
-   for (let j = 0; j < list.acronyms.length; j++) {
-     if (list.acronyms[j].language === language) {
-       acronymFound = true;
-       list.acronyms[j].text = acronym;
-       if (list.acronymsOrNames) {
-         list.acronymsOrNames[language] = acronym;
-       }
-     }
-   }
- }
- else {
-   list.acronyms = [];
- }
- if (!acronymFound) {
-   list.acronyms.push({language: language, text: acronym});
-   list.acronymsOrNames[language] = acronym;
- }
+  let acronymFound = false;
+  if (list.acronyms && list.acronyms.length) {
+    for (let j = 0; j < list.acronyms.length; j++) {
+      if (list.acronyms[j].language === language) {
+        acronymFound = true;
+        list.acronyms[j].text = acronym;
+        if (list.acronymsOrNames) {
+          list.acronymsOrNames[language] = acronym;
+        }
+      }
+    }
+  }
+  else {
+    list.acronyms = [];
+  }
+  if (!acronymFound) {
+    list.acronyms.push({language: language, text: acronym});
+    list.acronymsOrNames[language] = acronym;
+  }
 }
 
 module.exports = {
@@ -216,7 +216,7 @@ module.exports = {
         }
         if (list2.type === 'operation') {
           const lists = await List.find({'metadata.operation.id': list2.remote_id.toString()});
-          for (let group of lists) {
+          for (const group of lists) {
             const groupIndex = group.languageIndex('labels', language);
             const listIndex = list2.languageIndex('labels', language);
             group.labels[groupIndex].text = list2.labels[listIndex].text + ': ' + group.metadata.label;

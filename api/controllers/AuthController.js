@@ -19,62 +19,63 @@ const logger = config.logger;
 
 // Main helper function used for login. All logins go through this.
 async function _loginHelper (request, reply) {
- const email = request.payload && request.payload.email ? request.payload.email.toLowerCase() : false;
- const password = request.payload ? request.payload.password : false;
+  const email = request.payload && request.payload.email ? request.payload.email.toLowerCase() : false;
+  const password = request.payload ? request.payload.password : false;
 
- logger.debug('Entering _loginHelper');
+  logger.debug('Entering _loginHelper');
 
- if (!email || !password) {
-   const cuser = request.auth.credentials;
-   cuser.sanitize(cuser);
-   return cuser;
-   /*AuthPolicy.isAuthenticated(request, function (err) {
-     if (err && err.isBoom) {
-       return reply(err);
-     }
-     else {
-       const cuser = request.auth.credentials;
-       cuser.sanitize(cuser);
-       return reply(cuser);
-     }
-   });*/
- }
- else {
-   // If there has been 5 failed login attempts in the last 5 minutes, return
-   // unauthorized.
-   const now = Date.now();
-   const offset = 5 * 60 * 1000;
-   const d5minutes = new Date(now - offset);
+  if (!email || !password) {
+    const cuser = request.auth.credentials;
+    cuser.sanitize(cuser);
+    return cuser;
+    /*AuthPolicy.isAuthenticated(request, function (err) {
+      if (err && err.isBoom) {
+        return reply(err);
+      }
+      else {
+        const cuser = request.auth.credentials;
+        cuser.sanitize(cuser);
+        return reply(cuser);
+      }
+    });*/
+  }
+  else {
+    // If there has been 5 failed login attempts in the last 5 minutes, return
+    // unauthorized.
+    const now = Date.now();
+    const offset = 5 * 60 * 1000;
+    const d5minutes = new Date(now - offset);
 
-   const [number, user] = await Promise.all([
-     Flood.countDocuments({type: 'login', email: email, createdAt: {$gte: d5minutes.toISOString()}}),
-     User.findOne({email: email})
-   ]);
-   if (number >= 5) {
-     logger.warn('Account locked for 5 minutes', {email: email, security: true, fail: true, request: request});
-     throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
-   }
-   if (!user) {
-     logger.warn('Unsuccessful login attempt due to invalid email address', {email: email, security: true, fail: true, request: request});
-     throw Boom.unauthorized('invalid email or password');
-   }
-   if (!user.email_verified) {
-     logger.warn('Unsuccessful login attempt due to unverified email', {email: email, security: true, fail: true, request: request});
-     throw Boom.unauthorized('Please verify your email address');
-   }
-   if (user.isPasswordExpired()) {
-     logger.warn('Unsuccessful login attempt due to expired password', {email: email, security: true, fail: true, request: request});
-     throw Boom.unauthorized('password is expired');
-   }
+    const [number, user] = await Promise.all([
+      Flood.countDocuments({type: 'login', email: email, createdAt: {$gte: d5minutes.toISOString()}}),
+      User.findOne({email: email})
+    ]);
 
-   if (!user.validPassword(password)) {
-     logger.warn('Unsuccessful login attempt due to invalid password', {email: email, security: true, fail: true, request: request});
-     // Create a flood entry
-     await Flood.create({type: 'login', email: email, user: user});
-     throw Boom.unauthorized('invalid email or password');
-   }
-   return user;
- }
+    if (number >= 5) {
+      logger.warn('Account locked for 5 minutes', {email: email, security: true, fail: true, request: request});
+      throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
+    }
+    if (!user) {
+      logger.warn('Unsuccessful login attempt due to invalid email address', {email: email, security: true, fail: true, request: request});
+      throw Boom.unauthorized('invalid email or password');
+    }
+    if (!user.email_verified) {
+      logger.warn('Unsuccessful login attempt due to unverified email', {email: email, security: true, fail: true, request: request});
+      throw Boom.unauthorized('Please verify your email address');
+    }
+    if (user.isPasswordExpired()) {
+      logger.warn('Unsuccessful login attempt due to expired password', {email: email, security: true, fail: true, request: request});
+      throw Boom.unauthorized('password is expired');
+    }
+
+    if (!user.validPassword(password)) {
+      logger.warn('Unsuccessful login attempt due to invalid password', {email: email, security: true, fail: true, request: request});
+      // Create a flood entry
+      await Flood.create({type: 'login', email: email, user: user});
+      throw Boom.unauthorized('invalid email or password');
+    }
+    return user;
+  }
 }
 
 function _loginRedirect (request, reply, cookie = false) {
@@ -128,16 +129,16 @@ module.exports = {
     if (!payload.exp) {
       // Creating an API key, store the token in the database
       await JwtToken.create({
-          token: token,
-          user: result._id,
-          blacklist: false
-          // TODO: add expires
-        });
-        logger.warn('Created an API key', {email: result.email, security: true, request: request});
-        return {
-          user: result,
-          token: token
-        };
+        token: token,
+        user: result._id,
+        blacklist: false
+        // TODO: add expires
+      });
+      logger.warn('Created an API key', {email: result.email, security: true, request: request});
+      return {
+        user: result,
+        token: token
+      };
     }
     else {
       logger.info('Successful user authentication. Returning JWT.', {email: result.email, security: true, request: request});
@@ -205,7 +206,6 @@ module.exports = {
     }
     if (cookie && cookie.userId && cookie.totp === false) {
       try {
-        let gUser = {};
         const now = Date.now();
         const offset = 5 * 60 * 1000;
         const d5minutes = new Date(now - offset);
@@ -218,7 +218,17 @@ module.exports = {
           throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
         }
         const token = request.payload['x-hid-totp'];
-        await AuthPolicy.isTOTPValid(user, token);
+        try {
+          await AuthPolicy.isTOTPValid(user, token);
+        }
+        catch (err) {
+          if (err.output.statusCode === 401) {
+            // Create a flood entry
+            await Flood
+              .create({type: 'totp', email: cookie.userId, user: user});
+          }
+          throw err;
+        }
         cookie.totp = true;
         request.yar.set('session', cookie);
         if (request.payload['x-hid-totp-trust']) {
@@ -232,11 +242,6 @@ module.exports = {
         }
       }
       catch (err) {
-        if (err.output.statusCode === 401) {
-          // Create a flood entry
-          await Flood
-            .create({type: 'totp', email: cookie.userId, user: user});
-        }
         const alert =  {
           type: 'danger',
           message: err.output.payload.message
@@ -285,7 +290,7 @@ module.exports = {
       const clientId = request.query.client_id;
       user.sanitize(user);
       request.auth.credentials = user;
-      const [req, res] = await oauth.authorize(request, reply, {}, async function (clientID, redirect, done) {
+      const result = await oauth.authorize(request, reply, {}, async function (clientID, redirect, done) {
         try {
           const client = await Client.findOne({id: clientID});
           if (!client || !client.id) {
@@ -307,6 +312,7 @@ module.exports = {
           return done('An error occurred while processing the request. Please try logging in again.');
         }
       });
+      const req = result[0];
       if (!request.response || (request.response && !request.response.isBoom)) {
         if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
           request.payload = {transaction_id: req.oauth2.transactionID };
@@ -333,7 +339,7 @@ module.exports = {
 
   authorizeOauth2: async function (request, reply) {
     try {
-      const oauth = request.server.plugins['hapi-oauth2orize']
+      const oauth = request.server.plugins['hapi-oauth2orize'];
       const cookie = request.yar.get('session');
 
       if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
@@ -375,7 +381,7 @@ module.exports = {
 
   accessTokenOauth2: async function (request, reply) {
     try {
-      const oauth = request.server.plugins['hapi-oauth2orize']
+      const oauth = request.server.plugins['hapi-oauth2orize'];
       const code = request.payload.code;
       if (!code && request.payload.grant_type !== 'refresh_token') {
         logger.warn(
@@ -470,10 +476,10 @@ module.exports = {
     if (jtoken.id === request.auth.credentials.id) {
       // Blacklist token
       const doc = await JwtToken.findOneAndUpdate({token: token}, {
-          token: token,
-          user: request.auth.credentials._id,
-          blacklist: true
-        }, {upsert: true, new: true});
+        token: token,
+        user: request.auth.credentials._id,
+        blacklist: true
+      }, {upsert: true, new: true});
       return doc;
     }
     else {

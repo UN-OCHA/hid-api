@@ -122,5 +122,5 @@ internals.implementation = (server, options) => {
         }
       }
     }
-  }
-}
+  };
+};

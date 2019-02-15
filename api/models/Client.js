@@ -12,7 +12,7 @@ const Schema = mongoose.Schema;
  */
 
 const isHTMLValidator = function (v) {
- return !isHTML(v);
+  return !isHTML(v);
 };
 
 const ClientSchema = new Schema({
