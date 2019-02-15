@@ -310,7 +310,8 @@ module.exports = {
       if (!request.response || (request.response && !request.response.isBoom)) {
         if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
           request.payload = {transaction_id: req.oauth2.transactionID };
-          await oauth.decision(request, reply);
+          const response = await oauth.decision(request, reply);
+          return response;
         }
         else {
           // The user has not confirmed authorization, so present the
@@ -363,7 +364,8 @@ module.exports = {
         user.markModified('authorizedClients');
         await user.save;
       }
-      await oauth.decision(request, reply);
+      const response = await oauth.decision(request, reply);
+      return response;
     }
     catch (err) {
       // TODO: display error in a view

@@ -68,13 +68,9 @@ internals.decision = async function (request, reply, options, parse) {
         const result = internals.OauthServer.decision(options, parse);
         const transactionLoaderAsync = util.promisify(result[0]);
         const middlewareAsync = util.promisify(result[1]);
-        //try {
-          await transactionLoaderAsync(express.req, express.res);
-          await middlewareAsync(express.req, express.res)
-        /*}
-        catch (err) {
-          console.log('Err2: ' + err);
-        }*/
+        await transactionLoaderAsync(express.req, express.res);
+        const response = await middlewareAsync(express.req, express.res)
+        return response;
     }
 };
 
