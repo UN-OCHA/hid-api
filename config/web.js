@@ -191,7 +191,7 @@ module.exports = {
 
     oauth.deserializeClient(async function (id, done) {
       try {
-        Client.findOne({_id: id});
+        const client = Client.findOne({_id: id});
         return done(null, client);
       }
       catch (err) {
