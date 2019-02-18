@@ -3,7 +3,6 @@
 const Boom = require('boom');
 const qs = require('qs');
 const ejs = require('ejs');
-const http = require('http');
 const axios = require('axios');
 const moment = require('moment');
 const acceptLanguage = require('accept-language');

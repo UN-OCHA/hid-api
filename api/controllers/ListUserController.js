@@ -28,7 +28,7 @@ const checkinHelper = function (list, user, notify, childAttribute, currentUser)
   if (list.joinability === 'public' ||
     list.joinability === 'private' ||
     list.isOwner(currentUser)) {
-      payload.pending = false;
+    payload.pending = false;
   }
   else {
     payload.pending = true;
@@ -54,7 +54,7 @@ const checkinHelper = function (list, user, notify, childAttribute, currentUser)
     for (let i = 0, len = user[childAttribute].length; i < len; i++) {
       if (user[childAttribute][i].list.equals(list._id) &&
         user[childAttribute][i].deleted === false) {
-          throw Boom.badRequest('User is already checked in');
+        throw Boom.badRequest('User is already checked in');
       }
     }
   }

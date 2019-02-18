@@ -46,7 +46,7 @@ async function _loginHelper (request, reply) {
     const offset = 5 * 60 * 1000;
     const d5minutes = new Date(now - offset);
 
-    const [number, user] = await Promise.all([
+    const [number, user] = await Promise.all([
       Flood.countDocuments({type: 'login', email: email, createdAt: {$gte: d5minutes.toISOString()}}),
       User.findOne({email: email})
     ]);
@@ -209,7 +209,7 @@ module.exports = {
         const now = Date.now();
         const offset = 5 * 60 * 1000;
         const d5minutes = new Date(now - offset);
-        const [number, user] = await Promise.all([
+        const [number, user] = await Promise.all([
           Flood.count({type: 'totp', email: cookie.userId, createdAt: {$gte: d5minutes.toISOString()}}),
           User.findOne({_id: cookie.userId})
         ]);
