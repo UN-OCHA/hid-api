@@ -199,7 +199,7 @@ module.exports = {
       throw Boom.badRequest('Invalid app_verify_url');
     }
 
-    let record = null, user = {};
+    let record = null;
     if (request.payload.email) {
       record = await User.findOne({'emails.email': request.payload.email});
     }
@@ -449,7 +449,6 @@ module.exports = {
   },
 
   update: async function (request, reply) {
-    const options = HelperService.getOptionsFromQuery(request.query);
 
     logger.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
       ', values = ', request.payload, { request: request });
@@ -479,7 +478,7 @@ module.exports = {
       logger.warn('Updating user password', { request: request, security: true});
       if (user.validPassword(request.payload.old_password)) {
         if (!User.isStrongPassword(request.payload.new_password)) {
-          that.log.warn('Could not update user password. New password is not strong enough', { request: request, security: true, fail: true});
+          logger.warn('Could not update user password. New password is not strong enough', { request: request, security: true, fail: true});
           throw Boom.badRequest('Password is not strong enough');
         }
         request.payload.password = User.hashPassword(request.payload.new_password);
@@ -572,7 +571,7 @@ module.exports = {
   },
 
   validateEmail: async function (request, reply) {
-    let email = '', query = {};
+    let email = '';
 
     logger.debug('[UserController] Verifying email ', { request: request });
 
@@ -803,7 +802,7 @@ module.exports = {
       let ext = '';
       ext = metadata.format;
       path = path + ext;
-      const info = await image.resize(200, 200).toFile(path);
+      await image.resize(200, 200).toFile(path);
       record.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + metadata.format;
       record.lastModified = new Date();
       await record.save();
@@ -830,7 +829,6 @@ module.exports = {
     }
 
     // Make sure email added is unique
-    let user = {};
     const erecord = await User.findOne({'emails.email': request.payload.email});
     if (erecord) {
       throw Boom.badRequest('Email is not unique');
@@ -1089,9 +1087,9 @@ module.exports = {
     await user.save();
     const cuser = await User.findOne({_id: connection.user});
     // Create connection with current user
-    const cindex = cuser.connectionsIndex(guser._id);
+    const cindex = cuser.connectionsIndex(user._id);
     if (cindex === -1) {
-      cuser.connections.push({pending: false, user: guser._id});
+      cuser.connections.push({pending: false, user: user._id});
     }
     else {
       cuser.connections[cindex].pending = false;
@@ -1101,7 +1099,7 @@ module.exports = {
     // Send notification
     const notification = {
       type: 'connection_approved',
-      createdBy: guser,
+      createdBy: user,
       user: cuser
     };
     await NotificationService.send(notification);

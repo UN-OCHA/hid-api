@@ -510,147 +510,147 @@ const UserSchema = new Schema({
     passIfEmpty: true,
     message: 'location should be valid JSON'
   })*/
-},
-// TODO: figure out validation
-locations: {
-  type: Array
-  /*validate: validate({
-  validator: 'isJSON',
-  passIfEmpty: true,
-  message: 'locations should be valid JSON'
-})*/
-},
-locationsVisibility: {
-  type: String,
-  enum: visibilities,
-  default: 'anyone'
-},
-// Only an admin can set this
-is_admin: {
-  type: Boolean,
-  default: false,
-  adminOnly: true
-},
-isManager: {
-  type: Boolean,
-  default: false,
-  adminOnly: true
-},
-is_orphan: {
-  type: Boolean,
-  default: false,
-  readonly: true
-},
-is_ghost: {
-  type: Boolean,
-  default: false,
-  readonly: true
-},
-expires: {
-  type: Date,
-  default: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-  readonly: true
-},
-lastLogin: {
-  type: Date,
-  readonly: true
-},
-createdBy: {
-  type: Schema.ObjectId,
-  ref: 'User',
-  readonly: true
-},
-favoriteLists: [{
-  type: Schema.ObjectId,
-  ref: 'List'
-}],
-lists: {
-  type: [listUserSchema],
-  readonly: true
-},
-operations: {
-  type: [listUserSchema],
-  readonly: true
-},
-bundles: {
-  type: [listUserSchema],
-  readonly: true
-},
-disasters: {
-  type: [listUserSchema],
-  readonly: true
-},
-offices: {
-  type: [listUserSchema],
-  readonly: true
-},
-authorizedClients: [{
-  type: Schema.ObjectId,
-  ref: 'Client'
-}],
-subscriptions: {
-  type: [subscriptionSchema],
-  readonly: true
-},
-connections: {
-  type: [connectionSchema],
-  readonly: true
-},
-// TODO: figure out validation
-appMetadata: {
-  type: Schema.Types.Mixed
-  /*validate: validate({
-  validator: 'isJSON',
-  passIfEmpty: true,
-  message: 'appMetadata should be valid JSON'
-})*/
-},
-deleted: {
-  type: Boolean,
-  default: false
-},
-hidden: {
-  type: Boolean,
-  default: false,
-  adminOnly: true
-},
-// Whether this user is only using auth
-authOnly: {
-  type: Boolean,
-  default: true
-},
-// Whether the user uses TOTP for security
-totp: {
-  type: Boolean,
-  default: false
-},
-totpMethod: {
-  type: String,
-  enum: ['app']
-},
-totpConf: {
-  type: Schema.Types.Mixed,
-  readonly: true
-},
-totpTrusted: {
-  type: [trustedDeviceSchema],
-  readonly: true
-},
-googleCredentials: {
-  type: Schema.Types.Mixed,
-  readonly: true,
-  default: false
-},
-outlookCredentials: {
-  type: Schema.Types.Mixed,
-  readonly: true,
-  default: false
-},
-lastModified: {
-  type: Date,
-  default: Date.now,
-  readonly: true
-}
+  },
+  // TODO: figure out validation
+  locations: {
+    type: Array
+    /*validate: validate({
+    validator: 'isJSON',
+    passIfEmpty: true,
+    message: 'locations should be valid JSON'
+  })*/
+  },
+  locationsVisibility: {
+    type: String,
+    enum: visibilities,
+    default: 'anyone'
+  },
+  // Only an admin can set this
+  is_admin: {
+    type: Boolean,
+    default: false,
+    adminOnly: true
+  },
+  isManager: {
+    type: Boolean,
+    default: false,
+    adminOnly: true
+  },
+  is_orphan: {
+    type: Boolean,
+    default: false,
+    readonly: true
+  },
+  is_ghost: {
+    type: Boolean,
+    default: false,
+    readonly: true
+  },
+  expires: {
+    type: Date,
+    default: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    readonly: true
+  },
+  lastLogin: {
+    type: Date,
+    readonly: true
+  },
+  createdBy: {
+    type: Schema.ObjectId,
+    ref: 'User',
+    readonly: true
+  },
+  favoriteLists: [{
+    type: Schema.ObjectId,
+    ref: 'List'
+  }],
+  lists: {
+    type: [listUserSchema],
+    readonly: true
+  },
+  operations: {
+    type: [listUserSchema],
+    readonly: true
+  },
+  bundles: {
+    type: [listUserSchema],
+    readonly: true
+  },
+  disasters: {
+    type: [listUserSchema],
+    readonly: true
+  },
+  offices: {
+    type: [listUserSchema],
+    readonly: true
+  },
+  authorizedClients: [{
+    type: Schema.ObjectId,
+    ref: 'Client'
+  }],
+  subscriptions: {
+    type: [subscriptionSchema],
+    readonly: true
+  },
+  connections: {
+    type: [connectionSchema],
+    readonly: true
+  },
+  // TODO: figure out validation
+  appMetadata: {
+    type: Schema.Types.Mixed
+    /*validate: validate({
+    validator: 'isJSON',
+    passIfEmpty: true,
+    message: 'appMetadata should be valid JSON'
+  })*/
+  },
+  deleted: {
+    type: Boolean,
+    default: false
+  },
+  hidden: {
+    type: Boolean,
+    default: false,
+    adminOnly: true
+  },
+  // Whether this user is only using auth
+  authOnly: {
+    type: Boolean,
+    default: true
+  },
+  // Whether the user uses TOTP for security
+  totp: {
+    type: Boolean,
+    default: false
+  },
+  totpMethod: {
+    type: String,
+    enum: ['app']
+  },
+  totpConf: {
+    type: Schema.Types.Mixed,
+    readonly: true
+  },
+  totpTrusted: {
+    type: [trustedDeviceSchema],
+    readonly: true
+  },
+  googleCredentials: {
+    type: Schema.Types.Mixed,
+    readonly: true,
+    default: false
+  },
+  outlookCredentials: {
+    type: Schema.Types.Mixed,
+    readonly: true,
+    default: false
+  },
+  lastModified: {
+    type: Date,
+    default: Date.now,
+    readonly: true
+  }
 }, {
   timestamps: true,
   toObject: {
@@ -666,23 +666,19 @@ UserSchema.virtual('sub').get(function () {
   return this._id;
 });
 
-UserSchema.pre('remove', function (next) {
-  const that = this;
-  // Avoid null connections from being created when a user is removed
-  this
-  .model('User')
-  .find({'connections.user': this._id})
-  .then(users => {
+UserSchema.pre('remove', async function (next) {
+  try {
+    // Avoid null connections from being created when a user is removed
+    const users = await this.model('User').find({'connections.user': this._id});
+    const promises = [];
     for (let i = 0; i < users.length; i++) {
       for (let j = 0; j < users[i].connections.length; j++) {
         if (users[i].connections[j].user.toString() === that._id.toString()) {
           users[i].connections.id(users[i].connections[j]._id).remove();
         }
       }
-      users[i].save();
+      promises.push(users[i].save());
     }
-  })
-  .then(() => {
     // Reduce the number of contacts for each list of the user
     const listIds = [];
     listTypes.forEach(function (attr) {
@@ -690,19 +686,18 @@ UserSchema.pre('remove', function (next) {
         listIds.push(checkin.list);
       });
     });
-    return that
-    .model('List')
-    .update(
-      { _id: { $in: listIds}},
-      { $inc: { count: -1 }}
+    promises.push(this.model('List')
+      .update(
+        { _id: { $in: listIds}},
+        { $inc: { count: -1 }}
+      )
     );
-  })
-  .then(() => {
+    await Promise.all(promises);
     next();
-  })
-  .catch(err => {
+  }
+  catch (err) {
     next(err);
-  });
+  }
 });
 
 UserSchema.pre('save', function (next) {
@@ -726,20 +721,17 @@ UserSchema.post('findOneAndUpdate', function (user) {
   user.save();
 });
 
-UserSchema.post('findOne', function (result, next) {
-  const that = this;
+UserSchema.post('findOne', async function (result, next) {
   if (!result) {
     return next();
   }
-  result
-  .populate(userPopulate1)
-  .execPopulate()
-  .then(user => {
+  try {
+    await result.populate(userPopulate1);
     return next();
-  })
-  .catch(err => {
-    that.log.error('Error populating user', { error: err });
-  });
+  }
+  catch (err) {
+    next(err);
+  }
 });
 
 UserSchema.statics = {
@@ -801,573 +793,574 @@ UserSchema.statics = {
         if (user.connections[i].pending === false &&
           ((user.connections[i].user._id && user.connections[i].user._id.toString() === userId.toString()) ||
           (!user.connections[i].user._id && user.connections[i].user.toString() === userId.toString()))) {
-            index = i;
-          }
-        }
-      }
-      return index;
-    },
-
-    // Determines if a password is strong enough for HID
-    isStrongPassword: function (password) {
-      const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
-      // At least 8 characters and at least one number, one uppercase and one lowercase.
-      return password.length > 7 && regex.test(password);
-    },
-
-    hashPassword: function (password) {
-      return Bcrypt.hashSync(password, 11);
-    },
-
-    // Generate a cryptographically strong random password.
-    generateRandomPassword: function () {
-      const buffer = crypto.randomBytes(256);
-      return buffer.toString('hex').slice(0, 10) + 'B';
-    },
-
-    translateCheckin: function (checkin, language) {
-      let name = '', nameEn = '', acronym = '', acronymEn = '';
-      checkin.names.forEach(function (nameLn) {
-        if (nameLn.language === language) {
-          name = nameLn.text;
-        }
-        if (nameLn.language === 'en') {
-          nameEn = nameLn.text;
-        }
-      });
-      checkin.acronyms.forEach(function (acroLn) {
-        if (acroLn.language === language) {
-          acronym = acroLn.text;
-        }
-        if (acroLn.language === 'en') {
-          acronymEn = acroLn.text;
-        }
-      });
-      if (name !== '') {
-        checkin.name = name;
-      }
-      else {
-        if (nameEn !== '') {
-          checkin.name = nameEn;
-        }
-      }
-      if (acronym !== '') {
-        checkin.acronym = acronym;
-      }
-      else {
-        if (acronymEn !== '') {
-          checkin.acronym = acronymEn;
-        }
-      }
-    }
-  };
-
-  UserSchema.methods = {
-    sanitize: function (user) {
-      this.sanitizeClients();
-      this.sanitizeLists(user);
-      if (this._id.toString() !== user._id.toString() && !user.is_admin) {
-        if (this.emailsVisibility !== 'anyone') {
-          if ((this.emailsVisibility === 'verified' && !user.verified) ||
-          (this.emailsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
-            this.email = null;
-            this.emails = [];
-          }
-        }
-
-        if (this.phonesVisibility !== 'anyone') {
-          if ((this.phonesVisibility === 'verified' && !user.verified) ||
-          (this.phonesVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
-            this.phone_number = null;
-            this.phone_numbers = [];
-          }
-        }
-
-        if (this.locationsVisibility !== 'anyone') {
-          if ((this.locationsVisibility === 'verified' && !user.verified) ||
-          (this.locationsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
-            this.location = null;
-            this.locations = [];
-          }
-        }
-      }
-    },
-    getAppUrl: function () {
-      return process.env.APP_URL + '/users/' + this._id;
-    },
-
-    getListIds: function () {
-      const that = this;
-      const listIds = [];
-      listTypes.forEach(function (attr) {
-        if (that[attr + 's'].length > 0) {
-          that[attr + 's'].forEach(function (lu) {
-            if (lu.deleted === false) {
-              listIds.push(lu.list.toString());
-            }
-          });
-        }
-      });
-      return listIds;
-    },
-
-    sanitizeLists: function (user) {
-      if (this._id.toString() !== user._id.toString() && !user.is_admin && !user.isManager) {
-        const that = this;
-        listTypes.forEach(function (attr) {
-          _.remove(that[attr + 's'], function (checkin) {
-            if (checkin.visibility === 'inlist') {
-              let out = true;
-              // Is user in list ?
-              for (let i = 0; i < user[attr + 's'].length; i++) {
-                if (user[attr + 's'][i].list.toString() === checkin.list.toString() && !user[attr + 's'][i].deleted) {
-                  out = false;
-                }
-              }
-              // Is user the owner of the list ?
-              if (checkin.owner && checkin.owner.toString() === user._id.toString()) {
-                out = false;
-              }
-              // Is user a manager of the list ?
-              if (checkin.managers && checkin.managers.length) {
-                for (let i = 0; i < checkin.managers.length; i++) {
-                  if (checkin.managers[i].toString() === user._id.toString()) {
-                    out = false;
-                  }
-                }
-              }
-              return out;
-            }
-            else if (checkin.visibility === 'me') {
-              let out = true;
-
-              // Is user the owner of the list ?
-              if (checkin.owner && checkin.owner.toString() === user._id.toString()) {
-                out = false;
-              }
-              // Is user a manager of the list ?
-              if (checkin.managers && checkin.managers.length) {
-                for (let i = 0; i < checkin.managers.length; i++) {
-                  if (checkin.managers[i].toString() === user._id.toString()) {
-                    out = false;
-                  }
-                }
-              }
-              return out;
-            }
-            else {
-              return checkin.visibility === 'verified' && !user.verified;
-            }
-          });
-        });
-      }
-    },
-    sanitizeClients: function () {
-      if (this.authorizedClients && this.authorizedClients.length) {
-        const sanitized = [];
-        for (let i = 0, len = this.authorizedClients.length; i < len; i++) {
-          if (this.authorizedClients[i].secret) {
-            sanitized.push({
-              id: this.authorizedClients[i].id,
-              name: this.authorizedClients[i].name
-            });
-          }
-          else {
-            sanitized.push(this.authorizedClients[i]);
-          }
-        }
-      }
-    },
-    validPassword: function (password)  {
-      if (!this.password) {
-        return false;
-      }
-      else {
-        return Bcrypt.compareSync(password, this.password);
-      }
-    },
-
-    generateHash: function (type, email) {
-      if (type === 'reset_password') {
-        const now = Date.now();
-        const value = now + ':' + this._id.toString() + ':' + this.password;
-        const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
-        return {
-          timestamp: now,
-          hash: hash
-        };
-      }
-      else if (type === 'verify_email') {
-        const now = Date.now();
-        const value = now + ':' + this._id.toString() + ':' + email;
-        const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
-        return {
-          timestamp: now,
-          hash: hash
-        };
-      }
-      else {
-        const buffer = crypto.randomBytes(256);
-        const now = Date.now();
-        const hash = buffer.toString('hex').slice(0, 15);
-        return Buffer.from(now + '/' + hash).toString('base64');
-      }
-    },
-
-    // Validate the hash of a confirmation link
-    validHash: function (hashLink, type, time, email) {
-      if (type === 'reset_password') {
-        const now = Date.now();
-        if (now - time > 24 * 3600 * 1000) {
-          return false;
-        }
-        const value = time + ':' + this._id.toString() + ':' + this.password;
-        const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
-        return hash === hashLink;
-      }
-      else if (type === 'verify_email') {
-        const now = Date.now();
-        if (now - time > 24 * 3600 * 1000) {
-          return false;
-        }
-        const value = time + ':' + this._id.toString() + ':' + email;
-        const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
-        return hash === hashLink;
-      }
-      else {
-        const key = new Buffer(hashLink, 'base64').toString('ascii');
-        const parts = key.split('/');
-        const timestamp = parts[0];
-        const now = Date.now();
-
-        // Verify hash
-        // verify timestamp is not too old (allow up to 7 days in milliseconds)
-        if (timestamp < (now - 7 * 86400000) || timestamp > now) {
-          return false;
-        }
-        return true;
-      }
-    },
-
-    emailIndex: function (email) {
-      let index = -1;
-      for (let i = 0, len = this.emails.length; i < len; i++) {
-        if (this.emails[i].email === email) {
           index = i;
         }
       }
-      return index;
-    },
+    }
+    return index;
+  },
 
-    verifyEmail: function (email) {
-      if (this.email === email) {
-        this.email_verified = true;
+  // Determines if a password is strong enough for HID
+  isStrongPassword: function (password) {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+    // At least 8 characters and at least one number, one uppercase and one lowercase.
+    return password.length > 7 && regex.test(password);
+  },
+
+  hashPassword: function (password) {
+    return Bcrypt.hashSync(password, 11);
+  },
+
+  // Generate a cryptographically strong random password.
+  generateRandomPassword: function () {
+    const buffer = crypto.randomBytes(256);
+    return buffer.toString('hex').slice(0, 10) + 'B';
+  },
+
+  translateCheckin: function (checkin, language) {
+    let name = '', nameEn = '', acronym = '', acronymEn = '';
+    checkin.names.forEach(function (nameLn) {
+      if (nameLn.language === language) {
+        name = nameLn.text;
       }
-      const index = this.emailIndex(email);
-      if (index !== -1) {
-        this.emails[index].validated = true;
-        this.emails.set(index, this.emails[index]);
+      if (nameLn.language === 'en') {
+        nameEn = nameLn.text;
       }
-    },
+    });
+    checkin.acronyms.forEach(function (acroLn) {
+      if (acroLn.language === language) {
+        acronym = acroLn.text;
+      }
+      if (acroLn.language === 'en') {
+        acronymEn = acroLn.text;
+      }
+    });
+    if (name !== '') {
+      checkin.name = name;
+    }
+    else {
+      if (nameEn !== '') {
+        checkin.name = nameEn;
+      }
+    }
+    if (acronym !== '') {
+      checkin.acronym = acronym;
+    }
+    else {
+      if (acronymEn !== '') {
+        checkin.acronym = acronymEn;
+      }
+    }
+  }
+};
 
-    connectionsIndex: function (userId) {
-      let index = -1;
-      if (this.connections && this.connections.length) {
-        for (let i = 0, len = this.connections.length; i < len; i++) {
-          if (this.connections[i].user &&
-            this.connections[i].pending === false &&
-            ((this.connections[i].user._id && this.connections[i].user._id.toString() === userId.toString()) ||
-            (!this.connections[i].user._id && this.connections[i].user.toString() === userId.toString()))) {
-              index = i;
-            }
-          }
+UserSchema.methods = {
+  sanitize: function (user) {
+    this.sanitizeClients();
+    this.sanitizeLists(user);
+    if (this._id.toString() !== user._id.toString() && !user.is_admin) {
+      if (this.emailsVisibility !== 'anyone') {
+        if ((this.emailsVisibility === 'verified' && !user.verified) ||
+        (this.emailsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
+          this.email = null;
+          this.emails = [];
         }
-        return index;
-      },
+      }
 
-      hasAuthorizedClient: function (clientId) {
-        let out = false;
-        for (let i = 0, len = this.authorizedClients.length; i < len; i++) {
-          if (this.authorizedClients[i].id === clientId) {
-            out = true;
-          }
+      if (this.phonesVisibility !== 'anyone') {
+        if ((this.phonesVisibility === 'verified' && !user.verified) ||
+        (this.phonesVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
+          this.phone_number = null;
+          this.phone_numbers = [];
         }
-        return out;
-      },
+      }
 
-      subscriptionsIndex: function (serviceId) {
-        const id = serviceId.toString();
-        let index = -1;
-        for (let i = 0; i < this.subscriptions.length; i++) {
-          if (this.subscriptions[i].service &&
-            ((this.subscriptions[i].service._id && this.subscriptions[i].service._id.toString() === id) ||
-            this.subscriptions[i].service.toString() === id)) {
-              index = i;
-            }
-          }
-          return index;
-        },
+      if (this.locationsVisibility !== 'anyone') {
+        if ((this.locationsVisibility === 'verified' && !user.verified) ||
+        (this.locationsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
+          this.location = null;
+          this.locations = [];
+        }
+      }
+    }
+  },
 
-        // Whether we should send a reminder to verify email to user
-        // Reminder emails are sent out 2, 4, 7 and 30 days after registration
-        shouldSendReminderVerify: function() {
-          const created = new Date(this.createdAt),
-          current = Date.now(),
-          remindedVerify = new Date(this.remindedVerify);
-          if (this.email_verified || this.is_orphan || this.is_ghost) {
-            return false;
-          }
-          if (!this.remindedVerify && !this.timesRemindedVerify && current.valueOf() - created.valueOf() > 48 * 3600 * 1000) {
-            return true;
-          }
-          if (this.remindedVerify && this.timesRemindedVerify === 1 && current.valueOf() - remindedVerify.valueOf() > 48 * 3600 * 1000) {
-            return true;
-          }
-          if (this.remindedVerify && this.timesRemindedVerify === 2 && current.valueOf() - remindedVerify.valueOf() > 72 * 3600 * 1000) {
-            return true;
-          }
-          if (this.remindedVerify && this.timesRemindedVerify === 3 && current.valueOf() - remindedVerify.valueOf() > 23 * 24 * 3600 * 1000) {
-            return true;
-          }
-          return false;
-        },
+  getAppUrl: function () {
+    return process.env.APP_URL + '/users/' + this._id;
+  },
 
-        // Whether we should send an update reminder (sent out after a user hasn't been updated for 6 months)
-        shouldSendReminderUpdate: function () {
-          const d = new Date();
-          const revisedOffset = d.valueOf() - this.updatedAt.valueOf();
-          if (revisedOffset < 183 * 24 * 3600 * 1000) { // if not revised during 6 months
-            return false;
+  getListIds: function () {
+    const that = this;
+    const listIds = [];
+    listTypes.forEach(function (attr) {
+      if (that[attr + 's'].length > 0) {
+        that[attr + 's'].forEach(function (lu) {
+          if (lu.deleted === false) {
+            listIds.push(lu.list.toString());
           }
-          if (this.remindedUpdate) {
-            const remindedOffset = d.valueOf() - this.remindedUpdate.valueOf();
-            if (remindedOffset < 183 * 24 * 3600 * 1000) {
-              return false;
-            }
-          }
-          return true;
-        },
+        });
+      }
+    });
+    return listIds;
+  },
 
-        hasLocalPhoneNumber: function (iso2) {
-          let found = false;
-          const that = this;
-          this.phone_numbers.forEach(function (item) {
-            const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
-            try {
-              const phoneNumber = phoneUtil.parse(item.number);
-              const regionCode = phoneUtil.getRegionCodeForNumber(phoneNumber);
-              if (regionCode.toUpperCase() === iso2) {
-                found = true;
+  sanitizeLists: function (user) {
+    if (this._id.toString() !== user._id.toString() && !user.is_admin && !user.isManager) {
+      const that = this;
+      listTypes.forEach(function (attr) {
+        _.remove(that[attr + 's'], function (checkin) {
+          if (checkin.visibility === 'inlist') {
+            let out = true;
+            // Is user in list ?
+            for (let i = 0; i < user[attr + 's'].length; i++) {
+              if (user[attr + 's'][i].list.toString() === checkin.list.toString() && !user[attr + 's'][i].deleted) {
+                out = false;
               }
             }
-            catch (err) {
-              // Invalid phone number
-              that.log.error('An invalid phone number was found', { error: err });
+            // Is user the owner of the list ?
+            if (checkin.owner && checkin.owner.toString() === user._id.toString()) {
+              out = false;
             }
-          });
-          return found;
-        },
-
-        // Whether the contact is in country or not
-        isInCountry: async function (pcode) {
-          const hrinfoId = this.location.country.id.replace('hrinfo_loc_', '');
-          const url = 'https://www.humanitarianresponse.info/api/v1.0/locations/' + hrinfoId;
-          const response = await axios.get(url);
-          const parsed = JSON.parse(response.data);
-          return parsed.data[0].pcode === pcode;
-        },
-
-        translateCheckin: function (checkin, language) {
-          let name = '', nameEn = '', acronym = '', acronymEn = '';
-          checkin.names.forEach(function (nameLn) {
-            if (nameLn.language === language) {
-              name = nameLn.text;
-            }
-            if (nameLn.language === 'en') {
-              nameEn = nameLn.text;
-            }
-          });
-          checkin.acronyms.forEach(function (acroLn) {
-            if (acroLn.language === language) {
-              acronym = acroLn.text;
-            }
-            if (acroLn.language === 'en') {
-              acronymEn = acroLn.text;
-            }
-          });
-          if (name !== '') {
-            checkin.name = name;
-          }
-          else {
-            if (nameEn !== '') {
-              checkin.name = nameEn;
-            }
-          }
-          if (acronym !== '') {
-            checkin.acronym = acronym;
-          }
-          else {
-            if (acronymEn !== '') {
-              checkin.acronym = acronymEn;
-            }
-          }
-        },
-
-        translateListNames: function (language) {
-          const that = this;
-          listTypes.forEach(function (listType) {
-            if (that[listType + 's'] && that[listType + 's'].length) {
-              that[listType + 's'].forEach(function (checkin) {
-                that.translateCheckin(checkin, language);
-              });
-            }
-          });
-          if (this.organization) {
-            this.translateCheckin(this.organization, language);
-          }
-        },
-
-        updateCheckins: function (list) {
-          for (let j = 0; j < this[list.type + 's'].length; j++) {
-            if (this[list.type + 's'][j].list.toString() === list._id.toString()) {
-              this[list.type + 's'][j].name = list.name;
-              this[list.type + 's'][j].names = list.names;
-              this[list.type + 's'][j].acronym = list.acronym;
-              this[list.type + 's'][j].acronyms = list.acronyms;
-              this[list.type + 's'][j].owner = list.owner;
-              this[list.type + 's'][j].managers = list.managers;
-              this[list.type + 's'][j].visibility = list.visibility;
-              if (list.type === 'organization') {
-                this[list.type + 's'][j].orgTypeId = list.metadata.type.id;
-                this[list.type + 's'][j].orgTypeLabel = list.metadata.type.label;
-              }
-            }
-          }
-          if (list.type === 'organization' &&
-          this.organization &&
-          this.organization.list &&
-          this.organization.list.toString() === list._id.toString()) {
-            this.organization.name = list.name;
-            this.organization.names = list.names;
-            this.organization.acronym = list.acronym;
-            this.organization.acronyms = list.acronyms;
-            this.organization.owner = list.owner;
-            this.organization.managers = list.managers;
-            this.organization.visibility = list.visibility;
-            this.organization.orgTypeId = list.metadata.type.id;
-            this.organization.orgTypeLabel = list.metadata.type.label;
-          }
-        },
-
-        defaultPopulate: function () {
-          return this
-          .populate(userPopulate1)
-          .execPopulate();
-        },
-
-        trustedDeviceIndex: function (ua) {
-          let index = -1;
-          for (let i = 0, len = this.totpTrusted.length; i < len; i++) {
-            if (this.totpTrusted[i].ua === ua) {
-              index = i;
-            }
-          }
-          return index;
-        },
-
-        isTrustedDevice: function (ua, secret) {
-          const tindex = this.trustedDeviceIndex(ua);
-          const offset = Date.now() - 30 * 24 * 60 * 60 * 1000;
-          if (tindex !== -1 &&
-            this.totpTrusted[tindex].secret === secret &&
-            offset < this.totpTrusted[tindex].date) {
-              return true;
-            }
-            else {
-              return false;
-            }
-          },
-
-          backupCodeIndex: function (code) {
-            let index = -1;
-            for (let i = 0; i < this.totpConf.backupCodes.length; i++) {
-              if (Bcrypt.compareSync(code, this.totpConf.backupCodes[i])) {
-                index = i;
-              }
-            }
-            return index;
-          },
-
-          isPasswordExpired: function () {
-            const lastPasswordReset = this.lastPasswordReset.valueOf();
-            const current = new Date().valueOf();
-            if (current - lastPasswordReset > 6 * 30 * 24 * 3600 * 1000) {
-              return true;
-            }
-            else {
-              return false;
-            }
-          },
-
-          isVerifiableEmail: function (email) {
-            const ind = email.indexOf('@');
-            const domain = email.substr((ind + 1));
-            return TrustedDomain
-            .findOne({url: domain})
-            .populate('list');
-          },
-
-          canBeVerifiedAutomatically: function () {
-            const that = this;
-            const promises = [];
-            // Check all emails
-            this.emails.forEach(function (email) {
-              if (email.validated) {
-                promises.push(that.isVerifiableEmail(email.email));
-              }
-            });
-            return Promise.all(promises)
-            .then(values => {
-              let out = false;
-              values.forEach(function (val) {
-                if (val) {
-                  out = true;
+            // Is user a manager of the list ?
+            if (checkin.managers && checkin.managers.length) {
+              for (let i = 0; i < checkin.managers.length; i++) {
+                if (checkin.managers[i].toString() === user._id.toString()) {
+                  out = false;
                 }
-              });
-              return out;
-            });
-          },
-
-          toJSON: function () {
-            const user = this.toObject();
-            delete user.password;
-            if (user.totpConf) {
-              delete user.totpConf;
-            }
-            if (user.totpTrusted) {
-              for (let i = 0; i < user.totpTrusted.length; i++) {
-                delete user.totpTrusted[i].secret;
               }
             }
-            if (user.googleCredentials && user.googleCredentials.refresh_token) {
-              user.googleCredentials = true;
-            }
-            else {
-              user.googleCredentials = false;
-            }
-            if (user.outlookCredentials) {
-              user.outlookCredentials = true;
-            }
-            else {
-              user.outlookCredentials = false;
-            }
-            listTypes.forEach(function (attr) {
-              _.remove(user[attr + 's'], function (checkin) {
-                return checkin.deleted;
-              });
-            });
-            return user;
+            return out;
           }
-        };
+          else if (checkin.visibility === 'me') {
+            let out = true;
 
-        module.exports = mongoose.model('User', UserSchema);
+            // Is user the owner of the list ?
+            if (checkin.owner && checkin.owner.toString() === user._id.toString()) {
+              out = false;
+            }
+            // Is user a manager of the list ?
+            if (checkin.managers && checkin.managers.length) {
+              for (let i = 0; i < checkin.managers.length; i++) {
+                if (checkin.managers[i].toString() === user._id.toString()) {
+                  out = false;
+                }
+              }
+            }
+            return out;
+          }
+          else {
+            return checkin.visibility === 'verified' && !user.verified;
+          }
+        });
+      });
+    }
+  },
+  sanitizeClients: function () {
+    if (this.authorizedClients && this.authorizedClients.length) {
+      const sanitized = [];
+      for (let i = 0, len = this.authorizedClients.length; i < len; i++) {
+        if (this.authorizedClients[i].secret) {
+          sanitized.push({
+            id: this.authorizedClients[i].id,
+            name: this.authorizedClients[i].name
+          });
+        }
+        else {
+          sanitized.push(this.authorizedClients[i]);
+        }
+      }
+    }
+  },
+  validPassword: function (password)  {
+    if (!this.password) {
+      return false;
+    }
+    else {
+      return Bcrypt.compareSync(password, this.password);
+    }
+  },
+
+  generateHash: function (type, email) {
+    if (type === 'reset_password') {
+      const now = Date.now();
+      const value = now + ':' + this._id.toString() + ':' + this.password;
+      const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+      return {
+        timestamp: now,
+        hash: hash
+      };
+    }
+    else if (type === 'verify_email') {
+      const now = Date.now();
+      const value = now + ':' + this._id.toString() + ':' + email;
+      const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+      return {
+        timestamp: now,
+        hash: hash
+      };
+    }
+    else {
+      const buffer = crypto.randomBytes(256);
+      const now = Date.now();
+      const hash = buffer.toString('hex').slice(0, 15);
+      return Buffer.from(now + '/' + hash).toString('base64');
+    }
+  },
+
+  // Validate the hash of a confirmation link
+  validHash: function (hashLink, type, time, email) {
+    if (type === 'reset_password') {
+      const now = Date.now();
+      if (now - time > 24 * 3600 * 1000) {
+        return false;
+      }
+      const value = time + ':' + this._id.toString() + ':' + this.password;
+      const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+      return hash === hashLink;
+    }
+    else if (type === 'verify_email') {
+      const now = Date.now();
+      if (now - time > 24 * 3600 * 1000) {
+        return false;
+      }
+      const value = time + ':' + this._id.toString() + ':' + email;
+      const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+      return hash === hashLink;
+    }
+    else {
+      const key = new Buffer(hashLink, 'base64').toString('ascii');
+      const parts = key.split('/');
+      const timestamp = parts[0];
+      const now = Date.now();
+
+      // Verify hash
+      // verify timestamp is not too old (allow up to 7 days in milliseconds)
+      if (timestamp < (now - 7 * 86400000) || timestamp > now) {
+        return false;
+      }
+      return true;
+    }
+  },
+
+  emailIndex: function (email) {
+    let index = -1;
+    for (let i = 0, len = this.emails.length; i < len; i++) {
+      if (this.emails[i].email === email) {
+        index = i;
+      }
+    }
+    return index;
+  },
+
+  verifyEmail: function (email) {
+    if (this.email === email) {
+      this.email_verified = true;
+    }
+    const index = this.emailIndex(email);
+    if (index !== -1) {
+      this.emails[index].validated = true;
+      this.emails.set(index, this.emails[index]);
+    }
+  },
+
+  connectionsIndex: function (userId) {
+    let index = -1;
+    if (this.connections && this.connections.length) {
+      for (let i = 0, len = this.connections.length; i < len; i++) {
+        if (this.connections[i].user &&
+          this.connections[i].pending === false &&
+          ((this.connections[i].user._id && this.connections[i].user._id.toString() === userId.toString()) ||
+          (!this.connections[i].user._id && this.connections[i].user.toString() === userId.toString()))) {
+          index = i;
+        }
+      }
+    }
+    return index;
+  },
+
+  hasAuthorizedClient: function (clientId) {
+    let out = false;
+    for (let i = 0, len = this.authorizedClients.length; i < len; i++) {
+      if (this.authorizedClients[i].id === clientId) {
+        out = true;
+      }
+    }
+    return out;
+  },
+
+  subscriptionsIndex: function (serviceId) {
+    const id = serviceId.toString();
+    let index = -1;
+    for (let i = 0; i < this.subscriptions.length; i++) {
+      if (this.subscriptions[i].service &&
+        ((this.subscriptions[i].service._id && this.subscriptions[i].service._id.toString() === id) ||
+        this.subscriptions[i].service.toString() === id)) {
+        index = i;
+      }
+    }
+    return index;
+  },
+
+  // Whether we should send a reminder to verify email to user
+  // Reminder emails are sent out 2, 4, 7 and 30 days after registration
+  shouldSendReminderVerify: function() {
+    const created = new Date(this.createdAt),
+    current = Date.now(),
+    remindedVerify = new Date(this.remindedVerify);
+    if (this.email_verified || this.is_orphan || this.is_ghost) {
+      return false;
+    }
+    if (!this.remindedVerify && !this.timesRemindedVerify && current.valueOf() - created.valueOf() > 48 * 3600 * 1000) {
+      return true;
+    }
+    if (this.remindedVerify && this.timesRemindedVerify === 1 && current.valueOf() - remindedVerify.valueOf() > 48 * 3600 * 1000) {
+      return true;
+    }
+    if (this.remindedVerify && this.timesRemindedVerify === 2 && current.valueOf() - remindedVerify.valueOf() > 72 * 3600 * 1000) {
+      return true;
+    }
+    if (this.remindedVerify && this.timesRemindedVerify === 3 && current.valueOf() - remindedVerify.valueOf() > 23 * 24 * 3600 * 1000) {
+      return true;
+    }
+    return false;
+  },
+
+  // Whether we should send an update reminder (sent out after a user hasn't been updated for 6 months)
+  shouldSendReminderUpdate: function () {
+    const d = new Date();
+    const revisedOffset = d.valueOf() - this.updatedAt.valueOf();
+    if (revisedOffset < 183 * 24 * 3600 * 1000) { // if not revised during 6 months
+      return false;
+    }
+    if (this.remindedUpdate) {
+      const remindedOffset = d.valueOf() - this.remindedUpdate.valueOf();
+      if (remindedOffset < 183 * 24 * 3600 * 1000) {
+        return false;
+      }
+    }
+    return true;
+  },
+
+  hasLocalPhoneNumber: function (iso2) {
+    let found = false;
+    const that = this;
+    this.phone_numbers.forEach(function (item) {
+      const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
+      try {
+        const phoneNumber = phoneUtil.parse(item.number);
+        const regionCode = phoneUtil.getRegionCodeForNumber(phoneNumber);
+        if (regionCode.toUpperCase() === iso2) {
+          found = true;
+        }
+      }
+      catch (err) {
+        // Invalid phone number
+        that.log.error('An invalid phone number was found', { error: err });
+      }
+    });
+    return found;
+  },
+
+  // Whether the contact is in country or not
+  isInCountry: async function (pcode) {
+    const hrinfoId = this.location.country.id.replace('hrinfo_loc_', '');
+    const url = 'https://www.humanitarianresponse.info/api/v1.0/locations/' + hrinfoId;
+    const response = await axios.get(url);
+    const parsed = JSON.parse(response.data);
+    return parsed.data[0].pcode === pcode;
+  },
+
+  translateCheckin: function (checkin, language) {
+    let name = '', nameEn = '', acronym = '', acronymEn = '';
+    checkin.names.forEach(function (nameLn) {
+      if (nameLn.language === language) {
+        name = nameLn.text;
+      }
+      if (nameLn.language === 'en') {
+        nameEn = nameLn.text;
+      }
+    });
+    checkin.acronyms.forEach(function (acroLn) {
+      if (acroLn.language === language) {
+        acronym = acroLn.text;
+      }
+      if (acroLn.language === 'en') {
+        acronymEn = acroLn.text;
+      }
+    });
+    if (name !== '') {
+      checkin.name = name;
+    }
+    else {
+      if (nameEn !== '') {
+        checkin.name = nameEn;
+      }
+    }
+    if (acronym !== '') {
+      checkin.acronym = acronym;
+    }
+    else {
+      if (acronymEn !== '') {
+        checkin.acronym = acronymEn;
+      }
+    }
+  },
+
+  translateListNames: function (language) {
+    const that = this;
+    listTypes.forEach(function (listType) {
+      if (that[listType + 's'] && that[listType + 's'].length) {
+        that[listType + 's'].forEach(function (checkin) {
+          that.translateCheckin(checkin, language);
+        });
+      }
+    });
+    if (this.organization) {
+      this.translateCheckin(this.organization, language);
+    }
+  },
+
+  updateCheckins: function (list) {
+    for (let j = 0; j < this[list.type + 's'].length; j++) {
+      if (this[list.type + 's'][j].list.toString() === list._id.toString()) {
+        this[list.type + 's'][j].name = list.name;
+        this[list.type + 's'][j].names = list.names;
+        this[list.type + 's'][j].acronym = list.acronym;
+        this[list.type + 's'][j].acronyms = list.acronyms;
+        this[list.type + 's'][j].owner = list.owner;
+        this[list.type + 's'][j].managers = list.managers;
+        this[list.type + 's'][j].visibility = list.visibility;
+        if (list.type === 'organization') {
+          this[list.type + 's'][j].orgTypeId = list.metadata.type.id;
+          this[list.type + 's'][j].orgTypeLabel = list.metadata.type.label;
+        }
+      }
+    }
+    if (list.type === 'organization' &&
+    this.organization &&
+    this.organization.list &&
+    this.organization.list.toString() === list._id.toString()) {
+      this.organization.name = list.name;
+      this.organization.names = list.names;
+      this.organization.acronym = list.acronym;
+      this.organization.acronyms = list.acronyms;
+      this.organization.owner = list.owner;
+      this.organization.managers = list.managers;
+      this.organization.visibility = list.visibility;
+      this.organization.orgTypeId = list.metadata.type.id;
+      this.organization.orgTypeLabel = list.metadata.type.label;
+    }
+  },
+
+  defaultPopulate: function () {
+    return this
+    .populate(userPopulate1)
+    .execPopulate();
+  },
+
+  trustedDeviceIndex: function (ua) {
+    let index = -1;
+    for (let i = 0, len = this.totpTrusted.length; i < len; i++) {
+      if (this.totpTrusted[i].ua === ua) {
+        index = i;
+      }
+    }
+    return index;
+  },
+
+  isTrustedDevice: function (ua, secret) {
+    const tindex = this.trustedDeviceIndex(ua);
+    const offset = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    if (tindex !== -1 &&
+      this.totpTrusted[tindex].secret === secret &&
+      offset < this.totpTrusted[tindex].date) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  },
+
+  backupCodeIndex: function (code) {
+    let index = -1;
+    for (let i = 0; i < this.totpConf.backupCodes.length; i++) {
+      if (Bcrypt.compareSync(code, this.totpConf.backupCodes[i])) {
+        index = i;
+      }
+    }
+    return index;
+  },
+
+  isPasswordExpired: function () {
+    const lastPasswordReset = this.lastPasswordReset.valueOf();
+    const current = new Date().valueOf();
+    if (current - lastPasswordReset > 6 * 30 * 24 * 3600 * 1000) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  },
+
+  isVerifiableEmail: function (email) {
+    const ind = email.indexOf('@');
+    const domain = email.substr((ind + 1));
+    return TrustedDomain
+      .findOne({url: domain})
+      .populate('list');
+  },
+
+  canBeVerifiedAutomatically: function () {
+    const that = this;
+    const promises = [];
+    // Check all emails
+    this.emails.forEach(function (email) {
+      if (email.validated) {
+        promises.push(that.isVerifiableEmail(email.email));
+      }
+    });
+    return Promise.all(promises)
+    .then(values => {
+      let out = false;
+      values.forEach(function (val) {
+        if (val) {
+          out = true;
+        }
+      });
+      return out;
+    });
+  },
+
+  toJSON: function () {
+    const user = this.toObject();
+    delete user.password;
+    if (user.totpConf) {
+      delete user.totpConf;
+    }
+    if (user.totpTrusted) {
+      for (let i = 0; i < user.totpTrusted.length; i++) {
+        delete user.totpTrusted[i].secret;
+      }
+    }
+    if (user.googleCredentials && user.googleCredentials.refresh_token) {
+      user.googleCredentials = true;
+    }
+    else {
+      user.googleCredentials = false;
+    }
+    if (user.outlookCredentials) {
+      user.outlookCredentials = true;
+    }
+    else {
+      user.outlookCredentials = false;
+    }
+    listTypes.forEach(function (attr) {
+      _.remove(user[attr + 's'], function (checkin) {
+        return checkin.deleted;
+      });
+    });
+    return user;
+  }
+};
+
+module.exports = mongoose.model('User', UserSchema);

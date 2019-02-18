@@ -75,7 +75,7 @@ module.exports = {
           }
           return reply.view('login', loginArgs);
         }
-        catch (err) {
+        catch (err) {
           loginArgs.alert = {
             type: 'danger',
             message: 'Internal server error. We can not log you in. Please let us know at info@humanitarian.id'
@@ -185,7 +185,7 @@ module.exports = {
       });
     }
     try {
-      const user = await UserController.create(request);
+      await UserController.create(request);
       return reply.view('login', {
         alert: {type: 'success', message: 'Thank you for creating an account. You will soon receive a confirmation email to confirm your account.'},
         query: request.query,
@@ -211,7 +211,7 @@ module.exports = {
     const registerLink = _getRegisterLink(request.query);
     const passwordLink = _getPasswordLink(request.query);
     try {
-      const record = await UserController.validateEmail(request);
+      await UserController.validateEmail(request);
       return reply.view('login', {
         alert: {type: 'success', message: 'Thank you for confirming your email address. You can now log in'},
         query: request.query,
@@ -240,7 +240,7 @@ module.exports = {
     const registerLink = _getRegisterLink(request.payload);
     const passwordLink = _getPasswordLink(request.payload);
     try {
-      const response = await UserController.resetPasswordEndpoint(request);
+      await UserController.resetPasswordEndpoint(request);
       return reply.view('login', {
         alert: {type: 'success', message: 'Password reset was sent to ' + request.payload.email + '. Please make sure the email address is correct. If not, please reset your password again.'},
         query: request.query,
@@ -290,7 +290,7 @@ module.exports = {
       try {
         const user = await User.findOne({_id: cookie.id});
         const token = request.payload['x-hid-totp'];
-        const record = await AuthPolicy.isTOTPValid(user, token);
+        await AuthPolicy.isTOTPValid(user, token);
         cookie.totp = true;
         request.yar.set('session', cookie);
         return reply.view('new_password', {
@@ -318,7 +318,7 @@ module.exports = {
       const registerLink = _getRegisterLink(request.payload);
       const passwordLink = _getPasswordLink(request.payload);
       try {
-        const response = await UserController.resetPasswordEndpoint(request);
+        await UserController.resetPasswordEndpoint(request);
         if (params) {
           return reply.view('login', {
             alert: {type: 'success', message: 'Your password was successfully reset. You can now login.'},

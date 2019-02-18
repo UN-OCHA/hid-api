@@ -41,13 +41,13 @@ const isTOTPValid = function isTOTPValid (user, token) {
         user.totpConf.backupCodes.slice(index, 1);
         user.markModified('totpConf');
         user
-        .save()
-        .then(() => {
-          return resolve(user);
-        })
-        .catch(err => {
-          return reject(Boom.badImplementation());
-        });
+          .save()
+          .then(() => {
+            return resolve(user);
+          })
+          .catch(err => {
+            return reject(Boom.badImplementation());
+          });
       }
     }
   });

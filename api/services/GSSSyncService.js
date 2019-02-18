@@ -15,10 +15,10 @@ const User = require('../models/User');
 function getRowFromUser (elt) {
   const organization = elt.organization ? elt.organization.name : '';
   let country = '',
-  region = '',
-  skype = '',
-  bundles = '',
-  roles = '';
+    region = '',
+    skype = '',
+    bundles = '',
+    roles = '';
   if (elt.location && elt.location.country) {
     country = elt.location.country.name;
   }
@@ -57,7 +57,7 @@ function getRowFromUser (elt) {
     elt.email,
     elt.status
   ];
-};
+}
 
 function getAuthClient (user) {
   // Authenticate with Google
@@ -74,7 +74,7 @@ async function writeUser (gsssync, authClient, user, index) {
     values: [values]
   };
   try {
-    const response = await sheets.spreadsheets.values.update({
+    await sheets.spreadsheets.values.update({
       spreadsheetId: gsssync.spreadsheet,
       range: 'A' + index + ':M' + index,
       valueInputOption: 'RAW',
@@ -89,13 +89,13 @@ async function writeUser (gsssync, authClient, user, index) {
     }
     throw err;
   }
-};
+}
 
 async function addUser (agsssync, user) {
   const sheets = google.sheets('v4');
   const gsssync = await agsssync
-  .populate('list user')
-  .execPopulate();
+    .populate('list user')
+    .execPopulate();
   const authClient = getAuthClient();
   // Find users
   const criteria = gsssync.getUserCriteria();
@@ -103,10 +103,10 @@ async function addUser (agsssync, user) {
     throw Boom.unauthorized('You are not authorized to view this list');
   }
   const users = await User
-  .find(criteria)
-  .select(GSSSync.getUserAttributes())
-  .sort('name')
-  .lean();
+    .find(criteria)
+    .select(GSSSync.getUserAttributes())
+    .sort('name')
+    .lean();
   try {
     const column = await sheets.spreadsheets.values.get({
       spreadsheetId: gsssync.spreadsheet,
@@ -142,7 +142,7 @@ async function addUser (agsssync, user) {
           }
         }]
       };
-      const response = await sheets.spreadsheets.batchUpdate({
+      await sheets.spreadsheets.batchUpdate({
         spreadsheetId: gsssync.spreadsheet,
         resource: body,
         auth: authClient
@@ -161,13 +161,13 @@ async function addUser (agsssync, user) {
     }
     throw err;
   }
-};
+}
 
 async function deleteUser (agsssync, hid) {
   const sheets = google.sheets('v4');
   const gsssync = await agsssync
-  .populate('list user')
-  .execPopulate();
+    .populate('list user')
+    .execPopulate();
   const authClient = getAuthClient();
   try {
     const column = await sheets.spreadsheets.values.get({
@@ -215,13 +215,13 @@ async function deleteUser (agsssync, hid) {
     }
     throw err;
   }
-};
+}
 
 async function updateUser (agsssync, user) {
   const sheets = google.sheets('v4');
   const gsssync = await agsssync
-  .populate('list user')
-  .execPopulate();
+    .populate('list user')
+    .execPopulate();
   const authClient = getAuthClient();
   try {
     const column = await sheets.spreadsheets.values.get({
@@ -253,7 +253,7 @@ async function updateUser (agsssync, user) {
     }
     throw err;
   }
-};
+}
 
 module.exports = {
 
@@ -324,7 +324,7 @@ module.exports = {
   getSheetId: async function (agsssync) {
     const gsssync = await agsssync.populate('user').execPopulate();
     const authClient = getAuthClient();
-    const sheets = Google.sheets('v4');
+    const sheets = google.sheets('v4');
     const sheet = await sheets.spreadsheets.get({
       spreadsheetId: gsssync.spreadsheet,
       auth: authClient
@@ -346,10 +346,10 @@ module.exports = {
       throw Boom.unauthorized('You are not authorized to view this list');
     }
     const users = await User
-    .find(criteria)
-    .select(GSSSync.getUserAttributes())
-    .sort('name')
-    .lean();
+      .find(criteria)
+      .select(GSSSync.getUserAttributes())
+      .sort('name')
+      .lean();
     // Export users to spreadsheet
     const data = [];
     let index = 2;

@@ -51,7 +51,7 @@ module.exports = {
       options: {
         skip: function (request, reply) {
           const paths = ['/', '/login', '/oauth/authorize',
-          '/register', '/verify', '/verify2', '/password', '/new_password'];
+            '/register', '/verify', '/verify2', '/password', '/new_password'];
           if (paths.indexOf(request.path) === -1) {
             return true;
           }
@@ -137,8 +137,8 @@ module.exports = {
     oauth.exchange(oauth.exchanges.code(async function (client, code, redirectURI, payload, authInfo, done) {
       try {
         const ocode = await OauthToken
-        .findOne({token: code, type: 'code'})
-        .populate('client user');
+          .findOne({token: code, type: 'code'})
+          .populate('client user');
         if (!ocode.client._id.equals(client._id)) {
           return done(null, false);
         }
@@ -162,8 +162,8 @@ module.exports = {
     oauth.exchange(oauth.exchanges.refreshToken(async function (client, refreshToken, scope, done) {
       try {
         const tok = await OauthToken
-        .findOne({type: 'refresh', token: refreshToken})
-        .populate('client user');
+          .findOne({type: 'refresh', token: refreshToken})
+          .populate('client user');
         if (tok.client._id.toString() !== client._id.toString()) {
           return done(null, false, { message: 'This refresh token is for a different client'});
         }
