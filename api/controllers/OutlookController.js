@@ -46,13 +46,13 @@ module.exports = {
         gOsync = {};
       const sync = await OutlookSync.findOne({
         user: request.auth.credentials._id,
-        list: request.payload.list
+        list: request.payload.list,
       });
       if (sync) {
         throw Boom.conflict('Contact folder already exists');
       }
       const res = await oauth2.accessToken.create({
-        refresh_token: credentials.refresh_token
+        refresh_token: credentials.refresh_token,
       }).refresh();
       accessToken = res.token.access_token;
       // Create a Graph client

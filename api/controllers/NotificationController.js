@@ -19,13 +19,15 @@ module.exports = {
 
     const [results, number] = await Promise.all([
       HelperService.find(Notification, criteria, options),
-      Notification.countDocuments(criteria)
+      Notification.countDocuments(criteria),
     ]);
     return reply.response(results).header('X-Total-Count', number);
   },
 
   async update(request, reply) {
-    if (!request.payload || !request.payload.hasOwnProperty('read') || !request.payload.hasOwnProperty('notified')) {
+    if (!request.payload
+      || !Object.prototype.hasOwnProperty.call(request.payload, 'read')
+      || !Object.prototype.hasOwnProperty.call(request.payload, 'notified')) {
       throw Boom.badRequest();
     }
 

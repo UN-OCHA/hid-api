@@ -48,9 +48,8 @@ const NotificationSchema = new Schema({
   timestamps: true,
 });
 
-NotificationSchema.pre('save', function (next) {
+NotificationSchema.pre('save', async (next) => {
   if (!this.text) {
-    const that = this;
     let templatePath = `notifications/${this.type}`;
     if (this.user.locale && this.user.locale === 'fr') {
       templatePath += '/fr';
@@ -58,20 +57,18 @@ NotificationSchema.pre('save', function (next) {
     templatePath += '/html.ejs';
     const template = path.resolve(templatePath);
 
-    ejs.renderFile(template, {
-      createdBy: this.createdBy,
-      user: this.user,
-      params: this.params,
-    }, {}, (err, str) => {
-      if (err) {
-        return next(err);
-      }
-      that.text = str;
-      next();
-    });
-  } else {
-    next();
+    try {
+      const str = await ejs.renderFile(template, {
+        createdBy: this.createdBy,
+        user: this.user,
+        params: this.params,
+      }, {});
+      this.text = str;
+    } catch (err) {
+      return next(err);
+    }
   }
+  return next();
 });
 
 module.exports = mongoose.model('Notification', NotificationSchema);

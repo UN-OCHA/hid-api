@@ -13,9 +13,9 @@ const { Schema } = mongoose;
  * @description Service
  */
 
-function isHTMLValidator (v) {
+function isHTMLValidator(v) {
   return !isHTML(v);
-};
+}
 
 const mailchimpSchema = new Schema({
   apiKey: {

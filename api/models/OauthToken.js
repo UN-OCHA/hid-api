@@ -40,17 +40,16 @@ const OauthTokenSchema = new Schema({
   collection: 'oauthtoken',
 });
 
-OauthTokenSchema
-  .methods
-  .isExpired = function () {
+OauthTokenSchema.methods = {
+  isExpired() {
     const now = new Date();
     const { expires } = this;
     return now.getTime() > expires.getTime();
-  };
+  },
+};
 
-OauthTokenSchema
-  .statics
-  .generate = function (type, client, user, nonce) {
+OauthTokenSchema.statics = {
+  generate(type, client, user, nonce) {
     const buffer = crypto.randomBytes(256);
     const token = crypto
       .createHash('sha1')
@@ -67,6 +66,7 @@ OauthTokenSchema
       expires: now + 7 * 24 * 3600 * 1000,
     };
     return ftoken;
-  };
+  },
+};
 
 module.exports = mongoose.model('OauthToken', OauthTokenSchema);

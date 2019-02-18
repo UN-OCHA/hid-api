@@ -11,9 +11,9 @@ const { Schema } = mongoose;
  * @description OAuth Client
  */
 
-const isHTMLValidator = function (v) {
+function isHTMLValidator(v) {
   return !isHTML(v);
-};
+}
 
 const ClientSchema = new Schema({
   id: {

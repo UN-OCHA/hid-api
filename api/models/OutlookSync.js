@@ -3,6 +3,7 @@
 const mongoose = require('mongoose');
 const fs = require('fs');
 const microsoftGraph = require('@microsoft/microsoft-graph-client');
+const simpleOauth2 = require('simple-oauth2');
 
 const { Schema } = mongoose;
 
@@ -33,7 +34,7 @@ const OutlookSyncSchema = new Schema({
 OutlookSyncSchema.methods = {
   getOAuthClient() {
     const credentials = JSON.parse(fs.readFileSync('keys/outlook.json'));
-    return require('simple-oauth2').create(credentials);
+    return simpleOauth2.create(credentials);
   },
 
   getContact(user) {
@@ -67,7 +68,7 @@ OutlookSyncSchema.methods = {
 
   folderExists(folders) {
     let folderFound = false;
-    folders.forEach(function (folder) {
+    folders.forEach((folder) => {
       if (folder.id === this.folder) {
         folderFound = true;
       }
@@ -75,139 +76,112 @@ OutlookSyncSchema.methods = {
     return folderFound;
   },
 
-  addUser(addedUser) {
+  async addUser(addedUser) {
     const oauth2 = this.getOAuthClient();
-    const that = this;
-    let accessToken = ''; let client = {}; let
-      folderExists = false;
-    return this
+    await this
       .populate('user')
-      .execPopulate()
-      .then(() => oauth2.accessToken.create({ refresh_token: that.user.outlookCredentials.refresh_token }).refresh())
-      .then((res) => {
-        accessToken = res.token.access_token;
-        // Create a Graph client
-        client = microsoftGraph.Client.init({
-          authProvider: (done) => {
-            // Just return the token
-            done(null, accessToken);
-          },
-        });
-        return client
-          .api('/me/contactFolders')
-          .get();
-      })
-      .then((res) => {
-        folderExists = that.folderExists(res.value);
-        if (!folderExists) {
-          that.remove();
-        }
-      })
-      .then(() => {
-        if (folderExists) {
-          return client
-            .api(`/me/contactFolders/${that.folder}/contacts`)
-            .post(that.getContact(addedUser));
-        }
-      });
+      .execPopulate();
+    const res = await oauth2.accessToken.create({
+      refresh_token: this.user.outlookCredentials.refresh_token,
+    }).refresh();
+    const accessToken = res.token.access_token;
+    // Create a Graph client
+    const client = microsoftGraph.Client.init({
+      authProvider: (done) => {
+        // Just return the token
+        done(null, accessToken);
+      },
+    });
+    const res2 = await client.api('/me/contactFolders').get();
+    const folderExists = this.folderExists(res2.value);
+    if (!folderExists) {
+      this.remove();
+    } else {
+      await client.api(`/me/contactFolders/${this.folder}/contacts`)
+        .post(this.getContact(addedUser));
+    }
   },
 
-  updateUser(user) {
+  async updateUser(user) {
     const oauth2 = this.getOAuthClient();
-    const that = this;
-    let accessToken = ''; let client = {}; let
-      folderExists = false;
-    return this
+    await this
       .populate('user')
-      .execPopulate()
-      .then(() => oauth2.accessToken.create({ refresh_token: that.user.outlookCredentials.refresh_token }).refresh())
-      .then((res) => {
-        accessToken = res.token.access_token;
-        // Create a Graph client
-        client = microsoftGraph.Client.init({
-          authProvider: (done) => {
-            // Just return the token
-            done(null, accessToken);
-          },
-        });
-        return client
-          .api('/me/contactFolders')
-          .get();
-      })
-      .then((res) => {
-        folderExists = that.folderExists(res.value);
-        if (!folderExists) {
-          that.remove();
-        } else {
-          return client
-            .api(`/me/contactFolders/${that.folder}/contacts`)
-            .get();
-        }
-      })
-      .then((res) => {
-        if (folderExists && res && res.value) {
-          let contactId = '';
-          res.value.forEach((contact) => {
-            if (contact.personalNotes === user._id.toString()) {
-              contactId = contact.id;
-            }
-          });
-          if (contactId) {
-            return client
-              .api(`/me/contactFolders/${that.folder}/contacts/${contactId}`)
-              .patch(that.getContact(user));
+      .execPopulate();
+    const res = await oauth2.accessToken.create({
+      refresh_token: this.user.outlookCredentials.refresh_token,
+    }).refresh();
+    const accessToken = res.token.access_token;
+    // Create a Graph client
+    const client = microsoftGraph.Client.init({
+      authProvider: (done) => {
+        // Just return the token
+        done(null, accessToken);
+      },
+    });
+    const res2 = await client.api('/me/contactFolders').get();
+    const folderExists = this.folderExists(res2.value);
+    if (!folderExists) {
+      this.remove();
+    } else {
+      const res3 = await client
+        .api(`/me/contactFolders/${this.folder}/contacts`)
+        .get();
+      if (res3 && res3.value) {
+        let contactId = '';
+        res3.value.forEach((contact) => {
+          if (contact.personalNotes === user._id.toString()) {
+            contactId = contact.id;
           }
+        });
+        if (contactId) {
+          await client
+            .api(`/me/contactFolders/${this.folder}/contacts/${contactId}`)
+            .patch(this.getContact(user));
         }
-      });
+      }
+    }
   },
 
-  deleteUser(userId) {
+  async deleteUser(userId) {
     const oauth2 = this.getOAuthClient();
-    const that = this;
-    let accessToken = ''; let client = {}; let
-      folderExists = false;
-    return this
+    await this
       .populate('user')
-      .execPopulate()
-      .then(() => oauth2.accessToken.create({ refresh_token: that.user.outlookCredentials.refresh_token }).refresh())
-      .then((res) => {
-        accessToken = res.token.access_token;
-        // Create a Graph client
-        client = microsoftGraph.Client.init({
-          authProvider: (done) => {
-            // Just return the token
-            done(null, accessToken);
-          },
-        });
-        return client
-          .api('/me/contactFolders')
-          .get();
-      })
-      .then((res) => {
-        folderExists = that.folderExists(res.value);
-        if (!folderExists) {
-          that.remove();
-        } else {
-          return client
-            .api(`/me/contactFolders/${that.folder}/contacts`)
-            .get();
-        }
-      })
-      .then((res) => {
-        if (folderExists && res && res.value) {
-          let contactId = '';
-          res.value.forEach((contact) => {
-            if (contact.personalNotes === userId) {
-              contactId = contact.id;
-            }
-          });
-          if (contactId) {
-            return client
-              .api(`/me/contactFolders/${that.folder}/contacts/${contactId}`)
-              .delete();
+      .execPopulate();
+    const res = await oauth2.accessToken.create({
+      refresh_token: this.user.outlookCredentials.refresh_token,
+    }).refresh();
+    const accessToken = res.token.access_token;
+    // Create a Graph client
+    const client = microsoftGraph.Client.init({
+      authProvider: (done) => {
+        // Just return the token
+        done(null, accessToken);
+      },
+    });
+    const res2 = await client
+      .api('/me/contactFolders')
+      .get();
+    const folderExists = this.folderExists(res2.value);
+    if (!folderExists) {
+      this.remove();
+    } else {
+      const res3 = await client
+        .api(`/me/contactFolders/${this.folder}/contacts`)
+        .get();
+      if (res3 && res3.value) {
+        let contactId = '';
+        res3.value.forEach((contact) => {
+          if (contact.personalNotes === userId) {
+            contactId = contact.id;
           }
+        });
+        if (contactId) {
+          await client
+            .api(`/me/contactFolders/${this.folder}/contacts/${contactId}`)
+            .delete();
         }
-      });
+      }
+    }
   },
 };
 

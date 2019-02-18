@@ -34,9 +34,8 @@ const OperationSchema = new Schema({
   collection: 'operation',
 });
 
-OperationSchema
-  .methods
-  .managersIndex = function (user) {
+OperationSchema.methods = {
+  managersIndex(user) {
     let index = -1;
     for (let i = 0; i < this.managers.length; i += 1) {
       if (this.managers[i].id === user.id) {
@@ -44,6 +43,7 @@ OperationSchema
       }
     }
     return index;
-  };
+  },
+};
 
 module.exports = mongoose.model('Operation', OperationSchema);

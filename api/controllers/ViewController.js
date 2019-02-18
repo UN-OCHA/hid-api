@@ -51,42 +51,6 @@ module.exports = {
   async login(request, reply) {
     const cookie = request.yar.get('session');
 
-    if (!cookie || (cookie && !cookie.userId)) {
-      // Show the login form
-      const registerLink = _getRegisterLink(request.query);
-      const passwordLink = _getPasswordLink(request.query);
-      const loginArgs = {
-        title: 'Log into Humanitarian ID',
-        query: request.query,
-        registerLink,
-        passwordLink,
-        alert: false,
-      };
-
-      // Check client ID and redirect URI at this stage, so we can send an error message if needed.
-      if (request.query.client_id) {
-        try {
-          const client = await Client.findOne({ id: request.query.client_id });
-          if (!client || (client && client.redirectUri !== request.query.redirect_uri)) {
-            loginArgs.alert = {
-              type: 'danger',
-              message: 'The configuration of the client application is invalid. We can not log you in.',
-            };
-            return reply.view('login', loginArgs);
-          }
-          return reply.view('login', loginArgs);
-        } catch (err) {
-          loginArgs.alert = {
-            type: 'danger',
-            message: 'Internal server error. We can not log you in. Please let us know at info@humanitarian.id',
-          };
-          return reply.view('login', loginArgs);
-        }
-      } else {
-        return reply.view('login', loginArgs);
-      }
-    }
-
     if (cookie && cookie.userId && cookie.totp === true) { // User is already logged in
       if (request.query.client_id
         && request.query.redirect_uri
@@ -117,6 +81,40 @@ module.exports = {
         alert: false,
       });
     }
+
+    // Show the login form
+    const registerLink = _getRegisterLink(request.query);
+    const passwordLink = _getPasswordLink(request.query);
+    const loginArgs = {
+      title: 'Log into Humanitarian ID',
+      query: request.query,
+      registerLink,
+      passwordLink,
+      alert: false,
+    };
+
+    // Check client ID and redirect URI at this stage, so we can send an error message if needed.
+    if (request.query.client_id) {
+      try {
+        const client = await Client.findOne({ id: request.query.client_id });
+        if (!client || (client && client.redirectUri !== request.query.redirect_uri)) {
+          loginArgs.alert = {
+            type: 'danger',
+            message: 'The configuration of the client application is invalid. We can not log you in.',
+          };
+          return reply.view('login', loginArgs);
+        }
+        return reply.view('login', loginArgs);
+      } catch (err) {
+        loginArgs.alert = {
+          type: 'danger',
+          message: 'Internal server error. We can not log you in. Please let us know at info@humanitarian.id',
+        };
+        return reply.view('login', loginArgs);
+      }
+    } else {
+      return reply.view('login', loginArgs);
+    }
   },
 
   async logout(request, reply) {
@@ -124,11 +122,12 @@ module.exports = {
     if (request.query.redirect) {
       // Validate redirect URL
       const url = request.query.redirect;
+      const urlArray = url.split('/');
       let hostname;
       if (url.indexOf('://') > -1) {
-        hostname = url.split('/')[2];
+        hostname = urlArray[2];
       } else {
-        hostname = url.split('/')[0];
+        hostname = urlArray[0];
       }
       // find & remove port number
       hostname = hostname.split(':')[0];
@@ -339,6 +338,13 @@ module.exports = {
         });
       }
     }
+
+    return reply.view('message', {
+      alert: { type: 'danger', message: 'There was an error resetting your password.' },
+      query: request.payload,
+      isSuccess: false,
+      title: 'Password update',
+    });
   },
 
   // Display a default user page when user is logged in without OAuth

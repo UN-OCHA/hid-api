@@ -39,7 +39,7 @@ module.exports = {
   },
 
   // Empty endpoint to verify a TOTP token
-  verifyTOTPToken() {
+  verifyTOTPToken(request, reply) {
     return reply.response().code(204);
   },
 

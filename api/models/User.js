@@ -25,9 +25,9 @@ const userPopulate1 = [
 * @module User
 * @description User
 */
-const isHTMLValidator = function (v) {
+function isHTMLValidator(v) {
   return !isHTML(v);
-};
+}
 
 const visibilities = ['anyone', 'verified', 'connections'];
 
@@ -374,7 +374,7 @@ const UserSchema = new Schema({
         if (v.length) {
           let out = true;
           const types = ['Skype', 'Google', 'Facebook', 'Yahoo', 'Twitter'];
-          for (let i = 0, len = v.length; i < len; i++) {
+          for (let i = 0, len = v.length; i < len; i += 1) {
             if (!v[i].username || !v[i].type || (v[i].type && types.indexOf(v[i].type) === -1)) {
               out = false;
             }
@@ -397,7 +397,7 @@ const UserSchema = new Schema({
         if (v.length) {
           let out = true;
           const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/;
-          for (let i = 0, len = v.length; i < len; i++) {
+          for (let i = 0, len = v.length; i < len; i += 1) {
             if (!urlRegex.test(v[i].url)) {
               out = false;
             }
@@ -477,7 +477,7 @@ const UserSchema = new Schema({
       validator(v) {
         let out = true;
         if (v.length) {
-          for (let i = 0, len = v.length; i < len; i++) {
+          for (let i = 0, len = v.length; i < len; i += 1) {
             if (isHTML(v[i])) {
               out = false;
             }
@@ -656,17 +656,15 @@ const UserSchema = new Schema({
   collection: 'user',
 });
 
-UserSchema.virtual('sub').get(function () {
-  return this._id;
-});
+UserSchema.virtual('sub').get(() => this._id);
 
-UserSchema.pre('remove', async function (next) {
+UserSchema.pre('remove', async (next) => {
   try {
     // Avoid null connections from being created when a user is removed
     const users = await this.model('User').find({ 'connections.user': this._id });
     const promises = [];
-    for (let i = 0; i < users.length; i++) {
-      for (let j = 0; j < users[i].connections.length; j++) {
+    for (let i = 0; i < users.length; i += 1) {
+      for (let j = 0; j < users[i].connections.length; j += 1) {
         if (users[i].connections[j].user.toString() === this._id.toString()) {
           users[i].connections.id(users[i].connections[j]._id).remove();
         }
@@ -675,7 +673,7 @@ UserSchema.pre('remove', async function (next) {
     }
     // Reduce the number of contacts for each list of the user
     const listIds = [];
-    listTypes.forEach(function (attr) {
+    listTypes.forEach((attr) => {
       this[`${attr}s`].forEach((checkin) => {
         listIds.push(checkin.list);
       });
@@ -692,7 +690,7 @@ UserSchema.pre('remove', async function (next) {
   }
 });
 
-UserSchema.pre('save', function (next) {
+UserSchema.pre('save', (next) => {
   if (this.middle_name) {
     this.name = `${this.given_name} ${this.middle_name} ${this.family_name}`;
   } else {
@@ -720,18 +718,18 @@ UserSchema.post('findOne', async (result, next) => {
     await result.populate(userPopulate1);
     return next();
   } catch (err) {
-    next(err);
+    return next(err);
   }
 });
 
 UserSchema.statics = {
   explodeHash(hashLink) {
-    const key = new Buffer(hashLink, 'base64').toString('ascii');
+    const key = Buffer.from(hashLink, 'base64').toString('ascii');
     const parts = key.split('/');
     return {
       email: parts[0],
       timestamp: parts[1],
-      hash: new Buffer(parts[2], 'base64').toString('ascii'),
+      hash: Buffer.from(parts[2], 'base64').toString('ascii'),
     };
   },
 
@@ -748,7 +746,8 @@ UserSchema.statics = {
     ];
   },
 
-  sanitizeExportedUser(user, requester) {
+  sanitizeExportedUser(auser, requester) {
+    const user = auser;
     if (user._id.toString() !== requester._id.toString() && !requester.is_admin) {
       if (user.emailsVisibility !== 'anyone') {
         if ((user.emailsVisibility === 'verified' && !requester.verified)
@@ -778,11 +777,13 @@ UserSchema.statics = {
 
   connectionsIndex(user, userId) {
     let index = -1;
+    let connection = {};
     if (user.connections && user.connections.length) {
-      for (let i = 0, len = user.connections.length; i < len; i++) {
-        if (user.connections[i].pending === false
-          && ((user.connections[i].user._id && user.connections[i].user._id.toString() === userId.toString())
-          || (!user.connections[i].user._id && user.connections[i].user.toString() === userId.toString()))) {
+      for (let i = 0, len = user.connections.length; i < len; i += 1) {
+        connection = user.connections[i];
+        if (connection.pending === false
+          && ((connection.user._id && connection.user._id.toString() === userId.toString())
+          || (!connection.user._id && connection.user.toString() === userId.toString()))) {
           index = i;
         }
       }
@@ -807,9 +808,10 @@ UserSchema.statics = {
     return `${buffer.toString('hex').slice(0, 10)}B`;
   },
 
-  translateCheckin(checkin, language) {
+  translateCheckin(acheckin, language) {
     let name = ''; let nameEn = ''; let acronym = ''; let
       acronymEn = '';
+    const checkin = acheckin;
     checkin.names.forEach((nameLn) => {
       if (nameLn.language === language) {
         name = nameLn.text;
@@ -897,7 +899,7 @@ UserSchema.methods = {
           if (checkin.visibility === 'inlist') {
             let out = true;
             // Is user in list ?
-            for (let i = 0; i < user[`${attr}s`].length; i++) {
+            for (let i = 0; i < user[`${attr}s`].length; i += 1) {
               if (user[`${attr}s`][i].list.toString() === checkin.list.toString() && !user[`${attr}s`][i].deleted) {
                 out = false;
               }
@@ -908,7 +910,7 @@ UserSchema.methods = {
             }
             // Is user a manager of the list ?
             if (checkin.managers && checkin.managers.length) {
-              for (let i = 0; i < checkin.managers.length; i++) {
+              for (let i = 0; i < checkin.managers.length; i += 1) {
                 if (checkin.managers[i].toString() === user._id.toString()) {
                   out = false;
                 }
@@ -925,7 +927,7 @@ UserSchema.methods = {
             }
             // Is user a manager of the list ?
             if (checkin.managers && checkin.managers.length) {
-              for (let i = 0; i < checkin.managers.length; i++) {
+              for (let i = 0; i < checkin.managers.length; i += 1) {
                 if (checkin.managers[i].toString() === user._id.toString()) {
                   out = false;
                 }
@@ -942,7 +944,7 @@ UserSchema.methods = {
   sanitizeClients() {
     if (this.authorizedClients && this.authorizedClients.length) {
       const sanitized = [];
-      for (let i = 0, len = this.authorizedClients.length; i < len; i++) {
+      for (let i = 0, len = this.authorizedClients.length; i < len; i += 1) {
         if (this.authorizedClients[i].secret) {
           sanitized.push({
             id: this.authorizedClients[i].id,
@@ -1004,7 +1006,7 @@ UserSchema.methods = {
       const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
       return hash === hashLink;
     }
-    const key = new Buffer(hashLink, 'base64').toString('ascii');
+    const key = Buffer.from(hashLink, 'base64').toString('ascii');
     const parts = key.split('/');
     const timestamp = parts[0];
     const now = Date.now();
@@ -1019,7 +1021,7 @@ UserSchema.methods = {
 
   emailIndex(email) {
     let index = -1;
-    for (let i = 0, len = this.emails.length; i < len; i++) {
+    for (let i = 0, len = this.emails.length; i < len; i += 1) {
       if (this.emails[i].email === email) {
         index = i;
       }
@@ -1040,12 +1042,14 @@ UserSchema.methods = {
 
   connectionsIndex(userId) {
     let index = -1;
+    let connection = {};
     if (this.connections && this.connections.length) {
-      for (let i = 0, len = this.connections.length; i < len; i++) {
-        if (this.connections[i].user
-          && this.connections[i].pending === false
-          && ((this.connections[i].user._id && this.connections[i].user._id.toString() === userId.toString())
-          || (!this.connections[i].user._id && this.connections[i].user.toString() === userId.toString()))) {
+      for (let i = 0, len = this.connections.length; i < len; i += 1) {
+        connection = this.connections[i];
+        if (connection.user
+          && connection.pending === false
+          && ((connection.user._id && connection.user._id.toString() === userId.toString())
+          || (!connection.user._id && connection.user.toString() === userId.toString()))) {
           index = i;
         }
       }
@@ -1055,7 +1059,7 @@ UserSchema.methods = {
 
   hasAuthorizedClient(clientId) {
     let out = false;
-    for (let i = 0, len = this.authorizedClients.length; i < len; i++) {
+    for (let i = 0, len = this.authorizedClients.length; i < len; i += 1) {
       if (this.authorizedClients[i].id === clientId) {
         out = true;
       }
@@ -1066,10 +1070,12 @@ UserSchema.methods = {
   subscriptionsIndex(serviceId) {
     const id = serviceId.toString();
     let index = -1;
-    for (let i = 0; i < this.subscriptions.length; i++) {
-      if (this.subscriptions[i].service
-        && ((this.subscriptions[i].service._id && this.subscriptions[i].service._id.toString() === id)
-        || this.subscriptions[i].service.toString() === id)) {
+    let subscription = {};
+    for (let i = 0; i < this.subscriptions.length; i += 1) {
+      subscription = this.subscriptions[i];
+      if (subscription.service
+        && ((subscription.service._id && subscription.service._id.toString() === id)
+        || subscription.service.toString() === id)) {
         index = i;
       }
     }
@@ -1085,22 +1091,31 @@ UserSchema.methods = {
     if (this.email_verified || this.is_orphan || this.is_ghost) {
       return false;
     }
-    if (!this.remindedVerify && !this.timesRemindedVerify && current.valueOf() - created.valueOf() > 48 * 3600 * 1000) {
+    if (!this.remindedVerify
+      && !this.timesRemindedVerify
+      && current.valueOf() - created.valueOf() > 48 * 3600 * 1000) {
       return true;
     }
-    if (this.remindedVerify && this.timesRemindedVerify === 1 && current.valueOf() - remindedVerify.valueOf() > 48 * 3600 * 1000) {
+    if (this.remindedVerify
+      && this.timesRemindedVerify === 1
+      && current.valueOf() - remindedVerify.valueOf() > 48 * 3600 * 1000) {
       return true;
     }
-    if (this.remindedVerify && this.timesRemindedVerify === 2 && current.valueOf() - remindedVerify.valueOf() > 72 * 3600 * 1000) {
+    if (this.remindedVerify
+      && this.timesRemindedVerify === 2
+      && current.valueOf() - remindedVerify.valueOf() > 72 * 3600 * 1000) {
       return true;
     }
-    if (this.remindedVerify && this.timesRemindedVerify === 3 && current.valueOf() - remindedVerify.valueOf() > 23 * 24 * 3600 * 1000) {
+    if (this.remindedVerify
+      && this.timesRemindedVerify === 3
+      && current.valueOf() - remindedVerify.valueOf() > 23 * 24 * 3600 * 1000) {
       return true;
     }
     return false;
   },
 
-  // Whether we should send an update reminder (sent out after a user hasn't been updated for 6 months)
+  // Whether we should send an update reminder
+  // (sent out after a user hasn't been updated for 6 months)
   shouldSendReminderUpdate() {
     const d = new Date();
     const revisedOffset = d.valueOf() - this.updatedAt.valueOf();
@@ -1144,9 +1159,10 @@ UserSchema.methods = {
     return parsed.data[0].pcode === pcode;
   },
 
-  translateCheckin(checkin, language) {
+  translateCheckin(acheckin, language) {
     let name = ''; let nameEn = ''; let acronym = ''; let
       acronymEn = '';
+    const checkin = acheckin;
     checkin.names.forEach((nameLn) => {
       if (nameLn.language === language) {
         name = nameLn.text;
@@ -1190,7 +1206,7 @@ UserSchema.methods = {
   },
 
   updateCheckins(list) {
-    for (let j = 0; j < this[`${list.type}s`].length; j++) {
+    for (let j = 0; j < this[`${list.type}s`].length; j += 1) {
       if (this[`${list.type}s`][j].list.toString() === list._id.toString()) {
         this[`${list.type}s`][j].name = list.name;
         this[`${list.type}s`][j].names = list.names;
@@ -1229,7 +1245,7 @@ UserSchema.methods = {
 
   trustedDeviceIndex(ua) {
     let index = -1;
-    for (let i = 0, len = this.totpTrusted.length; i < len; i++) {
+    for (let i = 0, len = this.totpTrusted.length; i < len; i += 1) {
       if (this.totpTrusted[i].ua === ua) {
         index = i;
       }
@@ -1250,7 +1266,7 @@ UserSchema.methods = {
 
   backupCodeIndex(code) {
     let index = -1;
-    for (let i = 0; i < this.totpConf.backupCodes.length; i++) {
+    for (let i = 0; i < this.totpConf.backupCodes.length; i += 1) {
       if (Bcrypt.compareSync(code, this.totpConf.backupCodes[i])) {
         index = i;
       }
@@ -1301,7 +1317,7 @@ UserSchema.methods = {
       delete user.totpConf;
     }
     if (user.totpTrusted) {
-      for (let i = 0; i < user.totpTrusted.length; i++) {
+      for (let i = 0; i < user.totpTrusted.length; i += 1) {
         delete user.totpTrusted[i].secret;
       }
     }

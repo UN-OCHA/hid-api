@@ -60,7 +60,6 @@ Policies "protect" controller methods from being accessed by unauthorized users.
 Services are helper methods provided to the controllers.
 
 * EmailService: service to send emails
-* ErrorService: handles errors and sends them to newrelic
 * HelperService: various helper functions for controllers
 * JwtService: issues and verifies Json Web tokens
 * ListService: helper methods for lists controller

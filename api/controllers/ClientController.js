@@ -37,7 +37,11 @@ module.exports = {
 
   async update(request) {
     const client = await Client
-      .findOneAndUpdate({ _id: request.params.id }, request.payload, { runValidators: true, new: true });
+      .findOneAndUpdate(
+        { _id: request.params.id },
+        request.payload,
+        { runValidators: true, new: true },
+      );
     return client;
   },
 

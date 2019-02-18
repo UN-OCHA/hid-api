@@ -1,6 +1,7 @@
 
 
 const Boom = require('boom');
+const Hawk = require('hawk');
 const Client = require('../models/Client');
 const Flood = require('../models/Flood');
 const JwtToken = require('../models/JwtToken');
@@ -20,8 +21,11 @@ const { logger } = config;
 
 // Main helper function used for login. All logins go through this.
 async function loginHelper(request) {
-  const email = request.payload && request.payload.email ? request.payload.email.toLowerCase() : false;
   const password = request.payload ? request.payload.password : false;
+  let email = false;
+  if (request.payload && request.payload.email) {
+    email = request.payload.email.toLowerCase();
+  }
 
   logger.debug('Entering _loginHelper');
 
@@ -88,7 +92,7 @@ async function loginHelper(request) {
   return user;
 }
 
-function _loginRedirect(request, reply, cookie = false) {
+function loginRedirect(request, reply, cookie = false) {
   let redirect = '';
   if (request.payload.response_type) {
     redirect = request.payload.redirect || '/oauth/authorize';
@@ -159,56 +163,6 @@ module.exports = {
    */
   async login(request, reply) {
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId)) {
-      try {
-        const result = await loginHelper(request);
-        if (!result.totp) {
-          request.yar.set('session', { userId: result._id, totp: true });
-          return _loginRedirect(request, reply);
-        }
-        // Check to see if device is not a trusted device
-        const trusted = request.state['x-hid-totp-trust'];
-        if (trusted && result.isTrustedDevice(request.headers['user-agent'], trusted)) {
-          // If trusted device, go on
-          request.yar.set('session', { userId: result._id, totp: true });
-          return _loginRedirect(request, reply);
-        }
-        request.yar.set('session', { userId: result._id, totp: false });
-        return reply.view('totp', {
-          title: 'Enter your Authentication code',
-          query: request.payload,
-          destination: '/login',
-          alert: false,
-        });
-      } catch (err) {
-        const params = HelperService.getOauthParams(request.payload);
-
-        let registerLink = '/register';
-        if (params) {
-          registerLink += `?${params}`;
-        }
-
-        let passwordLink = '/password';
-        if (params) {
-          passwordLink += `?${params}`;
-        }
-
-        let alertMessage = 'We could not log you in. The username or password you have entered are incorrect. Kindly try again.';
-        if (err.message === 'password is expired') {
-          alertMessage = 'We could not log you in because your password is expired. Following UN regulations, as a security measure passwords must be udpated every six months. Kindly reset your password by clicking on the "Forgot/Reset password" link below.';
-        }
-        return reply.view('login', {
-          title: 'Log into Humanitarian ID',
-          query: request.payload,
-          registerLink,
-          passwordLink,
-          alert: {
-            type: 'danger',
-            message: alertMessage,
-          },
-        });
-      }
-    }
     if (cookie && cookie.userId && cookie.totp === false) {
       try {
         const now = Date.now();
@@ -241,7 +195,7 @@ module.exports = {
           await HelperService.saveTOTPDevice(request, user);
           const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
           const random = user.totpTrusted[tindex].secret;
-          return _loginRedirect(request, reply, {
+          return loginRedirect(request, reply, {
             name: 'x-hid-totp-trust',
             value: random,
             options: {
@@ -249,7 +203,7 @@ module.exports = {
             },
           });
         }
-        return _loginRedirect(request, reply);
+        return loginRedirect(request, reply);
       } catch (err) {
         const alert = {
           type: 'danger',
@@ -264,7 +218,55 @@ module.exports = {
       }
     }
     if (cookie && cookie.userId && cookie.totp === true) {
-      return _loginRedirect(request, reply);
+      return loginRedirect(request, reply);
+    }
+    try {
+      const result = await loginHelper(request);
+      if (!result.totp) {
+        request.yar.set('session', { userId: result._id, totp: true });
+        return loginRedirect(request, reply);
+      }
+      // Check to see if device is not a trusted device
+      const trusted = request.state['x-hid-totp-trust'];
+      if (trusted && result.isTrustedDevice(request.headers['user-agent'], trusted)) {
+        // If trusted device, go on
+        request.yar.set('session', { userId: result._id, totp: true });
+        return loginRedirect(request, reply);
+      }
+      request.yar.set('session', { userId: result._id, totp: false });
+      return reply.view('totp', {
+        title: 'Enter your Authentication code',
+        query: request.payload,
+        destination: '/login',
+        alert: false,
+      });
+    } catch (err) {
+      const params = HelperService.getOauthParams(request.payload);
+
+      let registerLink = '/register';
+      if (params) {
+        registerLink += `?${params}`;
+      }
+
+      let passwordLink = '/password';
+      if (params) {
+        passwordLink += `?${params}`;
+      }
+
+      let alertMessage = 'We could not log you in. The username or password you have entered are incorrect. Kindly try again.';
+      if (err.message === 'password is expired') {
+        alertMessage = 'We could not log you in because your password is expired. Following UN regulations, as a security measure passwords must be udpated every six months. Kindly reset your password by clicking on the "Forgot/Reset password" link below.';
+      }
+      return reply.view('login', {
+        title: 'Log into Humanitarian ID',
+        query: request.payload,
+        registerLink,
+        passwordLink,
+        alert: {
+          type: 'danger',
+          message: alertMessage,
+        },
+      });
     }
   },
 
@@ -323,21 +325,19 @@ module.exports = {
         }
       });
       const req = result[0];
-      if (!request.response || (request.response && !request.response.isBoom)) {
-        if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
-          request.payload = { transaction_id: req.oauth2.transactionID };
-          const response = await oauth.decision(request, reply);
-          return response;
-        }
-        // The user has not confirmed authorization, so present the
-        // authorization page.
-        return reply.view('authorize', {
-          user,
-          client: req.oauth2.client,
-          transactionID: req.oauth2.transactionID,
-          // csrf: req.csrfToken()
-        });
+      if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
+        request.payload = { transaction_id: req.oauth2.transactionID };
+        const response = await oauth.decision(request, reply);
+        return response;
       }
+      // The user has not confirmed authorization, so present the
+      // authorization page.
+      return reply.view('authorize', {
+        user,
+        client: req.oauth2.client,
+        transactionID: req.oauth2.transactionID,
+        // csrf: req.csrfToken()
+      });
     } catch (err) {
       // TODO: display the error in a view
       return err;
@@ -418,7 +418,7 @@ module.exports = {
     }
   },
 
-  openIdConfiguration(request, reply) {
+  openIdConfiguration() {
     const root = process.env.ROOT_URL;
     const out = {
       issuer: root,
@@ -453,7 +453,7 @@ module.exports = {
     return out;
   },
 
-  jwks(request, reply) {
+  jwks() {
     const key = JwtService.public2jwk();
     key.alg = 'RS256';
     const out = {
@@ -465,13 +465,13 @@ module.exports = {
   },
 
   // Provides a list of the json web tokens with no expiration date created by the current user
-  async jwtTokens(request, reply) {
+  async jwtTokens(request) {
     const tokens = await JwtToken.find({ user: request.auth.credentials._id });
     return tokens;
   },
 
   // Blacklist a JSON Web Token
-  async blacklistJwt(request, reply) {
+  async blacklistJwt(request) {
     const token = request.payload ? request.payload.token : null;
     if (!token) {
       throw Boom.badRequest('Missing token');
@@ -496,7 +496,6 @@ module.exports = {
 
   // Sign Requests for file downloads
   signRequest(request, reply) {
-    const hawk = require('hawk');
     const url = request.payload ? request.payload.url : null;
     if (!url) {
       return reply(Boom.badRequest('Missing url'));
@@ -506,7 +505,7 @@ module.exports = {
       key: process.env.COOKIE_PASSWORD,
       algorithm: 'sha256',
     };
-    const bewit = hawk.uri.getBewit(url, {
+    const bewit = Hawk.uri.getBewit(url, {
       credentials,
       ttlSec: 60 * 5,
     });

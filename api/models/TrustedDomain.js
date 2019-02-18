@@ -11,10 +11,6 @@ const { Schema } = mongoose;
  * @description Trusted Domain
  */
 
-function isHTMLValidator (v) {
-  return !isHTML(v);
-};
-
 const TrustedDomainSchema = new Schema({
   url: {
     type: String,
@@ -29,7 +25,7 @@ const TrustedDomainSchema = new Schema({
   description: {
     type: String,
     validate: {
-      validator: isHTMLValidator,
+      validator: v => !isHTML(v),
       message: 'HTML code is not allowed in description',
     },
   },

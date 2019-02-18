@@ -56,39 +56,37 @@ module.exports = {
 
       result.sanitize(request.auth.credentials);
       return result;
-    } 
-      const options = HelperService.getOptionsFromQuery(request.query);
-      const criteria = HelperService.getCriteriaFromQuery(request.query);
+    }
 
-      if (criteria.lists) {
-        const lists = criteria.lists.split(',');
-        if (lists.length > 1) {
-          criteria.$or = [];
-          lists.forEach((id) => {
-            criteria.$or.push({lists: id});
-          });
-          delete criteria.lists;
-        }
+    if (criteria.lists) {
+      const lists = criteria.lists.split(',');
+      if (lists.length > 1) {
+        criteria.$or = [];
+        lists.forEach((id) => {
+          criteria.$or.push({lists: id});
+        });
+        delete criteria.lists;
       }
+    }
 
-      if (criteria.name) {
-        if (criteria.name.length < 3) {
-          return reply(Boom.badRequest('Name must have at least 3 characters'));
-        }
-        criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/, '-');
-        criteria.name = new RegExp(criteria.name, 'i');
+    if (criteria.name) {
+      if (criteria.name.length < 3) {
+        return reply(Boom.badRequest('Name must have at least 3 characters'));
       }
+      criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/, '-');
+      criteria.name = new RegExp(criteria.name, 'i');
+    }
 
-      const [results, number] = await Promise.all([
-        HelperService.find(Service, criteria, options),
-        Service.countDocuments(criteria),
-      ]);
+    const [results, number] = await Promise.all([
+      HelperService.find(Service, criteria, options),
+      Service.countDocuments(criteria),
+    ]);
 
-      for (let i = 0; i < results.length; i++) {
-        results[i].sanitize(request.auth.credentials);
-      }
-      return reply.response(results).header('X-Total-Count', number);
-    
+    for (let i = 0; i < results.length; i++) {
+      results[i].sanitize(request.auth.credentials);
+    }
+    return reply.response(results).header('X-Total-Count', number);
+
   },
 
   async update(request, reply) {
@@ -119,9 +117,9 @@ module.exports = {
       const mc = new Mailchimp(request.query.apiKey);
       const result = await mc.get({ path: '/lists' });
       return result;
-    } 
+    }
       throw Boom.badRequest();
-    
+
   },
 
   // Get google groups from a domain

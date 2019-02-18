@@ -11,9 +11,9 @@ const isHTML = require('is-html');
  * @description List Model
  */
 
-const isHTMLValidator = function (v) {
+function isHTMLValidator(v) {
   return !isHTML(v);
-};
+}
 
 const translationSchema = new Schema({
   language: {
@@ -133,7 +133,7 @@ const ListSchema = new Schema({
   collection: 'list',
 });
 
-ListSchema.pre('save', function (next) {
+ListSchema.pre('save', (next) => {
   if (this.acronym) {
     this.name = `${this.label} (${this.acronym})`;
   } else {
@@ -166,8 +166,12 @@ ListSchema.post('findOneAndUpdate', (list) => {
   list.save();
 });
 
-ListSchema.index({ remote_id: 1, type: 1 },
-  { unique: true, partialFilterExpression: { remote_id: { $exists: true } } }
+ListSchema.index(
+  { remote_id: 1, type: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { remote_id: { $exists: true } },
+  },
 );
 
 ListSchema.methods = {
