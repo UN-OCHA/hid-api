@@ -1,8 +1,8 @@
-'use strict';
+
 
 const fs = require('fs');
-const {OAuth2Client} = require('google-auth-library');
-const {google} = require('googleapis');
+const { OAuth2Client } = require('google-auth-library');
+const { google } = require('googleapis');
 const Boom = require('boom');
 const GSSSync = require('../models/GSSSync');
 const List = require('../models/List');
@@ -12,13 +12,13 @@ const User = require('../models/User');
 * @module GSSSyncService
 * @description GSSSync Service
 */
-function getRowFromUser (elt) {
+function getRowFromUser(elt) {
   const organization = elt.organization ? elt.organization.name : '';
-  let country = '',
-    region = '',
-    skype = '',
-    bundles = '',
-    roles = '';
+  let country = '';
+  let region = '';
+  let skype = '';
+  let bundles = '';
+  let roles = '';
   if (elt.location && elt.location.country) {
     country = elt.location.country.name;
   }
@@ -26,20 +26,20 @@ function getRowFromUser (elt) {
     region = elt.location.region.name;
   }
   if (elt.voips && elt.voips.length) {
-    elt.voips.forEach(function (voip) {
+    elt.voips.forEach((voip) => {
       if (voip.type === 'Skype') {
         skype = voip.username;
       }
     });
   }
   if (elt.bundles && elt.bundles.length) {
-    elt.bundles.forEach(function (bundle) {
-      bundles += bundle.name + ';';
+    elt.bundles.forEach((bundle) => {
+      bundles += `${bundle.name};`;
     });
   }
   if (elt.functional_roles && elt.functional_roles.length) {
-    elt.functional_roles.forEach(function (role) {
-      roles += role.name + ';';
+    elt.functional_roles.forEach((role) => {
+      roles += `${role.name};`;
     });
   }
   return [
@@ -55,11 +55,11 @@ function getRowFromUser (elt) {
     elt.phone_number,
     skype,
     elt.email,
-    elt.status
+    elt.status,
   ];
 }
 
-function getAuthClient (user) {
+function getAuthClient(user) {
   // Authenticate with Google
   const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
   const authClient = new OAuth2Client(creds.web.client_id, creds.web.client_secret, 'postmessage');
@@ -67,22 +67,21 @@ function getAuthClient (user) {
   return authClient;
 }
 
-async function writeUser (gsssync, authClient, user, index) {
+async function writeUser(gsssync, authClient, user, index) {
   const sheets = google.sheets('v4');
   const values = getRowFromUser(user);
   const body = {
-    values: [values]
+    values: [values],
   };
   try {
     await sheets.spreadsheets.values.update({
       spreadsheetId: gsssync.spreadsheet,
-      range: 'A' + index + ':M' + index,
+      range: `A${index}:M${index}`,
       valueInputOption: 'RAW',
       resource: body,
-      auth: authClient
+      auth: authClient,
     });
-  }
-  catch (err) {
+  } catch (err) {
     if (err.code === 404) {
       // Spreadsheet has been deleted, remove the synchronization
       gsssync.remove();
@@ -91,7 +90,7 @@ async function writeUser (gsssync, authClient, user, index) {
   }
 }
 
-async function addUser (agsssync, user) {
+async function addUser(agsssync, user) {
   const sheets = google.sheets('v4');
   const gsssync = await agsssync
     .populate('list user')
@@ -111,22 +110,22 @@ async function addUser (agsssync, user) {
     const column = await sheets.spreadsheets.values.get({
       spreadsheetId: gsssync.spreadsheet,
       range: 'A:A',
-      auth: authClient
+      auth: authClient,
     });
     if (!column || !column.values) {
-      throw Boom.badImplementation('column or column.values is undefined on spreadsheet ' + gsssync.spreadsheet);
+      throw Boom.badImplementation(`column or column.values is undefined on spreadsheet ${gsssync.spreadsheet}`);
     }
-    let row = 0, index = 0, firstLine = true;
-    column.values.forEach(function (elt) {
+    let row = 0; let index = 0; let
+      firstLine = true;
+    column.values.forEach((elt) => {
       // Skip first line as it's the headers
       if (firstLine === true) {
         firstLine = false;
-      }
-      else {
+      } else {
         if (elt[0] !== users[row]._id.toString() && index === 0) {
           index = row + 1;
         }
-        row++;
+        row += 1;
       }
     });
     if (index !== 0) {
@@ -137,24 +136,22 @@ async function addUser (agsssync, user) {
               sheetId: gsssync.sheetId,
               dimension: 'ROWS',
               startIndex: index,
-              endIndex: index + 1
-            }
-          }
-        }]
+              endIndex: index + 1,
+            },
+          },
+        }],
       };
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId: gsssync.spreadsheet,
         resource: body,
-        auth: authClient
+        auth: authClient,
       });
       const writeIndex = index + 1;
       await writeUser(gsssync, authClient, user, writeIndex);
-    }
-    else {
+    } else {
       throw Boom.badRequest('Could not add user');
     }
-  }
-  catch (err) {
+  } catch (err) {
     if (err.code === 404) {
       // Spreadsheet has been deleted, remove the synchronization
       gsssync.remove();
@@ -163,7 +160,7 @@ async function addUser (agsssync, user) {
   }
 }
 
-async function deleteUser (agsssync, hid) {
+async function deleteUser(agsssync, hid) {
   const sheets = google.sheets('v4');
   const gsssync = await agsssync
     .populate('list user')
@@ -173,17 +170,18 @@ async function deleteUser (agsssync, hid) {
     const column = await sheets.spreadsheets.values.get({
       spreadsheetId: gsssync.spreadsheet,
       range: 'A:A',
-      auth: authClient
+      auth: authClient,
     });
     if (!column || !column.values) {
-      throw Boom.badImplementation('column or column.values is undefined on spreadsheet ' + gsssync.spreadsheet);
+      throw Boom.badImplementation(`column or column.values is undefined on spreadsheet ${gsssync.spreadsheet}`);
     }
-    let row = 0, index = 0;
-    column.values.forEach(function (elt) {
+    let row = 0; let
+      index = 0;
+    column.values.forEach((elt) => {
       if (elt[0] === hid) {
         index = row;
       }
-      row++;
+      row += 1;
     });
     if (index !== 0) {
       const body = {
@@ -193,22 +191,20 @@ async function deleteUser (agsssync, hid) {
               sheetId: gsssync.sheetId,
               dimension: 'ROWS',
               startIndex: index,
-              endIndex: index + 1
-            }
-          }
-        }]
+              endIndex: index + 1,
+            },
+          },
+        }],
       };
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId: gsssync.spreadsheet,
         resource: body,
-        auth: authClient
+        auth: authClient,
       });
-    }
-    else {
+    } else {
       throw Boom.badRequest('Could not find user');
     }
-  }
-  catch (err) {
+  } catch (err) {
     if (err.code === 404) {
       // Spreadsheet has been deleted, remove the synchronization
       gsssync.remove();
@@ -217,7 +213,7 @@ async function deleteUser (agsssync, hid) {
   }
 }
 
-async function updateUser (agsssync, user) {
+async function updateUser(agsssync, user) {
   const sheets = google.sheets('v4');
   const gsssync = await agsssync
     .populate('list user')
@@ -227,26 +223,25 @@ async function updateUser (agsssync, user) {
     const column = await sheets.spreadsheets.values.get({
       spreadsheetId: gsssync.spreadsheet,
       range: 'A:A',
-      auth: authClient
+      auth: authClient,
     });
     if (!column || !column.values) {
-      throw new Error('column or column.values is undefined on spreadsheet ' + gsssync.spreadsheet);
+      throw new Error(`column or column.values is undefined on spreadsheet ${gsssync.spreadsheet}`);
     }
-    let row = 0, index = 0;
-    column.values.forEach(function (elt) {
+    let row = 0;
+    let index = 0;
+    column.values.forEach((elt) => {
       if (elt[0] === user._id.toString()) {
         index = row + 1;
       }
-      row++;
+      row += 1;
     });
     if (index !== 0) {
       await writeUser(gsssync, authClient, user, index);
+    } else {
+      throw new Error(`Could not find user ${user._id.toString()} for spreadsheet ${gsssync.spreadsheet}`);
     }
-    else {
-      throw new Error('Could not find user ' + user._id.toString() + ' for spreadsheet ' + gsssync.spreadsheet);
-    }
-  }
-  catch (err) {
+  } catch (err) {
     if (err.code === 404) {
       // Spreadsheet has been deleted, remove the synchronization
       gsssync.remove();
@@ -257,89 +252,78 @@ async function updateUser (agsssync, user) {
 
 module.exports = {
 
-  addUserToSpreadsheets: async function (listId, user) {
-    const gsssyncs = await GSSSync.find({list: listId});
-    if (gsssyncs.length) {
-      const fn = async function (gsssync) {
-        await addUser(gsssync, user);
-      };
-      const actions = gsssyncs.map(fn);
-      return Promise.all(actions);
-    }
+  async addUserToSpreadsheets(listId, user) {
+    const gsssyncs = await GSSSync.find({ list: listId });
+    const actions = gsssyncs.map(async (gsssync) => {
+      await addUser(gsssync, user);
+    });
+    return Promise.all(actions);
   },
 
-  deleteUserFromSpreadsheets: async function (listId, hid) {
-    const gsssyncs = await GSSSync.find({list: listId});
-    if (gsssyncs.length) {
-      const fn = async function (gsssync) {
-        await deleteUser(gsssync, hid);
-      };
-      const actions = gsssyncs.map(fn);
-      return Promise.all(actions);
-    }
+  async deleteUserFromSpreadsheets(listId, hid) {
+    const gsssyncs = await GSSSync.find({ list: listId });
+    const actions = gsssyncs.map(async (gsssync) => {
+      await deleteUser(gsssync, hid);
+    });
+    return Promise.all(actions);
   },
 
-  synchronizeUser: async function (user) {
+  async synchronizeUser(user) {
     // Get all lists from user
     const listIds = user.getListIds();
 
     // Find the gsssyncs associated to the lists
-    const gsssyncs = await GSSSync.find({list: {$in: listIds}});
-    if (gsssyncs.length) {
-      // For each gsssync, call updateUser
-      const fn = async function (gsssync) {
-        await updateUser(gsssync, user);
-      };
-      const actions = gsssyncs.map(fn);
-      return Promise.all(actions);
-    }
+    const gsssyncs = await GSSSync.find({ list: { $in: listIds } });
+    // For each gsssync, call updateUser
+    const actions = gsssyncs.map(async (gsssync) => {
+      await updateUser(gsssync, user);
+    });
+    return Promise.all(actions);
   },
 
-  createSpreadsheet: async function (user, listId, callback) {
+  async createSpreadsheet(user, listId) {
     const list = await List.findOne({ _id: listId });
     if (!list) {
       throw new Error('List not found');
     }
     const authClient = getAuthClient(user);
     const sheets = google.sheets('v4');
-    let request = {
+    const request = {
       resource: {
         properties: {
-          title: list.name
+          title: list.name,
         },
         sheets: [{
           properties: {
             gridProperties: {
-              rowCount: 10000
-            }
-          }
-        }]
+              rowCount: 10000,
+            },
+          },
+        }],
       },
-      auth: authClient
+      auth: authClient,
     };
     const response = await sheets.spreadsheets.create(request);
     return response;
   },
 
-  getSheetId: async function (agsssync) {
+  async getSheetId(agsssync) {
     const gsssync = await agsssync.populate('user').execPopulate();
     const authClient = getAuthClient();
     const sheets = google.sheets('v4');
     const sheet = await sheets.spreadsheets.get({
       spreadsheetId: gsssync.spreadsheet,
-      auth: authClient
+      auth: authClient,
     });
     if (sheet) {
       return sheet.sheets[0].properties.sheetId;
     }
-    else {
-      return '';
-    }
+    return '';
   },
 
-  synchronizeAll: async function (agsssync) {
+  async synchronizeAll(agsssync) {
     const headers = GSSSync.getSpreadsheetHeaders();
-    const gsssync = await gsssync.populate('list user').execPopulate();
+    const gsssync = await agsssync.populate('list user').execPopulate();
     const authClient = getAuthClient();
     const criteria = gsssync.getUserCriteria();
     if (Object.keys(criteria).length === 0) {
@@ -356,26 +340,26 @@ module.exports = {
     let row = [];
     data.push({
       range: 'A1:M1',
-      values: [headers]
+      values: [headers],
     });
-    users.forEach(function (elt) {
+    users.forEach((elt) => {
       row = getRowFromUser(elt);
       data.push({
-        range: 'A' + index + ':M' + index,
-        values: [row]
+        range: `A${index}:M${index}`,
+        values: [row],
       });
-      index++;
+      index += 1;
     });
     const body = {
-      data: data,
-      valueInputOption: 'RAW'
+      data,
+      valueInputOption: 'RAW',
     };
     const sheets = google.sheets('v4');
     return sheets.spreadsheets.values.batchUpdate({
       spreadsheetId: gsssync.spreadsheet,
       resource: body,
-      auth: authClient
+      auth: authClient,
     });
-  }
+  },
 
 };

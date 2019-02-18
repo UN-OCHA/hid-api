@@ -1,8 +1,8 @@
-'use strict';
+
 
 const mongoose = require('mongoose');
 
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 
 /**
  * @module Operation
@@ -12,33 +12,33 @@ const Schema = mongoose.Schema;
 const OperationSchema = new Schema({
   remote_id: {
     type: Number,
-    readonly: true
+    readonly: true,
   },
   managers: [{
     type: Schema.ObjectId,
-    ref: 'User'
+    ref: 'User',
   }],
   url: {
     type: String,
-    readonly: true
+    readonly: true,
   },
   key_lists: [{
     type: Schema.ObjectId,
-    ref: 'List'
+    ref: 'List',
   }],
   key_roles: [{
     type: Schema.ObjectId,
-    ref: 'List'
-  }]
+    ref: 'List',
+  }],
 }, {
-  collection: 'operation'
+  collection: 'operation',
 });
 
 OperationSchema
   .methods
   .managersIndex = function (user) {
     let index = -1;
-    for (let i = 0; i < this.managers.length; i++) {
+    for (let i = 0; i < this.managers.length; i += 1) {
       if (this.managers[i].id === user.id) {
         index = i;
       }

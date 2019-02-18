@@ -1,4 +1,4 @@
-'use strict';
+
 
 const Boom = require('boom');
 
@@ -8,12 +8,12 @@ const Boom = require('boom');
  */
 module.exports = {
 
-  canRun (request, reply) {
-    if (request.headers && request.headers.authorization && request.headers.authorization === process.env.CRON_KEY) {
+  canRun(request) {
+    if (request.headers
+      && request.headers.authorization
+      && request.headers.authorization === process.env.CRON_KEY) {
       return true;
     }
-    else {
-      throw Boom.unauthorized('Missing or wrong cron key');
-    }
-  }
+    throw Boom.unauthorized('Missing or wrong cron key');
+  },
 };

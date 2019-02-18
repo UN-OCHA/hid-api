@@ -1,8 +1,8 @@
-'use strict';
+
 
 const mongoose = require('mongoose');
 
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 
 /**
  * @module JwtToken
@@ -13,19 +13,19 @@ const JwtTokenSchema = new Schema({
   token: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
   },
   user: {
     type: Schema.ObjectId,
-    ref: 'User'
+    ref: 'User',
   },
   blacklist: {
     type: Boolean,
     default: false,
-    required: true
-  }
+    required: true,
+  },
 }, {
-  collection: 'jwttoken'
+  collection: 'jwttoken',
 });
 
 module.exports = mongoose.model('JwtToken', JwtTokenSchema);

@@ -1,4 +1,4 @@
-'use strict';
+
 
 const Boom = require('boom');
 const _ = require('lodash');
@@ -15,7 +15,7 @@ const NotificationService = require('../services/NotificationService');
 
 module.exports = {
 
-  create: async function (request, reply) {
+  async create(request, reply) {
     HelperService.removeForbiddenAttributes(List, request, ['names']);
     request.payload.owner = request.auth.credentials._id;
     if (!request.payload.managers) {
@@ -26,7 +26,7 @@ module.exports = {
     return list;
   },
 
-  find: async function (request, reply) {
+  async find(request, reply) {
     const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
@@ -58,11 +58,11 @@ module.exports = {
     if (request.params.id) {
       if (!options.populate) {
         options.populate = [
-          {path: 'owner', select: '_id name'},
-          {path: 'managers', select: '_id name'}
+          { path: 'owner', select: '_id name' },
+          { path: 'managers', select: '_id name' },
         ];
       }
-      const result = await List.findOne({_id: request.params.id, deleted: criteria.deleted }).populate(options.populate);
+      const result = await List.findOne({ _id: request.params.id, deleted: criteria.deleted }).populate(options.populate);
       if (!result) {
         throw Boom.notFound();
       }
@@ -73,90 +73,87 @@ module.exports = {
       out.visible = result.isVisibleTo(request.auth.credentials);
       return out;
     }
-    else {
-      options.populate = [{path: 'owner', select: '_id name'}];
-      if (!request.auth.credentials.is_admin && !request.auth.credentials.isManager) {
-        criteria.$or = [{visibility: 'all'}, {visibility: 'inlist'}, {$and: [{ visibility: 'me'}, {managers: request.auth.credentials._id}]}];
-        if (request.auth.credentials.verified) {
-          criteria.$or.push({visibility: 'verified'});
-        }
+    options.populate = [{ path: 'owner', select: '_id name' }];
+    if (!request.auth.credentials.is_admin && !request.auth.credentials.isManager) {
+      criteria.$or = [{ visibility: 'all' }, { visibility: 'inlist' }, { $and: [{ visibility: 'me' }, { managers: request.auth.credentials._id }] }];
+      if (request.auth.credentials.verified) {
+        criteria.$or.push({ visibility: 'verified' });
       }
-      const [results, number] = await Promise.all([HelperService.find(List, criteria, options), List.countDocuments(criteria)]);
-      const out = [];
-      let tmp = {};
-      let optionsArray = [];
-      if (options.fields) {
-        optionsArray = options.fields.split(' ');
-      }
-      for (const list of results) {
-        tmp = list.toJSON();
-        tmp.visible = list.isVisibleTo(request.auth.credentials);
-        if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('names') !== -1)) {
-          tmp.name = list.translatedAttribute('names', reqLanguage);
-        }
-        if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('acronyms') !== -1)) {
-          tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
-        }
-        if (optionsArray.indexOf('count') !== -1) {
-          const ucriteria = {};
-          ucriteria[list.type + 's'] = {
-            $elemMatch: {list: list._id, deleted: false, pending: false}
-          };
-          tmp.count = await User.countDocuments(ucriteria);
-        }
-        out.push(tmp);
-      }
-      return reply.response(out).header('X-Total-Count', number);
     }
+    const [results, number] = await Promise.all([HelperService.find(List, criteria, options), List.countDocuments(criteria)]);
+    const out = [];
+    let tmp = {};
+    let optionsArray = [];
+    if (options.fields) {
+      optionsArray = options.fields.split(' ');
+    }
+    for (const list of results) {
+      tmp = list.toJSON();
+      tmp.visible = list.isVisibleTo(request.auth.credentials);
+      if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('names') !== -1)) {
+        tmp.name = list.translatedAttribute('names', reqLanguage);
+      }
+      if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('acronyms') !== -1)) {
+        tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
+      }
+      if (optionsArray.indexOf('count') !== -1) {
+        const ucriteria = {};
+        ucriteria[`${list.type}s`] = {
+          $elemMatch: { list: list._id, deleted: false, pending: false },
+        };
+        tmp.count = await User.countDocuments(ucriteria);
+      }
+      out.push(tmp);
+    }
+    return reply.response(out).header('X-Total-Count', number);
   },
 
-  update: async function (request, reply) {
-
+  async update(request, reply) {
     HelperService.removeForbiddenAttributes(List, request, ['names']);
 
-    const newlist = await List.findOneAndUpdate({_id: request.params.id}, request.payload, {runValidators: true, new: true});
+    const newlist = await List.findOneAndUpdate({ _id: request.params.id }, request.payload, { runValidators: true, new: true });
     const payloadManagers = [];
     if (request.payload.managers) {
-      request.payload.managers.forEach(function (man) {
+      request.payload.managers.forEach((man) => {
         payloadManagers.push(man.toString());
       });
     }
     const listManagers = [];
     if (newlist.managers) {
-      newlist.managers.forEach(function (man) {
+      newlist.managers.forEach((man) => {
         listManagers.push(man.toString());
       });
     }
     const diffAdded = _.difference(payloadManagers, listManagers);
     const diffRemoved = _.difference(listManagers, payloadManagers);
     if (diffAdded.length) {
-      const users = await User.find({_id: {$in: diffAdded}});
+      const users = await User.find({ _id: { $in: diffAdded } });
       for (const user of users) {
         await NotificationService
           .send({
             type: 'added_list_manager',
-            user: user,
+            user,
             createdBy: request.auth.credentials,
-            params: { list: newlist }
+            params: { list: newlist },
           }, () => {});
       }
     }
     if (diffRemoved.length) {
-      const users = await User.find({_id: {$in: diffRemoved}});
+      const users = await User.find({ _id: { $in: diffRemoved } });
       for (const user of users) {
         await NotificationService
           .send({
             type: 'removed_list_manager',
-            user: user,
+            user,
             createdBy: request.auth.credentials,
-            params: { list: newlist }
+            params: { list: newlist },
           }, () => {});
       }
     }
 
     // Update users
     const criteria = {};
-    criteria[newlist.type + 's.list'] = newlist._id.toString();
+    criteria[`${newlist.type}s.list`] = newlist._id.toString();
     const users = await User.find(criteria);
     const actions = [];
     for (let i = 0; i < users.length; i++) {
@@ -168,7 +165,7 @@ module.exports = {
     return newlist;
   },
 
-  destroy: async function (request, reply) {
+  async destroy(request, reply) {
     const record = await List.findOne({ _id: request.params.id });
     if (!record) {
       throw Boom.notFound();
@@ -178,17 +175,17 @@ module.exports = {
     const newRecord = await record.save();
     // Remove all checkins from users in this list
     const criteria = {};
-    criteria[record.type + 's.list'] = record._id.toString();
+    criteria[`${record.type}s.list`] = record._id.toString();
     const users = await User.find(criteria);
     for (const user of users) {
-      for (let j = 0; j < user[record.type + 's'].length; j++) {
-        if (user[record.type + 's'][j].list.toString() === record._id.toString()) {
-          user[record.type + 's'][j].deleted = true;
+      for (let j = 0; j < user[`${record.type}s`].length; j++) {
+        if (user[`${record.type}s`][j].list.toString() === record._id.toString()) {
+          user[`${record.type}s`][j].deleted = true;
         }
       }
       await user.save();
     }
     return newRecord;
-  }
+  },
 
 };

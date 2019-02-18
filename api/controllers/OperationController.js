@@ -1,4 +1,4 @@
-'use strict';
+
 
 const Boom = require('boom');
 const Operation = require('../models/Operation');
@@ -10,7 +10,7 @@ const HelperService = require('../services/HelperService');
  */
 module.exports = {
 
-  create: async function (request, reply) {
+  async create(request) {
     const operation = await Operation.create(request.payload);
     if (!operation) {
       throw Boom.badRequest();
@@ -18,7 +18,7 @@ module.exports = {
     return operation;
   },
 
-  find: async function (request, reply) {
+  async find(request, reply) {
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
 
@@ -30,21 +30,23 @@ module.exports = {
       }
       return result;
     }
-    else {
-      options.populate = 'managers key_roles key_lists';
-      const [results, number] = await Promise.all([HelperService.find(Operation, criteria, options), Operation.countDocuments(criteria)]);
-      return reply.response(results).header('X-Total-Count', number);
-    }
+    options.populate = 'managers key_roles key_lists';
+    const [results, number] = await Promise.all([
+      HelperService.find(Operation, criteria, options),
+      Operation.countDocuments(criteria)
+    ]);
+    return reply.response(results).header('X-Total-Count', number);
   },
 
-  update: async function (request, reply) {
-    const client = await Operation.findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true});
+  async update(request) {
+    const client = await Operation.findOneAndUpdate({ _id: request.params.id },
+      request.payload, { runValidators: true, new: true });
     return client;
   },
 
-  destroy: async function (request, reply) {
-    await Operation.remove({ _id: request.params.id});
+  async destroy(request, reply) {
+    await Operation.remove({ _id: request.params.id });
     return reply.response().code(204);
-  }
+  },
 
 };

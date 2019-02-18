@@ -1,9 +1,9 @@
-'use strict';
+
 
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 
 /**
  * @module OauthToken
@@ -14,37 +14,37 @@ const OauthTokenSchema = new Schema({
   type: {
     type: String,
     required: true,
-    enum: ['code', 'access', 'refresh']
+    enum: ['code', 'access', 'refresh'],
   },
   token: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
   },
   client: {
     type: Schema.ObjectId,
-    ref: 'Client'
+    ref: 'Client',
   },
   user: {
     type: Schema.ObjectId,
-    ref: 'User'
+    ref: 'User',
   },
   nonce: {
     type: String,
-    default: ''
+    default: '',
   },
   expires: {
-    type: Date
-  }
+    type: Date,
+  },
 }, {
-  collection: 'oauthtoken'
+  collection: 'oauthtoken',
 });
 
 OauthTokenSchema
   .methods
   .isExpired = function () {
     const now = new Date();
-    const expires = this.expires;
+    const { expires } = this;
     return now.getTime() > expires.getTime();
   };
 
@@ -59,12 +59,12 @@ OauthTokenSchema
 
     const now = Date.now();
     const ftoken = {
-      type: type,
-      token: token,
+      type,
+      token,
       client: client._id,
       user: user._id,
-      nonce: nonce,
-      expires: now + 7 * 24 * 3600 * 1000
+      nonce,
+      expires: now + 7 * 24 * 3600 * 1000,
     };
     return ftoken;
   };

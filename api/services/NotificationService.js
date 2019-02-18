@@ -1,4 +1,4 @@
-'use strict';
+
 
 const Notification = require('../models/Notification');
 const EmailService = require('./EmailService');
@@ -11,13 +11,13 @@ const EmailService = require('./EmailService');
 module.exports = {
 
   // Create notification and send email
-  send: async function (notification) {
+  async send(notification) {
     await Notification.create(notification);
     return EmailService.sendNotification(notification);
   },
 
   // Create notification and send email to multiple users
-  sendMultiple: function (users, notification, callback) {
+  sendMultiple(users, notification) {
     // Note that async functions return a promise
     const promises = users.map(async (user) => {
       const cNotification = JSON.parse(JSON.stringify(notification));
@@ -30,11 +30,11 @@ module.exports = {
   },
 
   // Create only a notification, without sending an email
-  notify: function (notification) {
+  notify(notification) {
     return Notification.create(notification);
   },
 
-  notifyMultiple: function (users, notification) {
+  notifyMultiple(users, notification) {
     // Note that async functions return a promise
     const promises = users.map(async (user) => {
       const cNotification = JSON.parse(JSON.stringify(notification));
@@ -43,6 +43,6 @@ module.exports = {
       return result;
     });
     return Promise.all(promises);
-  }
+  },
 
 };

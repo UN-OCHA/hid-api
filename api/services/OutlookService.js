@@ -1,4 +1,4 @@
-'use strict';
+
 
 const OutlookSync = require('../models/OutlookSync');
 
@@ -8,47 +8,32 @@ const OutlookSync = require('../models/OutlookSync');
  */
 module.exports = {
 
-  findByList: function (listId) {
+  findByList(listId) {
     return OutlookSync
-      .find({list: listId});
+      .find({ list: listId });
   },
 
-  addUserToContactFolders: async function (listId, user) {
-    const osyncs = await OutlookSync.find({list: listId});
-    if (osyncs.length) {
-      const fn = function (osync) {
-        return osync.addUser(user);
-      };
-      const actions = osyncs.map(fn);
-      return Promise.all(actions);
-    }
+  async addUserToContactFolders(listId, user) {
+    const osyncs = await OutlookSync.find({ list: listId });
+    const actions = osyncs.map(osync => osync.addUser(user));
+    return Promise.all(actions);
   },
 
-  deleteUserFromContactFolders: async function (listId, userId) {
-    const osyncs = await OutlookSync.find({list: listId});
-    if (osyncs.length) {
-      const fn = function (osync) {
-        return osync.deleteUser(userId);
-      };
-      const actions = osyncs.map(fn);
-      return Promise.all(actions);
-    }
+  async deleteUserFromContactFolders(listId, userId) {
+    const osyncs = await OutlookSync.find({ list: listId });
+    const actions = osyncs.map(osync => osync.deleteUser(userId));
+    return Promise.all(actions);
   },
 
-  synchronizeUser: async function (user) {
+  async synchronizeUser(user) {
     // Get all lists from user
     const listIds = user.getListIds();
 
     // Find the gsssyncs associated to the lists
-    const osyncs = await OutlookSync.find({list: {$in: listIds}});
-    if (osyncs.length) {
-      // For each gsssync, call updateUser
-      const fn = function (osync) {
-        return osync.updateUser(user);
-      };
-      const actions = osyncs.map(fn);
-      return Promise.all(actions);
-    }
-  }
+    const osyncs = await OutlookSync.find({ list: { $in: listIds } });
+    // For each gsssync, call updateUser
+    const actions = osyncs.map(osync => osync.updateUser(user));
+    return Promise.all(actions);
+  },
 
 };

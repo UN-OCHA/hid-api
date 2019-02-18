@@ -1,7 +1,7 @@
-'use strict';
+
 
 const Boom = require('boom');
-const {OAuth2Client} = require('google-auth-library');
+const { OAuth2Client } = require('google-auth-library');
 const fs = require('fs');
 const GSSSync = require('../models/GSSSync');
 const GSSSyncService = require('../services/GSSSyncService');
@@ -13,10 +13,11 @@ const GSSSyncService = require('../services/GSSSyncService');
 
 module.exports = {
 
-  create: async function (request, reply) {
+  async create(request) {
     request.payload.user = request.auth.credentials._id;
     if (!request.payload.spreadsheet) {
-      const spreadsheet = await GSSSyncService.createSpreadsheet(request.auth.credentials, request.payload.list);
+      const spreadsheet = await GSSSyncService
+        .createSpreadsheet(request.auth.credentials, request.payload.list);
       request.payload.spreadsheet = spreadsheet.data.spreadsheetId;
       request.payload.sheetId = spreadsheet.data.sheets[0].properties.sheetId;
     }
@@ -28,7 +29,7 @@ module.exports = {
     return gsssync;
   },
 
-  saveGoogleCredentials: async function (request, reply) {
+  async saveGoogleCredentials(request, reply) {
     if (request.payload.code) {
       const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
       const authClient = new OAuth2Client(creds.web.client_id, creds.web.client_secret, 'postmessage');
@@ -38,17 +39,14 @@ module.exports = {
         await request.auth.credentials.save();
         return reply.response().code(204);
       }
-      else {
-        throw Boom.badRequest('No refresh token');
-      }
-    }
-    else {
+      throw Boom.badRequest('No refresh token');
+    } else {
       throw Boom.badRequest();
     }
   },
 
-  destroy: async function (request, reply) {
+  async destroy(request, reply) {
     await GSSSync.remove({ _id: request.params.id });
     return reply.response().code(204);
-  }
+  },
 };

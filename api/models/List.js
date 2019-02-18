@@ -1,7 +1,8 @@
-'use strict';
+
 
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+
+const { Schema } = mongoose;
 const languages = ['en', 'fr', 'es'];
 const isHTML = require('is-html');
 
@@ -17,15 +18,15 @@ const isHTMLValidator = function (v) {
 const translationSchema = new Schema({
   language: {
     type: String,
-    enum: ['en', 'fr', 'es']
+    enum: ['en', 'fr', 'es'],
   },
   text: {
     type: String,
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in text'
-    }
-  }
+      message: 'HTML code is not allowed in text',
+    },
+  },
 });
 
 const ListSchema = new Schema({
@@ -35,8 +36,8 @@ const ListSchema = new Schema({
     index: true,
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in name'
-    }
+      message: 'HTML code is not allowed in name',
+    },
   },
 
   names: [translationSchema],
@@ -47,8 +48,8 @@ const ListSchema = new Schema({
     trim: true,
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in acronym'
-    }
+      message: 'HTML code is not allowed in acronym',
+    },
   },
 
   acronyms: [translationSchema],
@@ -59,8 +60,8 @@ const ListSchema = new Schema({
     required: [true, 'Label is required'],
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in label'
-    }
+      message: 'HTML code is not allowed in label',
+    },
   },
 
   labels: [translationSchema],
@@ -74,171 +75,160 @@ const ListSchema = new Schema({
       'list',
       'organization',
       'functional_role',
-      'office'
+      'office',
     ],
-    required: [true, 'Type is required']
+    required: [true, 'Type is required'],
   },
 
   visibility: {
     type: String,
     enum: ['me', 'inlist', 'all', 'verified'],
-    required: [true, 'Visibility is required']
+    required: [true, 'Visibility is required'],
   },
 
   joinability: {
     type: String,
     enum: ['public', 'moderated', 'private'],
-    required: [true, 'Joinability is required']
+    required: [true, 'Joinability is required'],
   },
 
   remote_id: {
     type: Number,
-    readonly: true
+    readonly: true,
   },
 
   legacyId: {
     type: String,
-    readonly: true
+    readonly: true,
   },
 
   owner: {
     type: Schema.ObjectId,
-    ref: 'User'
+    ref: 'User',
   },
 
   managers: [{
     type: Schema.ObjectId,
-    ref: 'User'
+    ref: 'User',
   }],
 
   metadata: {
     type: Schema.Types.Mixed,
-    readonly: true
+    readonly: true,
   },
 
   count: {
     type: Number,
     default: 0,
-    readonly: true
+    readonly: true,
   },
 
   deleted: {
     type: Boolean,
     default: false,
-    readonly: true
-  }
+    readonly: true,
+  },
 }, {
   timestamps: true,
-  collection: 'list'
+  collection: 'list',
 });
 
 ListSchema.pre('save', function (next) {
   if (this.acronym) {
-    this.name = this.label + ' (' + this.acronym + ')';
-  }
-  else {
+    this.name = `${this.label} (${this.acronym})`;
+  } else {
     this.name = this.label;
   }
   const that = this;
-  languages.forEach(function (lang) {
+  languages.forEach((lang) => {
     const labelIndex = that.languageIndex('labels', lang);
     const nameIndex = that.languageIndex('names', lang);
     const acronymIndex = that.languageIndex('acronyms', lang);
     let name = '';
     if (labelIndex !== -1) {
       if (acronymIndex !== -1 && that.acronyms[acronymIndex].text !== '') {
-        name = that.labels[labelIndex].text + ' (' + that.acronyms[acronymIndex].text + ')';
-      }
-      else {
+        name = `${that.labels[labelIndex].text} (${that.acronyms[acronymIndex].text})`;
+      } else {
         name = that.labels[labelIndex].text;
       }
       if (nameIndex !== -1) {
         that.names[nameIndex].text = name;
-      }
-      else {
-        that.names.push({language: lang, text: name});
+      } else {
+        that.names.push({ language: lang, text: name });
       }
     }
   });
-  next ();
+  next();
 });
 
-ListSchema.post('findOneAndUpdate', function (list) {
+ListSchema.post('findOneAndUpdate', (list) => {
   // Calling list.save to go through the presave hook and update list name
   list.save();
 });
 
-ListSchema.index({ 'remote_id': 1, 'type': 1}, { unique: true, partialFilterExpression: { remote_id: { $exists: true } } });
+ListSchema.index({ remote_id: 1, type: 1 },
+  { unique: true, partialFilterExpression: { remote_id: { $exists: true } } }
+);
 
 ListSchema.methods = {
-  getAppUrl: function () {
-    return process.env.APP_URL + '/lists/' + this._id;
+  getAppUrl() {
+    return `${process.env.APP_URL}/lists/${this._id}`;
   },
 
-  isVisibleTo: function (user) {
-    if (this.isOwner(user) ||
-      this.visibility === 'all' ||
-      (this.visibility === 'verified' && user.verified)) {
+  isVisibleTo(user) {
+    if (this.isOwner(user)
+      || this.visibility === 'all'
+      || (this.visibility === 'verified' && user.verified)) {
       return true;
-    }
-    else {
-      if (this.visibility === 'inlist') {
-        let out = false;
-        // Is user in list ?
-        for (let i = 0; i < user[this.type + 's'].length; i++) {
-          if (user[this.type + 's'][i].list.toString() === this._id.toString() && !user[this.type + 's'][i].deleted) {
-            out = true;
-          }
+    } if (this.visibility === 'inlist') {
+      let out = false;
+      // Is user in list ?
+      for (let i = 0; i < user[`${this.type}s`].length; i += 1) {
+        if (user[`${this.type}s`][i].list.toString() === this._id.toString() && !user[`${this.type}s`][i].deleted) {
+          out = true;
         }
-        return out;
       }
-      else {
-        return false;
-      }
+      return out;
     }
+
+    return false;
   },
 
-  isOwner: function (user) {
+  isOwner(user) {
     let ownerId = '';
     if (this.owner) {
       if (this.owner._id) {
         ownerId = this.owner._id.toString();
-      }
-      else {
+      } else {
         ownerId = this.owner.toString();
       }
     }
-    if (user.is_admin ||
-      ownerId === user._id.toString() ||
-      this.isManager(user)) {
+    if (user.is_admin
+      || ownerId === user._id.toString()
+      || this.isManager(user)) {
       return true;
     }
-    else {
-      return false;
-    }
+    return false;
   },
 
-  isManager: function (user) {
+  isManager(user) {
     let managerFound = false;
     if (this.managers && this.managers.length) {
-      this.managers.forEach(function (manager) {
+      this.managers.forEach((manager) => {
         if (manager.id && manager.id === user.id) {
           managerFound = true;
-        }
-        else {
-          if (manager.toString() === user._id.toString()) {
-            managerFound = true;
-          }
+        } else if (manager.toString() === user._id.toString()) {
+          managerFound = true;
         }
       });
     }
     return managerFound;
   },
 
-  languageIndex: function (attr, language) {
+  languageIndex(attr, language) {
     let index = -1;
     if (this[attr] && this[attr].length) {
-      for (let i = 0; i < this[attr].length; i++) {
+      for (let i = 0; i < this[attr].length; i += 1) {
         if (this[attr][i].language === language) {
           index = i;
         }
@@ -247,7 +237,7 @@ ListSchema.methods = {
     return index;
   },
 
-  translatedAttribute: function (attr, language) {
+  translatedAttribute(attr, language) {
     let index = this.languageIndex(attr, language);
     if (index === -1) {
       index = this.languageIndex(attr, 'en');
@@ -258,11 +248,9 @@ ListSchema.methods = {
     if (index !== -1 && this[attr][index]) {
       return this[attr][index].text;
     }
-    else {
-      const singularAttr = attr.substr(-1);
-      return this[singularAttr];
-    }
-  }
+    const singularAttr = attr.substr(-1);
+    return this[singularAttr];
+  },
 };
 
 module.exports = mongoose.model('List', ListSchema);

@@ -1,4 +1,4 @@
-'use strict';
+
 
 const Boom = require('boom');
 const TrustedDomain = require('../models/TrustedDomain');
@@ -10,7 +10,7 @@ const HelperService = require('../services/HelperService');
  */
 module.exports = {
 
-  create: async function (request, reply) {
+  async create(request) {
     const domain = await TrustedDomain.create(request.payload);
     if (!domain) {
       throw Boom.badRequest();
@@ -18,7 +18,7 @@ module.exports = {
     return domain;
   },
 
-  find: async function (request, reply) {
+  async find(request, reply) {
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
 
@@ -30,14 +30,12 @@ module.exports = {
       }
       return result;
     }
-    else {
-      const [results, number] = await Promise.all([HelperService.find(TrustedDomain, criteria, options).populate('list'), TrustedDomain.countDocuments(criteria)]);
-      return reply.response(results).header('X-Total-Count', number);
-    }
+    const [results, number] = await Promise.all([HelperService.find(TrustedDomain, criteria, options).populate('list'), TrustedDomain.countDocuments(criteria)]);
+    return reply.response(results).header('X-Total-Count', number);
   },
 
-  destroy: async function (request, reply) {
+  async destroy(request, reply) {
     await TrustedDomain.remove({ _id: request.params.id });
     return reply.response().code(204);
-  }
+  },
 };

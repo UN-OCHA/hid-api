@@ -1,17 +1,17 @@
-'use strict';
+
 
 const mongoose = require('mongoose');
 const isHTML = require('is-html');
 const validate = require('mongoose-validator');
 
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 
 /**
  * @module TrustedDomain
  * @description Trusted Domain
  */
 
-const isHTMLValidator = function (v) {
+function isHTMLValidator (v) {
   return !isHTML(v);
 };
 
@@ -23,22 +23,22 @@ const TrustedDomainSchema = new Schema({
     validate: validate({
       validator: 'isURL',
       passIfEmpty: false,
-      message: 'URL should be a URL'
-    })
+      message: 'URL should be a URL',
+    }),
   },
   description: {
     type: String,
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in description'
-    }
+      message: 'HTML code is not allowed in description',
+    },
   },
   list: {
     type: Schema.ObjectId,
-    ref: 'List'
-  }
+    ref: 'List',
+  },
 }, {
-  collection: 'trusteddomain'
+  collection: 'trusteddomain',
 });
 
 module.exports = mongoose.model('TrustedDomain', TrustedDomainSchema);

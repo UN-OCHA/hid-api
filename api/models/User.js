@@ -1,22 +1,24 @@
-'use strict';
+
 
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+
+const { Schema } = mongoose;
 const Bcrypt = require('bcryptjs');
 const Libphonenumber = require('google-libphonenumber');
-const TrustedDomain = require('./TrustedDomain');
 const axios = require('axios');
 const _ = require('lodash');
 const crypto = require('crypto');
 const isHTML = require('is-html');
 const validate = require('mongoose-validator');
+const TrustedDomain = require('./TrustedDomain');
+
 const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
 const userPopulate1 = [
-  {path: 'favoriteLists'},
-  {path: 'verified_by', select: '_id name'},
-  {path: 'subscriptions.service', select: '_id name'},
-  {path: 'connections.user', select: '_id name'},
-  {path: 'authorizedClients', select: '_id id name'}
+  { path: 'favoriteLists' },
+  { path: 'verified_by', select: '_id name' },
+  { path: 'subscriptions.service', select: '_id name' },
+  { path: 'connections.user', select: '_id name' },
+  { path: 'authorizedClients', select: '_id id name' },
 ];
 
 /**
@@ -32,7 +34,7 @@ const visibilities = ['anyone', 'verified', 'connections'];
 const emailSchema = new Schema({
   type: {
     type: String,
-    enum: ['Work', 'Personal']
+    enum: ['Work', 'Personal'],
   },
   email: {
     type: String,
@@ -43,102 +45,100 @@ const emailSchema = new Schema({
     validate: validate({
       validator: 'isEmail',
       passIfEmpty: true,
-      message: 'email should be a valid email'
-    })
+      message: 'email should be a valid email',
+    }),
   },
   validated: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 });
 
 const phoneSchema = new Schema({
   type: {
     type: String,
-    enum: ['Landline', 'Mobile', 'Fax', 'Satellite']
+    enum: ['Landline', 'Mobile', 'Fax', 'Satellite'],
   },
   number: {
     type: String,
     validate: {
-      validator: function (v) {
+      validator(v) {
         if (v !== '') {
           try {
             const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
             const phone = phoneUtil.parse(v);
             return phoneUtil.isValidNumber(phone);
-          }
-          catch (e) {
+          } catch (e) {
             return false;
           }
-        }
-        else {
+        } else {
           return true;
         }
       },
-      message: '{VALUE} is not a valid phone number !'
-    }
+      message: '{VALUE} is not a valid phone number !',
+    },
   },
   validated: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 });
 
 const translationSchema = new Schema({
   language: {
     type: String,
-    enum: ['en', 'fr', 'es']
+    enum: ['en', 'fr', 'es'],
   },
   text: {
     type: String,
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in text'
-    }
-  }
+      message: 'HTML code is not allowed in text',
+    },
+  },
 });
 
 const connectionSchema = new Schema({
   pending: {
     type: Boolean,
-    default: true
+    default: true,
   },
   user: {
     type: Schema.ObjectId,
-    ref: 'User'
+    ref: 'User',
   },
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 const listUserSchema = new Schema({
   list: {
     type: Schema.ObjectId,
-    ref: 'List'
+    ref: 'List',
   },
-  name: { type: String},
+  name: { type: String },
   names: [translationSchema],
-  acronym: { type: String},
+  acronym: { type: String },
   acronyms: [translationSchema],
   acronymsOrNames: {
-    type: Schema.Types.Mixed
+    type: Schema.Types.Mixed,
   },
   owner: {
     type: Schema.ObjectId,
-    ref: 'User'
+    ref: 'User',
   },
   managers: [{
     type: Schema.ObjectId,
-    ref: 'User'
+    ref: 'User',
   }],
   visibility: {
     type: String,
     enum: ['me', 'inlist', 'all', 'verified'],
   },
   orgTypeId: {
-    type: Number
+    type: Number,
   },
   orgTypeLabel: {
     type: String,
@@ -160,30 +160,30 @@ const listUserSchema = new Schema({
       'Red Cross / Red Crescent',
       'Religious',
       'United Nations',
-      'Unknown'
-    ]
+      'Unknown',
+    ],
   },
   checkoutDate: Date,
   pending: {
     type: Boolean,
-    default: true
+    default: true,
   },
   remindedCheckout: {
     type: Boolean,
-    default: false
+    default: false,
   },
   remindedCheckin: {
     type: Boolean,
-    default: false
+    default: false,
   },
   deleted: {
     type: Boolean,
-    default: false
+    default: false,
   },
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 const subscriptionSchema = new Schema({
@@ -194,73 +194,73 @@ const subscriptionSchema = new Schema({
     validate: validate({
       validator: 'isEmail',
       passIfEmpty: false,
-      message: 'email should be a valid email'
+      message: 'email should be a valid email',
     }),
-    required: true
+    required: true,
   },
   service: {
     type: Schema.ObjectId,
     ref: 'Service',
-    required: true
-  }
+    required: true,
+  },
 });
 
 const trustedDeviceSchema = new Schema({
   ua: {
-    type: String
+    type: String,
   },
   secret: {
-    type: String
+    type: String,
   },
   date: {
-    type: Date
-  }
+    type: Date,
+  },
 });
 
 const UserSchema = new Schema({
   // Legacy user_id data, to be added during migration
   user_id: {
     type: String,
-    readonly: true
+    readonly: true,
   },
   // Legacy ID data, added during the migration
   legacyId: {
     type: String,
-    readonly: true
+    readonly: true,
   },
   given_name: {
     type: String,
     trim: true,
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in given_name'
+      message: 'HTML code is not allowed in given_name',
     },
-    required: [true, 'Given name is required']
+    required: [true, 'Given name is required'],
   },
   middle_name: {
     type: String,
     trim: true,
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in middle_name'
-    }
+      message: 'HTML code is not allowed in middle_name',
+    },
   },
   family_name: {
     type: String,
     trim: true,
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in family_name'
+      message: 'HTML code is not allowed in family_name',
     },
-    required: [true, 'Family name is required']
+    required: [true, 'Family name is required'],
   },
   name: {
     type: String,
     index: true,
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in name'
-    }
+      message: 'HTML code is not allowed in name',
+    },
   },
   email: {
     type: String,
@@ -271,83 +271,83 @@ const UserSchema = new Schema({
     validate: validate({
       validator: 'isEmail',
       passIfEmpty: true,
-      message: 'email should be a valid email'
-    })
+      message: 'email should be a valid email',
+    }),
   },
   email_verified: {
     type: Boolean,
     default: false,
-    readonly: true
+    readonly: true,
   },
   // Last time the user was reminded to verify his account
   remindedVerify: {
     type: Date,
-    readonly: true
+    readonly: true,
   },
   // How many times the user was reminded to verify his account
   timesRemindedVerify: {
     type: Number,
     default: 0,
-    readonly: true
+    readonly: true,
   },
   // Last time the user was reminded to update his account details
   remindedUpdate: {
     type: Date,
-    readonly: true
+    readonly: true,
   },
   // TODO: mark this as readonly after HID-1499 is fixed
   emails: {
-    type: [emailSchema]
-    //readonly: true
+    type: [emailSchema],
+    // readonly: true
   },
   emailsVisibility: {
     type: String,
     enum: visibilities,
-    default: 'anyone'
+    default: 'anyone',
   },
   password: {
-    type: String
+    type: String,
   },
   // Last time the user reset his password
   lastPasswordReset: {
     type: Date,
     readonly: true,
-    default: Date.now
+    default: Date.now,
   },
   passwordResetAlert30days: {
     type: Boolean,
     default: false,
-    readonly: true
+    readonly: true,
   },
   passwordResetAlert7days: {
     type: Boolean,
     default: false,
-    readonly: true
+    readonly: true,
   },
   passwordResetAlert: {
     type: Boolean,
     default: false,
-    readonly: true
+    readonly: true,
   },
   // Only admins can set this
   verified: {
     type: Boolean,
     default: false,
-    managerOnly: true
+    managerOnly: true,
   },
   verified_by: {
     type: Schema.ObjectId,
     ref: 'User',
-    readonly: true
+    readonly: true,
   },
   verifiedOn: {
     type: Date,
-    readonly: true
+    readonly: true,
   },
   verificationExpiryEmail: {
     type: Boolean,
     default: false,
-    readonly: true
+    readonly: true,
   },
   // Makes sure it's a valid URL, and do not allow urls from other domains
   picture: {
@@ -355,22 +355,22 @@ const UserSchema = new Schema({
     validate: validate({
       validator: 'isURL',
       passIfEmpty: true,
-      arguments: {host_whitelist: ['api.humanitarian.id', 'api.dev.humanitarian.id', 'api.staging.humanitarian.id']},
-      message: 'picture should be a valid URL'
-    })
+      arguments: { host_whitelist: ['api.humanitarian.id', 'api.dev.humanitarian.id', 'api.staging.humanitarian.id'] },
+      message: 'picture should be a valid URL',
+    }),
   },
   notes: {
     type: String,
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in notes'
-    }
+      message: 'HTML code is not allowed in notes',
+    },
   },
   // Validates an array of VoIP objects
   voips: {
     type: Array,
     validate: {
-      validator: function (v) {
+      validator(v) {
         if (v.length) {
           let out = true;
           const types = ['Skype', 'Google', 'Facebook', 'Yahoo', 'Twitter'];
@@ -384,18 +384,16 @@ const UserSchema = new Schema({
           }
           return out;
         }
-        else {
-          return true;
-        }
+        return true;
       },
-      message: 'Invalid voip found'
-    }
+      message: 'Invalid voip found',
+    },
   },
   // Validates urls
   websites: {
     type: Array,
     validate: {
-      validator: function (v) {
+      validator(v) {
         if (v.length) {
           let out = true;
           const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/;
@@ -406,55 +404,51 @@ const UserSchema = new Schema({
           }
           return out;
         }
-        else {
-          return true;
-        }
+        return true;
       },
-      message: 'There is an invalid url'
-    }
+      message: 'There is an invalid url',
+    },
   },
   // TODO: validate timezone
   zoneinfo: {
     type: String,
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in zoneinfo'
-    }
+      message: 'HTML code is not allowed in zoneinfo',
+    },
   },
   locale: {
     type: String,
     enum: ['en', 'fr', 'es', 'ar'],
-    default: 'en'
+    default: 'en',
   },
   organization: {
     type: listUserSchema,
-    readonly: true
+    readonly: true,
   },
   organizations: {
     type: [listUserSchema],
-    readonly: true
+    readonly: true,
   },
   // Verify valid phone number with libphonenumber and reformat if needed
   phone_number: {
     type: String,
     validate: {
-      validator: function (v) {
+      validator(v) {
         if (v !== '') {
           try {
             const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
             const phone = phoneUtil.parse(v);
             return phoneUtil.isValidNumber(phone);
-          }
-          catch (e) {
+          } catch (e) {
             return false;
           }
-        }
-        else {
+        } else {
           return true;
         }
       },
-      message: '{VALUE} is not a valid phone number !'
-    }
+      message: '{VALUE} is not a valid phone number !',
+    },
   },
   phone_number_type: {
     type: String,
@@ -462,25 +456,25 @@ const UserSchema = new Schema({
   },
   // TODO: mark this as readonly when HID-1506 is fixed
   phone_numbers: {
-    type: [phoneSchema]
-    //readonly: true
+    type: [phoneSchema],
+    // readonly: true
   },
   phonesVisibility: {
     type: String,
     enum: visibilities,
-    default: 'anyone'
+    default: 'anyone',
   },
   job_title: {
     type: String,
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in job_title'
-    }
+      message: 'HTML code is not allowed in job_title',
+    },
   },
   job_titles: {
     type: Array,
     validate: {
-      validator: function (v) {
+      validator(v) {
         let out = true;
         if (v.length) {
           for (let i = 0, len = v.length; i < len; i++) {
@@ -491,175 +485,175 @@ const UserSchema = new Schema({
         }
         return out;
       },
-      message: 'HTML in job titles is not allowed'
-    }
+      message: 'HTML in job titles is not allowed',
+    },
   },
   functional_roles: [listUserSchema],
   status: {
     type: String,
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in status field'
-    }
+      message: 'HTML code is not allowed in status field',
+    },
   },
   // TODO: figure out validation
   location: {
-    type: Schema.Types.Mixed
-    /*validate: validate({
+    type: Schema.Types.Mixed,
+    /* validate: validate({
     validator: 'isJSON',
     passIfEmpty: true,
     message: 'location should be valid JSON'
-  })*/
+  }) */
   },
   // TODO: figure out validation
   locations: {
-    type: Array
-    /*validate: validate({
+    type: Array,
+    /* validate: validate({
     validator: 'isJSON',
     passIfEmpty: true,
     message: 'locations should be valid JSON'
-  })*/
+  }) */
   },
   locationsVisibility: {
     type: String,
     enum: visibilities,
-    default: 'anyone'
+    default: 'anyone',
   },
   // Only an admin can set this
   is_admin: {
     type: Boolean,
     default: false,
-    adminOnly: true
+    adminOnly: true,
   },
   isManager: {
     type: Boolean,
     default: false,
-    adminOnly: true
+    adminOnly: true,
   },
   is_orphan: {
     type: Boolean,
     default: false,
-    readonly: true
+    readonly: true,
   },
   is_ghost: {
     type: Boolean,
     default: false,
-    readonly: true
+    readonly: true,
   },
   expires: {
     type: Date,
     default: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    readonly: true
+    readonly: true,
   },
   lastLogin: {
     type: Date,
-    readonly: true
+    readonly: true,
   },
   createdBy: {
     type: Schema.ObjectId,
     ref: 'User',
-    readonly: true
+    readonly: true,
   },
   favoriteLists: [{
     type: Schema.ObjectId,
-    ref: 'List'
+    ref: 'List',
   }],
   lists: {
     type: [listUserSchema],
-    readonly: true
+    readonly: true,
   },
   operations: {
     type: [listUserSchema],
-    readonly: true
+    readonly: true,
   },
   bundles: {
     type: [listUserSchema],
-    readonly: true
+    readonly: true,
   },
   disasters: {
     type: [listUserSchema],
-    readonly: true
+    readonly: true,
   },
   offices: {
     type: [listUserSchema],
-    readonly: true
+    readonly: true,
   },
   authorizedClients: [{
     type: Schema.ObjectId,
-    ref: 'Client'
+    ref: 'Client',
   }],
   subscriptions: {
     type: [subscriptionSchema],
-    readonly: true
+    readonly: true,
   },
   connections: {
     type: [connectionSchema],
-    readonly: true
+    readonly: true,
   },
   // TODO: figure out validation
   appMetadata: {
-    type: Schema.Types.Mixed
-    /*validate: validate({
+    type: Schema.Types.Mixed,
+    /* validate: validate({
     validator: 'isJSON',
     passIfEmpty: true,
     message: 'appMetadata should be valid JSON'
-  })*/
+  }) */
   },
   deleted: {
     type: Boolean,
-    default: false
+    default: false,
   },
   hidden: {
     type: Boolean,
     default: false,
-    adminOnly: true
+    adminOnly: true,
   },
   // Whether this user is only using auth
   authOnly: {
     type: Boolean,
-    default: true
+    default: true,
   },
   // Whether the user uses TOTP for security
   totp: {
     type: Boolean,
-    default: false
+    default: false,
   },
   totpMethod: {
     type: String,
-    enum: ['app']
+    enum: ['app'],
   },
   totpConf: {
     type: Schema.Types.Mixed,
-    readonly: true
+    readonly: true,
   },
   totpTrusted: {
     type: [trustedDeviceSchema],
-    readonly: true
+    readonly: true,
   },
   googleCredentials: {
     type: Schema.Types.Mixed,
     readonly: true,
-    default: false
+    default: false,
   },
   outlookCredentials: {
     type: Schema.Types.Mixed,
     readonly: true,
-    default: false
+    default: false,
   },
   lastModified: {
     type: Date,
     default: Date.now,
-    readonly: true
-  }
+    readonly: true,
+  },
 }, {
   timestamps: true,
   toObject: {
-    virtuals: true
+    virtuals: true,
   },
   toJSON: {
-    virtuals: true
+    virtuals: true,
   },
-  collection: 'user'
+  collection: 'user',
 });
 
 UserSchema.virtual('sub').get(function () {
@@ -669,7 +663,7 @@ UserSchema.virtual('sub').get(function () {
 UserSchema.pre('remove', async function (next) {
   try {
     // Avoid null connections from being created when a user is removed
-    const users = await this.model('User').find({'connections.user': this._id});
+    const users = await this.model('User').find({ 'connections.user': this._id });
     const promises = [];
     for (let i = 0; i < users.length; i++) {
       for (let j = 0; j < users[i].connections.length; j++) {
@@ -682,30 +676,27 @@ UserSchema.pre('remove', async function (next) {
     // Reduce the number of contacts for each list of the user
     const listIds = [];
     listTypes.forEach(function (attr) {
-      this[attr + 's'].forEach(function (checkin) {
+      this[`${attr}s`].forEach((checkin) => {
         listIds.push(checkin.list);
       });
     });
     promises.push(this.model('List')
       .update(
-        { _id: { $in: listIds}},
-        { $inc: { count: -1 }}
-      )
-    );
+        { _id: { $in: listIds } },
+        { $inc: { count: -1 } },
+      ));
     await Promise.all(promises);
     next();
-  }
-  catch (err) {
+  } catch (err) {
     next(err);
   }
 });
 
 UserSchema.pre('save', function (next) {
   if (this.middle_name) {
-    this.name = this.given_name + ' ' + this.middle_name + ' ' + this.family_name;
-  }
-  else {
-    this.name = this.given_name + ' ' + this.family_name;
+    this.name = `${this.given_name} ${this.middle_name} ${this.family_name}`;
+  } else {
+    this.name = `${this.given_name} ${this.family_name}`;
   }
   if (this.is_orphan || this.is_ghost) {
     this.authOnly = false;
@@ -713,39 +704,38 @@ UserSchema.pre('save', function (next) {
   if (!this.user_id) {
     this.user_id = this._id;
   }
-  next ();
+  next();
 });
 
-UserSchema.post('findOneAndUpdate', function (user) {
+UserSchema.post('findOneAndUpdate', (user) => {
   // Calling user.save to go through the presave hook and update user name
   user.save();
 });
 
-UserSchema.post('findOne', async function (result, next) {
+UserSchema.post('findOne', async (result, next) => {
   if (!result) {
     return next();
   }
   try {
     await result.populate(userPopulate1);
     return next();
-  }
-  catch (err) {
+  } catch (err) {
     next(err);
   }
 });
 
 UserSchema.statics = {
-  explodeHash: function (hashLink) {
+  explodeHash(hashLink) {
     const key = new Buffer(hashLink, 'base64').toString('ascii');
     const parts = key.split('/');
     return {
-      'email': parts[0],
-      'timestamp': parts[1],
-      'hash': new Buffer(parts[2], 'base64').toString('ascii')
+      email: parts[0],
+      timestamp: parts[1],
+      hash: new Buffer(parts[2], 'base64').toString('ascii'),
     };
   },
 
-  listAttributes: function () {
+  listAttributes() {
     return [
       'lists',
       'operations',
@@ -754,31 +744,31 @@ UserSchema.statics = {
       'organization',
       'organizations',
       'functional_roles',
-      'offices'
+      'offices',
     ];
   },
 
-  sanitizeExportedUser: function (user, requester) {
+  sanitizeExportedUser(user, requester) {
     if (user._id.toString() !== requester._id.toString() && !requester.is_admin) {
       if (user.emailsVisibility !== 'anyone') {
-        if ((user.emailsVisibility === 'verified' && !requester.verified) ||
-        (user.emailsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
+        if ((user.emailsVisibility === 'verified' && !requester.verified)
+        || (user.emailsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
           user.email = null;
           user.emails = [];
         }
       }
 
       if (user.phonesVisibility !== 'anyone') {
-        if ((user.phonesVisibility === 'verified' && !requester.verified) ||
-        (user.phonesVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
+        if ((user.phonesVisibility === 'verified' && !requester.verified)
+        || (user.phonesVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
           user.phone_number = null;
           user.phone_numbers = [];
         }
       }
 
       if (user.locationsVisibility !== 'anyone') {
-        if ((user.locationsVisibility === 'verified' && !requester.verified) ||
-        (user.locationsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
+        if ((user.locationsVisibility === 'verified' && !requester.verified)
+        || (user.locationsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
           user.location = null;
           user.locations = [];
         }
@@ -786,13 +776,13 @@ UserSchema.statics = {
     }
   },
 
-  connectionsIndex: function (user, userId) {
+  connectionsIndex(user, userId) {
     let index = -1;
     if (user.connections && user.connections.length) {
       for (let i = 0, len = user.connections.length; i < len; i++) {
-        if (user.connections[i].pending === false &&
-          ((user.connections[i].user._id && user.connections[i].user._id.toString() === userId.toString()) ||
-          (!user.connections[i].user._id && user.connections[i].user.toString() === userId.toString()))) {
+        if (user.connections[i].pending === false
+          && ((user.connections[i].user._id && user.connections[i].user._id.toString() === userId.toString())
+          || (!user.connections[i].user._id && user.connections[i].user.toString() === userId.toString()))) {
           index = i;
         }
       }
@@ -801,25 +791,26 @@ UserSchema.statics = {
   },
 
   // Determines if a password is strong enough for HID
-  isStrongPassword: function (password) {
+  isStrongPassword(password) {
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
     // At least 8 characters and at least one number, one uppercase and one lowercase.
     return password.length > 7 && regex.test(password);
   },
 
-  hashPassword: function (password) {
+  hashPassword(password) {
     return Bcrypt.hashSync(password, 11);
   },
 
   // Generate a cryptographically strong random password.
-  generateRandomPassword: function () {
+  generateRandomPassword() {
     const buffer = crypto.randomBytes(256);
-    return buffer.toString('hex').slice(0, 10) + 'B';
+    return `${buffer.toString('hex').slice(0, 10)}B`;
   },
 
-  translateCheckin: function (checkin, language) {
-    let name = '', nameEn = '', acronym = '', acronymEn = '';
-    checkin.names.forEach(function (nameLn) {
+  translateCheckin(checkin, language) {
+    let name = ''; let nameEn = ''; let acronym = ''; let
+      acronymEn = '';
+    checkin.names.forEach((nameLn) => {
       if (nameLn.language === language) {
         name = nameLn.text;
       }
@@ -827,7 +818,7 @@ UserSchema.statics = {
         nameEn = nameLn.text;
       }
     });
-    checkin.acronyms.forEach(function (acroLn) {
+    checkin.acronyms.forEach((acroLn) => {
       if (acroLn.language === language) {
         acronym = acroLn.text;
       }
@@ -837,47 +828,41 @@ UserSchema.statics = {
     });
     if (name !== '') {
       checkin.name = name;
-    }
-    else {
-      if (nameEn !== '') {
-        checkin.name = nameEn;
-      }
+    } else if (nameEn !== '') {
+      checkin.name = nameEn;
     }
     if (acronym !== '') {
       checkin.acronym = acronym;
+    } else if (acronymEn !== '') {
+      checkin.acronym = acronymEn;
     }
-    else {
-      if (acronymEn !== '') {
-        checkin.acronym = acronymEn;
-      }
-    }
-  }
+  },
 };
 
 UserSchema.methods = {
-  sanitize: function (user) {
+  sanitize(user) {
     this.sanitizeClients();
     this.sanitizeLists(user);
     if (this._id.toString() !== user._id.toString() && !user.is_admin) {
       if (this.emailsVisibility !== 'anyone') {
-        if ((this.emailsVisibility === 'verified' && !user.verified) ||
-        (this.emailsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
+        if ((this.emailsVisibility === 'verified' && !user.verified)
+        || (this.emailsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
           this.email = null;
           this.emails = [];
         }
       }
 
       if (this.phonesVisibility !== 'anyone') {
-        if ((this.phonesVisibility === 'verified' && !user.verified) ||
-        (this.phonesVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
+        if ((this.phonesVisibility === 'verified' && !user.verified)
+        || (this.phonesVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
           this.phone_number = null;
           this.phone_numbers = [];
         }
       }
 
       if (this.locationsVisibility !== 'anyone') {
-        if ((this.locationsVisibility === 'verified' && !user.verified) ||
-        (this.locationsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
+        if ((this.locationsVisibility === 'verified' && !user.verified)
+        || (this.locationsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
           this.location = null;
           this.locations = [];
         }
@@ -885,16 +870,16 @@ UserSchema.methods = {
     }
   },
 
-  getAppUrl: function () {
-    return process.env.APP_URL + '/users/' + this._id;
+  getAppUrl() {
+    return `${process.env.APP_URL}/users/${this._id}`;
   },
 
-  getListIds: function () {
+  getListIds() {
     const that = this;
     const listIds = [];
-    listTypes.forEach(function (attr) {
-      if (that[attr + 's'].length > 0) {
-        that[attr + 's'].forEach(function (lu) {
+    listTypes.forEach((attr) => {
+      if (that[`${attr}s`].length > 0) {
+        that[`${attr}s`].forEach((lu) => {
           if (lu.deleted === false) {
             listIds.push(lu.list.toString());
           }
@@ -904,16 +889,16 @@ UserSchema.methods = {
     return listIds;
   },
 
-  sanitizeLists: function (user) {
+  sanitizeLists(user) {
     if (this._id.toString() !== user._id.toString() && !user.is_admin && !user.isManager) {
       const that = this;
-      listTypes.forEach(function (attr) {
-        _.remove(that[attr + 's'], function (checkin) {
+      listTypes.forEach((attr) => {
+        _.remove(that[`${attr}s`], (checkin) => {
           if (checkin.visibility === 'inlist') {
             let out = true;
             // Is user in list ?
-            for (let i = 0; i < user[attr + 's'].length; i++) {
-              if (user[attr + 's'][i].list.toString() === checkin.list.toString() && !user[attr + 's'][i].deleted) {
+            for (let i = 0; i < user[`${attr}s`].length; i++) {
+              if (user[`${attr}s`][i].list.toString() === checkin.list.toString() && !user[`${attr}s`][i].deleted) {
                 out = false;
               }
             }
@@ -931,7 +916,7 @@ UserSchema.methods = {
             }
             return out;
           }
-          else if (checkin.visibility === 'me') {
+          if (checkin.visibility === 'me') {
             let out = true;
 
             // Is user the owner of the list ?
@@ -948,101 +933,91 @@ UserSchema.methods = {
             }
             return out;
           }
-          else {
-            return checkin.visibility === 'verified' && !user.verified;
-          }
+
+          return checkin.visibility === 'verified' && !user.verified;
         });
       });
     }
   },
-  sanitizeClients: function () {
+  sanitizeClients() {
     if (this.authorizedClients && this.authorizedClients.length) {
       const sanitized = [];
       for (let i = 0, len = this.authorizedClients.length; i < len; i++) {
         if (this.authorizedClients[i].secret) {
           sanitized.push({
             id: this.authorizedClients[i].id,
-            name: this.authorizedClients[i].name
+            name: this.authorizedClients[i].name,
           });
-        }
-        else {
+        } else {
           sanitized.push(this.authorizedClients[i]);
         }
       }
     }
   },
-  validPassword: function (password)  {
+  validPassword(password) {
     if (!this.password) {
       return false;
     }
-    else {
-      return Bcrypt.compareSync(password, this.password);
-    }
+    return Bcrypt.compareSync(password, this.password);
   },
 
-  generateHash: function (type, email) {
+  generateHash(type, email) {
     if (type === 'reset_password') {
       const now = Date.now();
-      const value = now + ':' + this._id.toString() + ':' + this.password;
+      const value = `${now}:${this._id.toString()}:${this.password}`;
       const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
       return {
         timestamp: now,
-        hash: hash
+        hash,
       };
-    }
-    else if (type === 'verify_email') {
+    } if (type === 'verify_email') {
       const now = Date.now();
-      const value = now + ':' + this._id.toString() + ':' + email;
+      const value = `${now}:${this._id.toString()}:${email}`;
       const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
       return {
         timestamp: now,
-        hash: hash
+        hash,
       };
     }
-    else {
-      const buffer = crypto.randomBytes(256);
-      const now = Date.now();
-      const hash = buffer.toString('hex').slice(0, 15);
-      return Buffer.from(now + '/' + hash).toString('base64');
-    }
+    const buffer = crypto.randomBytes(256);
+    const now = Date.now();
+    const hash = buffer.toString('hex').slice(0, 15);
+    return Buffer.from(`${now}/${hash}`).toString('base64');
   },
 
   // Validate the hash of a confirmation link
-  validHash: function (hashLink, type, time, email) {
+  validHash(hashLink, type, time, email) {
     if (type === 'reset_password') {
       const now = Date.now();
       if (now - time > 24 * 3600 * 1000) {
         return false;
       }
-      const value = time + ':' + this._id.toString() + ':' + this.password;
+      const value = `${time}:${this._id.toString()}:${this.password}`;
       const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
       return hash === hashLink;
-    }
-    else if (type === 'verify_email') {
+    } if (type === 'verify_email') {
       const now = Date.now();
       if (now - time > 24 * 3600 * 1000) {
         return false;
       }
-      const value = time + ':' + this._id.toString() + ':' + email;
+      const value = `${time}:${this._id.toString()}:${email}`;
       const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
       return hash === hashLink;
     }
-    else {
-      const key = new Buffer(hashLink, 'base64').toString('ascii');
-      const parts = key.split('/');
-      const timestamp = parts[0];
-      const now = Date.now();
+    const key = new Buffer(hashLink, 'base64').toString('ascii');
+    const parts = key.split('/');
+    const timestamp = parts[0];
+    const now = Date.now();
 
-      // Verify hash
-      // verify timestamp is not too old (allow up to 7 days in milliseconds)
-      if (timestamp < (now - 7 * 86400000) || timestamp > now) {
-        return false;
-      }
-      return true;
+    // Verify hash
+    // verify timestamp is not too old (allow up to 7 days in milliseconds)
+    if (timestamp < (now - 7 * 86400000) || timestamp > now) {
+      return false;
     }
+    return true;
   },
 
-  emailIndex: function (email) {
+  emailIndex(email) {
     let index = -1;
     for (let i = 0, len = this.emails.length; i < len; i++) {
       if (this.emails[i].email === email) {
@@ -1052,7 +1027,7 @@ UserSchema.methods = {
     return index;
   },
 
-  verifyEmail: function (email) {
+  verifyEmail(email) {
     if (this.email === email) {
       this.email_verified = true;
     }
@@ -1063,14 +1038,14 @@ UserSchema.methods = {
     }
   },
 
-  connectionsIndex: function (userId) {
+  connectionsIndex(userId) {
     let index = -1;
     if (this.connections && this.connections.length) {
       for (let i = 0, len = this.connections.length; i < len; i++) {
-        if (this.connections[i].user &&
-          this.connections[i].pending === false &&
-          ((this.connections[i].user._id && this.connections[i].user._id.toString() === userId.toString()) ||
-          (!this.connections[i].user._id && this.connections[i].user.toString() === userId.toString()))) {
+        if (this.connections[i].user
+          && this.connections[i].pending === false
+          && ((this.connections[i].user._id && this.connections[i].user._id.toString() === userId.toString())
+          || (!this.connections[i].user._id && this.connections[i].user.toString() === userId.toString()))) {
           index = i;
         }
       }
@@ -1078,7 +1053,7 @@ UserSchema.methods = {
     return index;
   },
 
-  hasAuthorizedClient: function (clientId) {
+  hasAuthorizedClient(clientId) {
     let out = false;
     for (let i = 0, len = this.authorizedClients.length; i < len; i++) {
       if (this.authorizedClients[i].id === clientId) {
@@ -1088,13 +1063,13 @@ UserSchema.methods = {
     return out;
   },
 
-  subscriptionsIndex: function (serviceId) {
+  subscriptionsIndex(serviceId) {
     const id = serviceId.toString();
     let index = -1;
     for (let i = 0; i < this.subscriptions.length; i++) {
-      if (this.subscriptions[i].service &&
-        ((this.subscriptions[i].service._id && this.subscriptions[i].service._id.toString() === id) ||
-        this.subscriptions[i].service.toString() === id)) {
+      if (this.subscriptions[i].service
+        && ((this.subscriptions[i].service._id && this.subscriptions[i].service._id.toString() === id)
+        || this.subscriptions[i].service.toString() === id)) {
         index = i;
       }
     }
@@ -1103,10 +1078,10 @@ UserSchema.methods = {
 
   // Whether we should send a reminder to verify email to user
   // Reminder emails are sent out 2, 4, 7 and 30 days after registration
-  shouldSendReminderVerify: function() {
-    const created = new Date(this.createdAt),
-      current = Date.now(),
-      remindedVerify = new Date(this.remindedVerify);
+  shouldSendReminderVerify() {
+    const created = new Date(this.createdAt);
+    const current = Date.now();
+    const remindedVerify = new Date(this.remindedVerify);
     if (this.email_verified || this.is_orphan || this.is_ghost) {
       return false;
     }
@@ -1126,7 +1101,7 @@ UserSchema.methods = {
   },
 
   // Whether we should send an update reminder (sent out after a user hasn't been updated for 6 months)
-  shouldSendReminderUpdate: function () {
+  shouldSendReminderUpdate() {
     const d = new Date();
     const revisedOffset = d.valueOf() - this.updatedAt.valueOf();
     if (revisedOffset < 183 * 24 * 3600 * 1000) { // if not revised during 6 months
@@ -1141,10 +1116,10 @@ UserSchema.methods = {
     return true;
   },
 
-  hasLocalPhoneNumber: function (iso2) {
+  hasLocalPhoneNumber(iso2) {
     let found = false;
     const that = this;
-    this.phone_numbers.forEach(function (item) {
+    this.phone_numbers.forEach((item) => {
       const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
       try {
         const phoneNumber = phoneUtil.parse(item.number);
@@ -1152,8 +1127,7 @@ UserSchema.methods = {
         if (regionCode.toUpperCase() === iso2) {
           found = true;
         }
-      }
-      catch (err) {
+      } catch (err) {
         // Invalid phone number
         that.log.error('An invalid phone number was found', { error: err });
       }
@@ -1162,17 +1136,18 @@ UserSchema.methods = {
   },
 
   // Whether the contact is in country or not
-  isInCountry: async function (pcode) {
+  async isInCountry(pcode) {
     const hrinfoId = this.location.country.id.replace('hrinfo_loc_', '');
-    const url = 'https://www.humanitarianresponse.info/api/v1.0/locations/' + hrinfoId;
+    const url = `https://www.humanitarianresponse.info/api/v1.0/locations/${hrinfoId}`;
     const response = await axios.get(url);
     const parsed = JSON.parse(response.data);
     return parsed.data[0].pcode === pcode;
   },
 
-  translateCheckin: function (checkin, language) {
-    let name = '', nameEn = '', acronym = '', acronymEn = '';
-    checkin.names.forEach(function (nameLn) {
+  translateCheckin(checkin, language) {
+    let name = ''; let nameEn = ''; let acronym = ''; let
+      acronymEn = '';
+    checkin.names.forEach((nameLn) => {
       if (nameLn.language === language) {
         name = nameLn.text;
       }
@@ -1180,7 +1155,7 @@ UserSchema.methods = {
         nameEn = nameLn.text;
       }
     });
-    checkin.acronyms.forEach(function (acroLn) {
+    checkin.acronyms.forEach((acroLn) => {
       if (acroLn.language === language) {
         acronym = acroLn.text;
       }
@@ -1190,27 +1165,21 @@ UserSchema.methods = {
     });
     if (name !== '') {
       checkin.name = name;
-    }
-    else {
-      if (nameEn !== '') {
-        checkin.name = nameEn;
-      }
+    } else if (nameEn !== '') {
+      checkin.name = nameEn;
     }
     if (acronym !== '') {
       checkin.acronym = acronym;
-    }
-    else {
-      if (acronymEn !== '') {
-        checkin.acronym = acronymEn;
-      }
+    } else if (acronymEn !== '') {
+      checkin.acronym = acronymEn;
     }
   },
 
-  translateListNames: function (language) {
+  translateListNames(language) {
     const that = this;
-    listTypes.forEach(function (listType) {
-      if (that[listType + 's'] && that[listType + 's'].length) {
-        that[listType + 's'].forEach(function (checkin) {
+    listTypes.forEach((listType) => {
+      if (that[`${listType}s`] && that[`${listType}s`].length) {
+        that[`${listType}s`].forEach((checkin) => {
           that.translateCheckin(checkin, language);
         });
       }
@@ -1220,26 +1189,26 @@ UserSchema.methods = {
     }
   },
 
-  updateCheckins: function (list) {
-    for (let j = 0; j < this[list.type + 's'].length; j++) {
-      if (this[list.type + 's'][j].list.toString() === list._id.toString()) {
-        this[list.type + 's'][j].name = list.name;
-        this[list.type + 's'][j].names = list.names;
-        this[list.type + 's'][j].acronym = list.acronym;
-        this[list.type + 's'][j].acronyms = list.acronyms;
-        this[list.type + 's'][j].owner = list.owner;
-        this[list.type + 's'][j].managers = list.managers;
-        this[list.type + 's'][j].visibility = list.visibility;
+  updateCheckins(list) {
+    for (let j = 0; j < this[`${list.type}s`].length; j++) {
+      if (this[`${list.type}s`][j].list.toString() === list._id.toString()) {
+        this[`${list.type}s`][j].name = list.name;
+        this[`${list.type}s`][j].names = list.names;
+        this[`${list.type}s`][j].acronym = list.acronym;
+        this[`${list.type}s`][j].acronyms = list.acronyms;
+        this[`${list.type}s`][j].owner = list.owner;
+        this[`${list.type}s`][j].managers = list.managers;
+        this[`${list.type}s`][j].visibility = list.visibility;
         if (list.type === 'organization') {
-          this[list.type + 's'][j].orgTypeId = list.metadata.type.id;
-          this[list.type + 's'][j].orgTypeLabel = list.metadata.type.label;
+          this[`${list.type}s`][j].orgTypeId = list.metadata.type.id;
+          this[`${list.type}s`][j].orgTypeLabel = list.metadata.type.label;
         }
       }
     }
-    if (list.type === 'organization' &&
-    this.organization &&
-    this.organization.list &&
-    this.organization.list.toString() === list._id.toString()) {
+    if (list.type === 'organization'
+    && this.organization
+    && this.organization.list
+    && this.organization.list.toString() === list._id.toString()) {
       this.organization.name = list.name;
       this.organization.names = list.names;
       this.organization.acronym = list.acronym;
@@ -1252,13 +1221,13 @@ UserSchema.methods = {
     }
   },
 
-  defaultPopulate: function () {
+  defaultPopulate() {
     return this
       .populate(userPopulate1)
       .execPopulate();
   },
 
-  trustedDeviceIndex: function (ua) {
+  trustedDeviceIndex(ua) {
     let index = -1;
     for (let i = 0, len = this.totpTrusted.length; i < len; i++) {
       if (this.totpTrusted[i].ua === ua) {
@@ -1268,20 +1237,18 @@ UserSchema.methods = {
     return index;
   },
 
-  isTrustedDevice: function (ua, secret) {
+  isTrustedDevice(ua, secret) {
     const tindex = this.trustedDeviceIndex(ua);
     const offset = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    if (tindex !== -1 &&
-      this.totpTrusted[tindex].secret === secret &&
-      offset < this.totpTrusted[tindex].date) {
+    if (tindex !== -1
+      && this.totpTrusted[tindex].secret === secret
+      && offset < this.totpTrusted[tindex].date) {
       return true;
     }
-    else {
-      return false;
-    }
+    return false;
   },
 
-  backupCodeIndex: function (code) {
+  backupCodeIndex(code) {
     let index = -1;
     for (let i = 0; i < this.totpConf.backupCodes.length; i++) {
       if (Bcrypt.compareSync(code, this.totpConf.backupCodes[i])) {
@@ -1291,37 +1258,35 @@ UserSchema.methods = {
     return index;
   },
 
-  isPasswordExpired: function () {
+  isPasswordExpired() {
     const lastPasswordReset = this.lastPasswordReset.valueOf();
     const current = new Date().valueOf();
     if (current - lastPasswordReset > 6 * 30 * 24 * 3600 * 1000) {
       return true;
     }
-    else {
-      return false;
-    }
+    return false;
   },
 
-  isVerifiableEmail: function (email) {
+  isVerifiableEmail(email) {
     const ind = email.indexOf('@');
     const domain = email.substr((ind + 1));
     return TrustedDomain
-      .findOne({url: domain})
+      .findOne({ url: domain })
       .populate('list');
   },
 
-  canBeVerifiedAutomatically: async function () {
+  async canBeVerifiedAutomatically() {
     const that = this;
     const promises = [];
     // Check all emails
-    this.emails.forEach(function (email) {
+    this.emails.forEach((email) => {
       if (email.validated) {
         promises.push(that.isVerifiableEmail(email.email));
       }
     });
     const values = await Promise.all(promises);
     let out = false;
-    values.forEach(function (val) {
+    values.forEach((val) => {
       if (val) {
         out = true;
       }
@@ -1329,7 +1294,7 @@ UserSchema.methods = {
     return out;
   },
 
-  toJSON: function () {
+  toJSON() {
     const user = this.toObject();
     delete user.password;
     if (user.totpConf) {
@@ -1342,23 +1307,19 @@ UserSchema.methods = {
     }
     if (user.googleCredentials && user.googleCredentials.refresh_token) {
       user.googleCredentials = true;
-    }
-    else {
+    } else {
       user.googleCredentials = false;
     }
     if (user.outlookCredentials) {
       user.outlookCredentials = true;
-    }
-    else {
+    } else {
       user.outlookCredentials = false;
     }
-    listTypes.forEach(function (attr) {
-      _.remove(user[attr + 's'], function (checkin) {
-        return checkin.deleted;
-      });
+    listTypes.forEach((attr) => {
+      _.remove(user[`${attr}s`], checkin => checkin.deleted);
     });
     return user;
-  }
+  },
 };
 
 module.exports = mongoose.model('User', UserSchema);

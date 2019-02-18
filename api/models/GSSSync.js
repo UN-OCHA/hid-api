@@ -1,10 +1,10 @@
-'use strict';
+
 
 const mongoose = require('mongoose');
-const {OAuth2Client} = require('google-auth-library');
+const { OAuth2Client } = require('google-auth-library');
 const fs = require('fs');
 
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 
 /**
  * @module GSSSync
@@ -15,27 +15,27 @@ const GSSSyncSchema = new Schema({
   list: {
     type: Schema.ObjectId,
     ref: 'List',
-    required: [true, 'A list is required']
+    required: [true, 'A list is required'],
   },
   spreadsheet: {
     type: String,
-    required: [true, 'A spreadsheet ID is required']
+    required: [true, 'A spreadsheet ID is required'],
   },
   sheetId: {
     type: String,
-    required: [true, 'A sheet ID is required']
+    required: [true, 'A sheet ID is required'],
   },
   user: {
     type: Schema.ObjectId,
-    ref: 'User'
-  }
+    ref: 'User',
+  },
 }, {
   collection: 'gsssync',
-  timestamps: true
+  timestamps: true,
 });
 
 GSSSyncSchema.statics = {
-  getSpreadsheetHeaders: function () {
+  getSpreadsheetHeaders() {
     return [
       'Humanitarian ID',
       'First Name',
@@ -49,10 +49,10 @@ GSSSyncSchema.statics = {
       'Phone number',
       'Skype',
       'Email',
-      'Notes'
+      'Notes',
     ];
   },
-  getUserAttributes: function () {
+  getUserAttributes() {
     return [
       'name',
       'given_name',
@@ -76,13 +76,13 @@ GSSSyncSchema.statics = {
       'verified',
       'isManager',
       'is_admin',
-      'functional_roles'
+      'functional_roles',
     ].join(' ');
-  }
+  },
 };
 
 GSSSyncSchema.methods = {
-  getAuthClient: function () {
+  getAuthClient() {
     // Authenticate with Google
     const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
     const authClient = new OAuth2Client(creds.web.client_id, creds.web.client_secret, 'postmessage');
@@ -90,19 +90,19 @@ GSSSyncSchema.methods = {
     return authClient;
   },
 
-  getUserCriteria: function () {
-    const list = this.list;
+  getUserCriteria() {
+    const { list } = this;
     const criteria = {};
     if (list.isVisibleTo(this.user)) {
-      criteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false}};
+      criteria[`${list.type}s`] = { $elemMatch: { list: list._id, deleted: false } };
       if (!list.isOwner(this.user)) {
-        criteria[list.type + 's'].$elemMatch.pending = false;
+        criteria[`${list.type}s`].$elemMatch.pending = false;
       }
     }
     return criteria;
-  }
+  },
 };
 
-GSSSyncSchema.index({list: 1, spreadsheet: 1}, { unique: true});
+GSSSyncSchema.index({ list: 1, spreadsheet: 1 }, { unique: true });
 
 module.exports = mongoose.model('GSSSync', GSSSyncSchema);

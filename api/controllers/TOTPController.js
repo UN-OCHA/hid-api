@@ -1,4 +1,4 @@
-'use strict';
+
 
 const authenticator = require('authenticator');
 const Boom = require('boom');
@@ -6,7 +6,8 @@ const QRCode = require('qrcode');
 const BCrypt = require('bcryptjs');
 const HelperService = require('../services/HelperService');
 const config = require('../../config/env')[process.env.NODE_ENV];
-const logger = config.logger;
+
+const { logger } = config;
 
 /**
  * @module TOTPController
@@ -15,39 +16,39 @@ const logger = config.logger;
 module.exports = {
 
   // Creates a shared secret and generates a QRCode based on this shared secret
-  generateQRCode: async function (request, reply) {
+  async generateQRCode(request) {
     const user = request.auth.credentials;
     if (user.totp === true) {
       // TOTP is already enabled, user needs to disable it first
-      logger.warn('2FA already enabled. Can not generate QRCode.', { security: true, fail: true, request: request});
+      logger.warn('2FA already enabled. Can not generate QRCode.', { security: true, fail: true, request });
       throw Boom.badRequest('You have already enabled 2FA. You need to disable it first');
     }
     const secret = authenticator.generateKey();
     const mfa = {
-      secret: secret
+      secret,
     };
     user.totpConf = mfa;
     await user.save();
-    let qrCodeName = 'HID (' + process.env.NODE_ENV + ')';
+    let qrCodeName = `HID (${process.env.NODE_ENV})`;
     if (process.env.NODE_ENV === 'production') {
       qrCodeName = 'HID';
     }
     const otpauthUrl = authenticator.generateTotpUri(secret, user.name, qrCodeName, 'SHA1', 6, 30);
     const qrcode = await QRCode.toDataURL(otpauthUrl);
-    return {url: qrcode};
+    return { url: qrcode };
   },
 
   // Empty endpoint to verify a TOTP token
-  verifyTOTPToken: function (request, reply) {
+  verifyTOTPToken() {
     return reply.response().code(204);
   },
 
   // Enables TOTP for current user
-  enable: async function (request, reply) {
+  async enable(request) {
     const user = request.auth.credentials;
     if (user.totp === true) {
       // TOTP is already enabled, user needs to disable it first
-      logger.warn('2FA already enabled. No need to reenable.', { security: true, fail: true, request: request});
+      logger.warn('2FA already enabled. No need to reenable.', { security: true, fail: true, request });
       throw Boom.badRequest('2FA is already enabled. You need to disable it first');
     }
     const method = request.payload ? request.payload.method : '';
@@ -61,11 +62,11 @@ module.exports = {
   },
 
   // Disables TOTP for current user
-  disable: async function (request, reply) {
+  async disable(request) {
     const user = request.auth.credentials;
     if (user.totp !== true) {
       // TOTP is already disabled
-      logger.warn('2FA already disabled.', { security: true, fail: true, request: request});
+      logger.warn('2FA already disabled.', { security: true, fail: true, request });
       throw Boom.badRequest('2FA is already disabled.');
     }
     user.totp = false;
@@ -74,15 +75,17 @@ module.exports = {
     return user;
   },
 
-  saveDevice: async function (request, reply) {
+  async saveDevice(request, reply) {
     await HelperService.saveTOTPDevice(request, request.auth.credentials);
     const tindex = request.auth.credentials.trustedDeviceIndex(request.headers['user-agent']);
-    const secret = request.auth.credentials.totpTrusted[tindex].secret;
-    return reply.response({'x-hid-totp-trust': secret})
-      .state('x-hid-totp-trust', secret, { ttl: 30 * 24 * 60 * 60 * 1000, domain: 'humanitarian.id', isSameSite: false, isHttpOnly: false});
+    const { secret } = request.auth.credentials.totpTrusted[tindex];
+    return reply.response({ 'x-hid-totp-trust': secret })
+      .state('x-hid-totp-trust', secret, {
+        ttl: 30 * 24 * 60 * 60 * 1000, domain: 'humanitarian.id', isSameSite: false, isHttpOnly: false,
+      });
   },
 
-  destroyDevice: async function (request, reply) {
+  async destroyDevice(request, reply) {
     const user = request.auth.credentials;
     const deviceId = request.params.id;
     const device = user.totpTrusted.id(deviceId);
@@ -91,21 +94,20 @@ module.exports = {
       await user.save();
       return reply.response().code(204);
     }
-    else {
-      throw Boom.notFound();
-    }
+    throw Boom.notFound();
   },
 
-  generateBackupCodes: async function (request, reply) {
+  async generateBackupCodes(request) {
     const user = request.auth.credentials;
     if (!user.totp) {
       throw Boom.badRequest('TOTP needs to be enabled');
     }
-    const codes = [], hashedCodes = [];
-    for (let i = 0; i < 16; i++) {
+    const codes = []; const
+      hashedCodes = [];
+    for (let i = 0; i < 16; i += 1) {
       codes.push(HelperService.generateRandom());
     }
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 16; i += 1) {
       hashedCodes.push(BCrypt.hashSync(codes[i], 5));
     }
     // Save the hashed codes in the user and show the ones which are not hashed
@@ -113,5 +115,5 @@ module.exports = {
     user.markModified('totpConf');
     await user.save();
     return codes;
-  }
+  },
 };

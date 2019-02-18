@@ -1,4 +1,4 @@
-'use strict';
+
 
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
@@ -11,28 +11,28 @@ const rsa2jwk = require('rsa-pem-to-jwk');
 module.exports = {
 
   // Generates a token from supplied payload
-  issue: function (payload) {
+  issue(payload) {
     const cert = fs.readFileSync('keys/hid.rsa');
-    const options = { algorithm: 'RS256', header: { kid: 'hid-dev'} };
+    const options = { algorithm: 'RS256', header: { kid: 'hid-dev' } };
     return jwt.sign(
       payload,
       cert,
-      options
+      options,
     );
   },
 
   // Verifies token on a request
-  verify: function (token) {
+  verify(token) {
     const cert = fs.readFileSync('keys/hid.rsa.pub');
     return jwt.verify(token, cert);
   },
 
-  public2jwk: function () {
+  public2jwk() {
     const cert = fs.readFileSync('keys/hid.rsa.pub');
-    return rsa2jwk(cert, { use: 'sig', kid: 'hid-dev'}, 'public');
+    return rsa2jwk(cert, { use: 'sig', kid: 'hid-dev' }, 'public');
   },
 
-  generateIdToken: function (client, user, nonce) {
+  generateIdToken(client, user, nonce) {
     const now = Math.floor(Date.now() / 1000);
     let sub = user._id;
     if (client.id === 'iasc-prod' || client.id === 'iasc-dev') {
@@ -40,13 +40,13 @@ module.exports = {
     }
     const idToken = {
       iss: process.env.ROOT_URL,
-      sub: sub,
+      sub,
       aud: client.id,
       exp: now + 7 * 24 * 3600 * 1000,
-      nonce: nonce,
-      iat: now
+      nonce,
+      iat: now,
     };
     return this.issue(idToken);
-  }
+  },
 
 };

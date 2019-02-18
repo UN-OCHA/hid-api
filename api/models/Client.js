@@ -1,10 +1,10 @@
-'use strict';
+
 
 const mongoose = require('mongoose');
 const isHTML = require('is-html');
 const validate = require('mongoose-validator');
 
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 
 /**
  * @module Client
@@ -23,8 +23,8 @@ const ClientSchema = new Schema({
     unique: true,
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in id'
-    }
+      message: 'HTML code is not allowed in id',
+    },
   },
   name: {
     type: String,
@@ -32,8 +32,8 @@ const ClientSchema = new Schema({
     required: [true, 'Client name is required'],
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in name'
-    }
+      message: 'HTML code is not allowed in name',
+    },
   },
   secret: {
     type: String,
@@ -41,8 +41,8 @@ const ClientSchema = new Schema({
     required: [true, 'Client secret is required'],
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in secret'
-    }
+      message: 'HTML code is not allowed in secret',
+    },
   },
   url: {
     type: String,
@@ -50,8 +50,8 @@ const ClientSchema = new Schema({
     validate: validate({
       validator: 'isURL',
       passIfEmpty: true,
-      message: 'URL should be a URL'
-    })
+      message: 'URL should be a URL',
+    }),
   },
   redirectUri: {
     type: String,
@@ -60,8 +60,8 @@ const ClientSchema = new Schema({
     validate: validate({
       validator: 'isURL',
       passIfEmpty: false,
-      message: 'redirectUri should be a URL'
-    })
+      message: 'redirectUri should be a URL',
+    }),
   },
   loginUri: {
     type: String,
@@ -69,18 +69,18 @@ const ClientSchema = new Schema({
     validate: validate({
       validator: 'isURL',
       passIfEmpty: true,
-      message: 'loginUri should be a URL'
-    })
+      message: 'loginUri should be a URL',
+    }),
   },
   description: {
     type: String,
     validate: {
       validator: isHTMLValidator,
-      message: 'HTML code is not allowed in description'
-    }
-  }
+      message: 'HTML code is not allowed in description',
+    },
+  },
 }, {
-  collection: 'client'
+  collection: 'client',
 });
 
 module.exports = mongoose.model('Client', ClientSchema);

@@ -1,8 +1,8 @@
-'use strict';
+
 
 const mongoose = require('mongoose');
 
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 
 /**
  * @module Flood
@@ -13,18 +13,18 @@ const FloodSchema = new Schema({
   type: {
     type: String,
     enum: ['login', 'totp'],
-    required: [true, 'Flood type is required']
+    required: [true, 'Flood type is required'],
   },
   email: {
-    type: String
+    type: String,
   },
   user: {
     type: Schema.ObjectId,
-    ref: 'User'
-  }
+    ref: 'User',
+  },
 }, {
   collection: 'flood',
-  timestamps: true
+  timestamps: true,
 });
 
 module.exports = mongoose.model('Flood', FloodSchema);

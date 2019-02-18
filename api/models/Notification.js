@@ -1,10 +1,10 @@
-'use strict';
+
 
 const mongoose = require('mongoose');
 const path = require('path');
 const ejs = require('ejs');
 
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 
 /**
  * @module Notification
@@ -14,44 +14,44 @@ const Schema = mongoose.Schema;
 const NotificationSchema = new Schema({
   createdBy: {
     type: Schema.ObjectId,
-    ref: 'User'
+    ref: 'User',
   },
 
   text: {
-    type: String
+    type: String,
   },
 
   type: {
-    type: String
+    type: String,
   },
 
   user: {
     type: Schema.ObjectId,
-    ref: 'User'
+    ref: 'User',
   },
 
   params: {
-    type: Schema.Types.Mixed
+    type: Schema.Types.Mixed,
   },
 
   read: {
     type: Boolean,
-    default: false
+    default: false,
   },
 
   notified: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 }, {
   collection: 'notification',
-  timestamps: true
+  timestamps: true,
 });
 
-NotificationSchema.pre('save', function(next) {
+NotificationSchema.pre('save', function (next) {
   if (!this.text) {
     const that = this;
-    let templatePath = 'notifications/' + this.type;
+    let templatePath = `notifications/${this.type}`;
     if (this.user.locale && this.user.locale === 'fr') {
       templatePath += '/fr';
     }
@@ -61,16 +61,15 @@ NotificationSchema.pre('save', function(next) {
     ejs.renderFile(template, {
       createdBy: this.createdBy,
       user: this.user,
-      params: this.params
-    }, {}, function (err, str) {
+      params: this.params,
+    }, {}, (err, str) => {
       if (err) {
         return next(err);
       }
       that.text = str;
       next();
     });
-  }
-  else {
+  } else {
     next();
   }
 });

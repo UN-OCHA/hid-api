@@ -1,8 +1,8 @@
-'use strict';
+
 
 const mongoose = require('mongoose');
 
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 
 /**
  * @module ServiceCredentials
@@ -13,27 +13,27 @@ const ServiceCredentialsSchema = new Schema({
   type: {
     type: String,
     enum: ['googlegroup'],
-    required: [true, 'Type is required']
+    required: [true, 'Type is required'],
   },
   googlegroup: {
     domain: {
-      type: String
+      type: String,
     },
     secrets: Schema.Types.Mixed,
-    token: Schema.Types.Mixed
-  }
+    token: Schema.Types.Mixed,
+  },
 }, {
   collection: 'servicecredentials',
-  timestamps: true
+  timestamps: true,
 });
 
-ServiceCredentialsSchema
-  .methods
-  .toJSON = function () {
+ServiceCredentialsSchema.methods = {
+  toJSON() {
     const creds = this.toObject();
     delete creds.googlegroup.secrets;
     delete creds.googlegroup.token;
     return creds;
-  };
+  },
+};
 
 module.exports = mongoose.model('ServiceCredentials', ServiceCredentialsSchema);

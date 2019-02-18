@@ -1,4 +1,4 @@
-'use strict';
+
 
 const Boom = require('boom');
 const GSSSync = require('../models/GSSSync');
@@ -9,16 +9,14 @@ const GSSSync = require('../models/GSSSync');
  */
 module.exports = {
 
-  canDestroy: async function (request, reply) {
+  async canDestroy(request) {
     if (request.auth.credentials.is_admin || request.auth.credentials.isManager) {
       return true;
     }
-    const gsssync = await GSSSync.findOne({_id: request.params.id}).populate('user');
+    const gsssync = await GSSSync.findOne({ _id: request.params.id }).populate('user');
     if (gsssync.user._id.toString() === request.auth.credentials._id.toString()) {
       return true;
     }
-    else {
-      throw Boom.unauthorized('You are not allowed to delete this item');
-    }
-  }
+    throw Boom.unauthorized('You are not allowed to delete this item');
+  },
 };

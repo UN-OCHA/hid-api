@@ -1,4 +1,4 @@
-'use strict';
+
 
 const Boom = require('boom');
 const ServiceCredentials = require('../models/ServiceCredentials');
@@ -10,7 +10,7 @@ const HelperService = require('../services/HelperService');
  */
 module.exports = {
 
-  find: async function (request, reply) {
+  async find(request, reply) {
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
 
@@ -22,10 +22,11 @@ module.exports = {
       }
       return result;
     }
-    else {
-      const [results, number] = await Promise.all([HelperService.find(ServiceCredentials, criteria, options), ServiceCredentials.count(criteria)]);
-      return reply.response(results).header('X-Total-Count', number);
-    }
-  }
+    const [results, number] = await Promise.all([
+      HelperService.find(ServiceCredentials, criteria, options),
+      ServiceCredentials.count(criteria)
+    ]);
+    return reply.response(results).header('X-Total-Count', number);
+  },
 
 };

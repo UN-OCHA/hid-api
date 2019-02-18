@@ -1,4 +1,4 @@
-'use strict';
+
 
 const Boom = require('boom');
 const _ = require('lodash');
@@ -8,29 +8,29 @@ const OutlookService = require('../services/OutlookService');
 const NotificationService = require('../services/NotificationService');
 const GSSSyncService = require('../services/GSSSyncService');
 const config = require('../../config/env')[process.env.NODE_ENV];
-const logger = config.logger;
+
+const { logger } = config;
 
 /**
  * @module ListUserController
  * @description Generated Trails.js Controller.
  */
 const checkinHelper = function (list, user, notify, childAttribute, currentUser) {
-  let payload = {
-    list: list._id.toString()
+  const payload = {
+    list: list._id.toString(),
   };
 
   // Check that the list added corresponds to the right attribute
-  if (childAttribute !== list.type + 's' && childAttribute !== list.type) {
+  if (childAttribute !== `${list.type}s` && childAttribute !== list.type) {
     throw Boom.badRequest('Wrong list type');
   }
 
-  //Set the proper pending attribute depending on list type
-  if (list.joinability === 'public' ||
-    list.joinability === 'private' ||
-    list.isOwner(currentUser)) {
+  // Set the proper pending attribute depending on list type
+  if (list.joinability === 'public'
+    || list.joinability === 'private'
+    || list.isOwner(currentUser)) {
     payload.pending = false;
-  }
-  else {
+  } else {
     payload.pending = true;
   }
 
@@ -52,8 +52,8 @@ const checkinHelper = function (list, user, notify, childAttribute, currentUser)
 
     // Make sure user is not already checked in this list
     for (let i = 0, len = user[childAttribute].length; i < len; i++) {
-      if (user[childAttribute][i].list.equals(list._id) &&
-        user[childAttribute][i].deleted === false) {
+      if (user[childAttribute][i].list.equals(list._id)
+        && user[childAttribute][i].deleted === false) {
         throw Boom.badRequest('User is already checked in');
       }
     }
@@ -61,14 +61,13 @@ const checkinHelper = function (list, user, notify, childAttribute, currentUser)
 
   if (childAttribute !== 'organization') {
     user[childAttribute].push(payload);
-  }
-  else {
+  } else {
     user.organization = payload;
   }
   user.lastModified = new Date();
-  list.count = list.count + 1;
+  list.count += 1;
   const managers = [];
-  list.managers.forEach(function (manager) {
+  list.managers.forEach((manager) => {
     if (manager.toString() !== currentUser._id.toString()) {
       managers.push(manager);
     }
@@ -80,7 +79,7 @@ const checkinHelper = function (list, user, notify, childAttribute, currentUser)
   promises.push(NotificationService.notifyMultiple(managers, {
     type: 'checkin',
     createdBy: user,
-    params: { list: list }
+    params: { list },
   }));
   // Notify user if needed
   if (currentUser._id.toString() !== user._id.toString() && list.type !== 'list' && notify === true && !user.hidden) {
@@ -88,8 +87,8 @@ const checkinHelper = function (list, user, notify, childAttribute, currentUser)
     promises.push(NotificationService.send({
       type: 'admin_checkin',
       createdBy: currentUser,
-      user: user,
-      params: { list: list }
+      user,
+      params: { list },
     }));
   }
   // Notify list owner and managers of the new checkin if needed
@@ -97,7 +96,7 @@ const checkinHelper = function (list, user, notify, childAttribute, currentUser)
     logger.debug('Notifying list owners and manager of the new checkin');
     promises.push(NotificationService.sendMultiple(list.managers, {
       type: 'pending_checkin',
-      params: { list: list, user: user }
+      params: { list, user },
     }));
   }
   // Synchronize google spreadsheets
@@ -108,15 +107,15 @@ const checkinHelper = function (list, user, notify, childAttribute, currentUser)
 
 module.exports = {
 
-  checkinHelper: checkinHelper,
+  checkinHelper,
 
-  checkin: async function (request, reply) {
+  async checkin(request, reply) {
     const userId = request.params.id;
-    const childAttribute = request.params.childAttribute;
-    const payload = request.payload;
+    const { childAttribute } = request.params;
+    const { payload } = request;
     const childAttributes = User.listAttributes();
 
-    logger.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload, { request: request});
+    logger.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload, { request });
 
     if (childAttributes.indexOf(childAttribute) === -1 || childAttribute === 'organization') {
       throw Boom.notFound();
@@ -133,7 +132,7 @@ module.exports = {
     }
     delete request.payload.notify;
 
-    const [list, user] = await Promise.all([List.findOne({_id: payload.list}).populate('managers'), User.findOne({_id: userId})]);
+    const [list, user] = await Promise.all([List.findOne({ _id: payload.list }).populate('managers'), User.findOne({ _id: userId })]);
     if (!list || !user) {
       throw Boom.notFound();
     }
@@ -141,9 +140,9 @@ module.exports = {
     return user;
   },
 
-  update: async function (request, reply) {
-    const childAttribute = request.params.childAttribute;
-    const checkInId = request.params.checkInId;
+  async update(request, reply) {
+    const { childAttribute } = request.params;
+    const { checkInId } = request.params;
 
     logger.debug(
       '[ListUserController] (update) model = list, criteria =',
@@ -151,7 +150,7 @@ module.exports = {
       request.params.checkInId,
       ', values = ',
       request.payload,
-      { request: request }
+      { request },
     );
 
     // Make sure list specific attributes can not be set through update
@@ -179,25 +178,25 @@ module.exports = {
     record.lastModified = new Date();
     const promises = [];
     promises.push(record.save());
-    promises.push(List.findOne({_id: lu.list}));
+    promises.push(List.findOne({ _id: lu.list }));
     const [user, list] = await Promise.all(promises);
     if (listuser.pending === true && request.payload.pending === false) {
       // Send a notification to inform user that his checkin is not pending anymore
       const notification = {
         type: 'approved_checkin',
-        user: user,
+        user,
         createdBy: request.auth.credentials,
-        params: { list: list}
+        params: { list },
       };
       await NotificationService.send(notification);
     }
     return user;
   },
 
-  checkout: async function (request, reply) {
+  async checkout(request, reply) {
     const userId = request.params.id;
-    const childAttribute = request.params.childAttribute;
-    const checkInId = request.params.checkInId;
+    const { childAttribute } = request.params;
+    const { checkInId } = request.params;
     const childAttributes = User.listAttributes();
 
     if (childAttributes.indexOf(childAttribute) === -1) {
@@ -217,7 +216,7 @@ module.exports = {
     }
     user.lastModified = new Date();
     const list = await List.findOne({ _id: lu.list });
-    list.count = list.count - 1;
+    list.count -= 1;
     const promises = [];
     promises.push(user.save());
     promises.push(list.save());
@@ -226,15 +225,15 @@ module.exports = {
       promises.push(NotificationService.send({
         type: 'admin_checkout',
         createdBy: request.auth.credentials,
-        user: user,
-        params: { list: list }
+        user,
+        params: { list },
       }));
     }
     // Notify list managers of the checkin
     promises.push(NotificationService.notifyMultiple(list.managers, {
       type: 'checkout',
       createdBy: user,
-      params: { list: list }
+      params: { list },
     }));
     // Synchronize google spreadsheets
     promises.push(GSSSyncService.deleteUserFromSpreadsheets(list._id, user.id));
@@ -243,18 +242,18 @@ module.exports = {
     return user;
   },
 
-  updateListUsers: async function (request, reply) {
+  async updateListUsers(request, reply) {
     const childAttributes = User.listAttributes();
     const cursor = User
       .find({})
-      .populate([{path: 'lists.list'},
-        {path: 'operations.list'},
-        {path: 'bundles.list'},
-        {path: 'disasters.list'},
-        {path: 'organization.list'},
-        {path: 'organizations.list'},
-        {path: 'functional_roles.list'},
-        {path: 'offices.list'}
+      .populate([{ path: 'lists.list' },
+        { path: 'operations.list' },
+        { path: 'bundles.list' },
+        { path: 'disasters.list' },
+        { path: 'organization.list' },
+        { path: 'organizations.list' },
+        { path: 'functional_roles.list' },
+        { path: 'offices.list' },
       ])
       .cursor();
 
@@ -264,16 +263,15 @@ module.exports = {
           if (lu && lu.list && lu.list.owner) {
             lu.owner = lu.list.owner;
             lu.managers = lu.list.managers;
-            logger.info('Updated list for ' + user._id.toString());
+            logger.info(`Updated list for ${user._id.toString()}`);
             await user.save();
-          }
-          else {
-            logger.info('No list for ' + user._id.toString());
+          } else {
+            logger.info(`No list for ${user._id.toString()}`);
           }
         }
       }
     }
     return reply.response().code(204);
-  }
+  },
 
 };
