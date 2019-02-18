@@ -1,5 +1,10 @@
 'use strict';
 
+const winston = require('winston');
+const os = require('os');
+const _ = require('lodash');
+require('winston-daily-rotate-file');
+
 module.exports = {
   database: {
     stores: {
