@@ -201,22 +201,6 @@ module.exports = {
     return send(mailOptions, not.type, not);
   },
 
-  sendReminderVerify: function (user) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale
-    };
-    const hash = user.generateHash('verify_email', user.email);
-    let resetUrl = _addUrlArgument(process.env.APP_URL, 'email', user.email);
-    resetUrl = _addUrlArgument(resetUrl, 'time', hash.timestamp);
-    resetUrl = _addHash(resetUrl, hash.hash);
-    const context = {
-      user: user,
-      verifyLink: resetUrl
-    };
-    return send(mailOptions, 'reminder_verify', context);
-  },
-
   sendReminderUpdate: function (user) {
     const mailOptions = {
       to: user.email,

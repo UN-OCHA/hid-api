@@ -832,18 +832,6 @@ module.exports = [
 
   {
     method: 'GET',
-    path: '/api/v2/cron/sendReminderVerifyEmails',
-    config: {
-      auth: false,
-      pre: [
-        CronPolicy.canRun
-      ],
-      handler: CronController.sendReminderVerifyEmails
-    }
-  },
-
-  {
-    method: 'GET',
     path: '/api/v2/cron/sendReminderUpdateEmails',
     config: {
       auth: false,

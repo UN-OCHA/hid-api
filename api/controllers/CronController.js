@@ -38,32 +38,6 @@ module.exports = {
     return reply.response().code(204);
   },
 
-  sendReminderVerifyEmails: async function (request, reply) {
-    logger.info('sending reminder emails to verify addresses');
-    const cursor = User.find({'email_verified': false}).cursor();
-
-    let promises = [];
-    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      try {
-        if (user.shouldSendReminderVerify()) {
-          promises.push(EmailService.sendReminderVerify(user));
-          promises.push(User.collection.update(
-            { _id: user._id },
-            { $set: {
-              remindedVerify: new Date(),
-              timesRemindedVerify: user.timesRemindedVerify + 1
-            }}
-          ));
-        }
-      }
-      catch (err) {
-        logger.error(err);
-      }
-    }
-    await Promise.all(promises);
-    return reply.response().code(204);
-  },
-
   sendReminderUpdateEmails: async function (request, reply) {
     logger.info('Sending reminder update emails to contacts');
     const d = new Date(),
