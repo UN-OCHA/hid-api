@@ -43,7 +43,7 @@ async function _pdfExport (users, number, lists, req, format, callback) {
     }
   });
 
-  let data = {
+  const data = {
     lists: lists,
     number: number,
     users: users,
@@ -365,7 +365,8 @@ module.exports = {
         criteria.is_orphan = false;
         criteria.is_ghost = false;
       }
-      let listIds = [], lists = [];
+      const listIds = [];
+      let lists = [];
       for (let i = 0; i < childAttributes.length; i++) {
         if (criteria[childAttributes[i] + '.list']) {
           listIds.push(criteria[childAttributes[i] + '.list']);
@@ -438,7 +439,7 @@ module.exports = {
             pdfFormat = criteria.format;
             delete criteria.format;
           }
-          const [buffer, bytes] = _pdfExport(results, number, lists, request, pdfFormat);
+          const [buffer, bytes] = _pdfExport(results, number, lists, request, pdfFormat);
           return reply.response(buffer)
             .type('application/pdf')
             .bytes(bytes)
@@ -501,7 +502,7 @@ module.exports = {
     user = await User
       .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true});
     user = await user.defaultPopulate();
-    let promises = [];
+    const promises = [];
     if (request.auth.credentials._id.toString() !== user._id.toString()) {
       // User is being edited by someone else
       // If it's an auth account, surface it
@@ -563,7 +564,7 @@ module.exports = {
     record.verifyEmail(email);
     record.lastModified = new Date();
     await record.save();
-    let promises = [];
+    const promises = [];
     promises.push(GSSSyncService.synchronizeUser(record));
     promises.push(OutlookService.synchronizeUser(record));
     await Promise.all(promises);
@@ -636,7 +637,7 @@ module.exports = {
           }
         }
       }
-      let promises = [];
+      const promises = [];
       promises.push(record.save());
       if (record.email === request.payload.email) {
         promises.push(EmailService.sendPostRegister(record));
@@ -842,7 +843,7 @@ module.exports = {
       throw Boom.badRequest('Email already exists');
     }
     // Send confirmation email
-    let promises = [];
+    const promises = [];
     promises.push(EmailService.sendValidationEmail(record, email, appValidationUrl));
     for (let i = 0; i < record.emails.length; i++) {
       promises.push(EmailService.sendEmailAlert(record, record.emails[i].email, request.payload.email));

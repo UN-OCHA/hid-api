@@ -66,7 +66,7 @@ internals.deserializeClient = function (fn) {
 };
 
 internals.token = function (request, reply, options) {
-  var express = internals.convertToExpress(request, reply);
+  const express = internals.convertToExpress(request, reply);
   const tokenAsync = util.promisify(internals.OauthServer.token(options));
   return tokenAsync(express.req, express.res);
 };
@@ -78,11 +78,11 @@ internals.transformBoomError = function (boomE, authE) {
     return boomE;
   }
 
-  var overrides = authE || boomE.data || {};
+  const overrides = authE || boomE.data || {};
 
   Hoek.merge(boomE.output.payload, overrides);
 
-  var origBoomMessage = boomE.output.payload.message;
+  const origBoomMessage = boomE.output.payload.message;
 
   if (!boomE.output.payload.error_description && boomE.output.payload.message) {
     boomE.output.payload.error_description = boomE.output.payload.message;
@@ -105,7 +105,7 @@ internals.oauthToBoom = function (oauthError) {
   // These little bits of code are stolen from oauth2orize
   // to translate raw Token/AuthorizationErrors to OAuth2 style errors
 
-  var newResponse = {};
+  const newResponse = {};
   newResponse.error = oauthError.code || 'server_error';
   if (oauthError.message) {
     newResponse.error_description = oauthError.message;
@@ -125,19 +125,19 @@ internals.convertToExpress = function (request, reply) {
 
   request.yar.lazy(true);
 
-  var ExpressServer = {
+  const ExpressServer = {
     req: {
       session: request.yar,
       query: request.query,
       body: request.payload,
       user: Hoek.reach(request.auth.credentials, internals.settings.credentialsUserProperty || '',
-      { default: request.auth.credentials })
+        { default: request.auth.credentials })
     },
     res: {
       redirect: function (uri) {
 
         // map errors in URL to be similar to our custom Boom errors.
-        var uriObj = Url.parse(uri, true);
+        const uriObj = Url.parse(uri, true);
 
         if (uriObj.query.error) {
 

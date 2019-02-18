@@ -673,7 +673,7 @@ UserSchema.pre('remove', async function (next) {
     const promises = [];
     for (let i = 0; i < users.length; i++) {
       for (let j = 0; j < users[i].connections.length; j++) {
-        if (users[i].connections[j].user.toString() === that._id.toString()) {
+        if (users[i].connections[j].user.toString() === this._id.toString()) {
           users[i].connections.id(users[i].connections[j]._id).remove();
         }
       }
@@ -682,7 +682,7 @@ UserSchema.pre('remove', async function (next) {
     // Reduce the number of contacts for each list of the user
     const listIds = [];
     listTypes.forEach(function (attr) {
-      that[attr + 's'].forEach(function (checkin) {
+      this[attr + 's'].forEach(function (checkin) {
         listIds.push(checkin.list);
       });
     });
@@ -1105,8 +1105,8 @@ UserSchema.methods = {
   // Reminder emails are sent out 2, 4, 7 and 30 days after registration
   shouldSendReminderVerify: function() {
     const created = new Date(this.createdAt),
-    current = Date.now(),
-    remindedVerify = new Date(this.remindedVerify);
+      current = Date.now(),
+      remindedVerify = new Date(this.remindedVerify);
     if (this.email_verified || this.is_orphan || this.is_ghost) {
       return false;
     }
@@ -1254,8 +1254,8 @@ UserSchema.methods = {
 
   defaultPopulate: function () {
     return this
-    .populate(userPopulate1)
-    .execPopulate();
+      .populate(userPopulate1)
+      .execPopulate();
   },
 
   trustedDeviceIndex: function (ua) {
@@ -1310,7 +1310,7 @@ UserSchema.methods = {
       .populate('list');
   },
 
-  canBeVerifiedAutomatically: function () {
+  canBeVerifiedAutomatically: async function () {
     const that = this;
     const promises = [];
     // Check all emails
@@ -1319,16 +1319,14 @@ UserSchema.methods = {
         promises.push(that.isVerifiableEmail(email.email));
       }
     });
-    return Promise.all(promises)
-    .then(values => {
-      let out = false;
-      values.forEach(function (val) {
-        if (val) {
-          out = true;
-        }
-      });
-      return out;
+    const values = await Promise.all(promises);
+    let out = false;
+    values.forEach(function (val) {
+      if (val) {
+        out = true;
+      }
     });
+    return out;
   },
 
   toJSON: function () {
