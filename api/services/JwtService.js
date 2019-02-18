@@ -42,7 +42,7 @@ module.exports = {
       iss: process.env.ROOT_URL,
       sub,
       aud: client.id,
-      exp: now + 7 * 24 * 3600 * 1000,
+      exp: now + 7 * 24 * 3600,
       nonce,
       iat: now,
     };
