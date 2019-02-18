@@ -47,12 +47,13 @@ internals.decision = async function (request, reply, options, parse) {
   if (options && options.loadTransaction === false) {
     const decisionAsync = util.promisify(internals.OauthServer.decision(options, parse));
     await decisionAsync(express.req, express.res);
-  } else {
+  }
+  else {
     const result = internals.OauthServer.decision(options, parse);
     const transactionLoaderAsync = util.promisify(result[0]);
     const middlewareAsync = util.promisify(result[1]);
     await transactionLoaderAsync(express.req, express.res);
-    const response = await middlewareAsync(express.req, express.res)
+    const response = await middlewareAsync(express.req, express.res);
     return response;
   }
 };
@@ -105,7 +106,7 @@ internals.oauthToBoom = function (oauthError) {
   // These little bits of code are stolen from oauth2orize
   // to translate raw Token/AuthorizationErrors to OAuth2 style errors
 
-  const newResponse = {};
+  let newResponse = {};
   newResponse.error = oauthError.code || 'server_error';
   if (oauthError.message) {
     newResponse.error_description = oauthError.message;
@@ -163,7 +164,8 @@ internals.convertToExpress = function (request, reply) {
           let jsonContent;
           try {
             jsonContent = JSON.parse(content);
-          } catch (e) {
+          }
+          catch (e) {
             /* If we got a json error, ignore it.
             * The oauth2orize's response just wasn't json.
             */
@@ -183,7 +185,8 @@ internals.convertToExpress = function (request, reply) {
               ExpressServer.headers = [];
               this.statusCode = null;
 
-            } else {
+            }
+            else {
               // Respond non-error content as a json object if it is json.
               content = jsonContent;
             }
@@ -257,7 +260,8 @@ module.exports = {
 
       if (newResponse) {
         throw newResponse;
-      } else {
+      }
+      else {
         return reply.continue;
       }
     });
