@@ -31,6 +31,7 @@
     "hapi": "^18.1.0",
     "hapi-rate-limit": "^3.1.1",
     "hawk": "^7.0.10",
+    "hoek": "^6.1.2",
     "inert": "^5.1.2",
     "is-html": "^1.1.0",
     "jsonwebtoken": "^8.1.0",

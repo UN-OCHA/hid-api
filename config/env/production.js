@@ -1,4 +1,4 @@
-'use strict';
+
 
 const winston = require('winston');
 const os = require('os');
@@ -15,20 +15,21 @@ module.exports = {
         options: {
           keepAlive: 600000,
           connectTimeoutMS: 60000,
-          useNewUrlParser: true
-        }
-      }
+          useNewUrlParser: true,
+        },
+      },
     },
     models: {
       defaultStore: 'production',
-      migrate: 'create'
-    }
+      migrate: 'create',
+    },
   },
   logger: new winston.Logger({
     level: 'info',
     exitOnError: false,
     rewriters: [
-      function (level, msg, metadata) {
+      (level, msg, ametadata) => {
+        let metadata = ametadata;
         let ip = '';
         if (metadata.request && metadata.request.info && metadata.request.info.remoteAddress) {
           ip = metadata.request.info.remoteAddress;
@@ -48,28 +49,28 @@ module.exports = {
         // Extend metadata with some default.
         metadata.level = level;
         metadata.hostname = os.hostname();
-        metadata.env = 'hid-' + process.env.NODE_ENV;
+        metadata.env = `hid-${process.env.NODE_ENV}`;
         metadata.ip = ip;
         metadata.user = userId;
         metadata['@timestamp'] = new Date().toJSON();
 
         return metadata;
-      }
+      },
     ],
     transports: [
       new winston.transports.DailyRotateFile({
         name: 'info-file',
         filename: 'trails/info.log',
         level: 'info',
-        timestamp: true
+        timestamp: true,
       }),
       new winston.transports.DailyRotateFile({
         name: 'error-file',
         filename: 'trails/error.log',
         level: 'error',
-        timestamp: true
-      })
-    ]
-  })
+        timestamp: true,
+      }),
+    ],
+  }),
 
 };

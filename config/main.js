@@ -5,7 +5,6 @@
  * @see http://trailsjs.io/doc/config/main
  */
 
-'use strict';
 
 const path = require('path');
 
@@ -16,9 +15,9 @@ module.exports = {
    * requirements.
    */
   packs: [
-    //require('trailpack-repl'),
-    //require('trailpack-router'),
-    //require('trailpack-hapi')
+    // require('trailpack-repl'),
+    // require('trailpack-router'),
+    // require('trailpack-hapi')
   ],
 
   /**
@@ -27,6 +26,6 @@ module.exports = {
   paths: {
     root: path.resolve(__dirname, '..'),
     temp: path.resolve(__dirname, '..', '.tmp'),
-    www: path.resolve(__dirname, '..', 'assets')
-  }
+    www: path.resolve(__dirname, '..', 'assets'),
+  },
 };

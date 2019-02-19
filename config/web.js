@@ -6,6 +6,18 @@
 *
 * @see {@link http://trailsjs.io/doc/config/web}
 */
+const inert = require('inert');
+const ejs = require('ejs');
+const vision = require('vision');
+const yar = require('yar');
+const crumb = require('crumb');
+const hapiRateLimit = require('hapi-rate-limit');
+const oauth2orizeExt = require('oauth2orize-openid');
+const hapiOauth2Orize = require('../plugins/hapi-oauth2orize');
+const hapiAuthHid = require('../plugins/hapi-auth-hid');
+const Client = require('../api/models/Client');
+const OauthToken = require('../api/models/OauthToken');
+const JwtService = require('../api/services/JwtService');
 
 module.exports = {
 
@@ -21,172 +33,164 @@ module.exports = {
 
   views: {
     engines: {
-      html: require('ejs')
+      html: ejs,
     },
-    path: 'templates'
+    path: 'templates',
   },
 
   plugins: [
     {
-      plugin: require('inert')
+      plugin: inert,
     },
     {
-      plugin: require('vision')
+      plugin: vision,
     },
     {
-      plugin: require('yar'),
+      plugin: yar,
       options: {
         cache: {
-          expiresIn: 4 * 60 * 60 * 1000 // 4 hours sessions
+          expiresIn: 4 * 60 * 60 * 1000, // 4 hours sessions
         },
         cookieOptions: {
           password: process.env.COOKIE_PASSWORD,
           isSecure: process.env.NODE_ENV === 'production',
-          isHttpOnly: true
-        }
-      }
+          isHttpOnly: true,
+        },
+      },
     },
     {
-      plugin: require('crumb'),
+      plugin: crumb,
       options: {
-        skip: function (request, reply) {
+        skip(request) {
           const paths = ['/', '/login', '/oauth/authorize',
             '/register', '/verify', '/verify2', '/password', '/new_password'];
           if (paths.indexOf(request.path) === -1) {
             return true;
           }
           return false;
-        }
-      }
+        },
+      },
     },
     {
-      plugin: require('../plugins/hapi-oauth2orize'),
+      plugin: hapiOauth2Orize,
     },
     {
-      plugin: require('hapi-rate-limit'),
+      plugin: hapiRateLimit,
       options: {
         userLimit: 100000,
         trustProxy: true,
-        pathLimit: false
-      }
+        pathLimit: false,
+      },
     },
     {
-      plugin: require('../plugins/hapi-auth-hid')
-    }
+      plugin: hapiAuthHid,
+    },
   ],
 
-  onPluginsLoaded: function (server) {
+  onPluginsLoaded(server) {
     const oauth = server.plugins['hapi-oauth2orize'];
-    const oauth2orizeExt = require('oauth2orize-openid');
-    const Client = require('../api/models/Client');
-    const OauthToken = require('../api/models/OauthToken');
-    const JwtService = require('../api/services/JwtService');
     const OauthExpiresIn = 7 * 24 * 3600;
 
     // Register supported OpenID Connect 1.0 grant types.
 
     oauth.grant(oauth2orizeExt.extensions());
     // id_token grant type.
-    oauth.grant(oauth2orizeExt.grant.idToken(function(client, user, done){
+    oauth.grant(oauth2orizeExt.grant.idToken((client, user, done) => {
       const out = JwtService.generateIdToken(client, user);
       done(null, out);
     }));
 
     // 'id_token token' grant type.
     oauth.grant(oauth2orizeExt.grant.idTokenToken(
-      async function(client, user, done){
-        try  {
+      async (client, user, done) => {
+        try {
           const token = OauthToken.generate('access', client, user, '');
           const tok = await OauthToken.create(token);
           return done(null, tok.token);
-        }
-        catch (err) {
+        } catch (err) {
           return done(err);
         }
       },
-      function(client, user, req, done){
+      (client, user, req, done) => {
         const out = JwtService.generateIdToken(client, user);
-        return done (null, out);
-      }
+        return done(null, out);
+      },
     ));
 
     // Implicit Grant Flow
-    oauth.grant(oauth.grants.token(async function (client, user, ares, done) {
-      try  {
+    oauth.grant(oauth.grants.token(async (client, user, ares, done) => {
+      try {
         const token = OauthToken.generate('access', client, user, '');
         const tok = await OauthToken.create(token);
-        return done(null, tok.token, {expires_in: OauthExpiresIn});
-      }
-      catch (err) {
+        return done(null, tok.token, { expires_in: OauthExpiresIn });
+      } catch (err) {
         return done(err);
       }
     }));
     // Authorization code exchange flow
-    oauth.grant(oauth.grants.code(async function (client, redirectURI, user, res, req, done) {
+    oauth.grant(oauth.grants.code(async (client, redirectURI, user, res, req, done) => {
       const nonce = req.nonce ? req.nonce : '';
-      try  {
+      try {
         const token = OauthToken.generate('code', client, user, nonce);
         const tok = await OauthToken.create(token);
         return done(null, tok.token);
-      }
-      catch (err) {
+      } catch (err) {
         return done(err);
       }
     }));
 
-    oauth.exchange(oauth.exchanges.code(async function (client, code, redirectURI, payload, authInfo, done) {
-      try {
-        const ocode = await OauthToken
-          .findOne({token: code, type: 'code'})
-          .populate('client user');
-        if (!ocode.client._id.equals(client._id)) {
-          return done(null, false);
+    oauth.exchange(oauth.exchanges.code(
+      async (client, code, redirectURI, payload, authInfo, done) => {
+        try {
+          const ocode = await OauthToken
+            .findOne({ token: code, type: 'code' })
+            .populate('client user');
+          if (!ocode.client._id.equals(client._id)) {
+            return done(null, false);
+          }
+          const promises = [];
+          const refreshToken = OauthToken.generate('refresh', client, ocode.user, ocode.nonce);
+          const accessToken = OauthToken.generate('access', client, ocode.user, ocode.nonce);
+          promises.push(OauthToken.create(refreshToken));
+          promises.push(OauthToken.create(accessToken));
+          promises.push(OauthToken.remove({ type: 'code', token: code }));
+          const tokens = await Promise.all(promises);
+          return done(null, tokens[1].token, tokens[0].token, {
+            expires_in: OauthExpiresIn,
+            id_token: JwtService.generateIdToken(client, ocode.user, ocode.nonce),
+          });
+        } catch (err) {
+          return done(err);
         }
-        const promises = [];
-        const refreshToken = OauthToken.generate('refresh', client, ocode.user, ocode.nonce);
-        const accessToken = OauthToken.generate('access', client, ocode.user, ocode.nonce);
-        promises.push(OauthToken.create(refreshToken));
-        promises.push(OauthToken.create(accessToken));
-        promises.push(OauthToken.remove({type: 'code', token: code}));
-        const tokens = await Promise.all(promises);
-        return done(null, tokens[1].token, tokens[0].token, {
-          expires_in: OauthExpiresIn,
-          id_token: JwtService.generateIdToken(client, ocode.user, ocode.nonce)
-        });
-      }
-      catch (err) {
-        return done(err);
-      }
-    }));
+      },
+    ));
 
-    oauth.exchange(oauth.exchanges.refreshToken(async function (client, refreshToken, scope, done) {
+    oauth.exchange(oauth.exchanges.refreshToken(async (client, refreshToken, scope, done) => {
       try {
         const tok = await OauthToken
-          .findOne({type: 'refresh', token: refreshToken})
+          .findOne({ type: 'refresh', token: refreshToken })
           .populate('client user');
         if (tok.client._id.toString() !== client._id.toString()) {
-          return done(null, false, { message: 'This refresh token is for a different client'});
+          return done(null, false, { message: 'This refresh token is for a different client' });
         }
         const atoken = OauthToken.generate('access', tok.client, tok.user, tok.nonce);
         const ctok = await OauthToken.create(atoken);
-        return done(null, ctok.token, null, {expires_in: OauthExpiresIn});
-      }
-      catch (err) {
+        return done(null, ctok.token, null, { expires_in: OauthExpiresIn });
+      } catch (err) {
         return done(err);
       }
     }));
 
     // Client Serializers
-    oauth.serializeClient(function (client, done) {
+    oauth.serializeClient((client, done) => {
       done(null, client._id);
     });
 
-    oauth.deserializeClient(async function (id, done) {
+    oauth.deserializeClient(async (id, done) => {
       try {
-        const client = await Client.findOne({_id: id});
+        const client = await Client.findOne({ _id: id });
         return done(null, client);
-      }
-      catch (err) {
+      } catch (err) {
         return done(err);
       }
     });
@@ -195,16 +199,16 @@ module.exports = {
   options: {
     routes: {
       cors: {
-        additionalExposedHeaders: [ 'X-Total-Count', 'set-cookie' ],
+        additionalExposedHeaders: ['X-Total-Count', 'set-cookie'],
         additionalHeaders: ['Accept-Language', 'X-HID-TOTP'],
-        credentials: true // Allow the x-hid-totp-trust cookie to be sent
+        credentials: true, // Allow the x-hid-totp-trust cookie to be sent
       },
       payload: {
-        maxBytes: 5242880
+        maxBytes: 5242880,
       },
       security: {
-        xframe: true
-      }
-    }
-  }
+        xframe: true,
+      },
+    },
+  },
 };

@@ -1,11 +1,11 @@
-'use strict';
+
 
 module.exports = {
 
   trailpack: {
     disabled: [
-      'repl'
-    ]
+      'repl',
+    ],
   },
 
   database: {
@@ -16,12 +16,12 @@ module.exports = {
         options: {
           keepAlive: 600000,
           connectTimeoutMS: 60000,
-          useNewUrlParser: true
-        }
-      }
+          useNewUrlParser: true,
+        },
+      },
     },
     models: {
-      migrate: 'create'
-    }
-  }
+      migrate: 'create',
+    },
+  },
 };

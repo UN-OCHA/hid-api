@@ -32,7 +32,7 @@ _.defaultsDeep(webConfig.options, {
   },
 });
 
-const preResponse = function (request, reply) {
+const preResponse = (request, reply) => {
   const { response } = request;
   if (!response.isBoom) {
     return reply.continue;
@@ -67,7 +67,7 @@ const init = async () => {
   if (Array.isArray(app.config.main.paths.www)) {
     app.config.main.paths.www.map((item) => {
       const staticDir = path.relative(app.config.main.paths.root, item.path);
-      server.route({
+      return server.route({
         method: 'GET',
         path: item.humanUrl
           ? item.humanUrl.concat('/{filename*}')

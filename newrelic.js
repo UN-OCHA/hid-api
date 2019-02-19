@@ -1,10 +1,12 @@
-'use strict';
+
 
 /**
  * This file includes all of the configuration variables used by the Node.js
  * module. If there's a configurable element of the module and it's not
  * described in here, there's been a terrible mistake.
  */
+const path = require('path');
+
 exports.config = {
   /**
    * Array of application names.
@@ -153,7 +155,7 @@ exports.config = {
      *
      * @env NEW_RELIC_LOG
      */
-    filepath: require('path').join(process.cwd(), 'newrelic_agent.log'),
+    filepath: path.join(process.cwd(), 'newrelic_agent.log'),
     /**
      * Whether to write to a log file at all
      *
@@ -165,7 +167,7 @@ exports.config = {
      * Enables extra debugging at `warn` level. No need to enable except under
      * specific debugging conditions.
      */
-    diagnostics: false
+    diagnostics: false,
   },
 
   audit_log: {
@@ -188,7 +190,7 @@ exports.config = {
      *
      * @env NEW_RELIC_AUDIT_LOG_ENDPOINTS
      */
-    endpoints: []
+    endpoints: [],
   },
   /**
    * Whether to collect & submit error traces to New Relic.
@@ -227,7 +229,7 @@ exports.config = {
      * your own server's sake. The payload of events is compressed, but if it
      * grows too large the New Relic servers may reject it.
      */
-    max_event_samples_stored: 100
+    max_event_samples_stored: 100,
   },
   /**
    * Options regarding collecting system information. Used for system
@@ -247,7 +249,7 @@ exports.config = {
      *
      * @env NEW_RELIC_UTILIZATION_DETECT_DOCKER
      */
-    detect_docker: true
+    detect_docker: true,
   },
   transaction_tracer: {
     /**
@@ -313,7 +315,7 @@ exports.config = {
      * traces.  This is the minimum duration a query must take (in ms) for it
      * to be considered for for slow query and inclusion in transaction traces.
      */
-    explain_threshold: 500
+    explain_threshold: 500,
   },
   /**
    * Whether to enable internal supportability metrics and diagnostics. You're
@@ -339,7 +341,7 @@ exports.config = {
      *
      * @env NEW_RELIC_DEBUG_TRACER
      */
-    tracer_tracing: false
+    tracer_tracing: false,
   },
   /**
    * Rules for naming or ignoring transactions.
@@ -365,8 +367,8 @@ exports.config = {
      * @env NEW_RELIC_IGNORING_RULES
      */
     ignore: [
-      '^/socket.io/.*/xhr-polling/'
-    ]
+      '^/socket.io/.*/xhr-polling/',
+    ],
   },
   /**
    * By default, any transactions that are not affected by other bits of
@@ -426,7 +428,7 @@ exports.config = {
      *
      * @env NEW_RELIC_BROWSER_MONITOR_DEBUG
      */
-    debug: false
+    debug: false,
   },
   /**
    * Transaction Events
@@ -458,7 +460,7 @@ exports.config = {
      * behavior. You probably want at least double the value, but more is okay
      * as long as you can handle the memory overhead.
      */
-    max_samples_stored: 20000
+    max_samples_stored: 20000,
   },
 
   /**
@@ -488,7 +490,7 @@ exports.config = {
      * your own server's sake. The payload of events is compressed, but if it
      * grows too large the New Relic servers may reject it.
      */
-    max_samples_stored: 1000
+    max_samples_stored: 1000,
   },
   /**
    * This is used to configure properties about the user's host name.
@@ -505,7 +507,7 @@ exports.config = {
      *
      * @env NEW_RELIC_IPV_PREFERENCE
      */
-    ipv_preference: '4'
+    ipv_preference: '4',
   },
 
 
@@ -544,7 +546,7 @@ exports.config = {
    */
   slow_sql: {
     enabled: false,
-    max_samples: 10
+    max_samples: 10,
   },
 
   /**
@@ -558,7 +560,7 @@ exports.config = {
    *  Enables reporting of database/schema names. Default is `true`.
    */
   datastore_tracer: {
-    instance_reporting: {enabled: true},
-    database_name_reporting: {enabled: true}
-  }
+    instance_reporting: { enabled: true },
+    database_name_reporting: { enabled: true },
+  },
 };

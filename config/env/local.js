@@ -1,4 +1,4 @@
-'use strict';
+
 
 module.exports = {
   database: {
@@ -6,12 +6,12 @@ module.exports = {
       local: {
         migrate: 'create',
         uri: 'mongodb://db:27017/local',
-        options: {}
-      }
+        options: {},
+      },
     },
     models: {
       defaultStore: 'local',
-      migrate: 'create'
-    }
-  }
+      migrate: 'create',
+    },
+  },
 };
