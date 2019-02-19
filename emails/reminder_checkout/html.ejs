@@ -1,9 +1,8 @@
 <p>Dear <%= user.name %>,</p>
 
-<p>We have noticed that you are still checked into <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a>, but have specified a departure date of <%= params.listUser.checkoutDate %>. That was more than 2 days ago.</p>
+<p>We are reaching out to remind you that in two days we will check you out of <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a>,
+  as per your specified departure date of <%= params.listUser.checkoutDate %>.</p>
 
-<p>If you are no longer in <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a>, please check out. Otherwise, kindly update your profile with a new departure date.</p>
-
-<p>If no action is taken, you will be automatically checked out of <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a> in the next 12 days.</p>
+<p>In case you would like to join the list again simply go to <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a> and check in (you can do so through the arrow icon on top).</p>
 
 <% include ../includes/footer_en %>

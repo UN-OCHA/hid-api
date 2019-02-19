@@ -72,6 +72,8 @@ module.exports = {
     return reply.response().code(204);
   },
 
+  // Send reminder checkout email 48 hours before
+  // the departure date
   async sendReminderCheckoutEmails(request, reply) {
     logger.info('Sending reminder checkout emails to contacts');
     const now = new Date();
@@ -94,7 +96,7 @@ module.exports = {
           try {
             if (lu.checkoutDate && lu.remindedCheckout === false && !lu.deleted) {
               const dep = new Date(lu.checkoutDate);
-              if (now.valueOf() - dep.valueOf() > 48 * 3600 * 1000) {
+              if (dep.valueOf() - now.valueOf() < 48 * 3600 * 1000) {
                 const notification = { type: 'reminder_checkout', user, params: { listUser: lu, list: lu.list } };
                 await NotificationService.send(notification);
                 lu.remindedCheckout = true;
@@ -110,6 +112,7 @@ module.exports = {
     return reply.response().code(204);
   },
 
+  // Automatically check user out maximum 24 hours after his departure date
   async doAutomatedCheckout(request, reply) {
     logger.info('Running automated checkouts');
     let populate = '';
@@ -132,7 +135,7 @@ module.exports = {
           try {
             if (lu.checkoutDate && lu.remindedCheckout === true && !lu.deleted) {
               const dep = new Date(lu.checkoutDate);
-              if (now.valueOf() - dep.valueOf() > 14 * 24 * 3600 * 1000) {
+              if (now.valueOf() - dep.valueOf() > 24 * 3600 * 1000) {
                 const notification = { type: 'automated_checkout', user, params: { listUser: lu, list: lu.list } };
                 await NotificationService.send(notification);
                 lu.deleted = true;
