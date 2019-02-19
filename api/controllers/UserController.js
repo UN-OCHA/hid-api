@@ -28,7 +28,7 @@ const { logger } = config;
  * @description Generated Trails.js Controller.
  */
 
-async function _pdfExport(users, number, lists, req, format, callback) {
+async function _pdfExport(users, number, lists, req, format) {
   const filters = [];
   if (Object.prototype.hasOwnProperty.call(req.query, 'name') && req.query.name.length) {
     filters.push(req.query.name);
@@ -77,8 +77,8 @@ async function _pdfExport(users, number, lists, req, format, callback) {
   if (clientRes && clientRes.status === 200) {
     // clientRes.setEncoding('binary');
 
-    const pdfSize = parseInt(clientRes.headers['content-length']);
-    const pdfBuffer = new Buffer(pdfSize);
+    const pdfSize = parseInt(clientRes.headers['content-length'], 10);
+    const pdfBuffer = Buffer.alloc(pdfSize);
 
     pdfBuffer.write(clientRes.data, pdfSize, 'binary');
 
@@ -90,10 +90,26 @@ async function _pdfExport(users, number, lists, req, format, callback) {
 
 function _txtExport(users) {
   let out = '';
-  for (let i = 0; i < users.length; i++) {
+  for (let i = 0; i < users.length; i += 1) {
     out += `${users[i].name} <${users[i].email}>;`;
   }
   return out;
+}
+
+function getBundles(user) {
+  let bundles = '';
+  user.bundles.forEach((bundle) => {
+    bundles += `${bundle.name};`;
+  });
+  return bundles;
+}
+
+function getRoles(user) {
+  let roles = '';
+  user.functional_roles.forEach((role) => {
+    roles += `${role.name};`;
+  });
+  return roles;
 }
 
 function _csvExport(users, full = false) {
@@ -115,7 +131,7 @@ function _csvExport(users, full = false) {
   if (full) {
     out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes,Created At,Updated At,Orphan,Ghost,Verified,Manager,Admin\n';
   }
-  for (let i = 0; i < users.length; i++) {
+  for (let i = 0; i < users.length; i += 1) {
     org = '';
     bundles = '';
     country = '';
@@ -129,14 +145,10 @@ function _csvExport(users, full = false) {
       org = users[i].organization.name;
     }
     if (users[i].bundles && users[i].bundles.length) {
-      users[i].bundles.forEach((bundle) => {
-        bundles += `${bundle.name};`;
-      });
+      bundles = getBundles(users[i]);
     }
     if (users[i].functional_roles && users[i].functional_roles.length) {
-      users[i].functional_roles.forEach((role) => {
-        roles += `${role.name};`;
-      });
+      roles = getRoles(users[i]);
     }
     if (users[i].location && users[i].location.country) {
       country = users[i].location.country.name;
@@ -145,7 +157,7 @@ function _csvExport(users, full = false) {
       region = users[i].location.region.name;
     }
     if (users[i].voips.length) {
-      for (let j = 0; j < users[i].voips.length; j++) {
+      for (let j = 0; j < users[i].voips.length; j += 1) {
         if (users[i].voips[j].type === 'Skype') {
           skype = users[i].voips[j].username;
         }
@@ -187,7 +199,7 @@ function _csvExport(users, full = false) {
 
 module.exports = {
 
-  async create(request, reply) {
+  async create(request) {
     if (!request.payload.app_verify_url) {
       throw Boom.badRequest('Missing app_verify_url');
     }
@@ -221,13 +233,12 @@ module.exports = {
         // Set a random password
         request.payload.password = User.hashPassword(User.generateRandomPassword());
       }
-
-      const appVerifyUrl = request.payload.app_verify_url;
       delete request.payload.app_verify_url;
 
       let notify = true;
       if (typeof request.payload.notify !== 'undefined') {
-        notify = request.payload.notify;
+        const { notify: notif } = request.payload.notify;
+        notify = notif;
       }
       delete request.payload.notify;
 
@@ -269,13 +280,11 @@ module.exports = {
       if (user.email && notify === true) {
         if (!request.auth.credentials) {
           await EmailService.sendRegister(user, appVerifyUrl);
-        } else {
+        } else if (registrationType === 'kiosk') {
           // An admin is creating an orphan user or Kiosk registration
-          if (registrationType === 'kiosk') {
-            await EmailService.sendRegisterKiosk(user, appVerifyUrl);
-          } else {
-            await EmailService.sendRegisterOrphan(user, request.auth.credentials, appVerifyUrl);
-          }
+          await EmailService.sendRegisterKiosk(user, appVerifyUrl);
+        } else {
+          await EmailService.sendRegisterOrphan(user, request.auth.credentials, appVerifyUrl);
         }
       }
       return user;
@@ -296,7 +305,8 @@ module.exports = {
         criteria.is_ghost = false;
       }
       // Do not show user if it is hidden
-      if (!request.auth.credentials.is_admin && request.auth.credentials._id.toString() !== request.params.id) {
+      if (!request.auth.credentials.is_admin
+        && request.auth.credentials._id.toString() !== request.params.id) {
         criteria.hidden = false;
       }
       const user = await User.findOne(criteria);
@@ -307,97 +317,93 @@ module.exports = {
         user.translateListNames(reqLanguage);
         return user;
       }
-    } else {
-      const options = HelperService.getOptionsFromQuery(request.query);
-      const criteria = HelperService.getCriteriaFromQuery(request.query);
-      const childAttributes = User.listAttributes();
+    }
+    const options = HelperService.getOptionsFromQuery(request.query);
+    const criteria = HelperService.getCriteriaFromQuery(request.query);
+    const childAttributes = User.listAttributes();
 
-      // Hide unconfirmed users which are not orphans
-      if (request.auth.credentials && !request.auth.credentials.is_admin && !request.auth.credentials.isManager) {
-        criteria.$or = [{ email_verified: true }, { is_orphan: true }, { is_ghost: true }];
-      }
+    // Hide unconfirmed users which are not orphans
+    if (request.auth.credentials
+      && !request.auth.credentials.is_admin
+      && !request.auth.credentials.isManager) {
+      criteria.$or = [{ email_verified: true }, { is_orphan: true }, { is_ghost: true }];
+    }
 
-      // Hide hidden profile to non-admins
-      if (request.auth.credentials && !request.auth.credentials.is_admin) {
-        criteria.hidden = false;
-      }
+    // Hide hidden profile to non-admins
+    if (request.auth.credentials && !request.auth.credentials.is_admin) {
+      criteria.hidden = false;
+    }
 
-      // Do not allow exports for hidden users
-      if (request.params.extension && request.auth.credentials.hidden) {
-        throw Boom.unauthorized();
-      }
+    // Do not allow exports for hidden users
+    if (request.params.extension && request.auth.credentials.hidden) {
+      throw Boom.unauthorized();
+    }
 
-      if (criteria.q) {
-        if (validator.isEmail(criteria.q) && request.auth.credentials.verified) {
-          criteria['emails.email'] = new RegExp(criteria.q, 'i');
-        } else {
-          criteria.name = criteria.q;
-        }
-        delete criteria.q;
+    if (criteria.q) {
+      if (validator.isEmail(criteria.q) && request.auth.credentials.verified) {
+        criteria['emails.email'] = new RegExp(criteria.q, 'i');
+      } else {
+        criteria.name = criteria.q;
       }
+      delete criteria.q;
+    }
 
-      if (criteria.name) {
-        if (criteria.name.length < 3) {
-          throw Boom.badRequest('Name must have at least 3 characters');
-        }
-        criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/, '-');
-        criteria.name = new RegExp(criteria.name, 'i');
+    if (criteria.name) {
+      if (criteria.name.length < 3) {
+        throw Boom.badRequest('Name must have at least 3 characters');
       }
+      criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/, '-');
+      criteria.name = new RegExp(criteria.name, 'i');
+    }
 
-      if (criteria.country) {
-        criteria['location.country.id'] = criteria.country;
-        delete criteria.country;
-      }
+    if (criteria.country) {
+      criteria['location.country.id'] = criteria.country;
+      delete criteria.country;
+    }
 
-      if (!request.auth.credentials.verified) {
-        criteria.is_orphan = false;
-        criteria.is_ghost = false;
+    if (!request.auth.credentials.verified) {
+      criteria.is_orphan = false;
+      criteria.is_ghost = false;
+    }
+    const listIds = [];
+    let lists = [];
+    for (let i = 0; i < childAttributes.length; i += 1) {
+      if (criteria[`${childAttributes[i]}.list`]) {
+        listIds.push(criteria[`${childAttributes[i]}.list`]);
+        delete criteria[`${childAttributes[i]}.list`];
       }
-      const listIds = [];
-      let lists = [];
-      for (let i = 0; i < childAttributes.length; i++) {
-        if (criteria[`${childAttributes[i]}.list`]) {
-          listIds.push(criteria[`${childAttributes[i]}.list`]);
-          delete criteria[`${childAttributes[i]}.list`];
-        }
-      }
-      if (listIds.length) {
-        lists = await List.find({ _id: { $in: listIds } });
-        lists.forEach((list) => {
-          if (list.isVisibleTo(request.auth.credentials)) {
-            criteria[`${list.type}s`] = { $elemMatch: { list: list._id, deleted: false } };
-            if (!list.isOwner(request.auth.credentials)) {
-              criteria[`${list.type}s`].$elemMatch.pending = false;
-            }
-          } else {
-            throw Boom.unauthorized('You are not authorized to view this list');
+    }
+    if (listIds.length) {
+      lists = await List.find({ _id: { $in: listIds } });
+      lists.forEach((list) => {
+        if (list.isVisibleTo(request.auth.credentials)) {
+          criteria[`${list.type}s`] = { $elemMatch: { list: list._id, deleted: false } };
+          if (!list.isOwner(request.auth.credentials)) {
+            criteria[`${list.type}s`].$elemMatch.pending = false;
           }
-        });
-      }
-
-      logger.debug('[UserController] (find) criteria = ', criteria, ' options = ', options, { request });
-      const query = HelperService.find(User, criteria, options);
-      // HID-1561 - Set export limit to 2000
-      if (!options.limit && request.params.extension) {
-        query.limit(100000);
-      }
-      if (request.params.extension) {
-        query.select('name given_name family_name email job_title phone_number status organization bundles location voips connections phonesVisibility emailsVisibility locationsVisibility createdAt updatedAt is_orphan is_ghost verified isManager is_admin functional_roles');
-        query.lean();
-      }
-      const [results, number] = await Promise.all([query, User.countDocuments(criteria)]);
-      if (!results) {
-        throw Boom.notFound();
-      }
-      if (!request.params.extension) {
-        for (let i = 0, len = results.length; i < len; i++) {
-          results[i].sanitize(request.auth.credentials);
-          results[i].translateListNames(reqLanguage);
+        } else {
+          throw Boom.unauthorized('You are not authorized to view this list');
         }
-        return reply.response(results).header('X-Total-Count', number);
-      }
+      });
+    }
+
+    logger.debug('[UserController] (find) criteria = ', criteria, ' options = ', options, { request });
+    const query = HelperService.find(User, criteria, options);
+    // HID-1561 - Set export limit to 2000
+    if (!options.limit && request.params.extension) {
+      query.limit(100000);
+    }
+    if (request.params.extension) {
+      query.select('name given_name family_name email job_title phone_number status organization bundles location voips connections phonesVisibility emailsVisibility locationsVisibility createdAt updatedAt is_orphan is_ghost verified isManager is_admin functional_roles');
+      query.lean();
+    }
+    const [results, number] = await Promise.all([query, User.countDocuments(criteria)]);
+    if (!results) {
+      throw Boom.notFound();
+    }
+    if (request.params.extension) {
       // Sanitize users and translate list names from a plain object
-      for (let i = 0, len = results.length; i < len; i++) {
+      for (let i = 0, len = results.length; i < len; i += 1) {
         User.sanitizeExportedUser(results[i], request.auth.credentials);
         if (results[i].organization) {
           User.translateCheckin(results[i].organization, reqLanguage);
@@ -413,10 +419,12 @@ module.exports = {
         return reply.response(csvExport)
           .type('text/csv')
           .header('Content-Disposition', `attachment; filename="Humanitarian ID Contacts ${moment().format('YYYYMMDD')}.csv"`);
-      } if (request.params.extension === 'txt') {
+      }
+      if (request.params.extension === 'txt') {
         return reply.response(_txtExport(results))
           .type('text/plain');
-      } if (request.params.extension === 'pdf') {
+      }
+      if (request.params.extension === 'pdf') {
         let pdfFormat = '';
         if (criteria.format) {
           pdfFormat = criteria.format;
@@ -429,9 +437,14 @@ module.exports = {
           .header('Content-Disposition', `attachment; filename="Humanitarian ID Contacts ${moment().format('YYYYMMDD')}.pdf"`);
       }
     }
+    for (let i = 0, len = results.length; i < len; i += 1) {
+      results[i].sanitize(request.auth.credentials);
+      results[i].translateListNames(reqLanguage);
+    }
+    return reply.response(results).header('X-Total-Count', number);
   },
 
-  async update(request, reply) {
+  async update(request) {
     logger.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
       ', values = ', request.payload, { request });
 
@@ -480,7 +493,11 @@ module.exports = {
     // Update lastModified manually
     request.payload.lastModified = new Date();
     user = await User
-      .findOneAndUpdate({ _id: request.params.id }, request.payload, { runValidators: true, new: true });
+      .findOneAndUpdate(
+        { _id: request.params.id },
+        request.payload,
+        { runValidators: true, new: true },
+      );
     user = await user.defaultPopulate();
     const promises = [];
     if (request.auth.credentials._id.toString() !== user._id.toString()) {
@@ -504,7 +521,8 @@ module.exports = {
   },
 
   async destroy(request, reply) {
-    if (!request.auth.credentials.is_admin && request.auth.credentials._id.toString() !== request.params.id) {
+    if (!request.auth.credentials.is_admin
+      && request.auth.credentials._id.toString() !== request.params.id) {
       return reply(Boom.forbidden('You are not allowed to delete this account'));
     }
 
@@ -514,7 +532,7 @@ module.exports = {
     return reply.response().code(204);
   },
 
-  async setPrimaryEmail(request, reply) {
+  async setPrimaryEmail(request) {
     const { email } = request.payload;
 
     logger.debug('[UserController] Setting primary email', { request });
@@ -536,7 +554,8 @@ module.exports = {
       throw Boom.badRequest('Email has not been validated. You need to validate it first.');
     }
     record.email = email;
-    // If we are there, it means that the email has been validated, so make sure email_verified is set to true.
+    // If we are there, it means that the email has been validated,
+    // so make sure email_verified is set to true.
     record.verifyEmail(email);
     record.lastModified = new Date();
     await record.save();
@@ -547,9 +566,7 @@ module.exports = {
     return record;
   },
 
-  async validateEmail(request, reply) {
-    let email = '';
-
+  async validateEmail(request) {
     logger.debug('[UserController] Verifying email ', { request });
 
     if (!request.payload.hash && !request.params.email && !request.payload.time) {
@@ -575,7 +592,7 @@ module.exports = {
           record.lastModified = new Date();
           domain = await record.isVerifiableEmail(request.payload.email);
         } else {
-          for (let i = 0, len = record.emails.length; i < len; i++) {
+          for (let i = 0, len = record.emails.length; i < len; i += 1) {
             if (record.emails[i].email === request.payload.email) {
               record.emails[i].validated = true;
               record.emails.set(i, record.emails[i]);
@@ -599,7 +616,7 @@ module.exports = {
 
           let isCheckedIn = false;
           // Make sure user is not already checked in this list
-          for (let i = 0, len = record.organizations.length; i < len; i++) {
+          for (let i = 0, len = record.organizations.length; i < len; i += 1) {
             if (record.organizations[i].list.equals(domain.list._id)
               && record.organizations[i].deleted === false) {
               isCheckedIn = true;
@@ -619,8 +636,7 @@ module.exports = {
       await Promise.all(promises);
       return record;
     }
-    email = request.params.email;
-    const record = await User.findOne({ 'emails.email': email });
+    const record = await User.findOne({ 'emails.email': request.params.email });
     if (!record) {
       throw Boom.notFound();
     }
@@ -630,7 +646,7 @@ module.exports = {
       logger.warn('Invalid app_validation_url', { security: true, fail: true, request });
       throw Boom.badRequest('Invalid app_validation_url');
     }
-    await EmailService.sendValidationEmail(record, email, appValidationUrl);
+    await EmailService.sendValidationEmail(record, request.params.email, appValidationUrl);
     return 'Validation email sent successfully';
   },
 
@@ -664,7 +680,7 @@ module.exports = {
     return reply.response().code(204);
   },
 
-  async resetPasswordEndpoint(request, reply) {
+  async resetPasswordEndpoint(request) {
     if (request.payload.email) {
       const appResetUrl = request.payload.app_reset_url;
 
@@ -680,7 +696,8 @@ module.exports = {
       return '';
     }
     const cookie = request.yar.get('session');
-    if (!request.payload.hash || !request.payload.password || !request.payload.id || !request.payload.time) {
+    if (!request.payload.hash || !request.payload.password
+      || !request.payload.id || !request.payload.time) {
       throw Boom.badRequest('Wrong arguments');
     }
 
@@ -714,7 +731,8 @@ module.exports = {
       throw Boom.badRequest('Reset password link is expired or invalid');
     }
     if (domain) {
-      // Reset verifiedOn date as user was able to reset his password via an email from a trusted domain
+      // Reset verifiedOn date as user was able to
+      // reset his password via an email from a trusted domain
       record.verified = true;
       record.verified_by = hidAccount;
       record.verifiedOn = new Date();
@@ -749,7 +767,7 @@ module.exports = {
     return reply.response('Claim email sent successfully').code(202);
   },
 
-  async updatePicture(request, reply) {
+  async updatePicture(request) {
     const userId = request.params.id;
 
     logger.debug('[UserController] Updating picture ', { request });
@@ -778,7 +796,7 @@ module.exports = {
     throw Boom.badRequest('No file found');
   },
 
-  async addEmail(request, reply) {
+  async addEmail(request) {
     const appValidationUrl = request.payload.app_validation_url;
     const userId = request.params.id;
 
@@ -809,8 +827,10 @@ module.exports = {
     // Send confirmation email
     const promises = [];
     promises.push(EmailService.sendValidationEmail(record, email, appValidationUrl));
-    for (let i = 0; i < record.emails.length; i++) {
-      promises.push(EmailService.sendEmailAlert(record, record.emails[i].email, request.payload.email));
+    for (let i = 0; i < record.emails.length; i += 1) {
+      promises.push(
+        EmailService.sendEmailAlert(record, record.emails[i].email, request.payload.email),
+      );
     }
     if (record.emails.length === 0 && record.is_ghost) {
       // Turn ghost into orphan and set main email address
@@ -827,7 +847,7 @@ module.exports = {
     return record;
   },
 
-  async dropEmail(request, reply) {
+  async dropEmail(request) {
     const userId = request.params.id;
 
     logger.debug('[UserController] dropping email', { request });
@@ -855,7 +875,7 @@ module.exports = {
     return record;
   },
 
-  async addPhone(request, reply) {
+  async addPhone(request) {
     const userId = request.params.id;
 
     logger.debug('[UserController] adding phone number', { request });
@@ -874,7 +894,7 @@ module.exports = {
     return record;
   },
 
-  async dropPhone(request, reply) {
+  async dropPhone(request) {
     const userId = request.params.id;
     const phoneId = request.params.pid;
 
@@ -885,7 +905,7 @@ module.exports = {
       throw Boom.notFound();
     }
     let index = -1;
-    for (let i = 0, len = record.phone_numbers.length; i < len; i++) {
+    for (let i = 0, len = record.phone_numbers.length; i < len; i += 1) {
       if (record.phone_numbers[i]._id.toString() === phoneId) {
         index = i;
       }
@@ -907,7 +927,7 @@ module.exports = {
     return record;
   },
 
-  async setPrimaryPhone(request, reply) {
+  async setPrimaryPhone(request) {
     const { phone } = request.payload;
 
     logger.debug('[UserController] Setting primary phone number', { request });
@@ -921,7 +941,7 @@ module.exports = {
     }
     // Make sure phone is part of phone_numbers
     let index = -1;
-    for (let i = 0, len = record.phone_numbers.length; i < len; i++) {
+    for (let i = 0, len = record.phone_numbers.length; i < len; i += 1) {
       if (record.phone_numbers[i].number === phone) {
         index = i;
       }
@@ -940,7 +960,7 @@ module.exports = {
     return record;
   },
 
-  async setPrimaryOrganization(request, reply) {
+  async setPrimaryOrganization(request) {
     if (!request.payload) {
       throw Boom.badRequest('Missing listUser id');
     }
@@ -966,7 +986,7 @@ module.exports = {
     return user;
   },
 
-  showAccount(request, reply) {
+  showAccount(request) {
     logger.info(`calling /account.json for ${request.auth.credentials.email}`, { request });
     const user = JSON.parse(JSON.stringify(request.auth.credentials));
     if (request.params.currentClient && (request.params.currentClient.id === 'iasc-prod' || request.params.currentClient.id === 'iasc-dev')) {
@@ -987,7 +1007,7 @@ module.exports = {
     return user;
   },
 
-  async notify(request, reply) {
+  async notify(request) {
     logger.debug('[UserController] Notifying user', { request });
 
     const record = await User.findOne({ _id: request.params.id });
@@ -1005,7 +1025,7 @@ module.exports = {
     return record;
   },
 
-  async addConnection(request, reply) {
+  async addConnection(request) {
     logger.debug('[UserController] Adding connection', { request });
 
     const user = await User.findOne({ _id: request.params.id });
@@ -1035,7 +1055,7 @@ module.exports = {
     return user;
   },
 
-  async updateConnection(request, reply) {
+  async updateConnection(request) {
     logger.debug('[UserController] Updating connection', { request });
 
     const user = await User.findOne({ _id: request.params.id });
@@ -1066,7 +1086,7 @@ module.exports = {
     return user;
   },
 
-  async deleteConnection(request, reply) {
+  async deleteConnection(request) {
     logger.debug('[UserController] Deleting connection', { request });
 
     const user = await User.findOne({ _id: request.params.id });

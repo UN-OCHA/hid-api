@@ -16,13 +16,16 @@ const ListController = require('./ListController');
 async function _notifyNewDisaster(disaster) {
   if (disaster.metadata.operation && disaster.metadata.operation.length) {
     let operation = {};
-    for (let i = 0, len = disaster.metadata.operation.length; i < len; i++) {
+    for (let i = 0, len = disaster.metadata.operation.length; i < len; i += 1) {
       operation = disaster.metadata.operation[i];
+      /* eslint no-await-in-loop: "off" */
       const list = await List.findOne({ remote_id: operation.id });
       if (!list) {
         throw new Error('List not found');
       }
-      const users = await User.find({ operations: { $elemMatch: { list: list._id, deleted: false } } });
+      const users = await User.find({
+        operations: { $elemMatch: { list: list._id, deleted: false } },
+      });
       const notification = { type: 'new_disaster', params: { list: disaster } };
       await NotificationService.sendMultiple(users, notification);
     }
@@ -30,22 +33,20 @@ async function _notifyNewDisaster(disaster) {
 }
 
 function _parseList(listType, language, item) {
-  let visibility = ''; let label = ''; let acronym = ''; let
-    tmpList = {};
+  let visibility = '';
+  let tmpList = {};
   visibility = 'all';
   if (item.hid_access && item.hid_access === 'closed') {
     visibility = 'verified';
   }
-  label = item.label;
+  let { label } = item;
+  const { acronym } = item;
   if (listType === 'bundle' || listType === 'office') {
     if (item.operation[0].label) {
       label = `${item.operation[0].label}: ${item.label}`;
     } else {
       label = `Global: ${item.label}`;
     }
-  }
-  if (listType === 'organization' && item.acronym) {
-    acronym = item.acronym;
   }
   tmpList = {
     label,
@@ -74,15 +75,16 @@ function _parseList(listType, language, item) {
       });
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     resolve(tmpList);
   });
 }
 
-function _parseListLanguage(list, label, acronym, language) {
+function _parseListLanguage(alist, label, acronym, language) {
+  const list = alist;
   let labelFound = false;
   if (list.labels && list.labels.length) {
-    for (let i = 0; i < list.labels.length; i++) {
+    for (let i = 0; i < list.labels.length; i += 1) {
       if (list.labels[i].language === language) {
         labelFound = true;
         list.labels[i].text = label;
@@ -104,7 +106,7 @@ function _parseListLanguage(list, label, acronym, language) {
 
   let acronymFound = false;
   if (list.acronyms && list.acronyms.length) {
-    for (let j = 0; j < list.acronyms.length; j++) {
+    for (let j = 0; j < list.acronyms.length; j += 1) {
       if (list.acronyms[j].language === language) {
         acronymFound = true;
         list.acronyms[j].text = acronym;
@@ -144,9 +146,6 @@ module.exports = {
     }
     const listType = resource.substring(0, resource.length - 1);
     if (listTypes.indexOf(listType) === -1) {
-      throw Boom.badRequest();
-    }
-    if (event !== 'create' && event !== 'update' && event !== 'delete') {
       throw Boom.badRequest();
     }
     if (event === 'create' || event === 'update') {
@@ -201,7 +200,7 @@ module.exports = {
           criteria[`${list2.type}s.list`] = list2._id.toString();
           const users = await User.find(criteria);
           let user = {};
-          for (let i = 0; i < users.length; i++) {
+          for (let i = 0; i < users.length; i += 1) {
             user = users[i];
             user.updateCheckins(list);
             await user.save();
@@ -209,7 +208,8 @@ module.exports = {
         }
         if (list2.type === 'operation') {
           const lists = await List.find({ 'metadata.operation.id': list2.remote_id.toString() });
-          for (const group of lists) {
+          for (let i = 0; i < lists.length; i += 1) {
+            const group = lists[i];
             const groupIndex = group.languageIndex('labels', language);
             const listIndex = list2.languageIndex('labels', language);
             group.labels[groupIndex].text = `${list2.labels[listIndex].text}: ${group.metadata.label}`;
@@ -229,6 +229,7 @@ module.exports = {
         return ListController.destroy(request, reply);
       }
     }
+    throw Boom.badRequest();
   },
 
 };

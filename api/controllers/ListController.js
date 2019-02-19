@@ -15,7 +15,7 @@ const NotificationService = require('../services/NotificationService');
 
 module.exports = {
 
-  async create(request, reply) {
+  async create(request) {
     HelperService.removeForbiddenAttributes(List, request, ['names']);
     request.payload.owner = request.auth.credentials._id;
     if (!request.payload.managers) {
@@ -62,7 +62,9 @@ module.exports = {
           { path: 'managers', select: '_id name' },
         ];
       }
-      const result = await List.findOne({ _id: request.params.id, deleted: criteria.deleted }).populate(options.populate);
+      const result = await List.findOne({
+        _id: request.params.id, deleted: criteria.deleted,
+      }).populate(options.populate);
       if (!result) {
         throw Boom.notFound();
       }
@@ -80,14 +82,18 @@ module.exports = {
         criteria.$or.push({ visibility: 'verified' });
       }
     }
-    const [results, number] = await Promise.all([HelperService.find(List, criteria, options), List.countDocuments(criteria)]);
+    const [results, number] = await Promise.all([
+      HelperService.find(List, criteria, options),
+      List.countDocuments(criteria),
+    ]);
     const out = [];
     let tmp = {};
     let optionsArray = [];
     if (options.fields) {
       optionsArray = options.fields.split(' ');
     }
-    for (const list of results) {
+    for (let i = 0; i < results.length; i += 1) {
+      const list = results[i];
       tmp = list.toJSON();
       tmp.visible = list.isVisibleTo(request.auth.credentials);
       if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('names') !== -1)) {
@@ -101,6 +107,7 @@ module.exports = {
         ucriteria[`${list.type}s`] = {
           $elemMatch: { list: list._id, deleted: false, pending: false },
         };
+        /* eslint no-await-in-loop: "off" */
         tmp.count = await User.countDocuments(ucriteria);
       }
       out.push(tmp);
@@ -108,10 +115,14 @@ module.exports = {
     return reply.response(out).header('X-Total-Count', number);
   },
 
-  async update(request, reply) {
+  async update(request) {
     HelperService.removeForbiddenAttributes(List, request, ['names']);
 
-    const newlist = await List.findOneAndUpdate({ _id: request.params.id }, request.payload, { runValidators: true, new: true });
+    const newlist = await List.findOneAndUpdate(
+      { _id: request.params.id },
+      request.payload,
+      { runValidators: true, new: true },
+    );
     const payloadManagers = [];
     if (request.payload.managers) {
       request.payload.managers.forEach((man) => {
@@ -126,37 +137,40 @@ module.exports = {
     }
     const diffAdded = _.difference(payloadManagers, listManagers);
     const diffRemoved = _.difference(listManagers, payloadManagers);
+    const notifications = [];
     if (diffAdded.length) {
       const users = await User.find({ _id: { $in: diffAdded } });
-      for (const user of users) {
-        await NotificationService
+      for (let i = 0; i < users.length; i += 1) {
+        const user = users[i];
+        notifications.push(NotificationService
           .send({
             type: 'added_list_manager',
             user,
             createdBy: request.auth.credentials,
             params: { list: newlist },
-          }, () => {});
+          }));
       }
     }
     if (diffRemoved.length) {
       const users = await User.find({ _id: { $in: diffRemoved } });
-      for (const user of users) {
-        await NotificationService
+      for (let i = 0; i < users.length; i += 1) {
+        const user = users[i];
+        notifications.push(NotificationService
           .send({
             type: 'removed_list_manager',
             user,
             createdBy: request.auth.credentials,
             params: { list: newlist },
-          }, () => {});
+          }));
       }
     }
-
+    await Promise.all(notifications);
     // Update users
     const criteria = {};
     criteria[`${newlist.type}s.list`] = newlist._id.toString();
     const users = await User.find(criteria);
     const actions = [];
-    for (let i = 0; i < users.length; i++) {
+    for (let i = 0; i < users.length; i += 1) {
       const user = users[i];
       user.updateCheckins(newlist);
       actions.push(user.save());
@@ -165,7 +179,7 @@ module.exports = {
     return newlist;
   },
 
-  async destroy(request, reply) {
+  async destroy(request) {
     const record = await List.findOne({ _id: request.params.id });
     if (!record) {
       throw Boom.notFound();
@@ -176,15 +190,18 @@ module.exports = {
     // Remove all checkins from users in this list
     const criteria = {};
     criteria[`${record.type}s.list`] = record._id.toString();
+    const promises = [];
     const users = await User.find(criteria);
-    for (const user of users) {
-      for (let j = 0; j < user[`${record.type}s`].length; j++) {
+    for (let i = 0; i < users.length; i += 1) {
+      const user = users[i];
+      for (let j = 0; j < user[`${record.type}s`].length; j += 1) {
         if (user[`${record.type}s`][j].list.toString() === record._id.toString()) {
           user[`${record.type}s`][j].deleted = true;
         }
       }
-      await user.save();
+      promises.push(user.save());
     }
+    await Promise.all(promises);
     return newRecord;
   },
 

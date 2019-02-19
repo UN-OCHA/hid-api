@@ -125,14 +125,14 @@ module.exports = {
       const urlArray = url.split('/');
       let hostname;
       if (url.indexOf('://') > -1) {
-        hostname = urlArray[2];
+        [, , hostname] = urlArray;
       } else {
-        hostname = urlArray[0];
+        [hostname] = urlArray;
       }
       // find & remove port number
-      hostname = hostname.split(':')[0];
+      [hostname] = hostname.split(':');
       // find & remove "?"
-      hostname = hostname.split('?')[0];
+      [hostname] = hostname.split('?');
       const regex = new RegExp(hostname, 'i');
       try {
         const count = await Client.countDocuments({ redirectUri: regex });
@@ -161,7 +161,10 @@ module.exports = {
 
   async registerPost(request, reply) {
     // Check recaptcha
-    const recaptcha = new Recaptcha({ siteKey: process.env.RECAPTCHA_PUBLIC_KEY, secretKey: process.env.RECAPTCHA_PRIVATE_KEY });
+    const recaptcha = new Recaptcha({
+      siteKey: process.env.RECAPTCHA_PUBLIC_KEY,
+      secretKey: process.env.RECAPTCHA_PRIVATE_KEY,
+    });
     const registerLink = _getRegisterLink(request.payload);
     const passwordLink = _getPasswordLink(request.payload);
     try {
@@ -196,7 +199,11 @@ module.exports = {
     if (!request.query.hash && !request.query.email && !request.query.time) {
       throw Boom.badRequest('Missing hash parameter');
     }
-    request.payload = { hash: request.query.hash, email: request.query.email, time: request.query.time };
+    request.payload = {
+      hash: request.query.hash,
+      email: request.query.email,
+      time: request.query.time,
+    };
     const registerLink = _getRegisterLink(request.query);
     const passwordLink = _getPasswordLink(request.query);
     try {

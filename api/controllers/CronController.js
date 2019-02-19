@@ -1,5 +1,6 @@
 
 
+/* eslint no-await-in-loop: "off", no-restricted-syntax: "off" */
 const listAttributes = [
   'lists',
   'operations',
@@ -160,7 +161,9 @@ module.exports = {
         const d = new Date();
         const offset = d.valueOf() - lu.valueOf();
 
-        if (!lu.remindedCheckin && offset > 48 * 3600 * 1000 && offset < 72 * 3600 * 1000 && !lu.deleted) {
+        if (!lu.remindedCheckin && offset > 48 * 3600 * 1000
+          && offset < 72 * 3600 * 1000
+          && !lu.deleted) {
           const hasLocalPhoneNumber = user.hasLocalPhoneNumber(lu.list.metadata.country.pcode);
           const inCountry = await user.isInCountry(lu.list.metadata.country.pcode);
           const notification = {
@@ -182,7 +185,11 @@ module.exports = {
   async forcedResetPasswordAlert(request, reply) {
     const current = Date.now();
     const fiveMonths = new Date(current - 5 * 30 * 24 * 3600 * 1000);
-    const cursor = User.find({ totp: false, passwordResetAlert30days: false, $or: [{ lastPasswordReset: { $lte: fiveMonths } }, { lastPasswordReset: null }] }).cursor();
+    const cursor = User.find({
+      totp: false,
+      passwordResetAlert30days: false,
+      $or: [{ lastPasswordReset: { $lte: fiveMonths } }, { lastPasswordReset: null }],
+    }).cursor();
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
       await EmailService.sendForcedPasswordResetAlert(user);
@@ -201,7 +208,11 @@ module.exports = {
   async forcedResetPasswordAlert7(request, reply) {
     const current = Date.now();
     const fiveMonthsAnd23Days = new Date(current - 173 * 24 * 3600 * 1000);
-    const cursor = User.find({ totp: false, passwordResetAlert7days: false, $or: [{ lastPasswordReset: { $lte: fiveMonthsAnd23Days } }, { lastPasswordReset: null }] }).cursor();
+    const cursor = User.find({
+      totp: false,
+      passwordResetAlert7days: false,
+      $or: [{ lastPasswordReset: { $lte: fiveMonthsAnd23Days } }, { lastPasswordReset: null }],
+    }).cursor();
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
       await EmailService.sendForcedPasswordResetAlert7(user);
@@ -220,7 +231,11 @@ module.exports = {
   async forceResetPassword(request, reply) {
     const current = Date.now();
     const sixMonths = new Date(current - 6 * 30 * 24 * 3600 * 1000);
-    const cursor = User.find({ totp: false, passwordResetAlert: false, $or: [{ lastPasswordReset: { $lte: sixMonths } }, { lastPasswordReset: null }] }).cursor();
+    const cursor = User.find({
+      totp: false,
+      passwordResetAlert: false,
+      $or: [{ lastPasswordReset: { $lte: sixMonths } }, { lastPasswordReset: null }],
+    }).cursor();
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
       await EmailService.sendForcedPasswordReset(user);
@@ -343,7 +358,7 @@ module.exports = {
 
             let isCheckedIn = false;
             // Make sure user is not already checked in this list
-            for (let i = 0, len = user.organizations.length; i < len; i++) {
+            for (let i = 0, len = user.organizations.length; i < len; i += 1) {
               if (user.organizations[i].list.equals(domain.list._id)
                 && user.organizations[i].deleted === false) {
                 isCheckedIn = true;
@@ -386,7 +401,11 @@ module.exports = {
   async unverifyAfterOneYear(request, reply) {
     const current = Date.now();
     const oneYear = new Date(current - 365 * 24 * 3600 * 1000);
-    const cursor = User.find({ verified: true, verifiedOn: { $lte: oneYear }, verificationExpiryEmail: true }).cursor();
+    const cursor = User.find({
+      verified: true,
+      verifiedOn: { $lte: oneYear },
+      verificationExpiryEmail: true,
+    }).cursor();
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
       await User.collection.update(

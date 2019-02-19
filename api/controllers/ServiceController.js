@@ -15,7 +15,7 @@ const NotificationService = require('../services/NotificationService');
  */
 module.exports = {
 
-  async create(request, reply) {
+  async create(request) {
     request.payload.owner = request.auth.credentials._id;
     const service = await Service.create(request.payload);
     if (!service) {
@@ -30,9 +30,9 @@ module.exports = {
 
     if (!request.auth.credentials.is_admin) {
       criteria.$or = [
-        { 'hidden': false },
-        { 'owner': request.auth.credentials._id },
-        { 'managers': request.auth.credentials._id },
+        { hidden: false },
+        { owner: request.auth.credentials._id },
+        { managers: request.auth.credentials._id },
       ];
     }
 
@@ -63,7 +63,7 @@ module.exports = {
       if (lists.length > 1) {
         criteria.$or = [];
         lists.forEach((id) => {
-          criteria.$or.push({lists: id});
+          criteria.$or.push({ lists: id });
         });
         delete criteria.lists;
       }
@@ -82,16 +82,19 @@ module.exports = {
       Service.countDocuments(criteria),
     ]);
 
-    for (let i = 0; i < results.length; i++) {
+    for (let i = 0; i < results.length; i += 1) {
       results[i].sanitize(request.auth.credentials);
     }
     return reply.response(results).header('X-Total-Count', number);
-
   },
 
-  async update(request, reply) {
+  async update(request) {
     const service = await Service
-      .findOneAndUpdate({ _id: request.params.id }, request.payload, { runValidators: true, new: true });
+      .findOneAndUpdate(
+        { _id: request.params.id },
+        request.payload,
+        { runValidators: true, new: true },
+      );
     return service;
   },
 
@@ -99,31 +102,35 @@ module.exports = {
     const criteria = {};
     criteria['subscriptions.service'] = request.params.id;
     const users = await User.find(criteria);
-    for (const user of users) {
-      for (let j = user.subscriptions.length; j--;) {
-        if (user.subscriptions[j] && user.subscriptions[j].service && user.subscriptions[j].service.toString() === request.params.id) {
+    const promises = [];
+    for (let i = 0; i < users.length; i += 1) {
+      const user = users[i];
+      for (let j = user.subscriptions.length; j >= 0; j -= 1) {
+        if (user.subscriptions[j]
+          && user.subscriptions[j].service
+          && user.subscriptions[j].service.toString() === request.params.id) {
           user.subscriptions.splice(j, 1);
         }
       }
       user.markModified('subscriptions');
-      await user.save();
+      promises.push(user.save());
     }
+    await Promise.all(promises);
     await Service.remove({ _id: request.params.id });
     return reply.response().code(204);
   },
 
-  async mailchimpLists(request, reply) {
+  async mailchimpLists(request) {
     if (request.query.apiKey) {
       const mc = new Mailchimp(request.query.apiKey);
       const result = await mc.get({ path: '/lists' });
       return result;
     }
-      throw Boom.badRequest();
-
+    throw Boom.badRequest();
   },
 
   // Get google groups from a domain
-  async googleGroups(request, reply) {
+  async googleGroups(request) {
     // Find service credentials associated to domain
     const creds = await ServiceCredentials.findOne({ type: 'googlegroup', 'googlegroup.domain': request.query.domain });
     if (!creds) {
@@ -140,7 +147,7 @@ module.exports = {
   },
 
   // Subscribe a user to a service
-  async subscribe(request, reply) {
+  async subscribe(request) {
     const user = await User.findOne({ _id: request.params.id });
     if (!user) {
       throw Boom.notFound();
@@ -205,7 +212,7 @@ module.exports = {
     return user;
   },
 
-  async unsubscribe(request, reply) {
+  async unsubscribe(request) {
     let sendNotification = true;
     const user = await User.findOne({ _id: request.params.id });
     if (!user) {

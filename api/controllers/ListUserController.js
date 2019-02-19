@@ -15,7 +15,9 @@ const { logger } = config;
  * @module ListUserController
  * @description Generated Trails.js Controller.
  */
-const checkinHelper = function (list, user, notify, childAttribute, currentUser) {
+function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
+  const user = auser;
+  const list = alist;
   const payload = {
     list: list._id.toString(),
   };
@@ -51,7 +53,7 @@ const checkinHelper = function (list, user, notify, childAttribute, currentUser)
     }
 
     // Make sure user is not already checked in this list
-    for (let i = 0, len = user[childAttribute].length; i < len; i++) {
+    for (let i = 0, len = user[childAttribute].length; i < len; i += 1) {
       if (user[childAttribute][i].list.equals(list._id)
         && user[childAttribute][i].deleted === false) {
         throw Boom.badRequest('User is already checked in');
@@ -103,13 +105,13 @@ const checkinHelper = function (list, user, notify, childAttribute, currentUser)
   promises.push(GSSSyncService.addUserToSpreadsheets(list._id, user));
   promises.push(OutlookService.addUserToContactFolders(list._id, user));
   return Promise.all(promises);
-};
+}
 
 module.exports = {
 
   checkinHelper,
 
-  async checkin(request, reply) {
+  async checkin(request) {
     const userId = request.params.id;
     const { childAttribute } = request.params;
     const { payload } = request;
@@ -128,7 +130,8 @@ module.exports = {
 
     let notify = true;
     if (typeof request.payload.notify !== 'undefined') {
-      notify = request.payload.notify;
+      const { notify: notif } = request.payload;
+      notify = notif;
     }
     delete request.payload.notify;
 
@@ -140,7 +143,7 @@ module.exports = {
     return user;
   },
 
-  async update(request, reply) {
+  async update(request) {
     const { childAttribute } = request.params;
     const { checkInId } = request.params;
 
@@ -193,7 +196,7 @@ module.exports = {
     return user;
   },
 
-  async checkout(request, reply) {
+  async checkout(request) {
     const userId = request.params.id;
     const { childAttribute } = request.params;
     const { checkInId } = request.params;
@@ -210,8 +213,11 @@ module.exports = {
     const lu = user[childAttribute].id(checkInId);
     // Set deleted to true
     lu.deleted = true;
-    // If user is checking out of his primary organization, remove the listuser from the organization attribute
-    if (childAttribute === 'organizations' && user.organization && lu.list.toString() === user.organization.list.toString()) {
+    // If user is checking out of his primary organization,
+    // remove the listuser from the organization attribute
+    if (childAttribute === 'organizations'
+      && user.organization
+      && lu.list.toString() === user.organization.list.toString()) {
       user.organization.remove();
     }
     user.lastModified = new Date();
@@ -257,16 +263,33 @@ module.exports = {
       ])
       .cursor();
 
+    /* eslint no-await-in-loop: "off" */
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      for (const childAttribute of childAttributes) {
-        for (const lu in user[childAttribute]) {
+      for (let i = 0; i < childAttributes.length; i += 1) {
+        const childAttribute = childAttributes[i];
+        let lu = {};
+        if (childAttribute === 'organization') {
+          lu = user[childAttribute];
           if (lu && lu.list && lu.list.owner) {
             lu.owner = lu.list.owner;
             lu.managers = lu.list.managers;
             logger.info(`Updated list for ${user._id.toString()}`);
+            /* eslint no-await-in-loop: "off" */
             await user.save();
           } else {
             logger.info(`No list for ${user._id.toString()}`);
+          }
+        } else {
+          for (let j = 0; j < user[childAttribute].length; j += 1) {
+            if (lu && lu.list && lu.list.owner) {
+              lu.owner = lu.list.owner;
+              lu.managers = lu.list.managers;
+              logger.info(`Updated list for ${user._id.toString()}`);
+              /* eslint no-await-in-loop: "off" */
+              await user.save();
+            } else {
+              logger.info(`No list for ${user._id.toString()}`);
+            }
           }
         }
       }
