@@ -136,8 +136,6 @@ module.exports = {
             if (lu.checkoutDate && lu.remindedCheckout === true && !lu.deleted) {
               const dep = new Date(lu.checkoutDate);
               if (now.valueOf() - dep.valueOf() > 24 * 3600 * 1000) {
-                const notification = { type: 'automated_checkout', user, params: { listUser: lu, list: lu.list } };
-                await NotificationService.send(notification);
                 lu.deleted = true;
                 await user.save();
               }
