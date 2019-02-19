@@ -374,7 +374,7 @@ module.exports = {
       if (!request.payload.cancel && !user.hasAuthorizedClient(clientId)) {
         user.authorizedClients.push(request.yar.authorize[request.payload.transaction_id].client);
         user.markModified('authorizedClients');
-        await user.save;
+        await user.save();
       }
       const response = await oauth.decision(request, reply);
       return response;
