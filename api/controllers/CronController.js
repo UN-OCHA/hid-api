@@ -374,6 +374,7 @@ module.exports = {
               }
             }
           }
+          await user.save();
         }
       }
     }
