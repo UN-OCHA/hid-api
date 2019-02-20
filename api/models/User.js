@@ -1334,6 +1334,7 @@ UserSchema.methods = {
     listTypes.forEach((attr) => {
       _.remove(user[`${attr}s`], checkin => checkin.deleted);
     });
+    user.sub = user._id.toString();
     return user;
   },
 };
