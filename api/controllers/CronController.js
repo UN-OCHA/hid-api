@@ -161,35 +161,43 @@ module.exports = {
   async sendReminderCheckinEmails(request, reply) {
     logger.info('Sending reminder checkin emails to contacts');
 
+    const response = reply.response().code(204);
     const cursor = User
       .find({ 'operations.remindedCheckin': false })
       .populate('operations.list')
       .cursor();
 
-    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      for (const lu of user.operations) {
-        const d = new Date();
-        const offset = d.valueOf() - lu.valueOf();
+    const promise = new Promise(resolve => {
+      resolve(response);
+    });
 
-        if (!lu.remindedCheckin && offset > 48 * 3600 * 1000
-          && offset < 72 * 3600 * 1000
-          && !lu.deleted) {
-          const hasLocalPhoneNumber = user.hasLocalPhoneNumber(lu.list.metadata.country.pcode);
-          const inCountry = await user.isInCountry(lu.list.metadata.country.pcode);
-          const notification = {
-            type: 'reminder_checkin',
-            user,
-            params: {
-              listUser: lu, list: lu.list, hasLocalPhoneNumber, inCountry,
-            },
-          };
-          await NotificationService.send(notification);
-          lu.remindedCheckin = true;
-          await user.save();
+    promise.then(async () => {
+      for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+        for (const lu of user.operations) {
+          const d = new Date();
+          const offset = d.valueOf() - lu.valueOf();
+
+          if (!lu.remindedCheckin && offset > 48 * 3600 * 1000
+            && offset < 72 * 3600 * 1000
+            && !lu.deleted) {
+            const hasLocalPhoneNumber = user.hasLocalPhoneNumber(lu.list.metadata.country.pcode);
+            const inCountry = await user.isInCountry(lu.list.metadata.country.pcode);
+            const notification = {
+              type: 'reminder_checkin',
+              user,
+              params: {
+                listUser: lu, list: lu.list, hasLocalPhoneNumber, inCountry,
+              },
+            };
+            await NotificationService.send(notification);
+            lu.remindedCheckin = true;
+            await user.save();
+          }
         }
       }
-    }
-    return reply.response().code(204);
+      logger.info('Finished sending reminder checkin emails');
+    });
+    return promise;
   },
 
   async forcedResetPasswordAlert(request, reply) {
