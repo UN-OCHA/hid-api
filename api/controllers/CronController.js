@@ -74,7 +74,7 @@ module.exports = {
 
   // Send reminder checkout email 48 hours before
   // the departure date
-  async sendReminderCheckoutEmails(request, reply) {
+  sendReminderCheckoutEmails(request, reply) {
     logger.info('Sending reminder checkout emails to contacts');
     const now = new Date();
     let populate = '';
@@ -88,28 +88,37 @@ module.exports = {
       populate += ` ${attr}.list`;
     });
 
+    const response = reply.response().code(204);
     const cursor = User.find(criteria).populate(populate).cursor();
 
-    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      for (const listAttribute of listAttributes) {
-        for (const lu of user[listAttribute]) {
-          try {
-            if (lu.checkoutDate && lu.remindedCheckout === false && !lu.deleted) {
-              const dep = new Date(lu.checkoutDate);
-              if (dep.valueOf() - now.valueOf() < 48 * 3600 * 1000) {
-                const notification = { type: 'reminder_checkout', user, params: { listUser: lu, list: lu.list } };
-                await NotificationService.send(notification);
-                lu.remindedCheckout = true;
-                await user.save();
+    const promise = new Promise(resolve => {
+      resolve(response);
+    });
+
+    promise.then(async () => {
+      for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+        for (const listAttribute of listAttributes) {
+          for (const lu of user[listAttribute]) {
+            try {
+              if (lu.checkoutDate && lu.remindedCheckout === false && !lu.deleted) {
+                const dep = new Date(lu.checkoutDate);
+                if (dep.valueOf() - now.valueOf() < 48 * 3600 * 1000) {
+                  const notification = { type: 'reminder_checkout', user, params: { listUser: lu, list: lu.list } };
+                  await NotificationService.send(notification);
+                  lu.remindedCheckout = true;
+                  await user.save();
+                }
               }
+            } catch (err) {
+              logger.error(err);
             }
-          } catch (err) {
-            logger.error(err);
           }
         }
       }
-    }
-    return reply.response().code(204);
+      logger.info('Finished sending reminder checkout emails');
+    });
+
+    return promise;
   },
 
   // Automatically check user out maximum 24 hours after his departure date
