@@ -569,37 +569,44 @@ module.exports = {
   async validateEmail(request) {
     logger.debug('[UserController] Verifying email ', { request });
 
-    if (!request.payload.hash && !request.params.email && !request.payload.time) {
+    if (!request.payload.hash && !request.params.id && !request.payload.time) {
       throw Boom.badRequest();
     }
 
     // TODO: make sure current user can do this
 
     if (request.payload.hash) {
-      const record = await User.findOne({ 'emails.email': request.payload.email });
+      const record = await User.findOne({ _id: request.payload.id });
       if (!record) {
         throw Boom.notFound();
       }
       let domain = null;
+      let email = record.email;
+      if (request.payload.emailId) {
+        const emailRecord = record.emails.id(request.payload.emailId);
+        if (emailRecord) {
+          email = emailRecord.email;
+        }
+      }
       // Verify hash
-      if (record.validHash(request.payload.hash, 'verify_email', request.payload.time, request.payload.email) === true) {
+      if (record.validHash(request.payload.hash, 'verify_email', request.payload.time, email) === true) {
         // Verify user email
-        if (record.email === request.payload.email) {
+        if (record.email === email) {
           record.email_verified = true;
           record.expires = new Date(0, 0, 1, 0, 0, 0);
           record.emails[0].validated = true;
           record.emails.set(0, record.emails[0]);
           record.lastModified = new Date();
-          domain = await record.isVerifiableEmail(request.payload.email);
+          domain = await record.isVerifiableEmail(email);
         } else {
           for (let i = 0, len = record.emails.length; i < len; i += 1) {
-            if (record.emails[i].email === request.payload.email) {
+            if (record.emails[i].email === email) {
               record.emails[i].validated = true;
               record.emails.set(i, record.emails[i]);
             }
           }
           record.lastModified = new Date();
-          domain = await record.isVerifiableEmail(request.payload.email);
+          domain = await record.isVerifiableEmail(email);
         }
       } else {
         throw Boom.badRequest('Invalid hash');
@@ -630,7 +637,7 @@ module.exports = {
       }
       const promises = [];
       promises.push(record.save());
-      if (record.email === request.payload.email) {
+      if (record.email === email) {
         promises.push(EmailService.sendPostRegister(record));
       }
       await Promise.all(promises);
@@ -646,7 +653,9 @@ module.exports = {
       logger.warn('Invalid app_validation_url', { security: true, fail: true, request });
       throw Boom.badRequest('Invalid app_validation_url');
     }
-    await EmailService.sendValidationEmail(record, request.params.email, appValidationUrl);
+    const emailIndex = record.emailIndex(request.params.email);
+    const email = record.emails[emailIndex];
+    await EmailService.sendValidationEmail(record, email.email, email._id.toString(), appValidationUrl);
     return 'Validation email sent successfully';
   },
 
@@ -824,14 +833,6 @@ module.exports = {
     if (record.emailIndex(email) !== -1) {
       throw Boom.badRequest('Email already exists');
     }
-    // Send confirmation email
-    const promises = [];
-    promises.push(EmailService.sendValidationEmail(record, email, appValidationUrl));
-    for (let i = 0; i < record.emails.length; i += 1) {
-      promises.push(
-        EmailService.sendEmailAlert(record, record.emails[i].email, request.payload.email),
-      );
-    }
     if (record.emails.length === 0 && record.is_ghost) {
       // Turn ghost into orphan and set main email address
       record.is_ghost = false;
@@ -841,7 +842,17 @@ module.exports = {
     const data = { email: request.payload.email, type: request.payload.type, validated: false };
     record.emails.push(data);
     record.lastModified = new Date();
-    await record.save();
+    const savedRecord = await record.save();
+    const savedEmailIndex = savedRecord.emailIndex(email);
+    const savedEmail = savedRecord.emails[savedEmailIndex];
+    // Send confirmation email
+    const promises = [];
+    promises.push(EmailService.sendValidationEmail(record, email, savedEmail._id.toString(), appValidationUrl));
+    for (let i = 0; i < record.emails.length; i += 1) {
+      promises.push(
+        EmailService.sendEmailAlert(record, record.emails[i].email, request.payload.email),
+      );
+    }
     promises.push(OutlookService.synchronizeUser(record));
     await Promise.all(promises);
     return record;

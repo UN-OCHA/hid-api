@@ -196,12 +196,12 @@ module.exports = {
   },
 
   async verify(request, reply) {
-    if (!request.query.hash && !request.query.email && !request.query.time) {
+    if (!request.query.hash && !request.query.id && !request.query.time) {
       throw Boom.badRequest('Missing hash parameter');
     }
     request.payload = {
       hash: request.query.hash,
-      email: request.query.email,
+      id: request.query.id,
       time: request.query.time,
     };
     const registerLink = _getRegisterLink(request.query);

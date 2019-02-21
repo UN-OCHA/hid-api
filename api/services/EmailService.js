@@ -57,7 +57,7 @@ module.exports = {
       locale: user.locale || 'en',
     };
     const hash = user.generateHash('verify_email', user.email);
-    let resetUrl = addUrlArgument(appVerifyUrl, 'email', user.email);
+    let resetUrl = addUrlArgument(appVerifyUrl, 'id', user._id.toString());
     resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
     resetUrl = addHash(resetUrl, hash.hash);
     const context = {
@@ -178,13 +178,14 @@ module.exports = {
     return send(mailOptions, 'claim', context);
   },
 
-  sendValidationEmail(user, email, appValidationUrl) {
+  sendValidationEmail(user, email, emailId, appValidationUrl) {
     const mailOptions = {
       to: email,
       locale: user.locale,
     };
     const hash = user.generateHash('verify_email', email);
-    let resetUrl = addUrlArgument(appValidationUrl, 'email', email);
+    let resetUrl = addUrlArgument(appValidationUrl, 'id', user._id.toString());
+    resetUrl = addUrlArgument(resetUrl, 'emailId', emailId);
     resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
     resetUrl = addHash(resetUrl, hash.hash);
     const context = {
