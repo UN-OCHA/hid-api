@@ -569,10 +569,6 @@ module.exports = {
   async validateEmail(request) {
     logger.debug('[UserController] Verifying email ', { request });
 
-    if (!request.payload.hash && !request.params.id && !request.payload.time) {
-      throw Boom.badRequest();
-    }
-
     // TODO: make sure current user can do this
 
     if (request.payload.hash) {
