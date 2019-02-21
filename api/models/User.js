@@ -656,9 +656,12 @@ const UserSchema = new Schema({
   collection: 'user',
 });
 
-UserSchema.virtual('sub').get(() => this._id);
+/* eslint prefer-arrow-callback: "off", func-names: "off" */
+UserSchema.virtual('sub').get(function () {
+  return this._id;
+});
 
-UserSchema.pre('remove', async (next) => {
+UserSchema.pre('remove', async function (next) {
   try {
     // Avoid null connections from being created when a user is removed
     const users = await this.model('User').find({ 'connections.user': this._id });
@@ -690,7 +693,7 @@ UserSchema.pre('remove', async (next) => {
   }
 });
 
-UserSchema.pre('save', (next) => {
+UserSchema.pre('save', function (next) {
   if (this.middle_name) {
     this.name = `${this.given_name} ${this.middle_name} ${this.family_name}`;
   } else {
@@ -705,12 +708,12 @@ UserSchema.pre('save', (next) => {
   next();
 });
 
-UserSchema.post('findOneAndUpdate', (user) => {
+UserSchema.post('findOneAndUpdate', function (user) {
   // Calling user.save to go through the presave hook and update user name
   user.save();
 });
 
-UserSchema.post('findOne', async (result, next) => {
+UserSchema.post('findOne', async function (result, next) {
   if (!result) {
     return next();
   }

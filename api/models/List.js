@@ -133,7 +133,8 @@ const ListSchema = new Schema({
   collection: 'list',
 });
 
-ListSchema.pre('save', (next) => {
+/* eslint prefer-arrow-callback: "off", func-names: "off" */
+ListSchema.pre('save', function (next) {
   if (this.acronym) {
     this.name = `${this.label} (${this.acronym})`;
   } else {
@@ -161,7 +162,7 @@ ListSchema.pre('save', (next) => {
   next();
 });
 
-ListSchema.post('findOneAndUpdate', (list) => {
+ListSchema.post('findOneAndUpdate', function (list) {
   // Calling list.save to go through the presave hook and update list name
   list.save();
 });

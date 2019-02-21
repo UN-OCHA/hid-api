@@ -91,7 +91,7 @@ module.exports = {
     const response = reply.response().code(204);
     const cursor = User.find(criteria).populate(populate).cursor();
 
-    const promise = new Promise(resolve => {
+    const promise = new Promise((resolve) => {
       resolve(response);
     });
 
@@ -167,7 +167,7 @@ module.exports = {
       .populate('operations.list')
       .cursor();
 
-    const promise = new Promise(resolve => {
+    const promise = new Promise((resolve) => {
       resolve(response);
     });
 

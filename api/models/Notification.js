@@ -48,7 +48,8 @@ const NotificationSchema = new Schema({
   timestamps: true,
 });
 
-NotificationSchema.pre('save', async (next) => {
+/* eslint prefer-arrow-callback: "off", func-names: "off" */
+NotificationSchema.pre('save', async function (next) {
   if (!this.text) {
     let templatePath = `notifications/${this.type}`;
     if (this.user.locale && this.user.locale === 'fr') {
