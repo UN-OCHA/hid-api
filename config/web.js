@@ -89,7 +89,7 @@ module.exports = {
 
   onPluginsLoaded(server) {
     const oauth = server.plugins['hapi-oauth2orize'];
-    const OauthExpiresIn = 7 * 24 * 3600;
+    const OauthExpiresIn = 24 * 3600;
 
     // Register supported OpenID Connect 1.0 grant types.
 
