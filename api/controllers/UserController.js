@@ -655,7 +655,7 @@ module.exports = {
       record,
       email.email,
       email._id.toString(),
-      appValidationUrl
+      appValidationUrl,
     );
     return 'Validation email sent successfully';
   },
@@ -853,8 +853,8 @@ module.exports = {
         record,
         email,
         savedEmail._id.toString(),
-        appValidationUrl
-      )
+        appValidationUrl,
+      ),
     );
     for (let i = 0; i < record.emails.length; i += 1) {
       promises.push(
