@@ -577,11 +577,11 @@ module.exports = {
         throw Boom.notFound();
       }
       let domain = null;
-      let email = record.email;
+      let { email } = record;
       if (request.payload.emailId) {
         const emailRecord = record.emails.id(request.payload.emailId);
         if (emailRecord) {
-          email = emailRecord.email;
+          { email } = emailRecord;
         }
       }
       // Verify hash
@@ -651,7 +651,12 @@ module.exports = {
     }
     const emailIndex = record.emailIndex(request.params.email);
     const email = record.emails[emailIndex];
-    await EmailService.sendValidationEmail(record, email.email, email._id.toString(), appValidationUrl);
+    await EmailService.sendValidationEmail(
+      record,
+      email.email,
+      email._id.toString(),
+      appValidationUrl
+    );
     return 'Validation email sent successfully';
   },
 
@@ -843,7 +848,14 @@ module.exports = {
     const savedEmail = savedRecord.emails[savedEmailIndex];
     // Send confirmation email
     const promises = [];
-    promises.push(EmailService.sendValidationEmail(record, email, savedEmail._id.toString(), appValidationUrl));
+    promises.push(
+      EmailService.sendValidationEmail(
+        record,
+        email,
+        savedEmail._id.toString(),
+        appValidationUrl
+      )
+    );
     for (let i = 0; i < record.emails.length; i += 1) {
       promises.push(
         EmailService.sendEmailAlert(record, record.emails[i].email, request.payload.email),
