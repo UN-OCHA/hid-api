@@ -542,7 +542,7 @@ const UserSchema = new Schema({
   },
   expires: {
     type: Date,
-    default: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    default: () => Date.now() + 7 * 24 * 60 * 60 * 1000,
     readonly: true,
   },
   lastLogin: {
