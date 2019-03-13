@@ -654,7 +654,6 @@ const UserSchema = new Schema({
     virtuals: true,
   },
   collection: 'user',
-  collation: { locale: 'en_US' },
 });
 
 /* eslint prefer-arrow-callback: "off", func-names: "off" */
