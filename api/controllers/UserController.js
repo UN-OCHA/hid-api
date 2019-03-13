@@ -581,7 +581,7 @@ module.exports = {
       if (request.payload.emailId) {
         const emailRecord = record.emails.id(request.payload.emailId);
         if (emailRecord) {
-          { email } = emailRecord;
+          ({ email } = emailRecord);
         }
       }
       // Verify hash
