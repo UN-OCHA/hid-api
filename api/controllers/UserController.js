@@ -528,6 +528,11 @@ module.exports = {
 
     logger.debug('[UserController] (destroy) model = user, query =', request.query, { request });
 
+    const user = await User.findOne({ _id: request.params.id });
+    if (!user) {
+      throw Boom.notFound();
+    }
+    await EmailService.sendAdminDelete(user, request.auth.credentials);
     await User.remove({ _id: request.params.id });
     return reply.response().code(204);
   },

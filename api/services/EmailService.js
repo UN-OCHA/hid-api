@@ -261,4 +261,16 @@ module.exports = {
     return send(mailOptions, 'verification_expiry', context);
   },
 
+  sendAdminDelete(user, admin) {
+    const mailOptions = {
+      to: user.email,
+      locale: user.locale,
+    };
+    const context = {
+      user,
+      admin,
+    };
+    return send(mailOptions, 'admin_delete', context);
+  },
+
 };
