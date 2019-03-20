@@ -95,7 +95,7 @@ async function addUser(agsssync, user) {
   const gsssync = await agsssync
     .populate('list user')
     .execPopulate();
-  const authClient = getAuthClient();
+  const authClient = agsssync.getAuthClient();
   // Find users
   const criteria = gsssync.getUserCriteria();
   if (Object.keys(criteria).length === 0) {
@@ -165,7 +165,7 @@ async function deleteUser(agsssync, hid) {
   const gsssync = await agsssync
     .populate('list user')
     .execPopulate();
-  const authClient = getAuthClient();
+  const authClient = agsssync.getAuthClient();
   try {
     const column = await sheets.spreadsheets.values.get({
       spreadsheetId: gsssync.spreadsheet,
@@ -218,7 +218,7 @@ async function updateUser(agsssync, user) {
   const gsssync = await agsssync
     .populate('list user')
     .execPopulate();
-  const authClient = getAuthClient();
+  const authClient = agsssync.getAuthClient();
   try {
     const column = await sheets.spreadsheets.values.get({
       spreadsheetId: gsssync.spreadsheet,
@@ -309,7 +309,7 @@ module.exports = {
 
   async getSheetId(agsssync) {
     const gsssync = await agsssync.populate('user').execPopulate();
-    const authClient = getAuthClient();
+    const authClient = agsssync.getAuthClient();
     const sheets = google.sheets('v4');
     const sheet = await sheets.spreadsheets.get({
       spreadsheetId: gsssync.spreadsheet,
@@ -324,7 +324,7 @@ module.exports = {
   async synchronizeAll(agsssync) {
     const headers = GSSSync.getSpreadsheetHeaders();
     const gsssync = await agsssync.populate('list user').execPopulate();
-    const authClient = getAuthClient();
+    const authClient = agsssync.getAuthClient();
     const criteria = gsssync.getUserCriteria();
     if (Object.keys(criteria).length === 0) {
       throw Boom.unauthorized('You are not authorized to view this list');
