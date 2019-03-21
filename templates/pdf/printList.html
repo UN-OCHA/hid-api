@@ -58,7 +58,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <% results.forEach(function (user) { %>
+                  <% users.forEach(function (user) { %>
                   <tr class="profile-item ng-scope">
                     <td class="title-cell"><div class="avoid ng-binding"><%= user.name %></div></td>
                     <td><div class="avoid ng-binding"><% if (user.organization && user.organization.list) { %><%= user.organization.name %><% } %></div></td>
