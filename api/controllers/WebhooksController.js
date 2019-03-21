@@ -40,7 +40,7 @@ function _parseList(listType, language, item) {
     visibility = 'verified';
   }
   let { label } = item;
-  const { acronym } = item;
+  const acronym = item.acronym ? item.acronym : '';
   if (listType === 'bundle' || listType === 'office') {
     if (item.operation[0].label) {
       label = `${item.operation[0].label}: ${item.label}`;
@@ -120,7 +120,9 @@ function _parseListLanguage(alist, label, acronym, language) {
   }
   if (!acronymFound) {
     list.acronyms.push({ language, text: acronym });
-    list.acronymsOrNames[language] = acronym;
+    if (acronym !== '') {
+      list.acronymsOrNames[language] = acronym;
+    }
   }
 }
 
