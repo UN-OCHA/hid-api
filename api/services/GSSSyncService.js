@@ -82,11 +82,10 @@ async function writeUser(gsssync, authClient, user, index) {
       auth: authClient,
     });
   } catch (err) {
-    if (err.code === 404) {
+    if (err.code === 404 || err.code === 403) {
       // Spreadsheet has been deleted, remove the synchronization
       gsssync.remove();
     }
-    throw err;
   }
 }
 
@@ -112,12 +111,12 @@ async function addUser(agsssync, user) {
       range: 'A:A',
       auth: authClient,
     });
-    if (!column || !column.values) {
-      throw Boom.badImplementation(`column or column.values is undefined on spreadsheet ${gsssync.spreadsheet}`);
+    if (!column || !column.data || !column.data.values) {
+      throw Boom.badImplementation(`column or column.data.values is undefined on spreadsheet ${gsssync.spreadsheet}`);
     }
     let row = 0; let index = 0; let
       firstLine = true;
-    column.values.forEach((elt) => {
+    column.data.values.forEach((elt) => {
       // Skip first line as it's the headers
       if (firstLine === true) {
         firstLine = false;
@@ -152,11 +151,10 @@ async function addUser(agsssync, user) {
       throw Boom.badRequest('Could not add user');
     }
   } catch (err) {
-    if (err.code === 404) {
+    if (err.code === 404 || err.code === 403) {
       // Spreadsheet has been deleted, remove the synchronization
       gsssync.remove();
     }
-    throw err;
   }
 }
 
@@ -172,12 +170,12 @@ async function deleteUser(agsssync, hid) {
       range: 'A:A',
       auth: authClient,
     });
-    if (!column || !column.values) {
+    if (!column || !column.data || !column.data.values) {
       throw Boom.badImplementation(`column or column.values is undefined on spreadsheet ${gsssync.spreadsheet}`);
     }
     let row = 0; let
       index = 0;
-    column.values.forEach((elt) => {
+    column.data.values.forEach((elt) => {
       if (elt[0] === hid) {
         index = row;
       }
@@ -205,11 +203,10 @@ async function deleteUser(agsssync, hid) {
       throw Boom.badRequest('Could not find user');
     }
   } catch (err) {
-    if (err.code === 404) {
+    if (err.code === 404 || err.code === 403) {
       // Spreadsheet has been deleted, remove the synchronization
       gsssync.remove();
     }
-    throw err;
   }
 }
 
@@ -225,12 +222,12 @@ async function updateUser(agsssync, user) {
       range: 'A:A',
       auth: authClient,
     });
-    if (!column || !column.values) {
+    if (!column || !column.data || !column.data.values) {
       throw new Error(`column or column.values is undefined on spreadsheet ${gsssync.spreadsheet}`);
     }
     let row = 0;
     let index = 0;
-    column.values.forEach((elt) => {
+    column.data.values.forEach((elt) => {
       if (elt[0] === user._id.toString()) {
         index = row + 1;
       }
@@ -242,11 +239,10 @@ async function updateUser(agsssync, user) {
       throw new Error(`Could not find user ${user._id.toString()} for spreadsheet ${gsssync.spreadsheet}`);
     }
   } catch (err) {
-    if (err.code === 404) {
+    if (err.code === 404 || err.code === 403) {
       // Spreadsheet has been deleted, remove the synchronization
       gsssync.remove();
     }
-    throw err;
   }
 }
 
