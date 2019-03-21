@@ -147,6 +147,15 @@ ListSchema.pre('save', function (next) {
     const acronymIndex = that.languageIndex('acronyms', lang);
     let name = '';
     if (labelIndex !== -1) {
+      if (acronymIndex !== -1 && typeof that.acronyms[acronymIndex].text === 'undefined') {
+        that.acronyms[acronymIndex].text = '';
+        if (!that.acronymsOrNames) {
+          that.acronymsOrNames = [];
+        }
+        if (typeof that.acronymsOrNames[lang] === 'undefined') {
+          that.acronymsOrNames[lang] = that.labels[labelIndex].text;
+        }
+      }
       if (acronymIndex !== -1 && that.acronyms[acronymIndex].text !== '') {
         name = `${that.labels[labelIndex].text} (${that.acronyms[acronymIndex].text})`;
       } else {
