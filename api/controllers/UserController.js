@@ -386,6 +386,11 @@ module.exports = {
     }
 
     logger.debug('[UserController] (find) criteria = ', criteria, ' options = ', options, { request });
+    let pdfFormat = '';
+    if (criteria.format) {
+      pdfFormat = criteria.format;
+      delete criteria.format;
+    }
     const query = HelperService.find(User, criteria, options);
     // HID-1561 - Set export limit to 2000
     if (!options.limit && request.params.extension) {
@@ -423,11 +428,6 @@ module.exports = {
           .type('text/plain');
       }
       if (request.params.extension === 'pdf') {
-        let pdfFormat = '';
-        if (criteria.format) {
-          pdfFormat = criteria.format;
-          delete criteria.format;
-        }
         const [buffer, bytes] = await _pdfExport(results, number, lists, request, pdfFormat);
         return reply.response(buffer)
           .type('application/pdf')
