@@ -67,22 +67,20 @@ async function _pdfExport(users, number, lists, req, format) {
   const port = process.env.WKHTMLTOPDF_PORT || 80;
   const clientRes = await axios({
     method: 'post',
-    url: `${hostname}:${port}/htmltopdf`,
+    url: `http://${hostname}:${port}/htmltopdf`,
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Content-Length': postData.length,
     },
     data: postData,
+    responseType: 'arraybuffer',
   });
   if (clientRes && clientRes.status === 200) {
     // clientRes.setEncoding('binary');
 
     const pdfSize = parseInt(clientRes.headers['content-length'], 10);
-    const pdfBuffer = Buffer.alloc(pdfSize);
 
-    pdfBuffer.write(clientRes.data, pdfSize, 'binary');
-
-    return [pdfBuffer, pdfSize];
+    return [clientRes.data, pdfSize];
   }
 
   throw new Error(`An error occurred while generating PDF for list ${data.lists[0].name}`);
@@ -430,7 +428,7 @@ module.exports = {
           pdfFormat = criteria.format;
           delete criteria.format;
         }
-        const [buffer, bytes] = _pdfExport(results, number, lists, request, pdfFormat);
+        const [buffer, bytes] = await _pdfExport(results, number, lists, request, pdfFormat);
         return reply.response(buffer)
           .type('application/pdf')
           .bytes(bytes)
@@ -516,7 +514,12 @@ module.exports = {
     }
     promises.push(GSSSyncService.synchronizeUser(user));
     promises.push(OutlookService.synchronizeUser(user));
-    await Promise.all(promises);
+    try {
+      await Promise.all(promises);
+    }
+    catch (err) {
+
+    }
     return user;
   },
 
