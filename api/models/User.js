@@ -719,7 +719,7 @@ UserSchema.post('findOne', async function (result, next) {
     return next();
   }
   try {
-    await result.populate(userPopulate1);
+    await result.populate(userPopulate1).execPopulate();
     return next();
   } catch (err) {
     return next(err);
