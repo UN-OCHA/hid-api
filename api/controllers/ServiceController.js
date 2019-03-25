@@ -143,7 +143,7 @@ module.exports = {
       customer: 'my_customer',
       maxResults: 200,
     });
-    return response.groups;
+    return response.data.groups;
   },
 
   // Subscribe a user to a service
