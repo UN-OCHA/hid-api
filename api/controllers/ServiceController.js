@@ -43,10 +43,6 @@ module.exports = {
     // Do not show deleted lists
     criteria.deleted = false;
 
-    if (criteria.lists) {
-      criteria.lists = { $in: criteria.lists.split(',') };
-    }
-
     if (request.params.id) {
       criteria._id = request.params.id;
       const result = await Service.findOne(criteria).populate(options.populate);

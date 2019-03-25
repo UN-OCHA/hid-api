@@ -171,7 +171,7 @@ ServiceSchema.methods = {
 
   subscribeGoogleGroup(user, email, creds) {
     // Subscribe email to google group
-    const auth = this.googleGroupsAuthorize(creds.googlegroup);
+    const auth = ServiceSchema.statics.googleGroupsAuthorize(creds.googlegroup);
     const gservice = google.admin('directory_v1');
     return gservice.members.insert({
       auth,
@@ -183,7 +183,7 @@ ServiceSchema.methods = {
   unsubscribeGoogleGroup(user, creds) {
     const index = user.subscriptionsIndex(this._id);
     const { email } = user.subscriptions[index];
-    const auth = this.googleGroupsAuthorize(creds.googlegroup);
+    const auth = ServiceSchema.statics.googleGroupsAuthorize(creds.googlegroup);
     const gservice = google.admin('directory_v1');
     return gservice.members.delete({
       auth,
