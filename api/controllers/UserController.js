@@ -516,9 +516,8 @@ module.exports = {
     promises.push(OutlookService.synchronizeUser(user));
     try {
       await Promise.all(promises);
-    }
-    catch (err) {
-
+    } catch (err) {
+      return user;
     }
     return user;
   },
