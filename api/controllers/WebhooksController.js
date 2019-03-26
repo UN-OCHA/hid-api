@@ -133,7 +133,6 @@ module.exports = {
     const listTypes = [
       'operation',
       'bundle',
-      'disaster',
       'organization',
       'functional_role',
       'office',
