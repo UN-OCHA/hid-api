@@ -31,18 +31,11 @@ async function loginHelper(request) {
 
   if (!email || !password) {
     const cuser = request.auth.credentials;
+    if (!cuser) {
+      throw Boom.unauthorized('Invalid JSON Web Token');
+    }
     cuser.sanitize(cuser);
     return cuser;
-    /* AuthPolicy.isAuthenticated(request, function (err) {
-      if (err && err.isBoom) {
-        return reply(err);
-      }
-      else {
-        const cuser = request.auth.credentials;
-        cuser.sanitize(cuser);
-        return reply(cuser);
-      }
-    }); */
   }
 
   // If there has been 5 failed login attempts in the last 5 minutes, return

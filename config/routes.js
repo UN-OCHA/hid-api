@@ -186,9 +186,6 @@ module.exports = [
     method: 'POST',
     path: '/api/v2/jsonwebtoken',
     handler: AuthController.authenticate,
-    config: {
-      auth: false,
-    },
   },
 
   {
