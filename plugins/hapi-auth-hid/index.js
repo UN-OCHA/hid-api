@@ -110,7 +110,7 @@ internals.implementation = () => ({
           logger.warn('Token is expired', { security: true, fail: true, request });
           throw Boom.unauthorized('Expired token');
         }
-        logger.warn('Successful authentication through OAuth token', { security: true, user: tok.client.id, request});
+        logger.warn('Successful authentication through OAuth token', { security: true, user: tok.client.id, request });
         return reply.authenticated({
           credentials: tok.user,
           artifacts: tok.client,
