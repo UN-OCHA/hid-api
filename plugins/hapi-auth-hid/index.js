@@ -71,7 +71,7 @@ internals.implementation = () => ({
       }
       request.params.currentUser = user;
       delete request.query.bewit;
-      logger.warn('Successful authentication through bewit', { security: true, request });
+      logger.warn('Successful authentication through bewit', { security: true, user: attributes.id, request });
       return reply.authenticated({
         credentials: user,
       });
@@ -92,7 +92,7 @@ internals.implementation = () => ({
         request.params.token = jtoken; // This is the decrypted token or the payload you provided
         const user = await User.findOne({ _id: jtoken.id });
         if (user) {
-          logger.warn('Successful authentication through JWT', { security: true, request });
+          logger.warn('Successful authentication through JWT', { security: true, user: jtoken.id, request });
           return reply.authenticated({
             credentials: user,
           });
@@ -110,6 +110,7 @@ internals.implementation = () => ({
           logger.warn('Token is expired', { security: true, fail: true, request });
           throw Boom.unauthorized('Expired token');
         }
+        logger.warn('Successful authentication through OAuth token', { security: true, user: tok.client.id, request});
         return reply.authenticated({
           credentials: tok.user,
           artifacts: tok.client,
