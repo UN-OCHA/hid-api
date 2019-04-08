@@ -1002,7 +1002,7 @@ module.exports = {
     if (!checkin) {
       throw Boom.badRequest('Organization should be part of user organizations');
     }
-    user.organization = checkin;
+    user.organization.set(checkin);
     user.lastModified = new Date();
     await Promise.all([
       user.save(),
