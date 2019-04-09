@@ -8,6 +8,7 @@ const moment = require('moment');
 const acceptLanguage = require('accept-language');
 const sharp = require('sharp');
 const validator = require('validator');
+const fs = require('fs');
 
 const hidAccount = '5b2128e754a0d6046d6c69f2';
 const List = require('../models/List');
@@ -45,12 +46,15 @@ async function _pdfExport(users, number, lists, req, format) {
     }
   });
 
+  const inlineCSS = fs.readFileSync('assets/css/main.css');
+
   const data = {
     lists,
     number,
     users,
     dateGenerated: moment().format('LL'),
     filters,
+    inlineCSS,
   };
   let template = 'templates/pdf/printList.html';
   if (format === 'meeting-compact') {
