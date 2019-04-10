@@ -65,9 +65,21 @@ async function _pdfExport(users, number, lists, req, format) {
   const postData = qs.stringify({ html: str });
   const hostname = process.env.WKHTMLTOPDF_HOST;
   const port = process.env.WKHTMLTOPDF_PORT || 80;
+  const params = {
+    pdfLandscape: true,
+    pdfBackground: true,
+    pdfMarginUnit: 'mm',
+    pdfMarginTop: 10,
+    pdfMarginBottom: 10,
+    pdfMarginRight: 10,
+    pdfMarginLeft: 10,
+    scale: 1
+  };
+  const url = 'http://' + hostname + ':' + port + '/snap?';
   const clientRes = await axios({
     method: 'post',
-    url: `http://${hostname}:${port}/htmltopdf`,
+    url: url,
+    params: params,
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Content-Length': postData.length,
