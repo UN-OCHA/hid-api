@@ -73,13 +73,12 @@ async function _pdfExport(users, number, lists, req, format) {
     pdfMarginBottom: 10,
     pdfMarginRight: 10,
     pdfMarginLeft: 10,
-    scale: 1
+    scale: 1,
   };
-  const url = 'http://' + hostname + ':' + port + '/snap?';
   const clientRes = await axios({
     method: 'post',
-    url: url,
-    params: params,
+    url: `http://${hostname}:${port}/snap`,
+    params,
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Content-Length': postData.length,
