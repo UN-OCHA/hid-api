@@ -20,7 +20,7 @@ module.exports = {
       User.countDocuments({ authOnly: true }),
       User.countDocuments({}),
       User.countDocuments({ is_orphan: true }),
-      User.countDocuments({ verified: true }),
+      User.countDocuments({ is_ghost: true }),
       User.countDocuments({ verified: true }),
     ]);
     return {
