@@ -118,11 +118,8 @@ async function addUser(agsssync, user) {
     users.forEach((tmpUser) => {
       if (row >= column.data.values.length) {
         index = row + 1;
-      }
-      else {
-        if (column.data.values[row][0] !== tmpUser._id.toString() && index === 0) {
-          index = row + 1;
-        }
+      } else if (column.data.values[row][0] !== tmpUser._id.toString() && index === 0) {
+        index = row + 1;
       }
       row += 1;
     });

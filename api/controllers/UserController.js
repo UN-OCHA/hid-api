@@ -1019,8 +1019,7 @@ module.exports = {
     }
     if (user.organization) {
       user.organization.set(checkin);
-    }
-    else {
+    } else {
       user.organization = checkin;
     }
     user.lastModified = new Date();
