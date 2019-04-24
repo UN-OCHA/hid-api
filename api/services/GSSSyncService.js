@@ -114,18 +114,17 @@ async function addUser(agsssync, user) {
     if (!column || !column.data || !column.data.values) {
       throw Boom.badImplementation(`column or column.data.values is undefined on spreadsheet ${gsssync.spreadsheet}`);
     }
-    let row = 0; let index = 0; let
-      firstLine = true;
-    column.data.values.forEach((elt) => {
-      // Skip first line as it's the headers
-      if (firstLine === true) {
-        firstLine = false;
-      } else {
-        if (elt[0] !== users[row]._id.toString() && index === 0) {
+    let row = 1; let index = 0;
+    users.forEach((tmpUser) => {
+      if (row >= column.data.values.length) {
+        index = row + 1;
+      }
+      else {
+        if (column.data.values[row][0] !== tmpUser._id.toString() && index === 0) {
           index = row + 1;
         }
-        row += 1;
       }
+      row += 1;
     });
     if (index !== 0) {
       const body = {
