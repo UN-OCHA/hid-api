@@ -108,7 +108,9 @@ function _txtExport(users) {
 function getBundles(user) {
   let bundles = '';
   user.bundles.forEach((bundle) => {
-    bundles += `${bundle.name};`;
+    if (!bundle.deleted) {
+      bundles += `${bundle.name};`;
+    }
   });
   return bundles;
 }
@@ -116,7 +118,9 @@ function getBundles(user) {
 function getRoles(user) {
   let roles = '';
   user.functional_roles.forEach((role) => {
-    roles += `${role.name};`;
+    if (!role.deleted) {
+      roles += `${role.name};`;
+    }
   });
   return roles;
 }
