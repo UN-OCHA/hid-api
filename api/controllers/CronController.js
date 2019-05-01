@@ -292,6 +292,7 @@ module.exports = {
 
     for (let list = await cursor.next(); list != null; list = await cursor.next()) {
       const criteria = { };
+      criteria.authOnly = false;
       criteria[`${list.type}s`] = { $elemMatch: { list: list._id, deleted: false } };
       const number = await User.countDocuments(criteria);
       list.count = number;
