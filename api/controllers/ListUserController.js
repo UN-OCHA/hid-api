@@ -224,7 +224,6 @@ module.exports = {
     }
     user.lastModified = new Date();
     const list = await List.findOne({ _id: lu.list });
-    list.count -= 1;
     const promises = [];
     if (!user.authOnly) {
       list.count -= 1;
