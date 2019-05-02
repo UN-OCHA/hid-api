@@ -127,7 +127,7 @@ const ListSchema = new Schema({
   countVisible: {
     type: Number,
     default: 0,
-    readonly: true
+    readonly: true,
   },
 
   deleted: {

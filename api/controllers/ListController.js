@@ -106,14 +106,6 @@ module.exports = {
       if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('acronyms') !== -1)) {
         tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
       }
-      /*if (optionsArray.indexOf('count') !== -1) {
-        const ucriteria = {};
-        ucriteria[`${list.type}s`] = {
-          $elemMatch: { list: list._id, deleted: false, pending: false },
-        };
-        /* eslint no-await-in-loop: "off" */
-        /*tmp.count = await User.countDocuments(ucriteria);
-      }*/
       if (!request.auth.credentials.is_admin && !request.auth.credentials.isManager) {
         tmp.count = tmp.countVisible;
       }
