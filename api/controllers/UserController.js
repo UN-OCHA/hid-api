@@ -335,13 +335,6 @@ module.exports = {
     const criteria = HelperService.getCriteriaFromQuery(request.query);
     const childAttributes = User.listAttributes();
 
-    // Hide unconfirmed users which are not orphans
-    if (request.auth.credentials
-      && !request.auth.credentials.is_admin
-      && !request.auth.credentials.isManager) {
-      criteria.$or = [{ email_verified: true }, { is_orphan: true }, { is_ghost: true }];
-    }
-
     // Hide hidden profile to non-admins
     if (request.auth.credentials && !request.auth.credentials.is_admin) {
       criteria.hidden = false;
