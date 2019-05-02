@@ -508,12 +508,12 @@ module.exports = {
     if (user.authOnly === false && request.payload.authOnly === true) {
       // User is becoming visible. Update lists count.
       const listIds = user.getListIds();
-      await List.updateMany({ _id: { $in: listIds } }, { $inc: { count: 1 } });
+      await List.updateMany({ _id: { $in: listIds } }, { $inc: { countVisible: 1 } });
     }
     if (user.authOnly === true && request.payload.authOnly === false) {
       // User is becoming invisible. Update lists count.
       const listIds = user.getListIds();
-      await List.updateMany({ _id: { $in: listIds } }, { $inc: { count: -1 } });
+      await List.updateMany({ _id: { $in: listIds } }, { $inc: { countVisible: -1 } });
     }
     user = await User
       .findOneAndUpdate(

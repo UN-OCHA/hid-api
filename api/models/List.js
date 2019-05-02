@@ -123,6 +123,13 @@ const ListSchema = new Schema({
     readonly: true,
   },
 
+  // Number of contacts in the list with authOnly = false
+  countVisible: {
+    type: Number,
+    default: 0,
+    readonly: true
+  },
+
   deleted: {
     type: Boolean,
     default: false,

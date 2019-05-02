@@ -75,10 +75,11 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
   });
   const promises = [];
   promises.push(user.save());
+  list.count += 1;
   if (!user.authOnly) {
-    list.count += 1;
-    promises.push(list.save());
+    list.countVisible += 1;
   }
+  promises.push(list.save());
   // Notify list managers of the checkin
   promises.push(NotificationService.notifyMultiple(managers, {
     type: 'checkin',
@@ -225,10 +226,11 @@ module.exports = {
     user.lastModified = new Date();
     const list = await List.findOne({ _id: lu.list });
     const promises = [];
+    list.count -= 1;
     if (!user.authOnly) {
-      list.count -= 1;
-      promises.push(list.save());
+      list.countVisible -= 1;
     }
+    promises.push(list.save());
     promises.push(user.save());
     // Send notification if needed
     if (request.auth.credentials.id !== userId && !user.hidden) {
