@@ -35,6 +35,10 @@ module.exports = {
       options.sort = 'name';
     }
 
+    if (options.sort === '-count' && !request.auth.credentials.is_admin && !request.auth.credentials.isManager) {
+      options.sort = '-countVisible';
+    }
+
     // Search with contains when searching in name or label
     if (criteria.name) {
       if (criteria.name.length < 3) {
