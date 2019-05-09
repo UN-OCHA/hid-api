@@ -66,7 +66,7 @@ async function _pdfExport(users, number, lists, req, format) {
   const hostname = process.env.WKHTMLTOPDF_HOST;
   const port = process.env.WKHTMLTOPDF_PORT || 80;
   const params = {
-    service: 'hid-api',
+    service: 'hidapi',
     pdfLandscape: true,
     pdfBackground: true,
     pdfMarginUnit: 'mm',
