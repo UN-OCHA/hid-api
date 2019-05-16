@@ -44,13 +44,13 @@ module.exports = {
       if (criteria.name.length < 3) {
         throw Boom.badRequest('Name must have at least 3 characters');
       }
-      let name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/, '-');
+      let name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/g, '');
       name = new RegExp(name, 'i');
       criteria['names.text'] = name;
       delete criteria.name;
     }
     if (criteria.label) {
-      criteria.label = criteria.label.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/, '-');
+      criteria.label = criteria.label.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/g, '');
       criteria.label = new RegExp(criteria.label, 'i');
     }
 

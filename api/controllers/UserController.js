@@ -361,7 +361,7 @@ module.exports = {
       if (criteria.name.length < 3) {
         throw Boom.badRequest('Name must have at least 3 characters');
       }
-      criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/, '-');
+      criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/g, '');
       criteria.name = new RegExp(criteria.name, 'i');
     }
 
