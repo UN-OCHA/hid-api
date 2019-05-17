@@ -9,6 +9,7 @@ const listAttributes = [
   'organizations',
   'functional_roles',
 ];
+const cp = require('child_process');
 const hidAccount = '5b2128e754a0d6046d6c69f2';
 const OauthToken = require('../models/OauthToken');
 const List = require('../models/List');
@@ -304,13 +305,7 @@ module.exports = {
   },
 
   async setListCounts(request, reply) {
-    const cursor = List.find({ deleted: false }).cursor();
-    const promises = [];
-
-    for (let list = await cursor.next(); list != null; list = await cursor.next()) {
-      promises.push(setListCount(list));
-    }
-    await Promise.all(promises);
+    const compute = cp.fork('../workers');
     return reply.response().code(204);
   },
 
