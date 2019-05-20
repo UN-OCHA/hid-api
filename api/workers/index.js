@@ -1,7 +1,6 @@
-'use strict';
+/* eslint no-await-in-loop: "off", no-restricted-syntax: "off" */
 
 const mongoose = require('mongoose');
-const { Schema, connection } = mongoose;
 const app = require('../../');
 const config = require('../../config/env')[process.env.NODE_ENV];
 
@@ -30,9 +29,17 @@ async function setListCount(list) {
 }
 
 async function setListCounts() {
-  const count = await List.countDocuments({ deleted: false });
   const cursor = List.find({ deleted: false }).cursor();
-  let index = 0;
+  const promises = [];
+  for (let list = await cursor.next(); list != null; list = await cursor.next()) {
+    promises.push(setListCount(list));
+  }
+  try {
+    await Promise.all(promises);
+  } catch (err) {
+    logger.error(err);
+  }
+  /* let index = 0;
   while (index < count) {
     const batchStop = index + 100;
     const promises = [];
@@ -40,20 +47,17 @@ async function setListCounts() {
       const list = await cursor.next();
       if (list === null) {
         index = count;
-      }
-      else {
+      } else {
         promises.push(setListCount(list));
-        index++;
+        index += 1;
       }
     }
-    console.log('awaiting' + index);
     try {
       await Promise.all(promises);
+    } catch (err) {
+      logger.error(err);
     }
-    catch (err) {
-      console.log(err);
-    }
-  }
+  } */
 }
 
 setListCounts();

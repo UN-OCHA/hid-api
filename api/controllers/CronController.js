@@ -9,10 +9,9 @@ const listAttributes = [
   'organizations',
   'functional_roles',
 ];
-const cp = require('child_process');
 const hidAccount = '5b2128e754a0d6046d6c69f2';
+const cp = require('child_process');
 const OauthToken = require('../models/OauthToken');
-const List = require('../models/List');
 const User = require('../models/User');
 const EmailService = require('../services/EmailService');
 const NotificationService = require('../services/NotificationService');
@@ -20,22 +19,6 @@ const ListUserController = require('./ListUserController');
 const config = require('../../config/env')[process.env.NODE_ENV];
 
 const { logger } = config;
-
-async function setListCount(list) {
-  const criteriaAll = { };
-  criteriaAll[`${list.type}s`] = { $elemMatch: { list: list._id, deleted: false } };
-  const criteriaVisible = { };
-  criteriaVisible[`${list.type}s`] = { $elemMatch: { list: list._id, deleted: false } };
-  criteriaVisible.authOnly = false;
-  const [numberTotal, numberVisible] = await Promise.all([
-    User.countDocuments(criteriaAll),
-    User.countDocuments(criteriaVisible),
-  ]);
-  const flist = list;
-  flist.count = numberTotal;
-  flist.countVisible = numberVisible;
-  return flist.save();
-}
 
 /**
  * @module CronController
@@ -305,7 +288,7 @@ module.exports = {
   },
 
   async setListCounts(request, reply) {
-    const compute = cp.fork('../workers');
+    cp.fork('../workers');
     return reply.response().code(204);
   },
 
