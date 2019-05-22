@@ -288,7 +288,7 @@ module.exports = {
   },
 
   async setListCounts(request, reply) {
-    cp.fork('../workers');
+    cp.fork('api/workers');
     return reply.response().code(204);
   },
 
