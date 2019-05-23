@@ -880,13 +880,13 @@ UserSchema.methods = {
     return `${process.env.APP_URL}/users/${this._id}`;
   },
 
-  getListIds() {
+  getListIds(excludePending = false) {
     const that = this;
     const listIds = [];
     listTypes.forEach((attr) => {
       if (that[`${attr}s`].length > 0) {
         that[`${attr}s`].forEach((lu) => {
-          if (lu.deleted === false) {
+          if (lu.deleted === false && (excludePending === false || excludePending === true && lu.pending === false)) {
             listIds.push(lu.list.toString());
           }
         });

@@ -76,7 +76,7 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
   const promises = [];
   promises.push(user.save());
   list.count += 1;
-  if (!user.authOnly) {
+  if (!user.authOnly && !payload.pending) {
     list.countVisible += 1;
   }
   promises.push(list.save());
@@ -187,6 +187,12 @@ module.exports = {
     promises.push(List.findOne({ _id: lu.list }));
     const [user, list] = await Promise.all(promises);
     if (listuser.pending === true && request.payload.pending === false) {
+      const promises2 = [];
+      // Increment the number of visible users
+      if (user.authOnly === false) {
+        list.countVisible += 1;
+        promises2.push(list.save());
+      }
       // Send a notification to inform user that his checkin is not pending anymore
       const notification = {
         type: 'approved_checkin',
@@ -194,7 +200,8 @@ module.exports = {
         createdBy: request.auth.credentials,
         params: { list },
       };
-      await NotificationService.send(notification);
+      promises2.push(NotificationService.send(notification));
+      await Promise.all(promises2);
     }
     return user;
   },

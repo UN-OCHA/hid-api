@@ -16,7 +16,7 @@ async function setListCount(list) {
   const criteriaAll = { };
   criteriaAll[`${list.type}s`] = { $elemMatch: { list: list._id, deleted: false } };
   const criteriaVisible = { };
-  criteriaVisible[`${list.type}s`] = { $elemMatch: { list: list._id, deleted: false } };
+  criteriaVisible[`${list.type}s`] = { $elemMatch: { list: list._id, deleted: false, pending: false } };
   criteriaVisible.authOnly = false;
   const [numberTotal, numberVisible] = await Promise.all([
     User.countDocuments(criteriaAll),
@@ -39,25 +39,6 @@ async function setListCounts() {
   } catch (err) {
     logger.error(err);
   }
-  /* let index = 0;
-  while (index < count) {
-    const batchStop = index + 100;
-    const promises = [];
-    while (index < batchStop) {
-      const list = await cursor.next();
-      if (list === null) {
-        index = count;
-      } else {
-        promises.push(setListCount(list));
-        index += 1;
-      }
-    }
-    try {
-      await Promise.all(promises);
-    } catch (err) {
-      logger.error(err);
-    }
-  } */
 }
 
 setListCounts();

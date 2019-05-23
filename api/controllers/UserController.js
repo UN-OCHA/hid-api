@@ -503,13 +503,17 @@ module.exports = {
     request.payload.lastModified = new Date();
     if (user.authOnly === false && request.payload.authOnly === true) {
       // User is becoming visible. Update lists count.
-      const listIds = user.getListIds();
-      await List.updateMany({ _id: { $in: listIds } }, { $inc: { countVisible: 1 } });
+      const listIds = user.getListIds(true);
+      if (listIds.length) {
+        await List.updateMany({ _id: { $in: listIds } }, { $inc: { countVisible: 1 } });
+      }
     }
     if (user.authOnly === true && request.payload.authOnly === false) {
       // User is becoming invisible. Update lists count.
-      const listIds = user.getListIds();
-      await List.updateMany({ _id: { $in: listIds } }, { $inc: { countVisible: -1 } });
+      const listIds = user.getListIds(true);
+      if (listIds.length) {
+        await List.updateMany({ _id: { $in: listIds } }, { $inc: { countVisible: -1 } });
+      }
     }
     user = await User
       .findOneAndUpdate(
@@ -524,6 +528,11 @@ module.exports = {
       // If it's an auth account, surface it
       if (user.authOnly) {
         user.authOnly = false;
+        // User is becoming visible. Update lists count.
+        const listIds = user.getListIds(true);
+        if (listIds.length) {
+          await List.updateMany({ _id: { $in: listIds } }, { $inc: { countVisible: 1 } });
+        }
         promises.push(user.save());
         if (!user.hidden) {
           promises.push(EmailService.sendAuthToProfile(user, request.auth.credentials));
