@@ -1,5 +1,5 @@
 
-
+const lodash = require('lodash');
 const Notification = require('../models/Notification');
 const EmailService = require('./EmailService');
 
@@ -20,7 +20,7 @@ module.exports = {
   sendMultiple(users, notification) {
     // Note that async functions return a promise
     const promises = users.map(async (user) => {
-      const cNotification = JSON.parse(JSON.stringify(notification));
+      const cNotification = lodash.cloneDeep(notification);
       cNotification.user = user;
       const result = await Notification.create(cNotification);
       await EmailService.sendNotification(cNotification);
@@ -37,7 +37,7 @@ module.exports = {
   notifyMultiple(users, notification) {
     // Note that async functions return a promise
     const promises = users.map(async (user) => {
-      const cNotification = JSON.parse(JSON.stringify(notification));
+      const cNotification = lodash.cloneDeep(notification);
       cNotification.user = user;
       const result = await Notification.create(cNotification);
       return result;
