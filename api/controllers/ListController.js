@@ -122,6 +122,18 @@ module.exports = {
   async update(request) {
     HelperService.removeForbiddenAttributes(List, request, ['names']);
 
+    const criteriaAll = { };
+    criteriaAll[`${request.payload.type}s`] = { $elemMatch: { list: request.params.id, deleted: false } };
+    const criteriaVisible = { };
+    criteriaVisible[`${request.payload.type}s`] = { $elemMatch: { list: request.params.id, deleted: false, pending: false } };
+    criteriaVisible.authOnly = false;
+    const [numberTotal, numberVisible] = await Promise.all([
+      User.countDocuments(criteriaAll),
+      User.countDocuments(criteriaVisible),
+    ]);
+    request.payload.count = numberTotal;
+    request.payload.countVisible = numberVisible;
+
     const newlist = await List.findOneAndUpdate(
       { _id: request.params.id },
       request.payload,
