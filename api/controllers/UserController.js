@@ -502,17 +502,53 @@ module.exports = {
     // Update lastModified manually
     request.payload.lastModified = new Date();
     if (user.authOnly === false && request.payload.authOnly === true) {
-      // User is becoming visible. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, { $inc: { countVisible: 1 } });
-      }
-    }
-    if (user.authOnly === true && request.payload.authOnly === false) {
       // User is becoming invisible. Update lists count.
       const listIds = user.getListIds(true);
       if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, { $inc: { countVisible: -1 } });
+        await List.updateMany({ _id: { $in: listIds } }, {
+          $inc: {
+            countVerified: -1,
+            countUnverified: -1,
+          },
+        });
+      }
+    }
+    if (user.authOnly === true && request.payload.authOnly === false) {
+      // User is becoming visible. Update lists count.
+      const listIds = user.getListIds(true);
+      if (listIds.length) {
+        await List.updateMany({ _id: { $in: listIds } }, {
+          $inc: {
+            countVerified: 1,
+            countUnverified: 1,
+          },
+        });
+      }
+    }
+    if (user.hidden === false && request.payload.hidden === true) {
+      // User is being flagged. Update lists count.
+      const listIds = user.getListIds(true);
+      if (listIds.length) {
+        await List.updateMany({ _id: { $in: listIds } }, {
+          $inc: {
+            countManager: -1,
+            countVerified: -1,
+            countUnverified: -1,
+          },
+        });
+      }
+    }
+    if (user.hidden === true && request.payload.hidden === false) {
+      // User is being unflagged. Update lists count.
+      const listIds = user.getListIds(true);
+      if (listIds.length) {
+        await List.updateMany({ _id: { $in: listIds } }, {
+          $inc: {
+            countManager: 1,
+            countVerified: 1,
+            countUnverified: 1,
+          },
+        });
       }
     }
     user = await User
@@ -531,7 +567,12 @@ module.exports = {
         // User is becoming visible. Update lists count.
         const listIds = user.getListIds(true);
         if (listIds.length) {
-          await List.updateMany({ _id: { $in: listIds } }, { $inc: { countVisible: 1 } });
+          promises.push(List.updateMany({ _id: { $in: listIds } }, {
+            $inc: {
+              countVerified: 1,
+              countUnverified: 1,
+            },
+          }));
         }
         promises.push(user.save());
         if (!user.hidden) {
@@ -785,6 +826,13 @@ module.exports = {
       record.verifiedOn = new Date();
     }
     record.expires = new Date(0, 0, 1, 0, 0, 0);
+    if (record.is_orphan === true || record.is_ghost === true) {
+      // User is not an orphan anymore. Update lists count.
+      const listIds = record.getListIds(true);
+      if (listIds.length) {
+        await List.updateMany({ _id: { $in: listIds } }, { $inc: { countUnverified: 1 } });
+      }
+    }
     record.is_orphan = false;
     record.is_ghost = false;
     record.lastPasswordReset = new Date();

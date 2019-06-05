@@ -76,8 +76,18 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
   const promises = [];
   promises.push(user.save());
   list.count += 1;
-  if (!user.authOnly && !payload.pending) {
-    list.countVisible += 1;
+  if (user.authOnly && !user.hidden) {
+    list.countManager += 1;
+  }
+  if (!user.authOnly && !user.hidden) {
+    if (!user.is_orphan && !user.is_ghost) {
+      list.countManager += 1;
+      list.countVerified += 1;
+      list.countUnverified += 1;
+    } else {
+      list.countManager += 1;
+      list.countVerified += 1;
+    }
   }
   promises.push(list.save());
   // Notify list managers of the checkin
@@ -188,11 +198,6 @@ module.exports = {
     const [user, list] = await Promise.all(promises);
     if (listuser.pending === true && request.payload.pending === false) {
       const promises2 = [];
-      // Increment the number of visible users
-      if (user.authOnly === false) {
-        list.countVisible += 1;
-        promises2.push(list.save());
-      }
       // Send a notification to inform user that his checkin is not pending anymore
       const notification = {
         type: 'approved_checkin',
@@ -234,8 +239,18 @@ module.exports = {
     const list = await List.findOne({ _id: lu.list });
     const promises = [];
     list.count -= 1;
-    if (!user.authOnly) {
-      list.countVisible -= 1;
+    if (user.authOnly && !user.hidden) {
+      list.countManager -= 1;
+    }
+    if (!user.authOnly && !user.hidden) {
+      if (!user.is_orphan && !user.is_ghost) {
+        list.countManager -= 1;
+        list.countVerified -= 1;
+        list.countUnverified -= 1;
+      } else {
+        list.countManager -= 1;
+        list.countVerified -= 1;
+      }
     }
     promises.push(list.save());
     promises.push(user.save());

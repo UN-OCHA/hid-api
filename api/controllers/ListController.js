@@ -35,8 +35,14 @@ module.exports = {
       options.sort = 'name';
     }
 
-    if (options.sort === '-count' && !request.auth.credentials.is_admin && !request.auth.credentials.isManager) {
-      options.sort = '-countVisible';
+    if (options.sort === '-count' && !request.auth.credentials.is_admin) {
+      if (request.auth.credentials.isManager) {
+        options.sort = '-countManager';
+      } else if (request.auth.verified) {
+        options.sort = '-countVerified';
+      } else {
+        options.sort = '-countUnverified';
+      }
     }
 
     // Search with contains when searching in name or label
@@ -77,10 +83,7 @@ module.exports = {
       out.name = result.translatedAttribute('names', reqLanguage);
       out.acronym = result.translatedAttribute('acronyms', reqLanguage);
       out.visible = result.isVisibleTo(request.auth.credentials);
-      if (!request.auth.credentials.is_admin && !request.auth.credentials.isManager) {
-        out.count = out.countVisible;
-      }
-      delete out.countVisible;
+      out.count = result.getCount();
       return out;
     }
     options.populate = [{ path: 'owner', select: '_id name' }];
@@ -110,10 +113,7 @@ module.exports = {
       if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('acronyms') !== -1)) {
         tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
       }
-      if (!request.auth.credentials.is_admin && !request.auth.credentials.isManager) {
-        tmp.count = tmp.countVisible;
-      }
-      delete tmp.countVisible;
+      tmp.count = list.getCount();
       out.push(tmp);
     }
     return reply.response(out).header('X-Total-Count', number);
@@ -122,23 +122,10 @@ module.exports = {
   async update(request) {
     HelperService.removeForbiddenAttributes(List, request, ['names']);
 
-    const criteriaAll = { };
-    criteriaAll[`${request.payload.type}s`] = { $elemMatch: { list: request.params.id, deleted: false } };
-    const criteriaVisible = { };
-    criteriaVisible[`${request.payload.type}s`] = { $elemMatch: { list: request.params.id, deleted: false, pending: false } };
-    criteriaVisible.authOnly = false;
-    const [numberTotal, numberVisible] = await Promise.all([
-      User.countDocuments(criteriaAll),
-      User.countDocuments(criteriaVisible),
-    ]);
-    request.payload.count = numberTotal;
-    request.payload.countVisible = numberVisible;
-
-    const newlist = await List.findOneAndUpdate(
-      { _id: request.params.id },
-      request.payload,
-      { runValidators: true, new: true },
-    );
+    const list = await List.findById(request.params.id);
+    const newlist = _.merge(list, request.payload);
+    await newlist.computeCounts();
+    await newlist.save();
     const payloadManagers = [];
     if (request.payload.managers) {
       request.payload.managers.forEach((man) => {

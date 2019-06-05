@@ -9,23 +9,11 @@ const { logger } = config;
 const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
 mongoose.connect(store.uri, store.options);
 
-const User = require('../models/User');
 const List = require('../models/List');
 
 async function setListCount(list) {
-  const criteriaAll = { };
-  criteriaAll[`${list.type}s`] = { $elemMatch: { list: list._id, deleted: false } };
-  const criteriaVisible = { };
-  criteriaVisible[`${list.type}s`] = { $elemMatch: { list: list._id, deleted: false, pending: false } };
-  criteriaVisible.authOnly = false;
-  const [numberTotal, numberVisible] = await Promise.all([
-    User.countDocuments(criteriaAll),
-    User.countDocuments(criteriaVisible),
-  ]);
-  const flist = list;
-  flist.count = numberTotal;
-  flist.countVisible = numberVisible;
-  return flist.save();
+  await list.computeCounts();
+  return list.save();
 }
 
 async function setListCounts() {

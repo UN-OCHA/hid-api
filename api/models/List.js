@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 const languages = ['en', 'fr', 'es'];
 const isHTML = require('is-html');
+const User = require('./User');
 
 /**
  * @module List
@@ -123,8 +124,19 @@ const ListSchema = new Schema({
     readonly: true,
   },
 
-  // Number of contacts in the list with authOnly = false
-  countVisible: {
+  countManager: {
+    type: Number,
+    default: 0,
+    readonly: true,
+  },
+
+  countVerified: {
+    type: Number,
+    default: 0,
+    readonly: true,
+  },
+
+  countUnverified: {
     type: Number,
     default: 0,
     readonly: true,
@@ -271,6 +283,55 @@ ListSchema.methods = {
     }
     const singularAttr = attr.substr(-1);
     return this[singularAttr];
+  },
+
+  getCount(user) {
+    if (user.is_admin) {
+      return this.count;
+    }
+    if (user.isManager) {
+      return this.countManager;
+    }
+    if (user.verified) {
+      return this.countVerified;
+    }
+    if (!user.verified) {
+      return this.countUnverified;
+    }
+    return 0;
+  },
+
+  async computeCounts() {
+    const criteriaAll = { };
+    criteriaAll[`${this.type}s`] = { $elemMatch: { list: this._id, deleted: false } };
+    const criteriaManager = { };
+    criteriaManager[`${this.type}s`] = { $elemMatch: { list: this._id, deleted: false } };
+    criteriaManager.hidden = false;
+    const criteriaVerified = { };
+    criteriaVerified[`${this.type}s`] = { $elemMatch: { list: this._id, deleted: false } };
+    criteriaVerified.hidden = false;
+    criteriaVerified.authOnly = false;
+    const criteriaUnverified = { };
+    criteriaUnverified[`${this.type}s`] = { $elemMatch: { list: this._id, deleted: false } };
+    criteriaUnverified.hidden = false;
+    criteriaUnverified.authOnly = false;
+    criteriaUnverified.is_orphan = false;
+    criteriaUnverified.is_ghost = false;
+    /* const criteriaPending = { };
+    criteriaVisible[`${list.type}s`] = { $elemMatch: {
+      list: list._id, deleted: false, pending: true
+    } };
+    criteriaVisible.authOnly = false; */
+    const [count, countManager, countVerified, countUnverified] = await Promise.all([
+      User.countDocuments(criteriaAll),
+      User.countDocuments(criteriaManager),
+      User.countDocuments(criteriaVerified),
+      User.countDocuments(criteriaUnverified),
+    ]);
+    this.count = count;
+    this.countManager = countManager;
+    this.countVerified = countVerified;
+    this.countUnverified = countUnverified;
   },
 };
 
