@@ -83,7 +83,7 @@ module.exports = {
       out.name = result.translatedAttribute('names', reqLanguage);
       out.acronym = result.translatedAttribute('acronyms', reqLanguage);
       out.visible = result.isVisibleTo(request.auth.credentials);
-      out.count = result.getCount();
+      out.count = result.getCount(request.auth.credentials);
       return out;
     }
     options.populate = [{ path: 'owner', select: '_id name' }];
@@ -113,7 +113,7 @@ module.exports = {
       if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('acronyms') !== -1)) {
         tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
       }
-      tmp.count = list.getCount();
+      tmp.count = list.getCount(request.auth.credentials);
       out.push(tmp);
     }
     return reply.response(out).header('X-Total-Count', number);
