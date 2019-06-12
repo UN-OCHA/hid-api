@@ -402,7 +402,11 @@ module.exports = {
   async verificationExpiryEmail(request, reply) {
     const current = Date.now();
     const oneYear = new Date(current - 358 * 24 * 3600 * 1000);
-    const cursor = User.find({ verified: true, verifiedOn: { $lte: oneYear } }).cursor();
+    const cursor = User.find({
+      verified: true,
+      verifiedOn: { $lte: oneYear },
+      verified_by: { $ne: hidAccount },
+    }).cursor();
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
       await EmailService.sendVerificationExpiryEmail(user);
@@ -425,6 +429,7 @@ module.exports = {
       verified: true,
       verifiedOn: { $lte: oneYear },
       verificationExpiryEmail: true,
+      verified_by: { $ne: hidAccount },
     }).cursor();
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
