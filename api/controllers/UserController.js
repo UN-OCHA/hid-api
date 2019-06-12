@@ -974,6 +974,10 @@ module.exports = {
     }
     record.emails.splice(index, 1);
     record.lastModified = new Date();
+    const stillVerified = await record.canBeVerifiedAutomatically();
+    if (!stillVerified) {
+      record.verified = false;
+    }
     await record.save();
     await OutlookService.synchronizeUser(record);
     return record;
