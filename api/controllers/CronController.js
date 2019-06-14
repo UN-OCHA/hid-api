@@ -50,8 +50,8 @@ module.exports = {
       {
         $set: {
           verified_by: new ObjectId(hidAccount),
-        }
-      }
+        },
+      },
     );
     logger.info('Deleting expired Oauth Tokens');
     const now = new Date();
@@ -270,8 +270,7 @@ module.exports = {
             },
           );
         }
-      }
-      catch (err) {
+      } catch (err) {
         logger.error(err);
       }
     }
@@ -300,8 +299,7 @@ module.exports = {
             },
           );
         }
-      }
-      catch (err) {
+      } catch (err) {
         logger.error(err);
       }
     }
@@ -422,8 +420,7 @@ module.exports = {
             await user.save();
           }
         }
-      }
-      catch (err) {
+      } catch (err) {
         logger.error(err);
       }
     }
