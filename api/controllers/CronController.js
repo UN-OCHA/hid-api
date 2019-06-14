@@ -43,6 +43,16 @@ module.exports = {
   },
 
   async deleteExpiredTokens(request, reply) {
+    // Temporary: make sure verified_by are only ObjectIds
+    const ObjectId = require('mongoose').Types.ObjectId;
+    User.collection.updateMany(
+      { verified_by: hidAccount },
+      {
+        $set: {
+          verified_by: new ObjectId(hidAccount),
+        }
+      }
+    );
     logger.info('Deleting expired Oauth Tokens');
     const now = new Date();
     await OauthToken.remove({ expires: { $lt: now } });
