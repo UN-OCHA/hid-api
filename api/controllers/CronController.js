@@ -219,15 +219,21 @@ module.exports = {
     }).cursor();
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      await EmailService.sendForcedPasswordResetAlert(user);
-      await User.collection.update(
-        { _id: user._id },
-        {
-          $set: {
-            passwordResetAlert30days: true,
-          },
-        },
-      );
+      try {
+        if (user.email) {
+          await EmailService.sendForcedPasswordResetAlert(user);
+          await User.collection.update(
+            { _id: user._id },
+            {
+              $set: {
+                passwordResetAlert30days: true,
+              },
+            },
+          );
+        }
+      } catch (err) {
+        logger.error(err);
+      }
     }
     return reply.response().code(204);
   },
@@ -242,15 +248,22 @@ module.exports = {
     }).cursor();
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      await EmailService.sendForcedPasswordResetAlert7(user);
-      await User.collection.update(
-        { _id: user._id },
-        {
-          $set: {
-            passwordResetAlert7days: true,
-          },
-        },
-      );
+      try {
+        if (user.email) {
+          await EmailService.sendForcedPasswordResetAlert7(user);
+          await User.collection.update(
+            { _id: user._id },
+            {
+              $set: {
+                passwordResetAlert7days: true,
+              },
+            },
+          );
+        }
+      }
+      catch (err) {
+        logger.error(err);
+      }
     }
     return reply.response().code(204);
   },
@@ -265,15 +278,22 @@ module.exports = {
     }).cursor();
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      await EmailService.sendForcedPasswordReset(user);
-      await User.collection.update(
-        { _id: user._id },
-        {
-          $set: {
-            passwordResetAlert: true,
-          },
-        },
-      );
+      try {
+        if (user.email) {
+          await EmailService.sendForcedPasswordReset(user);
+          await User.collection.update(
+            { _id: user._id },
+            {
+              $set: {
+                passwordResetAlert: true,
+              },
+            },
+          );
+        }
+      }
+      catch (err) {
+        logger.error(err);
+      }
     }
     return reply.response().code(204);
   },
@@ -355,45 +375,46 @@ module.exports = {
     const cursor = User.find({}).cursor();
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      const promises = [];
-      user.emails.forEach((email) => {
-        if (email.validated) {
-          promises.push(user.isVerifiableEmail(email.email));
-        }
-      });
-      const domains = await Promise.all(promises);
-      for (const domain in domains) {
-        if (domain) {
-          user.verified = true;
-          user.verified_by = hidAccount;
-          if (!user.verified) {
-            user.verifiedOn = new Date();
+      try {
+        const promises = [];
+        user.emails.forEach((email) => {
+          if (email.validated) {
+            promises.push(user.isVerifiableEmail(email.email));
           }
-          // If the domain is associated to a list, check user in this list automatically
-          if (domain.list) {
-            if (!user.organizations) {
-              user.organizations = [];
+        });
+        const domains = await Promise.all(promises);
+        for (const domain in domains) {
+          if (domain) {
+            user.verified = true;
+            user.verified_by = hidAccount;
+            if (!user.verified) {
+              user.verifiedOn = new Date();
             }
-
-            let isCheckedIn = false;
-            // Make sure user is not already checked in this list
-            for (let i = 0, len = user.organizations.length; i < len; i += 1) {
-              if (user.organizations[i].list.equals(domain.list._id)
-                && user.organizations[i].deleted === false) {
-                isCheckedIn = true;
+            // If the domain is associated to a list, check user in this list automatically
+            if (domain.list) {
+              if (!user.organizations) {
+                user.organizations = [];
               }
-            }
 
-            if (!isCheckedIn) {
-              try {
+              let isCheckedIn = false;
+              // Make sure user is not already checked in this list
+              for (let i = 0, len = user.organizations.length; i < len; i += 1) {
+                if (user.organizations[i].list.equals(domain.list._id)
+                  && user.organizations[i].deleted === false) {
+                  isCheckedIn = true;
+                }
+              }
+
+              if (!isCheckedIn) {
                 await ListUserController.checkinHelper(domain.list, user, true, 'organizations', user);
-              } catch (err) {
-                logger.error(err);
               }
             }
+            await user.save();
           }
-          await user.save();
         }
+      }
+      catch (err) {
+        logger.error(err);
       }
     }
     return reply.response().code(204);
@@ -410,15 +431,21 @@ module.exports = {
     }).cursor();
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      await EmailService.sendVerificationExpiryEmail(user);
-      await User.collection.update(
-        { _id: user._id },
-        {
-          $set: {
-            verificationExpiryEmail: true,
-          },
-        },
-      );
+      try {
+        if (user.email) {
+          await EmailService.sendVerificationExpiryEmail(user);
+          await User.collection.update(
+            { _id: user._id },
+            {
+              $set: {
+                verificationExpiryEmail: true,
+              },
+            },
+          );
+        }
+      } catch (err) {
+        logger.error(err);
+      }
     }
     return reply.response().code(204);
   },
