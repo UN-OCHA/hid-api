@@ -406,6 +406,7 @@ module.exports = {
       verified: true,
       verifiedOn: { $lte: oneYear },
       verified_by: { $ne: hidAccount },
+      verificationExpiryEmail: false,
     }).cursor();
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {

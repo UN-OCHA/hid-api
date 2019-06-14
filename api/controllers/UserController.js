@@ -466,6 +466,7 @@ module.exports = {
     // Make sure user is verified if he is an admin or a manager
     if (request.payload.is_admin || request.payload.isManager) {
       request.payload.verified = true;
+      request.payload.verificationExpiryEmail = false;
     }
 
     // Check old password
@@ -477,6 +478,7 @@ module.exports = {
     if (request.payload.verified && !user.verified) {
       request.payload.verified_by = request.auth.credentials._id;
       request.payload.verifiedOn = new Date();
+      request.payload.verificationExpiryEmail = false;
     }
     if (request.payload.old_password && request.payload.new_password) {
       logger.warn('Updating user password', { request, security: true });
@@ -689,6 +691,7 @@ module.exports = {
         record.verified = true;
         record.verified_by = hidAccount;
         record.verifiedOn = new Date();
+        record.verificationExpiryEmail = false;
         // If the domain is associated to a list, check user in this list automatically
         if (domain.list) {
           if (!record.organizations) {
@@ -824,6 +827,7 @@ module.exports = {
       record.verified = true;
       record.verified_by = hidAccount;
       record.verifiedOn = new Date();
+      record.verificationExpiryEmail = false;
     }
     record.expires = new Date(0, 0, 1, 0, 0, 0);
     if (record.is_orphan === true || record.is_ghost === true) {
