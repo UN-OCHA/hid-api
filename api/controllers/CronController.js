@@ -45,7 +45,7 @@ module.exports = {
   async deleteExpiredTokens(request, reply) {
     // Temporary: make sure verified_by are only ObjectIds
     const ObjectId = require('mongoose').Types.ObjectId;
-    User.collection.updateMany(
+    await User.collection.updateMany(
       { verified_by: hidAccount },
       {
         $set: {
@@ -220,19 +220,19 @@ module.exports = {
   },
 
   async forcedResetPasswordAlert(request, reply) {
-    const current = Date.now();
-    const fiveMonths = new Date(current - 5 * 30 * 24 * 3600 * 1000);
-    const cursor = User.find({
-      totp: false,
-      passwordResetAlert30days: false,
-      $or: [{ lastPasswordReset: { $lte: fiveMonths } }, { lastPasswordReset: null }],
-    }).cursor();
+    try {
+      const current = Date.now();
+      const fiveMonths = new Date(current - 5 * 30 * 24 * 3600 * 1000);
+      const cursor = User.find({
+        totp: false,
+        passwordResetAlert30days: false,
+        $or: [{ lastPasswordReset: { $lte: fiveMonths } }, { lastPasswordReset: null }],
+      }).cursor({ noCursorTimeout: true });
 
-    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      try {
+      for (let user = await cursor.next(); user != null; user = await cursor.next()) {
         if (user.email) {
           await EmailService.sendForcedPasswordResetAlert(user);
-          await User.collection.update(
+          await User.collection.updateOne(
             { _id: user._id },
             {
               $set: {
@@ -241,27 +241,27 @@ module.exports = {
             },
           );
         }
-      } catch (err) {
-        logger.error(err);
       }
+    } catch (err) {
+      logger.error(err);
     }
     return reply.response().code(204);
   },
 
   async forcedResetPasswordAlert7(request, reply) {
-    const current = Date.now();
-    const fiveMonthsAnd23Days = new Date(current - 173 * 24 * 3600 * 1000);
-    const cursor = User.find({
-      totp: false,
-      passwordResetAlert7days: false,
-      $or: [{ lastPasswordReset: { $lte: fiveMonthsAnd23Days } }, { lastPasswordReset: null }],
-    }).cursor();
+    try {
+      const current = Date.now();
+      const fiveMonthsAnd23Days = new Date(current - 173 * 24 * 3600 * 1000);
+      const cursor = User.find({
+        totp: false,
+        passwordResetAlert7days: false,
+        $or: [{ lastPasswordReset: { $lte: fiveMonthsAnd23Days } }, { lastPasswordReset: null }],
+      }).cursor({ noCursorTimeout: true });
 
-    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      try {
+      for (let user = await cursor.next(); user != null; user = await cursor.next()) {
         if (user.email) {
           await EmailService.sendForcedPasswordResetAlert7(user);
-          await User.collection.update(
+          await User.collection.updateOne(
             { _id: user._id },
             {
               $set: {
@@ -270,27 +270,27 @@ module.exports = {
             },
           );
         }
-      } catch (err) {
-        logger.error(err);
       }
+    } catch (err) {
+      logger.error(err);
     }
     return reply.response().code(204);
   },
 
   async forceResetPassword(request, reply) {
-    const current = Date.now();
-    const sixMonths = new Date(current - 6 * 30 * 24 * 3600 * 1000);
-    const cursor = User.find({
-      totp: false,
-      passwordResetAlert: false,
-      $or: [{ lastPasswordReset: { $lte: sixMonths } }, { lastPasswordReset: null }],
-    }).cursor();
+    try {
+      const current = Date.now();
+      const sixMonths = new Date(current - 6 * 30 * 24 * 3600 * 1000);
+      const cursor = User.find({
+        totp: false,
+        passwordResetAlert: false,
+        $or: [{ lastPasswordReset: { $lte: sixMonths } }, { lastPasswordReset: null }],
+      }).cursor({ noCursorTimeout: true });
 
-    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      try {
+      for (let user = await cursor.next(); user != null; user = await cursor.next()) {
         if (user.email) {
           await EmailService.sendForcedPasswordReset(user);
-          await User.collection.update(
+          await User.collection.updateOne(
             { _id: user._id },
             {
               $set: {
@@ -299,9 +299,9 @@ module.exports = {
             },
           );
         }
-      } catch (err) {
-        logger.error(err);
       }
+    } catch (err) {
+      logger.error(err);
     }
     return reply.response().code(204);
   },
@@ -379,11 +379,11 @@ module.exports = {
   } */
 
   async verifyAutomatically(request, reply) {
-    logger.info('automatically verify users');
-    const cursor = User.find({}).cursor();
+    try {
+      logger.info('automatically verify users');
+      const cursor = User.find({}).cursor({ noCursorTimeout: true });
 
-    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      try {
+      for (let user = await cursor.next(); user != null; user = await cursor.next()) {
         const promises = [];
         user.emails.forEach((email) => {
           if (email.validated) {
@@ -420,25 +420,25 @@ module.exports = {
             await user.save();
           }
         }
-      } catch (err) {
-        logger.error(err);
       }
+    } catch (err) {
+      logger.error(err);
     }
     return reply.response().code(204);
   },
 
   async verificationExpiryEmail(request, reply) {
-    const current = Date.now();
-    const oneYear = new Date(current - 358 * 24 * 3600 * 1000);
-    const cursor = User.find({
-      verified: true,
-      verifiedOn: { $lte: oneYear },
-      verified_by: { $ne: hidAccount },
-      verificationExpiryEmail: false,
-    }).cursor();
+    try {
+      const current = Date.now();
+      const oneYear = new Date(current - 358 * 24 * 3600 * 1000);
+      const cursor = User.find({
+        verified: true,
+        verifiedOn: { $lte: oneYear },
+        verified_by: { $ne: hidAccount },
+        verificationExpiryEmail: false,
+      }).cursor({ noCursorTimeout: true });
 
-    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      try {
+      for (let user = await cursor.next(); user != null; user = await cursor.next()) {
         if (user.email) {
           await EmailService.sendVerificationExpiryEmail(user);
           await User.collection.update(
@@ -450,34 +450,38 @@ module.exports = {
             },
           );
         }
-      } catch (err) {
-        logger.error(err);
       }
+    } catch (err) {
+      logger.error(err);
     }
     return reply.response().code(204);
   },
 
   async unverifyAfterOneYear(request, reply) {
-    const current = Date.now();
-    const oneYear = new Date(current - 365 * 24 * 3600 * 1000);
-    const cursor = User.find({
-      verified: true,
-      verifiedOn: { $lte: oneYear },
-      verificationExpiryEmail: true,
-      verified_by: { $ne: hidAccount },
-    }).cursor();
+    try {
+      const current = Date.now();
+      const oneYear = new Date(current - 365 * 24 * 3600 * 1000);
+      const cursor = User.find({
+        verified: true,
+        verifiedOn: { $lte: oneYear },
+        verificationExpiryEmail: true,
+        verified_by: { $ne: hidAccount },
+      }).cursor({ noCursorTimeout: true });
 
-    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      await User.collection.update(
-        { _id: user._id },
-        {
-          $set: {
-            verified: false,
-            verifiedOn: new Date(0, 0, 1, 0, 0, 0),
-            verified_by: null,
+      for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+        await User.collection.update(
+          { _id: user._id },
+          {
+            $set: {
+              verified: false,
+              verifiedOn: new Date(0, 0, 1, 0, 0, 0),
+              verified_by: null,
+            },
           },
-        },
-      );
+        );
+      }
+    } catch (err) {
+      logger.error(err);
     }
     return reply.response().code(204);
   },

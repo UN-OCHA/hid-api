@@ -17,12 +17,12 @@ async function setListCount(list) {
 }
 
 async function setListCounts() {
-  const cursor = List.find({ deleted: false }).cursor();
-  const promises = [];
-  for (let list = await cursor.next(); list != null; list = await cursor.next()) {
-    promises.push(setListCount(list));
-  }
   try {
+    const cursor = List.find({ deleted: false }).cursor({ noCursorTimeout: true });
+    const promises = [];
+    for (let list = await cursor.next(); list != null; list = await cursor.next()) {
+      promises.push(setListCount(list));
+    }
     await Promise.all(promises);
   } catch (err) {
     logger.error(err);
