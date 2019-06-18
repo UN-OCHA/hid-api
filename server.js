@@ -4,13 +4,12 @@
  * Start up the Trails Application.Test
  */
 
-
+const newrelic = require('newrelic');
 const path = require('path');
 const _ = require('lodash');
 const mongoose = require('mongoose');
 const Boom = require('boom');
 const hapi = require('hapi');
-const newrelic = require('newrelic');
 const ejs = require('ejs');
 const app = require('./');
 const config = require('./config/env')[process.env.NODE_ENV];

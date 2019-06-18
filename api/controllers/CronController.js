@@ -43,16 +43,6 @@ module.exports = {
   },
 
   async deleteExpiredTokens(request, reply) {
-    // Temporary: make sure verified_by are only ObjectIds
-    const ObjectId = require('mongoose').Types.ObjectId;
-    await User.collection.updateMany(
-      { verified_by: hidAccount },
-      {
-        $set: {
-          verified_by: new ObjectId(hidAccount),
-        },
-      },
-    );
     logger.info('Deleting expired Oauth Tokens');
     const now = new Date();
     await OauthToken.remove({ expires: { $lt: now } });
@@ -71,20 +61,16 @@ module.exports = {
 
     const promises = [];
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      try {
-        if (user.shouldSendReminderUpdate()) {
-          promises.push(EmailService.sendReminderUpdate(user));
-          promises.push(User.collection.update(
-            { _id: user._id },
-            {
-              $set: {
-                remindedUpdate: new Date(),
-              },
+      if (user.shouldSendReminderUpdate()) {
+        promises.push(EmailService.sendReminderUpdate(user));
+        promises.push(User.collection.update(
+          { _id: user._id },
+          {
+            $set: {
+              remindedUpdate: new Date(),
             },
-          ));
-        }
-      } catch (err) {
-        logger.error(err);
+          },
+        ));
       }
     }
     await Promise.all(promises);
@@ -93,7 +79,7 @@ module.exports = {
 
   // Send reminder checkout email 48 hours before
   // the departure date
-  sendReminderCheckoutEmails(request, reply) {
+  async sendReminderCheckoutEmails(request, reply) {
     logger.info('Sending reminder checkout emails to contacts');
     const now = new Date();
     let populate = '';
@@ -108,34 +94,28 @@ module.exports = {
     });
 
     const response = reply.response().code(204);
-    const cursor = User.find(criteria).populate(populate).cursor();
+    const cursor = User.find(criteria).populate(populate).cursor({ noCursorTimeout: true });
 
-    const promise = new Promise((resolve) => {
-      resolve(response);
-    });
-
-    promise.then(async () => {
-      for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-        for (const listAttribute of listAttributes) {
-          for (const lu of user[listAttribute]) {
-            try {
-              if (lu.checkoutDate && lu.remindedCheckout === false && !lu.deleted) {
-                const dep = new Date(lu.checkoutDate);
-                if (dep.valueOf() - now.valueOf() < 48 * 3600 * 1000) {
-                  const notification = { type: 'reminder_checkout', user, params: { listUser: lu, list: lu.list } };
-                  await NotificationService.send(notification);
-                  lu.remindedCheckout = true;
-                  await user.save();
-                }
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      for (const listAttribute of listAttributes) {
+        for (const lu of user[listAttribute]) {
+          try {
+            if (lu.checkoutDate && lu.remindedCheckout === false && !lu.deleted) {
+              const dep = new Date(lu.checkoutDate);
+              if (dep.valueOf() - now.valueOf() < 48 * 3600 * 1000) {
+                const notification = { type: 'reminder_checkout', user, params: { listUser: lu, list: lu.list } };
+                await NotificationService.send(notification);
+                lu.remindedCheckout = true;
+                await user.save();
               }
-            } catch (err) {
-              logger.error(err);
             }
+          } catch (err) {
+            logger.error(err);
           }
         }
       }
-      logger.info('Finished sending reminder checkout emails');
-    });
+    }
+    logger.info('Finished sending reminder checkout emails');
 
     return promise;
   },
@@ -155,7 +135,7 @@ module.exports = {
     });
 
     const now = Date.now();
-    const cursor = User.find(criteria).populate(populate).cursor();
+    const cursor = User.find(criteria).populate(populate).cursor({ noCursorTimeout: true });
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
       for (const listAttribute of listAttributes) {
@@ -184,39 +164,33 @@ module.exports = {
     const cursor = User
       .find({ 'operations.remindedCheckin': false })
       .populate('operations.list')
-      .cursor();
+      .cursor({ noCursorTimeout: true });
 
-    const promise = new Promise((resolve) => {
-      resolve(response);
-    });
+    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
+      for (const lu of user.operations) {
+        const d = new Date();
+        const offset = d.valueOf() - lu.valueOf();
 
-    promise.then(async () => {
-      for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-        for (const lu of user.operations) {
-          const d = new Date();
-          const offset = d.valueOf() - lu.valueOf();
-
-          if (!lu.remindedCheckin && offset > 48 * 3600 * 1000
-            && offset < 72 * 3600 * 1000
-            && !lu.deleted) {
-            const hasLocalPhoneNumber = user.hasLocalPhoneNumber(lu.list.metadata.country.pcode);
-            const inCountry = await user.isInCountry(lu.list.metadata.country.pcode);
-            const notification = {
-              type: 'reminder_checkin',
-              user,
-              params: {
-                listUser: lu, list: lu.list, hasLocalPhoneNumber, inCountry,
-              },
-            };
-            await NotificationService.send(notification);
-            lu.remindedCheckin = true;
-            await user.save();
-          }
+        if (!lu.remindedCheckin && offset > 48 * 3600 * 1000
+          && offset < 72 * 3600 * 1000
+          && !lu.deleted) {
+          const hasLocalPhoneNumber = user.hasLocalPhoneNumber(lu.list.metadata.country.pcode);
+          const inCountry = await user.isInCountry(lu.list.metadata.country.pcode);
+          const notification = {
+            type: 'reminder_checkin',
+            user,
+            params: {
+              listUser: lu, list: lu.list, hasLocalPhoneNumber, inCountry,
+            },
+          };
+          await NotificationService.send(notification);
+          lu.remindedCheckin = true;
+          await user.save();
         }
       }
-      logger.info('Finished sending reminder checkin emails');
-    });
-    return promise;
+    }
+    logger.info('Finished sending reminder checkin emails');
+    return reply.response().code(204);
   },
 
   async forcedResetPasswordAlert(request, reply) {
