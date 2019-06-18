@@ -1,15 +1,15 @@
 /* eslint no-await-in-loop: "off", no-restricted-syntax: "off" */
 
 const mongoose = require('mongoose');
-const app = require('../../');
-const config = require('../../config/env')[process.env.NODE_ENV];
+const app = require('../');
+const config = require('../config/env')[process.env.NODE_ENV];
 
 const { logger } = config;
 
 const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
 mongoose.connect(store.uri, store.options);
 
-const List = require('../models/List');
+const List = require('../api/models/List');
 
 async function setListCount(list) {
   await list.computeCounts();
@@ -24,8 +24,10 @@ async function setListCounts() {
       promises.push(setListCount(list));
     }
     await Promise.all(promises);
+    process.exit();
   } catch (err) {
     logger.error(err);
+    process.exit();
   }
 }
 
