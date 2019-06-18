@@ -36,4 +36,9 @@ async function run() {
   process.exit();
 }
 
-run();
+(async function () {
+  await run();
+})().catch(e => {
+  console.log(e);
+  process.exit(1);
+})

@@ -7,6 +7,14 @@ const { logger } = config;
 const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
 mongoose.connect(store.uri, store.options);
 
+const listAttributes = [
+  'lists',
+  'operations',
+  'bundles',
+  'disasters',
+  'organizations',
+  'functional_roles',
+];
 const User = require('../api/models/User');
 const NotificationService = require('../api/services/NotificationService');
 
@@ -23,7 +31,6 @@ async function run() {
     populate += ` ${attr}.list`;
   });
 
-  const response = reply.response().code(204);
   const cursor = User.find(criteria).populate(populate).cursor({ noCursorTimeout: true });
 
   for (let user = await cursor.next(); user != null; user = await cursor.next()) {
@@ -48,4 +55,9 @@ async function run() {
   process.exit();
 }
 
-run();
+(async function () {
+  await run();
+})().catch(e => {
+  console.log(e);
+  process.exit(1);
+})

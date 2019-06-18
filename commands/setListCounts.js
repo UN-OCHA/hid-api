@@ -16,19 +16,19 @@ async function setListCount(list) {
   return list.save();
 }
 
-async function setListCounts() {
-  try {
-    const cursor = List.find({ deleted: false }).cursor({ noCursorTimeout: true });
-    const promises = [];
-    for (let list = await cursor.next(); list != null; list = await cursor.next()) {
-      promises.push(setListCount(list));
-    }
-    await Promise.all(promises);
-    process.exit();
-  } catch (err) {
-    logger.error(err);
-    process.exit();
+async function run() {
+  const cursor = List.find({ deleted: false }).cursor({ noCursorTimeout: true });
+  const promises = [];
+  for (let list = await cursor.next(); list != null; list = await cursor.next()) {
+    promises.push(setListCount(list));
   }
+  await Promise.all(promises);
+  process.exit();
 }
 
-setListCounts();
+(async function () {
+  await run();
+})().catch(e => {
+  console.log(e);
+  process.exit(1);
+})

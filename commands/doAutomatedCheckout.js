@@ -7,6 +7,14 @@ const { logger } = config;
 const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
 mongoose.connect(store.uri, store.options);
 
+const listAttributes = [
+  'lists',
+  'operations',
+  'bundles',
+  'disasters',
+  'organizations',
+  'functional_roles',
+];
 const User = require('../api/models/User');
 
 async function run() {
@@ -44,4 +52,9 @@ async function run() {
   process.exit();
 }
 
-run();
+(async function () {
+  await run();
+})().catch(e => {
+  console.log(e);
+  process.exit(1);
+})
