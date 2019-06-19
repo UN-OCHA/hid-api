@@ -1,8 +1,9 @@
+/* eslint no-await-in-loop: "off", no-restricted-syntax: "off" */
 const mongoose = require('mongoose');
 const app = require('../');
 const config = require('../config/env')[process.env.NODE_ENV];
 
-const { logger } = config;
+//const { logger } = config;
 
 const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
 mongoose.connect(store.uri, store.options);

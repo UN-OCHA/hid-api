@@ -93,7 +93,6 @@ module.exports = {
       populate += ` ${attr}.list`;
     });
 
-    const response = reply.response().code(204);
     const cursor = User.find(criteria).populate(populate).cursor({ noCursorTimeout: true });
 
     for (let user = await cursor.next(); user != null; user = await cursor.next()) {
@@ -116,8 +115,7 @@ module.exports = {
       }
     }
     logger.info('Finished sending reminder checkout emails');
-
-    return promise;
+    return reply.response().code(204);
   },
 
   // Automatically check user out maximum 24 hours after his departure date
@@ -159,8 +157,7 @@ module.exports = {
 
   async sendReminderCheckinEmails(request, reply) {
     logger.info('Sending reminder checkin emails to contacts');
-
-    const response = reply.response().code(204);
+    
     const cursor = User
       .find({ 'operations.remindedCheckin': false })
       .populate('operations.list')

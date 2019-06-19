@@ -1,3 +1,4 @@
+/* eslint no-await-in-loop: "off", no-restricted-syntax: "off" */
 const mongoose = require('mongoose');
 const app = require('../');
 const config = require('../config/env')[process.env.NODE_ENV];
