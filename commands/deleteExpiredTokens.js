@@ -1,4 +1,9 @@
 /* eslint no-await-in-loop: "off", no-restricted-syntax: "off" */
+
+/**
+ * @module deleteExpiredTokens
+ * @description Deletes the expired OAuth tokens from the database.
+ */
 const mongoose = require('mongoose');
 const app = require('../');
 const config = require('../config/env')[process.env.NODE_ENV];

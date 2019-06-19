@@ -1,4 +1,8 @@
 /* eslint no-await-in-loop: "off", no-restricted-syntax: "off" */
+/**
+ * @module doAutomatedCheckout
+ * @description Checks users out of lists automatically 24 hours after their set departure date.
+ */
 const mongoose = require('mongoose');
 const app = require('../');
 const config = require('../config/env')[process.env.NODE_ENV];

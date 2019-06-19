@@ -1,4 +1,10 @@
 /* eslint no-await-in-loop: "off", no-restricted-syntax: "off" */
+/**
+ * @module sendReminderCheckoutEmails
+ * @description Sends a reminder to users who are going to be checked out automatically 48 hours before
+ * the automated checkout happens.
+ */
+
 const mongoose = require('mongoose');
 const app = require('../');
 const config = require('../config/env')[process.env.NODE_ENV];

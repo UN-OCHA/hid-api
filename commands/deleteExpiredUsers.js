@@ -1,4 +1,8 @@
 /* eslint no-await-in-loop: "off", no-restricted-syntax: "off" */
+/**
+ * @module deleteExpiredUsers
+ * @description Deletes the expired users from the database.
+ */
 const mongoose = require('mongoose');
 const app = require('../');
 const config = require('../config/env')[process.env.NODE_ENV];

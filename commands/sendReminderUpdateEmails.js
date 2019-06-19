@@ -1,4 +1,8 @@
 /* eslint no-await-in-loop: "off", no-restricted-syntax: "off" */
+/**
+ * @module sendReminderUpdateEmails
+ * @description Sends a reminder to users who didn't update their profile in the last 6 months to update it.
+ */
 const mongoose = require('mongoose');
 const app = require('../');
 const config = require('../config/env')[process.env.NODE_ENV];
@@ -32,7 +36,7 @@ async function run() {
   for (let user = await cursor.next(); user != null; user = await cursor.next()) {
     if (user.shouldSendReminderUpdate()) {
       promises.push(EmailService.sendReminderUpdate(user));
-      promises.push(User.collection.update(
+      promises.push(User.collection.updateOne(
         { _id: user._id },
         {
           $set: {

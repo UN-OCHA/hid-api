@@ -1,4 +1,9 @@
 /* eslint no-await-in-loop: "off", no-restricted-syntax: "off" */
+/**
+ * @module verificationExpiryEmail
+ * @description Sends a verification expiry notification to users who have been verified manually
+ * 7 days before their verification expires.
+ */
 const mongoose = require('mongoose');
 const app = require('../');
 const config = require('../config/env')[process.env.NODE_ENV];

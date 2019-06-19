@@ -1,4 +1,8 @@
 /* eslint no-await-in-loop: "off", no-restricted-syntax: "off" */
+/**
+ * @module setListCounts
+ * @description Resets the list counters.
+ */
 
 const mongoose = require('mongoose');
 const app = require('../');

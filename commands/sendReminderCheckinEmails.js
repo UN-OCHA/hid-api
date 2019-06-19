@@ -1,4 +1,9 @@
 /* eslint no-await-in-loop: "off", no-restricted-syntax: "off" */
+/**
+ * @module sendReminderCheckinEmails
+ * @description Sends a notification to users who checked into a list more than 48 hours ago and didn't update their contact details.
+ */
+
 const mongoose = require('mongoose');
 const app = require('../');
 const config = require('../config/env')[process.env.NODE_ENV];
