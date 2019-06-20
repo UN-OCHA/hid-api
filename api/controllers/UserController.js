@@ -463,18 +463,12 @@ module.exports = {
       delete request.payload.password;
     }
 
-    // Make sure user is verified if he is an admin or a manager
-    if (request.payload.is_admin || request.payload.isManager) {
-      request.payload.verified = true;
-      request.payload.verificationExpiryEmail = false;
-    }
-
     // Check old password
     let user = await User.findOne({ _id: request.params.id });
     if (!user) {
       throw Boom.notFound();
     }
-    // If verifying user, set verified_by
+    // If verifying user, set verified_by and verificationExpiryEmail
     if (request.payload.verified && !user.verified) {
       request.payload.verified_by = request.auth.credentials._id;
       request.payload.verifiedOn = new Date();
