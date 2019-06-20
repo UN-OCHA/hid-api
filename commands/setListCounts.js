@@ -1,4 +1,5 @@
-/* eslint no-await-in-loop: "off", no-restricted-syntax: "off" */
+/* eslint no-await-in-loop: "off", no-restricted-syntax: "off", no-console: "off" */
+/* eslint func-names: "off" */
 /**
  * @module setListCounts
  * @description Resets the list counters.
@@ -6,9 +7,6 @@
 
 const mongoose = require('mongoose');
 const app = require('../');
-const config = require('../config/env')[process.env.NODE_ENV];
-
-const { logger } = config;
 
 const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
 mongoose.connect(store.uri, store.options);
@@ -32,7 +30,7 @@ async function run() {
 
 (async function () {
   await run();
-})().catch(e => {
+}()).catch((e) => {
   console.log(e);
   process.exit(1);
-})
+});

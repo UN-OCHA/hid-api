@@ -1,25 +1,16 @@
-/* eslint no-await-in-loop: "off", no-restricted-syntax: "off" */
+/* eslint no-await-in-loop: "off", no-restricted-syntax: "off", no-console: "off" */
+/* eslint func-names: "off" */
 /**
  * @module sendReminderUpdateEmails
- * @description Sends a reminder to users who didn't update their profile in the last 6 months to update it.
+ * @description Sends a reminder to users who didn't update their profile
+ * in the last 6 months to update it.
  */
 const mongoose = require('mongoose');
 const app = require('../');
-const config = require('../config/env')[process.env.NODE_ENV];
-
-const { logger } = config;
 
 const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
 mongoose.connect(store.uri, store.options);
 
-const listAttributes = [
-  'lists',
-  'operations',
-  'bundles',
-  'disasters',
-  'organizations',
-  'functional_roles',
-];
 const User = require('../api/models/User');
 const EmailService = require('../api/services/EmailService');
 
@@ -52,7 +43,7 @@ async function run() {
 
 (async function () {
   await run();
-})().catch(e => {
+}()).catch((e) => {
   console.log(e);
   process.exit(1);
-})
+});

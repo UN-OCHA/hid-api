@@ -157,7 +157,7 @@ module.exports = {
 
   async sendReminderCheckinEmails(request, reply) {
     logger.info('Sending reminder checkin emails to contacts');
-    
+
     const cursor = User
       .find({ 'operations.remindedCheckin': false })
       .populate('operations.list')

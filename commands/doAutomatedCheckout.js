@@ -1,4 +1,5 @@
-/* eslint no-await-in-loop: "off", no-restricted-syntax: "off" */
+/* eslint no-await-in-loop: "off", no-restricted-syntax: "off", no-console: "off" */
+/* eslint func-names: "off" */
 /**
  * @module doAutomatedCheckout
  * @description Checks users out of lists automatically 24 hours after their set departure date.
@@ -59,7 +60,7 @@ async function run() {
 
 (async function () {
   await run();
-})().catch(e => {
+}()).catch((e) => {
   console.log(e);
   process.exit(1);
-})
+});
