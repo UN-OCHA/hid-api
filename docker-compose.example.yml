@@ -1,5 +1,5 @@
 db:
-  image: unocha/alpine-mongo
+  image: unocha/mongo:4.0.5
   volumes:
     - ./db:/srv/db
   environment:
