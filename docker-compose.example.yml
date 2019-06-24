@@ -1,30 +1,35 @@
-db:
-  image: unocha/mongo:4.0.5
-  volumes:
-    - ./db:/srv/db
-  environment:
-    DNSDOCK_NAME: db
-    DNSDOCK_IMAGE: hid
-dev:
-  image: unocha/nodejs:8.11.3
-  volumes:
-    - .:/srv/www
-  environment:
-    DNSDOCK_NAME: api
-    DNSDOCK_IMAGE: hid
-    PORT: 80
-    NODE_ENV: local
-    ROOT_URL: http://api.hid.vm
-    SMTP_HOST: app.mailhog.vm
-    SMTP_PORT: 1025
-    SMTP_USER: humanitarianid
-    SMTP_PASS: smtp_password
-    APP_URL: http://app.hid.vm
-    COOKIE_PASSWORD: 6*a!_5;1:|7~+%5**WdS:^;X%PN||~:_:_R
-    V1_PROFILES_CLIENT_ID: clientid
-    V1_PROFILES_CLIENT_SECRET: clientsecret
-    WKHTMLTOPDF_HOST: pdf.contactsid.vm
-    WKHTMLTOPDF_PORT: 3000
+version: '2.1'
+
+services:
+  db:
+    image: unocha/mongo:4.0.5
+    volumes:
+      - ./db:/srv/db
+    # environment:
+    #   DNSDOCK_NAME: db
+    #   DNSDOCK_IMAGE: hid
+  dev:
+    image: unocha/nodejs:8.11.3
+    volumes:
+      - .:/srv/www
+    ports:
+      - 0.0.0.0:3000:3000
+    environment:
+      # DNSDOCK_NAME: api
+      # DNSDOCK_IMAGE: hid
+      # PORT: 80
+      NODE_ENV: local
+      ROOT_URL: http://api.hid.vm
+      SMTP_HOST: app.mailhog.vm
+      SMTP_PORT: 1025
+      SMTP_USER: humanitarianid
+      SMTP_PASS: smtp_password
+      APP_URL: http://app.hid.vm
+      COOKIE_PASSWORD: 6*a!_5;1:|7~+%5**WdS:^;X%PN||~:_:_R
+      V1_PROFILES_CLIENT_ID: clientid
+      V1_PROFILES_CLIENT_SECRET: clientsecret
+      WKHTMLTOPDF_HOST: pdf.contactsid.vm
+      WKHTMLTOPDF_PORT: 3000
 #test:
 #  image: unocha/alpine-nodejs:201610.npm3
 #  volumes:
