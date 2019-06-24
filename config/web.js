@@ -61,6 +61,9 @@ module.exports = {
     {
       plugin: crumb,
       options: {
+        cookieOptions: {
+          isSecure: process.env.NODE_ENV === 'production',
+        },
         skip(request) {
           const paths = ['/', '/login', '/oauth/authorize',
             '/register', '/verify', '/verify2', '/password', '/new_password'];
