@@ -4,9 +4,7 @@
  * Start up the Trails Application.Test
  */
 
-if (process.env.NODE_ENV !== 'local') {
-  const newrelic = require('newrelic');
-}
+const newrelic = require('newrelic');
 const path = require('path');
 const _ = require('lodash');
 const mongoose = require('mongoose');
