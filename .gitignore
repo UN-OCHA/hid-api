@@ -4,3 +4,4 @@ docker-compose.yml
 **/.DS_Store
 keys
 db
+newrelic_agent.log
