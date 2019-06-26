@@ -27,9 +27,7 @@ async function run() {
 
   for (let user = await cursor.next(); user != null; user = await cursor.next()) {
     if (user.email) {
-      if (user._id.toString() !== '58e493543f0e0d00aeec0d16') {
-        await EmailService.sendVerificationExpiryEmail(user);
-      }
+      await EmailService.sendVerificationExpiryEmail(user);
       await User.collection.updateOne(
         { _id: user._id },
         {

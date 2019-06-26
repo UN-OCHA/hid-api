@@ -9,8 +9,7 @@
     "url": "http://www.viguierjust.com"
   },
   "main": "index.js",
-  "keywords": [
-  ],
+  "keywords": [],
   "dependencies": {
     "@microsoft/microsoft-graph-client": "^1.0.0",
     "accept-language": "^3.0.15",
