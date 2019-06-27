@@ -682,8 +682,8 @@ UserSchema.pre('remove', async function (next) {
         listIds.push(checkin.list);
       });
     });
-    let updates = {
-      count: -1
+    const updates = {
+      count: -1,
     };
     if (this.authOnly && !this.hidden) {
       updates.countManager = -1;
