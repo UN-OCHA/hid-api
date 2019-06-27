@@ -62,12 +62,13 @@
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-standard": "^4.0.0",
     "mocha": "^4.0",
-    "nodemon": "^1.11.0",
+    "nodemon": "^1.19.1",
     "supertest": "^3.0.0"
   },
   "scripts": {
     "test": "eslint .",
-    "start": "node ./server.js"
+    "start": "node ./server.js",
+    "dev": "node ./node_modules/nodemon/bin/nodemon.js ./server.js"
   },
   "engines": {
     "node": ">= 8.0.0"
