@@ -602,7 +602,7 @@ module.exports = {
       throw Boom.notFound();
     }
     await EmailService.sendAdminDelete(user, request.auth.credentials);
-    await User.remove({ _id: request.params.id });
+    await user.remove();
     return reply.response().code(204);
   },
 

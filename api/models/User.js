@@ -682,10 +682,26 @@ UserSchema.pre('remove', async function (next) {
         listIds.push(checkin.list);
       });
     });
+    let updates = {
+      count: -1
+    };
+    if (this.authOnly && !this.hidden) {
+      updates.countManager = -1;
+    }
+    if (!this.authOnly && !this.hidden) {
+      if (!this.is_orphan && !this.is_ghost) {
+        updates.countManager = -1;
+        updates.countVerified = -1;
+        updates.countUnverified = -1;
+      } else {
+        updates.countManager = -1;
+        updates.countVerified = -1;
+      }
+    }
     promises.push(this.model('List')
-      .update(
+      .updateMany(
         { _id: { $in: listIds } },
-        { $inc: { count: -1 } },
+        { $inc: updates },
       ));
     await Promise.all(promises);
     next();
