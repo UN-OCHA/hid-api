@@ -24,14 +24,14 @@ Sometimes development requires authenticating with various roles or permissions.
 
 Snapshots are available at https://snapshots.dev.ahconu.org/hid/ — use your Jenkins user/pass to authenticate. You will need to file an OPS ticket to be added to the HID group before your Jenkins credentials can authenticate you.
 
-You will download a set of `.bson` (binary JSON) files. They are used for import/export of MongoDB data. To import the files, place them in the `db` directory of the repository. Make sure you have unzipped them so that the file ends in `.bson` instead of `.gz`. Then log into the API docker container and run the Mongo import script on each individual file:
+You will download a set of `.bson` (binary JSON) files. They are used for import/export of MongoDB data. To import the files, place them in the `db` directory of the repository from within your host machine. Make sure you have unzipped them so that the file ends in `.bson` instead of `.gz`. Then log into the MongoDB docker container and run the import script on each individual file:
 
 ```sh
-# Log into container:
-docker-compose exec dev sh
+# Log into MongoDB container:
+docker-compose exec db sh
 
 # Navigate to shared DB directory:
-cd /srv/www/db
+cd /srv/db
 
 # Run this command once for each file:
 # mongorestore -d DB_NAME -c FILENAME FILENAME.bson
