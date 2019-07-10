@@ -26,7 +26,7 @@ async function run() {
     });
     const domains = await Promise.all(promises);
     for (const domain in domains) {
-      if (domain) {
+      if (domain === 1) {
         user.verified = true;
         user.verified_by = hidAccount;
         if (!user.verified) {
@@ -52,6 +52,14 @@ async function run() {
           }
         }
         await user.save();
+      }
+      else {
+        if (user.verified && user.verified_by && user.verified_by.toString() === hidAccount) {
+          user.verified = false;
+          user.verified_by = null;
+	  user.verifiedOn = null;
+          await user.save();
+        }
       }
     }
   }
