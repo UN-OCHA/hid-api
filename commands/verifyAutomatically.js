@@ -52,14 +52,11 @@ async function run() {
           }
         }
         await user.save();
-      }
-      else {
-        if (user.verified && user.verified_by && user.verified_by.toString() === hidAccount) {
-          user.verified = false;
-          user.verified_by = null;
-	  user.verifiedOn = null;
-          await user.save();
-        }
+      } else if (user.verified && user.verified_by && user.verified_by.toString() === hidAccount) {
+        user.verified = false;
+        user.verified_by = null;
+        user.verifiedOn = null;
+        await user.save();
       }
     }
   }
