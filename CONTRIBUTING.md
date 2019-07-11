@@ -40,6 +40,8 @@ cd /srv/db
 mongorestore -d local -c user user.bson
 ```
 
+**⚠️ NOTE:** if you import the `gsssync.bson` it can have unintended 500 errors on your local API instance. The errors will manifest themselves pertaining to a missing `keys/client-secrets.json` when doing seemingly unrelated operations, such as saving user profile data. If work is being performed on the GSS syncing functionality, then this collection will come in handy, but until then just avoid importing it.
+
 
 ### Sending/Receiving Test Emails
 
