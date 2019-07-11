@@ -109,7 +109,7 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
   // Notify list owner and managers of the new checkin if needed
   if (payload.pending) {
     logger.debug('Notifying list owners and manager of the new checkin');
-    promises.push(NotificationService.sendMultiple(list.managers, {
+    promises.push(NotificationService.sendMultiple(managers, {
       type: 'pending_checkin',
       params: { list, user },
     }));
