@@ -22,7 +22,7 @@
     "ejs": "^2.5.2",
     "email-templates": "^5.0.2",
     "google-auth-library": "^2.0.2",
-    "google-libphonenumber": "^3.1.6",
+    "google-libphonenumber": "^3.2.3",
     "googleapis": "^36.0.0",
     "hapi": "^18.1.0",
     "hapi-rate-limit": "^3.1.1",
