@@ -25,41 +25,38 @@ async function run() {
       }
     });
     const domains = await Promise.all(promises);
-    for (const domain in domains) {
-      if (domain === 1) {
-        user.verified = true;
-        user.verified_by = hidAccount;
-        if (!user.verified) {
-          user.verifiedOn = new Date();
-        }
-        // If the domain is associated to a list, check user in this list automatically
-        if (domain.list) {
-          if (!user.organizations) {
-            user.organizations = [];
+    if (domains.length > 0) {
+      let resave = false;
+      await Promise.all(domains.map(async (domain) => {
+        if (domain && domain.url) {
+          resave = true;
+          if (!user.verified) {
+            user.verifiedOn = new Date();
           }
+          user.verified = true;
+          user.verified_by = hidAccount;
+          // If the domain is associated to a list, check user in this list automatically
+          if (domain.list) {
+            if (!user.organizations) {
+              user.organizations = [];
+            }
 
-          let isCheckedIn = false;
-          // Make sure user is not already checked in this list
-          for (let i = 0, len = user.organizations.length; i < len; i += 1) {
-            if (user.organizations[i].list.equals(domain.list._id)
-              && user.organizations[i].deleted === false) {
-              isCheckedIn = true;
+            let isCheckedIn = false;
+            // Make sure user is not already checked in this list
+            for (let i = 0, len = user.organizations.length; i < len; i += 1) {
+              if (user.organizations[i].list.equals(domain.list._id)
+                && user.organizations[i].deleted === false) {
+                isCheckedIn = true;
+              }
+            }
+            if (!isCheckedIn) {
+              await ListUserController.checkinHelper(domain.list, user, false, 'organizations', user);
             }
           }
-
-          if (!isCheckedIn) {
-            await ListUserController.checkinHelper(domain.list, user, true, 'organizations', user);
-          }
         }
+      }));
+      if (resave) {
         await user.save();
-      }
-      else {
-        if (user.verified && user.verified_by && user.verified_by.toString() === hidAccount) {
-          user.verified = false;
-          user.verified_by = null;
-	  user.verifiedOn = null;
-          await user.save();
-        }
       }
     }
   }
