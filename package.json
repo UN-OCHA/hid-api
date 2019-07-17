@@ -70,7 +70,8 @@
     "start": "node ./server.js"
   },
   "engines": {
-    "node": ">= 8.0.0"
+    "node": "8.11.3",
+    "npm": "6.9.0"
   },
   "repository": "un-ocha/hid-api",
   "license": "MIT"
