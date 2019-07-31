@@ -6,6 +6,7 @@ const _ = require('lodash');
 require('winston-daily-rotate-file');
 
 module.exports = {
+  hrInfo: 'www.humanitarianresponse.info',
   database: {
     stores: {
       staging: {

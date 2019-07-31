@@ -6,12 +6,13 @@ const _ = require('lodash');
 require('winston-daily-rotate-file');
 
 module.exports = {
-  hrInfo: 'www.humanitarianresponse.info',
+  hrInfo: 'migrate.staging.humanitarianresponse.info',
   database: {
     stores: {
-      production: {
+      staging: {
+        // should be 'create' or 'drop'
         migrate: 'create',
-        uri: process.env.DATABASE,
+        uri: 'mongodb://db:27017/staging',
         options: {
           keepAlive: 600000,
           connectTimeoutMS: 60000,
@@ -20,12 +21,12 @@ module.exports = {
       },
     },
     models: {
-      defaultStore: 'production',
+      defaultStore: 'staging',
       migrate: 'create',
     },
   },
   logger: new winston.Logger({
-    level: 'info',
+    level: 'debug',
     exitOnError: false,
     rewriters: [
       (level, msg, ametadata) => {
@@ -61,7 +62,7 @@ module.exports = {
       new winston.transports.DailyRotateFile({
         name: 'info-file',
         filename: 'trails/info.log',
-        level: 'info',
+        level: 'debug',
         timestamp: true,
       }),
       new winston.transports.DailyRotateFile({
@@ -72,5 +73,4 @@ module.exports = {
       }),
     ],
   }),
-
 };

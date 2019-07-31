@@ -10,6 +10,7 @@ const _ = require('lodash');
 const crypto = require('crypto');
 const isHTML = require('is-html');
 const validate = require('mongoose-validator');
+const config = require('../../config/env')[process.env.NODE_ENV];
 const TrustedDomain = require('./TrustedDomain');
 
 const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
@@ -1158,7 +1159,7 @@ UserSchema.methods = {
   // Whether the contact is in country or not
   async isInCountry(pcode) {
     const hrinfoId = this.location.country.id.replace('hrinfo_loc_', '');
-    const url = `https://www.humanitarianresponse.info/api/v1.0/locations/${hrinfoId}`;
+    const url = `https://${config.hrInfo}/api/v1.0/locations/${hrinfoId}`;
     const response = await axios.get(url);
     const parsed = JSON.parse(response.data);
     return parsed.data[0].pcode === pcode;

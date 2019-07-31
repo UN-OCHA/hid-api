@@ -1,13 +1,13 @@
 
 
 module.exports = {
-
   trailpack: {
     disabled: [
       'repl',
     ],
   },
 
+  hrInfo: 'www.humanitarianresponse.info',
   database: {
     stores: {
       testing: {

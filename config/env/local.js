@@ -4,6 +4,7 @@ const os = require('os');
 const _ = require('lodash');
 
 module.exports = {
+  hrInfo: 'www.humanitarianresponse.info',
   database: {
     stores: {
       local: {
