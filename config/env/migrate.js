@@ -9,7 +9,7 @@ module.exports = {
   hrInfo: 'migrate.staging.humanitarianresponse.info',
   database: {
     stores: {
-      staging: {
+      migrate: {
         // should be 'create' or 'drop'
         migrate: 'create',
         uri: 'mongodb://db:27017/staging',
@@ -21,7 +21,7 @@ module.exports = {
       },
     },
     models: {
-      defaultStore: 'staging',
+      defaultStore: 'migrate',
       migrate: 'create',
     },
   },
