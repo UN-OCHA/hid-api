@@ -364,7 +364,10 @@ module.exports = {
       request.auth.credentials = user;
       // Save authorized client if user allowed
       const clientId = request.yar.authorize[request.payload.transaction_id].client;
-      if (!request.payload.cancel && !user.hasAuthorizedClient(clientId)) {
+      if (!request.payload.bsubmit || request.payload.bsubmit === 'Deny') {
+        return reply.redirect('/');
+      }
+      if (!user.hasAuthorizedClient(clientId) && request.payload.bsubmit === 'Allow') {
         user.authorizedClients.push(request.yar.authorize[request.payload.transaction_id].client);
         user.markModified('authorizedClients');
         await user.save();
