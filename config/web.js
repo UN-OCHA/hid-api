@@ -98,7 +98,7 @@ module.exports = {
 
     oauth.grant(oauth2orizeExt.extensions());
     // id_token grant type.
-    oauth.grant(oauth2orizeExt.grant.idToken((client, user, done) => {
+    oauth.grant(oauth2orizeExt.grant.idToken((client, user, res, done) => {
       const out = JwtService.generateIdToken(client, user);
       done(null, out);
     }));
