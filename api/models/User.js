@@ -358,6 +358,7 @@ const UserSchema = new Schema({
       arguments: { host_whitelist: ['api.humanitarian.id', 'api.dev.humanitarian.id', 'api.staging.humanitarian.id'] },
       message: 'picture should be a valid URL',
     }),
+    default: '',
   },
   notes: {
     type: String,
