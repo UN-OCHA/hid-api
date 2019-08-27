@@ -158,7 +158,7 @@ module.exports = {
           promises.push(OauthToken.create(accessToken));
           promises.push(OauthToken.remove({ type: 'code', token: code }));
           const tokens = await Promise.all(promises);
-          const scope = [ 'openid' ];
+          const scope = ['openid'];
           return done(null, tokens[1].token, tokens[0].token, {
             expires_in: OauthExpiresIn,
             id_token: JwtService.generateIdToken(client, ocode.user, scope, ocode.nonce),
