@@ -98,8 +98,8 @@ module.exports = {
 
     oauth.grant(oauth2orizeExt.extensions());
     // id_token grant type.
-    oauth.grant(oauth2orizeExt.grant.idToken((client, user, res, done) => {
-      const out = JwtService.generateIdToken(client, user);
+    oauth.grant(oauth2orizeExt.grant.idToken((client, user, req, done) => {
+      const out = JwtService.generateIdToken(client, user, req.scope, req.nonce);
       done(null, out);
     }));
 
@@ -115,7 +115,7 @@ module.exports = {
         }
       },
       (client, user, req, done) => {
-        const out = JwtService.generateIdToken(client, user);
+        const out = JwtService.generateIdToken(client, user, req.scope, req.nonce);
         return done(null, out);
       },
     ));
@@ -158,9 +158,10 @@ module.exports = {
           promises.push(OauthToken.create(accessToken));
           promises.push(OauthToken.remove({ type: 'code', token: code }));
           const tokens = await Promise.all(promises);
+          const scope = [ 'openid' ];
           return done(null, tokens[1].token, tokens[0].token, {
             expires_in: OauthExpiresIn,
-            id_token: JwtService.generateIdToken(client, ocode.user, ocode.nonce),
+            id_token: JwtService.generateIdToken(client, ocode.user, scope, ocode.nonce),
           });
         } catch (err) {
           return done(err);
