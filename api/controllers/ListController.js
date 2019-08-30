@@ -122,10 +122,10 @@ module.exports = {
   async update(request) {
     HelperService.removeForbiddenAttributes(List, request, ['names']);
 
+    // Retrieve existing list
     const list = await List.findById(request.params.id);
-    const newlist = _.merge(list, request.payload);
-    await newlist.computeCounts();
-    await newlist.save();
+
+    // Check if we added or removed managers to the list
     const payloadManagers = [];
     if (request.payload.managers) {
       request.payload.managers.forEach((man) => {
@@ -133,13 +133,19 @@ module.exports = {
       });
     }
     const listManagers = [];
-    if (newlist.managers) {
-      newlist.managers.forEach((man) => {
+    if (list.managers) {
+      list.managers.forEach((man) => {
         listManagers.push(man.toString());
       });
     }
     const diffAdded = _.difference(payloadManagers, listManagers);
     const diffRemoved = _.difference(listManagers, payloadManagers);
+
+    // Create the new list and compute the counts
+    const newlist = _.merge(list, request.payload);
+    await newlist.computeCounts();
+
+    // Check whether we need to send notifications
     const notifications = [];
     if (diffAdded.length) {
       const users = await User.find({ _id: { $in: diffAdded } });
@@ -153,6 +159,7 @@ module.exports = {
             params: { list: newlist },
           }));
       }
+      newlist.markModified('managers');
     }
     if (diffRemoved.length) {
       const users = await User.find({ _id: { $in: diffRemoved } });
@@ -166,8 +173,15 @@ module.exports = {
             params: { list: newlist },
           }));
       }
+      newlist.markModified('managers');
     }
+
+    // Save the list
+    await newlist.save();
+
+    // Send the notifications
     await Promise.all(notifications);
+
     // Update users
     const criteria = {};
     criteria[`${newlist.type}s.list`] = newlist._id.toString();
