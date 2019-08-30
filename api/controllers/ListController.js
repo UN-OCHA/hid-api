@@ -133,8 +133,8 @@ module.exports = {
       });
     }
     const listManagers = [];
-    if (newlist.managers) {
-      newlist.managers.forEach((man) => {
+    if (list.managers) {
+      list.managers.forEach((man) => {
         listManagers.push(man.toString());
       });
     }
