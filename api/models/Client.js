@@ -63,6 +63,14 @@ const ClientSchema = new Schema({
       message: 'redirectUri should be a URL',
     }),
   },
+  redirectUrls: [{
+    type: String,
+    validate: validate({
+      validator: 'isURL',
+      passIfEmpty: false,
+      message: 'redirectUrl should be a URL',
+    }),
+  }],
   loginUri: {
     type: String,
     trim: true,
