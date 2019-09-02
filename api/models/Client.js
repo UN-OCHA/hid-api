@@ -56,7 +56,6 @@ const ClientSchema = new Schema({
   redirectUri: {
     type: String,
     trim: true,
-    required: [true, 'Redirect uri is required'],
     validate: validate({
       validator: 'isURL',
       passIfEmpty: false,
