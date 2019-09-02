@@ -305,14 +305,14 @@ module.exports = {
             );
           }
           // Verify redirect uri
-          if (client.redirectUri !== redirect) {
+          if (client.redirectUri !== redirect && client.redirectUrls.indexOf(redirect) === -1) {
             logger.warn(
               'Unsuccessful OAuth2 authorization due to wrong redirect URI',
               { security: true, fail: true, request },
             );
             return done('Wrong redirect URI');
           }
-          return done(null, client, client.redirectUri);
+          return done(null, client, redirect);
         } catch (err) {
           return done('An error occurred while processing the request. Please try logging in again.');
         }
