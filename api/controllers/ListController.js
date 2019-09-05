@@ -7,10 +7,13 @@ const List = require('../models/List');
 const User = require('../models/User');
 const HelperService = require('../services/HelperService');
 const NotificationService = require('../services/NotificationService');
+const config = require('../../config/env')[process.env.NODE_ENV];
+
+const { logger } = config;
 
 /**
  * @module ListController
- * @description Generated Trails.js Controller.
+ * @description Handles List Create Read Update Delete methods.
  */
 
 module.exports = {
@@ -22,6 +25,10 @@ module.exports = {
       request.payload.managers = [];
     }
     request.payload.managers.push(request.auth.credentials._id);
+    logger.info(
+      '[ListController->create] Creating a new list',
+      { request: request.payload }
+    );
     const list = await List.create(request.payload);
     return list;
   },
@@ -48,6 +55,10 @@ module.exports = {
     // Search with contains when searching in name or label
     if (criteria.name) {
       if (criteria.name.length < 3) {
+        logger.warn(
+          '[ListController->find] Name of a list must have at least 3 characters in find method',
+          { name: criteria.name }
+        );
         throw Boom.badRequest('Name must have at least 3 characters');
       }
       let name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/g, '');
@@ -76,6 +87,10 @@ module.exports = {
         _id: request.params.id, deleted: criteria.deleted,
       }).populate(options.populate);
       if (!result) {
+        logger.warn(
+          '[ListController->find] Could not find list',
+          { id: request.params.id }
+        );
         throw Boom.notFound();
       }
 
@@ -177,9 +192,17 @@ module.exports = {
     }
 
     // Save the list
+    logger.info(
+      '[ListController->update] Updating a list',
+      { request: request.payload }
+    );
     await newlist.save();
 
     // Send the notifications
+    logger.info(
+      '[ListController->update] Sending notifications after list update',
+      { list: newlist._id.toString() }
+    );
     await Promise.all(notifications);
 
     // Update users
@@ -192,6 +215,10 @@ module.exports = {
       user.updateCheckins(newlist);
       actions.push(user.save());
     }
+    logger.info(
+      '[ListController->update] Update all users part of the list being updated',
+      { list: newlist._id.toString() }
+    );
     await Promise.all(actions);
     return newlist;
   },
@@ -199,10 +226,18 @@ module.exports = {
   async destroy(request) {
     const record = await List.findOne({ _id: request.params.id });
     if (!record) {
+      logger.warn(
+        '[ListController->destroy] Unable to delete list: list not found',
+        { list: request.params.id }
+      );
       throw Boom.notFound();
     }
     // Set deleted to true
     record.deleted = true;
+    logger.info(
+      '[ListController->destroy] Adding deleted flag to list',
+      { list: request.params.id }
+    );
     const newRecord = await record.save();
     // Remove all checkins from users in this list
     const criteria = {};
@@ -218,6 +253,10 @@ module.exports = {
       }
       promises.push(user.save());
     }
+    logger.info(
+      '[ListController->destroy] Remove users from list being deleted',
+      { list: request.params.id }
+    );
     await Promise.all(promises);
     return newRecord;
   },

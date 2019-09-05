@@ -13,8 +13,14 @@ const { logger } = config;
 
 /**
  * @module ListUserController
- * @description Generated Trails.js Controller.
+ * @description Handles checkins and checkouts.
  */
+
+ /**
+  * Helper function used for checkins.
+  * Checks a user into a list and sends notifications
+  * if needed.
+  */
 function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
   const user = auser;
   const list = alist;
@@ -24,6 +30,9 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
 
   // Check that the list added corresponds to the right attribute
   if (childAttribute !== `${list.type}s` && childAttribute !== list.type) {
+    logger.warn(
+      '[ListUserController->checkinHelper] Wrong list type'
+    );
     throw Boom.badRequest('Wrong list type');
   }
 
@@ -56,6 +65,9 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
     for (let i = 0, len = user[childAttribute].length; i < len; i += 1) {
       if (user[childAttribute][i].list.equals(list._id)
         && user[childAttribute][i].deleted === false) {
+        logger.warn(
+          '[ListUserController->checkinHelper] User is already checked in'
+        );
         throw Boom.badRequest('User is already checked in');
       }
     }
@@ -89,8 +101,15 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
       list.countVerified += 1;
     }
   }
+  logger.info(
+    '[ListUserController->checkinHelper] Saving list',
+    { list: list }
+  );
   promises.push(list.save());
   // Notify list managers of the checkin
+  logger.info(
+    '[ListUserController->checkinHelper] Notify list managers of the checkin'
+  );
   promises.push(NotificationService.notifyMultiple(managers, {
     type: 'checkin',
     createdBy: user,
@@ -98,7 +117,10 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
   }));
   // Notify user if needed
   if (currentUser._id.toString() !== user._id.toString() && list.type !== 'list' && notify === true && !user.hidden) {
-    logger.debug('Checked in by a different user');
+    logger.info(
+      '[ListUserController->checkinHelper] Checked in by a different user',
+      { currentUser: currentUser._id.toString(), user: user._id.toString() }
+    );
     promises.push(NotificationService.send({
       type: 'admin_checkin',
       createdBy: currentUser,
@@ -108,7 +130,9 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
   }
   // Notify list owner and managers of the new checkin if needed
   if (payload.pending) {
-    logger.debug('Notifying list owners and manager of the new checkin');
+    logger.info(
+      '[ListUserController->checkinHelper] Notifying list owners and manager of the new checkin'
+    );
     promises.push(NotificationService.sendMultiple(managers, {
       type: 'pending_checkin',
       params: { list, user },
@@ -130,14 +154,19 @@ module.exports = {
     const { payload } = request;
     const childAttributes = User.listAttributes();
 
-    logger.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload, { request });
-
     if (childAttributes.indexOf(childAttribute) === -1 || childAttribute === 'organization') {
+      logger.warn(
+        '[ListUserController->checkin] Invalid childAttribute',
+        childAttribute
+      )
       throw Boom.notFound();
     }
 
     // Make sure there is a list in the payload
     if (!payload.list) {
+      logger.warn(
+        '[ListUserController->checkin] Missing list attribute'
+      );
       throw Boom.badRequest('Missing list attribute');
     }
 
@@ -150,6 +179,11 @@ module.exports = {
 
     const [list, user] = await Promise.all([List.findOne({ _id: payload.list }).populate('managers'), User.findOne({ _id: userId })]);
     if (!list || !user) {
+      logger.warn(
+        '[ListUserController->checkin] Could not find list or user',
+        payload.list,
+        userId
+      )
       throw Boom.notFound();
     }
     await checkinHelper(list, user, notify, childAttribute, request.auth.credentials);
@@ -160,8 +194,8 @@ module.exports = {
     const { childAttribute } = request.params;
     const { checkInId } = request.params;
 
-    logger.debug(
-      '[ListUserController] (update) model = list, criteria =',
+    logger.info(
+      '[ListUserController->update] Updating a checkin',
       request.query,
       request.params.checkInId,
       ', values = ',
@@ -186,6 +220,10 @@ module.exports = {
     let listuser = {};
     const record = await User.findOne({ _id: request.params.id });
     if (!record) {
+      logger.info(
+        '[ListUserController->update] User not found',
+        { user: request.params.id }
+      );
       throw Boom.notFound();
     }
     const lu = record[childAttribute].id(checkInId);
@@ -195,6 +233,9 @@ module.exports = {
     const promises = [];
     promises.push(record.save());
     promises.push(List.findOne({ _id: lu.list }));
+    logger.info(
+      '[ListUserController->update] Saving user with new checkin record'
+    );
     const [user, list] = await Promise.all(promises);
     if (listuser.pending === true && request.payload.pending === false) {
       const promises2 = [];
@@ -205,6 +246,10 @@ module.exports = {
         createdBy: request.auth.credentials,
         params: { list },
       };
+      logger.info(
+        '[ListUserController->update] Sending a notification to inform user that his checkin
+        is not pending anymore'
+      );
       promises2.push(NotificationService.send(notification));
       await Promise.all(promises2);
     }
@@ -218,11 +263,19 @@ module.exports = {
     const childAttributes = User.listAttributes();
 
     if (childAttributes.indexOf(childAttribute) === -1) {
+      logger.warn(
+        '[ListUserController->checkout] Invalid childAttribute',
+        childAttribute
+      );
       throw Boom.notFound();
     }
 
     const user = await User.findOne({ _id: request.params.id });
     if (!user) {
+      logger.info(
+        '[ListUserController->checkout] User not found',
+        request.params.id
+      );
       throw Boom.notFound();
     }
     const lu = user[childAttribute].id(checkInId);
@@ -256,6 +309,10 @@ module.exports = {
     promises.push(user.save());
     // Send notification if needed
     if (request.auth.credentials.id !== userId && !user.hidden) {
+      logger.info(
+        '[ListUserController->checkout] User was checked out by an admin. Sending notification',
+        { admin: request.auth.credentials.id, user: userId }
+      );
       promises.push(NotificationService.send({
         type: 'admin_checkout',
         createdBy: request.auth.credentials,
@@ -272,57 +329,11 @@ module.exports = {
     // Synchronize google spreadsheets
     promises.push(GSSSyncService.deleteUserFromSpreadsheets(list._id, user.id));
     promises.push(OutlookService.deleteUserFromContactFolders(list._id, user.id));
+    logger.info(
+      '[ListUserController->checkout] Saving list and user for checkout and sending notifications'
+    );
     await Promise.all(promises);
     return user;
-  },
-
-  async updateListUsers(request, reply) {
-    const childAttributes = User.listAttributes();
-    const cursor = User
-      .find({})
-      .populate([{ path: 'lists.list' },
-        { path: 'operations.list' },
-        { path: 'bundles.list' },
-        { path: 'disasters.list' },
-        { path: 'organization.list' },
-        { path: 'organizations.list' },
-        { path: 'functional_roles.list' },
-        { path: 'offices.list' },
-      ])
-      .cursor();
-
-    /* eslint no-await-in-loop: "off" */
-    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      for (let i = 0; i < childAttributes.length; i += 1) {
-        const childAttribute = childAttributes[i];
-        let lu = {};
-        if (childAttribute === 'organization') {
-          lu = user[childAttribute];
-          if (lu && lu.list && lu.list.owner) {
-            lu.owner = lu.list.owner;
-            lu.managers = lu.list.managers;
-            logger.info(`Updated list for ${user._id.toString()}`);
-            /* eslint no-await-in-loop: "off" */
-            await user.save();
-          } else {
-            logger.info(`No list for ${user._id.toString()}`);
-          }
-        } else {
-          for (let j = 0; j < user[childAttribute].length; j += 1) {
-            if (lu && lu.list && lu.list.owner) {
-              lu.owner = lu.list.owner;
-              lu.managers = lu.list.managers;
-              logger.info(`Updated list for ${user._id.toString()}`);
-              /* eslint no-await-in-loop: "off" */
-              await user.save();
-            } else {
-              logger.info(`No list for ${user._id.toString()}`);
-            }
-          }
-        }
-      }
-    }
-    return reply.response().code(204);
   },
 
 };

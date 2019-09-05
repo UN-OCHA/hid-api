@@ -3,6 +3,9 @@
 const Boom = require('boom');
 const Client = require('../models/Client');
 const HelperService = require('../services/HelperService');
+const config = require('../../config/env')[process.env.NODE_ENV];
+
+const { logger } = config;
 
 /**
  * @module ClientController
@@ -13,6 +16,10 @@ module.exports = {
   async create(request) {
     const client = await Client.create(request.payload);
     if (!client) {
+      logger.warn(
+        '[ClientController->create] Could not create client due to bad request',
+        { request: request }
+      );
       throw Boom.badRequest();
     }
     return client;
@@ -26,6 +33,9 @@ module.exports = {
       criteria._id = request.params.id;
       const result = await Client.findOne(criteria);
       if (!result) {
+        logger.warn(
+          '[ClientController->find] Could not find client with ID ' + request.params.id
+        );
         throw Boom.notFound();
       }
       return result;
@@ -36,6 +46,10 @@ module.exports = {
   },
 
   async update(request) {
+    logger.info(
+      '[ClientController->update] Updating client ' + request.params.id,
+      { request: request.payload }
+    );
     const client = await Client
       .findOneAndUpdate(
         { _id: request.params.id },
@@ -46,6 +60,9 @@ module.exports = {
   },
 
   async destroy(request, reply) {
+    logger.info(
+      '[ClientController->destroy] Removing client ' + request.params.id
+    );
     await Client.remove({ _id: request.params.id });
     return reply.response().code(204);
   },

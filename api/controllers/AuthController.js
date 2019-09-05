@@ -27,11 +27,10 @@ async function loginHelper(request) {
     email = request.payload.email.toLowerCase();
   }
 
-  logger.debug('Entering _loginHelper');
-
   if (!email || !password) {
     const cuser = request.auth.credentials;
     if (!cuser) {
+      logger.warn('[AuthController->loginHelper] Could not log in because of an invalid JSON Web Token');
       throw Boom.unauthorized('Invalid JSON Web Token');
     }
     cuser.sanitize(cuser);
@@ -50,32 +49,32 @@ async function loginHelper(request) {
   ]);
 
   if (number >= 5) {
-    logger.warn('Account locked for 5 minutes', {
+    logger.warn('[AuthController->loginHelper] Account locked for 5 minutes', {
       email, security: true, fail: true, request,
     });
     throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
   }
   if (!user) {
-    logger.warn('Unsuccessful login attempt due to invalid email address', {
+    logger.warn('[AuthController->loginHelper] Unsuccessful login attempt due to invalid email address', {
       email, security: true, fail: true, request,
     });
     throw Boom.unauthorized('invalid email or password');
   }
   if (!user.email_verified) {
-    logger.warn('Unsuccessful login attempt due to unverified email', {
+    logger.warn('[AuthController->loginHelper] Unsuccessful login attempt due to unverified email', {
       email, security: true, fail: true, request,
     });
     throw Boom.unauthorized('Please verify your email address');
   }
   if (user.isPasswordExpired()) {
-    logger.warn('Unsuccessful login attempt due to expired password', {
+    logger.warn('[AuthController->loginHelper] Unsuccessful login attempt due to expired password', {
       email, security: true, fail: true, request,
     });
     throw Boom.unauthorized('password is expired');
   }
 
   if (!user.validPassword(password)) {
-    logger.warn('Unsuccessful login attempt due to invalid password', {
+    logger.warn('[AuthController->loginHelper] Unsuccessful login attempt due to invalid password', {
       email, security: true, fail: true, request,
     });
     // Create a flood entry
@@ -103,7 +102,7 @@ function loginRedirect(request, reply, cookie = false) {
     redirect = '/user';
   }
 
-  logger.info('Successful user authentication. Redirecting.', {
+  logger.info('[AuthController->loginRedirect] Successful user authentication. Redirecting.', {
     client_id: request.payload.client_id, email: request.payload.email, security: true, request,
   });
   if (!cookie) {
@@ -141,13 +140,13 @@ module.exports = {
         blacklist: false,
         // TODO: add expires
       });
-      logger.warn('Created an API key', { email: result.email, security: true, request });
+      logger.warn('[AuthController->authenticate] Created an API key', { email: result.email, security: true, request });
       return {
         user: result,
         token,
       };
     }
-    logger.info('Successful user authentication. Returning JWT.', { email: result.email, security: true, request });
+    logger.info('[AuthController->authenticate] Successful user authentication. Returning JWT.', { email: result.email, security: true, request });
     return { user: result, token };
   },
 
@@ -166,7 +165,7 @@ module.exports = {
           User.findOne({ _id: cookie.userId }),
         ]);
         if (number >= 5) {
-          logger.warn('Account locked for 5 minutes', {
+          logger.warn('[AuthController->login] Account locked for 5 minutes', {
             userId: cookie.userId, security: true, fail: true, request,
           });
           throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
@@ -269,7 +268,7 @@ module.exports = {
 
       // Check response_type
       if (!request.query.response_type) {
-        logger.warn('Unsuccessful OAuth2 authorization due to missing response_type', {
+        logger.warn('[AuthController->authorizeDialogOauth2] Unsuccessful OAuth2 authorization due to missing response_type', {
           client_id: request.query.client_id, security: true, fail: true, request,
         });
         throw Boom.badRequest('Missing response_type');
@@ -279,7 +278,10 @@ module.exports = {
       // all relevant query parameters.
       const cookie = request.yar.get('session');
       if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
-        logger.info('Get request to /oauth/authorize without session. Redirecting to the login page.', { client_id: request.query.client_id, request });
+        logger.info(
+          '[AuthController->authorizeDialogOauth2] Get request to /oauth/authorize without session. Redirecting to the login page.',
+          { client_id: request.query.client_id, request }
+        );
         return reply.redirect(
           `/?redirect=/oauth/authorize&client_id=${request.query.client_id
           }&redirect_uri=${request.query.redirect_uri
@@ -300,6 +302,10 @@ module.exports = {
         try {
           const client = await Client.findOne({ id: clientID });
           if (!client || !client.id) {
+            logger.warn(
+              '[AuthController->authorizeDialogOauth2] Unsuccessful OAuth2 authorization because client was not found',
+              { security: true, fail: true, request }
+            );
             return done(
               'An error occurred while processing the request. Please try logging in again.',
             );
@@ -307,7 +313,7 @@ module.exports = {
           // Verify redirect uri
           if (client.redirectUri !== redirect && client.redirectUrls.indexOf(redirect) === -1) {
             logger.warn(
-              'Unsuccessful OAuth2 authorization due to wrong redirect URI',
+              '[AuthController->authorizeDialogOauth2] Unsuccessful OAuth2 authorization due to wrong redirect URI',
               { security: true, fail: true, request },
             );
             return done('Wrong redirect URI');
@@ -343,7 +349,10 @@ module.exports = {
       const cookie = request.yar.get('session');
 
       if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
-        logger.info('Got request to /oauth/authorize without session. Redirecting to the login page.', { client_id: request.query.client_id, request });
+        logger.info(
+          '[AuthController->authorizeOauth2] Got request to /oauth/authorize without session. Redirecting to the login page.',
+          { client_id: request.query.client_id, request }
+        );
         return reply.redirect(`/?redirect=/oauth/authorize&client_id=${request.query.client_id
         }&redirect_uri=${request.query.redirect_uri
         }&response_type=${request.query.response_type
@@ -355,7 +364,7 @@ module.exports = {
       const user = await User.findOne({ _id: cookie.userId });
       if (!user) {
         logger.warn(
-          `Unsuccessful OAuth2 authorization attempt. Could not find user with ID ${cookie.userId}`,
+          `[AuthController->authorizeOauth2] Unsuccessful OAuth2 authorization attempt. Could not find user with ID ${cookie.userId}`,
           { security: true, fail: true, request },
         );
         throw Boom.badRequest('Could not find user');
@@ -370,6 +379,10 @@ module.exports = {
       if (!user.hasAuthorizedClient(clientId) && request.payload.bsubmit === 'Allow') {
         user.authorizedClients.push(request.yar.authorize[request.payload.transaction_id].client);
         user.markModified('authorizedClients');
+        logger.info(
+          '[AuthController->authorizeOauth2] Added authorizedClient to user',
+          { user: user.email }
+        );
         await user.save();
       }
       const response = await oauth.decision(request, reply);
@@ -386,7 +399,7 @@ module.exports = {
       const { code } = request.payload;
       if (!code && request.payload.grant_type !== 'refresh_token') {
         logger.warn(
-          'Unsuccessful access token request due to missing authorization code.',
+          '[AuthController->accessTokenOauth2] Unsuccessful access token request due to missing authorization code.',
           { security: true, fail: true, request },
         );
         throw Boom.badRequest('Missing authorization code');
@@ -396,14 +409,17 @@ module.exports = {
       const ocode = await OauthToken.findOne({ token, type }).populate('client user');
       if (!ocode) {
         logger.warn(
-          'Unsuccessful access token request due to wrong authorization code.',
+          '[AuthController->accessTokenOauth2] Unsuccessful access token request due to wrong authorization code.',
           {
             security: true, fail: true, request, code,
           },
         );
         throw Boom.badRequest('Wrong authorization code');
       } else {
-        logger.info('Successful access token request', { security: true, request });
+        logger.info(
+          '[AuthController->accessTokenOauth2] Successful access token request',
+          { security: true, request }
+        );
         request.auth.credentials = ocode.client;
         const response = await oauth.token(request, reply);
         return response;
@@ -470,12 +486,18 @@ module.exports = {
   async blacklistJwt(request) {
     const token = request.payload ? request.payload.token : null;
     if (!token) {
+      logger.warn(
+        '[AuthController->blacklistJwt] Missing token'
+      );
       throw Boom.badRequest('Missing token');
     }
     // Check that blacklisted token belongs to current user
     const jtoken = JwtService.verify(token);
     if (jtoken.id === request.auth.credentials.id) {
       // Blacklist token
+      logger.info(
+        '[AuthController->blacklistJwt] Blacklisting token ' + jtoken.id
+      );
       const doc = await JwtToken.findOneAndUpdate({ token }, {
         token,
         user: request.auth.credentials._id,
@@ -484,16 +506,22 @@ module.exports = {
       return doc;
     }
     logger.warn(
-      'Tried to blacklist a token by a user who does not have the permission',
+      '[AuthController->blacklistJwt] Tried to blacklist a token by a user who does not have the permission',
       { security: true, fail: true, request },
     );
     throw Boom.badRequest('Could not blacklist this token because you did not generate it');
   },
 
-  // Sign Requests for file downloads
+  /**
+   * Creates short lived (5 minutes) tokens to
+   * sign requests for file downloads.
+   */
   signRequest(request, reply) {
     const url = request.payload ? request.payload.url : null;
     if (!url) {
+      logger.warn(
+        '[AuthController->signRequest] Missing url to sign request for file downloads'
+      );
       return reply(Boom.badRequest('Missing url'));
     }
     const credentials = {
