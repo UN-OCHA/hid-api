@@ -27,7 +27,7 @@ module.exports = {
     request.payload.managers.push(request.auth.credentials._id);
     logger.info(
       '[ListController->create] Creating a new list',
-      { request: request.payload }
+      { request: request.payload },
     );
     const list = await List.create(request.payload);
     return list;
@@ -57,7 +57,7 @@ module.exports = {
       if (criteria.name.length < 3) {
         logger.warn(
           '[ListController->find] Name of a list must have at least 3 characters in find method',
-          { name: criteria.name }
+          { name: criteria.name },
         );
         throw Boom.badRequest('Name must have at least 3 characters');
       }
@@ -89,7 +89,7 @@ module.exports = {
       if (!result) {
         logger.warn(
           '[ListController->find] Could not find list',
-          { id: request.params.id }
+          { id: request.params.id },
         );
         throw Boom.notFound();
       }
@@ -194,14 +194,14 @@ module.exports = {
     // Save the list
     logger.info(
       '[ListController->update] Updating a list',
-      { request: request.payload }
+      { request: request.payload },
     );
     await newlist.save();
 
     // Send the notifications
     logger.info(
       '[ListController->update] Sending notifications after list update',
-      { list: newlist._id.toString() }
+      { list: newlist._id.toString() },
     );
     await Promise.all(notifications);
 
@@ -217,7 +217,7 @@ module.exports = {
     }
     logger.info(
       '[ListController->update] Update all users part of the list being updated',
-      { list: newlist._id.toString() }
+      { list: newlist._id.toString() },
     );
     await Promise.all(actions);
     return newlist;
@@ -228,7 +228,7 @@ module.exports = {
     if (!record) {
       logger.warn(
         '[ListController->destroy] Unable to delete list: list not found',
-        { list: request.params.id }
+        { list: request.params.id },
       );
       throw Boom.notFound();
     }
@@ -236,7 +236,7 @@ module.exports = {
     record.deleted = true;
     logger.info(
       '[ListController->destroy] Adding deleted flag to list',
-      { list: request.params.id }
+      { list: request.params.id },
     );
     const newRecord = await record.save();
     // Remove all checkins from users in this list
@@ -255,7 +255,7 @@ module.exports = {
     }
     logger.info(
       '[ListController->destroy] Remove users from list being deleted',
-      { list: request.params.id }
+      { list: request.params.id },
     );
     await Promise.all(promises);
     return newRecord;

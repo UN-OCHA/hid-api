@@ -24,7 +24,7 @@ module.exports = {
     if (!request.payload.spreadsheet) {
       logger.info(
         '[GSSSyncController->create] Creating a Google Spreadsheet for synchronization with a list',
-        { list: request.payload.list }
+        { list: request.payload.list },
       );
       const spreadsheet = await GSSSyncService
         .createSpreadsheet(request.auth.credentials, request.payload.list);
@@ -35,7 +35,7 @@ module.exports = {
     if (!gsssync) {
       logger.warn(
         '[GSSSyncController->create] Could not create GSSSync',
-        { request: request.payload }
+        { request: request.payload },
       );
       throw Boom.badRequest();
     }
@@ -56,18 +56,18 @@ module.exports = {
         request.auth.credentials.googleCredentials = tokens;
         logger.info(
           '[GSSSyncController->saveGoogleCredentials] Saving Google credentials',
-          { user: request.auth.email }
+          { user: request.auth.email },
         );
         await request.auth.credentials.save();
         return reply.response().code(204);
       }
       logger.warn(
-        '[GSSSyncController->saveGoogleCredentials] Missing refresh token when saving Google credentials'
+        '[GSSSyncController->saveGoogleCredentials] Missing refresh token when saving Google credentials',
       );
       throw Boom.badRequest('No refresh token');
     } else {
       logger.warn(
-        '[GSSSyncController->saveGoogleCredentials] Could not save Google credentials: no code provided'
+        '[GSSSyncController->saveGoogleCredentials] Could not save Google credentials: no code provided',
       );
       throw Boom.badRequest();
     }
@@ -79,7 +79,7 @@ module.exports = {
    */
   async destroy(request, reply) {
     logger.info(
-      '[GSSSyncController->destroy] Remove GSSSync ' + request.params.id
+      `[GSSSyncController->destroy] Remove GSSSync ${request.params.id}`,
     );
     await GSSSync.remove({ _id: request.params.id });
     return reply.response().code(204);

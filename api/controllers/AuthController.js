@@ -280,7 +280,7 @@ module.exports = {
       if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
         logger.info(
           '[AuthController->authorizeDialogOauth2] Get request to /oauth/authorize without session. Redirecting to the login page.',
-          { client_id: request.query.client_id, request }
+          { client_id: request.query.client_id, request },
         );
         return reply.redirect(
           `/?redirect=/oauth/authorize&client_id=${request.query.client_id
@@ -304,7 +304,7 @@ module.exports = {
           if (!client || !client.id) {
             logger.warn(
               '[AuthController->authorizeDialogOauth2] Unsuccessful OAuth2 authorization because client was not found',
-              { security: true, fail: true, request }
+              { security: true, fail: true, request },
             );
             return done(
               'An error occurred while processing the request. Please try logging in again.',
@@ -351,7 +351,7 @@ module.exports = {
       if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
         logger.info(
           '[AuthController->authorizeOauth2] Got request to /oauth/authorize without session. Redirecting to the login page.',
-          { client_id: request.query.client_id, request }
+          { client_id: request.query.client_id, request },
         );
         return reply.redirect(`/?redirect=/oauth/authorize&client_id=${request.query.client_id
         }&redirect_uri=${request.query.redirect_uri
@@ -381,7 +381,7 @@ module.exports = {
         user.markModified('authorizedClients');
         logger.info(
           '[AuthController->authorizeOauth2] Added authorizedClient to user',
-          { user: user.email }
+          { user: user.email },
         );
         await user.save();
       }
@@ -418,7 +418,7 @@ module.exports = {
       } else {
         logger.info(
           '[AuthController->accessTokenOauth2] Successful access token request',
-          { security: true, request }
+          { security: true, request },
         );
         request.auth.credentials = ocode.client;
         const response = await oauth.token(request, reply);
@@ -487,7 +487,7 @@ module.exports = {
     const token = request.payload ? request.payload.token : null;
     if (!token) {
       logger.warn(
-        '[AuthController->blacklistJwt] Missing token'
+        '[AuthController->blacklistJwt] Missing token',
       );
       throw Boom.badRequest('Missing token');
     }
@@ -496,7 +496,7 @@ module.exports = {
     if (jtoken.id === request.auth.credentials.id) {
       // Blacklist token
       logger.info(
-        '[AuthController->blacklistJwt] Blacklisting token ' + jtoken.id
+        `[AuthController->blacklistJwt] Blacklisting token ${jtoken.id}`,
       );
       const doc = await JwtToken.findOneAndUpdate({ token }, {
         token,
@@ -520,7 +520,7 @@ module.exports = {
     const url = request.payload ? request.payload.url : null;
     if (!url) {
       logger.warn(
-        '[AuthController->signRequest] Missing url to sign request for file downloads'
+        '[AuthController->signRequest] Missing url to sign request for file downloads',
       );
       return reply(Boom.badRequest('Missing url'));
     }

@@ -2,7 +2,8 @@
 /* eslint func-names: "off" */
 /**
  * @module updateListUsers
- * @description Updates all checkins for all users to make sure the attributes are updated with their respective lists.
+ * @description Updates all checkins for all users to make sure the attributes
+ * are updated with their respective lists.
  */
 
 const mongoose = require('mongoose');
@@ -11,7 +12,6 @@ const app = require('../');
 const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
 mongoose.connect(store.uri, store.options);
 
-const List = require('../api/models/List');
 const User = require('../api/models/User');
 
 async function run() {
@@ -39,23 +39,23 @@ async function run() {
         if (lu && lu.list && lu.list.owner) {
           lu.owner = lu.list.owner;
           lu.managers = lu.list.managers;
-          //logger.info(`Updated list for ${user._id.toString()}`);
+          // logger.info(`Updated list for ${user._id.toString()}`);
           /* eslint no-await-in-loop: "off" */
           await user.save();
-        } //else {
-          //logger.info(`No list for ${user._id.toString()}`);
-        //}
+        } // else {
+        // logger.info(`No list for ${user._id.toString()}`);
+        // }
       } else {
         for (let j = 0; j < user[childAttribute].length; j += 1) {
           if (lu && lu.list && lu.list.owner) {
             lu.owner = lu.list.owner;
             lu.managers = lu.list.managers;
-            //logger.info(`Updated list for ${user._id.toString()}`);
+            // logger.info(`Updated list for ${user._id.toString()}`);
             /* eslint no-await-in-loop: "off" */
             await user.save();
-          } //else {
-            //logger.info(`No list for ${user._id.toString()}`);
-          //}
+          } // else {
+          // logger.info(`No list for ${user._id.toString()}`);
+          // }
         }
       }
     }

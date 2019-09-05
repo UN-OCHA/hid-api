@@ -18,7 +18,7 @@ module.exports = {
     if (!client) {
       logger.warn(
         '[ClientController->create] Could not create client due to bad request',
-        { request: request }
+        request,
       );
       throw Boom.badRequest();
     }
@@ -34,7 +34,7 @@ module.exports = {
       const result = await Client.findOne(criteria);
       if (!result) {
         logger.warn(
-          '[ClientController->find] Could not find client with ID ' + request.params.id
+          `[ClientController->find] Could not find client with ID ${request.params.id}`,
         );
         throw Boom.notFound();
       }
@@ -47,8 +47,8 @@ module.exports = {
 
   async update(request) {
     logger.info(
-      '[ClientController->update] Updating client ' + request.params.id,
-      { request: request.payload }
+      `[ClientController->update] Updating client ${request.params.id}`,
+      { request: request.payload },
     );
     const client = await Client
       .findOneAndUpdate(
@@ -61,7 +61,7 @@ module.exports = {
 
   async destroy(request, reply) {
     logger.info(
-      '[ClientController->destroy] Removing client ' + request.params.id
+      `[ClientController->destroy] Removing client ${request.params.id}`,
     );
     await Client.remove({ _id: request.params.id });
     return reply.response().code(204);

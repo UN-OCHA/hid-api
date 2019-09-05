@@ -16,11 +16,11 @@ const { logger } = config;
  * @description Handles checkins and checkouts.
  */
 
- /**
-  * Helper function used for checkins.
-  * Checks a user into a list and sends notifications
-  * if needed.
-  */
+/**
+ * Helper function used for checkins.
+ * Checks a user into a list and sends notifications
+ * if needed.
+ */
 function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
   const user = auser;
   const list = alist;
@@ -31,7 +31,7 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
   // Check that the list added corresponds to the right attribute
   if (childAttribute !== `${list.type}s` && childAttribute !== list.type) {
     logger.warn(
-      '[ListUserController->checkinHelper] Wrong list type'
+      '[ListUserController->checkinHelper] Wrong list type',
     );
     throw Boom.badRequest('Wrong list type');
   }
@@ -66,7 +66,7 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
       if (user[childAttribute][i].list.equals(list._id)
         && user[childAttribute][i].deleted === false) {
         logger.warn(
-          '[ListUserController->checkinHelper] User is already checked in'
+          '[ListUserController->checkinHelper] User is already checked in',
         );
         throw Boom.badRequest('User is already checked in');
       }
@@ -103,12 +103,12 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
   }
   logger.info(
     '[ListUserController->checkinHelper] Saving list',
-    { list: list }
+    list,
   );
   promises.push(list.save());
   // Notify list managers of the checkin
   logger.info(
-    '[ListUserController->checkinHelper] Notify list managers of the checkin'
+    '[ListUserController->checkinHelper] Notify list managers of the checkin',
   );
   promises.push(NotificationService.notifyMultiple(managers, {
     type: 'checkin',
@@ -119,7 +119,7 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
   if (currentUser._id.toString() !== user._id.toString() && list.type !== 'list' && notify === true && !user.hidden) {
     logger.info(
       '[ListUserController->checkinHelper] Checked in by a different user',
-      { currentUser: currentUser._id.toString(), user: user._id.toString() }
+      { currentUser: currentUser._id.toString(), user: user._id.toString() },
     );
     promises.push(NotificationService.send({
       type: 'admin_checkin',
@@ -131,7 +131,7 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
   // Notify list owner and managers of the new checkin if needed
   if (payload.pending) {
     logger.info(
-      '[ListUserController->checkinHelper] Notifying list owners and manager of the new checkin'
+      '[ListUserController->checkinHelper] Notifying list owners and manager of the new checkin',
     );
     promises.push(NotificationService.sendMultiple(managers, {
       type: 'pending_checkin',
@@ -157,15 +157,15 @@ module.exports = {
     if (childAttributes.indexOf(childAttribute) === -1 || childAttribute === 'organization') {
       logger.warn(
         '[ListUserController->checkin] Invalid childAttribute',
-        childAttribute
-      )
+        childAttribute,
+      );
       throw Boom.notFound();
     }
 
     // Make sure there is a list in the payload
     if (!payload.list) {
       logger.warn(
-        '[ListUserController->checkin] Missing list attribute'
+        '[ListUserController->checkin] Missing list attribute',
       );
       throw Boom.badRequest('Missing list attribute');
     }
@@ -182,8 +182,8 @@ module.exports = {
       logger.warn(
         '[ListUserController->checkin] Could not find list or user',
         payload.list,
-        userId
-      )
+        userId,
+      );
       throw Boom.notFound();
     }
     await checkinHelper(list, user, notify, childAttribute, request.auth.credentials);
@@ -222,7 +222,7 @@ module.exports = {
     if (!record) {
       logger.info(
         '[ListUserController->update] User not found',
-        { user: request.params.id }
+        { user: request.params.id },
       );
       throw Boom.notFound();
     }
@@ -234,7 +234,7 @@ module.exports = {
     promises.push(record.save());
     promises.push(List.findOne({ _id: lu.list }));
     logger.info(
-      '[ListUserController->update] Saving user with new checkin record'
+      '[ListUserController->update] Saving user with new checkin record',
     );
     const [user, list] = await Promise.all(promises);
     if (listuser.pending === true && request.payload.pending === false) {
@@ -247,8 +247,7 @@ module.exports = {
         params: { list },
       };
       logger.info(
-        '[ListUserController->update] Sending a notification to inform user that his checkin
-        is not pending anymore'
+        '[ListUserController->update] Sending a notification to inform user that his checkin is not pending anymore',
       );
       promises2.push(NotificationService.send(notification));
       await Promise.all(promises2);
@@ -265,7 +264,7 @@ module.exports = {
     if (childAttributes.indexOf(childAttribute) === -1) {
       logger.warn(
         '[ListUserController->checkout] Invalid childAttribute',
-        childAttribute
+        childAttribute,
       );
       throw Boom.notFound();
     }
@@ -274,7 +273,7 @@ module.exports = {
     if (!user) {
       logger.info(
         '[ListUserController->checkout] User not found',
-        request.params.id
+        request.params.id,
       );
       throw Boom.notFound();
     }
@@ -311,7 +310,7 @@ module.exports = {
     if (request.auth.credentials.id !== userId && !user.hidden) {
       logger.info(
         '[ListUserController->checkout] User was checked out by an admin. Sending notification',
-        { admin: request.auth.credentials.id, user: userId }
+        { admin: request.auth.credentials.id, user: userId },
       );
       promises.push(NotificationService.send({
         type: 'admin_checkout',
@@ -330,7 +329,7 @@ module.exports = {
     promises.push(GSSSyncService.deleteUserFromSpreadsheets(list._id, user.id));
     promises.push(OutlookService.deleteUserFromContactFolders(list._id, user.id));
     logger.info(
-      '[ListUserController->checkout] Saving list and user for checkout and sending notifications'
+      '[ListUserController->checkout] Saving list and user for checkout and sending notifications',
     );
     await Promise.all(promises);
     return user;
