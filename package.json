@@ -22,7 +22,7 @@
     "ejs": "^2.5.2",
     "email-templates": "^5.0.2",
     "google-auth-library": "^2.0.2",
-    "google-libphonenumber": "^3.1.6",
+    "google-libphonenumber": "^3.2.3",
     "googleapis": "^36.0.0",
     "hapi": "^18.1.0",
     "hapi-rate-limit": "^3.1.1",
@@ -62,16 +62,18 @@
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-standard": "^4.0.0",
     "mocha": "^4.0",
-    "nodemon": "^1.11.0",
+    "nodemon": "^1.19.1",
     "supertest": "^3.0.0"
   },
   "scripts": {
     "test": "eslint .",
-    "start": "node ./server.js"
+    "start": "node ./server.js",
+    "dev": "node ./node_modules/nodemon/bin/nodemon.js ./server.js"
   },
   "engines": {
-    "node": ">= 8.0.0"
+    "node": "8.11.3",
+    "npm": "6.9.0"
   },
-  "repository": "un-ocha/hid-api",
-  "license": "MIT"
+  "repository": "https://github.com/UN-OCHA/hid_api.git",
+  "license": "Apache-2.0"
 }

@@ -32,7 +32,7 @@ module.exports = {
     return rsa2jwk(cert, { use: 'sig', kid: 'hid-dev' }, 'public');
   },
 
-  generateIdToken(client, user, nonce) {
+  generateIdToken(client, user, scope, nonce) {
     const now = Math.floor(Date.now() / 1000);
     let sub = user._id;
     if (client.id === 'iasc-prod' || client.id === 'iasc-dev') {
@@ -46,6 +46,17 @@ module.exports = {
       nonce,
       iat: now,
     };
+    if (scope.indexOf('email') !== -1) {
+      idToken.email = user.email;
+      idToken.email_verified = user.email_verified;
+    }
+    if (scope.indexOf('profile') !== -1) {
+      idToken.name = user.name;
+      idToken.family_name = user.family_name;
+      idToken.given_name = user.given_name;
+      idToken.picture = user.picture;
+      idToken.updated_at = user.updatedAt;
+    }
     return this.issue(idToken);
   },
 

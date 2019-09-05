@@ -305,14 +305,14 @@ module.exports = {
             );
           }
           // Verify redirect uri
-          if (client.redirectUri !== redirect) {
+          if (client.redirectUri !== redirect && client.redirectUrls.indexOf(redirect) === -1) {
             logger.warn(
               'Unsuccessful OAuth2 authorization due to wrong redirect URI',
               { security: true, fail: true, request },
             );
             return done('Wrong redirect URI');
           }
-          return done(null, client, client.redirectUri);
+          return done(null, client, redirect);
         } catch (err) {
           return done('An error occurred while processing the request. Please try logging in again.');
         }
@@ -364,7 +364,10 @@ module.exports = {
       request.auth.credentials = user;
       // Save authorized client if user allowed
       const clientId = request.yar.authorize[request.payload.transaction_id].client;
-      if (!request.payload.cancel && !user.hasAuthorizedClient(clientId)) {
+      if (!request.payload.bsubmit || request.payload.bsubmit === 'Deny') {
+        return reply.redirect('/');
+      }
+      if (!user.hasAuthorizedClient(clientId) && request.payload.bsubmit === 'Allow') {
         user.authorizedClients.push(request.yar.authorize[request.payload.transaction_id].client);
         user.markModified('authorizedClients');
         await user.save();
