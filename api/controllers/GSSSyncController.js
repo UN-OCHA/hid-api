@@ -22,12 +22,12 @@ module.exports = {
   async create(request) {
     request.payload.user = request.auth.credentials._id;
     if (!request.payload.spreadsheet) {
-      logger.info(
-        '[GSSSyncController->create] Creating a Google Spreadsheet for synchronization with a list',
-        { list: request.payload.list },
-      );
       const spreadsheet = await GSSSyncService
         .createSpreadsheet(request.auth.credentials, request.payload.list);
+      logger.info(
+        '[GSSSyncController->create] Created a Google Spreadsheet for synchronization with a list',
+        { list: request.payload.list },
+      );
       request.payload.spreadsheet = spreadsheet.data.spreadsheetId;
       request.payload.sheetId = spreadsheet.data.sheets[0].properties.sheetId;
     }
@@ -39,7 +39,15 @@ module.exports = {
       );
       throw Boom.badRequest();
     }
+    logger.info(
+      '[GSSSyncController->create] Created a GSSSync',
+      { gsssync: request.payload },
+    );
     await GSSSyncService.synchronizeAll(gsssync);
+    logger.info(
+      '[GSSSyncController->create] Synchronized gsssync',
+      { gsssync: request.payload },
+    );
     return gsssync;
   },
 
@@ -54,11 +62,11 @@ module.exports = {
       const tokens = await authClient.getToken(request.payload.code);
       if (tokens && tokens.refresh_token) {
         request.auth.credentials.googleCredentials = tokens;
+        await request.auth.credentials.save();
         logger.info(
-          '[GSSSyncController->saveGoogleCredentials] Saving Google credentials',
+          '[GSSSyncController->saveGoogleCredentials] Saved Google credentials',
           { user: request.auth.email },
         );
-        await request.auth.credentials.save();
         return reply.response().code(204);
       }
       logger.warn(
@@ -78,10 +86,10 @@ module.exports = {
    * and a Google spreadsheet.
    */
   async destroy(request, reply) {
-    logger.info(
-      `[GSSSyncController->destroy] Remove GSSSync ${request.params.id}`,
-    );
     await GSSSync.remove({ _id: request.params.id });
+    logger.info(
+      `[GSSSyncController->destroy] Removed GSSSync ${request.params.id}`,
+    );
     return reply.response().code(204);
   },
 };

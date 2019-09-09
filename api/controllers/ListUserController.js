@@ -31,7 +31,7 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
   // Check that the list added corresponds to the right attribute
   if (childAttribute !== `${list.type}s` && childAttribute !== list.type) {
     logger.warn(
-      '[ListUserController->checkinHelper] Wrong list type',
+      `[ListUserController->checkinHelper] Wrong list type ${list.type} ${childAttribute}`,
     );
     throw Boom.badRequest('Wrong list type');
   }

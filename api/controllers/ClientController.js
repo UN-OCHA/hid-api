@@ -22,6 +22,9 @@ module.exports = {
       );
       throw Boom.badRequest();
     }
+    logger.info(
+      '[ClientController->create] Created a new client',
+    );
     return client;
   },
 
@@ -46,24 +49,24 @@ module.exports = {
   },
 
   async update(request) {
-    logger.info(
-      `[ClientController->update] Updating client ${request.params.id}`,
-      { request: request.payload },
-    );
     const client = await Client
       .findOneAndUpdate(
         { _id: request.params.id },
         request.payload,
         { runValidators: true, new: true },
       );
+    logger.info(
+      `[ClientController->update] Updated client ${request.params.id}`,
+      { request: request.payload },
+    );
     return client;
   },
 
   async destroy(request, reply) {
-    logger.info(
-      `[ClientController->destroy] Removing client ${request.params.id}`,
-    );
     await Client.remove({ _id: request.params.id });
+    logger.info(
+      `[ClientController->destroy] Removed client ${request.params.id}`,
+    );
     return reply.response().code(204);
   },
 };

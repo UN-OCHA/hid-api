@@ -25,11 +25,11 @@ module.exports = {
       request.payload.managers = [];
     }
     request.payload.managers.push(request.auth.credentials._id);
+    const list = await List.create(request.payload);
     logger.info(
-      '[ListController->create] Creating a new list',
+      '[ListController->create] Created a new list',
       { request: request.payload },
     );
-    const list = await List.create(request.payload);
     return list;
   },
 
@@ -162,6 +162,7 @@ module.exports = {
 
     // Check whether we need to send notifications
     const notifications = [];
+    const pendingLogs = [];
     if (diffAdded.length) {
       const users = await User.find({ _id: { $in: diffAdded } });
       for (let i = 0; i < users.length; i += 1) {
@@ -173,6 +174,10 @@ module.exports = {
             createdBy: request.auth.credentials,
             params: { list: newlist },
           }));
+        pendingLogs.push({
+          type: 'info',
+          message: `[ListController->update] Sent notification added_list_manager to ${user.email}`,
+        });
       }
       newlist.markModified('managers');
     }
@@ -187,23 +192,26 @@ module.exports = {
             createdBy: request.auth.credentials,
             params: { list: newlist },
           }));
+        pendingLogs.push({
+          type: 'info',
+          message: `[ListController->update] Sent notification removed_list_manager to ${user.email}`,
+        });
       }
       newlist.markModified('managers');
     }
 
     // Save the list
+    await newlist.save();
     logger.info(
-      '[ListController->update] Updating a list',
+      '[ListController->update] Updated a list',
       { request: request.payload },
     );
-    await newlist.save();
 
     // Send the notifications
-    logger.info(
-      '[ListController->update] Sending notifications after list update',
-      { list: newlist._id.toString() },
-    );
-    await Promise.all(notifications);
+    await Promise.all(notifications)
+    for (let i = 0; i < pendingLogs.length; i += 1) {
+      logger.log(pendingLogs[i]);
+    }
 
     // Update users
     const criteria = {};
@@ -215,10 +223,6 @@ module.exports = {
       user.updateCheckins(newlist);
       actions.push(user.save());
     }
-    logger.info(
-      '[ListController->update] Update all users part of the list being updated',
-      { list: newlist._id.toString() },
-    );
     await Promise.all(actions);
     return newlist;
   },
@@ -234,11 +238,11 @@ module.exports = {
     }
     // Set deleted to true
     record.deleted = true;
+    const newRecord = await record.save();
     logger.info(
-      '[ListController->destroy] Adding deleted flag to list',
+      '[ListController->destroy] Added deleted flag to list',
       { list: request.params.id },
     );
-    const newRecord = await record.save();
     // Remove all checkins from users in this list
     const criteria = {};
     criteria[`${record.type}s.list`] = record._id.toString();
@@ -253,10 +257,6 @@ module.exports = {
       }
       promises.push(user.save());
     }
-    logger.info(
-      '[ListController->destroy] Remove users from list being deleted',
-      { list: request.params.id },
-    );
     await Promise.all(promises);
     return newRecord;
   },

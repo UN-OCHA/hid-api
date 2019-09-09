@@ -25,9 +25,12 @@ const { logger } = config;
 
 /**
  * @module UserController
- * @description Generated Trails.js Controller.
+ * @description CRUD controller for users.
  */
 
+/**
+ * Exports users in PDF, using the PDF snap service.
+ */
 async function _pdfExport(users, number, lists, req, format) {
   const filters = [];
   if (Object.prototype.hasOwnProperty.call(req.query, 'name') && req.query.name.length) {
@@ -96,10 +99,16 @@ async function _pdfExport(users, number, lists, req, format) {
 
     return [clientRes.data, pdfSize];
   }
-
+  logger.error(
+    '[UserController->_pdfExport] An error occurred while generating a PDF',
+    { response: clientRes },
+  );
   throw new Error(`An error occurred while generating PDF for list ${data.lists[0].name}`);
 }
 
+/**
+ * Exports users to txt.
+ */
 function _txtExport(users) {
   let out = '';
   for (let i = 0; i < users.length; i += 1) {
@@ -108,6 +117,9 @@ function _txtExport(users) {
   return out;
 }
 
+/**
+ * Get the list of bundles a user is checked into.
+ */
 function getBundles(user) {
   let bundles = '';
   user.bundles.forEach((bundle) => {
@@ -118,6 +130,9 @@ function getBundles(user) {
   return bundles;
 }
 
+/**
+ * Get the list of functional roles a user is checked into.
+ */
 function getRoles(user) {
   let roles = '';
   user.functional_roles.forEach((role) => {
@@ -128,6 +143,9 @@ function getRoles(user) {
   return roles;
 }
 
+/**
+ * Helper function to export users to csv
+ */
 function _csvExport(users, full = false) {
   let out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes\n';
   let org = '';
@@ -217,12 +235,18 @@ module.exports = {
 
   async create(request) {
     if (!request.payload.app_verify_url) {
+      logger.warn(
+        '[UserController->create] Missing app_verify_url',
+      );
       throw Boom.badRequest('Missing app_verify_url');
     }
 
     const appVerifyUrl = request.payload.app_verify_url;
     if (!HelperService.isAuthorizedUrl(appVerifyUrl)) {
-      logger.warn('Invalid app_verify_url', { security: true, fail: true, request });
+      logger.warn(
+        '[UserController->create] Invalid app_verify_url',
+        { security: true, fail: true, request },
+      );
       throw Boom.badRequest('Invalid app_verify_url');
     }
 
@@ -233,8 +257,6 @@ module.exports = {
 
     if (!record) {
       // Create user
-      logger.debug('Preparing request for user creation', { request });
-
       if (request.payload.email) {
         request.payload.emails = [];
         request.payload.emails.push({ type: 'Work', email: request.payload.email, validated: false });
@@ -242,6 +264,9 @@ module.exports = {
 
       if (request.payload.password && request.payload.confirm_password) {
         if (!User.isStrongPassword(request.payload.password)) {
+          logger.warn(
+            '[UserController->create] Provided password is not strong enough',
+          );
           throw Boom.badRequest('The password is not strong enough');
         }
         request.payload.password = User.hashPassword(request.payload.password);
@@ -287,11 +312,21 @@ module.exports = {
         delete request.payload.tester;
       }
 
+      // Not showing request payload to avoid showing user passwords in logs.
+      logger.info(
+        '[UserController->create] Creating user',
+      );
       const user = await User.create(request.payload);
       if (!user) {
+        // Not showing request payload to avoid showing user passwords in logs.
+        logger.warn(
+          '[UserController->create] Create user failed'
+        );
         throw Boom.badRequest();
       }
-      logger.debug(`User ${user._id.toString()} successfully created`, { request });
+      logger.info(
+        `[UserController->create] User ${user._id.toString()} created successfully`
+      );
 
       if (user.email && notify === true) {
         if (!request.auth.credentials) {
@@ -304,9 +339,16 @@ module.exports = {
         }
       }
       return user;
-    } if (!request.auth.credentials) {
+    }
+    if (!request.auth.credentials) {
+      logger.warn(
+        `[UserController->create] The email address ${request.payload.email} is already registered`,
+      );
       throw Boom.badRequest('This email address is already registered. If you can not remember your password, please reset it');
     } else {
+      logger.warn(
+        `[UserController->create] The user already exists. id: ${record._id.toString()}`,
+      );
       throw Boom.badRequest(`This user already exists. user_id=${record._id.toString()}`);
     }
   },
@@ -327,6 +369,9 @@ module.exports = {
       }
       const user = await User.findOne(criteria);
       if (!user) {
+        logger.warn(
+          `[UserController->find] Could not find user ${request.params.id}`,
+        );
         throw Boom.notFound();
       } else {
         user.sanitize(request.auth.credentials);
@@ -345,6 +390,9 @@ module.exports = {
 
     // Do not allow exports for hidden users
     if (request.params.extension && request.auth.credentials.hidden) {
+      logger.warn(
+        `[UserController->find] Hidden user ${request.auth.credentials.id} tried to export users`
+      );
       throw Boom.unauthorized();
     }
 
@@ -359,6 +407,10 @@ module.exports = {
 
     if (criteria.name) {
       if (criteria.name.length < 3) {
+        logger.warn(
+          '[UserController->find] Name of a user must have at least 3 characters in find method',
+          { name: criteria.name },
+        );
         throw Boom.badRequest('Name must have at least 3 characters');
       }
       criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/g, '');
@@ -391,12 +443,14 @@ module.exports = {
             criteria[`${list.type}s`].$elemMatch.pending = false;
           }
         } else {
+          logger.warn(
+            `[UserController->find] User ${request.auth.credentials.id} is not authorized to view list ${list._id.toString()}`,
+          );
           throw Boom.unauthorized('You are not authorized to view this list');
         }
       });
     }
 
-    logger.debug('[UserController] (find) criteria = ', criteria, ' options = ', options, { request });
     let pdfFormat = '';
     if (criteria.format) {
       pdfFormat = criteria.format;
@@ -413,6 +467,10 @@ module.exports = {
     }
     const [results, number] = await Promise.all([query, User.countDocuments(criteria)]);
     if (!results) {
+      logger.warn(
+        '[UserController->find] Could not find users',
+        { criteria: criteria },
+      );
       throw Boom.notFound();
     }
     if (request.params.extension) {
@@ -454,8 +512,6 @@ module.exports = {
   },
 
   async update(request) {
-    logger.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
-      ', values = ', request.payload, { request });
 
     const childAttributes = User.listAttributes();
     HelperService.removeForbiddenAttributes(User, request, childAttributes);
@@ -466,6 +522,9 @@ module.exports = {
     // Check old password
     let user = await User.findOne({ _id: request.params.id });
     if (!user) {
+      logger.warn(
+        `[UserController->update] Could not find user ${request.params.id}`,
+      );
       throw Boom.notFound();
     }
     // If verifying user, set verified_by and verificationExpiryEmail
@@ -475,10 +534,16 @@ module.exports = {
       request.payload.verificationExpiryEmail = false;
     }
     if (request.payload.old_password && request.payload.new_password) {
-      logger.warn('Updating user password', { request, security: true });
+      logger.warn(
+        '[UserController->update] Updating user password',
+        { request, security: true },
+      );
       if (user.validPassword(request.payload.old_password)) {
         if (!User.isStrongPassword(request.payload.new_password)) {
-          logger.warn('Could not update user password. New password is not strong enough', { request, security: true, fail: true });
+          logger.warn(
+            `[UserController->update] Could not update user password for user ${user.id}. New password is not strong enough`,
+            { request, security: true, fail: true },
+          );
           throw Boom.badRequest('Password is not strong enough');
         }
         request.payload.password = User.hashPassword(request.payload.new_password);
@@ -486,9 +551,15 @@ module.exports = {
         request.payload.passwordResetAlert30days = false;
         request.payload.passwordResetAlert7days = false;
         request.payload.passwordResetAlert = false;
-        logger.warn('Successfully updated user password', { request, security: true });
+        logger.warn(
+          '[UserController->update] Successfully updated user password',
+          { request, security: true },
+        );
       } else {
-        logger.warn('Could not update user password. Old password is wrong', { request, security: true, fail: true });
+        logger.warn(
+          `[UserController->update] Could not update user password for user ${user.id}. Old password is wrong`,
+          { request, security: true, fail: true },
+        );
         throw Boom.badRequest('The current password you entered is incorrect');
       }
     }
@@ -501,6 +572,9 @@ module.exports = {
       // User is becoming invisible. Update lists count.
       const listIds = user.getListIds(true);
       if (listIds.length) {
+        logger.info(
+          `[UserController->update] User ${user._id.toString()} is becoming invisible. Updating list counts`,
+        );
         await List.updateMany({ _id: { $in: listIds } }, {
           $inc: {
             countVerified: -1,
@@ -513,6 +587,9 @@ module.exports = {
       // User is becoming visible. Update lists count.
       const listIds = user.getListIds(true);
       if (listIds.length) {
+        logger.info(
+          `[UserController->update] User ${user._id.toString()} is becoming visible. Updating list counts`,
+        );
         await List.updateMany({ _id: { $in: listIds } }, {
           $inc: {
             countVerified: 1,
@@ -525,6 +602,9 @@ module.exports = {
       // User is being flagged. Update lists count.
       const listIds = user.getListIds(true);
       if (listIds.length) {
+        logger.info(
+          `[UserController->update] User ${user._id.toString()} is being flagged. Updating list counts`,
+        );
         await List.updateMany({ _id: { $in: listIds } }, {
           $inc: {
             countManager: -1,
@@ -538,6 +618,9 @@ module.exports = {
       // User is being unflagged. Update lists count.
       const listIds = user.getListIds(true);
       if (listIds.length) {
+        logger.info(
+          `[UserController->update] User ${user._id.toString()} is being unflagged. Updating list counts`,
+        );
         await List.updateMany({ _id: { $in: listIds } }, {
           $inc: {
             countManager: 1,
@@ -547,6 +630,9 @@ module.exports = {
         });
       }
     }
+    logger.info(
+      `[UserController->update] Saving user ${user._id.toString()}`,
+    );
     user = await User
       .findOneAndUpdate(
         { _id: request.params.id },
@@ -563,6 +649,9 @@ module.exports = {
         // User is becoming visible. Update lists count.
         const listIds = user.getListIds(true);
         if (listIds.length) {
+          logger.info(
+            `[UserController->update] User ${user._id.toString()} is becoming visible. Updating list counts`,
+          );
           promises.push(List.updateMany({ _id: { $in: listIds } }, {
             $inc: {
               countVerified: 1,
@@ -584,6 +673,10 @@ module.exports = {
     try {
       await Promise.all(promises);
     } catch (err) {
+      logger.warn(
+        `[UserController->update] An error occurred while updating user`,
+        { error: err },
+      );
       return user;
     }
     return user;
@@ -592,16 +685,23 @@ module.exports = {
   async destroy(request, reply) {
     if (!request.auth.credentials.is_admin
       && request.auth.credentials._id.toString() !== request.params.id) {
+      logger.warn(
+        `[UserController->destroy] User ${request.auth.credentials._id.toString()} is not allowed to delete user ${request.params.id}`,
+      );
       return reply(Boom.forbidden('You are not allowed to delete this account'));
     }
 
-    logger.debug('[UserController] (destroy) model = user, query =', request.query, { request });
-
     const user = await User.findOne({ _id: request.params.id });
     if (!user) {
+      logger.warn(
+        `[UserController->destroy] Could not find user ${request.params.id}`,
+      );
       throw Boom.notFound();
     }
     await EmailService.sendAdminDelete(user, request.auth.credentials);
+    logger.info(
+      `[UserController->destroy] Removing user ${request.params.id}`,
+    );
     await user.remove();
     return reply.response().code(204);
   },
@@ -609,22 +709,32 @@ module.exports = {
   async setPrimaryEmail(request) {
     const { email } = request.payload;
 
-    logger.debug('[UserController] Setting primary email', { request });
-
     if (!request.payload.email) {
+      logger.warn(
+        `[UserController->setPrimaryEmail] No email in payload`,
+      );
       throw Boom.badRequest();
     }
 
     const record = await User.findOne({ _id: request.params.id });
     if (!record) {
+      logger.warn(
+        `[UserController->setPrimaryEmail] Could not find user ${request.params.id}`,
+      );
       throw Boom.notFound();
     }
     // Make sure email is validated
     const index = record.emailIndex(email);
     if (index === -1) {
+      logger.warn(
+        `[UserController->setPrimaryEmail] Email ${email} does not exist for user ${request.params.id}`,
+      );
       throw Boom.badRequest('Email does not exist');
     }
     if (!record.emails[index].validated) {
+      logger.warn(
+        `[UserController->setPrimaryEmail] Email ${record.emails[index]} has not been validated for user ${request.params.id}`,
+      );
       throw Boom.badRequest('Email has not been validated. You need to validate it first.');
     }
     record.email = email;
@@ -632,6 +742,9 @@ module.exports = {
     // so make sure email_verified is set to true.
     record.verifyEmail(email);
     record.lastModified = new Date();
+    logger.info(
+      `[UserController->setPrimaryEmail] Saving user ${request.params.id}`,
+    );
     await record.save();
     const promises = [];
     promises.push(GSSSyncService.synchronizeUser(record));
@@ -641,13 +754,14 @@ module.exports = {
   },
 
   async validateEmail(request) {
-    logger.debug('[UserController] Verifying email ', { request });
-
     // TODO: make sure current user can do this
 
     if (request.payload.hash) {
       const record = await User.findOne({ _id: request.payload.id });
       if (!record) {
+        logger.warn(
+          `[UserController->validateEmail] Could not find user ${request.payload.id}`,
+        );
         throw Boom.notFound();
       }
       let domain = null;
@@ -679,6 +793,9 @@ module.exports = {
           domain = await record.isVerifiableEmail(email);
         }
       } else {
+        logger.warn(
+          `[UserController->validateEmail] Invalid hash ${request.payload.hash} provided`,
+        );
         throw Boom.badRequest('Invalid hash');
       }
       if (domain) {
@@ -716,12 +833,18 @@ module.exports = {
     }
     const record = await User.findOne({ 'emails.email': request.params.email });
     if (!record) {
+      logger.warn(
+        `[UserController->validateEmail] Could not find user with email ${request.params.email}`,
+      );
       throw Boom.notFound();
     }
     // Send validation email again
     const appValidationUrl = request.payload.app_validation_url;
     if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
-      logger.warn('Invalid app_validation_url', { security: true, fail: true, request });
+      logger.warn(
+      `[UserController->validateEmail] Invalid app_validation_url ${appValidationUrl}`,
+        { security: true, fail: true, request },
+      );
       throw Boom.badRequest('Invalid app_validation_url');
     }
     const emailIndex = record.emailIndex(request.params.email);
@@ -736,30 +859,47 @@ module.exports = {
   },
 
   async updatePassword(request, reply) {
-    logger.debug('[UserController] Updating user password', { request });
 
     if (!request.payload.old_password || !request.payload.new_password) {
+      logger.warn(
+        `[UserController->updatePassword] Request is missing parameters (old or new password)`,
+      );
       throw Boom.badRequest('Request is missing parameters (old or new password)');
     }
 
     if (!User.isStrongPassword(request.payload.new_password)) {
-      logger.warn('New password is not strong enough', { request, security: true, fail: true });
+      logger.warn(
+        '[UserController->updatePassword] New password is not strong enough',
+        { request, security: true, fail: true },
+      );
       throw Boom.badRequest('New password is not strong enough');
     }
 
     // Check old password
     const user = await User.findOne({ _id: request.params.id });
     if (!user) {
+      logger.warn(
+        `[UserController->updatePassword] User ${request.params.id} not found`,
+      );
       throw Boom.notFound();
     }
-    logger.warn('Updating user password', { request, security: true });
+    logger.warn(
+      `[UserController->updatePassword] Updating password for user ${user._id.toString()}`,
+      { request, security: true },
+    );
     if (user.validPassword(request.payload.old_password)) {
       user.password = User.hashPassword(request.payload.new_password);
       user.lastModified = new Date();
-      logger.warn('Successfully updated user password', { request, security: true });
+      logger.warn(
+        `[UserController->updatePassword] Successfully updated password for user ${user._id.toString()}`,
+        { request, security: true },
+      );
       await user.save();
     } else {
-      logger.warn('Could not update user password. Old password is wrong', { request, security: true, fail: true });
+      logger.warn(
+        `[UserController->updatePassword] Could not update password for user ${user._id.toString()}. Old password is wrong`,
+        { request, security: true, fail: true },
+      );
       throw Boom.badRequest('The old password is wrong');
     }
     return reply.response().code(204);
@@ -770,11 +910,17 @@ module.exports = {
       const appResetUrl = request.payload.app_reset_url;
 
       if (!HelperService.isAuthorizedUrl(appResetUrl)) {
-        logger.warn('Invalid app_reset_url', { security: true, fail: true, request });
+        logger.warn(
+          `[UserController->resetPasswordEndpoint] Invalid app_reset_url ${appResetUrl}`,
+          { security: true, fail: true, request },
+        );
         throw Boom.badRequest('app_reset_url is invalid');
       }
       const record = await User.findOne({ email: request.payload.email.toLowerCase() });
       if (!record) {
+        logger.warn(
+          `[UserController->resetPasswordEndpoint] User ${request.params.id} not found`,
+        );
         return '';
       }
       await EmailService.sendResetPassword(record, appResetUrl);
@@ -783,18 +929,30 @@ module.exports = {
     const cookie = request.yar.get('session');
     if (!request.payload.hash || !request.payload.password
       || !request.payload.id || !request.payload.time) {
+      logger.warn(
+        '[UserController->resetPasswordEndpoint] Wrong or missing arguments',
+      );
       throw Boom.badRequest('Wrong arguments');
     }
 
     if (!User.isStrongPassword(request.payload.password)) {
-      logger.warn('Could not reset password. New password is not strong enough.', { security: true, fail: true, request });
+      logger.warn(
+        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough.',
+        { security: true, fail: true, request },
+      );
       throw Boom.badRequest('New password is not strong enough');
     }
 
-    logger.warn('Resetting password', { security: true, request });
+    logger.warn(
+      `[UserController->resetPasswordEndpoint] Resetting password for user ${request.payload.id}`,
+      { security: true, request },
+    );
     let record = await User.findOne({ _id: request.payload.id });
     if (!record) {
-      logger.warn('Could not reset password. User not found', { security: true, fail: true, request });
+      logger.warn(
+        `[UserController->resetPasswordEndpoint] Could not reset password. User ${request.payload.id} not found`,
+        { security: true, fail: true, request },
+      );
       throw Boom.badRequest('Reset password link is expired or invalid');
     }
     if (record.totp && !cookie) {
@@ -806,6 +964,9 @@ module.exports = {
     if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
       const pwd = User.hashPassword(request.payload.password);
       if (pwd === record.password) {
+        logger.warn(
+          `[UserController->resetPasswordEndpoint] Could not reset password for user ${request.payload.id}. The new password can not be the same as the old one`,
+        );
         throw Boom.badRequest('The new password can not be the same as the old one');
       } else {
         record.password = pwd;
@@ -813,6 +974,9 @@ module.exports = {
         domain = await record.isVerifiableEmail(record.email);
       }
     } else {
+      logger.warn(
+        `[UserController->resetPasswordEndpoint] Reset password link is expired or invalid`,
+      );
       throw Boom.badRequest('Reset password link is expired or invalid');
     }
     if (domain) {
@@ -828,6 +992,9 @@ module.exports = {
       // User is not an orphan anymore. Update lists count.
       const listIds = record.getListIds(true);
       if (listIds.length) {
+        logger.info(
+          `[UserController->resetPasswordEndpoint] User ${record._id.toString()} is not an orphan anymore. Updating list counts`,
+        );
         await List.updateMany({ _id: { $in: listIds } }, { $inc: { countUnverified: 1 } });
       }
     }
@@ -839,7 +1006,10 @@ module.exports = {
     record.passwordResetAlert = false;
     record.lastModified = new Date();
     await record.save();
-    logger.warn('Password updated successfully', { security: true, request });
+    logger.warn(
+      `[UserController->resetPasswordEndpoint] Password updated successfully for user ${record._id.toString()}`,
+      { security: true, request },
+    );
     return 'Password reset successfully';
   },
 
@@ -848,12 +1018,18 @@ module.exports = {
     const userId = request.params.id;
 
     if (!HelperService.isAuthorizedUrl(appResetUrl)) {
-      logger.warn('Invalid app_reset_url', { security: true, fail: true, request });
+      logger.warn(
+        `[UserController->claimEmail] Invalid app_reset_url ${appResetUrl}`,
+        { security: true, fail: true, request },
+      );
       throw Boom.badRequest('app_reset_url is invalid');
     }
 
     const record = await User.findOne({ _id: userId });
     if (!record) {
+      logger.warn(
+        `[UserController->claimEmail] User ${userId} not found`,
+      );
       throw Boom.notFound();
     }
     await EmailService.sendClaim(record, appResetUrl);
@@ -863,17 +1039,21 @@ module.exports = {
   async updatePicture(request) {
     const userId = request.params.id;
 
-    logger.debug('[UserController] Updating picture ', { request });
-
     const data = request.payload;
     if (data.file) {
       const image = sharp(data.file);
       const record = await User.findOne({ _id: userId });
       if (!record) {
+        logger.warn(
+          `[UserController->updatePicture] User ${request.params.id} not found`,
+        );
         throw Boom.notFound();
       }
       const metadata = await image.metadata();
       if (metadata.format !== 'jpeg' && metadata.format !== 'png') {
+        logger.warn(
+          `[UserController->updatePicture] ${metadata.format} is not a valid image format`,
+        );
         throw Boom.badRequest('Invalid image format. Only jpeg and png are accepted');
       }
       let path = `${__dirname}/../../assets/pictures/${userId}.`;
@@ -884,6 +1064,9 @@ module.exports = {
       record.picture = `${process.env.ROOT_URL}/assets/pictures/${userId}.${metadata.format}`;
       record.lastModified = new Date();
       await record.save();
+      logger.info(
+        `[UserController->updatePicture] Successfully updated picture for user ${record._id.toString()}`,
+      );
       return record;
     }
     throw Boom.badRequest('No file found');
