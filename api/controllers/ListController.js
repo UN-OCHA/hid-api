@@ -216,12 +216,21 @@ module.exports = {
     criteria[`${newlist.type}s.list`] = newlist._id.toString();
     const users = await User.find(criteria);
     const actions = [];
+    const actionsLogs = [];
     for (let i = 0; i < users.length; i += 1) {
       const user = users[i];
       user.updateCheckins(newlist);
       actions.push(user.save());
+      actionsLogs.push({
+        type: 'info',
+        message: `[ListController->update] Successfully saved user ${user.id}`,
+      });
     }
     await Promise.all(actions);
+    // Possible Performance impact by logging too much
+    for (let i = 0; i < actionsLogs.length; i += 1) {
+      logger.log(actionsLogs[i]);
+    }
     return newlist;
   },
 
@@ -245,6 +254,7 @@ module.exports = {
     const criteria = {};
     criteria[`${record.type}s.list`] = record._id.toString();
     const promises = [];
+    const pendingLogs = [];
     const users = await User.find(criteria);
     for (let i = 0; i < users.length; i += 1) {
       const user = users[i];
@@ -254,8 +264,16 @@ module.exports = {
         }
       }
       promises.push(user.save());
+      pendingLogs.push({
+        type: 'info',
+        message: `[ListController->destroy] Successfully saved user ${user.id}`,
+      });
     }
     await Promise.all(promises);
+    // Possible performance impact by logging too much.
+    for (let i = 0; i < pendingLogs.length; i += 1) {
+      logger.log(pendingLogs[i]);
+    }
     return newRecord;
   },
 

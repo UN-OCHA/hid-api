@@ -114,6 +114,7 @@ module.exports = {
     criteria['subscriptions.service'] = request.params.id;
     const users = await User.find(criteria);
     const promises = [];
+    const pendingLogs = [];
     for (let i = 0; i < users.length; i += 1) {
       const user = users[i];
       for (let j = user.subscriptions.length; j >= 0; j -= 1) {
@@ -125,10 +126,18 @@ module.exports = {
       }
       user.markModified('subscriptions');
       promises.push(user.save());
+      pendingLogs.push({
+        type: 'info',
+        message: `[ServiceController->destroy] Successfully saved user ${user.id}`,
+      });
     }
     await Promise.all(promises);
+    // Possible performance impact by logging too much.
+    for (let i = 0; i < pendingLogs.length; i += 1) {
+      logger.log(pendingLogs[i]);
+    }
     logger.info(
-      `[ServiceController->destroy] Removed user subscriptions for service ${request.params.id}`,
+      `[ServiceController->destroy] Removed all user subscriptions for service ${request.params.id}`,
     );
     await Service.remove({ _id: request.params.id });
     logger.info(
