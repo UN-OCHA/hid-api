@@ -1,5 +1,3 @@
-
-
 const Boom = require('boom');
 const Client = require('../models/Client');
 const HelperService = require('../services/HelperService');

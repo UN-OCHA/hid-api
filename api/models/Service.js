@@ -1,5 +1,3 @@
-
-
 const mongoose = require('mongoose');
 const Mailchimp = require('mailchimp-api-v3');
 const crypto = require('crypto');

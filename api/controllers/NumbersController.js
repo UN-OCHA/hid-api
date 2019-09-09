@@ -1,5 +1,3 @@
-
-
 const List = require('../models/List');
 const User = require('../models/User');
 

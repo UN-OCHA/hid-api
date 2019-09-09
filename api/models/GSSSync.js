@@ -1,5 +1,3 @@
-
-
 const mongoose = require('mongoose');
 const { OAuth2Client } = require('google-auth-library');
 const fs = require('fs');

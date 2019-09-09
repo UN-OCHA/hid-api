@@ -1,5 +1,3 @@
-
-
 const Boom = require('boom');
 const _ = require('lodash');
 const List = require('../models/List');

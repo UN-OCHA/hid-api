@@ -1,5 +1,3 @@
-
-
 const Boom = require('boom');
 const Hawk = require('hawk');
 const Client = require('../models/Client');

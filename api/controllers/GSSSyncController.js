@@ -1,5 +1,3 @@
-
-
 const Boom = require('boom');
 const { OAuth2Client } = require('google-auth-library');
 const fs = require('fs');

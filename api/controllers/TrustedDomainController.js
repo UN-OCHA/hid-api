@@ -1,5 +1,3 @@
-
-
 const Boom = require('boom');
 const TrustedDomain = require('../models/TrustedDomain');
 const HelperService = require('../services/HelperService');

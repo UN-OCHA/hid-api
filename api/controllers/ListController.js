@@ -1,5 +1,3 @@
-
-
 const Boom = require('boom');
 const _ = require('lodash');
 const acceptLanguage = require('accept-language');

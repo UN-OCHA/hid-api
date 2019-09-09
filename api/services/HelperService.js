@@ -1,5 +1,3 @@
-
-
 const crypto = require('crypto');
 const _ = require('lodash');
 

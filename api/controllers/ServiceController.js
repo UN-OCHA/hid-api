@@ -1,5 +1,3 @@
-
-
 const Boom = require('boom');
 const Mailchimp = require('mailchimp-api-v3');
 const { google } = require('googleapis');

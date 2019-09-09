@@ -1,5 +1,3 @@
-
-
 const Boom = require('boom');
 const Operation = require('../models/Operation');
 const HelperService = require('../services/HelperService');

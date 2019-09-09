@@ -1,5 +1,3 @@
-
-
 const Boom = require('boom');
 const qs = require('qs');
 const ejs = require('ejs');

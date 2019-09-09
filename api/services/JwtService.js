@@ -1,5 +1,3 @@
-
-
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const rsa2jwk = require('rsa-pem-to-jwk');

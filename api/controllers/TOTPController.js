@@ -1,5 +1,3 @@
-
-
 const authenticator = require('authenticator');
 const Boom = require('boom');
 const QRCode = require('qrcode');

@@ -1,10 +1,11 @@
-
-
 const Nodemailer = require('nodemailer');
 const Email = require('email-templates');
 
 const TransporterUrl = `smtp://${process.env.SMTP_USER}:${process.env.SMTP_PASS}@${process.env.SMTP_HOST}:${process.env.SMTP_PORT}`;
 const Transporter = Nodemailer.createTransport(TransporterUrl);
+const config = require('../../config/env')[process.env.NODE_ENV];
+
+const { logger } = config;
 
 /**
  * @module EmailService
@@ -46,6 +47,9 @@ function send(options, tpl, context) {
     message: options,
     locals: context,
   };
+  logger.info(
+    `[EmailService->send] About to send ${tpl} email to ${options.to}`,
+  );
   return email.send(args);
 }
 
