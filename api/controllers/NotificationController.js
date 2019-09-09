@@ -55,19 +55,19 @@ module.exports = {
       }
       record.notified = request.payload.notified;
       record.read = request.payload.read;
-      logger.info(
-        `[NotificationController->update] Saving notification ${request.params.id}`,
-      );
       record = await record.save();
+      logger.info(
+        `[NotificationController->update] Saved notification ${request.params.id}`,
+      );
       return record;
     }
-    logger.info(
-      '[NotificationController->update] Updating notifications for current user',
-      { currentUser: request.auth.credentials.id, request: request.payload },
-    );
     await Notification.update({ user: request.auth.credentials.id },
       { read: request.payload.read, notified: request.payload.notified },
       { multi: true });
+    logger.info(
+      '[NotificationController->update] Updated notifications for current user',
+      { currentUser: request.auth.credentials.id, request: request.payload },
+    );
     return reply.response().code(204);
   },
 

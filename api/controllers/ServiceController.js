@@ -98,16 +98,16 @@ module.exports = {
   },
 
   async update(request) {
-    logger.info(
-      `[ServiceController->service] Updating service ${request.params.id}`,
-      { request: request.payload },
-    );
     const service = await Service
       .findOneAndUpdate(
         { _id: request.params.id },
         request.payload,
         { runValidators: true, new: true },
       );
+    logger.info(
+      `[ServiceController->service] Updated service ${request.params.id}`,
+      { request: request.payload },
+    );
     return service;
   },
 
@@ -128,24 +128,24 @@ module.exports = {
       user.markModified('subscriptions');
       promises.push(user.save());
     }
-    logger.info(
-      `[ServiceController->destroy] Remove user subscriptions for service ${request.params.id}`,
-    );
     await Promise.all(promises);
     logger.info(
-      `[ServiceController->destroy] Delete service ${request.params.id}`,
+      `[ServiceController->destroy] Removed user subscriptions for service ${request.params.id}`,
     );
     await Service.remove({ _id: request.params.id });
+    logger.info(
+      `[ServiceController->destroy] Removed service ${request.params.id}`,
+    );
     return reply.response().code(204);
   },
 
   async mailchimpLists(request) {
     if (request.query.apiKey) {
       const mc = new Mailchimp(request.query.apiKey);
-      logger.info(
-        '[ServiceController->mailchimpLists] Get mailchimp lists',
-      );
       const result = await mc.get({ path: '/lists' });
+      logger.info(
+        '[ServiceController->mailchimpLists] Retrieved mailchimp lists',
+      );
       return result;
     }
     logger.warn(
@@ -166,14 +166,14 @@ module.exports = {
     }
     const auth = Service.googleGroupsAuthorize(creds.googlegroup);
     const service = google.admin('directory_v1');
-    logger.info(
-      `[ServiceController->googleGroups] Getting list of groups for domain ${request.query.domain}`,
-    );
     const response = await service.groups.list({
       auth,
       customer: 'my_customer',
       maxResults: 200,
     });
+    logger.info(
+      `[ServiceController->googleGroups] Retrieved list of groups for domain ${request.query.domain}`,
+    );
     return response.data.groups;
   },
 
@@ -213,22 +213,28 @@ module.exports = {
         );
         throw new Error('Could not find service credentials');
       }
-      logger.info(
-        `[ServiceController->subscribe] Subscribe user ${request.params.id} to service ${request.payload.service}`,
-      );
       await service.subscribeGoogleGroup(user, request.payload.email, creds);
+      logger.info(
+        `[ServiceController->subscribe] Subscribed user ${request.params.id} to service ${request.payload.service}`,
+      );
       user.subscriptions.push({ email: request.payload.email, service });
       await user.save();
+      logger.info(
+        `[ServiceController->subscribe] Saved user ${request.params.id}`,
+      );
     }
     if (service.type === 'mailchimp') {
       try {
-        logger.info(
-          `[ServiceController->subscribe] Subscribe user ${request.params.id} to service ${request.payload.service}`,
-        );
         const output = await service.subscribeMailchimp(user, request.payload.email);
+        logger.info(
+          `[ServiceController->subscribe] Subscribed user ${request.params.id} to service ${request.payload.service}`,
+        );
         if (output.statusCode === 200) {
           user.subscriptions.push({ email: request.payload.email, service });
           await user.save();
+          logger.info(
+            `[ServiceController->subscribe] Saved user ${request.params.id}`,
+          );
         } else {
           logger.error(
             '[ServiceController->subscribe] Error calling the Mailchimp API',
@@ -244,6 +250,9 @@ module.exports = {
           // Member already exists in mailchimp
           user.subscriptions.push({ email: request.payload.email, service });
           await user.save();
+          logger.info(
+            `[ServiceController->subscribe] Saved user ${request.params.id} with new mailchimp subscription`,
+          );
           if (user.id !== request.auth.credentials.id) {
             const notification = {
               type: 'service_subscription',
@@ -251,10 +260,10 @@ module.exports = {
               createdBy: request.auth.credentials,
               params: { service },
             };
-            logger.info(
-              `[ServiceController->subscribe] Send a service_subscription notification to ${user.email}`,
-            );
             await NotificationService.send(notification);
+            logger.info(
+              `[ServiceController->subscribe] Sent a service_subscription notification to ${user.email}`,
+            );
           }
         } else {
           logger.error(
@@ -273,10 +282,10 @@ module.exports = {
         createdBy: request.auth.credentials,
         params: { service },
       };
-      logger.info(
-        `[ServiceController->subscribe] Send a service_subscription notification to ${user.email}`,
-      );
       await NotificationService.send(notification);
+      logger.info(
+        `[ServiceController->subscribe] Sent a service_subscription notification to ${user.email}`,
+      );
     }
     return user;
   },
@@ -313,10 +322,10 @@ module.exports = {
         throw new Error('Could not find service credentials');
       }
       try {
-        logger.info(
-          `[ServiceController->unsubscribe] Unsubscribe user ${request.params.id} from service ${request.payload.service}`,
-        );
         await service.unsubscribeGoogleGroup(user, creds);
+        logger.info(
+          `[ServiceController->unsubscribe] Unsubscribed user ${request.params.id} from service ${request.payload.service}`,
+        );
         user.subscriptions.splice(index, 1);
         await user.save();
       } catch (err) {
@@ -338,10 +347,10 @@ module.exports = {
     }
     if (service.type === 'mailchimp') {
       try {
-        logger.info(
-          `[ServiceController->unsubscribe] Unsubscribe user ${request.params.id} from service ${request.payload.service}`,
-        );
         const output = await service.unsubscribeMailchimp(user);
+        logger.info(
+          `[ServiceController->unsubscribe] Unsubscribed user ${request.params.id} from service ${request.payload.service}`,
+        );
         if (output.statusCode === 204) {
           logger.info(
             `[ServiceController->unsubscribe] User ${request.params.id} was successfully unsubscribed from mailchimp list associated to service ${request.payload.service}`,
@@ -377,10 +386,10 @@ module.exports = {
         createdBy: request.auth.credentials,
         params: { service },
       };
-      logger.info(
-        `[ServiceController->unsubscribe] Send a service_unsubscription notification to ${user.email}`,
-      );
       await NotificationService.send(notification);
+      logger.info(
+        `[ServiceController->unsubscribe] Sent a service_unsubscription notification to ${user.email}`,
+      );
     }
     return user;
   },

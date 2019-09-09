@@ -208,7 +208,7 @@ module.exports = {
     );
 
     // Send the notifications
-    await Promise.all(notifications)
+    await Promise.all(notifications);
     for (let i = 0; i < pendingLogs.length; i += 1) {
       logger.log(pendingLogs[i]);
     }

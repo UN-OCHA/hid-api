@@ -28,10 +28,10 @@ module.exports = {
       secret,
     };
     user.totpConf = mfa;
-    logger.info(
-      `[TOTPController->generateQRCode] Saving user ${user.id} with totp secret`,
-    );
     await user.save();
+    logger.info(
+      `[TOTPController->generateQRCode] Saved user ${user.id} with totp secret`,
+    );
     let qrCodeName = `HID (${process.env.NODE_ENV})`;
     if (process.env.NODE_ENV === 'production') {
       qrCodeName = 'HID';
@@ -63,10 +63,10 @@ module.exports = {
     }
     user.totpMethod = request.payload.method;
     user.totp = true;
-    logger.info(
-      `[TOTPController->enable] Save user ${user.id} with 2FA method ${user.totpMethod}`,
-    );
     await user.save();
+    logger.info(
+      `[TOTPController->enable] Saved user ${user.id} with 2FA method ${user.totpMethod}`,
+    );
     return user;
   },
 
@@ -80,18 +80,18 @@ module.exports = {
     }
     user.totp = false;
     user.totpConf = {};
+    await user.save();
     logger.info(
       `[TOTPController->disable] Disabled 2FA for user ${user.id}`,
     );
-    await user.save();
     return user;
   },
 
   async saveDevice(request, reply) {
-    logger.info(
-      `[TOTPController->saveDevice] Save new 2FA device for ${request.auth.credentials.id}`,
-    );
     await HelperService.saveTOTPDevice(request, request.auth.credentials);
+    logger.info(
+      `[TOTPController->saveDevice] Saved new 2FA device for ${request.auth.credentials.id}`,
+    );
     const tindex = request.auth.credentials.trustedDeviceIndex(request.headers['user-agent']);
     const { secret } = request.auth.credentials.totpTrusted[tindex];
     return reply.response({ 'x-hid-totp-trust': secret })
@@ -106,10 +106,10 @@ module.exports = {
     const device = user.totpTrusted.id(deviceId);
     if (device) {
       user.totpTrusted.id(deviceId).remove();
-      logger.info(
-        `[TOTPController->destroyDevice] Remove 2FA device ${deviceId} for ${request.auth.credentials.id}`,
-      );
       await user.save();
+      logger.info(
+        `[TOTPController->destroyDevice] Removed 2FA device ${deviceId} for ${request.auth.credentials.id}`,
+      );
       return reply.response().code(204);
     }
     logger.warn(
@@ -137,10 +137,10 @@ module.exports = {
     // Save the hashed codes in the user and show the ones which are not hashed
     user.totpConf.backupCodes = hashedCodes;
     user.markModified('totpConf');
-    logger.info(
-      `[TOTPController->generateBackupCodes] Save user ${user.id} with new backup codes`,
-    );
     await user.save();
+    logger.info(
+      `[TOTPController->generateBackupCodes] Saved user ${user.id} with new backup codes`,
+    );
     return codes;
   },
 };

@@ -49,20 +49,20 @@ module.exports = {
   },
 
   async update(request) {
-    logger.info(
-      `[OperationController->update] Updating operation ${request.params.id}`,
-      { request: request.payload },
-    );
     const client = await Operation.findOneAndUpdate({ _id: request.params.id },
       request.payload, { runValidators: true, new: true });
+    logger.info(
+      `[OperationController->update] Updated operation ${request.params.id}`,
+      { request: request.payload },
+    );
     return client;
   },
 
   async destroy(request, reply) {
-    logger.info(
-      `[OperationController->destroy] Deleting operation ${request.params.id}`,
-    );
     await Operation.remove({ _id: request.params.id });
+    logger.info(
+      `[OperationController->destroy] Removed operation ${request.params.id}`,
+    );
     return reply.response().code(204);
   },
 

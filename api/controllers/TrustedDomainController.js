@@ -45,10 +45,10 @@ module.exports = {
   },
 
   async destroy(request, reply) {
-    logger.info(
-      `[TrustedDomainController->destroy] Deleting TrustedDomain ${request.params.id}`,
-    );
     await TrustedDomain.remove({ _id: request.params.id });
+    logger.info(
+      `[TrustedDomainController->destroy] Deleted TrustedDomain ${request.params.id}`,
+    );
     return reply.response().code(204);
   },
 };
