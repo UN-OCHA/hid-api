@@ -22,7 +22,7 @@ async function _notifyNewDisaster(disaster) {
       /* eslint no-await-in-loop: "off" */
       const list = await List.findOne({ remote_id: operation.id });
       if (!list) {
-        logger.warn(
+        logger.error(
           `[WebhooksController->_notifyNewDisaster] List with remote_id ${operation.id} not found`,
         );
         throw new Error('List not found');

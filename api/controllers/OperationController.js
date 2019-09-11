@@ -20,6 +20,10 @@ module.exports = {
       );
       throw Boom.badRequest();
     }
+    logger.info(
+      '[OperationController->create] Successfully created operation',
+      { request: request.payload },
+    );
     return operation;
   },
 

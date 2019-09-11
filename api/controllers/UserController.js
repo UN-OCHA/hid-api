@@ -715,10 +715,10 @@ module.exports = {
       throw Boom.notFound();
     }
     await EmailService.sendAdminDelete(user, request.auth.credentials);
-    logger.info(
-      `[UserController->destroy] Removing user ${request.params.id}`,
-    );
     await user.remove();
+    logger.info(
+      `[UserController->destroy] Removed user ${request.params.id}`,
+    );
     return reply.response().code(204);
   },
 
