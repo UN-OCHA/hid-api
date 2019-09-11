@@ -1,5 +1,3 @@
-
-
 const Boom = require('boom');
 const _ = require('lodash');
 const acceptLanguage = require('accept-language');
@@ -7,10 +5,13 @@ const List = require('../models/List');
 const User = require('../models/User');
 const HelperService = require('../services/HelperService');
 const NotificationService = require('../services/NotificationService');
+const config = require('../../config/env')[process.env.NODE_ENV];
+
+const { logger } = config;
 
 /**
  * @module ListController
- * @description Generated Trails.js Controller.
+ * @description Handles List Create Read Update Delete methods.
  */
 
 module.exports = {
@@ -23,6 +24,10 @@ module.exports = {
     }
     request.payload.managers.push(request.auth.credentials._id);
     const list = await List.create(request.payload);
+    logger.info(
+      '[ListController->create] Created a new list',
+      { request: request.payload },
+    );
     return list;
   },
 
@@ -48,6 +53,10 @@ module.exports = {
     // Search with contains when searching in name or label
     if (criteria.name) {
       if (criteria.name.length < 3) {
+        logger.warn(
+          '[ListController->find] Name of a list must have at least 3 characters in find method',
+          { name: criteria.name },
+        );
         throw Boom.badRequest('Name must have at least 3 characters');
       }
       let name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/g, '');
@@ -76,6 +85,10 @@ module.exports = {
         _id: request.params.id, deleted: criteria.deleted,
       }).populate(options.populate);
       if (!result) {
+        logger.warn(
+          '[ListController->find] Could not find list',
+          { id: request.params.id },
+        );
         throw Boom.notFound();
       }
 
@@ -147,6 +160,7 @@ module.exports = {
 
     // Check whether we need to send notifications
     const notifications = [];
+    const pendingLogs = [];
     if (diffAdded.length) {
       const users = await User.find({ _id: { $in: diffAdded } });
       for (let i = 0; i < users.length; i += 1) {
@@ -158,6 +172,10 @@ module.exports = {
             createdBy: request.auth.credentials,
             params: { list: newlist },
           }));
+        pendingLogs.push({
+          type: 'info',
+          message: `[ListController->update] Sent notification added_list_manager to ${user.email}`,
+        });
       }
       newlist.markModified('managers');
     }
@@ -172,42 +190,71 @@ module.exports = {
             createdBy: request.auth.credentials,
             params: { list: newlist },
           }));
+        pendingLogs.push({
+          type: 'info',
+          message: `[ListController->update] Sent notification removed_list_manager to ${user.email}`,
+        });
       }
       newlist.markModified('managers');
     }
 
     // Save the list
     await newlist.save();
+    logger.info(
+      '[ListController->update] Updated a list',
+      { request: request.payload },
+    );
 
     // Send the notifications
     await Promise.all(notifications);
+    for (let i = 0; i < pendingLogs.length; i += 1) {
+      logger.log(pendingLogs[i]);
+    }
 
     // Update users
     const criteria = {};
     criteria[`${newlist.type}s.list`] = newlist._id.toString();
     const users = await User.find(criteria);
     const actions = [];
+    const actionsLogs = [];
     for (let i = 0; i < users.length; i += 1) {
       const user = users[i];
       user.updateCheckins(newlist);
       actions.push(user.save());
+      actionsLogs.push({
+        type: 'info',
+        message: `[ListController->update] Successfully saved user ${user.id}`,
+      });
     }
     await Promise.all(actions);
+    // Possible Performance impact by logging too much
+    for (let i = 0; i < actionsLogs.length; i += 1) {
+      logger.log(actionsLogs[i]);
+    }
     return newlist;
   },
 
   async destroy(request) {
     const record = await List.findOne({ _id: request.params.id });
     if (!record) {
+      logger.warn(
+        '[ListController->destroy] Unable to delete list: list not found',
+        { list: request.params.id },
+      );
       throw Boom.notFound();
     }
     // Set deleted to true
     record.deleted = true;
     const newRecord = await record.save();
+    logger.info(
+      '[ListController->destroy] Added deleted flag to list',
+      { list: request.params.id },
+    );
     // Remove all checkins from users in this list
     const criteria = {};
     criteria[`${record.type}s.list`] = record._id.toString();
     const promises = [];
+    const pendingLogs = [];
     const users = await User.find(criteria);
     for (let i = 0; i < users.length; i += 1) {
       const user = users[i];
@@ -217,8 +264,16 @@ module.exports = {
         }
       }
       promises.push(user.save());
+      pendingLogs.push({
+        type: 'info',
+        message: `[ListController->destroy] Successfully saved user ${user.id}`,
+      });
     }
     await Promise.all(promises);
+    // Possible performance impact by logging too much.
+    for (let i = 0; i < pendingLogs.length; i += 1) {
+      logger.log(pendingLogs[i]);
+    }
     return newRecord;
   },
 

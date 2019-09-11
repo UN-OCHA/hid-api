@@ -1,11 +1,12 @@
-
-
 const Boom = require('boom');
 const _ = require('lodash');
 const List = require('../models/List');
 const User = require('../models/User');
 const NotificationService = require('../services/NotificationService');
 const ListController = require('./ListController');
+const config = require('../../config/env')[process.env.NODE_ENV];
+
+const { logger } = config;
 
 /**
  * @module WebhooksController
@@ -21,6 +22,9 @@ async function _notifyNewDisaster(disaster) {
       /* eslint no-await-in-loop: "off" */
       const list = await List.findOne({ remote_id: operation.id });
       if (!list) {
+        logger.error(
+          `[WebhooksController->_notifyNewDisaster] List with remote_id ${operation.id} not found`,
+        );
         throw new Error('List not found');
       }
       const users = await User.find({
@@ -28,6 +32,9 @@ async function _notifyNewDisaster(disaster) {
       });
       const notification = { type: 'new_disaster', params: { list: disaster } };
       await NotificationService.sendMultiple(users, notification);
+      logger.info(
+        `[WebhooksController->_notifyNewDisaster] Sent notification of type new_disaster for disaster ${disaster._id.toString()}`,
+      );
     }
   }
 }
@@ -143,10 +150,17 @@ module.exports = {
     const language = request.payload.language ? request.payload.language : 'en';
     const translations = request.payload.translations ? request.payload.translations : ['en'];
     if (!event || !entity || !resource) {
+      logger.warn(
+        '[WebhooksController->hrinfo] Bad request: missing event or entity or resource',
+        { request: request.payload },
+      );
       throw Boom.badRequest();
     }
     const listType = resource.substring(0, resource.length - 1);
     if (listTypes.indexOf(listType) === -1) {
+      logger.warn(
+        `[WebhooksController->hrinfo] Wrong list type ${listType}`,
+      );
       throw Boom.badRequest();
     }
     if (event === 'create' || event === 'update') {
@@ -167,6 +181,9 @@ module.exports = {
         if (!gList) {
           _parseListLanguage(newList, newList.label, newList.acronym, language);
           list2 = await List.create(newList);
+          logger.info(
+            `[WebhooksController->hrinfo] Created new list ${list2._id.toString()}`,
+          );
         } else {
           if (newList.name !== gList.name || newList.visibility !== gList.visibility) {
             updateUsers = true;
@@ -193,6 +210,10 @@ module.exports = {
           }
           gList.markModified('metadata');
           list2 = await gList.save();
+          logger.info(
+            `[WebhooksController->hrinfo] Successfully updated list ${gList._id.toString()}`,
+            { request: request.payload },
+          );
         }
         if (!gList && list2.type === 'disaster' && event === 'create') {
           _notifyNewDisaster(list2);
@@ -205,6 +226,9 @@ module.exports = {
             user = users[i];
             user.updateCheckins(list);
             await user.save();
+            logger.info(
+              `[WebhooksController->hrinfo] Updated user ${user.id}`,
+            );
           }
         }
         if (list2.type === 'operation') {
@@ -216,6 +240,9 @@ module.exports = {
             group.labels[groupIndex].text = `${list2.labels[listIndex].text}: ${group.metadata.label}`;
             group.label = `${list2.label}: ${group.metadata.label}`;
             await group.save();
+            logger.info(
+              `[WebhooksController->hrinfo] Updated list ${group._id.toString()}`,
+            );
           }
         }
         return list2;
@@ -224,12 +251,18 @@ module.exports = {
     } else if (event === 'delete') {
       const list = await List.findOne({ type: listType, remote_id: entity.id });
       if (!list) {
+        logger.warn(
+          `[WebhooksController->hrinfo] Could not find list of type ${listType} with remote_id ${entity.id}`,
+        );
         throw Boom.badRequest();
       } else {
         request.params.id = list._id.toString();
         return ListController.destroy(request, reply);
       }
     }
+    logger.warn(
+      `[WebhooksController->hrinfo] Wrong event type ${event}`,
+    );
     throw Boom.badRequest();
   },
 

@@ -116,7 +116,7 @@ process.on('unhandledRejection', (err) => {
   if (process.env.NODE_ENV !== 'local') {
     newrelic.noticeError(err);
   }
-  // console.log(err);
+  logger.error('[unhandledRejection] Unhandled rejection error', err);
   process.exit(1);
 });
 

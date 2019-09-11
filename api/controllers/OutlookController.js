@@ -1,5 +1,3 @@
-
-
 const Boom = require('boom');
 const fs = require('fs');
 const microsoftGraph = require('@microsoft/microsoft-graph-client');

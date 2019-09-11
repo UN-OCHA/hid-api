@@ -1,5 +1,3 @@
-
-
 const Boom = require('boom');
 const qs = require('qs');
 const ejs = require('ejs');
@@ -12,7 +10,7 @@ const validator = require('validator');
 const hidAccount = '5b2128e754a0d6046d6c69f2';
 const List = require('../models/List');
 const User = require('../models/User');
-const OutlookService = require('../services/OutlookService');
+// const OutlookService = require('../services/OutlookService');
 const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
 const NotificationService = require('../services/NotificationService');
@@ -25,9 +23,12 @@ const { logger } = config;
 
 /**
  * @module UserController
- * @description Generated Trails.js Controller.
+ * @description CRUD controller for users.
  */
 
+/**
+ * Exports users in PDF, using the PDF snap service.
+ */
 async function _pdfExport(users, number, lists, req, format) {
   const filters = [];
   if (Object.prototype.hasOwnProperty.call(req.query, 'name') && req.query.name.length) {
@@ -96,10 +97,16 @@ async function _pdfExport(users, number, lists, req, format) {
 
     return [clientRes.data, pdfSize];
   }
-
+  logger.error(
+    '[UserController->_pdfExport] An error occurred while generating a PDF',
+    { response: clientRes },
+  );
   throw new Error(`An error occurred while generating PDF for list ${data.lists[0].name}`);
 }
 
+/**
+ * Exports users to txt.
+ */
 function _txtExport(users) {
   let out = '';
   for (let i = 0; i < users.length; i += 1) {
@@ -108,6 +115,9 @@ function _txtExport(users) {
   return out;
 }
 
+/**
+ * Get the list of bundles a user is checked into.
+ */
 function getBundles(user) {
   let bundles = '';
   user.bundles.forEach((bundle) => {
@@ -118,6 +128,9 @@ function getBundles(user) {
   return bundles;
 }
 
+/**
+ * Get the list of functional roles a user is checked into.
+ */
 function getRoles(user) {
   let roles = '';
   user.functional_roles.forEach((role) => {
@@ -128,6 +141,9 @@ function getRoles(user) {
   return roles;
 }
 
+/**
+ * Helper function to export users to csv
+ */
 function _csvExport(users, full = false) {
   let out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes\n';
   let org = '';
@@ -217,12 +233,18 @@ module.exports = {
 
   async create(request) {
     if (!request.payload.app_verify_url) {
+      logger.warn(
+        '[UserController->create] Missing app_verify_url',
+      );
       throw Boom.badRequest('Missing app_verify_url');
     }
 
     const appVerifyUrl = request.payload.app_verify_url;
     if (!HelperService.isAuthorizedUrl(appVerifyUrl)) {
-      logger.warn('Invalid app_verify_url', { security: true, fail: true, request });
+      logger.warn(
+        '[UserController->create] Invalid app_verify_url',
+        { security: true, fail: true, request },
+      );
       throw Boom.badRequest('Invalid app_verify_url');
     }
 
@@ -233,8 +255,6 @@ module.exports = {
 
     if (!record) {
       // Create user
-      logger.debug('Preparing request for user creation', { request });
-
       if (request.payload.email) {
         request.payload.emails = [];
         request.payload.emails.push({ type: 'Work', email: request.payload.email, validated: false });
@@ -242,6 +262,9 @@ module.exports = {
 
       if (request.payload.password && request.payload.confirm_password) {
         if (!User.isStrongPassword(request.payload.password)) {
+          logger.warn(
+            '[UserController->create] Provided password is not strong enough',
+          );
           throw Boom.badRequest('The password is not strong enough');
         }
         request.payload.password = User.hashPassword(request.payload.password);
@@ -287,26 +310,49 @@ module.exports = {
         delete request.payload.tester;
       }
 
+      // Not showing request payload to avoid showing user passwords in logs.
       const user = await User.create(request.payload);
       if (!user) {
+        // Not showing request payload to avoid showing user passwords in logs.
+        logger.warn(
+          '[UserController->create] Create user failed',
+        );
         throw Boom.badRequest();
       }
-      logger.debug(`User ${user._id.toString()} successfully created`, { request });
+      logger.info(
+        `[UserController->create] User ${user._id.toString()} created successfully`,
+      );
 
       if (user.email && notify === true) {
         if (!request.auth.credentials) {
           await EmailService.sendRegister(user, appVerifyUrl);
+          logger.info(
+            `[UserController->create] Sent registration email to ${user.email}`,
+          );
         } else if (registrationType === 'kiosk') {
           // An admin is creating an orphan user or Kiosk registration
           await EmailService.sendRegisterKiosk(user, appVerifyUrl);
+          logger.info(
+            `[UserController->create] Sent registration kiosk email to ${user.email}`,
+          );
         } else {
           await EmailService.sendRegisterOrphan(user, request.auth.credentials, appVerifyUrl);
+          logger.info(
+            `[UserController->create] Sent registration orphan email to ${user.email}`,
+          );
         }
       }
       return user;
-    } if (!request.auth.credentials) {
+    }
+    if (!request.auth.credentials) {
+      logger.warn(
+        `[UserController->create] The email address ${request.payload.email} is already registered`,
+      );
       throw Boom.badRequest('This email address is already registered. If you can not remember your password, please reset it');
     } else {
+      logger.warn(
+        `[UserController->create] The user already exists. id: ${record._id.toString()}`,
+      );
       throw Boom.badRequest(`This user already exists. user_id=${record._id.toString()}`);
     }
   },
@@ -327,6 +373,9 @@ module.exports = {
       }
       const user = await User.findOne(criteria);
       if (!user) {
+        logger.warn(
+          `[UserController->find] Could not find user ${request.params.id}`,
+        );
         throw Boom.notFound();
       } else {
         user.sanitize(request.auth.credentials);
@@ -345,6 +394,9 @@ module.exports = {
 
     // Do not allow exports for hidden users
     if (request.params.extension && request.auth.credentials.hidden) {
+      logger.warn(
+        `[UserController->find] Hidden user ${request.auth.credentials.id} tried to export users`,
+      );
       throw Boom.unauthorized();
     }
 
@@ -359,6 +411,10 @@ module.exports = {
 
     if (criteria.name) {
       if (criteria.name.length < 3) {
+        logger.warn(
+          '[UserController->find] Name of a user must have at least 3 characters in find method',
+          { name: criteria.name },
+        );
         throw Boom.badRequest('Name must have at least 3 characters');
       }
       criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/g, '');
@@ -391,12 +447,14 @@ module.exports = {
             criteria[`${list.type}s`].$elemMatch.pending = false;
           }
         } else {
+          logger.warn(
+            `[UserController->find] User ${request.auth.credentials.id} is not authorized to view list ${list._id.toString()}`,
+          );
           throw Boom.unauthorized('You are not authorized to view this list');
         }
       });
     }
 
-    logger.debug('[UserController] (find) criteria = ', criteria, ' options = ', options, { request });
     let pdfFormat = '';
     if (criteria.format) {
       pdfFormat = criteria.format;
@@ -413,6 +471,10 @@ module.exports = {
     }
     const [results, number] = await Promise.all([query, User.countDocuments(criteria)]);
     if (!results) {
+      logger.warn(
+        '[UserController->find] Could not find users',
+        { criteria },
+      );
       throw Boom.notFound();
     }
     if (request.params.extension) {
@@ -454,9 +516,6 @@ module.exports = {
   },
 
   async update(request) {
-    logger.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
-      ', values = ', request.payload, { request });
-
     const childAttributes = User.listAttributes();
     HelperService.removeForbiddenAttributes(User, request, childAttributes);
     if (request.payload.password) {
@@ -466,6 +525,9 @@ module.exports = {
     // Check old password
     let user = await User.findOne({ _id: request.params.id });
     if (!user) {
+      logger.warn(
+        `[UserController->update] Could not find user ${request.params.id}`,
+      );
       throw Boom.notFound();
     }
     // If verifying user, set verified_by and verificationExpiryEmail
@@ -475,10 +537,16 @@ module.exports = {
       request.payload.verificationExpiryEmail = false;
     }
     if (request.payload.old_password && request.payload.new_password) {
-      logger.warn('Updating user password', { request, security: true });
+      logger.info(
+        `[UserController->update] Updating user password for user ${user.id}`,
+        { security: true },
+      );
       if (user.validPassword(request.payload.old_password)) {
         if (!User.isStrongPassword(request.payload.new_password)) {
-          logger.warn('Could not update user password. New password is not strong enough', { request, security: true, fail: true });
+          logger.warn(
+            `[UserController->update] Could not update user password for user ${user.id}. New password is not strong enough`,
+            { request, security: true, fail: true },
+          );
           throw Boom.badRequest('Password is not strong enough');
         }
         request.payload.password = User.hashPassword(request.payload.new_password);
@@ -486,9 +554,15 @@ module.exports = {
         request.payload.passwordResetAlert30days = false;
         request.payload.passwordResetAlert7days = false;
         request.payload.passwordResetAlert = false;
-        logger.warn('Successfully updated user password', { request, security: true });
+        logger.info(
+          `[UserController->update] Request payload updated to change password for user ${user.id}`,
+          { security: true },
+        );
       } else {
-        logger.warn('Could not update user password. Old password is wrong', { request, security: true, fail: true });
+        logger.warn(
+          `[UserController->update] Could not update user password for user ${user.id}. Old password is wrong`,
+          { request, security: true, fail: true },
+        );
         throw Boom.badRequest('The current password you entered is incorrect');
       }
     }
@@ -507,6 +581,9 @@ module.exports = {
             countUnverified: -1,
           },
         });
+        logger.info(
+          `[UserController->update] User ${user._id.toString()} is becoming invisible. Updated list counts`,
+        );
       }
     }
     if (user.authOnly === true && request.payload.authOnly === false) {
@@ -519,6 +596,9 @@ module.exports = {
             countUnverified: 1,
           },
         });
+        logger.info(
+          `[UserController->update] User ${user._id.toString()} is becoming visible. Updated list counts`,
+        );
       }
     }
     if (user.hidden === false && request.payload.hidden === true) {
@@ -532,6 +612,9 @@ module.exports = {
             countUnverified: -1,
           },
         });
+        logger.info(
+          `[UserController->update] User ${user._id.toString()} is being flagged. Updated list counts`,
+        );
       }
     }
     if (user.hidden === true && request.payload.hidden === false) {
@@ -545,6 +628,9 @@ module.exports = {
             countUnverified: 1,
           },
         });
+        logger.info(
+          `[UserController->update] User ${user._id.toString()} is being unflagged. Updated list counts`,
+        );
       }
     }
     user = await User
@@ -553,8 +639,12 @@ module.exports = {
         request.payload,
         { runValidators: true, new: true },
       );
+    logger.info(
+      `[UserController->update] Successfully saved user ${user._id.toString()}`,
+    );
     user = await user.defaultPopulate();
     const promises = [];
+    const pendingLogs = [];
     if (request.auth.credentials._id.toString() !== user._id.toString()) {
       // User is being edited by someone else
       // If it's an auth account, surface it
@@ -569,22 +659,41 @@ module.exports = {
               countUnverified: 1,
             },
           }));
+          pendingLogs.push({
+            type: 'info',
+            message: `[UserController->update] User ${user._id.toString()} is becoming visible. Updated list counts`,
+          });
         }
         promises.push(user.save());
+        pendingLogs.push({
+          type: 'info',
+          message: `[UserController->update] User ${user._id.toString()} saved successfully`,
+        });
         if (!user.hidden) {
           promises.push(EmailService.sendAuthToProfile(user, request.auth.credentials));
+          pendingLogs.push({
+            type: 'info',
+            message: `[UserController->update] Sent auth_to_profile email to user ${user.email}`,
+          });
         }
       } else if (!user.hidden) {
         const notification = { type: 'admin_edit', user, createdBy: request.auth.credentials };
         promises.push(NotificationService.send(notification));
+        pendingLogs.push({
+          type: 'info',
+          message: `[UserController->update] Sent admin_edit notification to user ${user.id}`,
+        });
       }
     }
     promises.push(GSSSyncService.synchronizeUser(user));
-    promises.push(OutlookService.synchronizeUser(user));
-    try {
-      await Promise.all(promises);
-    } catch (err) {
-      return user;
+    pendingLogs.push({
+      type: 'info',
+      message: `[UserController->update] Synchronized user ${user.id} with google spreadsheet`,
+    });
+    // promises.push(OutlookService.synchronizeUser(user));
+    await Promise.all(promises);
+    for (let i = 0; i < pendingLogs.length; i += 1) {
+      logger.log(pendingLogs[i]);
     }
     return user;
   },
@@ -592,39 +701,56 @@ module.exports = {
   async destroy(request, reply) {
     if (!request.auth.credentials.is_admin
       && request.auth.credentials._id.toString() !== request.params.id) {
+      logger.warn(
+        `[UserController->destroy] User ${request.auth.credentials._id.toString()} is not allowed to delete user ${request.params.id}`,
+      );
       return reply(Boom.forbidden('You are not allowed to delete this account'));
     }
 
-    logger.debug('[UserController] (destroy) model = user, query =', request.query, { request });
-
     const user = await User.findOne({ _id: request.params.id });
     if (!user) {
+      logger.warn(
+        `[UserController->destroy] Could not find user ${request.params.id}`,
+      );
       throw Boom.notFound();
     }
     await EmailService.sendAdminDelete(user, request.auth.credentials);
     await user.remove();
+    logger.info(
+      `[UserController->destroy] Removed user ${request.params.id}`,
+    );
     return reply.response().code(204);
   },
 
   async setPrimaryEmail(request) {
     const { email } = request.payload;
 
-    logger.debug('[UserController] Setting primary email', { request });
-
     if (!request.payload.email) {
+      logger.warn(
+        '[UserController->setPrimaryEmail] No email in payload',
+      );
       throw Boom.badRequest();
     }
 
     const record = await User.findOne({ _id: request.params.id });
     if (!record) {
+      logger.warn(
+        `[UserController->setPrimaryEmail] Could not find user ${request.params.id}`,
+      );
       throw Boom.notFound();
     }
     // Make sure email is validated
     const index = record.emailIndex(email);
     if (index === -1) {
+      logger.warn(
+        `[UserController->setPrimaryEmail] Email ${email} does not exist for user ${request.params.id}`,
+      );
       throw Boom.badRequest('Email does not exist');
     }
     if (!record.emails[index].validated) {
+      logger.warn(
+        `[UserController->setPrimaryEmail] Email ${record.emails[index]} has not been validated for user ${request.params.id}`,
+      );
       throw Boom.badRequest('Email has not been validated. You need to validate it first.');
     }
     record.email = email;
@@ -633,21 +759,29 @@ module.exports = {
     record.verifyEmail(email);
     record.lastModified = new Date();
     await record.save();
-    const promises = [];
-    promises.push(GSSSyncService.synchronizeUser(record));
-    promises.push(OutlookService.synchronizeUser(record));
-    await Promise.all(promises);
+    logger.info(
+      `[UserController->setPrimaryEmail] Saved user ${request.params.id} successfully`,
+    );
+    await GSSSyncService.synchronizeUser(record);
+    logger.info(
+      `[UserController->setPrimaryEmail] Synchronized user ${request.params.id} with google spreadsheets successfully`,
+    );
+    // const promises = [];
+    // promises.push(GSSSyncService.synchronizeUser(record));
+    // promises.push(OutlookService.synchronizeUser(record));
+    // await Promise.all(promises);
     return record;
   },
 
   async validateEmail(request) {
-    logger.debug('[UserController] Verifying email ', { request });
-
     // TODO: make sure current user can do this
 
     if (request.payload.hash) {
       const record = await User.findOne({ _id: request.payload.id });
       if (!record) {
+        logger.warn(
+          `[UserController->validateEmail] Could not find user ${request.payload.id}`,
+        );
         throw Boom.notFound();
       }
       let domain = null;
@@ -679,6 +813,9 @@ module.exports = {
           domain = await record.isVerifiableEmail(email);
         }
       } else {
+        logger.warn(
+          `[UserController->validateEmail] Invalid hash ${request.payload.hash} provided`,
+        );
         throw Boom.badRequest('Invalid hash');
       }
       if (domain) {
@@ -707,21 +844,39 @@ module.exports = {
         }
       }
       const promises = [];
+      const pendingLogs = [];
       promises.push(record.save());
+      pendingLogs.push({
+        type: 'info',
+        message: `[UserController->validateEmail] Saved user ${record.id} successfully`,
+      });
       if (record.email === email) {
         promises.push(EmailService.sendPostRegister(record));
+        pendingLogs.push({
+          type: 'info',
+          message: `[UserController->validateEmail] Sent post_register email to ${record.email} successfully`,
+        });
       }
       await Promise.all(promises);
+      for (let i = 0; i < pendingLogs.length; i += 1) {
+        logger.log(pendingLogs[i]);
+      }
       return record;
     }
     const record = await User.findOne({ 'emails.email': request.params.email });
     if (!record) {
+      logger.warn(
+        `[UserController->validateEmail] Could not find user with email ${request.params.email}`,
+      );
       throw Boom.notFound();
     }
     // Send validation email again
     const appValidationUrl = request.payload.app_validation_url;
     if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
-      logger.warn('Invalid app_validation_url', { security: true, fail: true, request });
+      logger.warn(
+        `[UserController->validateEmail] Invalid app_validation_url ${appValidationUrl}`,
+        { security: true, fail: true, request },
+      );
       throw Boom.badRequest('Invalid app_validation_url');
     }
     const emailIndex = record.emailIndex(request.params.email);
@@ -736,30 +891,42 @@ module.exports = {
   },
 
   async updatePassword(request, reply) {
-    logger.debug('[UserController] Updating user password', { request });
-
     if (!request.payload.old_password || !request.payload.new_password) {
+      logger.warn(
+        '[UserController->updatePassword] Request is missing parameters (old or new password)',
+      );
       throw Boom.badRequest('Request is missing parameters (old or new password)');
     }
 
     if (!User.isStrongPassword(request.payload.new_password)) {
-      logger.warn('New password is not strong enough', { request, security: true, fail: true });
+      logger.warn(
+        '[UserController->updatePassword] New password is not strong enough',
+        { request, security: true, fail: true },
+      );
       throw Boom.badRequest('New password is not strong enough');
     }
 
     // Check old password
     const user = await User.findOne({ _id: request.params.id });
     if (!user) {
+      logger.warn(
+        `[UserController->updatePassword] User ${request.params.id} not found`,
+      );
       throw Boom.notFound();
     }
-    logger.warn('Updating user password', { request, security: true });
     if (user.validPassword(request.payload.old_password)) {
       user.password = User.hashPassword(request.payload.new_password);
       user.lastModified = new Date();
-      logger.warn('Successfully updated user password', { request, security: true });
       await user.save();
+      logger.info(
+        `[UserController->updatePassword] Successfully updated password for user ${user._id.toString()}`,
+        { security: true },
+      );
     } else {
-      logger.warn('Could not update user password. Old password is wrong', { request, security: true, fail: true });
+      logger.warn(
+        `[UserController->updatePassword] Could not update password for user ${user._id.toString()}. Old password is wrong`,
+        { security: true, fail: true },
+      );
       throw Boom.badRequest('The old password is wrong');
     }
     return reply.response().code(204);
@@ -770,31 +937,48 @@ module.exports = {
       const appResetUrl = request.payload.app_reset_url;
 
       if (!HelperService.isAuthorizedUrl(appResetUrl)) {
-        logger.warn('Invalid app_reset_url', { security: true, fail: true, request });
+        logger.warn(
+          `[UserController->resetPasswordEndpoint] Invalid app_reset_url ${appResetUrl}`,
+          { security: true, fail: true, request },
+        );
         throw Boom.badRequest('app_reset_url is invalid');
       }
       const record = await User.findOne({ email: request.payload.email.toLowerCase() });
       if (!record) {
+        logger.warn(
+          `[UserController->resetPasswordEndpoint] User ${request.params.id} not found`,
+        );
         return '';
       }
       await EmailService.sendResetPassword(record, appResetUrl);
+      logger.info(
+        `[UserController->resetPasswordEndpoint] Successfully sent reset password email to ${record.email}`,
+      );
       return '';
     }
     const cookie = request.yar.get('session');
     if (!request.payload.hash || !request.payload.password
       || !request.payload.id || !request.payload.time) {
+      logger.warn(
+        '[UserController->resetPasswordEndpoint] Wrong or missing arguments',
+      );
       throw Boom.badRequest('Wrong arguments');
     }
 
     if (!User.isStrongPassword(request.payload.password)) {
-      logger.warn('Could not reset password. New password is not strong enough.', { security: true, fail: true, request });
+      logger.warn(
+        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough.',
+        { security: true, fail: true, request },
+      );
       throw Boom.badRequest('New password is not strong enough');
     }
 
-    logger.warn('Resetting password', { security: true, request });
     let record = await User.findOne({ _id: request.payload.id });
     if (!record) {
-      logger.warn('Could not reset password. User not found', { security: true, fail: true, request });
+      logger.warn(
+        `[UserController->resetPasswordEndpoint] Could not reset password. User ${request.payload.id} not found`,
+        { security: true, fail: true, request },
+      );
       throw Boom.badRequest('Reset password link is expired or invalid');
     }
     if (record.totp && !cookie) {
@@ -806,6 +990,9 @@ module.exports = {
     if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
       const pwd = User.hashPassword(request.payload.password);
       if (pwd === record.password) {
+        logger.warn(
+          `[UserController->resetPasswordEndpoint] Could not reset password for user ${request.payload.id}. The new password can not be the same as the old one`,
+        );
         throw Boom.badRequest('The new password can not be the same as the old one');
       } else {
         record.password = pwd;
@@ -813,6 +1000,9 @@ module.exports = {
         domain = await record.isVerifiableEmail(record.email);
       }
     } else {
+      logger.warn(
+        '[UserController->resetPasswordEndpoint] Reset password link is expired or invalid',
+      );
       throw Boom.badRequest('Reset password link is expired or invalid');
     }
     if (domain) {
@@ -829,6 +1019,9 @@ module.exports = {
       const listIds = record.getListIds(true);
       if (listIds.length) {
         await List.updateMany({ _id: { $in: listIds } }, { $inc: { countUnverified: 1 } });
+        logger.info(
+          `[UserController->resetPasswordEndpoint] User ${record._id.toString()} is not an orphan anymore. Updated list counts`,
+        );
       }
     }
     record.is_orphan = false;
@@ -839,7 +1032,10 @@ module.exports = {
     record.passwordResetAlert = false;
     record.lastModified = new Date();
     await record.save();
-    logger.warn('Password updated successfully', { security: true, request });
+    logger.info(
+      `[UserController->resetPasswordEndpoint] Password updated successfully for user ${record._id.toString()}`,
+      { security: true, request },
+    );
     return 'Password reset successfully';
   },
 
@@ -848,12 +1044,18 @@ module.exports = {
     const userId = request.params.id;
 
     if (!HelperService.isAuthorizedUrl(appResetUrl)) {
-      logger.warn('Invalid app_reset_url', { security: true, fail: true, request });
+      logger.warn(
+        `[UserController->claimEmail] Invalid app_reset_url ${appResetUrl}`,
+        { security: true, fail: true, request },
+      );
       throw Boom.badRequest('app_reset_url is invalid');
     }
 
     const record = await User.findOne({ _id: userId });
     if (!record) {
+      logger.warn(
+        `[UserController->claimEmail] User ${userId} not found`,
+      );
       throw Boom.notFound();
     }
     await EmailService.sendClaim(record, appResetUrl);
@@ -863,17 +1065,21 @@ module.exports = {
   async updatePicture(request) {
     const userId = request.params.id;
 
-    logger.debug('[UserController] Updating picture ', { request });
-
     const data = request.payload;
     if (data.file) {
       const image = sharp(data.file);
       const record = await User.findOne({ _id: userId });
       if (!record) {
+        logger.warn(
+          `[UserController->updatePicture] User ${request.params.id} not found`,
+        );
         throw Boom.notFound();
       }
       const metadata = await image.metadata();
       if (metadata.format !== 'jpeg' && metadata.format !== 'png') {
+        logger.warn(
+          `[UserController->updatePicture] ${metadata.format} is not a valid image format`,
+        );
         throw Boom.badRequest('Invalid image format. Only jpeg and png are accepted');
       }
       let path = `${__dirname}/../../assets/pictures/${userId}.`;
@@ -884,6 +1090,9 @@ module.exports = {
       record.picture = `${process.env.ROOT_URL}/assets/pictures/${userId}.${metadata.format}`;
       record.lastModified = new Date();
       await record.save();
+      logger.info(
+        `[UserController->updatePicture] Successfully updated picture for user ${record._id.toString()}`,
+      );
       return record;
     }
     throw Boom.badRequest('No file found');
@@ -893,28 +1102,41 @@ module.exports = {
     const appValidationUrl = request.payload.app_validation_url;
     const userId = request.params.id;
 
-    logger.debug('[UserController] adding email', { request });
-
     if (!appValidationUrl || !request.payload.email) {
+      logger.warn(
+        '[UserController->addEmail] No email or app_validation_url provided',
+      );
       throw Boom.badRequest();
     }
 
     if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
-      logger.warn('Invalid app_validation_url', { security: true, fail: true, request });
+      logger.warn(
+        `[UserController->addEmail] Invalid app_validation_url ${appValidationUrl}`,
+        { security: true, fail: true, request },
+      );
       throw Boom.badRequest('Invalid app_validation_url');
     }
 
     // Make sure email added is unique
     const erecord = await User.findOne({ 'emails.email': request.payload.email });
     if (erecord) {
+      logger.warn(
+        `[UserController->addEmail] Email ${request.payload.email} is not unique`,
+      );
       throw Boom.badRequest('Email is not unique');
     }
     const record = await User.findOne({ _id: userId });
     if (!record) {
+      logger.warn(
+        `[UserController->addEmail] User ${userId} not found`,
+      );
       throw Boom.notFound();
     }
     const { email } = request.payload;
     if (record.emailIndex(email) !== -1) {
+      logger.warn(
+        `[UserController->addEmail] Email ${email} already exists`,
+      );
       throw Boom.badRequest('Email already exists');
     }
     if (record.emails.length === 0 && record.is_ghost) {
@@ -927,10 +1149,14 @@ module.exports = {
     record.emails.push(data);
     record.lastModified = new Date();
     const savedRecord = await record.save();
+    logger.warn(
+      `[UserController->addEmail] Successfully saved user ${record.id}`,
+    );
     const savedEmailIndex = savedRecord.emailIndex(email);
     const savedEmail = savedRecord.emails[savedEmailIndex];
     // Send confirmation email
     const promises = [];
+    const pendingLogs = [];
     promises.push(
       EmailService.sendValidationEmail(
         record,
@@ -939,35 +1165,56 @@ module.exports = {
         appValidationUrl,
       ),
     );
+    pendingLogs.push({
+      type: 'info',
+      message: `[UserController->addEmail] Successfully sent validation email to ${email}`,
+    });
     for (let i = 0; i < record.emails.length; i += 1) {
       promises.push(
         EmailService.sendEmailAlert(record, record.emails[i].email, request.payload.email),
       );
+      pendingLogs.push({
+        type: 'info',
+        message: `[UserController->addEmail] Successfully sent email alert to ${record.emails[i].email}`,
+      });
     }
-    promises.push(OutlookService.synchronizeUser(record));
+    // promises.push(OutlookService.synchronizeUser(record));
     await Promise.all(promises);
+    for (let i = 0; i < pendingLogs.length; i += 1) {
+      logger.log(pendingLogs[i]);
+    }
     return record;
   },
 
   async dropEmail(request) {
     const userId = request.params.id;
 
-    logger.debug('[UserController] dropping email', { request });
-
     if (!request.params.email) {
+      logger.warn(
+        '[UserController->dropEmail] No email provided',
+      );
       throw Boom.badRequest();
     }
 
     const record = await User.findOne({ _id: userId });
     if (!record) {
+      logger.warn(
+        `[UserController->dropEmail] User ${userId} not found`,
+      );
       throw Boom.notFound();
     }
     const { email } = request.params;
     if (email === record.email) {
+      logger.warn(
+        `[UserController->dropEmail] Primary email for user ${userId} can not be removed`,
+      );
       throw Boom.badRequest('You can not remove the primary email');
     }
     const index = record.emailIndex(email);
     if (index === -1) {
+      logger.warn(
+        `[UserController->dropEmail] Email ${email} does not exist`,
+      );
       throw Boom.badRequest('Email does not exist');
     }
     record.emails.splice(index, 1);
@@ -977,26 +1224,34 @@ module.exports = {
       record.verified = false;
     }
     await record.save();
-    await OutlookService.synchronizeUser(record);
+    logger.info(
+      `[UserController->dropEmail] User ${record.id} saved successfully`,
+    );
+    // await OutlookService.synchronizeUser(record);
     return record;
   },
 
   async addPhone(request) {
     const userId = request.params.id;
 
-    logger.debug('[UserController] adding phone number', { request });
-
     const record = await User.findOne({ _id: userId });
     if (!record) {
+      logger.warn(
+        `[UserController->addPhone] User ${userId} not found`,
+      );
       throw Boom.notFound();
     }
     const data = { number: request.payload.number, type: request.payload.type };
     record.phone_numbers.push(data);
     record.lastModified = new Date();
-    await Promise.all([
-      record.save(),
-      OutlookService.synchronizeUser(record),
-    ]);
+    await record.save();
+    logger.info(
+      `[UserController->addPhone] User ${userId} saved successfully`,
+    );
+    // await Promise.all([
+    //  record.save(),
+    //  OutlookService.synchronizeUser(record),
+    // ]);
     return record;
   },
 
@@ -1004,10 +1259,11 @@ module.exports = {
     const userId = request.params.id;
     const phoneId = request.params.pid;
 
-    logger.debug('[UserController] dropping phone number', { request });
-
     const record = await User.findOne({ _id: userId });
     if (!record) {
+      logger.warn(
+        `[UserController->dropPhone] User ${userId} not found`,
+      );
       throw Boom.notFound();
     }
     let index = -1;
@@ -1017,6 +1273,9 @@ module.exports = {
       }
     }
     if (index === -1) {
+      logger.warn(
+        `[UserController->dropPhone] Phone number ${phoneId} not found for user ${userId}`,
+      );
       throw Boom.notFound();
     }
     // Do not allow deletion of primary phone number
@@ -1026,23 +1285,31 @@ module.exports = {
     }
     record.phone_numbers.splice(index, 1);
     record.lastModified = new Date();
-    await Promise.all([
-      record.save(),
-      OutlookService.synchronizeUser(record),
-    ]);
+    await record.save();
+    logger.info(
+      `[UserController->dropPhone] User ${record.id} saved successfully`,
+    );
+    // await Promise.all([
+    //  record.save(),
+    //  OutlookService.synchronizeUser(record),
+    // ]);
     return record;
   },
 
   async setPrimaryPhone(request) {
     const { phone } = request.payload;
 
-    logger.debug('[UserController] Setting primary phone number', { request });
-
     if (!request.payload.phone) {
+      logger.warn(
+        '[UserController->setPrimaryPhone] No phone in request payload',
+      );
       throw Boom.badRequest();
     }
     const record = await User.findOne({ _id: request.params.id });
     if (!record) {
+      logger.warn(
+        `[UserController->setPrimaryPhone] User ${request.params.id} not found`,
+      );
       throw Boom.notFound();
     }
     // Make sure phone is part of phone_numbers
@@ -1053,6 +1320,9 @@ module.exports = {
       }
     }
     if (index === -1) {
+      logger.warn(
+        `[UserController->setPrimaryPhone] Phone number ${phone} not found for user ${request.params.id}`,
+      );
       throw Boom.badRequest('Phone does not exist');
     }
     record.phone_number = record.phone_numbers[index].number;
@@ -1061,25 +1331,43 @@ module.exports = {
     await Promise.all([
       record.save(),
       GSSSyncService.synchronizeUser(record),
-      OutlookService.synchronizeUser(record),
+      // OutlookService.synchronizeUser(record),
     ]);
+    logger.info(
+      `[UserController->setPrimaryPhone] User ${request.params.id} saved successfully`,
+    );
+    logger.info(
+      `[UserController->setPrimaryPhone] Successfully synchronized google spreadsheets for user ${request.params.id}`,
+    );
     return record;
   },
 
   async setPrimaryOrganization(request) {
     if (!request.payload) {
+      logger.warn(
+        '[UserController->setPrimaryOrganization] Missing request payload',
+      );
       throw Boom.badRequest('Missing listUser id');
     }
     if (!request.payload._id) {
+      logger.warn(
+        '[UserController->setPrimaryOrganization] Missing listUser id',
+      );
       throw Boom.badRequest('Missing listUser id');
     }
 
     const user = await User.findOne({ _id: request.params.id });
     if (!user) {
+      logger.warn(
+        `[UserController->setPrimaryOrganization] User ${request.params.id} not found`,
+      );
       throw Boom.notFound();
     }
     const checkin = user.organizations.id(request.payload._id);
     if (!checkin) {
+      logger.warn(
+        `[UserController->setPrimaryOrganization] Organization ${request.payload._id.toString()} should be part of user organizations`,
+      );
       throw Boom.badRequest('Organization should be part of user organizations');
     }
     if (user.organization) {
@@ -1091,13 +1379,22 @@ module.exports = {
     await Promise.all([
       user.save(),
       GSSSyncService.synchronizeUser(user),
-      OutlookService.synchronizeUser(user),
+      // OutlookService.synchronizeUser(user),
     ]);
+    logger.info(
+      `[UserController->setPrimaryPhone] User ${request.params.id} saved successfully`,
+    );
+    logger.info(
+      `[UserController->setPrimaryPhone] Successfully synchronized google spreadsheets for user ${request.params.id}`,
+    );
     return user;
   },
 
   showAccount(request) {
-    logger.info(`calling /account.json for ${request.auth.credentials.email}`, { request });
+    logger.info(
+      `[UserController->showAccount] calling /account.json for ${request.auth.credentials.email}`,
+      { request },
+    );
     const user = JSON.parse(JSON.stringify(request.auth.credentials));
     if (request.params.currentClient && (request.params.currentClient.id === 'iasc-prod' || request.params.currentClient.id === 'iasc-dev')) {
       user.sub = user.email;
@@ -1118,10 +1415,11 @@ module.exports = {
   },
 
   async notify(request) {
-    logger.debug('[UserController] Notifying user', { request });
-
     const record = await User.findOne({ _id: request.params.id });
     if (!record) {
+      logger.warn(
+        `[UserController->notify] User ${request.params.id} not found`,
+      );
       throw Boom.notFound();
     }
 
@@ -1131,15 +1429,19 @@ module.exports = {
       user: record,
     };
     await NotificationService.send(notPayload);
+    logger.info(
+      `[UserController->notify] Successfully sent contact_needs_update notification to ${record.email}`,
+    );
 
     return record;
   },
 
   async addConnection(request) {
-    logger.debug('[UserController] Adding connection', { request });
-
     const user = await User.findOne({ _id: request.params.id });
     if (!user) {
+      logger.warn(
+        `[UserController->addConnection] User ${request.params.id} not found`,
+      );
       throw Boom.notFound();
     }
 
@@ -1147,6 +1449,9 @@ module.exports = {
       user.connections = [];
     }
     if (user.connectionsIndex(request.auth.credentials._id) !== -1) {
+      logger.warn(
+        `[UserController->addConnection] User ${request.params.id} is already a connection of ${request.auth.credentials._id.toString()}`,
+      );
       throw Boom.badRequest('User is already a connection');
     }
 
@@ -1162,20 +1467,30 @@ module.exports = {
       user.save(),
       NotificationService.send(notification),
     ]);
+    logger.info(
+      `[UserController->addConnection] User ${request.params.id} successfully saved`,
+    );
+    logger.info(
+      `[UserController->addConnection] Successfully sent connection_request notification to ${user.email}`,
+    );
     return user;
   },
 
   async updateConnection(request) {
-    logger.debug('[UserController] Updating connection', { request });
-
     const user = await User.findOne({ _id: request.params.id });
     if (!user) {
+      logger.warn(
+        `[UserController->updateConnection] User ${request.params.id} not found`,
+      );
       throw Boom.notFound();
     }
     const connection = user.connections.id(request.params.cid);
     connection.pending = false;
     user.lastModified = new Date();
     await user.save();
+    logger.info(
+      `[UserController->updateConnection] User ${request.params.id} saved successfully`,
+    );
     const cuser = await User.findOne({ _id: connection.user });
     // Create connection with current user
     const cindex = cuser.connectionsIndex(user._id);
@@ -1186,6 +1501,9 @@ module.exports = {
     }
     cuser.lastModified = new Date();
     await cuser.save();
+    logger.info(
+      `[UserController->updateConnection] User ${cuser.id} saved successfully`,
+    );
     // Send notification
     const notification = {
       type: 'connection_approved',
@@ -1193,19 +1511,26 @@ module.exports = {
       user: cuser,
     };
     await NotificationService.send(notification);
+    logger.info(
+      `[UserController->updateConnection] Successfully sent notification of type connection_approved to ${cuser.email}`,
+    );
     return user;
   },
 
   async deleteConnection(request) {
-    logger.debug('[UserController] Deleting connection', { request });
-
     const user = await User.findOne({ _id: request.params.id });
     if (!user) {
+      logger.warn(
+        `[UserController->deleteConnection] User ${request.params.id} not found`,
+      );
       throw Boom.notFound();
     }
     user.connections.id(request.params.cid).remove();
     user.lastModified = new Date();
     await user.save();
+    logger.info(
+      `[UserController->deleteConnection] User ${request.params.id} saved successfully`,
+    );
     return user;
   },
 };
