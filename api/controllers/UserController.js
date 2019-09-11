@@ -537,7 +537,7 @@ module.exports = {
       request.payload.verificationExpiryEmail = false;
     }
     if (request.payload.old_password && request.payload.new_password) {
-      logger.warn(
+      logger.info(
         `[UserController->update] Updating user password for user ${user.id}`,
         { security: true },
       );
@@ -554,7 +554,7 @@ module.exports = {
         request.payload.passwordResetAlert30days = false;
         request.payload.passwordResetAlert7days = false;
         request.payload.passwordResetAlert = false;
-        logger.warn(
+        logger.info(
           `[UserController->update] Request payload updated to change password for user ${user.id}`,
           { security: true },
         );
@@ -918,7 +918,7 @@ module.exports = {
       user.password = User.hashPassword(request.payload.new_password);
       user.lastModified = new Date();
       await user.save();
-      logger.warn(
+      logger.info(
         `[UserController->updatePassword] Successfully updated password for user ${user._id.toString()}`,
         { security: true },
       );
@@ -1032,7 +1032,7 @@ module.exports = {
     record.passwordResetAlert = false;
     record.lastModified = new Date();
     await record.save();
-    logger.warn(
+    logger.info(
       `[UserController->resetPasswordEndpoint] Password updated successfully for user ${record._id.toString()}`,
       { security: true, request },
     );
