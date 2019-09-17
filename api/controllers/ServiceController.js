@@ -1,4 +1,4 @@
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const Mailchimp = require('mailchimp-api-v3');
 const { google } = require('googleapis');
 const ServiceCredentials = require('../models/ServiceCredentials');

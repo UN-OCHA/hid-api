@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { OAuth2Client } = require('google-auth-library');
 const { google } = require('googleapis');
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const GSSSync = require('../models/GSSSync');
 const List = require('../models/List');
 const User = require('../models/User');

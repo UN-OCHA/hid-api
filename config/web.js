@@ -6,11 +6,11 @@
 *
 * @see {@link http://trailsjs.io/doc/config/web}
 */
-const inert = require('inert');
+const inert = require('@hapi/inert');
 const ejs = require('ejs');
-const vision = require('vision');
-const yar = require('yar');
-const crumb = require('crumb');
+const vision = require('@hapi/vision');
+const yar = require('@hapi/yar');
+const crumb = require('@hapi/crumb');
 const hapiRateLimit = require('hapi-rate-limit');
 const oauth2orizeExt = require('oauth2orize-openid');
 const hapiOauth2Orize = require('../plugins/hapi-oauth2orize');

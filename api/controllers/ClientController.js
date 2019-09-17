@@ -1,4 +1,4 @@
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const Client = require('../models/Client');
 const HelperService = require('../services/HelperService');
 const config = require('../../config/env')[process.env.NODE_ENV];

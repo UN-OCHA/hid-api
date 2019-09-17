@@ -1,5 +1,5 @@
 const authenticator = require('authenticator');
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const QRCode = require('qrcode');
 const BCrypt = require('bcryptjs');
 const HelperService = require('../services/HelperService');
