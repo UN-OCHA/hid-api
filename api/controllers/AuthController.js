@@ -1,5 +1,5 @@
 const Boom = require('boom');
-const Hawk = require('hawk');
+const Hawk = require('@hapi/hawk');
 const Client = require('../models/Client');
 const Flood = require('../models/Flood');
 const JwtToken = require('../models/JwtToken');
