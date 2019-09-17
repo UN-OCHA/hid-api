@@ -27,7 +27,7 @@
     "@hapi/hapi": "^18.4.0",
     "hapi-rate-limit": "^3.1.1",
     "@hapi/hawk": "^7.1.2",
-    "hoek": "^6.1.2",
+    "@hapi/hoek": "^8.2.4",
     "inert": "^5.1.2",
     "is-html": "^1.1.0",
     "jsonwebtoken": "^8.1.0",
