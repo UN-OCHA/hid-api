@@ -6,7 +6,7 @@
 *
 * @see {@link http://trailsjs.io/doc/config/web}
 */
-const inert = require('inert');
+const inert = require('@hapi/inert');
 const ejs = require('ejs');
 const vision = require('vision');
 const yar = require('yar');
