@@ -1,4 +1,4 @@
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const qs = require('qs');
 const ejs = require('ejs');
 const axios = require('axios');

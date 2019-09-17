@@ -1,4 +1,4 @@
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const fs = require('fs');
 const microsoftGraph = require('@microsoft/microsoft-graph-client');
 const simpleOauth2 = require('simple-oauth2');

@@ -1,4 +1,4 @@
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const Hawk = require('@hapi/hawk');
 const Client = require('../models/Client');
 const Flood = require('../models/Flood');

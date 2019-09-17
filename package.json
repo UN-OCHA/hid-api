@@ -17,7 +17,7 @@
     "authenticator": "^1.1.2",
     "axios": "^0.18.0",
     "bcryptjs": "^2.3.0",
-    "boom": "^7.3.0",
+    "@hapi/boom": "^7.4.3",
     "crumb": "^7.2.3",
     "ejs": "^2.5.2",
     "email-templates": "^5.0.2",

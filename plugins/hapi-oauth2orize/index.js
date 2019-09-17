@@ -1,5 +1,5 @@
 const Oauth2orize = require('oauth2orize');
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const Hoek = require('hoek');
 const Url = require('url');
 const util = require('util');

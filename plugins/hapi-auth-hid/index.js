@@ -1,6 +1,4 @@
-
-
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const acceptLanguage = require('accept-language');
 const Hawk = require('@hapi/hawk');
 const JwtToken = require('../../api/models/JwtToken');
