@@ -50,7 +50,7 @@
     "@hapi/vision": "^5.5.4",
     "winston": "^2.2",
     "winston-daily-rotate-file": "^1.4.6",
-    "yar": "^9.0.1"
+    "@hapi/yar": "^9.2.1"
   },
   "devDependencies": {
     "eslint": "^5.14.0",
