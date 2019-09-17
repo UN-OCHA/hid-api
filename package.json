@@ -18,7 +18,7 @@
     "axios": "^0.18.0",
     "bcryptjs": "^2.3.0",
     "@hapi/boom": "^7.4.3",
-    "crumb": "^7.2.3",
+    "@hapi/crumb": "^7.3.2",
     "ejs": "^2.5.2",
     "email-templates": "^5.0.2",
     "google-auth-library": "^2.0.2",
