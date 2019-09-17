@@ -47,7 +47,7 @@
     "sharp": "^0.21.1",
     "simple-oauth2": "^1.5.0",
     "validator": "^10.11.0",
-    "vision": "^5.4.4",
+    "@hapi/vision": "^5.5.4",
     "winston": "^2.2",
     "winston-daily-rotate-file": "^1.4.6",
     "yar": "^9.0.1"

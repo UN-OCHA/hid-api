@@ -8,7 +8,7 @@
 */
 const inert = require('@hapi/inert');
 const ejs = require('ejs');
-const vision = require('vision');
+const vision = require('@hapi/vision');
 const yar = require('yar');
 const crumb = require('@hapi/crumb');
 const hapiRateLimit = require('hapi-rate-limit');
