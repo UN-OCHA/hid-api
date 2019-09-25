@@ -1,10 +1,8 @@
-
-
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const _ = require('lodash');
 const List = require('../models/List');
 const User = require('../models/User');
-const OutlookService = require('../services/OutlookService');
+// const OutlookService = require('../services/OutlookService');
 const NotificationService = require('../services/NotificationService');
 const GSSSyncService = require('../services/GSSSyncService');
 const config = require('../../config/env')[process.env.NODE_ENV];
@@ -13,7 +11,13 @@ const { logger } = config;
 
 /**
  * @module ListUserController
- * @description Generated Trails.js Controller.
+ * @description Handles checkins and checkouts.
+ */
+
+/**
+ * Helper function used for checkins.
+ * Checks a user into a list and sends notifications
+ * if needed.
  */
 function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
   const user = auser;
@@ -24,6 +28,9 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
 
   // Check that the list added corresponds to the right attribute
   if (childAttribute !== `${list.type}s` && childAttribute !== list.type) {
+    logger.warn(
+      `[ListUserController->checkinHelper] Wrong list type ${list.type} ${childAttribute}`,
+    );
     throw Boom.badRequest('Wrong list type');
   }
 
@@ -56,6 +63,9 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
     for (let i = 0, len = user[childAttribute].length; i < len; i += 1) {
       if (user[childAttribute][i].list.equals(list._id)
         && user[childAttribute][i].deleted === false) {
+        logger.warn(
+          '[ListUserController->checkinHelper] User is already checked in',
+        );
         throw Boom.badRequest('User is already checked in');
       }
     }
@@ -74,7 +84,12 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
     }
   });
   const promises = [];
+  const pendingLogs = [];
   promises.push(user.save());
+  pendingLogs.push({
+    type: 'info',
+    message: `[ListUserController->checkinHelper] Saved user ${user.id}`,
+  });
   list.count += 1;
   if (user.authOnly && !user.hidden) {
     list.countManager += 1;
@@ -90,34 +105,56 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
     }
   }
   promises.push(list.save());
+  pendingLogs.push({
+    type: 'info',
+    message: `[ListUserController->checkinHelper] Saved list ${list._id.toString()}`,
+  });
   // Notify list managers of the checkin
   promises.push(NotificationService.notifyMultiple(managers, {
     type: 'checkin',
     createdBy: user,
     params: { list },
   }));
+  pendingLogs.push({
+    type: 'info',
+    message: `[ListUserController->checkinHelper] Sent notification of type checkin to list managers for list ${list._id.toString()}`,
+  });
   // Notify user if needed
   if (currentUser._id.toString() !== user._id.toString() && list.type !== 'list' && notify === true && !user.hidden) {
-    logger.debug('Checked in by a different user');
     promises.push(NotificationService.send({
       type: 'admin_checkin',
       createdBy: currentUser,
       user,
       params: { list },
     }));
+    pendingLogs.push({
+      type: 'info',
+      message: `[ListUserController->checkinHelper] User ${user._id.toString()} was checked in by ${currentUser._id.toString()}; sent admin_checkin notification`,
+    });
   }
   // Notify list owner and managers of the new checkin if needed
   if (payload.pending) {
-    logger.debug('Notifying list owners and manager of the new checkin');
     promises.push(NotificationService.sendMultiple(managers, {
       type: 'pending_checkin',
       params: { list, user },
     }));
+    pendingLogs.push({
+      type: 'info',
+      message: `[ListUserController->checkinHelper] Sent pending_checkin notification to list owners and managers of ${list._id.toString()}`,
+    });
   }
   // Synchronize google spreadsheets
   promises.push(GSSSyncService.addUserToSpreadsheets(list._id, user));
-  promises.push(OutlookService.addUserToContactFolders(list._id, user));
-  return Promise.all(promises);
+  pendingLogs.push({
+    type: 'info',
+    message: `[ListUserController->checkinHelper] Synchronized Google spreadsheets for list ${list._id.toString()}`,
+  });
+  // promises.push(OutlookService.addUserToContactFolders(list._id, user));
+  return Promise.all(promises).then(() => {
+    for (let i = 0; i < pendingLogs.length; i += 1) {
+      logger.log(pendingLogs[i]);
+    }
+  });
 }
 
 module.exports = {
@@ -130,14 +167,18 @@ module.exports = {
     const { payload } = request;
     const childAttributes = User.listAttributes();
 
-    logger.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload, { request });
-
     if (childAttributes.indexOf(childAttribute) === -1 || childAttribute === 'organization') {
+      logger.warn(
+        `[ListUserController->checkin] Invalid childAttribute ${childAttribute}`,
+      );
       throw Boom.notFound();
     }
 
     // Make sure there is a list in the payload
     if (!payload.list) {
+      logger.warn(
+        '[ListUserController->checkin] Missing list attribute',
+      );
       throw Boom.badRequest('Missing list attribute');
     }
 
@@ -150,6 +191,11 @@ module.exports = {
 
     const [list, user] = await Promise.all([List.findOne({ _id: payload.list }).populate('managers'), User.findOne({ _id: userId })]);
     if (!list || !user) {
+      logger.warn(
+        '[ListUserController->checkin] Could not find list or user',
+        payload.list,
+        userId,
+      );
       throw Boom.notFound();
     }
     await checkinHelper(list, user, notify, childAttribute, request.auth.credentials);
@@ -160,8 +206,8 @@ module.exports = {
     const { childAttribute } = request.params;
     const { checkInId } = request.params;
 
-    logger.debug(
-      '[ListUserController] (update) model = list, criteria =',
+    logger.info(
+      '[ListUserController->update] Updating a checkin',
       request.query,
       request.params.checkInId,
       ', values = ',
@@ -186,6 +232,10 @@ module.exports = {
     let listuser = {};
     const record = await User.findOne({ _id: request.params.id });
     if (!record) {
+      logger.info(
+        '[ListUserController->update] User not found',
+        { user: request.params.id },
+      );
       throw Boom.notFound();
     }
     const lu = record[childAttribute].id(checkInId);
@@ -196,8 +246,10 @@ module.exports = {
     promises.push(record.save());
     promises.push(List.findOne({ _id: lu.list }));
     const [user, list] = await Promise.all(promises);
+    logger.info(
+      `[ListUserController->update] Updated user ${record._id.toString()} with new checkin record`,
+    );
     if (listuser.pending === true && request.payload.pending === false) {
-      const promises2 = [];
       // Send a notification to inform user that his checkin is not pending anymore
       const notification = {
         type: 'approved_checkin',
@@ -205,8 +257,10 @@ module.exports = {
         createdBy: request.auth.credentials,
         params: { list },
       };
-      promises2.push(NotificationService.send(notification));
-      await Promise.all(promises2);
+      await NotificationService.send(notification);
+      logger.info(
+        `[ListUserController->update] Sent a notification of type approved_checkin to user ${user._id.toString()}`,
+      );
     }
     return user;
   },
@@ -218,11 +272,17 @@ module.exports = {
     const childAttributes = User.listAttributes();
 
     if (childAttributes.indexOf(childAttribute) === -1) {
+      logger.warn(
+        `[ListUserController->checkout] Invalid childAttribute ${childAttribute}`,
+      );
       throw Boom.notFound();
     }
 
     const user = await User.findOne({ _id: request.params.id });
     if (!user) {
+      logger.info(
+        `[ListUserController->checkout] User ${request.params.id} not found`,
+      );
       throw Boom.notFound();
     }
     const lu = user[childAttribute].id(checkInId);
@@ -238,6 +298,7 @@ module.exports = {
     user.lastModified = new Date();
     const list = await List.findOne({ _id: lu.list });
     const promises = [];
+    const pendingLogs = [];
     list.count -= 1;
     if (user.authOnly && !user.hidden) {
       list.countManager -= 1;
@@ -253,7 +314,15 @@ module.exports = {
       }
     }
     promises.push(list.save());
+    pendingLogs.push({
+      type: 'info',
+      message: `[ListUserController->checkout] Saved list ${list._id.toString()}`,
+    });
     promises.push(user.save());
+    pendingLogs.push({
+      type: 'info',
+      message: `[ListUserController->checkout] Saved user ${user._id.toString()}`,
+    });
     // Send notification if needed
     if (request.auth.credentials.id !== userId && !user.hidden) {
       promises.push(NotificationService.send({
@@ -262,6 +331,10 @@ module.exports = {
         user,
         params: { list },
       }));
+      pendingLogs.push({
+        type: 'info',
+        message: `[ListUserController->checkout] Sent notification of type admin_checkout to user ${userId}`,
+      });
     }
     // Notify list managers of the checkin
     promises.push(NotificationService.notifyMultiple(list.managers, {
@@ -269,60 +342,22 @@ module.exports = {
       createdBy: user,
       params: { list },
     }));
+    pendingLogs.push({
+      type: 'info',
+      message: '[ListUserController->checkout] Sent notification of type checkout to list managers',
+    });
     // Synchronize google spreadsheets
     promises.push(GSSSyncService.deleteUserFromSpreadsheets(list._id, user.id));
-    promises.push(OutlookService.deleteUserFromContactFolders(list._id, user.id));
+    pendingLogs.push({
+      type: 'info',
+      message: `[ListUserController->checkout] Deleted user ${user.id} from google spreadsheets associated to list ${list._id.toString()}`,
+    });
+    // promises.push(OutlookService.deleteUserFromContactFolders(list._id, user.id));
     await Promise.all(promises);
-    return user;
-  },
-
-  async updateListUsers(request, reply) {
-    const childAttributes = User.listAttributes();
-    const cursor = User
-      .find({})
-      .populate([{ path: 'lists.list' },
-        { path: 'operations.list' },
-        { path: 'bundles.list' },
-        { path: 'disasters.list' },
-        { path: 'organization.list' },
-        { path: 'organizations.list' },
-        { path: 'functional_roles.list' },
-        { path: 'offices.list' },
-      ])
-      .cursor();
-
-    /* eslint no-await-in-loop: "off" */
-    for (let user = await cursor.next(); user != null; user = await cursor.next()) {
-      for (let i = 0; i < childAttributes.length; i += 1) {
-        const childAttribute = childAttributes[i];
-        let lu = {};
-        if (childAttribute === 'organization') {
-          lu = user[childAttribute];
-          if (lu && lu.list && lu.list.owner) {
-            lu.owner = lu.list.owner;
-            lu.managers = lu.list.managers;
-            logger.info(`Updated list for ${user._id.toString()}`);
-            /* eslint no-await-in-loop: "off" */
-            await user.save();
-          } else {
-            logger.info(`No list for ${user._id.toString()}`);
-          }
-        } else {
-          for (let j = 0; j < user[childAttribute].length; j += 1) {
-            if (lu && lu.list && lu.list.owner) {
-              lu.owner = lu.list.owner;
-              lu.managers = lu.list.managers;
-              logger.info(`Updated list for ${user._id.toString()}`);
-              /* eslint no-await-in-loop: "off" */
-              await user.save();
-            } else {
-              logger.info(`No list for ${user._id.toString()}`);
-            }
-          }
-        }
-      }
+    for (let i = 0; i < pendingLogs.length; i += 1) {
+      logger.log(pendingLogs[i]);
     }
-    return reply.response().code(204);
+    return user;
   },
 
 };

@@ -1,12 +1,13 @@
-
-
 const fs = require('fs');
 const { OAuth2Client } = require('google-auth-library');
 const { google } = require('googleapis');
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const GSSSync = require('../models/GSSSync');
 const List = require('../models/List');
 const User = require('../models/User');
+const config = require('../../config/env')[process.env.NODE_ENV];
+
+const { logger } = config;
 
 /**
 * @module GSSSyncService
@@ -81,7 +82,14 @@ async function writeUser(gsssync, authClient, user, index) {
       resource: body,
       auth: authClient,
     });
+    logger.info(
+      `[GSSSyncService->writeUser] Successfully wrote user ${user._id} in ${gsssync.spreadsheet}`,
+    );
   } catch (err) {
+    logger.error(
+      `[GSSSyncService->writeUser] Error writing user to spreadsheet ${gsssync.spreadsheet}`,
+      { error: err },
+    );
     if (err.code === 404 || err.code === 403) {
       // Spreadsheet has been deleted, remove the synchronization
       gsssync.remove();
@@ -89,6 +97,9 @@ async function writeUser(gsssync, authClient, user, index) {
   }
 }
 
+/**
+ * Add a user to a spreadsheet
+ */
 async function addUser(agsssync, user) {
   const sheets = google.sheets('v4');
   const gsssync = await agsssync
@@ -98,6 +109,9 @@ async function addUser(agsssync, user) {
   // Find users
   const criteria = gsssync.getUserCriteria();
   if (Object.keys(criteria).length === 0) {
+    logger.warn(
+      '[GSSSyncService->addUser] User is not authorized to view this list',
+    );
     throw Boom.unauthorized('You are not authorized to view this list');
   }
   const users = await User
@@ -112,6 +126,9 @@ async function addUser(agsssync, user) {
       auth: authClient,
     });
     if (!column || !column.data || !column.data.values) {
+      logger.warn(
+        `[GSSSyncService->addUser] column or column.data.values is undefined on spreadsheet ${gsssync.spreadsheet}`,
+      );
       throw Boom.badImplementation(`column or column.data.values is undefined on spreadsheet ${gsssync.spreadsheet}`);
     }
     let row = 1; let index = 0;
@@ -141,12 +158,22 @@ async function addUser(agsssync, user) {
         resource: body,
         auth: authClient,
       });
+      logger.info(
+        `[GSSSyncService->addUser] Successfully updated spreadsheet ${gsssync.spreadsheet}`,
+      );
       const writeIndex = index + 1;
       await writeUser(gsssync, authClient, user, writeIndex);
     } else {
+      logger.warn(
+        `[GSSSyncService->addUser] Could not add user ${user._id} to spreadsheet ${gsssync.spreadsheet}`,
+      );
       throw Boom.badRequest('Could not add user');
     }
   } catch (err) {
+    logger.error(
+      `[GSSSyncService->writeUser] Error adding user to spreadsheet ${gsssync.spreadsheet}`,
+      { error: err },
+    );
     if (err.code === 404 || err.code === 403) {
       // Spreadsheet has been deleted, remove the synchronization
       gsssync.remove();
@@ -167,6 +194,9 @@ async function deleteUser(agsssync, hid) {
       auth: authClient,
     });
     if (!column || !column.data || !column.data.values) {
+      logger.warn(
+        `[GSSSyncService->deleteUser] column or column.data.values is undefined on spreadsheet ${gsssync.spreadsheet}`,
+      );
       throw Boom.badImplementation(`column or column.values is undefined on spreadsheet ${gsssync.spreadsheet}`);
     }
     let row = 0; let
@@ -195,10 +225,20 @@ async function deleteUser(agsssync, hid) {
         resource: body,
         auth: authClient,
       });
+      logger.info(
+        `[GSSSyncService->deleteUser] Successfully updated spreadsheet ${gsssync.spreadsheet}`,
+      );
     } else {
+      logger.warn(
+        `[GSSSyncService->deleteUser] Could not find user ${hid} in spreadsheet ${gsssync.spreadsheet}`,
+      );
       throw Boom.badRequest('Could not find user');
     }
   } catch (err) {
+    logger.error(
+      `[GSSSyncService->deleteUser] Error removing user from spreadsheet ${gsssync.spreadsheet}`,
+      { error: err },
+    );
     if (err.code === 404 || err.code === 403) {
       // Spreadsheet has been deleted, remove the synchronization
       gsssync.remove();
@@ -219,6 +259,9 @@ async function updateUser(agsssync, user) {
       auth: authClient,
     });
     if (!column || !column.data || !column.data.values) {
+      logger.warn(
+        `[GSSSyncService->updateUser] column or column.data.values is undefined on spreadsheet ${gsssync.spreadsheet}`,
+      );
       throw new Error(`column or column.values is undefined on spreadsheet ${gsssync.spreadsheet}`);
     }
     let row = 0;
@@ -232,9 +275,16 @@ async function updateUser(agsssync, user) {
     if (index !== 0) {
       await writeUser(gsssync, authClient, user, index);
     } else {
+      logger.warn(
+        `[GSSSyncService->updateUser] Could not find user ${user._id} in spreadsheet ${gsssync.spreadsheet}`,
+      );
       throw new Error(`Could not find user ${user._id.toString()} for spreadsheet ${gsssync.spreadsheet}`);
     }
   } catch (err) {
+    logger.error(
+      `[GSSSyncService->updateUser] Error updating user in spreadsheet ${gsssync.spreadsheet}`,
+      { error: err },
+    );
     if (err.code === 404 || err.code === 403) {
       // Spreadsheet has been deleted, remove the synchronization
       gsssync.remove();
@@ -276,6 +326,9 @@ module.exports = {
   async createSpreadsheet(user, listId) {
     const list = await List.findOne({ _id: listId });
     if (!list) {
+      logger.warn(
+        `[GSSSyncService->createSpreadsheet] Could not find list ${listId}`,
+      );
       throw new Error('List not found');
     }
     const authClient = getAuthClient(user);
@@ -296,6 +349,9 @@ module.exports = {
       auth: authClient,
     };
     const response = await sheets.spreadsheets.create(request);
+    logger.info(
+      '[GSSSyncService->createSpreadsheet] Successfully created spreadsheet',
+    );
     return response;
   },
 
@@ -319,6 +375,9 @@ module.exports = {
     const authClient = agsssync.getAuthClient();
     const criteria = gsssync.getUserCriteria();
     if (Object.keys(criteria).length === 0) {
+      logger.warn(
+        '[GSSSyncService->synchronizeAll] User is not authorized to view this list',
+      );
       throw Boom.unauthorized('You are not authorized to view this list');
     }
     const users = await User

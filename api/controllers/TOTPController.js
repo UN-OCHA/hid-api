@@ -1,7 +1,5 @@
-
-
 const authenticator = require('authenticator');
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const QRCode = require('qrcode');
 const BCrypt = require('bcryptjs');
 const HelperService = require('../services/HelperService');
@@ -11,7 +9,7 @@ const { logger } = config;
 
 /**
  * @module TOTPController
- * @description Generated Trails.js Controller.
+ * @description Controller for 2FA functions.
  */
 module.exports = {
 
@@ -20,7 +18,7 @@ module.exports = {
     const user = request.auth.credentials;
     if (user.totp === true) {
       // TOTP is already enabled, user needs to disable it first
-      logger.warn('2FA already enabled. Can not generate QRCode.', { security: true, fail: true, request });
+      logger.warn('[TOTPController->generateQRCode] 2FA already enabled. Can not generate QRCode.', { security: true, fail: true, request });
       throw Boom.badRequest('You have already enabled 2FA. You need to disable it first');
     }
     const secret = authenticator.generateKey();
@@ -29,6 +27,9 @@ module.exports = {
     };
     user.totpConf = mfa;
     await user.save();
+    logger.info(
+      `[TOTPController->generateQRCode] Saved user ${user.id} with totp secret`,
+    );
     let qrCodeName = `HID (${process.env.NODE_ENV})`;
     if (process.env.NODE_ENV === 'production') {
       qrCodeName = 'HID';
@@ -48,16 +49,22 @@ module.exports = {
     const user = request.auth.credentials;
     if (user.totp === true) {
       // TOTP is already enabled, user needs to disable it first
-      logger.warn('2FA already enabled. No need to reenable.', { security: true, fail: true, request });
+      logger.warn('[TOTPController->enable] 2FA already enabled. No need to reenable.', { security: true, fail: true, request });
       throw Boom.badRequest('2FA is already enabled. You need to disable it first');
     }
     const method = request.payload ? request.payload.method : '';
     if (method !== 'app' && method !== 'sms') {
+      logger.warn(
+        `[TOTPController->enable] Invalid 2FA method provided: ${method}`,
+      );
       throw Boom.badRequest('Valid 2FA method is required');
     }
     user.totpMethod = request.payload.method;
     user.totp = true;
     await user.save();
+    logger.info(
+      `[TOTPController->enable] Saved user ${user.id} with 2FA method ${user.totpMethod}`,
+    );
     return user;
   },
 
@@ -66,17 +73,23 @@ module.exports = {
     const user = request.auth.credentials;
     if (user.totp !== true) {
       // TOTP is already disabled
-      logger.warn('2FA already disabled.', { security: true, fail: true, request });
+      logger.warn('[TOTPController->disable] 2FA already disabled.', { security: true, fail: true, request });
       throw Boom.badRequest('2FA is already disabled.');
     }
     user.totp = false;
     user.totpConf = {};
     await user.save();
+    logger.info(
+      `[TOTPController->disable] Disabled 2FA for user ${user.id}`,
+    );
     return user;
   },
 
   async saveDevice(request, reply) {
     await HelperService.saveTOTPDevice(request, request.auth.credentials);
+    logger.info(
+      `[TOTPController->saveDevice] Saved new 2FA device for ${request.auth.credentials.id}`,
+    );
     const tindex = request.auth.credentials.trustedDeviceIndex(request.headers['user-agent']);
     const { secret } = request.auth.credentials.totpTrusted[tindex];
     return reply.response({ 'x-hid-totp-trust': secret })
@@ -92,14 +105,23 @@ module.exports = {
     if (device) {
       user.totpTrusted.id(deviceId).remove();
       await user.save();
+      logger.info(
+        `[TOTPController->destroyDevice] Removed 2FA device ${deviceId} for ${request.auth.credentials.id}`,
+      );
       return reply.response().code(204);
     }
+    logger.warn(
+      `[TOTPController->destroyDevice] Could not find device ${deviceId} for ${request.auth.credentials.id}`,
+    );
     throw Boom.notFound();
   },
 
   async generateBackupCodes(request) {
     const user = request.auth.credentials;
     if (!user.totp) {
+      logger.warn(
+        `[TOTPController->generateBackupCodes] TOTP needs to be enable for user ${request.auth.credentials.id}`,
+      );
       throw Boom.badRequest('TOTP needs to be enabled');
     }
     const codes = []; const
@@ -114,6 +136,9 @@ module.exports = {
     user.totpConf.backupCodes = hashedCodes;
     user.markModified('totpConf');
     await user.save();
+    logger.info(
+      `[TOTPController->generateBackupCodes] Saved user ${user.id} with new backup codes`,
+    );
     return codes;
   },
 };

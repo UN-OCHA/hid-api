@@ -172,15 +172,6 @@ module.exports = [
   },
 
   {
-    method: 'GET',
-    path: '/api/v2/updatelistusers',
-    handler: ListUserController.updateListUsers,
-    config: {
-      auth: false,
-    },
-  },
-
-  {
     method: 'POST',
     path: '/api/v2/jsonwebtoken',
     handler: AuthController.authenticate,

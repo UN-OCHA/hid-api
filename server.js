@@ -8,8 +8,8 @@ const newrelic = require('newrelic');
 const path = require('path');
 const _ = require('lodash');
 const mongoose = require('mongoose');
-const Boom = require('boom');
-const hapi = require('hapi');
+const Boom = require('@hapi/boom');
+const hapi = require('@hapi/hapi');
 const ejs = require('ejs');
 const app = require('./');
 const config = require('./config/env')[process.env.NODE_ENV];
@@ -116,7 +116,7 @@ process.on('unhandledRejection', (err) => {
   if (process.env.NODE_ENV !== 'local') {
     newrelic.noticeError(err);
   }
-  // console.log(err);
+  logger.error('[unhandledRejection] Unhandled rejection error', err);
   process.exit(1);
 });
 

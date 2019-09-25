@@ -1,5 +1,3 @@
-
-
 const mongoose = require('mongoose');
 const isHTML = require('is-html');
 const validate = require('mongoose-validator');

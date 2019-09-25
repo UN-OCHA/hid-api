@@ -1,5 +1,3 @@
-
-
 const OutlookSync = require('../models/OutlookSync');
 
 /**

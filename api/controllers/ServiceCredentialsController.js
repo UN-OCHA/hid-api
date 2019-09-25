@@ -1,12 +1,13 @@
-
-
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const ServiceCredentials = require('../models/ServiceCredentials');
 const HelperService = require('../services/HelperService');
+const config = require('../../config/env')[process.env.NODE_ENV];
+
+const { logger } = config;
 
 /**
  * @module ServiceCredentialsController
- * @description Generated Trails.js Controller.
+ * @description Handles display of service credentials (google groups credentials)
  */
 module.exports = {
 
@@ -18,6 +19,9 @@ module.exports = {
       criteria._id = request.params.id;
       const result = await ServiceCredentials.findOne(criteria);
       if (!result) {
+        logger.warn(
+          `[ServiceCredentialsController->find] ServiceCredentials ${request.params.id} not found`,
+        );
         throw Boom.notFound();
       }
       return result;

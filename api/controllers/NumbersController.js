@@ -1,11 +1,11 @@
-
-
 const List = require('../models/List');
 const User = require('../models/User');
 
 /**
  * @module NumbersController
- * @description Generated Trails.js Controller.
+ * @description Provide the number of custom contact lists, number of auth users,
+ * total number of users, number of orphans, number of ghost users and number
+ * of verified users.
  */
 module.exports = {
 

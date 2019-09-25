@@ -1,4 +1,3 @@
-
 const lodash = require('lodash');
 const Notification = require('../models/Notification');
 const EmailService = require('./EmailService');

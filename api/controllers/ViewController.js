@@ -1,6 +1,4 @@
-
-
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const Recaptcha = require('recaptcha2');
 const Client = require('../models/Client');
 const User = require('../models/User');
