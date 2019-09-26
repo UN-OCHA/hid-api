@@ -1,4 +1,4 @@
-FROM unocha/nodejs:8.11.3
+FROM unocha/nodejs:10.14.2
 
 WORKDIR /srv/www
 
