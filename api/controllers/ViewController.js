@@ -97,7 +97,7 @@ module.exports = {
         const client = await Client.findOne({ id: request.query.client_id });
         if (!client
           || (client && client.redirectUri !== request.query.redirect_uri
-            && client.redirectUrls.indexOf(request.query.redirect_uri) === -1)) {
+            && !client.redirectUrls.includes(request.query.redirect_uri))) {
           loginArgs.alert = {
             type: 'danger',
             message: 'The configuration of the client application is invalid. We can not log you in.',

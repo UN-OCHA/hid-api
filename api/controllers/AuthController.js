@@ -309,7 +309,7 @@ module.exports = {
             );
           }
           // Verify redirect uri
-          if (client.redirectUri !== redirect && client.redirectUrls.indexOf(redirect) === -1) {
+          if (client.redirectUri !== redirect && !client.redirectUrls.includes(redirect)) {
             logger.warn(
               '[AuthController->authorizeDialogOauth2] Unsuccessful OAuth2 authorization due to wrong redirect URI',
               { security: true, fail: true, request },
