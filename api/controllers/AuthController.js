@@ -412,7 +412,9 @@ module.exports = {
             security: true, fail: true, request, code,
           },
         );
-        throw Boom.badRequest('Wrong authorization code');
+        // OAuth2 standard error.
+        let error = new Error('invalid_grant');
+        throw Boom.boomify(error, { statusCode: 400 });
       } else {
         logger.info(
           '[AuthController->accessTokenOauth2] Successful access token request',
