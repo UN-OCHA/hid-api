@@ -73,6 +73,8 @@ internals.implementation = () => ({
       return reply.authenticated({
         credentials: user,
       });
+    } else if (request.method === 'post' && request.payload && request.payload['access_token']) {
+      token = request.payload['access_token'];
     } else {
       logger.warn('No authorization token was found', { security: true, fail: true, request });
       throw Boom.unauthorized('No Authorization header was found');
