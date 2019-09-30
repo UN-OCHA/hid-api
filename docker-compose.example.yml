@@ -6,7 +6,7 @@ services:
     volumes:
       - ./db:/srv/db
   dev:
-    image: unocha/nodejs:8.11.3
+    image: unocha/nodejs:10.14.2
     volumes:
       - .:/srv/www
     ports:
