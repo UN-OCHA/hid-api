@@ -423,7 +423,7 @@ module.exports = {
           },
         );
         // OAuth2 standard error.
-        let error = new Error('invalid_grant');
+        const error = new Error('invalid_grant');
         throw Boom.boomify(error, { statusCode: 400 });
       } else {
         logger.info(
