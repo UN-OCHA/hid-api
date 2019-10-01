@@ -263,6 +263,7 @@ module.exports = {
   async authorizeDialogOauth2(request, reply) {
     try {
       const oauth = request.server.plugins['hapi-oauth2orize'];
+      const prompt = request.query.prompt ? request.query.prompt : '';
 
       // Check response_type
       if (!request.query.response_type) {
@@ -275,7 +276,12 @@ module.exports = {
       // If the user is not authenticated, redirect to the login page and preserve
       // all relevant query parameters.
       const cookie = request.yar.get('session');
-      if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp) || prompt === 'login') {
+        // If user is not logged in and prompt is set to none, throw an error message.
+        if (prompt === 'none') {
+          const error = new Error('login_required');
+          throw Boom.boomify(error, { statusCode: 401 });
+        }
         logger.info(
           '[AuthController->authorizeDialogOauth2] Get request to /oauth/authorize without session. Redirecting to the login page.',
           { client_id: request.query.client_id, request },
@@ -328,7 +334,11 @@ module.exports = {
         return response;
       }
       // The user has not confirmed authorization, so present the
-      // authorization page.
+      // authorization page if prompt != none.
+      if (prompt === 'none') {
+        const error = new Error('interaction_required');
+        throw Boom.boomify(error, { statusCode: 401 });
+      }
       return reply.view('authorize', {
         user,
         client: req.oauth2.client,
@@ -412,7 +422,9 @@ module.exports = {
             security: true, fail: true, request, code,
           },
         );
-        throw Boom.badRequest('Wrong authorization code');
+        // OAuth2 standard error.
+        const error = new Error('invalid_grant');
+        throw Boom.boomify(error, { statusCode: 400 });
       } else {
         logger.info(
           '[AuthController->accessTokenOauth2] Successful access token request',

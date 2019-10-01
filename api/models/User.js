@@ -449,6 +449,11 @@ const UserSchema = new Schema({
       message: '{VALUE} is not a valid phone number !',
     },
   },
+  phone_number_verified: {
+    type: Boolean,
+    default: false,
+    readonly: true,
+  },
   phone_number_type: {
     type: String,
     enum: ['Mobile', 'Landline', 'Fax', 'Satellite', ''],
