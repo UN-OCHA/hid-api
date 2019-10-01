@@ -279,8 +279,9 @@ module.exports = {
       if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp) || prompt === 'login') {
         // If user is not logged in and prompt is set to none, throw an error message.
         if (prompt === 'none') {
-          const error = new Error('login_required');
-          throw Boom.boomify(error, { statusCode: 401 });
+          const error = Boom.unauthorized('login required');
+          error.output.payload.error = 'login_required';
+          throw error;
         }
         logger.info(
           '[AuthController->authorizeDialogOauth2] Get request to /oauth/authorize without session. Redirecting to the login page.',
@@ -336,8 +337,9 @@ module.exports = {
       // The user has not confirmed authorization, so present the
       // authorization page if prompt != none.
       if (prompt === 'none') {
-        const error = new Error('interaction_required');
-        throw Boom.boomify(error, { statusCode: 401 });
+        const error = Boom.unauthorized('interaction required');
+        error.output.payload.error = 'interaction_required';
+        throw error;
       }
       return reply.view('authorize', {
         user,
@@ -423,8 +425,9 @@ module.exports = {
           },
         );
         // OAuth2 standard error.
-        const error = new Error('invalid_grant');
-        throw Boom.boomify(error, { statusCode: 400 });
+        const error = Boom.badRequest('invalid authorization code');
+        error.output.payload.error = 'invalid_grant';
+        throw error;
       } else {
         logger.info(
           '[AuthController->accessTokenOauth2] Successful access token request',
