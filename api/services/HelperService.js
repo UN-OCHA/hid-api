@@ -11,6 +11,7 @@ const queryOptions = [
 const authorizedDomains = [
   'https://humanitarian.id',
   'https://auth.humanitarian.id',
+  'https://app.cd.dev.humanitarian.id',
   'https://app.dev.humanitarian.id',
   'https://api.dev.humanitarian.id',
   'https://api.humanitarian.id',
@@ -18,6 +19,8 @@ const authorizedDomains = [
   'https://api.staging.humanitarian.id',
   'https://app.staging.humanitarian.id',
   'https://api.hid.vm',
+  'https://app.hid.vm',
+  'http://app.hid.vm',
 ];
 
 /**
