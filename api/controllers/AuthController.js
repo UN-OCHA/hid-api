@@ -213,6 +213,9 @@ module.exports = {
     try {
       const result = await loginHelper(request);
       if (!result.totp) {
+        // Store user login time.
+        result.auth_time = Date.now();
+        await result.save();
         request.yar.set('session', { userId: result._id, totp: true });
         return loginRedirect(request, reply);
       }
@@ -220,6 +223,9 @@ module.exports = {
       const trusted = request.state['x-hid-totp-trust'];
       if (trusted && result.isTrustedDevice(request.headers['user-agent'], trusted)) {
         // If trusted device, go on
+        // Store user login time.
+        result.auth_time = Date.now();
+        await result.save();
         request.yar.set('session', { userId: result._id, totp: true });
         return loginRedirect(request, reply);
       }

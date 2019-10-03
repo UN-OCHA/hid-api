@@ -60,6 +60,7 @@ OauthTokenSchema.statics = {
       token,
       client: client._id,
       user: user._id,
+      auth_time: user.auth_time ? user.auth_time.getTime() : null,
       nonce,
       expires: now + 7 * 24 * 3600 * 1000,
     };

@@ -659,6 +659,10 @@ const UserSchema = new Schema({
   },
   collection: 'user',
   collation: { locale: 'en_US' },
+  auth_time: {
+    type: Date,
+    readonly: true,
+  }
 });
 
 /* eslint prefer-arrow-callback: "off", func-names: "off" */
