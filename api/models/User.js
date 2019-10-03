@@ -662,7 +662,7 @@ const UserSchema = new Schema({
   auth_time: {
     type: Date,
     readonly: true,
-  }
+  },
 });
 
 /* eslint prefer-arrow-callback: "off", func-names: "off" */
