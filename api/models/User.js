@@ -649,6 +649,10 @@ const UserSchema = new Schema({
     default: Date.now,
     readonly: true,
   },
+  auth_time: {
+    type: Date,
+    readonly: true,
+  },
 }, {
   timestamps: true,
   toObject: {
@@ -659,10 +663,6 @@ const UserSchema = new Schema({
   },
   collection: 'user',
   collation: { locale: 'en_US' },
-  auth_time: {
-    type: Date,
-    readonly: true,
-  },
 });
 
 /* eslint prefer-arrow-callback: "off", func-names: "off" */
