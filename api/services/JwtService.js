@@ -43,6 +43,7 @@ module.exports = {
       exp: now + 24 * 3600,
       nonce,
       iat: now,
+      auth_time: user.auth_time,
     };
     if (scope.indexOf('email') !== -1) {
       idToken.email = user.email;
