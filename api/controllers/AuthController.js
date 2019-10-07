@@ -343,9 +343,9 @@ module.exports = {
       // The user has not confirmed authorization, so present the
       // authorization page if prompt != none.
       if (prompt === 'none') {
-        const error = Boom.unauthorized('interaction required');
-        error.output.payload.error = 'interaction_required';
-        throw error;
+        return reply.redirect(`${request.query.redirect_uri}?error=interaction_required&state=${request.query.state
+        }&scope=${request.query.scope
+        }&nonce=${request.query.nonce}`);
       }
       return reply.view('authorize', {
         user,
