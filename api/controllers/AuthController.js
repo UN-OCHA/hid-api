@@ -276,7 +276,9 @@ module.exports = {
         logger.warn('[AuthController->authorizeDialogOauth2] Unsuccessful OAuth2 authorization due to missing response_type', {
           client_id: request.query.client_id, security: true, fail: true, request,
         });
-        throw Boom.badRequest('Missing response_type');
+        return reply.redirect(`${request.query.redirect_uri}?error=invalid_request&state=${request.query.state
+        }&scope=${request.query.scope
+        }&nonce=${request.query.nonce}`);
       }
 
       // If the user is not authenticated, redirect to the login page and preserve
