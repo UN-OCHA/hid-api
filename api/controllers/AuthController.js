@@ -285,9 +285,9 @@ module.exports = {
       if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp) || prompt === 'login') {
         // If user is not logged in and prompt is set to none, throw an error message.
         if (prompt === 'none') {
-          const error = Boom.unauthorized('login required');
-          error.output.payload.error = 'login_required';
-          throw error;
+          return reply.redirect(`${request.query.redirect_uri}?error=login_required&state=${request.query.state
+          }&scope=${request.query.scope
+          }&nonce=${request.query.nonce}`);
         }
         logger.info(
           '[AuthController->authorizeDialogOauth2] Get request to /oauth/authorize without session. Redirecting to the login page.',
