@@ -22,6 +22,43 @@ module.exports = {
   },
 };
 
+internals.tokenToUser = async (token) => {
+  try {
+    const jtoken = JwtService.verify(token);
+    // Make sure token is not blacklisted
+    const tok = await JwtToken.findOne({ token, blacklist: true });
+    if (tok) {
+      logger.warn('Tried to get authorization with a blacklisted token', { security: true, fail: true });
+      throw Boom.unauthorized('Invalid Token !');
+    }
+    const user = await User.findOne({ _id: jtoken.id });
+    if (user) {
+      logger.info('Successful authentication through JWT', { security: true, user: jtoken.id });
+      return {
+        user,
+      };
+    }
+
+    logger.warn('Could not find user linked to JWT', { security: true, fail: true });
+    throw Boom.unauthorized('Invalid Token !');
+  } catch (err) {
+    const tok = await OauthToken.findOne({ token }).populate('user client');
+    if (!tok) {
+      logger.warn('Invalid token', { security: true, fail: true });
+      throw Boom.unauthorized('Invalid Token!');
+    }
+    if (tok.isExpired()) {
+      logger.warn('Token is expired', { security: true, fail: true });
+      throw Boom.unauthorized('Expired token');
+    }
+    logger.info('Successful authentication through OAuth token', { security: true, user: tok.client.id });
+    return {
+      credentials: tok.user,
+      artifacts: tok.client,
+    };
+  }
+};
+
 internals.implementation = () => ({
   async authenticate(request, reply) {
     acceptLanguage.languages(['en', 'fr', 'es']);
@@ -73,51 +110,30 @@ internals.implementation = () => ({
       return reply.authenticated({
         credentials: user,
       });
-    } else if (request.method === 'post' && request.payload && request.payload.access_token) {
-      token = request.payload.access_token;
     } else {
-      logger.warn('No authorization token was found', { security: true, fail: true, request });
-      throw Boom.unauthorized('No Authorization header was found');
+      // Pass it on to payload method.
+      return reply.authenticated({ credentials: {} });
     }
 
     if (token !== '') {
-      try {
-        const jtoken = JwtService.verify(token);
-        // Make sure token is not blacklisted
-        const tok = await JwtToken.findOne({ token, blacklist: true });
-        if (tok) {
-          logger.warn('Tried to get authorization with a blacklisted token', { security: true, fail: true, request });
-          throw Boom.unauthorized('Invalid Token !');
-        }
-        request.params.token = jtoken; // This is the decrypted token or the payload you provided
-        const user = await User.findOne({ _id: jtoken.id });
-        if (user) {
-          logger.info('Successful authentication through JWT', { security: true, user: jtoken.id, request });
-          return reply.authenticated({
-            credentials: user,
-          });
-        }
-
-        logger.warn('Could not find user linked to JWT', { security: true, fail: true, request });
-        throw Boom.unauthorized('Invalid Token !');
-      } catch (err) {
-        const tok = await OauthToken.findOne({ token }).populate('user client');
-        if (!tok) {
-          logger.warn('Invalid token', { security: true, fail: true, request });
-          throw Boom.unauthorized('Invalid Token!');
-        }
-        if (tok.isExpired()) {
-          logger.warn('Token is expired', { security: true, fail: true, request });
-          throw Boom.unauthorized('Expired token');
-        }
-        logger.info('Successful authentication through OAuth token', { security: true, user: tok.client.id, request });
-        return reply.authenticated({
-          credentials: tok.user,
-          artifacts: tok.client,
-        });
-      }
+      const creds = await internals.tokenToUser(token);
+      return reply.authenticated(creds);
     }
     logger.warn('No authorization token was found', { security: true, fail: true, request });
     throw Boom.unauthorized('No Authorization header was found');
+  },
+
+  async payload(request, h) {
+    if (!request.payload.access_token) {
+      logger.warn('No authorization token was found', { security: true, fail: true, request });
+      throw Boom.unauthorized('No authorization token found');
+    }
+    const creds = await internals.tokenToUser(request.payload.access_token);
+    request.auth.credentials = creds.user ? creds.user : creds.credentials;
+    return h.continue;
+  },
+
+  options: {
+    payload: true,
   },
 });
