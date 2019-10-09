@@ -35,7 +35,7 @@ internals.tokenToUser = async (token) => {
     if (user) {
       logger.info('Successful authentication through JWT', { security: true, user: jtoken.id });
       return {
-        user,
+        credentials: user,
       };
     }
 
@@ -129,7 +129,7 @@ internals.implementation = () => ({
       throw Boom.unauthorized('No authorization token found');
     }
     const creds = await internals.tokenToUser(request.payload.access_token);
-    request.auth.credentials = creds.user ? creds.user : creds.credentials;
+    request.auth.credentials = creds.credentials;
     return h.continue;
   },
 
