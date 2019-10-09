@@ -6,7 +6,8 @@
  *
  * @see http://trailsjs.io/doc/config/routes.js
  */
-
+const Joi = require('@hapi/joi');
+const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
 const ViewController = require('../api/controllers/ViewController');
 const WebhooksController = require('../api/controllers/WebhooksController');
@@ -32,6 +33,17 @@ const TOTPController = require('../api/controllers/TOTPController');
 const UserController = require('../api/controllers/UserController');
 const UserPolicy = require('../api/policies/UserPolicy');
 const AuthController = require('../api/controllers/AuthController');
+
+const childAttributes = [
+  'operations',
+  'bundles',
+  'disasters',
+  'lists',
+  'organization',
+  'organizations',
+  'functional_roles',
+  'offices',
+];
 
 module.exports = [
 
@@ -261,12 +273,26 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/user/{id?}',
     handler: UserController.find,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'GET',
     path: '/api/v2/user.{extension}',
     handler: UserController.find,
+    options: {
+      validate: {
+        params: Joi.object({
+          extension: Joi.string().valid(['csv', 'pdf']).required(),
+        }),
+      },
+    },
   },
 
   {
@@ -277,6 +303,13 @@ module.exports = [
         UserPolicy.canUpdate,
       ],
       handler: UserController.update,
+    },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
     },
   },
 
@@ -289,12 +322,26 @@ module.exports = [
       ],
       handler: UserController.destroy,
     },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/notification',
     handler: UserController.notify,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -305,6 +352,14 @@ module.exports = [
         ListUserPolicy.canCheckin,
       ],
       handler: ListUserController.checkin,
+    },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          childAttribute: Joi.string().valid(childAttributes).required(),
+        }),
+      },
     },
   },
 
@@ -317,6 +372,14 @@ module.exports = [
       ],
       handler: ListUserController.update,
     },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          childAttribute: Joi.string().valid(childAttributes).required(),
+        }),
+      },
+    },
   },
 
   {
@@ -327,6 +390,15 @@ module.exports = [
         ListUserPolicy.canCheckout,
       ],
       handler: ListUserController.checkout,
+    },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          childAttribute: Joi.string().valid(childAttributes).required(),
+          checkInId: Joi.string().regex(objectIdRegex),
+        }),
+      },
     },
   },
 
@@ -348,6 +420,13 @@ module.exports = [
       ],
       handler: UserController.updatePassword,
     },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -358,6 +437,13 @@ module.exports = [
         UserPolicy.canClaim,
       ],
       handler: UserController.claimEmail,
+    },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
     },
   },
 
@@ -375,6 +461,13 @@ module.exports = [
         allow: 'multipart/form-data',
       },
     },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -385,6 +478,13 @@ module.exports = [
         UserPolicy.canUpdate,
       ],
       handler: UserController.addEmail,
+    },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
     },
   },
 
@@ -397,6 +497,13 @@ module.exports = [
         AuthPolicy.isTOTPEnabledAndValid,
       ],
       handler: UserController.setPrimaryEmail,
+    },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
     },
   },
 
@@ -418,6 +525,13 @@ module.exports = [
       ],
       handler: UserController.dropEmail,
     },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -428,6 +542,13 @@ module.exports = [
         UserPolicy.canUpdate,
       ],
       handler: UserController.addPhone,
+    },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
     },
   },
 
@@ -440,6 +561,14 @@ module.exports = [
       ],
       handler: UserController.dropPhone,
     },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          pid: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -450,6 +579,13 @@ module.exports = [
         UserPolicy.canUpdate,
       ],
       handler: UserController.setPrimaryPhone,
+    },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
     },
   },
 
@@ -462,12 +598,26 @@ module.exports = [
       ],
       handler: UserController.setPrimaryOrganization,
     },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/connections',
     handler: UserController.addConnection,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -478,6 +628,14 @@ module.exports = [
         UserPolicy.canUpdate,
       ],
       handler: UserController.updateConnection,
+    },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          cid: Joi.string().regex(objectIdRegex),
+        }),
+      },
     },
   },
 
@@ -490,6 +648,14 @@ module.exports = [
       ],
       handler: UserController.deleteConnection,
     },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          cid: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -500,6 +666,13 @@ module.exports = [
         ServicePolicy.canSubscribe,
       ],
       handler: ServiceController.subscribe,
+    },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
     },
   },
 
@@ -512,18 +685,40 @@ module.exports = [
       ],
       handler: ServiceController.unsubscribe,
     },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          serviceId: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/googlecredentials',
     handler: GSSSyncController.saveGoogleCredentials,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/outlookcredentials',
     handler: OutlookController.saveOutlookCredentials,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -541,6 +736,13 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/list/{id?}',
     handler: ListController.find,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -552,6 +754,13 @@ module.exports = [
       ],
       handler: ListController.update,
     },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -562,6 +771,13 @@ module.exports = [
         ListPolicy.canDestroy,
       ],
       handler: ListController.destroy,
+    },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
     },
   },
 
@@ -585,6 +801,13 @@ module.exports = [
       ],
       handler: ClientController.find,
     },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -596,6 +819,13 @@ module.exports = [
       ],
       handler: ClientController.update,
     },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -606,6 +836,13 @@ module.exports = [
         AuthPolicy.isAdmin,
       ],
       handler: ClientController.destroy,
+    },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
     },
   },
 
@@ -629,6 +866,13 @@ module.exports = [
       ],
       handler: TrustedDomainController.find,
     },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -640,18 +884,39 @@ module.exports = [
       ],
       handler: TrustedDomainController.destroy,
     },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'GET',
     path: '/api/v2/notification/{id?}',
     handler: NotificationController.find,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'PUT',
     path: '/api/v2/notification/{id?}',
     handler: NotificationController.update,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -664,6 +929,13 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/service/{id?}',
     handler: ServiceController.find,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -693,6 +965,13 @@ module.exports = [
       ],
       handler: ServiceController.update,
     },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -703,6 +982,13 @@ module.exports = [
         ServicePolicy.canDestroy,
       ],
       handler: ServiceController.destroy,
+    },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
     },
   },
 
@@ -733,6 +1019,13 @@ module.exports = [
     method: 'DELETE',
     path: '/api/v2/totp/device/{id}',
     handler: TOTPController.destroyDevice,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -818,6 +1111,13 @@ module.exports = [
     method: 'GET',
     path: '/api/v2/operation/{id?}',
     handler: OperationController.find,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -829,6 +1129,13 @@ module.exports = [
       ],
       handler: OperationController.update,
     },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
@@ -839,6 +1146,13 @@ module.exports = [
         AuthPolicy.isAdminOrGlobalManager,
       ],
       handler: OperationController.destroy,
+    },
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
     },
   },
 ];
