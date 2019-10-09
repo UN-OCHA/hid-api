@@ -112,11 +112,11 @@ const init = async () => {
   // console.log(`Server running at: ${server.info.uri}`);
 };
 
-process.on('unhandledRejection', (err) => {
+process.on('unhandledRejection', (err, p) => {
   if (process.env.NODE_ENV !== 'local') {
     newrelic.noticeError(err);
   }
-  logger.error('[unhandledRejection] Unhandled rejection error', err);
+  logger.error('[unhandledRejection] Unhandled rejection error', err, p);
   process.exit(1);
 });
 
