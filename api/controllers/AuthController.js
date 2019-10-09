@@ -213,6 +213,9 @@ module.exports = {
     try {
       const result = await loginHelper(request);
       if (!result.totp) {
+        // Store user login time.
+        result.auth_time = new Date();
+        await result.save();
         request.yar.set('session', { userId: result._id, totp: true });
         return loginRedirect(request, reply);
       }
@@ -220,6 +223,9 @@ module.exports = {
       const trusted = request.state['x-hid-totp-trust'];
       if (trusted && result.isTrustedDevice(request.headers['user-agent'], trusted)) {
         // If trusted device, go on
+        // Store user login time.
+        result.auth_time = new Date();
+        await result.save();
         request.yar.set('session', { userId: result._id, totp: true });
         return loginRedirect(request, reply);
       }
@@ -263,19 +269,28 @@ module.exports = {
   async authorizeDialogOauth2(request, reply) {
     try {
       const oauth = request.server.plugins['hapi-oauth2orize'];
+      const prompt = request.query.prompt ? request.query.prompt : '';
 
       // Check response_type
       if (!request.query.response_type) {
         logger.warn('[AuthController->authorizeDialogOauth2] Unsuccessful OAuth2 authorization due to missing response_type', {
           client_id: request.query.client_id, security: true, fail: true, request,
         });
-        throw Boom.badRequest('Missing response_type');
+        return reply.redirect(`${request.query.redirect_uri}?error=invalid_request&state=${request.query.state
+        }&scope=${request.query.scope
+        }&nonce=${request.query.nonce}`);
       }
 
       // If the user is not authenticated, redirect to the login page and preserve
       // all relevant query parameters.
       const cookie = request.yar.get('session');
-      if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp) || prompt === 'login') {
+        // If user is not logged in and prompt is set to none, throw an error message.
+        if (prompt === 'none') {
+          return reply.redirect(`${request.query.redirect_uri}?error=login_required&state=${request.query.state
+          }&scope=${request.query.scope
+          }&nonce=${request.query.nonce}`);
+        }
         logger.info(
           '[AuthController->authorizeDialogOauth2] Get request to /oauth/authorize without session. Redirecting to the login page.',
           { client_id: request.query.client_id, request },
@@ -309,7 +324,7 @@ module.exports = {
             );
           }
           // Verify redirect uri
-          if (client.redirectUri !== redirect && client.redirectUrls.indexOf(redirect) === -1) {
+          if (client.redirectUri !== redirect && !client.redirectUrls.includes(redirect)) {
             logger.warn(
               '[AuthController->authorizeDialogOauth2] Unsuccessful OAuth2 authorization due to wrong redirect URI',
               { security: true, fail: true, request },
@@ -328,7 +343,12 @@ module.exports = {
         return response;
       }
       // The user has not confirmed authorization, so present the
-      // authorization page.
+      // authorization page if prompt != none.
+      if (prompt === 'none') {
+        return reply.redirect(`${request.query.redirect_uri}?error=interaction_required&state=${request.query.state
+        }&scope=${request.query.scope
+        }&nonce=${request.query.nonce}`);
+      }
       return reply.view('authorize', {
         user,
         client: req.oauth2.client,
@@ -412,7 +432,10 @@ module.exports = {
             security: true, fail: true, request, code,
           },
         );
-        throw Boom.badRequest('Wrong authorization code');
+        // OAuth2 standard error.
+        const error = Boom.badRequest('invalid authorization code');
+        error.output.payload.error = 'invalid_grant';
+        throw error;
       } else {
         logger.info(
           '[AuthController->accessTokenOauth2] Successful access token request',
