@@ -124,7 +124,10 @@ internals.implementation = () => ({
   },
 
   async payload(request, h) {
-    const isAuthenticated = Object.keys(request.auth.credentials).length === 0 ? false : true;
+    let isAuthenticated = true;
+    if (Object.keys(request.auth.credentials).length === 0) {
+      isAuthenticated = false;
+    }
     if (isAuthenticated) {
       return h.continue;
     }
