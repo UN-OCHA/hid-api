@@ -124,6 +124,10 @@ internals.implementation = () => ({
   },
 
   async payload(request, h) {
+    const isAuthenticated = Object.keys(request.auth.credentials).length === 0 ? false : true;
+    if (isAuthenticated) {
+      return h.continue;
+    }
     if (!request.payload.access_token) {
       logger.warn('No authorization token was found', { security: true, fail: true, request });
       throw Boom.unauthorized('No authorization token found');
