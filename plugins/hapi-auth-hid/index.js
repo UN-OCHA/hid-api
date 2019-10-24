@@ -104,7 +104,6 @@ internals.implementation = () => ({
       if (!user) {
         throw Boom.unauthorized('No user found');
       }
-      request.params.currentUser = user;
       delete request.query.bewit;
       logger.info('Successful authentication through bewit', { security: true, user: attributes.id, request });
       return reply.authenticated({
