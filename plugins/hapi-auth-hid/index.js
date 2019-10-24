@@ -104,7 +104,6 @@ internals.implementation = () => ({
       if (!user) {
         throw Boom.unauthorized('No user found');
       }
-      request.params.currentUser = user;
       delete request.query.bewit;
       logger.info('Successful authentication through bewit', { security: true, user: attributes.id, request });
       return reply.authenticated({
@@ -124,6 +123,13 @@ internals.implementation = () => ({
   },
 
   async payload(request, h) {
+    let isAuthenticated = true;
+    if (Object.keys(request.auth.credentials).length === 0) {
+      isAuthenticated = false;
+    }
+    if (isAuthenticated) {
+      return h.continue;
+    }
     if (!request.payload.access_token) {
       logger.warn('No authorization token was found', { security: true, fail: true, request });
       throw Boom.unauthorized('No authorization token found');
