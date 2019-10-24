@@ -1,8 +1,9 @@
-version: "2"
+version: "2.1"
 services:
   db:
-    image: unocha/alpine-mongo
+    image: unocha/mongo:4.0.5
     volumes:
+      - ./db:/srv/db
       - ./data:/srv
       - .:/srv/www
     environment:
@@ -16,7 +17,7 @@ services:
           - db.hid.vm
 
   dev:
-    image: unocha/alpine-nodejs:3.6-201708-01-HID
+    image: unocha/nodejs:10.14.2
     volumes:
       - .:/srv/www
     links:
