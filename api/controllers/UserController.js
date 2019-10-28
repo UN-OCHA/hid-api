@@ -1,364 +1,467 @@
-'use strict';
-
-const Controller = require('trails/controller');
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const qs = require('qs');
 const ejs = require('ejs');
-const http = require('http');
+const axios = require('axios');
 const moment = require('moment');
 const acceptLanguage = require('accept-language');
 const sharp = require('sharp');
 const validator = require('validator');
+
 const hidAccount = '5b2128e754a0d6046d6c69f2';
+const List = require('../models/List');
+const User = require('../models/User');
+// const OutlookService = require('../services/OutlookService');
+const EmailService = require('../services/EmailService');
+const HelperService = require('../services/HelperService');
+const NotificationService = require('../services/NotificationService');
+const GSSSyncService = require('../services/GSSSyncService');
+const AuthPolicy = require('../policies/AuthPolicy');
+const ListUserController = require('./ListUserController');
+const config = require('../../config/env')[process.env.NODE_ENV];
+
+const { logger } = config;
 
 /**
  * @module UserController
- * @description Generated Trails.js Controller.
+ * @description CRUD controller for users.
  */
-module.exports = class UserController extends Controller{
 
-  _removeForbiddenAttributes (request) {
-    const childAttributes = this.app.orm.User.listAttributes();
-    this.app.services.HelperService.removeForbiddenAttributes('User', request, childAttributes);
+/**
+ * Exports users in PDF, using the PDF snap service.
+ */
+async function _pdfExport(users, number, lists, req, format) {
+  const filters = [];
+  if (Object.prototype.hasOwnProperty.call(req.query, 'name') && req.query.name.length) {
+    filters.push(req.query.name);
   }
-
-  _errorHandler (err, request, reply) {
-    return this.app.services.ErrorService.handle(err, request, reply);
+  if (Object.prototype.hasOwnProperty.call(req.query, 'verified') && req.query.verified) {
+    filters.push('Verified User');
   }
-
-  _createHelper(request, reply) {
-    const Model = this.app.orm.User;
-    const UserModel = this.app.models.User;
-
-    this.log.debug('Preparing request for user creation', { request: request });
-
-    if (request.payload.email) {
-      request.payload.emails = [];
-      request.payload.emails.push({type: 'Work', email: request.payload.email, validated: false});
+  if (Object.prototype.hasOwnProperty.call(req.query, 'is_admin') && req.query.is_admin) {
+    filters.push('Administrator');
+  }
+  lists.forEach((list, index) => {
+    if (index > 0) {
+      filters.push(list.name);
     }
+  });
 
-    if (request.payload.password && request.payload.confirm_password) {
-      if (!UserModel.isStrongPassword(request.payload.password)) {
-        return reply(Boom.badRequest('The password is not strong enough'));
-      }
-      request.payload.password = UserModel.hashPassword(request.payload.password);
+  const data = {
+    lists,
+    number,
+    users,
+    dateGenerated: moment().format('LL'),
+    filters,
+  };
+  let template = 'templates/pdf/printList.html';
+  if (format === 'meeting-compact') {
+    template = 'templates/pdf/printMeetingCompact.html';
+  } else if (format === 'meeting-comfortable') {
+    template = 'templates/pdf/printMeetingComfortable.html';
+  }
+  const str = await ejs.renderFile(template, data, {});
+
+  // Send the HTML to the wkhtmltopdf service to generate a PDF, and
+  // return the output.
+  const postData = qs.stringify({ html: str });
+  const hostname = process.env.WKHTMLTOPDF_HOST;
+  const port = process.env.WKHTMLTOPDF_PORT || 80;
+  const params = {
+    service: 'hid_api',
+    pdfLandscape: true,
+    pdfBackground: true,
+    pdfMarginUnit: 'mm',
+    pdfMarginTop: 10,
+    pdfMarginBottom: 10,
+    pdfMarginRight: 10,
+    pdfMarginLeft: 10,
+    scale: 1,
+  };
+  const clientRes = await axios({
+    method: 'post',
+    url: `http://${hostname}:${port}/snap`,
+    params,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': postData.length,
+      'X-Forwarded-For': req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+      'User-Agent': req.headers['user-agent'],
+    },
+    data: postData,
+    responseType: 'arraybuffer',
+  });
+  if (clientRes && clientRes.status === 200) {
+    // clientRes.setEncoding('binary');
+
+    const pdfSize = parseInt(clientRes.headers['content-length'], 10);
+
+    return [clientRes.data, pdfSize];
+  }
+  logger.error(
+    '[UserController->_pdfExport] An error occurred while generating a PDF',
+    { response: clientRes },
+  );
+  throw new Error(`An error occurred while generating PDF for list ${data.lists[0].name}`);
+}
+
+/**
+ * Exports users to txt.
+ */
+function _txtExport(users) {
+  let out = '';
+  for (let i = 0; i < users.length; i += 1) {
+    out += `${users[i].name} <${users[i].email}>;`;
+  }
+  return out;
+}
+
+/**
+ * Get the list of bundles a user is checked into.
+ */
+function getBundles(user) {
+  let bundles = '';
+  user.bundles.forEach((bundle) => {
+    if (!bundle.deleted) {
+      bundles += `${bundle.name};`;
     }
-    else {
-      // Set a random password
-      request.payload.password = UserModel.hashPassword(UserModel.generateRandomPassword());
+  });
+  return bundles;
+}
+
+/**
+ * Get the list of functional roles a user is checked into.
+ */
+function getRoles(user) {
+  let roles = '';
+  user.functional_roles.forEach((role) => {
+    if (!role.deleted) {
+      roles += `${role.name};`;
     }
+  });
+  return roles;
+}
 
-    const appVerifyUrl = request.payload.app_verify_url;
-    delete request.payload.app_verify_url;
-
-    let notify = true;
-    if (typeof request.payload.notify !== 'undefined') {
-      notify = request.payload.notify;
+/**
+ * Helper function to export users to csv
+ */
+function _csvExport(users, full = false) {
+  let out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes\n';
+  let org = '';
+  let bundles = '';
+  let roles = '';
+  let country = '';
+  let region = '';
+  let jobTitle = '';
+  let phoneNumber = '';
+  let skype = '';
+  let status = '';
+  let orphan = '';
+  let ghost = '';
+  let verified = '';
+  let manager = '';
+  let admin = '';
+  if (full) {
+    out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes,Created At,Updated At,Orphan,Ghost,Verified,Manager,Admin\n';
+  }
+  for (let i = 0; i < users.length; i += 1) {
+    org = '';
+    bundles = '';
+    country = '';
+    region = '';
+    skype = '';
+    roles = '';
+    jobTitle = users[i].job_title || ' ';
+    phoneNumber = users[i].phone_number || ' ';
+    status = users[i].status || ' ';
+    if (users[i].organization && users[i].organization.list) {
+      org = users[i].organization.name;
     }
-    delete request.payload.notify;
-
-    let registrationType = '';
-    if (request.payload.registration_type) {
-      registrationType = request.payload.registration_type;
-      delete request.payload.registration_type;
+    if (users[i].bundles && users[i].bundles.length) {
+      bundles = getBundles(users[i]);
     }
-
-    this._removeForbiddenAttributes(request);
-
-    if (request.params.currentUser && registrationType === '') {
-      // Creating an orphan user
-      request.payload.createdBy = request.params.currentUser._id;
-      // If an orphan is being created, do not expire
-      request.payload.expires = new Date(0, 0, 1, 0, 0, 0);
-      if (request.payload.email) {
-        request.payload.is_orphan = true;
-      }
-      else {
-        request.payload.is_ghost = true;
-      }
+    if (users[i].functional_roles && users[i].functional_roles.length) {
+      roles = getRoles(users[i]);
     }
-
-    // HID-1582: creating a short lived user for testing
-    if (request.payload.tester) {
-      const now = Date.now();
-      request.payload.expires = new Date(now + 3600 * 1000);
-      request.payload.email_verified = true;
-      delete request.payload.tester;
+    if (users[i].location && users[i].location.country) {
+      country = users[i].location.country.name;
     }
-
-    const that = this;
-    let guser = {};
-    Model
-      .create(request.payload)
-      .then((user) => {
-        if (!user) {
-          throw Boom.badRequest();
+    if (users[i].location && users[i].location.region) {
+      region = users[i].location.region.name;
+    }
+    if (users[i].voips.length) {
+      for (let j = 0; j < users[i].voips.length; j += 1) {
+        if (users[i].voips[j].type === 'Skype') {
+          skype = users[i].voips[j].username;
         }
-        guser = user;
-        that.log.debug('User ' + user._id.toString() + ' successfully created', { request: request });
-
-        if (user.email && notify === true) {
-          if (!request.params.currentUser) {
-            if (process.env.NODE_ENV === 'local') {
-              return;
-            }
-            return that.app.services.EmailService.sendRegister(user, appVerifyUrl);
-          }
-          else {
-            // An admin is creating an orphan user or Kiosk registration
-            if (registrationType === 'kiosk') {
-              return that.app.services.EmailService.sendRegisterKiosk(user, appVerifyUrl);
-            }
-            else {
-              return that.app.services.EmailService.sendRegisterOrphan(user, request.params.currentUser, appVerifyUrl);
-            }
-          }
-        }
-      })
-      .then(info => {
-        return reply(guser);
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
-
-  create (request, reply) {
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
-    const Model = this.app.orm.user;
-
-    this.log.debug('[UserController] (create) payload =', request.payload, 'options =', options, { request: request });
-
-    if (!request.payload.app_verify_url) {
-      return reply(Boom.badRequest('Missing app_verify_url'));
-    }
-
-    const appVerifyUrl = request.payload.app_verify_url;
-    if (!this.app.services.HelperService.isAuthorizedUrl(appVerifyUrl)) {
-      this.log.warn('Invalid app_verify_url', { security: true, fail: true, request: request});
-      return reply(Boom.badRequest('Invalid app_verify_url'));
-    }
-
-    const that = this;
-    if (request.payload.email) {
-      Model
-        .findOne({'emails.email': request.payload.email})
-        .then((record) => {
-          if (!record) {
-            // Create user
-            that._createHelper(request, reply);
-          }
-          else {
-            if (!request.params.currentUser) {
-              return reply(Boom.badRequest('This email address is already registered. If you can not remember your password, please reset it'));
-            }
-            else {
-              return reply(Boom.badRequest('This user already exists. user_id=' + record._id.toString()));
-            }
-          }
-        })
-        .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
-        });
-    }
-    else {
-      // Create ghost user
-      that._createHelper(request, reply);
-    }
-  }
-
-  _pdfExport (data, req, format, callback) {
-    const filters = [];
-    if (Object.prototype.hasOwnProperty.call(req.query, 'name') && req.query.name.length) {
-      filters.push(req.query.name);
-    }
-    if (Object.prototype.hasOwnProperty.call(req.query, 'verified') && req.query.verified) {
-      filters.push('Verified User');
-    }
-    if (Object.prototype.hasOwnProperty.call(req.query, 'is_admin') && req.query.is_admin) {
-      filters.push('Administrator');
-    }
-    data.lists.forEach(function (list, index) {
-      if (index > 0) {
-        filters.push(list.name);
       }
-    });
-
-    data.dateGenerated = moment().format('LL');
-    data.filters = filters;
-    let template = 'templates/pdf/printList.html';
-    if (format === 'meeting-compact') {
-      template = 'templates/pdf/printMeetingCompact.html';
     }
-    else if (format === 'meeting-comfortable') {
-      template = 'templates/pdf/printMeetingComfortable.html';
-    }
-    ejs.renderFile(template, data, {}, function (err, str) {
-      if (err) {
-        callback(err);
-      }
-      else {
-        const postData = qs.stringify({
-            'html': str
-          }),
-          options = {
-            hostname: process.env.WKHTMLTOPDF_HOST,
-            port: process.env.WKHTMLTOPDF_PORT || 80,
-            path: '/htmltopdf',
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              'Content-Length': postData.length
-            }
-          };
-
-        // Send the HTML to the wkhtmltopdf service to generate a PDF, and
-        // return the output.
-        const clientReq = http.request(options, function(clientRes) {
-          if (clientRes && clientRes.statusCode === 200) {
-            clientRes.setEncoding('binary');
-
-            const pdfSize = parseInt(clientRes.headers['content-length']),
-              pdfBuffer = new Buffer(pdfSize);
-            let bytes = 0;
-
-            clientRes.on('data', function(chunk) {
-              pdfBuffer.write(chunk, bytes, 'binary');
-              bytes += chunk.length;
-            });
-
-            clientRes.on('end', function() {
-              callback(null, pdfBuffer, bytes);
-            });
-          }
-          else {
-            callback(new Error('An error occurred while generating PDF for list ' + data.lists[0].name));
-          }
-        });
-
-        // Handle errors with the HTTP request.
-        clientReq.on('error', function(e) {
-          callback(new Error('An error occurred while generating PDF for list ' + data.lists[0].name));
-        });
-
-        // Write post data containing the rendered HTML.
-        clientReq.write(postData);
-        clientReq.end();
-      }
-    });
-  }
-
-  _txtExport (users) {
-    let out = '';
-    for (let i = 0; i < users.length; i++) {
-      out += users[i].name + ' <' + users[i].email + '>;';
-    }
-    return out;
-  }
-
-  _csvExport (users, full = false) {
-    let out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes\n',
-      org = '',
-      bundles = '',
-      roles = '',
-      country = '',
-      region = '',
-      jobTitle = '',
-      phoneNumber = '',
-      skype = '',
-      status = '',
-      orphan = '',
-      ghost = '',
-      verified = '',
-      manager = '',
-      admin = '';
+    orphan = users[i].is_orphan ? '1' : '0';
+    ghost = users[i].is_ghost ? '1' : '0';
+    verified = users[i].verified ? '1' : '0';
+    manager = users[i].isManager ? '1' : '0';
+    admin = users[i].is_admin ? '1' : '0';
+    out = `${out
+    }"${users[i].given_name}",`
+      + `"${users[i].family_name}",`
+      + `"${jobTitle}",`
+      + `"${org}",`
+      + `"${bundles}",`
+      + `"${roles}",`
+      + `"${country}",`
+      + `"${region}",`
+      + `"${phoneNumber}",`
+      + `"${skype}",`
+      + `"${users[i].email}",`
+      + `"${status}`;
     if (full) {
-      out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes,Created At,Updated At,Orphan,Ghost,Verified,Manager,Admin\n';
+      out = `${out}",`
+        + `"${users[i].createdAt}",`
+        + `"${users[i].updatedAt}",`
+        + `"${orphan}",`
+        + `"${ghost}",`
+        + `"${verified}",`
+        + `"${manager}",`
+        + `"${admin}"\n`;
+    } else {
+      out += '"\n';
     }
-    for (let i = 0; i < users.length; i++) {
-      org = '';
-      bundles = '';
-      country = '';
-      region = '';
-      skype = '';
-      roles = '';
-      jobTitle = users[i].job_title || ' ';
-      phoneNumber = users[i].phone_number || ' ';
-      status = users[i].status || ' ';
-      if (users[i].organization && users[i].organization.list) {
-        org = users[i].organization.name;
+  }
+  return out;
+}
+
+module.exports = {
+
+  async create(request) {
+    if (!request.payload.app_verify_url) {
+      logger.warn(
+        '[UserController->create] Missing app_verify_url',
+      );
+      throw Boom.badRequest('Missing app_verify_url');
+    }
+
+    const appVerifyUrl = request.payload.app_verify_url;
+    if (!HelperService.isAuthorizedUrl(appVerifyUrl)) {
+      logger.warn(
+        '[UserController->create] Invalid app_verify_url',
+        { security: true, fail: true, request },
+      );
+      throw Boom.badRequest('Invalid app_verify_url');
+    }
+
+    let record = null;
+    if (request.payload.email) {
+      record = await User.findOne({ 'emails.email': request.payload.email });
+    }
+
+    if (!record) {
+      // Create user
+      if (request.payload.email) {
+        request.payload.emails = [];
+        request.payload.emails.push({ type: 'Work', email: request.payload.email, validated: false });
       }
-      if (users[i].bundles && users[i].bundles.length) {
-        users[i].bundles.forEach(function (bundle) {
-          bundles += bundle.name + ';';
-        });
+
+      if (request.payload.password && request.payload.confirm_password) {
+        if (!User.isStrongPassword(request.payload.password)) {
+          logger.warn(
+            '[UserController->create] Provided password is not strong enough',
+          );
+          throw Boom.badRequest('The password is not strong enough');
+        }
+        request.payload.password = User.hashPassword(request.payload.password);
+      } else {
+        // Set a random password
+        request.payload.password = User.hashPassword(User.generateRandomPassword());
       }
-      if (users[i].functional_roles && users[i].functional_roles.length) {
-        users[i].functional_roles.forEach(function (role) {
-          roles += role.name + ';';
-        });
+      delete request.payload.app_verify_url;
+
+      let notify = true;
+      if (typeof request.payload.notify !== 'undefined') {
+        const { notify: notif } = request.payload.notify;
+        notify = notif;
       }
-      if (users[i].location && users[i].location.country) {
-        country = users[i].location.country.name;
+      delete request.payload.notify;
+
+      let registrationType = '';
+      if (request.payload.registration_type) {
+        registrationType = request.payload.registration_type;
+        delete request.payload.registration_type;
       }
-      if (users[i].location && users[i].location.region) {
-        region = users[i].location.region.name;
-      }
-      if (users[i].voips.length) {
-        for (let j = 0; j < users[i].voips.length; j++) {
-          if (users[i].voips[j].type === 'Skype') {
-            skype = users[i].voips[j].username;
-          }
+
+      const childAttributes = User.listAttributes();
+      HelperService.removeForbiddenAttributes(User, request, childAttributes);
+
+      if (request.auth.credentials && registrationType === '') {
+        // Creating an orphan user
+        request.payload.createdBy = request.auth.credentials._id;
+        // If an orphan is being created, do not expire
+        request.payload.expires = new Date(0, 0, 1, 0, 0, 0);
+        if (request.payload.email) {
+          request.payload.is_orphan = true;
+        } else {
+          request.payload.is_ghost = true;
         }
       }
-      orphan = users[i].is_orphan ? '1' : '0';
-      ghost = users[i].is_ghost ? '1' : '0';
-      verified = users[i].verified ? '1' : '0';
-      manager = users[i].isManager ? '1' : '0';
-      admin = users[i].is_admin ? '1' : '0';
-      out = out +
-        '"' + users[i].given_name + '",' +
-        '"' + users[i].family_name + '",' +
-        '"' + jobTitle + '",' +
-        '"' + org + '",' +
-        '"' + bundles + '",' +
-        '"' + roles + '",' +
-        '"' + country + '",' +
-        '"' + region + '",' +
-        '"' + phoneNumber + '",' +
-        '"' + skype + '",' +
-        '"' + users[i].email + '",' +
-        '"' + status;
-      if (full) {
-        out = out + '",' +
-          '"' + users[i].createdAt + '",' +
-          '"' + users[i].updatedAt + '",' +
-          '"' + orphan + '",' +
-          '"' + ghost + '",' +
-          '"' + verified + '",' +
-          '"' + manager + '",' +
-          '"' + admin + '"\n';
+
+      // HID-1582: creating a short lived user for testing
+      if (request.payload.tester) {
+        const now = Date.now();
+        request.payload.expires = new Date(now + 3600 * 1000);
+        request.payload.email_verified = true;
+        delete request.payload.tester;
       }
-      else {
-        out = out + '"\n';
+      // Not showing request payload to avoid showing user passwords in logs.
+      const user = await User.create(request.payload);
+      if (!user) {
+        // Not showing request payload to avoid showing user passwords in logs.
+        logger.warn(
+          '[UserController->create] Create user failed',
+        );
+        throw Boom.badRequest();
+      }
+      logger.info(
+        `[UserController->create] User ${user._id.toString()} created successfully`,
+      );
+
+      if (user.email && notify === true) {
+        if (!request.auth.credentials) {
+          if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'testing') {
+            await EmailService.sendRegister(user, appVerifyUrl);
+          }
+          logger.info(
+            `[UserController->create] Sent registration email to ${user.email}`,
+          );
+        } else if (registrationType === 'kiosk') {
+          // An admin is creating an orphan user or Kiosk registration
+          await EmailService.sendRegisterKiosk(user, appVerifyUrl);
+          logger.info(
+            `[UserController->create] Sent registration kiosk email to ${user.email}`,
+          );
+        } else {
+          await EmailService.sendRegisterOrphan(user, request.auth.credentials, appVerifyUrl);
+          logger.info(
+            `[UserController->create] Sent registration orphan email to ${user.email}`,
+          );
+        }
+      }
+      return user;
+    }
+    if (!request.auth.credentials) {
+      logger.warn(
+        `[UserController->create] The email address ${request.payload.email} is already registered`,
+      );
+      throw Boom.badRequest('This email address is already registered. If you can not remember your password, please reset it');
+    } else {
+      logger.warn(
+        `[UserController->create] The user already exists. id: ${record._id.toString()}`,
+      );
+      throw Boom.badRequest(`This user already exists. user_id=${record._id.toString()}`);
+    }
+  },
+
+  async find(request, reply) {
+    const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
+
+    if (request.params.id) {
+      const criteria = { _id: request.params.id };
+      if (!request.auth.credentials.verified) {
+        criteria.is_orphan = false;
+        criteria.is_ghost = false;
+      }
+      // Do not show user if it is hidden
+      if (!request.auth.credentials.is_admin
+        && request.auth.credentials._id.toString() !== request.params.id) {
+        criteria.hidden = false;
+      }
+      const user = await User.findOne(criteria);
+      if (!user) {
+        logger.warn(
+          `[UserController->find] Could not find user ${request.params.id}`,
+        );
+        throw Boom.notFound();
+      } else {
+        user.sanitize(request.auth.credentials);
+        user.translateListNames(reqLanguage);
+        return user;
       }
     }
-    return out;
-  }
+    const options = HelperService.getOptionsFromQuery(request.query);
+    const criteria = HelperService.getCriteriaFromQuery(request.query);
+    const childAttributes = User.listAttributes();
 
-  _findHelper(request, reply, criteria, options, lists) {
-    const User = this.app.orm.User;
-    const UserModel = this.app.models.User;
-    const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
+    // Hide hidden profile to non-admins
+    if (request.auth.credentials && !request.auth.credentials.is_admin) {
+      criteria.hidden = false;
+    }
+
+    // Do not allow exports for hidden users
+    if (request.params.extension && request.auth.credentials.hidden) {
+      logger.warn(
+        `[UserController->find] Hidden user ${request.auth.credentials.id} tried to export users`,
+      );
+      throw Boom.unauthorized();
+    }
+
+    if (criteria.q) {
+      if (validator.isEmail(criteria.q) && request.auth.credentials.verified) {
+        criteria['emails.email'] = new RegExp(criteria.q, 'i');
+      } else {
+        criteria.name = criteria.q;
+      }
+      delete criteria.q;
+    }
+
+    if (criteria.name) {
+      if (criteria.name.length < 3) {
+        logger.warn(
+          '[UserController->find] Name of a user must have at least 3 characters in find method',
+          { name: criteria.name },
+        );
+        throw Boom.badRequest('Name must have at least 3 characters');
+      }
+      criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/g, '');
+      criteria.name = new RegExp(criteria.name, 'i');
+    }
+
+    if (criteria.country) {
+      criteria['location.country.id'] = criteria.country;
+      delete criteria.country;
+    }
+
+    if (!request.auth.credentials.verified) {
+      criteria.is_orphan = false;
+      criteria.is_ghost = false;
+    }
+    const listIds = [];
+    let lists = [];
+    for (let i = 0; i < childAttributes.length; i += 1) {
+      if (criteria[`${childAttributes[i]}.list`]) {
+        listIds.push(criteria[`${childAttributes[i]}.list`]);
+        delete criteria[`${childAttributes[i]}.list`];
+      }
+    }
+    if (listIds.length) {
+      lists = await List.find({ _id: { $in: listIds } });
+      lists.forEach((list) => {
+        if (list.isVisibleTo(request.auth.credentials)) {
+          criteria[`${list.type}s`] = { $elemMatch: { list: list._id, deleted: false } };
+          if (!list.isOwner(request.auth.credentials)) {
+            criteria[`${list.type}s`].$elemMatch.pending = false;
+          }
+        } else {
+          logger.warn(
+            `[UserController->find] User ${request.auth.credentials.id} is not authorized to view list ${list._id.toString()}`,
+          );
+          throw Boom.unauthorized('You are not authorized to view this list');
+        }
+      });
+    }
+
     let pdfFormat = '';
     if (criteria.format) {
       pdfFormat = criteria.format;
       delete criteria.format;
     }
-
-    const that = this;
-    this.log.debug('[UserController] (find) criteria = ', criteria, ' options = ', options, { request: request });
-    const query = this.app.services.HelperService.find('User', criteria, options);
+    const query = HelperService.find(User, criteria, options);
     // HID-1561 - Set export limit to 2000
     if (!options.limit && request.params.extension) {
       query.limit(100000);
@@ -367,940 +470,935 @@ module.exports = class UserController extends Controller{
       query.select('name given_name family_name email job_title phone_number status organization bundles location voips connections phonesVisibility emailsVisibility locationsVisibility createdAt updatedAt is_orphan is_ghost verified isManager is_admin functional_roles');
       query.lean();
     }
-    query
-      .then((results) => {
-        return User
-          .count(criteria)
-          .then((number) => {
-            return {results: results, number: number};
-          });
-      })
-      .then((results) => {
-        if (!results.results) {
-          return reply(Boom.notFound());
-        }
-        if (!request.params.extension) {
-          for (let i = 0, len = results.results.length; i < len; i++) {
-            results.results[i].sanitize(request.params.currentUser);
-            results.results[i].translateListNames(reqLanguage);
-          }
-          return reply(results.results).header('X-Total-Count', results.number);
-        }
-        else {
-          // Sanitize users and translate list names from a plain object
-          for (let i = 0, len = results.results.length; i < len; i++) {
-            UserModel.sanitizeExportedUser(results.results[i], request.params.currentUser);
-            if (results.results[i].organization) {
-              UserModel.translateCheckin(results.results[i].organization, reqLanguage);
-            }
-          }
-          if (request.params.extension === 'csv') {
-            let csvExport = '';
-            if (request.params.currentUser.is_admin) {
-              csvExport = that._csvExport(results.results, true);
-            }
-            else {
-              csvExport = that._csvExport(results.results, false);
-            }
-            return reply(csvExport)
-              .type('text/csv')
-              .header('Content-Disposition', 'attachment; filename="Humanitarian ID Contacts ' + moment().format('YYYYMMDD') + '.csv"');
-          }
-          else if (request.params.extension === 'txt') {
-            return reply(that._txtExport(results.results))
-              .type('text/plain');
-          }
-          else if (request.params.extension === 'pdf') {
-            results.lists = lists;
-            that._pdfExport(results, request, pdfFormat, function (err, buffer, bytes) {
-              if (err) {
-                throw err;
-              }
-              else {
-                reply(buffer)
-                  .type('application/pdf')
-                  .bytes(bytes)
-                  .header('Content-Disposition', 'attachment; filename="Humanitarian ID Contacts ' + moment().format('YYYYMMDD') + '.pdf"');
-              }
-            });
-          }
-        }
-      })
-      .catch((err) => {
-        that._errorHandler(err, request, reply);
-      });
-  }
-
-  find (request, reply) {
-    const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
-    const User = this.app.orm.User;
-    const that = this;
-
-    if (request.params.id) {
-      const criteria = {_id: request.params.id};
-      if (!request.params.currentUser.verified) {
-        criteria.is_orphan = false;
-        criteria.is_ghost = false;
-      }
-      User
-        .findOne(criteria)
-        .then((user) => {
-          if (!user) {
-            throw Boom.notFound();
-          }
-          else {
-            user.sanitize(request.params.currentUser);
-            user.translateListNames(reqLanguage);
-            return reply(user);
-          }
-        })
-        .catch((err) => {
-          that._errorHandler(err, request, reply);
-        });
+    const [results, number] = await Promise.all([query, User.countDocuments(criteria)]);
+    if (!results) {
+      logger.warn(
+        '[UserController->find] Could not find users',
+        { criteria },
+      );
+      throw Boom.notFound();
     }
-    else {
-      const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-      const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
-      const List = this.app.orm.List;
-      const childAttributes = User.listAttributes();
-
-      // Hide unconfirmed users which are not orphans
-      if (request.params.currentUser && !request.params.currentUser.is_admin && !request.params.currentUser.isManager) {
-        criteria.$or = [{'email_verified': true}, {'is_orphan': true}, {'is_ghost': true}];
-      }
-
-      if (criteria.q) {
-        if (validator.isEmail(criteria.q) && request.params.currentUser.verified) {
-          criteria['emails.email'] = new RegExp(criteria.q, 'i');
-        }
-        else {
-          criteria.name = criteria.q;
-        }
-        delete criteria.q;
-      }
-
-      if (criteria.name) {
-        if (criteria.name.length < 3) {
-          return reply(Boom.badRequest('Name must have at least 3 characters'));
-        }
-        criteria.name = criteria.name.replace(/([^a-z0-9 ]+)/gi, '-');
-        criteria.name = new RegExp(criteria.name, 'i');
-      }
-
-      if (criteria.country) {
-        criteria['location.country.id'] = criteria.country;
-        delete criteria.country;
-      }
-
-      if (!request.params.currentUser.verified) {
-        criteria.is_orphan = false;
-        criteria.is_ghost = false;
-      }
-      const listIds = [];
-      for (let i = 0; i < childAttributes.length; i++) {
-        if (criteria[childAttributes[i] + '.list']) {
-          listIds.push(criteria[childAttributes[i] + '.list']);
-          delete criteria[childAttributes[i] + '.list'];
+    if (request.params.extension) {
+      // Sanitize users and translate list names from a plain object
+      for (let i = 0, len = results.length; i < len; i += 1) {
+        User.sanitizeExportedUser(results[i], request.auth.credentials);
+        if (results[i].organization) {
+          User.translateCheckin(results[i].organization, reqLanguage);
         }
       }
-      if (!listIds.length) {
-        this._findHelper(request, reply, criteria, options, listIds);
+      if (request.params.extension === 'csv') {
+        let csvExport = '';
+        if (request.auth.credentials.is_admin) {
+          csvExport = _csvExport(results, true);
+        } else {
+          csvExport = _csvExport(results, false);
+        }
+        return reply.response(csvExport)
+          .type('text/csv')
+          .header('Content-Disposition', `attachment; filename="Humanitarian ID Contacts ${moment().format('YYYYMMDD')}.csv"`);
       }
-      else {
-        List
-          .find({_id: { $in: listIds}})
-          .then((lists) => {
-            lists.forEach(function (list) {
-              if (list.isVisibleTo(request.params.currentUser)) {
-                criteria[list.type + 's'] = {$elemMatch: {list: list._id, deleted: false}};
-                if (!list.isOwner(request.params.currentUser)) {
-                  criteria[list.type + 's'].$elemMatch.pending = false;
-                }
-              }
-              else {
-                throw Boom.unauthorized('You are not authorized to view this list');
-              }
-            });
-            return lists;
-          })
-          .then((lists) => {
-            that._findHelper(request, reply, criteria, options, lists);
-          })
-          .catch(err => {
-            that._errorHandler(err, request, reply);
-          });
+      if (request.params.extension === 'txt') {
+        return reply.response(_txtExport(results))
+          .type('text/plain');
+      }
+      if (request.params.extension === 'pdf') {
+        const [buffer, bytes] = await _pdfExport(results, number, lists, request, pdfFormat);
+        return reply.response(buffer)
+          .type('application/pdf')
+          .bytes(bytes)
+          .header('Content-Disposition', `attachment; filename="Humanitarian ID Contacts ${moment().format('YYYYMMDD')}.pdf"`);
       }
     }
-  }
-
-  _updateQuery (request, options) {
-    const User = this.app.orm.user,
-      NotificationService = this.app.services.NotificationService,
-      EmailService = this.app.services.EmailService,
-      that = this;
-    let nextAction = '';
-    if (request.payload.updatedAt) {
-      delete request.payload.updatedAt;
+    for (let i = 0, len = results.length; i < len; i += 1) {
+      results[i].sanitize(request.auth.credentials);
+      results[i].translateListNames(reqLanguage);
     }
-    return User
-      .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
-      .exec()
-      .then((user) => {
-        return user.defaultPopulate();
-      })
-      .then(user => {
-        if (request.params.currentUser._id.toString() !== user._id.toString()) {
-          // User is being edited by someone else
-          // If it's an auth account, surface it
-          if (user.authOnly) {
-            nextAction = 'sendAuthToProfile';
-            user.authOnly = false;
-            return user.save();
-          }
-          else {
-            nextAction = 'notification';
-          }
-        }
-        return user;
-      })
-      .then(user => {
-        if (nextAction === 'sendAuthToProfile') {
-          EmailService.sendAuthToProfile(user, request.params.currentUser, () => {});
-        }
-        if (nextAction === 'notification') {
-          const notification = {type: 'admin_edit', user: user, createdBy: request.params.currentUser};
-          NotificationService.send(notification, () => {});
-        }
-        return user;
-      })
-      .then(user => {
-        return that.app.services.GSSSyncService.synchronizeUser(user);
-      })
-      .then(user => {
-        return that.app.services.OutlookService.synchronizeUser(user);
-      });
-  }
+    return reply.response(results).header('X-Total-Count', number);
+  },
 
-  update (request, reply) {
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const Model = this.app.orm.user;
-    const UserModel = this.app.models.User;
-
-    this.log.debug('[UserController] (update) model = user, criteria =', request.query, request.params.id,
-      ', values = ', request.payload, { request: request });
-
-    this._removeForbiddenAttributes(request);
+  async update(request) {
+    const childAttributes = User.listAttributes();
+    HelperService.removeForbiddenAttributes(User, request, childAttributes);
     if (request.payload.password) {
       delete request.payload.password;
     }
 
-    // Make sure user is verified if he is an admin or a manager
-    if (request.payload.is_admin || request.payload.isManager) {
-      request.payload.verified = true;
+    // Check old password
+    let user = await User.findOne({ _id: request.params.id });
+    if (!user) {
+      logger.warn(
+        `[UserController->update] Could not find user ${request.params.id}`,
+      );
+      throw Boom.notFound();
     }
-
-    const that = this;
-    if ((request.payload.old_password && request.payload.new_password) || request.payload.verified) {
-      this.log.debug('Updating user password or user is verified', { request: request });
-      // Check old password
-      Model
-        .findOne({_id: request.params.id})
-        .then((user) => {
-          if (!user) {
-            throw Boom.notFound();
-          }
-          // If verifying user, set verified_by
-          if (request.payload.verified && !user.verified) {
-            request.payload.verified_by = request.params.currentUser._id;
-            request.payload.verifiedOn = new Date();
-          }
-          if (request.payload.old_password) {
-            that.log.warn('Updating user password', { request: request, security: true});
-            if (user.validPassword(request.payload.old_password)) {
-              if (!UserModel.isStrongPassword(request.payload.new_password)) {
-                that.log.warn('Could not update user password. New password is not strong enough', { request: request, security: true, fail: true});
-                throw Boom.badRequest('Password is not strong enough');
-              }
-              request.payload.password = UserModel.hashPassword(request.payload.new_password);
-              request.payload.lastPasswordReset = new Date();
-              request.payload.passwordResetAlert30days = false;
-              request.payload.passwordResetAlert7days = false;
-              request.payload.passwordResetAlert = false;
-              that.log.warn('Successfully updated user password', { request: request, security: true});
-              return that._updateQuery(request, options);
-            }
-            else {
-              that.log.warn('Could not update user password. Old password is wrong', { request: request, security: true, fail: true});
-              throw Boom.badRequest('The old password is wrong');
-            }
-          }
-          else {
-            return that._updateQuery(request, options);
-          }
-        })
-        .then(user => {
-          return reply(user);
-        })
-        .catch(err => {
-          that._errorHandler(err, request, reply);
-        });
+    // If verifying user, set verified_by and verificationExpiryEmail
+    if (request.payload.verified && !user.verified) {
+      request.payload.verified_by = request.auth.credentials._id;
+      request.payload.verifiedOn = new Date();
+      request.payload.verificationExpiryEmail = false;
     }
-    else {
-      if (!request.payload.verified) {
-        request.payload.verified_by = null;
-        request.payload.verifiedOn = null;
+    if (request.payload.old_password && request.payload.new_password) {
+      logger.info(
+        `[UserController->update] Updating user password for user ${user.id}`,
+        { security: true },
+      );
+      if (user.validPassword(request.payload.old_password)) {
+        if (!User.isStrongPassword(request.payload.new_password)) {
+          logger.warn(
+            `[UserController->update] Could not update user password for user ${user.id}. New password is not strong enough`,
+            { request, security: true, fail: true },
+          );
+          throw Boom.badRequest('Password is not strong enough');
+        }
+        request.payload.password = User.hashPassword(request.payload.new_password);
+        request.payload.lastPasswordReset = new Date();
+        request.payload.passwordResetAlert30days = false;
+        request.payload.passwordResetAlert7days = false;
+        request.payload.passwordResetAlert = false;
+        logger.info(
+          `[UserController->update] Request payload updated to change password for user ${user.id}`,
+          { security: true },
+        );
+      } else {
+        logger.warn(
+          `[UserController->update] Could not update user password for user ${user.id}. Old password is wrong`,
+          { request, security: true, fail: true },
+        );
+        throw Boom.badRequest('The current password you entered is incorrect');
       }
-      this._updateQuery(request, options)
-        .then(user => {
-          return reply(user);
-        })
-        .catch(err => {
-          that._errorHandler(err, request, reply);
-        });
     }
-  }
+    if (request.payload.updatedAt) {
+      delete request.payload.updatedAt;
+    }
+    // Update lastModified manually
+    request.payload.lastModified = new Date();
+    if (user.authOnly === false && request.payload.authOnly === true) {
+      // User is becoming invisible. Update lists count.
+      const listIds = user.getListIds(true);
+      if (listIds.length) {
+        await List.updateMany({ _id: { $in: listIds } }, {
+          $inc: {
+            countVerified: -1,
+            countUnverified: -1,
+          },
+        });
+        logger.info(
+          `[UserController->update] User ${user._id.toString()} is becoming invisible. Updated list counts`,
+        );
+      }
+    }
+    if (user.authOnly === true && request.payload.authOnly === false) {
+      // User is becoming visible. Update lists count.
+      const listIds = user.getListIds(true);
+      if (listIds.length) {
+        await List.updateMany({ _id: { $in: listIds } }, {
+          $inc: {
+            countVerified: 1,
+            countUnverified: 1,
+          },
+        });
+        logger.info(
+          `[UserController->update] User ${user._id.toString()} is becoming visible. Updated list counts`,
+        );
+      }
+    }
+    if (user.hidden === false && request.payload.hidden === true) {
+      // User is being flagged. Update lists count.
+      const listIds = user.getListIds(true);
+      if (listIds.length) {
+        await List.updateMany({ _id: { $in: listIds } }, {
+          $inc: {
+            countManager: -1,
+            countVerified: -1,
+            countUnverified: -1,
+          },
+        });
+        logger.info(
+          `[UserController->update] User ${user._id.toString()} is being flagged. Updated list counts`,
+        );
+      }
+    }
+    if (user.hidden === true && request.payload.hidden === false) {
+      // User is being unflagged. Update lists count.
+      const listIds = user.getListIds(true);
+      if (listIds.length) {
+        await List.updateMany({ _id: { $in: listIds } }, {
+          $inc: {
+            countManager: 1,
+            countVerified: 1,
+            countUnverified: 1,
+          },
+        });
+        logger.info(
+          `[UserController->update] User ${user._id.toString()} is being unflagged. Updated list counts`,
+        );
+      }
+    }
+    user = await User
+      .findOneAndUpdate(
+        { _id: request.params.id },
+        request.payload,
+        { runValidators: true, new: true },
+      );
+    logger.info(
+      `[UserController->update] Successfully saved user ${user._id.toString()}`,
+    );
+    user = await user.defaultPopulate();
+    const promises = [];
+    const pendingLogs = [];
+    if (request.auth.credentials._id.toString() !== user._id.toString()) {
+      // User is being edited by someone else
+      // If it's an auth account, surface it
+      if (user.authOnly) {
+        user.authOnly = false;
+        // User is becoming visible. Update lists count.
+        const listIds = user.getListIds(true);
+        if (listIds.length) {
+          promises.push(List.updateMany({ _id: { $in: listIds } }, {
+            $inc: {
+              countVerified: 1,
+              countUnverified: 1,
+            },
+          }));
+          pendingLogs.push({
+            type: 'info',
+            message: `[UserController->update] User ${user._id.toString()} is becoming visible. Updated list counts`,
+          });
+        }
+        promises.push(user.save());
+        pendingLogs.push({
+          type: 'info',
+          message: `[UserController->update] User ${user._id.toString()} saved successfully`,
+        });
+        if (!user.hidden) {
+          promises.push(EmailService.sendAuthToProfile(user, request.auth.credentials));
+          pendingLogs.push({
+            type: 'info',
+            message: `[UserController->update] Sent auth_to_profile email to user ${user.email}`,
+          });
+        }
+      } else if (!user.hidden) {
+        const notification = { type: 'admin_edit', user, createdBy: request.auth.credentials };
+        promises.push(NotificationService.send(notification));
+        pendingLogs.push({
+          type: 'info',
+          message: `[UserController->update] Sent admin_edit notification to user ${user.id}`,
+        });
+      }
+    }
+    promises.push(GSSSyncService.synchronizeUser(user));
+    pendingLogs.push({
+      type: 'info',
+      message: `[UserController->update] Synchronized user ${user.id} with google spreadsheet`,
+    });
+    // promises.push(OutlookService.synchronizeUser(user));
+    await Promise.all(promises);
+    for (let i = 0; i < pendingLogs.length; i += 1) {
+      logger.log(pendingLogs[i]);
+    }
+    return user;
+  },
 
-  destroy (request, reply) {
-    const User = this.app.orm.User;
-
-    if (!request.params.currentUser.is_admin && request.params.currentUser._id.toString() !== request.params.id) {
+  async destroy(request, reply) {
+    if (!request.auth.credentials.is_admin
+      && request.auth.credentials._id.toString() !== request.params.id) {
+      logger.warn(
+        `[UserController->destroy] User ${request.auth.credentials._id.toString()} is not allowed to delete user ${request.params.id}`,
+      );
       return reply(Boom.forbidden('You are not allowed to delete this account'));
     }
 
-    this.log.debug('[UserController] (destroy) model = user, query =', request.query, { request: request });
+    const user = await User.findOne({ _id: request.params.id });
+    if (!user) {
+      logger.warn(
+        `[UserController->destroy] Could not find user ${request.params.id}`,
+      );
+      throw Boom.notFound();
+    }
+    if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'testing') {  
+      await EmailService.sendAdminDelete(user, request.auth.credentials);
+    }
+    await user.remove();
+    logger.info(
+      `[UserController->destroy] Removed user ${request.params.id}`,
+    );
+    return reply.response().code(204);
+  },
 
-    const that = this;
-
-    User
-      .findOne({ _id: request.params.id })
-      .then(user => {
-        return user.remove();
-      })
-      .then(() => {
-        return reply().code(204);
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
-
-  setPrimaryEmail (request, reply) {
-    const Model = this.app.orm.user;
-    const email = request.payload.email;
-    const that = this;
-
-    this.log.debug('[UserController] Setting primary email', { request: request });
+  async setPrimaryEmail(request) {
+    const { email } = request.payload;
 
     if (!request.payload.email) {
-      return reply(Boom.badRequest());
+      logger.warn(
+        '[UserController->setPrimaryEmail] No email in payload',
+      );
+      throw Boom.badRequest();
     }
 
-    Model
-      .findOne({ _id: request.params.id})
-      .then(record => {
-        if (!record) {
-          throw Boom.notFound();
-        }
-        // Make sure email is validated
-        const index = record.emailIndex(email);
-        if (index === -1) {
-          throw Boom.badRequest('Email does not exist');
-        }
-        if (!record.emails[index].validated) {
-          throw Boom.badRequest('Email has not been validated. You need to validate it first.');
-        }
-        record.email = email;
-        // If we are there, it means that the email has been validated, so make sure email_verified is set to true.
-        record.verifyEmail(email);
-        return record.save();
-      })
-      .then(record => {
-        return that.app.services.GSSSyncService.synchronizeUser(record);
-      })
-      .then(record => {
-        return that.app.services.OutlookService.synchronizeUser(record);
-      })
-      .then(record => {
-        return reply(record);
-      })
-      .catch(err => {
-        that._errorHandler(err, request, reply);
-      });
-  }
-
-  validateEmail (request, reply) {
-    const Model = this.app.orm.user;
-    let email = '', query = {};
-
-    this.log.debug('[UserController] Verifying email ', { request: request });
-
-    if (!request.payload.hash && !request.params.email) {
-      return reply(Boom.badRequest());
+    const record = await User.findOne({ _id: request.params.id });
+    if (!record) {
+      logger.warn(
+        `[UserController->setPrimaryEmail] Could not find user ${request.params.id}`,
+      );
+      throw Boom.notFound();
     }
+    // Make sure email is validated
+    const index = record.emailIndex(email);
+    if (index === -1) {
+      logger.warn(
+        `[UserController->setPrimaryEmail] Email ${email} does not exist for user ${request.params.id}`,
+      );
+      throw Boom.badRequest('Email does not exist');
+    }
+    if (!record.emails[index].validated) {
+      logger.warn(
+        `[UserController->setPrimaryEmail] Email ${record.emails[index]} has not been validated for user ${request.params.id}`,
+      );
+      throw Boom.badRequest('Email has not been validated. You need to validate it first.');
+    }
+    record.email = email;
+    // If we are there, it means that the email has been validated,
+    // so make sure email_verified is set to true.
+    record.verifyEmail(email);
+    record.lastModified = new Date();
+    await record.save();
+    logger.info(
+      `[UserController->setPrimaryEmail] Saved user ${request.params.id} successfully`,
+    );
+    await GSSSyncService.synchronizeUser(record);
+    logger.info(
+      `[UserController->setPrimaryEmail] Synchronized user ${request.params.id} with google spreadsheets successfully`,
+    );
+    // const promises = [];
+    // promises.push(GSSSyncService.synchronizeUser(record));
+    // promises.push(OutlookService.synchronizeUser(record));
+    // await Promise.all(promises);
+    return record;
+  },
 
+  async validateEmail(request) {
     // TODO: make sure current user can do this
 
     if (request.payload.hash) {
-      query = Model.findOne({hash: request.payload.hash, hashAction: 'verify_email'});
-    }
-    else {
-      email = request.params.email;
-      query = Model.findOne({'emails.email': email});
-    }
-
-    const that = this;
-    let grecord = {};
-    query
-      .then(record => {
-        if (!record) {
-          throw Boom.notFound();
+      const record = await User.findOne({ _id: request.payload.id });
+      if (!record) {
+        logger.warn(
+          `[UserController->validateEmail] Could not find user ${request.payload.id}`,
+        );
+        throw Boom.notFound();
+      }
+      let domain = null;
+      let { email } = record;
+      if (request.payload.emailId) {
+        const emailRecord = record.emails.id(request.payload.emailId);
+        if (emailRecord) {
+          ({ email } = emailRecord);
         }
-        if (request.payload.hash) {
-          // Verify hash
-          if (record.validHash(request.payload.hash) === true) {
-            // Verify user email
-            if (record.email === record.hashEmail) {
-              record.email_verified = true;
-              record.expires = new Date(0, 0, 1, 0, 0, 0);
-              record.emails[0].validated = true;
-              record.emails.set(0, record.emails[0]);
-              if (record.isVerifiableEmail(record.hashEmail)) {
-                record.verified = true;
-                record.verified_by = hidAccount;
-                record.verifiedOn = new Date();
-              }
-              return record.save();
-            }
-            else {
-              for (let i = 0, len = record.emails.length; i < len; i++) {
-                if (record.emails[i].email === record.hashEmail) {
-                  record.emails[i].validated = true;
-                  record.emails.set(i, record.emails[i]);
-                }
-              }
-              if (record.isVerifiableEmail(record.hashEmail)) {
-                record.verified = true;
-                record.verified_by = hidAccount;
-                record.verifiedOn = new Date();
-              }
-              return record.save();
+      }
+      // Verify hash
+      if (record.validHash(request.payload.hash, 'verify_email', request.payload.time, email) === true) {
+        // Verify user email
+        if (record.email === email) {
+          record.email_verified = true;
+          record.expires = new Date(0, 0, 1, 0, 0, 0);
+          record.emails[0].validated = true;
+          record.emails.set(0, record.emails[0]);
+          record.lastModified = new Date();
+          domain = await record.isVerifiableEmail(email);
+        } else {
+          for (let i = 0, len = record.emails.length; i < len; i += 1) {
+            if (record.emails[i].email === email) {
+              record.emails[i].validated = true;
+              record.emails.set(i, record.emails[i]);
             }
           }
-          else {
-            throw Boom.badRequest('Invalid hash');
+          record.lastModified = new Date();
+          domain = await record.isVerifiableEmail(email);
+        }
+      } else {
+        logger.warn(
+          `[UserController->validateEmail] Invalid hash ${request.payload.hash} provided`,
+        );
+        throw Boom.badRequest('Invalid hash');
+      }
+      if (domain) {
+        record.verified = true;
+        record.verified_by = hidAccount;
+        record.verifiedOn = new Date();
+        record.verificationExpiryEmail = false;
+        // If the domain is associated to a list, check user in this list automatically
+        if (domain.list) {
+          if (!record.organizations) {
+            record.organizations = [];
+          }
+
+          let isCheckedIn = false;
+          // Make sure user is not already checked in this list
+          for (let i = 0, len = record.organizations.length; i < len; i += 1) {
+            if (record.organizations[i].list.equals(domain.list._id)
+              && record.organizations[i].deleted === false) {
+              isCheckedIn = true;
+            }
+          }
+
+          if (!isCheckedIn) {
+            await ListUserController.checkinHelper(domain.list, record, true, 'organizations', record);
           }
         }
-        else {
-          // Send validation email again
-          const appValidationUrl = request.payload.app_validation_url;
-          if (!that.app.services.HelperService.isAuthorizedUrl(appValidationUrl)) {
-            that.log.warn('Invalid app_validation_url', { security: true, fail: true, request: request});
-            throw Boom.badRequest('Invalid app_validation_url');
-          }
-          return that.app.services.EmailService.sendValidationEmail(record, email, appValidationUrl);
-        }
-      })
-      .then(record => {
-        grecord = record;
-        if (request.payload.hash && record.email === record.hashEmail) {
-          return that.app.services.EmailService.sendPostRegister(record);
-        }
-      })
-      .then(info => {
-        if (request.payload.hash) {
-          return reply(grecord);
-        }
-        else {
-          return reply('Validation email sent successfully').code(202);
-        }
-      })
-      .catch(err => {
-        that._errorHandler(err, request, reply);
+      }
+      const promises = [];
+      const pendingLogs = [];
+      promises.push(record.save());
+      pendingLogs.push({
+        type: 'info',
+        message: `[UserController->validateEmail] Saved user ${record.id} successfully`,
       });
-  }
-
-  // Send a password reset email
-  // TODO: make sure we control flood
-  sendResetPassword (request, reply) {
-    const User = this.app.orm.User;
-    const appResetUrl = request.payload.app_reset_url;
-    const that = this;
-
-    if (!this.app.services.HelperService.isAuthorizedUrl(appResetUrl)) {
-      this.log.warn('Invalid app_reset_url', { security: true, fail: true, request: request});
-      return reply(Boom.badRequest('app_reset_url is invalid'));
+      if (record.email === email) {
+        promises.push(EmailService.sendPostRegister(record));
+        pendingLogs.push({
+          type: 'info',
+          message: `[UserController->validateEmail] Sent post_register email to ${record.email} successfully`,
+        });
+      }
+      await Promise.all(promises);
+      for (let i = 0; i < pendingLogs.length; i += 1) {
+        logger.log(pendingLogs[i]);
+      }
+      return record;
     }
-    User
-      .findOne({email: request.payload.email.toLowerCase()})
-      .then(record => {
-        if (!record) {
-          return that._errorHandler(Boom.badRequest('Email could not be found'), request, reply);
-        }
-        return that.app.services.EmailService.sendResetPassword(record, appResetUrl);
-      })
-      .then(info => {
-        return reply('Password reset email sent successfully').code(202);
-      })
-      .catch(err => {
-        that._errorHandler(err, request, reply);
-      });
-  }
+    const record = await User.findOne({ 'emails.email': request.params.email });
+    if (!record) {
+      logger.warn(
+        `[UserController->validateEmail] Could not find user with email ${request.params.email}`,
+      );
+      throw Boom.notFound();
+    }
+    // Send validation email again
+    const appValidationUrl = request.payload.app_validation_url;
+    if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
+      logger.warn(
+        `[UserController->validateEmail] Invalid app_validation_url ${appValidationUrl}`,
+        { security: true, fail: true, request },
+      );
+      throw Boom.badRequest('Invalid app_validation_url');
+    }
+    const emailIndex = record.emailIndex(request.params.email);
+    const email = record.emails[emailIndex];
+    await EmailService.sendValidationEmail(
+      record,
+      email.email,
+      email._id.toString(),
+      appValidationUrl,
+    );
+    return 'Validation email sent successfully';
+  },
 
-  updatePassword (request, reply) {
-    const User = this.app.orm.user;
-    const UserModel = this.app.models.User;
-
-    this.log.debug('[UserController] Updating user password', { request: request });
-
+  async updatePassword(request, reply) {
     if (!request.payload.old_password || !request.payload.new_password) {
-      return reply(Boom.badRequest('Request is missing parameters (old or new password)'));
+      logger.warn(
+        '[UserController->updatePassword] Request is missing parameters (old or new password)',
+      );
+      throw Boom.badRequest('Request is missing parameters (old or new password)');
     }
 
-    if (!UserModel.isStrongPassword(request.payload.new_password)) {
-      this.log.warn('New password is not strong enough', { request: request, security: true, fail: true});
-      return reply(Boom.badRequest('New password is not strong enough'));
+    if (!User.isStrongPassword(request.payload.new_password)) {
+      logger.warn(
+        '[UserController->updatePassword] New password is not strong enough',
+        { request, security: true, fail: true },
+      );
+      throw Boom.badRequest('New password is not strong enough');
     }
 
-    const that = this;
     // Check old password
-    User
-      .findOne({_id: request.params.id})
-      .then((user) => {
-        if (!user) {
-          return reply(Boom.notFound());
-        }
-        that.log.warn('Updating user password', { request: request, security: true});
-        if (user.validPassword(request.payload.old_password)) {
-          user.password = UserModel.hashPassword(request.payload.new_password);
-          that.log.warn('Successfully updated user password', { request: request, security: true});
-          return user.save();
-        }
-        else {
-          that.log.warn('Could not update user password. Old password is wrong', { request: request, security: true, fail: true});
-          return reply(Boom.badRequest('The old password is wrong'));
-        }
-      })
-      .then(() => {
-        return reply().code(204);
-      })
-      .catch(err => {
-        that._errorHandler(err, reply);
-      });
-  }
-
-  resetPassword (request, reply, checkTotp = true) {
-    const Model = this.app.orm.User;
-    const UserModel = this.app.models.User;
-    const that = this;
-    const authPolicy = this.app.policies.AuthPolicy;
-
-    if (!request.payload.hash || !request.payload.password) {
-      return reply(Boom.badRequest('Wrong arguments'));
+    const user = await User.findOne({ _id: request.params.id });
+    if (!user) {
+      logger.warn(
+        `[UserController->updatePassword] User ${request.params.id} not found`,
+      );
+      throw Boom.notFound();
     }
-
-    if (!UserModel.isStrongPassword(request.payload.password)) {
-      this.log.warn('Could not reset password. New password is not strong enough.', { security: true, fail: true, request: request});
-      return reply(Boom.badRequest('New password is not strong enough'));
+    if (user.validPassword(request.payload.old_password)) {
+      user.password = User.hashPassword(request.payload.new_password);
+      user.lastModified = new Date();
+      await user.save();
+      logger.info(
+        `[UserController->updatePassword] Successfully updated password for user ${user._id.toString()}`,
+        { security: true },
+      );
+    } else {
+      logger.warn(
+        `[UserController->updatePassword] Could not update password for user ${user._id.toString()}. Old password is wrong`,
+        { security: true, fail: true },
+      );
+      throw Boom.badRequest('The old password is wrong');
     }
+    return reply.response().code(204);
+  },
 
-    this.log.warn('Resetting password', { security: true, request: request});
-    Model
-      .findOne({hash: request.payload.hash, hashAction: 'reset_password'})
-      .then(record => {
-        if (!record) {
-          that.log.warn('Could not reset password. Hash not found', { security: true, fail: true, request: request});
-          throw Boom.badRequest('Reset password link is expired or invalid');
-        }
-        return record;
-      })
-      .then(record => {
-        if (record.totp && checkTotp) {
-          // Check that there is a TOTP token and that it is valid
-          const token = request.headers['x-hid-totp'];
-          return authPolicy.isTOTPValid(record, token);
-        }
-        else {
-          return record;
-        }
-      })
-      .then(record => {
-        if (record.validHash(request.payload.hash) === true) {
-          const pwd = UserModel.hashPassword(request.payload.password);
-          if (pwd === record.password) {
-            throw Boom.badRequest('The new password can not be the same as the old one');
-          }
-          else {
-            record.password = pwd;
-            record.verifyEmail(record.email);
-            if (record.isVerifiableEmail(record.email)) {
-              // Reset verifiedOn date as user was able to reset his password via an email from a trusted domain
-              record.verified = true;
-              record.verified_by = hidAccount;
-              record.verifiedOn = new Date();
-            }
-            record.expires = new Date(0, 0, 1, 0, 0, 0);
-            record.is_orphan = false;
-            record.is_ghost = false;
-            record.hash = '';
-            record.lastPasswordReset = new Date();
-            record.passwordResetAlert30days = false;
-            record.passwordResetAlert7days = false;
-            record.passwordResetAlert = false;
-            return record.save();
-          }
-        }
-        else {
-          throw Boom.badRequest('Reset password link is expired or invalid');
-        }
-      })
-      .then(() => {
-        that.log.warn('Password updated successfully', { security: true, request: request});
-        return reply('Password reset successfully');
-      })
-      .catch(err => {
-        that._errorHandler(err, request, reply);
-      });
-  }
-
-  resetPasswordEndpoint (request, reply) {
+  async resetPasswordEndpoint(request) {
     if (request.payload.email) {
-      return this.sendResetPassword(request, reply);
-    }
-    else {
-      return this.resetPassword(request, reply);
-    }
-  }
+      const appResetUrl = request.payload.app_reset_url;
 
-  claimEmail (request, reply) {
-    const Model = this.app.orm.User;
+      if (!HelperService.isAuthorizedUrl(appResetUrl)) {
+        logger.warn(
+          `[UserController->resetPasswordEndpoint] Invalid app_reset_url ${appResetUrl}`,
+          { security: true, fail: true, request },
+        );
+        throw Boom.badRequest('app_reset_url is invalid');
+      }
+      const record = await User.findOne({ email: request.payload.email.toLowerCase() });
+      if (!record) {
+        logger.warn(
+          `[UserController->resetPasswordEndpoint] User ${request.params.id} not found`,
+        );
+        return '';
+      }
+      await EmailService.sendResetPassword(record, appResetUrl);
+      logger.info(
+        `[UserController->resetPasswordEndpoint] Successfully sent reset password email to ${record.email}`,
+      );
+      return '';
+    }
+    const cookie = request.yar.get('session');
+    if (!request.payload.hash || !request.payload.password
+      || !request.payload.id || !request.payload.time) {
+      logger.warn(
+        '[UserController->resetPasswordEndpoint] Wrong or missing arguments',
+      );
+      throw Boom.badRequest('Wrong arguments');
+    }
+
+    if (!User.isStrongPassword(request.payload.password)) {
+      logger.warn(
+        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough.',
+        { security: true, fail: true, request },
+      );
+      throw Boom.badRequest('New password is not strong enough');
+    }
+
+    let record = await User.findOne({ _id: request.payload.id });
+    if (!record) {
+      logger.warn(
+        `[UserController->resetPasswordEndpoint] Could not reset password. User ${request.payload.id} not found`,
+        { security: true, fail: true, request },
+      );
+      throw Boom.badRequest('Reset password link is expired or invalid');
+    }
+    if (record.totp && !cookie) {
+      // Check that there is a TOTP token and that it is valid
+      const token = request.headers['x-hid-totp'];
+      record = await AuthPolicy.isTOTPValid(record, token);
+    }
+    let domain = null;
+    if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
+      const pwd = User.hashPassword(request.payload.password);
+      if (pwd === record.password) {
+        logger.warn(
+          `[UserController->resetPasswordEndpoint] Could not reset password for user ${request.payload.id}. The new password can not be the same as the old one`,
+        );
+        throw Boom.badRequest('The new password can not be the same as the old one');
+      } else {
+        record.password = pwd;
+        record.verifyEmail(record.email);
+        domain = await record.isVerifiableEmail(record.email);
+      }
+    } else {
+      logger.warn(
+        '[UserController->resetPasswordEndpoint] Reset password link is expired or invalid',
+      );
+      throw Boom.badRequest('Reset password link is expired or invalid');
+    }
+    if (domain) {
+      // Reset verifiedOn date as user was able to
+      // reset his password via an email from a trusted domain
+      record.verified = true;
+      record.verified_by = hidAccount;
+      record.verifiedOn = new Date();
+      record.verificationExpiryEmail = false;
+    }
+    record.expires = new Date(0, 0, 1, 0, 0, 0);
+    if (record.is_orphan === true || record.is_ghost === true) {
+      // User is not an orphan anymore. Update lists count.
+      const listIds = record.getListIds(true);
+      if (listIds.length) {
+        await List.updateMany({ _id: { $in: listIds } }, { $inc: { countUnverified: 1 } });
+        logger.info(
+          `[UserController->resetPasswordEndpoint] User ${record._id.toString()} is not an orphan anymore. Updated list counts`,
+        );
+      }
+    }
+    record.is_orphan = false;
+    record.is_ghost = false;
+    record.lastPasswordReset = new Date();
+    record.passwordResetAlert30days = false;
+    record.passwordResetAlert7days = false;
+    record.passwordResetAlert = false;
+    record.lastModified = new Date();
+    await record.save();
+    logger.info(
+      `[UserController->resetPasswordEndpoint] Password updated successfully for user ${record._id.toString()}`,
+      { security: true, request },
+    );
+    return 'Password reset successfully';
+  },
+
+  async claimEmail(request, reply) {
     const appResetUrl = request.payload.app_reset_url;
     const userId = request.params.id;
 
-    if (!this.app.services.HelperService.isAuthorizedUrl(appResetUrl)) {
-      this.log.warn('Invalid app_reset_url', { security: true, fail: true, request: request});
-      return reply(Boom.badRequest('app_reset_url is invalid'));
+    if (!HelperService.isAuthorizedUrl(appResetUrl)) {
+      logger.warn(
+        `[UserController->claimEmail] Invalid app_reset_url ${appResetUrl}`,
+        { security: true, fail: true, request },
+      );
+      throw Boom.badRequest('app_reset_url is invalid');
     }
 
-    const that = this;
-    Model
-      .findOne({_id: userId})
-      .then(record => {
-        if (!record) {
-          return reply(Boom.notFound());
-        }
-        return that.app.services.EmailService.sendClaim(record, appResetUrl);
-      })
-      .then(info => {
-        return reply('Claim email sent successfully').code(202);
-      })
-      .catch(err => {
-        that._errorHandler(err, request, reply);
-      });
-  }
+    const record = await User.findOne({ _id: userId });
+    if (!record) {
+      logger.warn(
+        `[UserController->claimEmail] User ${userId} not found`,
+      );
+      throw Boom.notFound();
+    }
+    await EmailService.sendClaim(record, appResetUrl);
+    return reply.response('Claim email sent successfully').code(202);
+  },
 
-  updatePicture (request, reply) {
-    const Model = this.app.orm.User;
+  async updatePicture(request) {
     const userId = request.params.id;
-    const that = this;
-
-    this.log.debug('[UserController] Updating picture ', { request: request });
 
     const data = request.payload;
     if (data.file) {
       const image = sharp(data.file);
-      let guser = {}, gmetadata = {};
-      Model
-        .findOne({_id: userId})
-        .then(record => {
-          if (!record) {
-            throw Boom.notFound();
-          }
-          guser = record;
-          return image.metadata();
-        })
-        .then(function(metadata) {
-          if (metadata.format !== 'jpeg' && metadata.format !== 'png') {
-            return reply(Boom.badRequest('Invalid image format. Only jpeg and png are accepted'));
-          }
-          gmetadata = metadata;
-          let path = __dirname + '/../../assets/pictures/' + userId + '.';
-          let ext = '';
-          ext = metadata.format;
-          path = path + ext;
-          return image
-            .resize(200, 200)
-            .toFile(path);
-        })
-        .then(function (info) {
-          guser.picture = process.env.ROOT_URL + '/assets/pictures/' + userId + '.' + gmetadata.format;
-          return guser.save();
-        })
-        .then(record => {
-          return reply(record);
-        })
-        .catch(err => {
-          that._errorHandler(err, request, reply);
-        });
+      const record = await User.findOne({ _id: userId });
+      if (!record) {
+        logger.warn(
+          `[UserController->updatePicture] User ${request.params.id} not found`,
+        );
+        throw Boom.notFound();
+      }
+      const metadata = await image.metadata();
+      if (metadata.format !== 'jpeg' && metadata.format !== 'png') {
+        logger.warn(
+          `[UserController->updatePicture] ${metadata.format} is not a valid image format`,
+        );
+        throw Boom.badRequest('Invalid image format. Only jpeg and png are accepted');
+      }
+      let path = `${__dirname}/../../assets/pictures/${userId}.`;
+      let ext = '';
+      ext = metadata.format;
+      path += ext;
+      await image.resize(200, 200).toFile(path);
+      record.picture = `${process.env.ROOT_URL}/assets/pictures/${userId}.${metadata.format}`;
+      record.lastModified = new Date();
+      await record.save();
+      logger.info(
+        `[UserController->updatePicture] Successfully updated picture for user ${record._id.toString()}`,
+      );
+      return record;
     }
-    else {
-      return reply(Boom.badRequest('No file found'));
-    }
-  }
+    throw Boom.badRequest('No file found');
+  },
 
-  addEmail (request, reply) {
-    const Model = this.app.orm.User;
+  async addEmail(request) {
     const appValidationUrl = request.payload.app_validation_url;
     const userId = request.params.id;
 
-    this.log.debug('[UserController] adding email', { request: request});
     if (!appValidationUrl || !request.payload.email) {
-      return reply(Boom.badRequest());
+      logger.warn(
+        '[UserController->addEmail] No email or app_validation_url provided',
+      );
+      throw Boom.badRequest();
     }
 
-    if (!this.app.services.HelperService.isAuthorizedUrl(appValidationUrl)) {
-      this.log.warn('Invalid app_validation_url', { security: true, fail: true, request: request});
-      return reply(Boom.badRequest('Invalid app_validation_url'));
+    if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
+      logger.warn(
+        `[UserController->addEmail] Invalid app_validation_url ${appValidationUrl}`,
+        { security: true, fail: true, request },
+      );
+      throw Boom.badRequest('Invalid app_validation_url');
     }
 
     // Make sure email added is unique
-    const that = this;
-    let user = {};
-    Model
-      .findOne({'emails.email': request.payload.email})
-      .then(erecord => {
-        if (erecord) {
-          throw Boom.badRequest('Email is not unique');
-        }
-        return Model.findOne({_id: userId});
-      })
-      .then(record => {
-        if (!record) {
-          throw Boom.notFound();
-        }
-        const email = request.payload.email;
-        if (record.emailIndex(email) !== -1) {
-          throw Boom.badRequest('Email already exists');
-        }
-        user = record;
-        // Send confirmation email
-        return that.app.services.EmailService.sendValidationEmail(record, email, appValidationUrl);
-      })
-      .then(info => {
-        for (let i = 0; i < user.emails.length; i++) {
-          that.app.services.EmailService.sendEmailAlert(user, user.emails[i].email, request.payload.email);
-        }
-        if (user.emails.length === 0 && user.is_ghost) {
-          // Turn ghost into orphan and set main email address
-          user.is_ghost = false;
-          user.is_orphan = true;
-          user.email = request.payload.email;
-        }
-        const data = { email: request.payload.email, type: request.payload.type, validated: false };
-        user.emails.push(data);
-        return user.save();
-      })
-      .then(record => {
-        return that.app.services.OutlookService.synchronizeUser(record);
-      })
-      .then(() => {
-        return reply(user);
-      })
-      .catch(err => {
-        that._errorHandler(err, request, reply);
+    const erecord = await User.findOne({ 'emails.email': request.payload.email });
+    if (erecord) {
+      logger.warn(
+        `[UserController->addEmail] Email ${request.payload.email} is not unique`,
+      );
+      throw Boom.badRequest('Email is not unique');
+    }
+    const record = await User.findOne({ _id: userId });
+    if (!record) {
+      logger.warn(
+        `[UserController->addEmail] User ${userId} not found`,
+      );
+      throw Boom.notFound();
+    }
+    const { email } = request.payload;
+    if (record.emailIndex(email) !== -1) {
+      logger.warn(
+        `[UserController->addEmail] Email ${email} already exists`,
+      );
+      throw Boom.badRequest('Email already exists');
+    }
+    if (record.emails.length === 0 && record.is_ghost) {
+      // Turn ghost into orphan and set main email address
+      record.is_ghost = false;
+      record.is_orphan = true;
+      record.email = request.payload.email;
+    }
+    const data = { email: request.payload.email, type: request.payload.type, validated: false };
+    record.emails.push(data);
+    record.lastModified = new Date();
+    const savedRecord = await record.save();
+    logger.warn(
+      `[UserController->addEmail] Successfully saved user ${record.id}`,
+    );
+    const savedEmailIndex = savedRecord.emailIndex(email);
+    const savedEmail = savedRecord.emails[savedEmailIndex];
+    // Send confirmation email
+    const promises = [];
+    const pendingLogs = [];
+    promises.push(
+      EmailService.sendValidationEmail(
+        record,
+        email,
+        savedEmail._id.toString(),
+        appValidationUrl,
+      ),
+    );
+    pendingLogs.push({
+      type: 'info',
+      message: `[UserController->addEmail] Successfully sent validation email to ${email}`,
+    });
+    for (let i = 0; i < record.emails.length; i += 1) {
+      promises.push(
+        EmailService.sendEmailAlert(record, record.emails[i].email, request.payload.email),
+      );
+      pendingLogs.push({
+        type: 'info',
+        message: `[UserController->addEmail] Successfully sent email alert to ${record.emails[i].email}`,
       });
-  }
+    }
+    // promises.push(OutlookService.synchronizeUser(record));
+    await Promise.all(promises);
+    for (let i = 0; i < pendingLogs.length; i += 1) {
+      logger.log(pendingLogs[i]);
+    }
+    return record;
+  },
 
-  dropEmail (request, reply) {
-    const Model = this.app.orm.User;
+  async dropEmail(request) {
     const userId = request.params.id;
-    const that = this;
 
-    this.log.debug('[UserController] dropping email', { request: request });
     if (!request.params.email) {
-      return reply(Boom.badRequest());
+      logger.warn(
+        '[UserController->dropEmail] No email provided',
+      );
+      throw Boom.badRequest();
     }
 
-    Model
-      .findOne({_id: userId})
-      .then(record => {
-        if (!record) {
-          throw Boom.notFound();
-        }
-        const email = request.params.email;
-        if (email === record.email) {
-          throw Boom.badRequest('You can not remove the primary email');
-        }
-        const index = record.emailIndex(email);
-        if (index === -1) {
-          throw Boom.badRequest('Email does not exist');
-        }
-        record.emails.splice(index, 1);
-        return record.save();
-      })
-      .then(record => {
-        return that.app.services.OutlookService.synchronizeUser(record);
-      })
-      .then(record => {
-        return reply(record);
-      })
-      .catch(err => {
-        that._errorHandler(err, request, reply);
-      });
-  }
+    const record = await User.findOne({ _id: userId });
+    if (!record) {
+      logger.warn(
+        `[UserController->dropEmail] User ${userId} not found`,
+      );
+      throw Boom.notFound();
+    }
+    const { email } = request.params;
+    if (email === record.email) {
+      logger.warn(
+        `[UserController->dropEmail] Primary email for user ${userId} can not be removed`,
+      );
+      throw Boom.badRequest('You can not remove the primary email');
+    }
+    const index = record.emailIndex(email);
+    if (index === -1) {
+      logger.warn(
+        `[UserController->dropEmail] Email ${email} does not exist`,
+      );
+      throw Boom.badRequest('Email does not exist');
+    }
+    record.emails.splice(index, 1);
+    record.lastModified = new Date();
+    const stillVerified = await record.canBeVerifiedAutomatically();
+    if (!stillVerified) {
+      record.verified = false;
+    }
+    await record.save();
+    logger.info(
+      `[UserController->dropEmail] User ${record.id} saved successfully`,
+    );
+    // await OutlookService.synchronizeUser(record);
+    return record;
+  },
 
-  addPhone (request, reply) {
-    const Model = this.app.orm.User;
+  async addPhone(request) {
     const userId = request.params.id;
-    const that = this;
 
-    this.log.debug('[UserController] adding phone number', { request: request });
+    const record = await User.findOne({ _id: userId });
+    if (!record) {
+      logger.warn(
+        `[UserController->addPhone] User ${userId} not found`,
+      );
+      throw Boom.notFound();
+    }
+    const data = { number: request.payload.number, type: request.payload.type };
+    record.phone_numbers.push(data);
+    record.lastModified = new Date();
+    await record.save();
+    logger.info(
+      `[UserController->addPhone] User ${userId} saved successfully`,
+    );
+    // await Promise.all([
+    //  record.save(),
+    //  OutlookService.synchronizeUser(record),
+    // ]);
+    return record;
+  },
 
-    Model
-      .findOne({_id: userId})
-      .then(record => {
-        if (!record) {
-          throw Boom.notFound();
-        }
-        const data = { number: request.payload.number, type: request.payload.type };
-        record.phone_numbers.push(data);
-        return record.save();
-      })
-      .then(record => {
-        return that.app.services.OutlookService.synchronizeUser(record);
-      })
-      .then(record => {
-        return reply(record);
-      })
-      .catch(err => {
-        that._errorHandler(err, request, reply);
-      });
-  }
-
-  dropPhone (request, reply) {
-    const Model = this.app.orm.User;
+  async dropPhone(request) {
     const userId = request.params.id;
     const phoneId = request.params.pid;
-    const that = this;
 
-    this.log.debug('[UserController] dropping phone number', { request: request });
+    const record = await User.findOne({ _id: userId });
+    if (!record) {
+      logger.warn(
+        `[UserController->dropPhone] User ${userId} not found`,
+      );
+      throw Boom.notFound();
+    }
+    let index = -1;
+    for (let i = 0, len = record.phone_numbers.length; i < len; i += 1) {
+      if (record.phone_numbers[i]._id.toString() === phoneId) {
+        index = i;
+      }
+    }
+    if (index === -1) {
+      logger.warn(
+        `[UserController->dropPhone] Phone number ${phoneId} not found for user ${userId}`,
+      );
+      throw Boom.notFound();
+    }
+    // Do not allow deletion of primary phone number
+    if (record.phone_numbers[index].number === record.phone_number) {
+      record.phone_number = '';
+      record.phone_number_type = '';
+    }
+    record.phone_numbers.splice(index, 1);
+    record.lastModified = new Date();
+    await record.save();
+    logger.info(
+      `[UserController->dropPhone] User ${record.id} saved successfully`,
+    );
+    // await Promise.all([
+    //  record.save(),
+    //  OutlookService.synchronizeUser(record),
+    // ]);
+    return record;
+  },
 
-    Model
-      .findOne({_id: userId})
-      .then(record => {
-        if (!record) {
-          throw Boom.notFound();
-        }
-        let index = -1;
-        for (let i = 0, len = record.phone_numbers.length; i < len; i++) {
-          if (record.phone_numbers[i]._id === phoneId) {
-            index = i;
-          }
-        }
-        if (index === -1) {
-          throw Boom.notFound();
-        }
-        // Do not allow deletion of primary phone number
-        if (record.phone_numbers[index].number === record.phone_number) {
-          throw Boom.badRequest('Can not remove primary phone number');
-        }
-        record.phone_numbers.splice(index, 1);
-        return record.save();
-      })
-      .then(record => {
-        return that.app.services.OutlookService.synchronizeUser(record);
-      })
-      .then(record => {
-        return reply(record);
-      })
-      .catch(err => {
-        that._errorHandler(err, request, reply);
-      });
-  }
-
-  setPrimaryPhone (request, reply) {
-    const Model = this.app.orm.user;
-    const phone = request.payload.phone;
-    const that = this;
-
-    this.log.debug('[UserController] Setting primary phone number', { request: request });
+  async setPrimaryPhone(request) {
+    const { phone } = request.payload;
 
     if (!request.payload.phone) {
-      return reply(Boom.badRequest());
+      logger.warn(
+        '[UserController->setPrimaryPhone] No phone in request payload',
+      );
+      throw Boom.badRequest();
     }
-    Model
-      .findOne({ _id: request.params.id})
-      .then(record => {
-        if (!record) {
-          throw Boom.notFound();
-        }
-        // Make sure phone is part of phone_numbers
-        let index = -1;
-        for (let i = 0, len = record.phone_numbers.length; i < len; i++) {
-          if (record.phone_numbers[i].number === phone) {
-            index = i;
-          }
-        }
-        if (index === -1) {
-          throw Boom.badRequest('Phone does not exist');
-        }
-        record.phone_number = record.phone_numbers[index].number;
-        record.phone_number_type = record.phone_numbers[index].type;
-        return record.save();
-      })
-      .then(user => {
-        return that.app.services.GSSSyncService.synchronizeUser(user);
-      })
-      .then(user => {
-        return that.app.services.OutlookService.synchronizeUser(user);
-      })
-      .then(user => {
-        return reply(user);
-      })
-      .catch(err => {
-        that._errorHandler(err, request, reply);
-      });
-  }
+    const record = await User.findOne({ _id: request.params.id });
+    if (!record) {
+      logger.warn(
+        `[UserController->setPrimaryPhone] User ${request.params.id} not found`,
+      );
+      throw Boom.notFound();
+    }
+    // Make sure phone is part of phone_numbers
+    let index = -1;
+    for (let i = 0, len = record.phone_numbers.length; i < len; i += 1) {
+      if (record.phone_numbers[i].number === phone) {
+        index = i;
+      }
+    }
+    if (index === -1) {
+      logger.warn(
+        `[UserController->setPrimaryPhone] Phone number ${phone} not found for user ${request.params.id}`,
+      );
+      throw Boom.badRequest('Phone does not exist');
+    }
+    record.phone_number = record.phone_numbers[index].number;
+    record.phone_number_type = record.phone_numbers[index].type;
+    record.lastModified = new Date();
+    await Promise.all([
+      record.save(),
+      GSSSyncService.synchronizeUser(record),
+      // OutlookService.synchronizeUser(record),
+    ]);
+    logger.info(
+      `[UserController->setPrimaryPhone] User ${request.params.id} saved successfully`,
+    );
+    logger.info(
+      `[UserController->setPrimaryPhone] Successfully synchronized google spreadsheets for user ${request.params.id}`,
+    );
+    return record;
+  },
 
-  setPrimaryOrganization (request, reply) {
-    const User = this.app.orm.user;
+  async setPrimaryOrganization(request) {
     if (!request.payload) {
-      return reply(Boom.badRequest('Missing listUser id'));
+      logger.warn(
+        '[UserController->setPrimaryOrganization] Missing request payload',
+      );
+      throw Boom.badRequest('Missing listUser id');
     }
     if (!request.payload._id) {
-      return reply(Boom.badRequest('Missing listUser id'));
+      logger.warn(
+        '[UserController->setPrimaryOrganization] Missing listUser id',
+      );
+      throw Boom.badRequest('Missing listUser id');
     }
-    const that = this;
-    User
-      .findOne({_id: request.params.id})
-      .then(user => {
-        if (!user) {
-          throw Boom.notFound();
-        }
-        const checkin = user.organizations.id(request.payload._id);
-        if (!checkin) {
-          throw Boom.badRequest('Organization should be part of user organizations');
-        }
-        user.organization = checkin;
-        return user.save();
-      })
-      .then(user => {
-        return that.app.services.GSSSyncService.synchronizeUser(user);
-      })
-      .then(user => {
-        return that.app.services.OutlookService.synchronizeUser(user);
-      })
-      .then(user => {
-        return reply(user);
-      })
-      .catch (err => {
-        that._errorHandler(err, request, reply);
-      });
 
-  }
+    const user = await User.findOne({ _id: request.params.id });
+    if (!user) {
+      logger.warn(
+        `[UserController->setPrimaryOrganization] User ${request.params.id} not found`,
+      );
+      throw Boom.notFound();
+    }
+    const checkin = user.organizations.id(request.payload._id);
+    if (!checkin) {
+      logger.warn(
+        `[UserController->setPrimaryOrganization] Organization ${request.payload._id.toString()} should be part of user organizations`,
+      );
+      throw Boom.badRequest('Organization should be part of user organizations');
+    }
+    if (user.organization) {
+      user.organization.set(checkin);
+    } else {
+      user.organization = checkin;
+    }
+    user.lastModified = new Date();
+    await Promise.all([
+      user.save(),
+      GSSSyncService.synchronizeUser(user),
+      // OutlookService.synchronizeUser(user),
+    ]);
+    logger.info(
+      `[UserController->setPrimaryPhone] User ${request.params.id} saved successfully`,
+    );
+    logger.info(
+      `[UserController->setPrimaryPhone] Successfully synchronized google spreadsheets for user ${request.params.id}`,
+    );
+    return user;
+  },
 
-  showAccount (request, reply) {
-    this.log.info('calling /account.json for ' + request.params.currentUser.email, { request: request });
-    const user = JSON.parse(JSON.stringify(request.params.currentUser));
+  showAccount(request) {
+    logger.info(
+      `[UserController->showAccount] calling /account.json for ${request.auth.credentials.email}`,
+      { request },
+    );
+    const user = JSON.parse(JSON.stringify(request.auth.credentials));
     if (request.params.currentClient && (request.params.currentClient.id === 'iasc-prod' || request.params.currentClient.id === 'iasc-dev')) {
       user.sub = user.email;
     }
@@ -1310,156 +1408,132 @@ module.exports = class UserController extends Controller{
     if (request.params.currentClient && request.params.currentClient.id === 'kaya-prod') {
       user.name = user.name.replace(' ', '');
     }
-    if (request.params.currentClient &&
-      (request.params.currentClient.id === 'rc-shelter-database' ||
-        request.params.currentClient.id === 'rc-shelter-db-2-prod' ||
-        request.params.currentClient.id === 'deep-prod')) {
+    if (request.params.currentClient
+      && (request.params.currentClient.id === 'rc-shelter-database'
+        || request.params.currentClient.id === 'rc-shelter-db-2-prod'
+        || request.params.currentClient.id === 'deep-prod')) {
       user.active = !user.deleted;
     }
-    reply(user);
-  }
+    return user;
+  },
 
-  notify (request, reply) {
-    const Model = this.app.orm.User;
+  async notify(request) {
+    const record = await User.findOne({ _id: request.params.id });
+    if (!record) {
+      logger.warn(
+        `[UserController->notify] User ${request.params.id} not found`,
+      );
+      throw Boom.notFound();
+    }
 
-    this.log.debug('[UserController] Notifying user', { request: request });
+    const notPayload = {
+      type: 'contact_needs_update',
+      createdBy: request.auth.credentials,
+      user: record,
+    };
+    await NotificationService.send(notPayload);
+    logger.info(
+      `[UserController->notify] Successfully sent contact_needs_update notification to ${record.email}`,
+    );
 
-    const that = this;
-    Model
-      .findOne({ _id: request.params.id})
-      .then(record => {
-        if (!record) {
-          throw Boom.notFound();
-        }
+    return record;
+  },
 
-        const notPayload = {
-          type: 'contact_needs_update',
-          createdBy: request.params.currentUser,
-          user: record
-        };
-        that.app.services.NotificationService.send(notPayload, function (out) {
-          return reply(out);
-        });
-      })
-      .catch(err => {
-        that._errorHandler(err, request, reply);
-      });
-  }
+  async addConnection(request) {
+    const user = await User.findOne({ _id: request.params.id });
+    if (!user) {
+      logger.warn(
+        `[UserController->addConnection] User ${request.params.id} not found`,
+      );
+      throw Boom.notFound();
+    }
 
-  addConnection (request, reply) {
-    const User = this.app.orm.User;
+    if (!user.connections) {
+      user.connections = [];
+    }
+    if (user.connectionsIndex(request.auth.credentials._id) !== -1) {
+      logger.warn(
+        `[UserController->addConnection] User ${request.params.id} is already a connection of ${request.auth.credentials._id.toString()}`,
+      );
+      throw Boom.badRequest('User is already a connection');
+    }
 
-    this.log.debug('[UserController] Adding connection', { request: request });
+    user.connections.push({ pending: true, user: request.auth.credentials._id });
+    user.lastModified = new Date();
 
-    const that = this;
+    const notification = {
+      type: 'connection_request',
+      createdBy: request.auth.credentials,
+      user,
+    };
+    await Promise.all([
+      user.save(),
+      NotificationService.send(notification),
+    ]);
+    logger.info(
+      `[UserController->addConnection] User ${request.params.id} successfully saved`,
+    );
+    logger.info(
+      `[UserController->addConnection] Successfully sent connection_request notification to ${user.email}`,
+    );
+    return user;
+  },
 
-    User
-      .findOne({_id: request.params.id})
-      .then(user => {
-        if (!user) {
-          throw Boom.notFound();
-        }
+  async updateConnection(request) {
+    const user = await User.findOne({ _id: request.params.id });
+    if (!user) {
+      logger.warn(
+        `[UserController->updateConnection] User ${request.params.id} not found`,
+      );
+      throw Boom.notFound();
+    }
+    const connection = user.connections.id(request.params.cid);
+    connection.pending = false;
+    user.lastModified = new Date();
+    await user.save();
+    logger.info(
+      `[UserController->updateConnection] User ${request.params.id} saved successfully`,
+    );
+    const cuser = await User.findOne({ _id: connection.user });
+    // Create connection with current user
+    const cindex = cuser.connectionsIndex(user._id);
+    if (cindex === -1) {
+      cuser.connections.push({ pending: false, user: user._id });
+    } else {
+      cuser.connections[cindex].pending = false;
+    }
+    cuser.lastModified = new Date();
+    await cuser.save();
+    logger.info(
+      `[UserController->updateConnection] User ${cuser.id} saved successfully`,
+    );
+    // Send notification
+    const notification = {
+      type: 'connection_approved',
+      createdBy: user,
+      user: cuser,
+    };
+    await NotificationService.send(notification);
+    logger.info(
+      `[UserController->updateConnection] Successfully sent notification of type connection_approved to ${cuser.email}`,
+    );
+    return user;
+  },
 
-        if (!user.connections) {
-          user.connections = [];
-        }
-        if (user.connectionsIndex(request.params.currentUser._id) !== -1) {
-          throw Boom.badRequest('User is already a connection');
-        }
-
-        user.connections.push({pending: true, user: request.params.currentUser._id});
-
-        return user.save();
-      })
-      .then(user => {
-        reply(user);
-
-        const notification = {
-          type: 'connection_request',
-          createdBy: request.params.currentUser,
-          user: user
-        };
-        that.app.services.NotificationService.send(notification, function () {
-
-        });
-      })
-      .catch(err => {
-        that._errorHandler(err, request, reply);
-      });
-  }
-
-  updateConnection (request, reply) {
-    const User = this.app.orm.User;
-
-    this.log.debug('[UserController] Updating connection', { request: request });
-
-    const that = this;
-    let guser = {};
-
-    User
-      .findOne({_id: request.params.id})
-      .then(user => {
-        if (!user) {
-          return reply(Boom.notFound());
-        }
-        const connection = user.connections.id(request.params.cid);
-        connection.pending = false;
-        return user.save();
-      })
-      .then(user => {
-        guser = user;
-        const connection = user.connections.id(request.params.cid);
-        return User.findOne({_id: connection.user});
-      })
-      .then(cuser => {
-        // Create connection with current user
-        const cindex = cuser.connectionsIndex(guser._id);
-        if (cindex === -1) {
-          cuser.connections.push({pending: false, user: guser._id});
-        }
-        else {
-          cuser.connections[cindex].pending = false;
-        }
-        return cuser.save();
-      })
-      .then(cuser => {
-        reply(guser);
-        // Send notification
-        const notification = {
-          type: 'connection_approved',
-          createdBy: guser,
-          user: cuser
-        };
-        that.app.services.NotificationService.send(notification, function () {
-
-        });
-      })
-      .catch(err => {
-        that._errorHandler(err, request, reply);
-      });
-  }
-
-  deleteConnection (request, reply) {
-    const User = this.app.orm.User;
-
-    this.log.debug('[UserController] Deleting connection', { request: request });
-
-    const that = this;
-
-    User
-      .findOne({_id: request.params.id})
-      .then(user => {
-        if (!user) {
-          throw Boom.notFound();
-        }
-        user.connections.id(request.params.cid).remove();
-        return user.save();
-      })
-      .then(user => {
-        reply(user);
-      })
-      .catch(err => {
-        that._errorHandler(err, request, reply);
-      });
-  }
+  async deleteConnection(request) {
+    const user = await User.findOne({ _id: request.params.id });
+    if (!user) {
+      logger.warn(
+        `[UserController->deleteConnection] User ${request.params.id} not found`,
+      );
+      throw Boom.notFound();
+    }
+    user.connections.id(request.params.cid).remove();
+    user.lastModified = new Date();
+    await user.save();
+    logger.info(
+      `[UserController->deleteConnection] User ${request.params.id} saved successfully`,
+    );
+    return user;
+  },
 };

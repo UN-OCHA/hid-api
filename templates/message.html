@@ -1,0 +1,22 @@
+<% include header %>
+<div class="container api-page">
+  <div class="row">
+    <div class="col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+      <div class="page-header">
+        <h1 class="page-header__heading"><%= title %></h1>
+      </div>
+      <% if (alert) { %>
+        <div class="alert alert--inline alert--<%= alert.type %>" role="alert">
+          <div class="alert__inner">
+            <%= alert.message %>
+          </div>
+        </div>
+      <% } %>
+      <% if (isSuccess) { %>
+        <p class="form-field">Now you can login on <a href="https://humanitarian.id" target="_blank">Humanitarian ID</a> or one of our <a href="https://about.humanitarian.id/partners-using-our-authentication-service" target="_blank">partner websites</a>.</p>
+      <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+<% include footer %>

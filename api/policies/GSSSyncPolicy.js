@@ -1,33 +1,26 @@
-'use strict';
+const Boom = require('@hapi/boom');
+const GSSSync = require('../models/GSSSync');
+const config = require('../../config/env')[process.env.NODE_ENV];
 
-const Policy = require('trails/policy');
-const Boom = require('boom');
+const { logger } = config;
 
 /**
  * @module GSSSyncPolicy
  * @description GSSSyncPolicy
  */
-module.exports = class GSSSyncPolicy extends Policy {
+module.exports = {
 
-  canDestroy (request, reply) {
-    if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
-      return reply();
+  async canDestroy(request) {
+    if (request.auth.credentials.is_admin || request.auth.credentials.isManager) {
+      return true;
     }
-    const GSSSync = this.app.orm.GSSSync;
-    const that = this;
-    GSSSync
-      .findOne({_id: request.params.id})
-      .populate('user')
-      .then((gsssync) => {
-        if (gsssync.user._id.toString() === request.params.currentUser._id.toString()) {
-          return reply();
-        }
-        else {
-          return reply(Boom.unauthorized('You are not allowed to delete this item'));
-        }
-      })
-      .catch((err) => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
+    const gsssync = await GSSSync.findOne({ _id: request.params.id }).populate('user');
+    if (gsssync.user._id.toString() === request.auth.credentials._id.toString()) {
+      return true;
+    }
+    logger.warn(
+      `[GSSSyncPolicy->canDestroy] User ${request.auth.credentials._id.toString()} is not allowed to delete ${request.params.id}`,
+    );
+    throw Boom.unauthorized('You are not allowed to delete this item');
+  },
 };

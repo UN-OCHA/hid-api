@@ -1,333 +1,280 @@
-'use strict';
-
-const Service = require('trails/service');
 const Nodemailer = require('nodemailer');
 const Email = require('email-templates');
-const TransporterUrl = 'smtp://' + process.env.SMTP_USER + ':' + process.env.SMTP_PASS + '@' + process.env.SMTP_HOST + ':' + process.env.SMTP_PORT;
+
+const TransporterUrl = `smtp://${process.env.SMTP_USER}:${process.env.SMTP_PASS}@${process.env.SMTP_HOST}:${process.env.SMTP_PORT}`;
 const Transporter = Nodemailer.createTransport(TransporterUrl);
+const config = require('../../config/env')[process.env.NODE_ENV];
+
+const { logger } = config;
 
 /**
  * @module EmailService
  * @description Service to send emails
  */
-module.exports = class EmailService extends Service {
-
-  // Helper function to add hash to a link
-  _addHash(url, hash) {
-    let out = url;
-    if (url.indexOf('?') !== -1) {
-      out += '&hash=' + hash;
-    }
-    else {
-      out += '?hash=' + hash;
-    }
-    return out;
+function addUrlArgument(url, name, value) {
+  let out = url;
+  if (url.indexOf('?') !== -1) {
+    out += `&${name}=${value}`;
+  } else {
+    out += `?${name}=${value}`;
   }
+  return out;
+}
 
-  // Send an email
-  send (options, template, context, callback) {
-    if (options.locale && options.locale === 'fr') {
-      template = template + '/fr';
-    }
-    const email = new Email({
-      views: {
-        options: {
-          extension: 'ejs'
-        }
-      },
-      message: {
-        from: 'info@humanitarian.id'
-      },
-      send: true,
-      transport: Transporter
-    });
-    const args = {
-      template: template,
-      message: options,
-      locals: context
-    };
-    if (callback) {
-      email.send(args)
-        .then(() => {
-          return callback();
-        })
-        .catch(err => {
-          return callback(err);
-        });
-    }
-    else {
-      return email.send(args);
-    }
+function addHash(url, hash) {
+  return addUrlArgument(url, 'hash', hash);
+}
+
+function send(options, tpl, context) {
+  let template = tpl;
+  if (options.locale && options.locale === 'fr') {
+    template += '/fr';
   }
+  const email = new Email({
+    views: {
+      options: {
+        extension: 'ejs',
+      },
+    },
+    message: {
+      from: 'info@humanitarian.id',
+    },
+    send: true,
+    transport: Transporter,
+  });
+  const args = {
+    template,
+    message: options,
+    locals: context,
+  };
+  logger.info(
+    `[EmailService->send] About to send ${tpl} email to ${options.to}`,
+  );
+  return email.send(args);
+}
 
-  sendRegister (user, appVerifyUrl) {
+module.exports = {
+
+  sendRegister(user, appVerifyUrl) {
     const mailOptions = {
       to: user.email,
-      locale: user.locale || 'en'
+      locale: user.locale || 'en',
     };
-
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'verify_email';
-    user.hashEmail = user.email;
-    return user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appVerifyUrl, hash);
-        const context = {
-          name: user.name,
-          reset_url: resetUrl
-        };
-        return that.send(mailOptions, 'register', context);
-      });
-  }
+    const hash = user.generateHash('verify_email', user.email);
+    let resetUrl = addUrlArgument(appVerifyUrl, 'id', user._id.toString());
+    resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = addHash(resetUrl, hash.hash);
+    const context = {
+      name: user.name,
+      reset_url: resetUrl,
+    };
+    return send(mailOptions, 'register', context);
+  },
 
   sendRegisterOrphan(user, admin, appVerifyUrl) {
     const mailOptions = {
       to: user.email,
-      locale: user.locale || 'en'
+      locale: user.locale || 'en',
     };
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'reset_password';
-    user.hashEmail = user.email;
-    return user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appVerifyUrl, hash);
-        const context = {
-          user: user,
-          admin: admin,
-          reset_url: resetUrl
-        };
-        return that.send(mailOptions, 'register_orphan', context);
-      });
-  }
+    const hash = user.generateHash('reset_password');
+    let resetUrl = addUrlArgument(appVerifyUrl, 'id', user._id.toString());
+    resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = addHash(resetUrl, hash.hash);
+    const context = {
+      user,
+      admin,
+      reset_url: resetUrl,
+    };
+    return send(mailOptions, 'register_orphan', context);
+  },
 
   sendRegisterKiosk(user, appVerifyUrl) {
     const mailOptions = {
       to: user.email,
-      locale: user.locale || 'en'
+      locale: user.locale || 'en',
     };
+    const hash = user.generateHash('reset_password');
+    let resetUrl = addUrlArgument(appVerifyUrl, 'id', user._id.toString());
+    resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = addHash(resetUrl, hash.hash);
+    const context = {
+      user,
+      reset_url: resetUrl,
+    };
+    return send(mailOptions, 'register_kiosk', context);
+  },
 
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'reset_password';
-    user.hashEmail = user.email;
-    return user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appVerifyUrl, hash);
-        const context = {
-          user: user,
-          reset_url: resetUrl
-        };
-        return that.send(mailOptions, 'register_kiosk', context);
-      });
-  }
-
-  sendPostRegister (user) {
+  sendPostRegister(user) {
     const mailOptions = {
       to: user.email,
-      locale: user.locale
+      locale: user.locale,
     };
     const context = {
       given_name: user.given_name,
-      profile_url: process.env.APP_URL + '/users/' + user._id
+      profile_url: `${process.env.APP_URL}/users/${user._id}`,
     };
-    return this.send(mailOptions, 'post_register', context);
-  }
+    return send(mailOptions, 'post_register', context);
+  },
 
-  sendResetPassword (user, appResetUrl) {
+  sendResetPassword(user, appResetUrl) {
     const mailOptions = {
       to: user.email,
-      locale: user.locale
+      locale: user.locale,
     };
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'reset_password';
-    user.hashEmail = '';
-    return user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appResetUrl, hash);
-        const context = {
-          name: user.name,
-          reset_url: resetUrl
-        };
-        return that.send(mailOptions, 'reset_password', context);
-      });
-  }
+    const hash = user.generateHash('reset_password');
+    let resetUrl = addUrlArgument(appResetUrl, 'id', user._id.toString());
+    resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = addHash(resetUrl, hash.hash);
+    const context = {
+      name: user.name,
+      reset_url: resetUrl,
+      appResetUrl,
+    };
+    return send(mailOptions, 'reset_password', context);
+  },
 
-  sendForcedPasswordReset (user, appResetUrl, callback) {
+  sendForcedPasswordReset(user) {
     const mailOptions = {
       to: user.email,
-      locale: user.locale
+      locale: user.locale,
     };
     const context = {
-      user: user
+      user,
     };
-    this.send(mailOptions, 'forced_password_reset', context, callback);
-  }
+    return send(mailOptions, 'forced_password_reset', context);
+  },
 
-  sendForcedPasswordResetAlert (user, callback) {
+  sendForcedPasswordResetAlert(user) {
     const mailOptions = {
       to: user.email,
-      locale: user.locale
+      locale: user.locale,
     };
     const context = {
-      user: user
+      user,
     };
-    this.send(mailOptions, 'forced_password_reset_alert', context, callback);
-  }
+    return send(mailOptions, 'forced_password_reset_alert', context);
+  },
 
-  sendForcedPasswordResetAlert7 (user, callback) {
+  sendForcedPasswordResetAlert7(user) {
     const mailOptions = {
       to: user.email,
-      locale: user.locale
+      locale: user.locale,
     };
     const context = {
-      user: user
+      user,
     };
-    this.send(mailOptions, 'forced_password_reset_alert7', context, callback);
-  }
+    return send(mailOptions, 'forced_password_reset_alert7', context);
+  },
 
-  sendClaim (user, appResetUrl) {
+  sendClaim(user, appResetUrl) {
     const mailOptions = {
       to: user.email,
-      locale: user.locale
+      locale: user.locale,
     };
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'reset_password';
-    user.hashEmail = '';
-    return user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appResetUrl, hash);
-        const context = {
-          name: user.name,
-          reset_url: resetUrl
-        };
-        return that.send(mailOptions, 'claim', context);
-      });
-  }
+    const hash = user.generateHash('reset_password');
+    let resetUrl = addUrlArgument(appResetUrl, 'id', user._id.toString());
+    resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = addHash(resetUrl, hash.hash);
+    const context = {
+      name: user.name,
+      reset_url: resetUrl,
+    };
+    return send(mailOptions, 'claim', context);
+  },
 
-  sendValidationEmail (user, email, appValidationUrl) {
+  sendValidationEmail(user, email, emailId, appValidationUrl) {
     const mailOptions = {
       to: email,
-      locale: user.locale
+      locale: user.locale,
     };
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'verify_email';
-    user.hashEmail = email;
-    return user
-      .save()
-      .then(() => {
-        const resetUrl = that._addHash(appValidationUrl, hash);
-        const context = {
-          user: user,
-          reset_url: resetUrl
-        };
-        return that.send(mailOptions, 'email_validation', context);
-      });
-  }
+    const hash = user.generateHash('verify_email', email);
+    let resetUrl = addUrlArgument(appValidationUrl, 'id', user._id.toString());
+    resetUrl = addUrlArgument(resetUrl, 'emailId', emailId);
+    resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
+    resetUrl = addHash(resetUrl, hash.hash);
+    const context = {
+      user,
+      reset_url: resetUrl,
+    };
+    return send(mailOptions, 'email_validation', context);
+  },
 
   sendNotification(not) {
     const mailOptions = {
       to: not.user.email,
-      locale: not.user.locale
+      locale: not.user.locale,
     };
-    return this.send(mailOptions, not.type, not);
-  }
+    return send(mailOptions, not.type, not);
+  },
 
-  sendReminderVerify (user, callback) {
+  sendReminderUpdate(user) {
     const mailOptions = {
       to: user.email,
-      locale: user.locale
-    };
-    const hash = user.generateHash();
-    const that = this;
-    user.hash = hash;
-    user.hashAction = 'verify_email';
-    user.hashEmail = user.email;
-    user
-      .save()
-      .then(() => {
-        const context = {
-          user: user,
-          verifyLink: this._addHash(process.env.APP_URL, hash)
-        };
-        that.send(mailOptions, 'reminder_verify', context, callback);
-      })
-      .catch(err => {
-        callback(err);
-      });
-  }
-
-  sendReminderUpdate (user, callback) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale
+      locale: user.locale,
     };
     const context = {
-      user: user,
-      userUrl: process.env.APP_URL + '/user/' + user._id
+      user,
+      userUrl: `${process.env.APP_URL}/user/${user._id}`,
     };
-    this.send(mailOptions, 'reminder_update', context, callback);
-  }
+    return send(mailOptions, 'reminder_update', context);
+  },
 
-  sendAuthToProfile (user, createdBy, callback) {
+  sendAuthToProfile(user, createdBy) {
     const mailOptions = {
       to: user.email,
-      locale: user.locale
+      locale: user.locale,
     };
     const context = {
-      user: user,
-      createdBy: createdBy
+      user,
+      createdBy,
     };
-    this.send(mailOptions, 'auth_to_profile', context, callback);
-  }
+    return send(mailOptions, 'auth_to_profile', context);
+  },
 
-  sendEmailAlert (user, emailSend, emailAdded, callback) {
+  sendEmailAlert(user, emailSend, emailAdded) {
     const mailOptions = {
       to: emailSend,
-      locale: user.locale
+      locale: user.locale,
     };
     const context = {
-      user: user,
-      emailAdded: emailAdded
+      user,
+      emailAdded,
     };
-    this.send(mailOptions, 'email_alert', context, callback);
-  }
+    return send(mailOptions, 'email_alert', context);
+  },
 
-  sendSpecialPasswordReset (user, callback) {
+  sendSpecialPasswordReset(user) {
     const mailOptions = {
       to: user.email,
-      locale: user.locale
+      locale: user.locale,
     };
     const context = {
-      user: user
+      user,
     };
-    this.send(mailOptions, 'special_password_reset', context, callback);
-  }
+    return send(mailOptions, 'special_password_reset', context);
+  },
 
-  sendVerificationExpiryEmail (user, callback) {
+  sendVerificationExpiryEmail(user) {
     const mailOptions = {
       to: user.email,
-      locale: user.locale
+      locale: user.locale,
     };
     const context = {
-      user: user
+      user,
     };
-    this.send(mailOptions, 'verification_expiry', context, callback);
-  }
+    return send(mailOptions, 'verification_expiry', context);
+  },
+
+  sendAdminDelete(user, admin) {
+    const mailOptions = {
+      to: user.email,
+      locale: user.locale,
+    };
+    const context = {
+      user,
+      admin,
+    };
+    return send(mailOptions, 'admin_delete', context);
+  },
 
 };

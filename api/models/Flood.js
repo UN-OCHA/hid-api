@@ -1,36 +1,28 @@
-'use strict';
+const mongoose = require('mongoose');
 
-const Model = require('trails/model');
-const Schema = require('mongoose').Schema;
+const { Schema } = mongoose;
 
 /**
  * @module Flood
  * @description Flood attempts
  */
-module.exports = class Flood extends Model {
 
-  static config () {
-    return {
-      schema: {
-        timestamps: true
-      }
-    };
-  }
+const FloodSchema = new Schema({
+  type: {
+    type: String,
+    enum: ['login', 'totp'],
+    required: [true, 'Flood type is required'],
+  },
+  email: {
+    type: String,
+  },
+  user: {
+    type: Schema.ObjectId,
+    ref: 'User',
+  },
+}, {
+  collection: 'flood',
+  timestamps: true,
+});
 
-  static schema () {
-    return {
-      type: {
-        type: String,
-        enum: ['login'],
-        required: [true, 'Flood type is required']
-      },
-      email: {
-        type: String
-      },
-      user: {
-        type: Schema.ObjectId,
-        ref: 'User'
-      }
-    };
-  }
-};
+module.exports = mongoose.model('Flood', FloodSchema);

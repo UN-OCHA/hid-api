@@ -1,40 +1,37 @@
-'use strict';
+const Boom = require('@hapi/boom');
+const Operation = require('../models/Operation');
+const config = require('../../config/env')[process.env.NODE_ENV];
 
-const Policy = require('trails/policy');
-const Boom = require('boom');
+const { logger } = config;
 
 /**
  * @module OperationsPolicy
  * @description Operations Policy
  */
-module.exports = class OperationsPolicy extends Policy {
+module.exports = {
 
-  canUpdateOperation (request, reply) {
+  async canUpdateOperation(request) {
     // If user is a global manager or admin, allow it
-    if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
-      return reply();
+    if (request.auth.credentials.is_admin || request.auth.credentials.isManager) {
+      return true;
     }
 
     // Otherwise check if it is a manager of the operation list
-    const that = this;
-    this.app.orm.Operation
-      .findOne({_id: request.params.id})
-      .populate('managers')
-      .then((op) => {
-        if (!op) {
-          throw Boom.notFound();
-        }
-        if (op.managersIndex(request.params.currentUser) !== -1) {
-          return reply();
-        }
-        else {
-          throw Boom.forbidden();
-        }
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
+    const op = await Operation.findOne({ _id: request.params.id }).populate('managers');
+    if (!op) {
+      logger.warn(
+        `[OperationsPolicy->canUpdateOperation] Can not find operation ${request.params.id}`,
+      );
+      throw Boom.notFound();
+    }
+    if (op.managersIndex(request.auth.credentials) !== -1) {
+      return true;
+    }
+    logger.warn(
+      `[OperationsPolicy->canUpdateOperation] User ${request.auth.credentials.id} can not update operation ${request.params.id}`,
+    );
+    throw Boom.forbidden();
+  },
 
 
 };

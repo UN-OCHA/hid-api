@@ -1,13 +1,49 @@
 /**
- * Routes Configuration
- * (trails.config.routes)
+ * Routes optionsuration
+ * (trails.options.routes)
  *
- * Configure how routes map to views and controllers.
+ * optionsure how routes map to views and controllers.
  *
- * @see http://trailsjs.io/doc/config/routes.js
+ * @see http://trailsjs.io/doc/options/routes.js
  */
+const Joi = require('@hapi/joi');
 
-'use strict';
+const ViewController = require('../api/controllers/ViewController');
+const WebhooksController = require('../api/controllers/WebhooksController');
+const WebhooksPolicy = require('../api/policies/WebhooksPolicy');
+const ServiceCredentialsController = require('../api/controllers/ServiceCredentialsController');
+const AuthPolicy = require('../api/policies/AuthPolicy');
+const OutlookController = require('../api/controllers/OutlookController');
+const NotificationController = require('../api/controllers/NotificationController');
+const ClientController = require('../api/controllers/ClientController');
+const TrustedDomainController = require('../api/controllers/TrustedDomainController');
+const GSSSyncController = require('../api/controllers/GSSSyncController');
+const GSSSyncPolicy = require('../api/policies/GSSSyncPolicy');
+const ListController = require('../api/controllers/ListController');
+const ListPolicy = require('../api/policies/ListPolicy');
+const OperationController = require('../api/controllers/OperationController');
+const OperationsPolicy = require('../api/policies/OperationsPolicy');
+const ListUserController = require('../api/controllers/ListUserController');
+const ListUserPolicy = require('../api/policies/ListUserPolicy');
+const ServiceController = require('../api/controllers/ServiceController');
+const ServicePolicy = require('../api/policies/ServicePolicy');
+const NumbersController = require('../api/controllers/NumbersController');
+const TOTPController = require('../api/controllers/TOTPController');
+const UserController = require('../api/controllers/UserController');
+const UserPolicy = require('../api/policies/UserPolicy');
+const AuthController = require('../api/controllers/AuthController');
+
+const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+const childAttributes = [
+  'operations',
+  'bundles',
+  'disasters',
+  'lists',
+  'organization',
+  'organizations',
+  'functional_roles',
+  'offices',
+];
 
 module.exports = [
 
@@ -17,67 +53,100 @@ module.exports = [
   {
     method: 'GET',
     path: '/',
-    handler: 'ViewController.login'
+    handler: ViewController.login,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: 'GET',
     path: '/register',
-    handler: 'ViewController.register'
+    handler: ViewController.register,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: 'POST',
     path: '/register',
-    handler: 'ViewController.registerPost'
+    handler: ViewController.registerPost,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: 'GET',
     path: '/verify',
-    handler: 'ViewController.newPassword'
+    handler: ViewController.newPassword,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: 'GET',
     path: '/verify2',
-    handler: 'ViewController.verify'
+    handler: ViewController.verify,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: 'GET',
     path: '/logout',
-    handler: 'ViewController.logout'
+    handler: ViewController.logout,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: 'GET',
     path: '/password',
-    handler: 'ViewController.password'
+    handler: ViewController.password,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: 'POST',
     path: '/password',
-    handler: 'ViewController.passwordPost'
+    handler: ViewController.passwordPost,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: 'GET',
     path: '/new_password',
-    handler: 'ViewController.newPassword'
+    handler: ViewController.newPassword,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: 'POST',
     path: '/new_password',
-    handler: 'ViewController.newPasswordPost'
+    handler: ViewController.newPasswordPost,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: 'GET',
     path: '/user',
-    handler: 'ViewController.user'
+    handler: ViewController.user,
+    options: {
+      auth: false,
+    },
   },
 
   {
@@ -85,9 +154,12 @@ module.exports = [
     path: '/docs/{param*}',
     handler: {
       directory: {
-        path: 'docs'
-      }
-    }
+        path: 'docs',
+      },
+    },
+    options: {
+      auth: false,
+    },
   },
 
   /**
@@ -96,535 +168,931 @@ module.exports = [
   {
     method: 'GET',
     path: '/.well-known/openid-configuration',
-    handler: 'AuthController.openIdConfiguration'
+    handler: AuthController.openIdConfiguration,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: 'GET',
     path: '/oauth/jwks',
-    handler: 'AuthController.jwks'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/updatelistusers',
-    handler: 'ListUserController.updateListUsers'
+    handler: AuthController.jwks,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/jsonwebtoken',
-    handler: 'AuthController.authenticate'
+    handler: AuthController.authenticate,
   },
 
   {
     method: 'GET',
     path: '/api/v2/jsonwebtoken',
-    handler: 'AuthController.jwtTokens'
+    handler: AuthController.jwtTokens,
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/jsonwebtoken',
-    handler: 'AuthController.blacklistJwt'
+    handler: AuthController.blacklistJwt,
   },
 
   {
     method: 'POST',
     path: '/login',
-    handler: 'AuthController.login'
+    handler: AuthController.login,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: 'GET',
     path: '/oauth/authorize',
-    handler: 'AuthController.authorizeDialogOauth2'
+    handler: AuthController.authorizeDialogOauth2,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: 'POST',
     path: '/oauth/authorize',
-    handler: 'AuthController.authorizeOauth2'
+    handler: AuthController.authorizeOauth2,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: ['GET', 'POST'],
     path: '/oauth/access_token',
-    handler: 'AuthController.accessTokenOauth2'
+    handler: AuthController.accessTokenOauth2,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: ['GET', 'POST'],
     path: '/account.json',
-    handler: 'UserController.showAccount'
+    handler: UserController.showAccount,
   },
 
   {
     method: 'GET',
     path: '/api/v2/numbers',
-    handler: 'NumbersController.numbers'
+    handler: NumbersController.numbers,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v2/signedRequest',
+    handler: AuthController.signRequest,
   },
 
   {
     method: 'POST',
     path: '/api/v2/user',
-    handler: 'UserController.create'
+    options: {
+      pre: [
+        UserPolicy.canCreate,
+      ],
+      handler: UserController.create,
+    },
   },
 
   {
     method: 'GET',
     path: '/api/v2/user/{id?}',
-    handler: 'UserController.find'
+    handler: UserController.find,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'GET',
     path: '/api/v2/user.{extension}',
-    handler: 'UserController.find'
+    handler: UserController.find,
+    options: {
+      validate: {
+        params: Joi.object({
+          extension: Joi.string().valid('csv', 'pdf').required(),
+        }),
+      },
+    },
   },
 
   {
-    method: [ 'PUT', 'PATCH' ],
+    method: ['PUT', 'PATCH'],
     path: '/api/v2/user/{id}',
-    handler: 'UserController.update'
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.update,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}',
-    handler: 'UserController.destroy'
+    options: {
+      pre: [
+        AuthPolicy.isTOTPEnabledAndValid,
+      ],
+      handler: UserController.destroy,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/notification',
-    handler: 'UserController.notify'
+    handler: UserController.notify,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/{childAttribute}',
-    handler: 'ListUserController.checkin'
+    options: {
+      pre: [
+        ListUserPolicy.canCheckin,
+      ],
+      handler: ListUserController.checkin,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          childAttribute: Joi.string().valid(...childAttributes).required(),
+        }),
+      },
+    },
   },
 
   {
     method: ['PUT', 'PATCH'],
     path: '/api/v2/user/{id}/{childAttribute}/{checkInId}',
-    handler: 'ListUserController.update'
+    options: {
+      pre: [
+        ListUserPolicy.canUpdate,
+      ],
+      handler: ListUserController.update,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          childAttribute: Joi.string().valid(...childAttributes).required(),
+        }),
+      },
+    },
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}/{childAttribute}/{checkInId}',
-    handler: 'ListUserController.checkout'
+    options: {
+      pre: [
+        ListUserPolicy.canCheckout,
+      ],
+      handler: ListUserController.checkout,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          childAttribute: Joi.string().valid(...childAttributes).required(),
+          checkInId: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/password',
-    handler: 'UserController.resetPasswordEndpoint'
+    handler: UserController.resetPasswordEndpoint,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/password',
-    handler: 'UserController.updatePassword'
+    options: {
+      pre: [
+        AuthPolicy.isTOTPEnabledAndValid,
+      ],
+      handler: UserController.updatePassword,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/orphan',
-    handler: 'UserController.claimEmail'
+    options: {
+      pre: [
+        UserPolicy.canClaim,
+      ],
+      handler: UserController.claimEmail,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/picture',
-    handler: 'UserController.updatePicture',
-    config: {
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.updatePicture,
       payload: {
         output: 'data',
         parse: true,
-        allow: 'multipart/form-data'
-      }
-    }
+        allow: 'multipart/form-data',
+      },
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/emails',
-    handler: 'UserController.addEmail'
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.addEmail,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/email',
-    handler: 'UserController.setPrimaryEmail'
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+        AuthPolicy.isTOTPEnabledAndValid,
+      ],
+      handler: UserController.setPrimaryEmail,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/emails/{email?}',
-    handler: 'UserController.validateEmail'
+    handler: UserController.validateEmail,
+    options: {
+      auth: false,
+    },
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}/emails/{email}',
-    handler: 'UserController.dropEmail'
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.dropEmail,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/phone_numbers',
-    handler: 'UserController.addPhone'
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.addPhone,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}/phone_numbers/{pid}',
-    handler: 'UserController.dropPhone'
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.dropPhone,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          pid: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/phone_number',
-    handler: 'UserController.setPrimaryPhone'
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.setPrimaryPhone,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/organization',
-    handler: 'UserController.setPrimaryOrganization'
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.setPrimaryOrganization,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/connections',
-    handler: 'UserController.addConnection'
+    handler: UserController.addConnection,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/connections/{cid}',
-    handler: 'UserController.updateConnection'
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.updateConnection,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          cid: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}/connections/{cid}',
-    handler: 'UserController.deleteConnection'
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.deleteConnection,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          cid: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/subscriptions',
-    handler: 'ServiceController.subscribe'
+    options: {
+      pre: [
+        ServicePolicy.canSubscribe,
+      ],
+      handler: ServiceController.subscribe,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}/subscriptions/{serviceId}',
-    handler: 'ServiceController.unsubscribe'
+    options: {
+      pre: [
+        ServicePolicy.canUnsubscribe,
+      ],
+      handler: ServiceController.unsubscribe,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          serviceId: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/googlecredentials',
-    handler: 'GSSSyncController.saveGoogleCredentials'
+    handler: GSSSyncController.saveGoogleCredentials,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/user/{id}/outlookcredentials',
-    handler: 'OutlookController.saveOutlookCredentials'
+    handler: OutlookController.saveOutlookCredentials,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/list',
-    handler: 'ListController.create'
+    options: {
+      pre: [
+        ListPolicy.canCreate,
+      ],
+      handler: ListController.create,
+    },
   },
 
   {
     method: 'GET',
     path: '/api/v2/list/{id?}',
-    handler: 'ListController.find'
+    handler: ListController.find,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'PUT',
     path: '/api/v2/list/{id}',
-    handler: 'ListController.update'
+    options: {
+      pre: [
+        ListPolicy.canUpdate,
+      ],
+      handler: ListController.update,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/list/{id}',
-    handler: 'ListController.destroy'
+    options: {
+      pre: [
+        ListPolicy.canDestroy,
+      ],
+      handler: ListController.destroy,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/client',
-    handler: 'ClientController.create'
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: ClientController.create,
+    },
   },
 
   {
     method: 'GET',
     path: '/api/v2/client/{id?}',
-    handler: 'ClientController.find'
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: ClientController.find,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'PUT',
     path: '/api/v2/client/{id}',
-    handler: 'ClientController.update'
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: ClientController.update,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/client/{id}',
-    handler: 'ClientController.destroy'
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: ClientController.destroy,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v2/trustedDomain',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: TrustedDomainController.create,
+    },
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/trustedDomain/{id?}',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: TrustedDomainController.find,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/trustedDomain/{id}',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: TrustedDomainController.destroy,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'GET',
     path: '/api/v2/notification/{id?}',
-    handler: 'NotificationController.find'
+    handler: NotificationController.find,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'PUT',
     path: '/api/v2/notification/{id?}',
-    handler: 'NotificationController.update'
+    handler: NotificationController.update,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/service',
-    handler: 'ServiceController.create'
+    handler: ServiceController.create,
   },
 
   {
     method: 'GET',
     path: '/api/v2/service/{id?}',
-    handler: 'ServiceController.find'
+    handler: ServiceController.find,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'GET',
     path: '/api/v2/service/mailchimp/lists',
-    handler: 'ServiceController.mailchimpLists'
+    handler: ServiceController.mailchimpLists,
   },
 
   {
     method: 'GET',
     path: '/api/v2/service/google/groups',
-    handler: 'ServiceController.googleGroups'
+    handler: ServiceController.googleGroups,
   },
 
   {
     method: 'GET',
     path: '/api/v2/servicecredentials',
-    handler: 'ServiceCredentialsController.find'
+    handler: ServiceCredentialsController.find,
   },
 
   {
-    method: [ 'PUT', 'PATCH' ],
+    method: ['PUT', 'PATCH'],
     path: '/api/v2/service/{id}',
-    handler: 'ServiceController.update'
+    options: {
+      pre: [
+        ServicePolicy.canUpdate,
+      ],
+      handler: ServiceController.update,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/service/{id}',
-    handler: 'ServiceController.destroy'
+    options: {
+      pre: [
+        ServicePolicy.canDestroy,
+      ],
+      handler: ServiceController.destroy,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/totp/qrcode',
-    handler: 'TOTPController.generateQRCode'
+    handler: TOTPController.generateQRCode,
   },
 
   {
     method: 'POST',
     path: '/api/v2/totp/codes',
-    handler: 'TOTPController.generateBackupCodes'
+    handler: TOTPController.generateBackupCodes,
   },
 
   {
     method: 'POST',
     path: '/api/v2/totp/device',
-    handler: 'TOTPController.saveDevice'
+    options: {
+      pre: [
+        AuthPolicy.isTOTPEnabledAndValid,
+      ],
+      handler: TOTPController.saveDevice,
+    },
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/totp/device/{id}',
-    handler: 'TOTPController.destroyDevice'
+    handler: TOTPController.destroyDevice,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/totp',
-    handler: 'TOTPController.enable'
+    options: {
+      pre: [
+        AuthPolicy.isTOTPValidPolicy,
+      ],
+      handler: TOTPController.enable,
+    },
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/totp',
-    handler: 'TOTPController.disable'
+    options: {
+      pre: [
+        AuthPolicy.isTOTPEnabledAndValid,
+      ],
+      handler: TOTPController.disable,
+    },
   },
 
   {
     method: 'GET',
     path: '/api/v2/totp',
-    handler: 'TOTPController.verifyTOTPToken'
+    options: {
+      pre: [
+        AuthPolicy.isTOTPValidPolicy,
+      ],
+      handler: TOTPController.verifyTOTPToken,
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/gsssync',
-    handler: 'GSSSyncController.create'
+    handler: GSSSyncController.create,
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/gsssync',
-    handler: 'GSSSyncController.destroy'
+    options: {
+      pre: [
+        GSSSyncPolicy.canDestroy,
+      ],
+      handler: GSSSyncController.destroy,
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/outlookGroup',
-    handler: 'OutlookController.create'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/cron/deleteExpiredUsers',
-    handler: 'CronController.deleteExpiredUsers'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/cron/deleteExpiredTokens',
-    handler: 'CronController.deleteExpiredTokens'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/cron/sendReminderVerifyEmails',
-    handler: 'CronController.sendReminderVerifyEmails'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/cron/sendReminderUpdateEmails',
-    handler: 'CronController.sendReminderUpdateEmails'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/cron/sendReminderCheckoutEmails',
-    handler: 'CronController.sendReminderCheckoutEmails'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/cron/sendReminderCheckinEmails',
-    handler: 'CronController.sendReminderCheckinEmails'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/cron/forcedResetPasswordAlert',
-    handler: 'CronController.forcedResetPasswordAlert'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/cron/forceResetPassword',
-    handler: 'CronController.forceResetPassword'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/cron/forcedResetPasswordAlert7',
-    handler: 'CronController.forcedResetPasswordAlert7'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/cron/doAutomatedCheckout',
-    handler: 'CronController.doAutomatedCheckout'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/cron/specialPasswordReset',
-    handler: 'CronController.sendSpecialPasswordResetEmail'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/cron/verifyAutomatically',
-    handler: 'CronController.verifyAutomatically'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/cron/verificationExpiryEmail',
-    handler: 'CronController.verificationExpiryEmail'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/cron/unverifyAfterOneYear',
-    handler: 'CronController.unverifyAfterOneYear'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/cron/setListCounts',
-    handler: 'CronController.setListCounts'
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/cron/verifyEmails',
-    handler: 'CronController.verifyEmails'
+    handler: OutlookController.create,
   },
 
   {
     method: 'POST',
     path: '/api/v2/webhooks/hrinfo',
-    handler: 'WebhooksController.hrinfo'
+    options: {
+      auth: false,
+      pre: [
+        WebhooksPolicy.canRun,
+      ],
+      handler: WebhooksController.hrinfo,
+    },
   },
 
   {
     method: 'POST',
     path: '/api/v2/operation',
-    handler: 'OperationController.create'
+    options: {
+      pre: [
+        AuthPolicy.isAdminOrGlobalManager,
+      ],
+      handler: OperationController.create,
+    },
   },
 
   {
     method: 'GET',
     path: '/api/v2/operation/{id?}',
-    handler: 'OperationController.find'
+    handler: OperationController.find,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'PUT',
     path: '/api/v2/operation/{id}',
-    handler: 'OperationController.update'
+    options: {
+      pre: [
+        OperationsPolicy.canUpdateOperation,
+      ],
+      handler: OperationController.update,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 
   {
     method: 'DELETE',
     path: '/api/v2/operation/{id}',
-    handler: 'OperationController.destroy'
+    options: {
+      pre: [
+        AuthPolicy.isAdminOrGlobalManager,
+      ],
+      handler: OperationController.destroy,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
   },
 ];

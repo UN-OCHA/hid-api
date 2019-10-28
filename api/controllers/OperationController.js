@@ -1,86 +1,71 @@
-'use strict';
+const Boom = require('@hapi/boom');
+const Operation = require('../models/Operation');
+const HelperService = require('../services/HelperService');
+const config = require('../../config/env')[process.env.NODE_ENV];
 
-const Controller = require('trails/controller');
-const Boom = require('boom');
+const { logger } = config;
 
 /**
  * @module OperationController
- * @description Generated Trails.js Controller.
+ * @description CRUD controller for operation pages.
  */
-module.exports = class OperationController extends Controller{
+module.exports = {
 
-  create (request, reply) {
-    const Operation = this.app.orm.Operation;
-    const that = this;
-    Operation
-      .create(request.payload)
-      .then((operation) => {
-        if (!operation) {
-          throw Boom.badRequest();
-        }
-        return reply(operation);
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
+  async create(request) {
+    const operation = await Operation.create(request.payload);
+    if (!operation) {
+      logger.warn(
+        '[OperationController->create] Bad request',
+        { request: request.payload },
+      );
+      throw Boom.badRequest();
+    }
+    logger.info(
+      '[OperationController->create] Successfully created operation',
+      { request: request.payload },
+    );
+    return operation;
+  },
 
-  find (request, reply) {
-    const Operation = this.app.orm.Operation;
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
-    const that = this;
+  async find(request, reply) {
+    const options = HelperService.getOptionsFromQuery(request.query);
+    const criteria = HelperService.getCriteriaFromQuery(request.query);
 
     if (request.params.id) {
       criteria._id = request.params.id;
-      Operation
-        .findOne(criteria)
-        .populate('managers key_roles key_lists')
-        .then(result => {
-          if (!result) {
-            throw Boom.notFound();
-          }
-          return reply(result);
-        })
-        .catch(err => {
-          that.app.services.ErrorService.handle(err, request, reply);
-        });
+      const result = await Operation.findOne(criteria).populate('managers key_roles key_lists');
+      if (!result) {
+        logger.warn(
+          `[OperationController->find] Operation ${request.params.id} not found`,
+        );
+        throw Boom.notFound();
+      }
+      return result;
     }
-    else {
-      options.populate = 'managers key_roles key_lists';
-      const query = this.app.services.HelperService.find('Operation', criteria, options);
-      let gresults = {};
-      query
-        .then((results) => {
-          gresults = results;
-          return Operation.count(criteria);
-        })
-        .then((number) => {
-          return reply(gresults).header('X-Total-Count', number);
-        })
-        .catch((err) => {
-          that.app.services.ErrorService.handle(err, request, reply);
-        });
-    }
-  }
+    options.populate = 'managers key_roles key_lists';
+    const [results, number] = await Promise.all([
+      HelperService.find(Operation, criteria, options),
+      Operation.countDocuments(criteria),
+    ]);
+    return reply.response(results).header('X-Total-Count', number);
+  },
 
-  update (request, reply) {
-    const Model = this.app.orm.Operation,
-      that = this;
-    Model
-      .findOneAndUpdate({ _id: request.params.id }, request.payload, {runValidators: true, new: true})
-      .then((client) => {
-        reply(client);
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
+  async update(request) {
+    const client = await Operation.findOneAndUpdate({ _id: request.params.id },
+      request.payload, { runValidators: true, new: true });
+    logger.info(
+      `[OperationController->update] Updated operation ${request.params.id}`,
+      { request: request.payload },
+    );
+    return client;
+  },
 
-  destroy (request, reply) {
-    request.params.model = 'Operation';
-    const FootprintController = this.app.controllers.FootprintController;
-    FootprintController.destroy(request, reply);
-  }
+  async destroy(request, reply) {
+    await Operation.remove({ _id: request.params.id });
+    logger.info(
+      `[OperationController->destroy] Removed operation ${request.params.id}`,
+    );
+    return reply.response().code(204);
+  },
 
 };

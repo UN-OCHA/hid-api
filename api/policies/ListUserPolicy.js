@@ -1,94 +1,85 @@
-'use strict';
+const Boom = require('@hapi/boom');
+const List = require('../models/List');
+const User = require('../models/User');
+const config = require('../../config/env')[process.env.NODE_ENV];
 
-const Policy = require('trails/policy');
-const Boom = require('boom');
+const { logger } = config;
 
 /**
  * @module ListUserPolicy
  * @description ListUser Policy
  */
-module.exports = class ListUserPolicy extends Policy {
-  canCheckin (request, reply) {
-    const List = this.app.orm.List;
-    if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
-      return reply();
+module.exports = {
+  async canCheckin(request) {
+    if (request.auth.credentials.is_admin || request.auth.credentials.isManager) {
+      return true;
     }
-    const that = this;
-    List
-      .findOne({_id: request.payload.list})
-      .then((list) => {
-        if (!list) {
-          return reply(Boom.badRequest('List not found'));
-        }
-        if (list.isOwner(request.params.currentUser) || list.joinability !== 'private') {
-          return reply();
-        }
-        else {
-          return reply(Boom.unauthorized('You are not authorized to do this'));
-        }
-      })
-      .catch((err) => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
-
-  canCheckout(request, reply) {
-    const User = this.app.orm.User;
-    const childAttribute = request.params.childAttribute;
-    const checkInId = request.params.checkInId;
-    if (request.params.currentUser.is_admin || request.params.currentUser.isManager) {
-      return reply();
+    if (request.auth.credentials.hidden === true) {
+      logger.warn(
+        `[ListUserPolicy->canCheckin] User ${request.auth.credentials.id} is flagged and can not check into lists`,
+      );
+      throw Boom.unauthorized('You are not authorized to check into lists');
     }
-    const populate = childAttribute + '.list';
-    const that = this;
-    User
-      .findOne({_id: request.params.id})
-      .populate(populate)
-      .then((user) => {
-        const lu = user[childAttribute].id(checkInId);
-        if (lu.list.isOwner(request.params.currentUser) ||
-          request.params.currentUser.id === request.params.id) {
-          return reply();
-        }
-        else {
-          return reply(Boom.unauthorized('You are not authorized to do this'));
-        }
-      })
-      .catch((err) => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
+    const list = await List.findOne({ _id: request.payload.list });
+    if (!list) {
+      logger.warn(
+        `[ListUserPolicy->canCheckin] List ${request.payload.list} not found`,
+      );
+      throw Boom.badRequest('List not found');
+    }
+    if (list.isOwner(request.auth.credentials) || list.joinability !== 'private') {
+      return true;
+    }
+    logger.warn(
+      `[ListUserPolicy->canCheckin] User ${request.auth.credentials.id} can not check into list ${request.payload.list}`,
+    );
+    throw Boom.unauthorized('You are not authorized to do this');
+  },
 
-  canUpdate (request, reply) {
-    const User = this.app.orm.User;
-    const childAttribute = request.params.childAttribute;
-    const checkInId = request.params.checkInId;
+  async canCheckout(request) {
+    const { childAttribute } = request.params;
+    const { checkInId } = request.params;
+    if (request.auth.credentials.is_admin || request.auth.credentials.isManager) {
+      return true;
+    }
+    const populate = `${childAttribute}.list`;
+    const user = await User.findOne({ _id: request.params.id }).populate(populate);
+    const lu = user[childAttribute].id(checkInId);
+    if (lu.list.isOwner(request.auth.credentials)
+      || request.auth.credentials.id === request.params.id) {
+      return true;
+    }
+    logger.warn(
+      `[ListUserPolicy->canCheckout] User ${request.auth.credentials.id} can not check out of list ${lu.list._id.toString()}`,
+    );
+    throw Boom.unauthorized('You are not authorized to do this');
+  },
 
-    const populate = childAttribute + '.list';
-    const that = this;
-    User
-      .findOne({_id: request.params.id})
-      .populate(populate)
-      .then((user) => {
-        const lu = user[childAttribute].id(checkInId);
-        if (lu.pending === true && request.payload.pending === false) {
-          // User is being approved: allow only administrators, list managers and list owners to do this
-          if (!lu.list.isOwner(request.params.currentUser)) {
-            return reply(Boom.unauthorized('You need to be an admin or a manager of this list'));
-          }
-        }
-        else {
-          // Other changes are being made; allow only: admins, global managers, list managers, list owners, current user
-          if (!lu.list.isOwner(request.params.currentUser) &&
-            !request.params.currentUser.isManager &&
-            request.params.currentUser.id !== request.params.id) {
-            return reply(Boom.unauthorized('You are not authorized to do this'));
-          }
-        }
-        reply();
-      })
-      .catch((err) => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
+  async canUpdate(request) {
+    const { childAttribute } = request.params;
+    const { checkInId } = request.params;
+
+    const populate = `${childAttribute}.list`;
+    const user = await User.findOne({ _id: request.params.id }).populate(populate);
+    const lu = user[childAttribute].id(checkInId);
+    if (lu.pending === true && request.payload.pending === false) {
+      // User is being approved: allow only administrators, list managers and list owners to do this
+      if (!lu.list.isOwner(request.auth.credentials)) {
+        logger.warn(
+          `[ListUserPolicy->canUpdate] User ${request.auth.credentials} needs to be an admin or a manager of list ${lu.list._id.toString()}`,
+        );
+        throw Boom.unauthorized('You need to be an admin or a manager of this list');
+      }
+    } else if (!lu.list.isOwner(request.auth.credentials)
+      && !request.auth.credentials.isManager
+      && request.auth.credentials.id !== request.params.id) {
+      // Other changes are being made; allow only: admins, global managers,
+      // list managers, list owners, current user
+      logger.warn(
+        `[ListUserPolicy->canUpdate] User ${request.auth.credentials} can not update checkin for list ${lu.list._id.toString()}`,
+      );
+      throw Boom.unauthorized('You are not authorized to do this');
+    }
+    return true;
+  },
 };

@@ -1,3 +1,0 @@
---require test/mocha.env.js
---recursive
---timeout 30000
