@@ -1,52 +1,36 @@
-'use strict';
-
-const Controller = require('trails/controller');
+const List = require('../models/List');
+const User = require('../models/User');
 
 /**
  * @module NumbersController
- * @description Generated Trails.js Controller.
+ * @description Provide the number of custom contact lists, number of auth users,
+ * total number of users, number of orphans, number of ghost users and number
+ * of verified users.
  */
-module.exports = class NumbersController extends Controller{
+module.exports = {
 
-  numbers (request, reply) {
-    const List = this.app.orm.List, User = this.app.orm.User;
-    const that = this;
-    let numberCcls = 0,
-      numberAuth = 0,
-      numberUsers = 0,
-      numberOrphans = 0,
-      numberGhosts = 0;
-    List
-      .count({type: 'list'})
-      .then(number1 => {
-        numberCcls = number1;
-        return User.count({'authOnly': true});
-      })
-      .then(number2 => {
-        numberAuth = number2;
-        return User.count({});
-      })
-      .then(number3 => {
-        numberUsers = number3;
-        return User.count({'is_orphan': true});
-      })
-      .then(number4 => {
-        numberOrphans = number4;
-        return User.count({'is_ghost': true});
-      })
-      .then(number5 => {
-        numberGhosts = number5;
-        return reply({
-          'numberCcls': numberCcls,
-          'numberOrphans': numberOrphans,
-          'numberGhosts': numberGhosts,
-          'numberAuth': numberAuth,
-          'numberUsers': numberUsers
-        });
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
+  async numbers() {
+    const [numberCcls,
+      numberAuth,
+      numberUsers,
+      numberOrphans,
+      numberGhosts,
+      numberVerified] = await Promise.all([
+      List.countDocuments({ type: 'list' }),
+      User.countDocuments({ authOnly: true }),
+      User.countDocuments({}),
+      User.countDocuments({ is_orphan: true }),
+      User.countDocuments({ is_ghost: true }),
+      User.countDocuments({ verified: true }),
+    ]);
+    return {
+      numberCcls,
+      numberOrphans,
+      numberGhosts,
+      numberAuth,
+      numberUsers,
+      numberVerified,
+    };
+  },
 
 };

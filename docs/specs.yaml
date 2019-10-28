@@ -25,7 +25,7 @@ tags:
     description: 'Methods related to notifications'
   - name: 'totp'
     description: 'Methods related to 2 Factor Authentication'
-host: 'api2.dev.humanitarian.id'
+host: 'api.dev.humanitarian.id'
 basePath: '/api/v2'
 schemes:
   - https

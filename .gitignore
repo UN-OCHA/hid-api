@@ -4,3 +4,6 @@ coverage
 trails-*.log*
 *.log
 tmp
+keys
+db
+newrelic_agent.log

@@ -1,2 +1,3 @@
 docs/*
 config/migrate.js
+db

@@ -5,7 +5,6 @@
  * @see http://trailsjs.io/doc/config/session.js
  */
 
-'use strict';
 
 module.exports = {
 
@@ -20,14 +19,14 @@ module.exports = {
   jwt: {
     secret: '',
     connection: 'localStorage',
-    model: 'WebToken'
+    model: 'WebToken',
   },
 
   /**
    * Define cookie-specific options
    */
   cookie: {
-    maxAge: 24 * 60 * 60 * 1000
-  }
+    maxAge: 24 * 60 * 60 * 1000,
+  },
 
 };

@@ -1,21 +1,24 @@
-'use strict';
+const Boom = require('@hapi/boom');
+const config = require('../../config/env')[process.env.NODE_ENV];
 
-const Policy = require('trails/policy');
-const Boom = require('boom');
+const { logger } = config;
 
 /**
  * @module WebhooksPolicy
  * @description Webhooks Policy
  */
-module.exports = class WebhooksPolicy extends Policy {
+module.exports = {
 
-  canRun (request, reply) {
-    if (request.headers && request.headers.authorization && request.headers.authorization === process.env.CRON_KEY) {
-      return reply();
+  canRun(request) {
+    if (request.headers
+      && request.headers.authorization
+      && request.headers.authorization === process.env.CRON_KEY) {
+      return true;
     }
-    else {
-      return reply(Boom.unauthorized('Missing or wrong secret'));
-    }
-  }
+    logger.warn(
+      '[WebhooksPolicy->canRun] Missing or wrong secret provided',
+    );
+    throw Boom.unauthorized('Missing or wrong secret');
+  },
 
 };

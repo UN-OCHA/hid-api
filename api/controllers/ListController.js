@@ -1,291 +1,280 @@
-'use strict';
-
-const Controller = require('trails/controller');
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const _ = require('lodash');
-const async = require('async');
 const acceptLanguage = require('accept-language');
+const List = require('../models/List');
+const User = require('../models/User');
+const HelperService = require('../services/HelperService');
+const NotificationService = require('../services/NotificationService');
+const config = require('../../config/env')[process.env.NODE_ENV];
+
+const { logger } = config;
 
 /**
  * @module ListController
- * @description Generated Trails.js Controller.
+ * @description Handles List Create Read Update Delete methods.
  */
-module.exports = class ListController extends Controller{
 
-  _removeForbiddenAttributes (request) {
-    this.app.services.HelperService.removeForbiddenAttributes('List', request, ['names']);
-  }
+module.exports = {
 
-  create (request, reply) {
-    const List = this.app.orm.List;
-    this._removeForbiddenAttributes(request);
-    request.payload.owner = request.params.currentUser._id;
+  async create(request) {
+    HelperService.removeForbiddenAttributes(List, request, ['names']);
+    request.payload.owner = request.auth.credentials._id;
     if (!request.payload.managers) {
       request.payload.managers = [];
     }
-    request.payload.managers.push(request.params.currentUser._id);
-    const that = this;
-    List
-      .create(request.payload)
-      .then((list) => {
-        return reply(list);
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
+    request.payload.managers.push(request.auth.credentials._id);
+    const list = await List.create(request.payload);
+    logger.info(
+      '[ListController->create] Created a new list',
+      { request: request.payload },
+    );
+    return list;
+  },
 
-  find (request, reply) {
+  async find(request, reply) {
     const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
-    const criteria = this.app.services.HelperService.getCriteriaFromQuery(request.query);
-    const List = this.app.orm.List;
-    const User = this.app.orm.User;
+    const options = HelperService.getOptionsFromQuery(request.query);
+    const criteria = HelperService.getCriteriaFromQuery(request.query);
 
     if (!options.sort) {
       options.sort = 'name';
     }
 
+    if (options.sort === '-count' && !request.auth.credentials.is_admin) {
+      if (request.auth.credentials.isManager) {
+        options.sort = '-countManager';
+      } else if (request.auth.verified) {
+        options.sort = '-countVerified';
+      } else {
+        options.sort = '-countUnverified';
+      }
+    }
+
     // Search with contains when searching in name or label
     if (criteria.name) {
       if (criteria.name.length < 3) {
-        return reply(Boom.badRequest('Name must have at least 3 characters'));
+        logger.warn(
+          '[ListController->find] Name of a list must have at least 3 characters in find method',
+          { name: criteria.name },
+        );
+        throw Boom.badRequest('Name must have at least 3 characters');
       }
-      let name = criteria.name.replace(/([^a-z0-9 :]+)/gi, '-');
+      let name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/g, '');
       name = new RegExp(name, 'i');
       criteria['names.text'] = name;
       delete criteria.name;
     }
     if (criteria.label) {
-      criteria.label = criteria.label.replace(/([^a-z0-9 :]+)/gi, '-');
+      criteria.label = criteria.label.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/g, '');
       criteria.label = new RegExp(criteria.label, 'i');
     }
 
     // Do not show deleted lists
     criteria.deleted = false;
 
-    this.log.debug(
-      '[ListController] (find) model = list, criteria =',
-      request.query,
-      request.params.id,
-      'options =',
-      options,
-      { request: request}
-    );
-
     // List visiblity
-    const that = this;
 
     if (request.params.id) {
       if (!options.populate) {
         options.populate = [
-          {path: 'owner', select: '_id name'},
-          {path: 'managers', select: '_id name'}
+          { path: 'owner', select: '_id name' },
+          { path: 'managers', select: '_id name' },
         ];
       }
-      List
-        .findOne({_id: request.params.id, deleted: criteria.deleted })
-        .populate(options.populate)
-        .then(result => {
-          if (!result) {
-            throw Boom.notFound();
-          }
+      const result = await List.findOne({
+        _id: request.params.id, deleted: criteria.deleted,
+      }).populate(options.populate);
+      if (!result) {
+        logger.warn(
+          '[ListController->find] Could not find list',
+          { id: request.params.id },
+        );
+        throw Boom.notFound();
+      }
 
-          const out = result.toJSON();
-          out.name = result.translatedAttribute('names', reqLanguage);
-          out.acronym = result.translatedAttribute('acronyms', reqLanguage);
-          out.visible = result.isVisibleTo(request.params.currentUser);
-          return reply(out);
-        })
-        .catch(err => { that.app.services.ErrorService.handle(err, request, reply); });
+      const out = result.toJSON();
+      out.name = result.translatedAttribute('names', reqLanguage);
+      out.acronym = result.translatedAttribute('acronyms', reqLanguage);
+      out.visible = result.isVisibleTo(request.auth.credentials);
+      out.count = result.getCount(request.auth.credentials);
+      return out;
     }
-    else {
-      options.populate = [{path: 'owner', select: '_id name'}];
-      const query = this.app.services.HelperService.find('List', criteria, options);
-      query
-        .then((results) => {
-          return List
-            .count(criteria)
-            .then((number) => {
-              return {result: results, number: number};
-            });
-        })
-        .then((result) => {
-          const out = [];
-          let tmp = {};
-          let optionsArray = [];
-          if (options.fields) {
-            optionsArray = options.fields.split(' ');
-          }
-          async.eachSeries(result.result, function (list, next) {
-            tmp = list.toJSON();
-            tmp.visible = list.isVisibleTo(request.params.currentUser);
-            if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('names') !== -1)) {
-              tmp.name = list.translatedAttribute('names', reqLanguage);
-            }
-            if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('acronyms') !== -1)) {
-              tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
-            }
-            if (optionsArray.indexOf('count') !== -1) {
-              const ucriteria = {};
-              ucriteria[list.type + 's'] = {
-                $elemMatch: {list: list._id, deleted: false, pending: false}
-              };
-              User
-                .count(ucriteria)
-                .then((count) => {
-                  tmp.count = count;
-                  out.push(tmp);
-                  next();
-                });
-            }
-            else {
-              out.push(tmp);
-              next();
-            }
-          }, function (err) {
-            reply(out).header('X-Total-Count', result.number);
-          });
-        })
-        .catch((err) => {
-          that.app.services.ErrorService.handle(err, request, reply);
-        });
+    options.populate = [{ path: 'owner', select: '_id name' }];
+    if (!request.auth.credentials.is_admin && !request.auth.credentials.isManager) {
+      criteria.$or = [{ visibility: 'all' }, { visibility: 'inlist' }, { $and: [{ visibility: 'me' }, { managers: request.auth.credentials._id }] }];
+      if (request.auth.credentials.verified) {
+        criteria.$or.push({ visibility: 'verified' });
+      }
     }
-  }
+    const [results, number] = await Promise.all([
+      HelperService.find(List, criteria, options),
+      List.countDocuments(criteria),
+    ]);
+    const out = [];
+    let tmp = {};
+    let optionsArray = [];
+    if (options.fields) {
+      optionsArray = options.fields.split(' ');
+    }
+    for (let i = 0; i < results.length; i += 1) {
+      const list = results[i];
+      tmp = list.toJSON();
+      tmp.visible = list.isVisibleTo(request.auth.credentials);
+      if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('names') !== -1)) {
+        tmp.name = list.translatedAttribute('names', reqLanguage);
+      }
+      if (optionsArray.length === 0 || (optionsArray.length > 0 && optionsArray.indexOf('acronyms') !== -1)) {
+        tmp.acronym = list.translatedAttribute('acronyms', reqLanguage);
+      }
+      tmp.count = list.getCount(request.auth.credentials);
+      out.push(tmp);
+    }
+    return reply.response(out).header('X-Total-Count', number);
+  },
 
-  _notifyManagers(uids, type, request, list) {
-    const User = this.app.orm.user;
-    const that = this;
-    User
-      .find({_id: {$in: uids}})
-      .then((users) => {
-        for (let i = 0, len = users.length; i < len; i++) {
-          that.app.services.NotificationService
-            .send({
-              type: type,
-              user: users[i],
-              createdBy: request.params.currentUser,
-              params: { list: list }
-            }, () => {});
-        }
-      })
-      .catch((err) => {
-        that.log.error('Unexpected error', {request: request, error: err});
+  async update(request) {
+    HelperService.removeForbiddenAttributes(List, request, ['names']);
+
+    // Retrieve existing list
+    const list = await List.findById(request.params.id);
+
+    // Check if we added or removed managers to the list
+    const payloadManagers = [];
+    if (request.payload.managers) {
+      request.payload.managers.forEach((man) => {
+        payloadManagers.push(man.toString());
       });
-  }
+    }
+    const listManagers = [];
+    if (list.managers) {
+      list.managers.forEach((man) => {
+        listManagers.push(man.toString());
+      });
+    }
+    const diffAdded = _.difference(payloadManagers, listManagers);
+    const diffRemoved = _.difference(listManagers, payloadManagers);
 
-  update (request, reply) {
-    const Model = this.app.orm.list;
-    const User = this.app.orm.user;
+    // Create the new list and compute the counts
+    const newlist = _.merge(list, request.payload);
+    await newlist.computeCounts();
 
-    this._removeForbiddenAttributes(request);
+    // Check whether we need to send notifications
+    const notifications = [];
+    const pendingLogs = [];
+    if (diffAdded.length) {
+      const users = await User.find({ _id: { $in: diffAdded } });
+      for (let i = 0; i < users.length; i += 1) {
+        const user = users[i];
+        notifications.push(NotificationService
+          .send({
+            type: 'added_list_manager',
+            user,
+            createdBy: request.auth.credentials,
+            params: { list: newlist },
+          }));
+        pendingLogs.push({
+          type: 'info',
+          message: `[ListController->update] Sent notification added_list_manager to ${user.email}`,
+        });
+      }
+      newlist.markModified('managers');
+    }
+    if (diffRemoved.length) {
+      const users = await User.find({ _id: { $in: diffRemoved } });
+      for (let i = 0; i < users.length; i += 1) {
+        const user = users[i];
+        notifications.push(NotificationService
+          .send({
+            type: 'removed_list_manager',
+            user,
+            createdBy: request.auth.credentials,
+            params: { list: newlist },
+          }));
+        pendingLogs.push({
+          type: 'info',
+          message: `[ListController->update] Sent notification removed_list_manager to ${user.email}`,
+        });
+      }
+      newlist.markModified('managers');
+    }
 
-    this.log.debug(
-      '[ListController] (update) model = list, criteria =',
-      request.query,
-      request.params.id,
-      ', values = ',
-      request.payload,
-      { request: request }
+    // Save the list
+    await newlist.save();
+    logger.info(
+      '[ListController->update] Updated a list',
+      { request: request.payload },
     );
 
-    const that = this;
-    let newlist = {};
-    Model
-      .findOne({_id: request.params.id})
-      .then(list => {
-        return Model
-          .findOneAndUpdate({_id: request.params.id}, request.payload, {runValidators: true, new: true});
-      })
-      .then((list2) => {
-        newlist = list2;
-        reply(list2);
-      })
-      .then(() => {
-        const payloadManagers = [];
-        if (request.payload.managers) {
-          request.payload.managers.forEach(function (man) {
-            payloadManagers.push(man.toString());
-          });
-        }
-        const listManagers = [];
-        if (newlist.managers) {
-          newlist.managers.forEach(function (man) {
-            listManagers.push(man.toString());
-          });
-        }
-        const diffAdded = _.difference(payloadManagers, listManagers);
-        const diffRemoved = _.difference(listManagers, payloadManagers);
-        if (diffAdded.length) {
-          that._notifyManagers(diffAdded, 'added_list_manager', request, newlist);
-        }
-        if (diffRemoved.length) {
-          that._notifyManagers(diffRemoved, 'removed_list_manager', request, newlist);
-        }
+    // Send the notifications
+    await Promise.all(notifications);
+    for (let i = 0; i < pendingLogs.length; i += 1) {
+      logger.log(pendingLogs[i]);
+    }
 
-        // Update users
-        const criteria = {};
-        criteria[newlist.type + 's.list'] = newlist._id.toString();
-        return User
-          .find(criteria);
-      })
-      .then(users => {
-        let actions = [];
-        for (let i = 0; i < users.length; i++) {
-          const user = users[i];
-          user.updateCheckins(newlist);
-          actions.push(user.save());
-        }
-        return Promise.all(actions);
-      })
-      .catch((err) => {
-        that.app.services.ErrorService.handle(err, request, reply);
+    // Update users
+    const criteria = {};
+    criteria[`${newlist.type}s.list`] = newlist._id.toString();
+    const users = await User.find(criteria);
+    const actions = [];
+    const actionsLogs = [];
+    for (let i = 0; i < users.length; i += 1) {
+      const user = users[i];
+      user.updateCheckins(newlist);
+      actions.push(user.save());
+      actionsLogs.push({
+        type: 'info',
+        message: `[ListController->update] Successfully saved user ${user.id}`,
       });
-  }
+    }
+    await Promise.all(actions);
+    // Possible Performance impact by logging too much
+    for (let i = 0; i < actionsLogs.length; i += 1) {
+      logger.log(actionsLogs[i]);
+    }
+    return newlist;
+  },
 
-  destroy (request, reply) {
-    const List = this.app.orm.List;
-    const User = this.app.orm.User;
-
-    this.log.debug('[ListController] (destroy) model = list, query =', request.query, { request: request});
-    const that = this;
-
-    List
-      .findOne({ _id: request.params.id })
-      .then(record => {
-        if (!record) {
-          throw Boom.notFound();
+  async destroy(request) {
+    const record = await List.findOne({ _id: request.params.id });
+    if (!record) {
+      logger.warn(
+        '[ListController->destroy] Unable to delete list: list not found',
+        { list: request.params.id },
+      );
+      throw Boom.notFound();
+    }
+    // Set deleted to true
+    record.deleted = true;
+    const newRecord = await record.save();
+    logger.info(
+      '[ListController->destroy] Added deleted flag to list',
+      { list: request.params.id },
+    );
+    // Remove all checkins from users in this list
+    const criteria = {};
+    criteria[`${record.type}s.list`] = record._id.toString();
+    const promises = [];
+    const pendingLogs = [];
+    const users = await User.find(criteria);
+    for (let i = 0; i < users.length; i += 1) {
+      const user = users[i];
+      for (let j = 0; j < user[`${record.type}s`].length; j += 1) {
+        if (user[`${record.type}s`][j].list.toString() === record._id.toString()) {
+          user[`${record.type}s`][j].deleted = true;
         }
-        // Set deleted to true
-        record.deleted = true;
-        return record
-          .save()
-          .then(() => {
-            return record;
-          });
-      })
-      .then((record) => {
-        reply(record);
-        // Remove all checkins from users in this list
-        const criteria = {};
-        criteria[record.type + 's.list'] = record._id.toString();
-        return User
-          .find(criteria)
-          .then(users => {
-            for (let i = 0; i < users.length; i++) {
-              const user = users[i];
-              for (let j = 0; j < user[record.type + 's'].length; j++) {
-                if (user[record.type + 's'][j].list.toString() === record._id.toString()) {
-                  user[record.type + 's'][j].deleted = true;
-                }
-              }
-              user.save();
-            }
-          });
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
+      }
+      promises.push(user.save());
+      pendingLogs.push({
+        type: 'info',
+        message: `[ListController->destroy] Successfully saved user ${user.id}`,
       });
-  }
+    }
+    await Promise.all(promises);
+    // Possible performance impact by logging too much.
+    for (let i = 0; i < pendingLogs.length; i += 1) {
+      logger.log(pendingLogs[i]);
+    }
+    return newRecord;
+  },
 
 };

@@ -1,204 +1,218 @@
-'use strict';
-
-const Controller = require('trails/controller');
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 const _ = require('lodash');
-const async = require('async');
+const List = require('../models/List');
+const User = require('../models/User');
+// const OutlookService = require('../services/OutlookService');
+const NotificationService = require('../services/NotificationService');
+const GSSSyncService = require('../services/GSSSyncService');
+const config = require('../../config/env')[process.env.NODE_ENV];
+
+const { logger } = config;
 
 /**
  * @module ListUserController
- * @description Generated Trails.js Controller.
+ * @description Handles checkins and checkouts.
  */
-module.exports = class ListUserController extends Controller{
 
-  checkin (request, reply) {
-    const options = this.app.services.HelperService.getOptionsFromQuery(request.query);
+/**
+ * Helper function used for checkins.
+ * Checks a user into a list and sends notifications
+ * if needed.
+ */
+function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
+  const user = auser;
+  const list = alist;
+  const payload = {
+    list: list._id.toString(),
+  };
+
+  // Check that the list added corresponds to the right attribute
+  if (childAttribute !== `${list.type}s` && childAttribute !== list.type) {
+    logger.warn(
+      `[ListUserController->checkinHelper] Wrong list type ${list.type} ${childAttribute}`,
+    );
+    throw Boom.badRequest('Wrong list type');
+  }
+
+  // Set the proper pending attribute depending on list type
+  if (list.joinability === 'public'
+    || list.joinability === 'private'
+    || list.isOwner(currentUser)) {
+    payload.pending = false;
+  } else {
+    payload.pending = true;
+  }
+
+  payload.name = list.name;
+  payload.acronym = list.acronym;
+  payload.owner = list.owner;
+  payload.managers = list.managers;
+  payload.visibility = list.visibility;
+
+  if (list.type === 'organization') {
+    payload.orgTypeId = list.metadata.type.id;
+    payload.orgTypeLabel = list.metadata.type.label;
+  }
+
+  if (childAttribute !== 'organization') {
+    if (!user[childAttribute]) {
+      user[childAttribute] = [];
+    }
+
+    // Make sure user is not already checked in this list
+    for (let i = 0, len = user[childAttribute].length; i < len; i += 1) {
+      if (user[childAttribute][i].list.equals(list._id)
+        && user[childAttribute][i].deleted === false) {
+        logger.warn(
+          '[ListUserController->checkinHelper] User is already checked in',
+        );
+        throw Boom.badRequest('User is already checked in');
+      }
+    }
+  }
+
+  if (childAttribute !== 'organization') {
+    user[childAttribute].push(payload);
+  } else {
+    user.organization = payload;
+  }
+  user.lastModified = new Date();
+  const managers = [];
+  list.managers.forEach((manager) => {
+    if (manager.toString() !== currentUser._id.toString()) {
+      managers.push(manager);
+    }
+  });
+  const promises = [];
+  const pendingLogs = [];
+  promises.push(user.save());
+  pendingLogs.push({
+    type: 'info',
+    message: `[ListUserController->checkinHelper] Saved user ${user.id}`,
+  });
+  list.count += 1;
+  if (user.authOnly && !user.hidden) {
+    list.countManager += 1;
+  }
+  if (!user.authOnly && !user.hidden) {
+    if (!user.is_orphan && !user.is_ghost) {
+      list.countManager += 1;
+      list.countVerified += 1;
+      list.countUnverified += 1;
+    } else {
+      list.countManager += 1;
+      list.countVerified += 1;
+    }
+  }
+  promises.push(list.save());
+  pendingLogs.push({
+    type: 'info',
+    message: `[ListUserController->checkinHelper] Saved list ${list._id.toString()}`,
+  });
+  // Notify list managers of the checkin
+  promises.push(NotificationService.notifyMultiple(managers, {
+    type: 'checkin',
+    createdBy: user,
+    params: { list },
+  }));
+  pendingLogs.push({
+    type: 'info',
+    message: `[ListUserController->checkinHelper] Sent notification of type checkin to list managers for list ${list._id.toString()}`,
+  });
+  // Notify user if needed
+  if (currentUser._id.toString() !== user._id.toString() && list.type !== 'list' && notify === true && !user.hidden) {
+    promises.push(NotificationService.send({
+      type: 'admin_checkin',
+      createdBy: currentUser,
+      user,
+      params: { list },
+    }));
+    pendingLogs.push({
+      type: 'info',
+      message: `[ListUserController->checkinHelper] User ${user._id.toString()} was checked in by ${currentUser._id.toString()}; sent admin_checkin notification`,
+    });
+  }
+  // Notify list owner and managers of the new checkin if needed
+  if (payload.pending) {
+    promises.push(NotificationService.sendMultiple(managers, {
+      type: 'pending_checkin',
+      params: { list, user },
+    }));
+    pendingLogs.push({
+      type: 'info',
+      message: `[ListUserController->checkinHelper] Sent pending_checkin notification to list owners and managers of ${list._id.toString()}`,
+    });
+  }
+  // Synchronize google spreadsheets
+  promises.push(GSSSyncService.addUserToSpreadsheets(list._id, user));
+  pendingLogs.push({
+    type: 'info',
+    message: `[ListUserController->checkinHelper] Synchronized Google spreadsheets for list ${list._id.toString()}`,
+  });
+  // promises.push(OutlookService.addUserToContactFolders(list._id, user));
+  return Promise.all(promises).then(() => {
+    for (let i = 0; i < pendingLogs.length; i += 1) {
+      logger.log(pendingLogs[i]);
+    }
+  });
+}
+
+module.exports = {
+
+  checkinHelper,
+
+  async checkin(request) {
     const userId = request.params.id;
-    const childAttribute = request.params.childAttribute;
-    const payload = request.payload;
-    const Model = this.app.orm.user;
-    const List = this.app.orm.list;
-    const childAttributes = Model.listAttributes();
-    const GSSSyncService = this.app.services.GSSSyncService;
-    const OutlookService = this.app.services.OutlookService;
-
-    this.log.debug('[UserController] (checkin) user ->', childAttribute, ', payload =', payload,
-      'options =', options, { request: request});
+    const { childAttribute } = request.params;
+    const { payload } = request;
+    const childAttributes = User.listAttributes();
 
     if (childAttributes.indexOf(childAttribute) === -1 || childAttribute === 'organization') {
-      return reply(Boom.notFound());
+      logger.warn(
+        `[ListUserController->checkin] Invalid childAttribute ${childAttribute}`,
+      );
+      throw Boom.notFound();
     }
 
     // Make sure there is a list in the payload
     if (!payload.list) {
-      return reply(Boom.badRequest('Missing list attribute'));
+      logger.warn(
+        '[ListUserController->checkin] Missing list attribute',
+      );
+      throw Boom.badRequest('Missing list attribute');
     }
 
     let notify = true;
     if (typeof request.payload.notify !== 'undefined') {
-      notify = request.payload.notify;
+      const { notify: notif } = request.payload;
+      notify = notif;
     }
     delete request.payload.notify;
 
-    const that = this;
-    let gResult = {};
+    const [list, user] = await Promise.all([List.findOne({ _id: payload.list }).populate('managers'), User.findOne({ _id: userId })]);
+    if (!list || !user) {
+      logger.warn(
+        '[ListUserController->checkin] Could not find list or user',
+        payload.list,
+        userId,
+      );
+      throw Boom.notFound();
+    }
+    await checkinHelper(list, user, notify, childAttribute, request.auth.credentials);
+    return user;
+  },
 
-    List
-      .findOne({ '_id': payload.list })
-      .then((list) => {
-        // Check that the list added corresponds to the right attribute
-        if (childAttribute !== list.type + 's' && childAttribute !== list.type) {
-          throw Boom.badRequest('Wrong list type');
-        }
+  async update(request) {
+    const { childAttribute } = request.params;
+    const { checkInId } = request.params;
 
-        //Set the proper pending attribute depending on list type
-        if (list.joinability === 'public' ||
-          list.joinability === 'private' ||
-          list.isOwner(request.params.currentUser)) {
-          payload.pending = false;
-        }
-        else {
-          payload.pending = true;
-        }
-
-        payload.name = list.name;
-        payload.acronym = list.acronym;
-        payload.owner = list.owner;
-        payload.managers = list.managers;
-        payload.visibility = list.visibility;
-
-        if (list.type === 'organization') {
-          payload.orgTypeId = list.metadata.type.id;
-          payload.orgTypeLabel = list.metadata.type.label;
-        }
-
-        that.log.debug('Looking for user with id ' + userId, { request: request});
-        return Model
-          .findOne({ '_id': userId })
-          .then((record) => {
-            if (!record) {
-              throw Boom.badRequest('User not found');
-            }
-            return {list: list, user: record};
-          });
-      })
-      .then((result) => {
-        const record = result.user,
-          list = result.list;
-        if (childAttribute !== 'organization') {
-          if (!record[childAttribute]) {
-            record[childAttribute] = [];
-          }
-
-          // Make sure user is not already checked in this list
-          for (let i = 0, len = record[childAttribute].length; i < len; i++) {
-            if (record[childAttribute][i].list.equals(list._id) &&
-              record[childAttribute][i].deleted === false) {
-              throw Boom.badRequest('User is already checked in');
-            }
-          }
-        }
-        return result;
-      })
-      .then((result) => {
-        that.log.debug('Setting the listUser to the correct attribute', {request: request});
-        const record = result.user;
-        if (childAttribute !== 'organization') {
-          if (!record[childAttribute]) {
-            record[childAttribute] = [];
-          }
-
-          record[childAttribute].push(payload);
-        }
-        else {
-          record.organization = payload;
-        }
-        return {list: result.list, user: record};
-      })
-      .then((result) => {
-        return result.user
-          .save()
-          .then(() => {
-            reply(result.user);
-            return result;
-          });
-      })
-      .then((result) => {
-        result.list.count = result.list.count + 1;
-        return result.list
-          .save()
-          .then(() => {
-            return result;
-          });
-      })
-      .then((result) => {
-        const managers = [];
-        result.list.managers.forEach(function (manager) {
-          if (manager.toString() !== request.params.currentUser._id.toString()) {
-            managers.push(manager);
-          }
-        });
-        // Notify list managers of the checkin
-        that.app.services.NotificationService.notifyMultiple(managers, {
-          type: 'checkin',
-          createdBy: result.user,
-          params: { list: result.list }
-        });
-        return result;
-      })
-      .then((result) => {
-        // Notify user if needed
-        if (request.params.currentUser.id !== userId && result.list.type !== 'list' && notify === true) {
-          that.log.debug('Checked in by a different user', {request: request});
-          that.app.services.NotificationService.send({
-            type: 'admin_checkin',
-            createdBy: request.params.currentUser,
-            user: result.user,
-            params: { list: result.list }
-          }, () => { });
-        }
-        return result;
-      })
-      .then((result) => {
-        // Notify list owner and managers of the new checkin if needed
-        const list = result.list,
-          user = result.user;
-        if (payload.pending) {
-          that.log.debug('Notifying list owners and manager of the new checkin', {request: request});
-          that.app.services.NotificationService.sendMultiple(list.managers, {
-            type: 'pending_checkin',
-            params: { list: list, user: user }
-          }, () => { });
-        }
-        return result;
-      })
-      .then((result) => {
-        gResult = result;
-        // Synchronize google spreadsheets
-        return GSSSyncService.addUserToSpreadsheets(result.list._id, result.user);
-      })
-      .then(data => {
-        return OutlookService.addUserToContactFolders(gResult.list._id, gResult.user);
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
-
-  update (request, reply) {
-    const User = this.app.orm.User;
-    const List = this.app.orm.List;
-    const NotificationService = this.app.services.NotificationService;
-    const childAttribute = request.params.childAttribute;
-    const checkInId = request.params.checkInId;
-
-    this.log.debug(
-      '[ListUserController] (update) model = list, criteria =',
+    logger.info(
+      '[ListUserController->update] Updating a checkin',
       request.query,
       request.params.checkInId,
       ', values = ',
       request.payload,
-      { request: request }
+      { request },
     );
 
     // Make sure list specific attributes can not be set through update
@@ -215,181 +229,135 @@ module.exports = class ListUserController extends Controller{
       delete request.payload.visibility;
     }
 
-    const that = this;
     let listuser = {};
-    User
-      .findOne({ _id: request.params.id })
-      .then(record => {
-        if (!record) {
-          throw Boom.notFound();
-        }
-        const lu = record[childAttribute].id(checkInId);
-        listuser = _.cloneDeep(lu);
-        _.assign(lu, request.payload);
-        return record
-          .save()
-          .then((user) => {
-            reply(user);
-            return {user: user, listuser: lu};
-          });
-      })
-      .then(result => {
-        return List
-          .findOne({_id: result.listuser.list})
-          .then(list => {
-            return {user: result.user, listuser: result.listuser, list: list};
-          });
-      })
-      .then(result => {
-        if (listuser.pending === true && request.payload.pending === false) {
-          // Send a notification to inform user that his checkin is not pending anymore
-          const notification = {
-            type: 'approved_checkin',
-            user: result.user,
-            createdBy: request.params.currentUser,
-            params: { list: result.list}
-          };
-          NotificationService.send(notification, () => {});
-        }
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
+    const record = await User.findOne({ _id: request.params.id });
+    if (!record) {
+      logger.info(
+        '[ListUserController->update] User not found',
+        { user: request.params.id },
+      );
+      throw Boom.notFound();
+    }
+    const lu = record[childAttribute].id(checkInId);
+    listuser = _.cloneDeep(lu);
+    _.assign(lu, request.payload);
+    record.lastModified = new Date();
+    const promises = [];
+    promises.push(record.save());
+    promises.push(List.findOne({ _id: lu.list }));
+    const [user, list] = await Promise.all(promises);
+    logger.info(
+      `[ListUserController->update] Updated user ${record._id.toString()} with new checkin record`,
+    );
+    if (listuser.pending === true && request.payload.pending === false) {
+      // Send a notification to inform user that his checkin is not pending anymore
+      const notification = {
+        type: 'approved_checkin',
+        user,
+        createdBy: request.auth.credentials,
+        params: { list },
+      };
+      await NotificationService.send(notification);
+      logger.info(
+        `[ListUserController->update] Sent a notification of type approved_checkin to user ${user._id.toString()}`,
+      );
+    }
+    return user;
+  },
 
-  checkout (request, reply) {
-    const options = this.app.packs.hapi.getOptionsFromQuery(request.query);
+  async checkout(request) {
     const userId = request.params.id;
-    const childAttribute = request.params.childAttribute;
-    const checkInId = request.params.checkInId;
-    const payload = request.payload;
-    const User = this.app.orm.user;
-    const List = this.app.orm.List;
-    const GSSSyncService = this.app.services.GSSSyncService;
-    const OutlookService = this.app.services.OutlookService;
+    const { childAttribute } = request.params;
+    const { checkInId } = request.params;
     const childAttributes = User.listAttributes();
-
-    this.log.debug('[UserController] (checkout) user ->', childAttribute, ', payload =', payload,
-      'options =', options, { request: request });
 
     if (childAttributes.indexOf(childAttribute) === -1) {
-      return reply(Boom.notFound());
+      logger.warn(
+        `[ListUserController->checkout] Invalid childAttribute ${childAttribute}`,
+      );
+      throw Boom.notFound();
     }
 
-    const that = this;
-    let gResult = {};
-
-    User
-      .findOne({ _id: request.params.id })
-      .then(record => {
-        if (!record) {
-          throw Boom.notFound();
-        }
-        const lu = record[childAttribute].id(checkInId);
-        // Set deleted to true
-        lu.deleted = true;
-        // If user is checking out of his primary organization, remove the listuser from the organization attribute
-        if (childAttribute === 'organizations' && record.organization && lu.list.toString() === record.organization.list.toString()) {
-          record.organization.remove();
-        }
-        return record
-          .save()
-          .then((user) => {
-            return {user: user, listuser: lu};
-          });
-      })
-      .then((result) => {
-        reply(result.user);
-        return List
-          .findOne({ _id: result.listuser.list })
-          .then(list => {
-            list.count = list.count - 1;
-            return list.save();
-          })
-          .then(list => {
-            return {user: result.user, listuser: result.listuser, list: list};
-          });
-      })
-      .then((result) => {
-        // Send notification if needed
-        if (request.params.currentUser.id !== userId) {
-          that.app.services.NotificationService.send({
-            type: 'admin_checkout',
-            createdBy: request.params.currentUser,
-            user: result.user,
-            params: { list: result.list }
-          }, () => { });
-        }
-        return result;
-      })
-      .then((result) => {
-        // Notify list managers of the checkin
-        that.app.services.NotificationService.notifyMultiple(result.list.managers, {
-          type: 'checkout',
-          createdBy: result.user,
-          params: { list: result.list }
-        });
-        return result;
-      })
-      .then((result) => {
-        gResult = result;
-        // Synchronize google spreadsheets
-        return GSSSyncService.deleteUserFromSpreadsheets(result.list._id, result.user.id);
-      })
-      .then(data => {
-        return OutlookService.deleteUserFromContactFolders(gResult.list._id, gResult.user.id);
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
-
-  updateListUsers(request, reply) {
-    reply();
-    const app = this;
-    const User = this.app.orm.User;
-    const childAttributes = User.listAttributes();
-    const stream = User
-      .find({})
-      .populate([{path: 'lists.list'},
-        {path: 'operations.list'},
-        {path: 'bundles.list'},
-        {path: 'disasters.list'},
-        {path: 'organization.list'},
-        {path: 'organizations.list'},
-        {path: 'functional_roles.list'},
-        {path: 'offices.list'}
-      ])
-      .stream();
-
-    stream.on('data', function(user) {
-      this.pause();
-      const that = this;
-      async.eachSeries(childAttributes, function (attr, nextAttr) {
-        async.eachSeries(user[attr], function (lu, nextLu) {
-          if (lu && lu.list && lu.list.owner) {
-            lu.owner = lu.list.owner;
-            lu.managers = lu.list.managers;
-            app.log.info('Updated list for ' + user._id.toString());
-            user.save(function (err) {
-              nextLu();
-            });
-          }
-          else {
-            app.log.info('No list for ' + user._id.toString());
-            nextLu();
-          }
-        }, function (err) {
-          nextAttr();
-        });
-      }, function (err) {
-        that.resume();
-      });
+    const user = await User.findOne({ _id: request.params.id });
+    if (!user) {
+      logger.info(
+        `[ListUserController->checkout] User ${request.params.id} not found`,
+      );
+      throw Boom.notFound();
+    }
+    const lu = user[childAttribute].id(checkInId);
+    // Set deleted to true
+    lu.deleted = true;
+    // If user is checking out of his primary organization,
+    // remove the listuser from the organization attribute
+    if (childAttribute === 'organizations'
+      && user.organization
+      && lu.list.toString() === user.organization.list.toString()) {
+      user.organization.remove();
+    }
+    user.lastModified = new Date();
+    const list = await List.findOne({ _id: lu.list });
+    const promises = [];
+    const pendingLogs = [];
+    list.count -= 1;
+    if (user.authOnly && !user.hidden) {
+      list.countManager -= 1;
+    }
+    if (!user.authOnly && !user.hidden) {
+      if (!user.is_orphan && !user.is_ghost) {
+        list.countManager -= 1;
+        list.countVerified -= 1;
+        list.countUnverified -= 1;
+      } else {
+        list.countManager -= 1;
+        list.countVerified -= 1;
+      }
+    }
+    promises.push(list.save());
+    pendingLogs.push({
+      type: 'info',
+      message: `[ListUserController->checkout] Saved list ${list._id.toString()}`,
     });
-
-    stream.on('close', function () {
-      app.log.info('Finished updating listusers');
+    promises.push(user.save());
+    pendingLogs.push({
+      type: 'info',
+      message: `[ListUserController->checkout] Saved user ${user._id.toString()}`,
     });
-  }
+    // Send notification if needed
+    if (request.auth.credentials.id !== userId && !user.hidden) {
+      promises.push(NotificationService.send({
+        type: 'admin_checkout',
+        createdBy: request.auth.credentials,
+        user,
+        params: { list },
+      }));
+      pendingLogs.push({
+        type: 'info',
+        message: `[ListUserController->checkout] Sent notification of type admin_checkout to user ${userId}`,
+      });
+    }
+    // Notify list managers of the checkin
+    promises.push(NotificationService.notifyMultiple(list.managers, {
+      type: 'checkout',
+      createdBy: user,
+      params: { list },
+    }));
+    pendingLogs.push({
+      type: 'info',
+      message: '[ListUserController->checkout] Sent notification of type checkout to list managers',
+    });
+    // Synchronize google spreadsheets
+    promises.push(GSSSyncService.deleteUserFromSpreadsheets(list._id, user.id));
+    pendingLogs.push({
+      type: 'info',
+      message: `[ListUserController->checkout] Deleted user ${user.id} from google spreadsheets associated to list ${list._id.toString()}`,
+    });
+    // promises.push(OutlookService.deleteUserFromContactFolders(list._id, user.id));
+    await Promise.all(promises);
+    for (let i = 0; i < pendingLogs.length; i += 1) {
+      logger.log(pendingLogs[i]);
+    }
+    return user;
+  },
 
 };

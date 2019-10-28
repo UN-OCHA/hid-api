@@ -1,87 +1,93 @@
-'use strict';
-
-const Controller = require('trails/controller');
-const Boom = require('boom');
-const Google = require('googleapis');
+const Boom = require('@hapi/boom');
+const { OAuth2Client } = require('google-auth-library');
 const fs = require('fs');
+const GSSSync = require('../models/GSSSync');
+const GSSSyncService = require('../services/GSSSyncService');
+const config = require('../../config/env')[process.env.NODE_ENV];
+
+const { logger } = config;
 
 /**
  * @module GSSSyncController
- * @description Generated Trails.js Controller.
+ * @description Handles the synchronization of lists with google spreadsheets.
  */
-module.exports = class GSSSyncController extends Controller{
 
-  createHelper (request, reply) {
-    const GSSSync = this.app.orm.GSSSync;
-    const GSSSyncService = this.app.services.GSSSyncService;
-    const that = this;
-    let gsync = {};
-    GSSSync
-      .create(request.payload)
-      .then((gsssync) => {
-        if (!gsssync) {
-          throw Boom.badRequest();
-        }
-        gsync = gsssync;
-        return GSSSyncService.synchronizeAll(gsssync);
-      })
-      .then((resp) => {
-        reply (gsync);
-      })
-      .catch(err => {
-        that.app.services.ErrorService.handle(err, request, reply);
-      });
-  }
+module.exports = {
 
-  create (request, reply) {
-    const GSSSyncService = this.app.services.GSSSyncService;
-    const that = this;
-    request.payload.user = request.params.currentUser._id;
+  /**
+   * Create a synchronization between a list and a Google spreadsheet.
+   */
+  async create(request) {
+    request.payload.user = request.auth.credentials._id;
     if (!request.payload.spreadsheet) {
-      GSSSyncService.createSpreadsheet(request.params.currentUser, request.payload.list, function (err, spreadsheet) {
-        if (err) {
-          return that.app.services.ErrorService.handle(err, request, reply);
-        }
-        request.payload.spreadsheet = spreadsheet.spreadsheetId;
-        request.payload.sheetId = spreadsheet.sheets[0].properties.sheetId;
-        that.createHelper(request, reply);
-      });
+      const spreadsheet = await GSSSyncService
+        .createSpreadsheet(request.auth.credentials, request.payload.list);
+      logger.info(
+        '[GSSSyncController->create] Created a Google Spreadsheet for synchronization with a list',
+        { list: request.payload.list },
+      );
+      request.payload.spreadsheet = spreadsheet.data.spreadsheetId;
+      request.payload.sheetId = spreadsheet.data.sheets[0].properties.sheetId;
     }
-    else {
-      this.createHelper(request, reply);
+    const gsssync = await GSSSync.create(request.payload);
+    if (!gsssync) {
+      logger.warn(
+        '[GSSSyncController->create] Could not create GSSSync',
+        { request: request.payload },
+      );
+      throw Boom.badRequest();
     }
-  }
+    logger.info(
+      '[GSSSyncController->create] Created a GSSSync',
+      { gsssync: request.payload },
+    );
+    await GSSSyncService.synchronizeAll(gsssync);
+    logger.info(
+      '[GSSSyncController->create] Synchronized gsssync',
+      { gsssync: request.payload },
+    );
+    return gsssync;
+  },
 
-  saveGoogleCredentials (request, reply) {
-    const that = this;
-    const OAuth2 = Google.auth.OAuth2;
+  /**
+   * Save Google access and refresh tokens to allow HID to access a spreadsheet
+   * in the provided Google account.
+   */
+  async saveGoogleCredentials(request, reply) {
     if (request.payload.code) {
       const creds = JSON.parse(fs.readFileSync('keys/client_secrets.json'));
-      const authClient = new OAuth2(creds.web.client_id, creds.web.client_secret, 'postmessage');
-      authClient
-        .getToken(request.payload.code, function (err, tokens) {
-          if (err) {
-            return that.app.services.ErrorService.handle(err, request, reply);
-          }
-          if (tokens && tokens.refresh_token) {
-            request.params.currentUser.googleCredentials = tokens;
-            request.params.currentUser.save();
-            reply().code(204);
-          }
-          else {
-            const noRefreshToken = Boom.badRequest('No refresh token');
-            that.app.services.ErrorService.handle(noRefreshToken, request, reply);
-          }
-        });
+      const authClient = new OAuth2Client(creds.web.client_id, creds.web.client_secret, 'postmessage');
+      const tokens = await authClient.getToken(request.payload.code);
+      if (tokens && tokens.refresh_token) {
+        request.auth.credentials.googleCredentials = tokens;
+        await request.auth.credentials.save();
+        logger.info(
+          '[GSSSyncController->saveGoogleCredentials] Saved Google credentials',
+          { user: request.auth.email },
+        );
+        return reply.response().code(204);
+      }
+      logger.warn(
+        '[GSSSyncController->saveGoogleCredentials] Missing refresh token when saving Google credentials',
+      );
+      throw Boom.badRequest('No refresh token');
+    } else {
+      logger.warn(
+        '[GSSSyncController->saveGoogleCredentials] Could not save Google credentials: no code provided',
+      );
+      throw Boom.badRequest();
     }
-    else {
-      return reply(Boom.badRequest());
-    }
-  }
+  },
 
-  destroy (request, reply) {
-    request.params.model = 'gsssync';
-    const FootprintController = this.app.controllers.FootprintController;
-    FootprintController.destroy(request, reply);
-  }
+  /**
+   * Removes the synchronization between a list
+   * and a Google spreadsheet.
+   */
+  async destroy(request, reply) {
+    await GSSSync.remove({ _id: request.params.id });
+    logger.info(
+      `[GSSSyncController->destroy] Removed GSSSync ${request.params.id}`,
+    );
+    return reply.response().code(204);
+  },
 };

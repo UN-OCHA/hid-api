@@ -1,17 +1,36 @@
-'use strict';
+const Boom = require('@hapi/boom');
+const ServiceCredentials = require('../models/ServiceCredentials');
+const HelperService = require('../services/HelperService');
+const config = require('../../config/env')[process.env.NODE_ENV];
 
-const Controller = require('trails/controller');
+const { logger } = config;
 
 /**
  * @module ServiceCredentialsController
- * @description Generated Trails.js Controller.
+ * @description Handles display of service credentials (google groups credentials)
  */
-module.exports = class ServiceCredentialsController extends Controller{
+module.exports = {
 
-  find (request, reply) {
-    request.params.model = 'servicecredentials';
-    const FootprintController = this.app.controllers.FootprintController;
-    FootprintController.find(request, reply);
-  }
+  async find(request, reply) {
+    const options = HelperService.getOptionsFromQuery(request.query);
+    const criteria = HelperService.getCriteriaFromQuery(request.query);
+
+    if (request.params.id) {
+      criteria._id = request.params.id;
+      const result = await ServiceCredentials.findOne(criteria);
+      if (!result) {
+        logger.warn(
+          `[ServiceCredentialsController->find] ServiceCredentials ${request.params.id} not found`,
+        );
+        throw Boom.notFound();
+      }
+      return result;
+    }
+    const [results, number] = await Promise.all([
+      HelperService.find(ServiceCredentials, criteria, options),
+      ServiceCredentials.count(criteria),
+    ]);
+    return reply.response(results).header('X-Total-Count', number);
+  },
 
 };

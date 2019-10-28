@@ -2,8 +2,7 @@
 
 [![Build Status](https://travis-ci.org/UN-OCHA/hid_api.svg?branch=master)](https://travis-ci.org/UN-OCHA/hid_api)
 
-Humanitarian ID v2 API is built on [TrailsJS](https://trailsjs.io). Much of the documentation concerning the structure of the code can
-therefore be found in [TrailsJS documentation](https://trailsjs.io/doc). It uses:
+Humanitarian ID v2 API is built on :
 
 * mongoDB as its database backend
 * hapi as its web server
@@ -61,7 +60,6 @@ Policies "protect" controller methods from being accessed by unauthorized users.
 Services are helper methods provided to the controllers.
 
 * EmailService: service to send emails
-* ErrorService: handles errors and sends them to newrelic
 * HelperService: various helper functions for controllers
 * JwtService: issues and verifies Json Web tokens
 * ListService: helper methods for lists controller
