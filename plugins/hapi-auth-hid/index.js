@@ -135,10 +135,8 @@ internals.implementation = () => ({
       request.auth.credentials = creds.credentials;
       return h.continue;
     }
-    else {
-      logger.warn('No authorization token was found', { security: true, fail: true, request });
-      throw Boom.unauthorized('No authorization token found');
-    }
+    logger.warn('No authorization token was found', { security: true, fail: true, request });
+    throw Boom.unauthorized('No authorization token found');
   },
 
   options: {
