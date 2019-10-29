@@ -25,4 +25,8 @@ const FloodSchema = new Schema({
   timestamps: true,
 });
 
+FloodSchema.index({
+  user: 1,
+});
+
 module.exports = mongoose.model('Flood', FloodSchema);
