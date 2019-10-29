@@ -95,7 +95,6 @@ module.exports = {
     if (request.query.client_id) {
       try {
         const client = await Client.findOne({ id: request.query.client_id });
-        console.log('client', client, request.query.client_id);
         if (!client
           || (client && client.redirectUri !== request.query.redirect_uri
             && !client.redirectUrls.includes(request.query.redirect_uri))) {
