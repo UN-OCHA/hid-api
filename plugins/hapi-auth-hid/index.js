@@ -130,13 +130,15 @@ internals.implementation = () => ({
     if (isAuthenticated) {
       return h.continue;
     }
-    if (!request.payload.access_token) {
+    if (request.payload && request.payload.access_token) {
+      const creds = await internals.tokenToUser(request.payload.access_token);
+      request.auth.credentials = creds.credentials;
+      return h.continue;
+    }
+    else {
       logger.warn('No authorization token was found', { security: true, fail: true, request });
       throw Boom.unauthorized('No authorization token found');
     }
-    const creds = await internals.tokenToUser(request.payload.access_token);
-    request.auth.credentials = creds.credentials;
-    return h.continue;
   },
 
   options: {
