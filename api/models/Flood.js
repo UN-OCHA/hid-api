@@ -26,7 +26,9 @@ const FloodSchema = new Schema({
 });
 
 FloodSchema.index({
-  user: 1,
+  email: 1,
+  type: 1,
+  createdAt: 1,
 });
 
 module.exports = mongoose.model('Flood', FloodSchema);
