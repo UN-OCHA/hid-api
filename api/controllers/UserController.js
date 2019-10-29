@@ -324,9 +324,7 @@ module.exports = {
 
       if (user.email && notify === true) {
         if (!request.auth.credentials) {
-          if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'testing') {
-            await EmailService.sendRegister(user, appVerifyUrl);
-          }
+          await EmailService.sendRegister(user, appVerifyUrl);
           logger.info(
             `[UserController->create] Sent registration email to ${user.email}`,
           );
@@ -715,9 +713,7 @@ module.exports = {
       );
       throw Boom.notFound();
     }
-    if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'testing') {  
-      await EmailService.sendAdminDelete(user, request.auth.credentials);
-    }
+    await EmailService.sendAdminDelete(user, request.auth.credentials);
     await user.remove();
     logger.info(
       `[UserController->destroy] Removed user ${request.params.id}`,

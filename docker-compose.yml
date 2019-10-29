@@ -28,10 +28,10 @@ services:
       PORT: 80
       NODE_ENV: local
       ROOT_URL: http://api.hid.vm
-      SMTP_HOST: 12345.com
-      SMTP_PORT: 1025
-      SMTP_USER: humanitarianid
-      SMTP_PASS: smtp_password
+      SMTP_HOST: smtp.ethereal.email
+      SMTP_PORT: 587
+      SMTP_USER: jeanette.senger60@ethereal.email
+      SMTP_PASS: 7sJmaG2sf5a8r6VyJS
       APP_URL: http://app.hid.vm
       COOKIE_PASSWORD: 6*a!_5;1:|7~+%5**WdS:^;X%PN||~:_:_R
       V1_PROFILES_CLIENT_ID: clientid

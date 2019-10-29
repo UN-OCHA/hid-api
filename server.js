@@ -4,10 +4,7 @@
  * Start up the Trails Application.Test
  */
 
-let newrelic;
-if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'testing') {
-  newrelic = require('newrelic');
-}
+const newrelic = require('newrelic');
 const path = require('path');
 const _ = require('lodash');
 const mongoose = require('mongoose');
@@ -46,10 +43,8 @@ const preResponse = (request, reply) => {
   }
   if (response.output.statusCode === 500) {
     logger.error('Unexpected error', { request, error: response.toString() });
-    if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'testing') {
-      // Send the error to newrelic
-      newrelic.noticeError(response.toString());
-    }
+    // Send the error to newrelic
+    newrelic.noticeError(response.toString());
   }
   return reply.continue;
 };
@@ -116,9 +111,7 @@ const init = async () => {
 };
 
 process.on('unhandledRejection', (err, p) => {
-  if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'testing') {
-    newrelic.noticeError(err);
-  }
+  newrelic.noticeError(err);
   logger.error('[unhandledRejection] Unhandled rejection error', err, p);
   process.exit(1);
 });
