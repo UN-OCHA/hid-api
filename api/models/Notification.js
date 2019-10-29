@@ -46,6 +46,11 @@ const NotificationSchema = new Schema({
   timestamps: true,
 });
 
+NotificationSchema.index({
+  read: 1,
+  user: 1,
+});
+
 /* eslint prefer-arrow-callback: "off", func-names: "off" */
 NotificationSchema.pre('save', async function (next) {
   if (!this.text) {

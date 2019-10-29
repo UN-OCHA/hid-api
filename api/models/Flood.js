@@ -25,4 +25,10 @@ const FloodSchema = new Schema({
   timestamps: true,
 });
 
+FloodSchema.index({
+  email: 1,
+  type: 1,
+  createdAt: 1,
+});
+
 module.exports = mongoose.model('Flood', FloodSchema);

@@ -26,4 +26,8 @@ const JwtTokenSchema = new Schema({
   collection: 'jwttoken',
 });
 
+JwtTokenSchema.index({
+  user: 1,
+});
+
 module.exports = mongoose.model('JwtToken', JwtTokenSchema);
