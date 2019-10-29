@@ -20,6 +20,7 @@ const authorizedDomains = [
   'https://app.staging.humanitarian.id',
   'https://api.hid.vm',
   'https://app.hid.vm',
+  'http://api.hid.vm',
   'http://app.hid.vm',
 ];
 
