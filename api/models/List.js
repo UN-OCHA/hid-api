@@ -201,6 +201,12 @@ ListSchema.index(
   },
 );
 
+// Index names.text for name based queries.
+ListSchema.index({ 'names.text': 1 });
+
+// Index deleted attribute.
+ListSchema.index({ 'deleted': 1 });
+
 ListSchema.methods = {
   getAppUrl() {
     return `${process.env.APP_URL}/lists/${this._id}`;
