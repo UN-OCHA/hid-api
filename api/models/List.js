@@ -205,7 +205,7 @@ ListSchema.index(
 ListSchema.index({ 'names.text': 1 });
 
 // Index deleted attribute.
-ListSchema.index({ 'deleted': 1 });
+ListSchema.index({ deleted: 1 });
 
 ListSchema.methods = {
   getAppUrl() {

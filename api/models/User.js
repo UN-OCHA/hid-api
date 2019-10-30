@@ -667,8 +667,8 @@ const UserSchema = new Schema({
 UserSchema.index({ name: 1 }, { collation: { locale: 'en_US' } });
 
 // Index lists for list of users.
-UserSchema.index({ 'lists.list': 1});
-UserSchema.index({ 'operations.list': 1});
+UserSchema.index({ 'lists.list': 1 });
+UserSchema.index({ 'operations.list': 1 });
 UserSchema.index({ 'bundles.list': 1 });
 UserSchema.index({ 'disasters.list': 1 });
 UserSchema.index({ 'offices.list': 1 });
