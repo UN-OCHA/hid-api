@@ -160,6 +160,7 @@ module.exports = {
     if (listTypes.indexOf(listType) === -1) {
       logger.warn(
         `[WebhooksController->hrinfo] Wrong list type ${listType}`,
+        { request: request.payload },
       );
       throw Boom.badRequest();
     }
@@ -183,6 +184,7 @@ module.exports = {
           list2 = await List.create(newList);
           logger.info(
             `[WebhooksController->hrinfo] Created new list ${list2._id.toString()}`,
+            { request: request.payload },
           );
         } else {
           if (newList.name !== gList.name || newList.visibility !== gList.visibility) {
@@ -242,6 +244,7 @@ module.exports = {
             await group.save();
             logger.info(
               `[WebhooksController->hrinfo] Updated list ${group._id.toString()}`,
+              { request: request.payload },
             );
           }
         }
