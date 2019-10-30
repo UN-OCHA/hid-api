@@ -461,6 +461,9 @@ module.exports = {
       delete criteria.format;
     }
     const query = HelperService.find(User, criteria, options);
+    if (criteria.name) {
+      query.collation({ locale: 'en_US' });
+    }
     // HID-1561 - Set export limit to 2000
     if (!options.limit && request.params.extension) {
       query.limit(100000);
