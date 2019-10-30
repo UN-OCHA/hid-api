@@ -289,7 +289,7 @@ module.exports = [
     options: {
       validate: {
         params: Joi.object({
-          extension: Joi.string().valid('csv', 'pdf').required(),
+          extension: Joi.string().valid('csv', 'pdf', 'txt').required(),
         }),
       },
     },
