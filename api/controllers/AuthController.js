@@ -422,6 +422,48 @@ module.exports = {
         );
         throw Boom.badRequest('Missing authorization code');
       }
+      // Check client_id and client_secret
+      let client = null;
+      let clientId = null;
+      let clientSecret = null;
+      if (request.payload.client_id && request.payload.client_secret) {
+        // Using client_secret_post authorization
+        clientId = request.payload.client_id;
+        clientSecret = request.payload.client_secret;
+      } else if (request.headers.authorization) {
+        // Using client_secret_basic authorization
+        // Decrypt the Authorization header.
+        const parts = request.headers.authorization.split(' ');
+        if (parts.length === 2) {
+          const credentials = parts[1];
+          const buff = Buffer.from(credentials, 'base64');
+          const text = buff.toString('ascii');
+          const cparts = text.split(':');
+          [clientId, clientSecret] = cparts;
+        }
+      } else {
+        logger.warn(
+          '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to invalid client authentication.',
+          { security: true, fail: true, request },
+        );
+        throw Boom.badRequest('invalid client authentication');
+      }
+      // Using client_secret_post authentication method.
+      client = await Client.findOne({ id: clientId });
+      if (!client) {
+        logger.warn(
+          '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to wrong client ID.',
+          { security: true, fail: true, request },
+        );
+        throw Boom.badRequest('invalid client_id');
+      }
+      if (clientSecret !== client.secret) {
+        logger.warn(
+          '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to wrong client authentication.',
+          { security: true, fail: true, request },
+        );
+        throw Boom.badRequest('invalid client_secret');
+      }
       const token = request.payload.code ? request.payload.code : request.payload.refresh_token;
       const type = request.payload.code ? 'code' : 'refresh';
       const ocode = await OauthToken.findOne({ token, type }).populate('client user');
@@ -457,6 +499,10 @@ module.exports = {
       issuer: root,
       authorization_endpoint: `${root}/oauth/authorize`,
       token_endpoint: `${root}/oauth/access_token`,
+      token_endpoint_auth_methods_supported: [
+        'client_secret_basic',
+        'client_secret_post',
+      ],
       userinfo_endpoint: `${root}/account.json`,
       jwks_uri: `${root}/oauth/jwks`,
       response_types_supported: ['code', 'token', 'id_token', 'id_token token'],
