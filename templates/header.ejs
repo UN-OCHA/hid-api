@@ -92,8 +92,13 @@
   var ochaDropdown = document.querySelector('.cd-ocha');
 
   ochaButton.addEventListener('click', function toggleDropdown() {
-    ochaButton.setAttribute('aria-expanded', !ochaButton.getAttribute('aria-expanded'));
-    ochaDropdown.classList.toggle('open');
+    if (ochaButton.getAttribute('aria-expanded') === 'true') {
+      ochaButton.setAttribute('aria-expanded', 'false');
+      ochaDropdown.classList.remove('open');
+    } else {
+      ochaButton.setAttribute('aria-expanded', 'true');
+      ochaDropdown.classList.add('open');
+    }
   });
 }());
 </script>
