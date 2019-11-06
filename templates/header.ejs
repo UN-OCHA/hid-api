@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="no-js" lang="en-US" dir="ltr">
+<html class="no-js no-cssgrid" lang="en-US" dir="ltr">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -30,11 +30,48 @@
       <header class="cd-header" role="banner">
         <div class="cd-global-header">
           <div class="cd-container cd-global-header__inner">
-            <div class="cd-ocha">
-              <span class="cd-ocha-btn cd-global-header__dropdown-btn" id="cd-ocha-dropdown-toggle" aria-label="OCHA Services">
-                <span class="cd-ocha-btn__logo"></span>
-                <span class="cd-ocha-btn__label" style="display: block">OCHA Services</span>
-              </span>
+            <div class="cd-ocha dropdown" uib-dropdown keyboard-nav="true">
+              <button type="button" class="cd-ocha-btn cd-global-header__dropdown-btn" id="cd-ocha-dropdown-toggle" aria-expanded="false" aria-label="OCHA Services" data-toggle="dropdown" uib-dropdown-toggle>
+                <span class="cd-ocha-btn__logo" aria-hidden="true"></span>
+                <span class="cd-ocha-btn__label" translate>OCHA Services</span>
+                <svg class="icon icon--arrow-down">
+                  <use xlink:href="#arrow-down"></use>
+                </svg>
+              </button>
+              <div class="cd-global-header__dropdown cd-ocha-dropdown cd-dropdown" role="menu" id="cd-ocha-dropdown" aria-labelledby="cd-ocha-dropdown-toggle" uib-dropdown-menu>
+                <div class="cd-ocha-dropdown__inner">
+                  <div class="cd-ocha-dropdown__section">
+                    <p class="cd-ocha-dropdown__heading" translate>Related Platforms</p>
+                    <ul class="cd-ocha-dropdown__list">
+                      <li class="cd-ocha-dropdown__link"><a href="https://gms.unocha.org">Grant Management System</a></li>
+                      <li class="cd-ocha-dropdown__link"><a href="https://humanitarianresponse.info">Humanitarian Response</a></li>
+                      <li class="cd-ocha-dropdown__link"><a href="https://hum-insight.info">Humanitarian Insight</a></li>
+                      <li class="cd-ocha-dropdown__link"><a href="https://reliefweb.int">ReliefWeb</a></li>
+                    </ul>
+                  </div>
+                  <div class="cd-ocha-dropdown__section">
+                    <p class="cd-ocha-dropdown__heading" translate>Other OCHA Services</p>
+                    <ul class="cd-ocha-dropdown__list">
+                      <li class="cd-ocha-dropdown__link"><a href="https://fts.unocha.org/">Financial Tracking Service</a></li>
+                      <li class="cd-ocha-dropdown__link"><a href="https://data.humdata.org/">Humanitarian Data Exchange</a></li>
+                      <li class="cd-ocha-dropdown__link"><a href="https://humanitarian.id/">Humanitarian ID</a></li>
+                      <li class="cd-ocha-dropdown__link"><a href="https://humanitarianresponse.info/">Humanitarian Response</a></li>
+                    </ul>
+                  </div>
+                  <div class="cd-ocha-dropdown__section">
+                    <p class="cd-ocha-dropdown__heading" aria-hidden="true">&nbsp;</p>
+                    <ul class="cd-ocha-dropdown__list">
+                      <li class="cd-ocha-dropdown__link"><a href="https://interagencystandingcommittee.org">Inter-Agency Standing Committee</a></li>
+                      <li class="cd-ocha-dropdown__link"><a href="https://unocha.org/">OCHA website</a></li>
+                      <li class="cd-ocha-dropdown__link"><a href="https://reliefweb.int/">ReliefWeb</a></li>
+                      <li class="cd-ocha-dropdown__link"><a href="https://vosocc.unocha.org/">Virtual OSOCC</a></li>
+                    </ul>
+                  </div>
+                  <div class="cd-ocha-dropdown__section">
+                    <a class="cd-ocha-dropdown__see-all" href="https://www.unocha.org/ocha-digital-services" target="_blank" rel="noopener">See all</a>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -48,3 +85,31 @@
           </div>
         </div>
       </header>
+
+<script>
+(function iife() {
+  // Remove no-js class from HTML
+  document.documentElement.classList.remove('no-js');
+
+  // Feature detection for CSS Grid
+  if (window.CSS && window.CSS.supports && window.CSS.supports('display: grid')) {
+    document.documentElement.classList.remove('no-cssgrid');
+    document.documentElement.classList.add('cssgrid');
+  }
+
+  // Define our OCHA Services elements
+  var ochaButton = document.querySelector('#cd-ocha-dropdown-toggle');
+  var ochaDropdown = document.querySelector('.cd-ocha');
+
+  // Listen for interaction
+  ochaButton.addEventListener('click', function toggleDropdown() {
+    if (ochaButton.getAttribute('aria-expanded') === 'true') {
+      ochaButton.setAttribute('aria-expanded', 'false');
+      ochaDropdown.classList.remove('open');
+    } else {
+      ochaButton.setAttribute('aria-expanded', 'true');
+      ochaDropdown.classList.add('open');
+    }
+  });
+}());
+</script>
