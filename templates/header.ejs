@@ -101,6 +101,7 @@
   var ochaButton = document.querySelector('#cd-ocha-dropdown-toggle');
   var ochaDropdown = document.querySelector('.cd-ocha');
 
+  // Listen for interaction
   ochaButton.addEventListener('click', function toggleDropdown() {
     if (ochaButton.getAttribute('aria-expanded') === 'true') {
       ochaButton.setAttribute('aria-expanded', 'false');
