@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="no-js" lang="en-US" dir="ltr">
+<html class="no-js no-cssgrid" lang="en-US" dir="ltr">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -88,6 +88,16 @@
 
 <script>
 (function iife() {
+  // Remove no-js class from HTML
+  document.documentElement.classList.remove('no-js');
+
+  // Feature detection for CSS Grid
+  if (window.CSS && window.CSS.supports && window.CSS.supports('display: grid')) {
+    document.documentElement.classList.remove('no-cssgrid');
+    document.documentElement.classList.add('cssgrid');
+  }
+
+  // Define our OCHA Services elements
   var ochaButton = document.querySelector('#cd-ocha-dropdown-toggle');
   var ochaDropdown = document.querySelector('.cd-ocha');
 
