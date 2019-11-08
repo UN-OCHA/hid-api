@@ -4650,19 +4650,19 @@ a.cd-footer-social__link {
   padding-top: 16px;
   padding-bottom: 16px; }
 
-.pdf .col-xs-8 {
-  float: left;
-  width: 66.66667%; }
-
-.pdf .col-xs-4 {
-  float: left;
-  width: 33.33333%; }
-
-.pdf .page-header {
-  padding-top: 24px;
-  margin-bottom: 16px; }
-  .pdf .page-header img {
-    height: auto; }
+.pdf {
+  background-color: white; }
+  .pdf .col-xs-8 {
+    float: left;
+    width: 66.66667%; }
+  .pdf .col-xs-4 {
+    float: left;
+    width: 33.33333%; }
+  .pdf .page-header {
+    padding-top: 24px;
+    margin-bottom: 16px; }
+    .pdf .page-header img {
+      height: auto; }
 
 .table {
   font-size: 14px;
