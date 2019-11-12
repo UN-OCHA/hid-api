@@ -242,7 +242,7 @@ module.exports = {
     const appVerifyUrl = request.payload.app_verify_url;
     if (!HelperService.isAuthorizedUrl(appVerifyUrl)) {
       logger.warn(
-        '[UserController->create] Invalid app_verify_url',
+        `[UserController->create] app_verify_url ${appVerifyUrl} is not in authorizedDomains allowlist`,
         { security: true, fail: true, request },
       );
       throw Boom.badRequest('Invalid app_verify_url');
@@ -877,7 +877,7 @@ module.exports = {
     const appValidationUrl = request.payload.app_validation_url;
     if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
       logger.warn(
-        `[UserController->validateEmail] Invalid app_validation_url ${appValidationUrl}`,
+        `[UserController->validateEmail] app_validation_url ${appValidationUrl} is not in authorizedDomains allowlist`,
         { security: true, fail: true, request },
       );
       throw Boom.badRequest('Invalid app_validation_url');
@@ -941,7 +941,7 @@ module.exports = {
 
       if (!HelperService.isAuthorizedUrl(appResetUrl)) {
         logger.warn(
-          `[UserController->resetPasswordEndpoint] Invalid app_reset_url ${appResetUrl}`,
+          `[UserController->resetPasswordEndpoint] app_reset_url ${appResetUrl} is not in authorizedDomains allowlist`,
           { security: true, fail: true, request },
         );
         throw Boom.badRequest('app_reset_url is invalid');
@@ -1048,7 +1048,7 @@ module.exports = {
 
     if (!HelperService.isAuthorizedUrl(appResetUrl)) {
       logger.warn(
-        `[UserController->claimEmail] Invalid app_reset_url ${appResetUrl}`,
+        `[UserController->claimEmail] app_reset_url ${appResetUrl} is not in authorizedDomains allowlist`,
         { security: true, fail: true, request },
       );
       throw Boom.badRequest('app_reset_url is invalid');
@@ -1114,7 +1114,7 @@ module.exports = {
 
     if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
       logger.warn(
-        `[UserController->addEmail] Invalid app_validation_url ${appValidationUrl}`,
+        `[UserController->addEmail] app_validation_url ${appValidationUrl} is not in authorizedDomains allowlist`,
         { security: true, fail: true, request },
       );
       throw Boom.badRequest('Invalid app_validation_url');
