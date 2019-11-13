@@ -72,6 +72,25 @@
                 </div>
               </div>
             </div>
+            <div class="cd-global-header__language-switcher">
+              <div class="cd-language-switcher" uib-dropdown keyboard-nav="true">
+                <span class="cd-user-menu__item cd-user-menu__item--small cd-global-header__dropdown-btn t-lang-btn" id="cd-language-toggle">en</span>
+              </div>
+            </div>
+            <div class="cd-global-header__user-menu">
+              <div uib-dropdown keyboard-nav="true">
+                <h2 class="element-invisible" translate>User menu</h2>
+
+                <!-- anonymous user-login link -->
+                <div ng-if="!isAuthenticated" class="content">
+                  <ul class="menu cd-global-header__dropdown-btn cd-user-menu__item" role="menu">
+                    <li class="cd-user-menu__icon-login">
+                      <a href="/" class="login-link" translate>Login</a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="cd-site-header">
@@ -96,11 +115,11 @@
     document.documentElement.classList.add('cssgrid');
   }
 
-  // Define our OCHA Services elements
+  // Define OCHA Services elements
   var ochaButton = document.querySelector('#cd-ocha-dropdown-toggle');
   var ochaDropdown = document.querySelector('.cd-ocha');
 
-  // Listen for interaction
+  // Listen for interaction with OCHA Services menu
   ochaButton.addEventListener('click', function toggleDropdown() {
     if (ochaButton.getAttribute('aria-expanded') === 'true') {
       ochaButton.setAttribute('aria-expanded', 'false');
@@ -111,6 +130,22 @@
       ochaDropdown.classList.add('open');
       ga('send', 'event', 'Auth', 'OCHA Services', 'Open');
     }
+  });
+
+  // Define Login element
+  var loginLink = document.querySelector('.login-link');
+
+  // Listen for interaction with Login link
+  loginLink.addEventListener('click', function reportLoginClick(ev) {
+    // Prevent full-page refresh
+    ev.preventDefault();
+
+    // Focus on email input
+    var emailInput = document.querySelector('#email');
+    emailInput.focus();
+
+    // Log interaction in GA
+    ga('send', 'event', 'Auth', 'Login', 'Click');
   });
 }());
 </script>
