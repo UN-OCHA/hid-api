@@ -12,16 +12,15 @@
         <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
         <script>window.html5 || document.write('<script src="js/vendor/html5shiv.js"><\/script>')</script>
     <![endif]-->
-    <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
     <script>
-        (function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
-        function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
-        e=o.createElement(i);r=o.getElementsByTagName(i)[0];
-        e.src='//www.google-analytics.com/analytics.js';
-        r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
-        ga('create','UA-60189654-2','auto');ga('send','pageview');
+      (function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+      function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+      e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+      e.src='//www.google-analytics.com/analytics.js';
+      r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+      ga('create','UA-60189654-2','auto');
+      ga('send','pageview');
     </script>
-
   </head>
   <body>
     <a id="skip-to-content" href="#main" class="skip-link element-invisible element-focusable">Skip to main content</a>
@@ -106,9 +105,11 @@
     if (ochaButton.getAttribute('aria-expanded') === 'true') {
       ochaButton.setAttribute('aria-expanded', 'false');
       ochaDropdown.classList.remove('open');
+      ga('send', 'event', 'Auth', 'OCHA Services', 'Close');
     } else {
       ochaButton.setAttribute('aria-expanded', 'true');
       ochaDropdown.classList.add('open');
+      ga('send', 'event', 'Auth', 'OCHA Services', 'Open');
     }
   });
 }());
