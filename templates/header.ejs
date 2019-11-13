@@ -77,6 +77,20 @@
                 <span class="cd-user-menu__item cd-user-menu__item--small cd-global-header__dropdown-btn t-lang-btn" id="cd-language-toggle">en</span>
               </div>
             </div>
+            <div class="cd-global-header__user-menu">
+              <div uib-dropdown keyboard-nav="true">
+                <h2 class="element-invisible" translate>User menu</h2>
+
+                <!-- anonymous user-login link -->
+                <div ng-if="!isAuthenticated" class="content">
+                  <ul class="menu cd-global-header__dropdown-btn cd-user-menu__item" role="menu">
+                    <li class="cd-user-menu__icon-login">
+                      <a href="/" class="login-link" translate>Login</a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="cd-site-header">
