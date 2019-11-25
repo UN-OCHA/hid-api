@@ -9,19 +9,26 @@ const queryOptions = [
   'fields',
 ];
 const authorizedDomains = [
+  // Production
   'https://humanitarian.id',
+  'https://api.humanitarian.id',
   'https://auth.humanitarian.id',
-  'https://app.cd.dev.humanitarian.id',
+
+  // Dev
   'https://app.dev.humanitarian.id',
   'https://api.dev.humanitarian.id',
-  'https://api.humanitarian.id',
-  'https://auth.staging.humanitarian.id',
-  'https://api.staging.humanitarian.id',
+  'https://auth.dev.humanitarian.id',
+
+  // Staging
   'https://app.staging.humanitarian.id',
-  'https://api.hid.vm',
+  'https://api.staging.humanitarian.id',
+  'https://auth.staging.humanitarian.id',
+
+  // Local
   'https://app.hid.vm',
-  'http://api.hid.vm',
+  'https://api.hid.vm',
   'http://app.hid.vm',
+  'http://api.hid.vm',
 ];
 
 /**
