@@ -62,21 +62,21 @@
                   <% users.forEach(function (user) { %>
                   <tr class="profile-item ng-scope">
                     <td class="col-xs-2">
-                      <%= user.name %>
+                      <%- user.name %>
                     </td>
                     <td class="col-xs-2">
                       <% if (user.organization && user.organization.list) { %>
-                      <%= user.organization.name %>
+                      <%- user.organization.name %>
                       <% } %>
                     </td>
                     <td class="col-xs-2">
-                      <%= user.job_title %>
+                      <%- user.job_title %>
                     </td>
                     <td class="col-xs-2">
-                      <%= user.phone_number %>
+                      <%- user.phone_number %>
                     </td>
                     <td class="col-xs-2">
-                      <%= user.email %>
+                      <%- user.email %>
                     </td>
                     <td class="col-xs-3">
                     </td>
