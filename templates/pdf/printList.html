@@ -60,12 +60,12 @@
                 <tbody>
                   <% users.forEach(function (user) { %>
                   <tr class="profile-item ng-scope">
-                    <td class="title-cell"><div class="avoid ng-binding"><%= user.name %></div></td>
-                    <td><div class="avoid ng-binding"><% if (user.organization && user.organization.list) { %><%= user.organization.name %><% } %></div></td>
-                    <td><div class="avoid ng-binding"><%= user.job_title %></div></td>
-                    <td><%= user.phone_number %></td>
-                    <td><%= user.email %></td>
-                    <td><% if (user.location && user.location.country) { %><%= user.location.country.name %><% } %> <% if (user.location && user.location.region) { %><%= user.location.region.name %><% } %></td>
+                    <td class="title-cell"><div class="avoid ng-binding"><%- user.name %></div></td>
+                    <td><div class="avoid ng-binding"><% if (user.organization && user.organization.list) { %><%- user.organization.name %><% } %></div></td>
+                    <td><div class="avoid ng-binding"><%- user.job_title %></div></td>
+                    <td><%- user.phone_number %></td>
+                    <td><%- user.email %></td>
+                    <td><% if (user.location && user.location.country) { %><%- user.location.country.name %><% } %> <% if (user.location && user.location.region) { %><%- user.location.region.name %><% } %></td>
                   </tr>
                   <% }); %>
                 </tbody>
