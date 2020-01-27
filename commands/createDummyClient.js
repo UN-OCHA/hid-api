@@ -2,8 +2,10 @@
 /* eslint func-names: "off" */
 
 /**
- * @module migrateRedirectUrls
- * @description Migrates the redirect URLs to an array to allow for multiple redirect URLs
+ * @module createDummyClient
+ * @description Create dummy client.
+ *
+ * docker-compose exec dev node ./commands/createDummyClient.js
  */
 const mongoose = require('mongoose');
 const app = require('../');
@@ -19,18 +21,11 @@ async function run() {
     id: 'client',
     name: 'client',
     secret: 'clientsecret',
-    url: 'https://iasc8.local.docksal/',
-    redirectUrls: ['https://iasc8.local.docksal/user/login/hid/callback']
+    url: 'https://example.com/',
+    redirectUrls: ['https://example.com/user/login/hid/callback']
   };
 
   await Client.create(clientInfo);
-
-  const cursor = Client.find({ }).cursor({ noCursorTimeout: true });
-
-  // Loop through each client in the database.
-  for (let client = await cursor.next(); client != null; client = await cursor.next()) {
-    console.log(client.name);
-  }
 
   process.exit();
 }
