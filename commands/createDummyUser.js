@@ -7,6 +7,7 @@
  * docker-compose exec dev node ./commands/createDummyUser.js
  */
 const mongoose = require('mongoose');
+const args = require('yargs').argv;
 const app = require('../');
 
 const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
@@ -15,22 +16,38 @@ mongoose.connect(store.uri, store.options);
 const User = require('../api/models/User');
 
 async function run() {
-  let reginfo = {
+  const userInfo = {
     email: 'test@example.com',
     password: 'testing',
     family_name: 'test',
-    given_name: 'test'
+    given_name: 'test',
   };
 
-  reginfo.confirm_password = reginfo.password;
+  if (args.email) {
+    userInfo.email = args.email;
+  }
 
-  reginfo.emails = [];
-  reginfo.emails.push({ type: 'Work', email: reginfo.email, validated: false });
+  if (args.password) {
+    userInfo.password = args.password;
+  }
 
-  reginfo.password = User.hashPassword(reginfo.password);
-  reginfo.email_verified = true;
+  if (args.family_name) {
+    userInfo.family_name = args.family_name;
+  }
 
-  const user = await User.create(reginfo);
+  if (args.given_name) {
+    userInfo.given_name = args.given_name;
+  }
+
+  userInfo.confirm_password = userInfo.password;
+
+  userInfo.emails = [];
+  userInfo.emails.push({ type: 'Work', email: userInfo.email, validated: false });
+
+  userInfo.password = User.hashPassword(userInfo.password);
+  userInfo.email_verified = true;
+
+  await User.create(userInfo);
 
   process.exit();
 }
