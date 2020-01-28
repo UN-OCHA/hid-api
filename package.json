@@ -51,7 +51,8 @@
     "simple-oauth2": "^2.4.0",
     "validator": "^10.11.0",
     "winston": "^2.2",
-    "winston-daily-rotate-file": "^1.4.6"
+    "winston-daily-rotate-file": "^1.4.6",
+    "yargs": "^15.1.0"
   },
   "devDependencies": {
     "diff": ">=3.5.0",
