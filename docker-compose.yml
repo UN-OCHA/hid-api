@@ -3,7 +3,6 @@ services:
   db:
     image: unocha/mongo:4.0.5
     volumes:
-      - ./data:/srv
       - ./db:/srv/db
       - .:/srv/www
     environment:
