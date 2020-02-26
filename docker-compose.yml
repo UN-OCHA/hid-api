@@ -3,8 +3,8 @@ services:
   db:
     image: unocha/mongo:4.0.5
     volumes:
-      - ./db:/srv/db
       - ./data:/srv
+      - ./db:/srv/db
       - .:/srv/www
     environment:
       DNSDOCK_NAME: db
