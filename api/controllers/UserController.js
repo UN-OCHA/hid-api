@@ -544,6 +544,17 @@ module.exports = {
         `[UserController->update] Updating user password for user ${user.id}`,
         { security: true },
       );
+
+      // Check to see if new password matches current (old) password.
+      if (request.payload.old_password === request.payload.new_password) {
+        logger.warn(
+          `[UserController->update] Could not update user password for user ${user.id}. New password is the same as old password`,
+          { request, security: true, fail: true },
+        );
+        throw Boom.badRequest('New password must be different than previous password');
+      }
+
+      // Check old password before continuing. It must be correct to proceed.
       if (user.validPassword(request.payload.old_password)) {
         if (!User.isStrongPassword(request.payload.new_password)) {
           logger.warn(
