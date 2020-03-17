@@ -905,37 +905,44 @@ module.exports = {
   },
 
   async updatePassword(request, reply) {
-    if (!request.payload.old_password || !request.payload.new_password) {
-      logger.warn(
-        '[UserController->updatePassword] Request is missing parameters (old or new password)',
-      );
-      throw Boom.badRequest('Request is missing parameters (old or new password)');
-    }
-
-    if (request.payload.old_password === request.payload.new_password) {
-      logger.warn(
-        `[UserController->update] Could not update user password for user ${user.id}. New password is the same as old password`,
-        { request, security: true, fail: true },
-      );
-      throw Boom.badRequest('New password must be different than previous password');
-    }
-
-    if (!User.isStrongPassword(request.payload.new_password)) {
-      logger.warn(
-        '[UserController->updatePassword] New password is not strong enough',
-        { request, security: true, fail: true },
-      );
-      throw Boom.badRequest('New password is not strong enough');
-    }
-
-    // Check old password
     const user = await User.findOne({ _id: request.params.id });
+
+    // Was the user parameter supplied?
     if (!user) {
       logger.warn(
         `[UserController->updatePassword] User ${request.params.id} not found`,
       );
       throw Boom.notFound();
     }
+
+    // Are both password parameters present?
+    if (!request.payload.old_password || !request.payload.new_password) {
+      logger.warn(
+        `[UserController->updatePassword] Could not update user password for user ${user.id}. Request is missing parameters (old or new password)`,
+        { request, security: true, fail: true },
+      );
+      throw Boom.badRequest('Request is missing parameters (old or new password)');
+    }
+
+    // Business logic: is the new password different than the old one?
+    if (request.payload.old_password === request.payload.new_password) {
+      logger.warn(
+        `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is the same as old password`,
+        { request, security: true, fail: true },
+      );
+      throw Boom.badRequest('New password must be different than previous password');
+    }
+
+    // Business logic: is the new password strong enough?
+    if (!User.isStrongPassword(request.payload.new_password)) {
+      logger.warn(
+        `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is not strong enough`,
+        { request, security: true, fail: true },
+      );
+      throw Boom.badRequest('New password is not strong enough');
+    }
+
+    // Proceed with password update.
     if (user.validPassword(request.payload.old_password)) {
       user.password = User.hashPassword(request.payload.new_password);
       user.lastModified = new Date();
