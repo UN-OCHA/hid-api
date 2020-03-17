@@ -912,6 +912,14 @@ module.exports = {
       throw Boom.badRequest('Request is missing parameters (old or new password)');
     }
 
+    if (request.payload.old_password === request.payload.new_password) {
+      logger.warn(
+        `[UserController->update] Could not update user password for user ${user.id}. New password is the same as old password`,
+        { request, security: true, fail: true },
+      );
+      throw Boom.badRequest('New password must be different than previous password');
+    }
+
     if (!User.isStrongPassword(request.payload.new_password)) {
       logger.warn(
         '[UserController->updatePassword] New password is not strong enough',
