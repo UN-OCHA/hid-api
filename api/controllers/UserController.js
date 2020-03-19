@@ -889,7 +889,7 @@ module.exports = {
     if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
       logger.warn(
         `[UserController->validateEmail] app_validation_url ${appValidationUrl} is not in authorizedDomains allowlist`,
-        { security: true, fail: true, request },
+        { request, security: true, fail: true },
       );
       throw Boom.badRequest('Invalid app_validation_url');
     }
@@ -950,12 +950,12 @@ module.exports = {
       await user.save();
       logger.info(
         `[UserController->updatePassword] Successfully updated password for user ${user._id.toString()}`,
-        { security: true },
+        { request, security: true },
       );
     } else {
       logger.warn(
         `[UserController->updatePassword] Could not update password for user ${user._id.toString()}. Old password is wrong`,
-        { security: true, fail: true },
+        { request, security: true, fail: true },
       );
       throw Boom.badRequest('The old password is wrong');
     }
@@ -969,7 +969,7 @@ module.exports = {
       if (!HelperService.isAuthorizedUrl(appResetUrl)) {
         logger.warn(
           `[UserController->resetPasswordEndpoint] app_reset_url ${appResetUrl} is not in authorizedDomains allowlist`,
-          { security: true, fail: true, request },
+          { request, security: true, fail: true },
         );
         throw Boom.badRequest('app_reset_url is invalid');
       }
@@ -983,6 +983,7 @@ module.exports = {
       await EmailService.sendResetPassword(record, appResetUrl);
       logger.info(
         `[UserController->resetPasswordEndpoint] Successfully sent reset password email to ${record.email}`,
+        { request, security: true },
       );
       return '';
     }
@@ -991,6 +992,7 @@ module.exports = {
       || !request.payload.id || !request.payload.time) {
       logger.warn(
         '[UserController->resetPasswordEndpoint] Wrong or missing arguments',
+        { request, security: true }
       );
       throw Boom.badRequest('Wrong arguments');
     }
@@ -998,7 +1000,7 @@ module.exports = {
     if (!User.isStrongPassword(request.payload.password)) {
       logger.warn(
         '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough.',
-        { security: true, fail: true, request },
+        { request, security: true, fail: true },
       );
       throw Boom.badRequest('New password is not strong enough');
     }
@@ -1007,7 +1009,7 @@ module.exports = {
     if (!record) {
       logger.warn(
         `[UserController->resetPasswordEndpoint] Could not reset password. User ${request.payload.id} not found`,
-        { security: true, fail: true, request },
+        { request, security: true, fail: true },
       );
       throw Boom.badRequest('Reset password link is expired or invalid');
     }
@@ -1022,6 +1024,7 @@ module.exports = {
       if (pwd === record.password) {
         logger.warn(
           `[UserController->resetPasswordEndpoint] Could not reset password for user ${request.payload.id}. The new password can not be the same as the old one`,
+          { request, security: true, fail: true },
         );
         throw Boom.badRequest('The new password can not be the same as the old one');
       } else {
@@ -1032,6 +1035,7 @@ module.exports = {
     } else {
       logger.warn(
         '[UserController->resetPasswordEndpoint] Reset password link is expired or invalid',
+        { request, security: true, fail: true },
       );
       throw Boom.badRequest('Reset password link is expired or invalid');
     }
@@ -1064,7 +1068,7 @@ module.exports = {
     await record.save();
     logger.info(
       `[UserController->resetPasswordEndpoint] Password updated successfully for user ${record._id.toString()}`,
-      { security: true, request },
+      { request, security: true },
     );
     return 'Password reset successfully';
   },
