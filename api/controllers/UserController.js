@@ -1026,7 +1026,7 @@ module.exports = {
           `[UserController->resetPasswordEndpoint] Could not reset password for user ${request.payload.id}. The new password can not be the same as the old one`,
           { request, security: true, fail: true },
         );
-        throw Boom.badRequest('The new password can not be the same as the old one');
+        throw Boom.badRequest('Could not reset password');
       } else {
         record.password = User.hashPassword(request.payload.password);
         record.verifyEmail(record.email);
