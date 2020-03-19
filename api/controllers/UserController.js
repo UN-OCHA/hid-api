@@ -992,7 +992,7 @@ module.exports = {
       || !request.payload.id || !request.payload.time) {
       logger.warn(
         '[UserController->resetPasswordEndpoint] Wrong or missing arguments',
-        { request, security: true }
+        { request, security: true },
       );
       throw Boom.badRequest('Wrong arguments');
     }
