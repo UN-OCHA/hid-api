@@ -1020,15 +1020,15 @@ module.exports = {
     }
     let domain = null;
     if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
-      const pwd = User.hashPassword(request.payload.password);
-      if (pwd === record.password) {
+      // Check the new password against the old one.
+      if (record.validPassword(request.payload.password)) {
         logger.warn(
           `[UserController->resetPasswordEndpoint] Could not reset password for user ${request.payload.id}. The new password can not be the same as the old one`,
           { request, security: true, fail: true },
         );
         throw Boom.badRequest('The new password can not be the same as the old one');
       } else {
-        record.password = pwd;
+        record.password = User.hashPassword(request.payload.password);
         record.verifyEmail(record.email);
         domain = await record.isVerifiableEmail(record.email);
       }
