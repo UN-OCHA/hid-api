@@ -36,7 +36,10 @@ module.exports = {
     }
     const otpauthUrl = authenticator.generateTotpUri(secret, user.name, qrCodeName, 'SHA1', 6, 30);
     const qrcode = await QRCode.toDataURL(otpauthUrl);
-    return { url: qrcode };
+    return {
+      url: qrcode,
+      raw: otpauthUrl,
+    };
   },
 
   // Empty endpoint to verify a TOTP token
