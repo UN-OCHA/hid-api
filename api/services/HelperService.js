@@ -20,6 +20,7 @@ const authorizedDomains = [
   'https://auth.dev.humanitarian.id',
   'https://dev.app-humanitarian-id.ahconu.org',
   'https://dev.api-humanitarian-id.ahconu.org',
+  'https://dev.auth-humanitarian-id.ahconu.org',
 
   // Staging
   'https://app.staging.humanitarian.id',
@@ -27,6 +28,7 @@ const authorizedDomains = [
   'https://auth.staging.humanitarian.id',
   'https://stage.app-humanitarian-id.ahconu.org',
   'https://stage.api-humanitarian-id.ahconu.org',
+  'https://stage.auth-humanitarian-id.ahconu.org',
 
   // Local
   'https://app.hid.vm',
