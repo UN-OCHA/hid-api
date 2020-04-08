@@ -2,18 +2,24 @@
   "name": "hid-api",
   "version": "0.0.0",
   "description": "API for Humanitarian ID v2",
-  "homepage": "http://about.humanitarian.id",
+  "homepage": "https://about.humanitarian.id",
+  "repository": "https://github.com/UN-OCHA/hid_api.git",
+  "license": "Apache-2.0",
   "author": {
-    "name": "Guillaume Viguier",
-    "email": "guillaume@viguierjust.com",
-    "url": "http://www.viguierjust.com"
+    "name": "UN OCHA",
+    "email": "ops@humanitarianresponse.info"
   },
-  "main": "index.js",
   "keywords": [],
+  "main": "index.js",
+  "scripts": {
+    "test": "eslint .",
+    "start": "node ./server.js",
+    "dev": "node ./node_modules/nodemon/bin/nodemon.js ./server.js"
+  },
   "dependencies": {
     "@hapi/boom": "^7.4.3",
     "@hapi/crumb": "^7.3.2",
-    "@hapi/hapi": "^18.4.0",
+    "@hapi/hapi": "^18.4.1",
     "@hapi/hawk": "^7.1.2",
     "@hapi/hoek": "^8.2.4",
     "@hapi/inert": "^5.2.2",
@@ -27,7 +33,7 @@
     "axios": "^0.18.0",
     "bcryptjs": "^2.3.0",
     "ejs": "^2.5.2",
-    "email-templates": "^6.0.2",
+    "email-templates": "^7.0.4",
     "google-auth-library": "^5.2.1",
     "google-libphonenumber": "^3.2.3",
     "googleapis": "^43.0.0",
@@ -55,8 +61,9 @@
     "yargs": "^15.1.0"
   },
   "devDependencies": {
+    "acorn": "^5.7.4",
     "diff": ">=3.5.0",
-    "eslint": "^5.14.0",
+    "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-config-standard": "^12.0.0",
     "eslint-config-trails": "latest",
@@ -64,19 +71,11 @@
     "eslint-plugin-node": "^8.0.1",
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-standard": "^4.0.0",
-    "mocha": "^4.0",
-    "nodemon": "^1.19.1",
-    "supertest": "^3.0.0"
-  },
-  "scripts": {
-    "test": "eslint .",
-    "start": "node ./server.js",
-    "dev": "node ./node_modules/nodemon/bin/nodemon.js ./server.js"
+    "minimist": "^1.2.5",
+    "nodemon": "^2.0.2"
   },
   "engines": {
-    "node": "8.11.3",
-    "npm": "6.9.0"
-  },
-  "repository": "https://github.com/UN-OCHA/hid_api.git",
-  "license": "Apache-2.0"
+    "node": "10.14.2",
+    "npm": "6.4.1"
+  }
 }
