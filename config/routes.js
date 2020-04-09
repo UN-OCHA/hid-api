@@ -419,6 +419,22 @@ module.exports = [
 
   {
     method: 'PUT',
+    path: '/api/v3/user/{id}/password',
+    options: {
+      pre: [
+        AuthPolicy.isTOTPEnabledAndValid,
+      ],
+      handler: UserController.updatePassword,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+
+  {
+    method: 'PUT',
     path: '/api/v2/user/{id}/orphan',
     options: {
       pre: [
