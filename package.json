@@ -58,7 +58,7 @@
     "validator": "^10.11.0",
     "winston": "^2.2",
     "winston-daily-rotate-file": "^1.4.6",
-    "yargs": "^15.1.0"
+    "yargs": "^15.3.1"
   },
   "devDependencies": {
     "acorn": "^5.7.4",
