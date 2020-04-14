@@ -18,7 +18,7 @@ const authorizedDomains = [
   'https://app.dev.humanitarian.id',
   'https://api.dev.humanitarian.id',
   'https://auth.dev.humanitarian.id',
-  'https://dev.app-humanitarian-id.ahconu.org',
+  'https://dev.humanitarian-id.ahconu.org',
   'https://dev.api-humanitarian-id.ahconu.org',
   'https://dev.auth-humanitarian-id.ahconu.org',
 
@@ -26,7 +26,7 @@ const authorizedDomains = [
   'https://app.staging.humanitarian.id',
   'https://api.staging.humanitarian.id',
   'https://auth.staging.humanitarian.id',
-  'https://stage.app-humanitarian-id.ahconu.org',
+  'https://stage.humanitarian-id.ahconu.org',
   'https://stage.api-humanitarian-id.ahconu.org',
   'https://stage.auth-humanitarian-id.ahconu.org',
 
