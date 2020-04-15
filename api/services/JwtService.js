@@ -11,7 +11,7 @@ module.exports = {
   // Generates a token from supplied payload
   issue(payload) {
     const cert = fs.readFileSync('keys/sign.rsa');
-    const options = { algorithm: 'RS256', header: { kid: 'hid-v3' } };
+    const options = { algorithm: 'RS256', header: { kid: `hid-v3-${process.env.NODE_ENV}` } };
     return jwt.sign(
       payload,
       cert,
