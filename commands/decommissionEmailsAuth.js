@@ -26,7 +26,7 @@ async function run() {
 
   // Send one email to each user we queried.
   for (let user = await cursor.next(); user !== null; user = await cursor.next()) {
-    await EmailService.sendDecommissionForProfileUsers(user);
+    await EmailService.sendDecommissionForAuthUsers(user);
   }
 
   // When we are done queing emails, exit with status 0.
