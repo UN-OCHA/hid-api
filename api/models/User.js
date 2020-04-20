@@ -352,7 +352,16 @@ const UserSchema = new Schema({
     validate: validate({
       validator: 'isURL',
       passIfEmpty: true,
-      arguments: { host_whitelist: ['api.humanitarian.id', 'api.dev.humanitarian.id', 'api.staging.humanitarian.id'] },
+      arguments: {
+        host_whitelist: [
+          'api.humanitarian.id',
+          'api.dev.humanitarian.id',
+          'api.staging.humanitarian.id',
+          'dev.api-humanitarian-id.ahconu.org',
+          'stage.api-humanitarian-id.ahconu.org',
+          'api.hid.vm',
+        ],
+      },
       message: 'picture should be a valid URL',
     }),
     default: '',
