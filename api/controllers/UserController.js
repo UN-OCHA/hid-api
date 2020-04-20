@@ -925,7 +925,17 @@ module.exports = {
     }
 
     // Business logic: is the new password strong enough?
-    if (!User.isStrongPassword(request.payload.new_password)) {
+    //
+    // v2 and v3 have different requirements so we check the request path before
+    // checking the password strength.
+    const requestIsV3 = request.path.indexOf('api/v3') !== -1;
+    if (requestIsV3 && !User.isStrongPasswordV3(request.payload.new_password)) {
+      logger.warn(
+        `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is not strong enough`,
+        { request, security: true, fail: true },
+      );
+      throw Boom.badRequest('New password does not meet requirements');
+    } else if (!User.isStrongPassword(request.payload.new_password)) {
       logger.warn(
         `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is not strong enough`,
         { request, security: true, fail: true },
@@ -997,7 +1007,18 @@ module.exports = {
       throw Boom.badRequest('Wrong arguments');
     }
 
-    if (!User.isStrongPassword(request.payload.password)) {
+    // Business logic: is the new password strong enough?
+    //
+    // v2 and v3 have different requirements so we check the request path before
+    // checking the password strength.
+    const requestIsV3 = request.path.indexOf('api/v3') !== -1;
+    if (requestIsV3 && !User.isStrongPasswordV3(request.payload.password)) {
+      logger.warn(
+        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough.',
+        { request, security: true, fail: true },
+      );
+      throw Boom.badRequest('New password is not strong enough');
+    } else if (!User.isStrongPassword(request.payload.password)) {
       logger.warn(
         '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough.',
         { request, security: true, fail: true },
