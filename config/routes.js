@@ -403,6 +403,15 @@ module.exports = [
 
   {
     method: 'PUT',
+    path: '/api/v3/user/password',
+    handler: UserController.resetPasswordEndpoint,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'PUT',
     path: '/api/v2/user/{id}/password',
     options: {
       pre: [
