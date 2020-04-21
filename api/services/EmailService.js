@@ -139,7 +139,9 @@ module.exports = {
       locale: user.locale,
     };
     const context = {
-      name: user.name,
+      user: {
+        name: user.name,
+      },
     };
     logger.info(`[EmailService->sendDecommissionForAuthUsers]`, context);
     return send(mailOptions, 'decommission_auth', context);
@@ -151,7 +153,9 @@ module.exports = {
       locale: user.locale,
     };
     const context = {
-      name: user.name,
+      user: {
+        name: user.name,
+      },
     };
     logger.info(`[EmailService->sendDecommissionForProfileUsers]`, context);
     return send(mailOptions, 'decommission_profile', context);
