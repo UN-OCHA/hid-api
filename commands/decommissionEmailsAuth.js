@@ -26,7 +26,11 @@ async function run() {
 
   // Send one email to each user we queried.
   for (let user = await cursor.next(); user !== null; user = await cursor.next()) {
-    await EmailService.sendDecommissionForAuthUsers(user);
+    if (user.name && user.email) {
+      await EmailService.sendDecommissionForAuthUsers(user);
+    } else {
+      console.log(`[Commands->decommissionEmailsAuth] Email NOT sent: user ${user._id} lacked name/email`);
+    }
   }
 
   // When we are done queing emails, exit with status 0.
