@@ -260,10 +260,20 @@ module.exports = {
         request.payload.emails.push({ type: 'Work', email: request.payload.email, validated: false });
       }
 
+      // Business logic: is the new password strong enough?
+      //
+      // v2 and v3 have different requirements so we check the request path before
+      // checking the password strength.
+      const requestIsV3 = request.path.indexOf('api/v3') !== -1;
       if (request.payload.password && request.payload.confirm_password) {
-        if (!User.isStrongPassword(request.payload.password)) {
+        if (requestIsV3 && !User.isStrongPasswordV3(request.payload.password)) {
           logger.warn(
-            '[UserController->create] Provided password is not strong enough',
+            '[UserController->create] Provided password is not strong enough (v3)',
+          );
+          throw Boom.badRequest('The password is not strong enough');
+        } else if (!User.isStrongPassword(request.payload.password)) {
+          logger.warn(
+            '[UserController->create] Provided password is not strong enough (v2)',
           );
           throw Boom.badRequest('The password is not strong enough');
         }
@@ -525,7 +535,7 @@ module.exports = {
       delete request.payload.password;
     }
 
-    // Check old password
+    // Load the user based on ID from the HTTP request
     let user = await User.findOne({ _id: request.params.id });
     if (!user) {
       logger.warn(
@@ -533,56 +543,18 @@ module.exports = {
       );
       throw Boom.notFound();
     }
+
     // If verifying user, set verified_by and verificationExpiryEmail
     if (request.payload.verified && !user.verified) {
       request.payload.verified_by = request.auth.credentials._id;
       request.payload.verifiedOn = new Date();
       request.payload.verificationExpiryEmail = false;
     }
-    if (request.payload.old_password && request.payload.new_password) {
-      logger.info(
-        `[UserController->update] Updating user password for user ${user.id}`,
-        { security: true },
-      );
 
-      // Check to see if new password matches current (old) password.
-      if (request.payload.old_password === request.payload.new_password) {
-        logger.warn(
-          `[UserController->update] Could not update user password for user ${user.id}. New password is the same as old password`,
-          { request, security: true, fail: true },
-        );
-        throw Boom.badRequest('New password must be different than previous password');
-      }
-
-      // Check old password before continuing. It must be correct to proceed.
-      if (user.validPassword(request.payload.old_password)) {
-        if (!User.isStrongPassword(request.payload.new_password)) {
-          logger.warn(
-            `[UserController->update] Could not update user password for user ${user.id}. New password is not strong enough`,
-            { request, security: true, fail: true },
-          );
-          throw Boom.badRequest('Password is not strong enough');
-        }
-        request.payload.password = User.hashPassword(request.payload.new_password);
-        request.payload.lastPasswordReset = new Date();
-        request.payload.passwordResetAlert30days = false;
-        request.payload.passwordResetAlert7days = false;
-        request.payload.passwordResetAlert = false;
-        logger.info(
-          `[UserController->update] Request payload updated to change password for user ${user.id}`,
-          { security: true },
-        );
-      } else {
-        logger.warn(
-          `[UserController->update] Could not update user password for user ${user.id}. Old password is wrong`,
-          { request, security: true, fail: true },
-        );
-        throw Boom.badRequest('The current password you entered is incorrect');
-      }
-    }
     if (request.payload.updatedAt) {
       delete request.payload.updatedAt;
     }
+
     // Update lastModified manually
     request.payload.lastModified = new Date();
     if (user.authOnly === false && request.payload.authOnly === true) {
@@ -600,6 +572,7 @@ module.exports = {
         );
       }
     }
+
     if (user.authOnly === true && request.payload.authOnly === false) {
       // User is becoming visible. Update lists count.
       const listIds = user.getListIds(true);
@@ -615,6 +588,7 @@ module.exports = {
         );
       }
     }
+
     if (user.hidden === false && request.payload.hidden === true) {
       // User is being flagged. Update lists count.
       const listIds = user.getListIds(true);
@@ -631,6 +605,7 @@ module.exports = {
         );
       }
     }
+
     if (user.hidden === true && request.payload.hidden === false) {
       // User is being unflagged. Update lists count.
       const listIds = user.getListIds(true);
@@ -647,6 +622,7 @@ module.exports = {
         );
       }
     }
+
     user = await User
       .findOneAndUpdate(
         { _id: request.params.id },
@@ -699,16 +675,19 @@ module.exports = {
         });
       }
     }
+
     promises.push(GSSSyncService.synchronizeUser(user));
     pendingLogs.push({
       type: 'info',
       message: `[UserController->update] Synchronized user ${user.id} with google spreadsheet`,
     });
     // promises.push(OutlookService.synchronizeUser(user));
+
     await Promise.all(promises);
     for (let i = 0; i < pendingLogs.length; i += 1) {
       logger.log(pendingLogs[i]);
     }
+
     return user;
   },
 
@@ -931,13 +910,13 @@ module.exports = {
     const requestIsV3 = request.path.indexOf('api/v3') !== -1;
     if (requestIsV3 && !User.isStrongPasswordV3(request.payload.new_password)) {
       logger.warn(
-        `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is not strong enough`,
+        `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is not strong enough (v3)`,
         { request, security: true, fail: true },
       );
       throw Boom.badRequest('New password does not meet requirements');
     } else if (!User.isStrongPassword(request.payload.new_password)) {
       logger.warn(
-        `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is not strong enough`,
+        `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is not strong enough (v2)`,
         { request, security: true, fail: true },
       );
       throw Boom.badRequest('New password is not strong enough');
@@ -1014,13 +993,13 @@ module.exports = {
     const requestIsV3 = request.path.indexOf('api/v3') !== -1;
     if (requestIsV3 && !User.isStrongPasswordV3(request.payload.password)) {
       logger.warn(
-        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough.',
+        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough (v3)',
         { request, security: true, fail: true },
       );
       throw Boom.badRequest('New password is not strong enough');
     } else if (!User.isStrongPassword(request.payload.password)) {
       logger.warn(
-        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough.',
+        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough (v2)',
         { request, security: true, fail: true },
       );
       throw Boom.badRequest('New password is not strong enough');
