@@ -507,6 +507,7 @@ module.exports = [
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
+          email: Joi.string().email({ minDomainSegments: 2 }),
         }),
       },
     },

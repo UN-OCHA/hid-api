@@ -1190,7 +1190,7 @@ module.exports = {
   },
 
   async dropEmail(request) {
-    const userId = request.params.id;
+    const { id, email } = request.params;
 
     if (!request.params.email) {
       logger.warn(
@@ -1199,17 +1199,16 @@ module.exports = {
       throw Boom.badRequest();
     }
 
-    const record = await User.findOne({ _id: userId });
+    const record = await User.findOne({ _id: id });
     if (!record) {
       logger.warn(
-        `[UserController->dropEmail] User ${userId} not found`,
+        `[UserController->dropEmail] User ${id} not found`,
       );
       throw Boom.notFound();
     }
-    const { email } = request.params;
     if (email === record.email) {
       logger.warn(
-        `[UserController->dropEmail] Primary email for user ${userId} can not be removed`,
+        `[UserController->dropEmail] Primary email for user ${id} can not be removed`,
       );
       throw Boom.badRequest('You can not remove the primary email');
     }
@@ -1227,10 +1226,11 @@ module.exports = {
       record.verified = false;
     }
     await record.save();
+
     logger.info(
-      `[UserController->dropEmail] User ${record.id} saved successfully`,
+      `[UserController->dropEmail] User ${id} saved successfully`,
     );
-    // await OutlookService.synchronizeUser(record);
+
     return record;
   },
 
