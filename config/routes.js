@@ -550,6 +550,23 @@ module.exports = [
   },
 
   {
+    method: 'DELETE',
+    path: '/api/v3/user/{id}/emails/{email}',
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.dropEmail,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          email: Joi.string().email({ minDomainSegments: 2 }),
+        }),
+      },
+    },
+  },
+
+  {
     method: 'POST',
     path: '/api/v2/user/{id}/phone_numbers',
     options: {
