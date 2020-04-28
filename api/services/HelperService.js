@@ -14,6 +14,10 @@ const authorizedDomains = [
   'https://api.humanitarian.id',
   'https://auth.humanitarian.id',
 
+  // Production (AWS Migration)
+  'https://prod-humanitarian-id.ahconu.org',
+  'https://prod-api-humanitarian-id.ahconu.org',
+
   // Dev
   'https://app.dev.humanitarian.id',
   'https://api.dev.humanitarian.id',
