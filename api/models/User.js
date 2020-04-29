@@ -359,6 +359,7 @@ const UserSchema = new Schema({
           'api.staging.humanitarian.id',
           'dev.api-humanitarian-id.ahconu.org',
           'stage.api-humanitarian-id.ahconu.org',
+          'prod-api-humanitarian-id.ahconu.org',
           'api.hid.vm',
         ],
       },
