@@ -18,9 +18,10 @@ const EmailService = require('../api/services/EmailService');
 
 async function run() {
   const limit = argv.limit || 0;
+  const locale = argv.locale || /.*/;
 
   const cursor = User
-    .find({ authOnly: true })
+    .find({ authOnly: true, locale })
     .limit(limit)
     .cursor({ noCursorTimeout: true });
 
