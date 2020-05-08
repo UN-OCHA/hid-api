@@ -9,7 +9,11 @@ module.exports = {
       local: {
         migrate: 'create',
         uri: 'mongodb://db:27017/local',
-        options: {},
+        options: {
+          keepAlive: 600000,
+          connectTimeoutMS: 60000,
+          useNewUrlParser: true,
+        },
       },
     },
     models: {
