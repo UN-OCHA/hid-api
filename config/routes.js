@@ -270,6 +270,17 @@ module.exports = [
   },
 
   {
+    method: 'POST',
+    path: '/api/v3/user',
+    options: {
+      pre: [
+        UserPolicy.canCreate,
+      ],
+      handler: UserController.create,
+    },
+  },
+
+  {
     method: 'GET',
     path: '/api/v2/user/{id?}',
     handler: UserController.find,
@@ -403,7 +414,32 @@ module.exports = [
 
   {
     method: 'PUT',
+    path: '/api/v3/user/password',
+    handler: UserController.resetPasswordEndpoint,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'PUT',
     path: '/api/v2/user/{id}/password',
+    options: {
+      pre: [
+        AuthPolicy.isTOTPEnabledAndValid,
+      ],
+      handler: UserController.updatePassword,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+
+  {
+    method: 'PUT',
+    path: '/api/v3/user/{id}/password',
     options: {
       pre: [
         AuthPolicy.isTOTPEnabledAndValid,
@@ -507,6 +543,24 @@ module.exports = [
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
+          email: Joi.string().email({ minDomainSegments: 2 }),
+        }),
+      },
+    },
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v3/user/{id}/emails/{email}',
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.dropEmail,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          email: Joi.string().email({ minDomainSegments: 2 }),
         }),
       },
     },

@@ -260,10 +260,20 @@ module.exports = {
         request.payload.emails.push({ type: 'Work', email: request.payload.email, validated: false });
       }
 
+      // Business logic: is the new password strong enough?
+      //
+      // v2 and v3 have different requirements so we check the request path before
+      // checking the password strength.
+      const requestIsV3 = request.path.indexOf('api/v3') !== -1;
       if (request.payload.password && request.payload.confirm_password) {
-        if (!User.isStrongPassword(request.payload.password)) {
+        if (requestIsV3 && !User.isStrongPasswordV3(request.payload.password)) {
           logger.warn(
-            '[UserController->create] Provided password is not strong enough',
+            '[UserController->create] Provided password is not strong enough (v3)',
+          );
+          throw Boom.badRequest('The password is not strong enough');
+        } else if (!User.isStrongPassword(request.payload.password)) {
+          logger.warn(
+            '[UserController->create] Provided password is not strong enough (v2)',
           );
           throw Boom.badRequest('The password is not strong enough');
         }
@@ -525,7 +535,7 @@ module.exports = {
       delete request.payload.password;
     }
 
-    // Check old password
+    // Load the user based on ID from the HTTP request
     let user = await User.findOne({ _id: request.params.id });
     if (!user) {
       logger.warn(
@@ -533,45 +543,18 @@ module.exports = {
       );
       throw Boom.notFound();
     }
+
     // If verifying user, set verified_by and verificationExpiryEmail
     if (request.payload.verified && !user.verified) {
       request.payload.verified_by = request.auth.credentials._id;
       request.payload.verifiedOn = new Date();
       request.payload.verificationExpiryEmail = false;
     }
-    if (request.payload.old_password && request.payload.new_password) {
-      logger.info(
-        `[UserController->update] Updating user password for user ${user.id}`,
-        { security: true },
-      );
-      if (user.validPassword(request.payload.old_password)) {
-        if (!User.isStrongPassword(request.payload.new_password)) {
-          logger.warn(
-            `[UserController->update] Could not update user password for user ${user.id}. New password is not strong enough`,
-            { request, security: true, fail: true },
-          );
-          throw Boom.badRequest('Password is not strong enough');
-        }
-        request.payload.password = User.hashPassword(request.payload.new_password);
-        request.payload.lastPasswordReset = new Date();
-        request.payload.passwordResetAlert30days = false;
-        request.payload.passwordResetAlert7days = false;
-        request.payload.passwordResetAlert = false;
-        logger.info(
-          `[UserController->update] Request payload updated to change password for user ${user.id}`,
-          { security: true },
-        );
-      } else {
-        logger.warn(
-          `[UserController->update] Could not update user password for user ${user.id}. Old password is wrong`,
-          { request, security: true, fail: true },
-        );
-        throw Boom.badRequest('The current password you entered is incorrect');
-      }
-    }
+
     if (request.payload.updatedAt) {
       delete request.payload.updatedAt;
     }
+
     // Update lastModified manually
     request.payload.lastModified = new Date();
     if (user.authOnly === false && request.payload.authOnly === true) {
@@ -589,6 +572,7 @@ module.exports = {
         );
       }
     }
+
     if (user.authOnly === true && request.payload.authOnly === false) {
       // User is becoming visible. Update lists count.
       const listIds = user.getListIds(true);
@@ -604,6 +588,7 @@ module.exports = {
         );
       }
     }
+
     if (user.hidden === false && request.payload.hidden === true) {
       // User is being flagged. Update lists count.
       const listIds = user.getListIds(true);
@@ -620,6 +605,7 @@ module.exports = {
         );
       }
     }
+
     if (user.hidden === true && request.payload.hidden === false) {
       // User is being unflagged. Update lists count.
       const listIds = user.getListIds(true);
@@ -636,6 +622,7 @@ module.exports = {
         );
       }
     }
+
     user = await User
       .findOneAndUpdate(
         { _id: request.params.id },
@@ -688,16 +675,19 @@ module.exports = {
         });
       }
     }
+
     promises.push(GSSSyncService.synchronizeUser(user));
     pendingLogs.push({
       type: 'info',
       message: `[UserController->update] Synchronized user ${user.id} with google spreadsheet`,
     });
     // promises.push(OutlookService.synchronizeUser(user));
+
     await Promise.all(promises);
     for (let i = 0; i < pendingLogs.length; i += 1) {
       logger.log(pendingLogs[i]);
     }
+
     return user;
   },
 
@@ -878,7 +868,7 @@ module.exports = {
     if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
       logger.warn(
         `[UserController->validateEmail] app_validation_url ${appValidationUrl} is not in authorizedDomains allowlist`,
-        { security: true, fail: true, request },
+        { request, security: true, fail: true },
       );
       throw Boom.badRequest('Invalid app_validation_url');
     }
@@ -894,41 +884,67 @@ module.exports = {
   },
 
   async updatePassword(request, reply) {
-    if (!request.payload.old_password || !request.payload.new_password) {
-      logger.warn(
-        '[UserController->updatePassword] Request is missing parameters (old or new password)',
-      );
-      throw Boom.badRequest('Request is missing parameters (old or new password)');
-    }
-
-    if (!User.isStrongPassword(request.payload.new_password)) {
-      logger.warn(
-        '[UserController->updatePassword] New password is not strong enough',
-        { request, security: true, fail: true },
-      );
-      throw Boom.badRequest('New password is not strong enough');
-    }
-
-    // Check old password
     const user = await User.findOne({ _id: request.params.id });
+
+    // Was the user parameter supplied?
     if (!user) {
       logger.warn(
         `[UserController->updatePassword] User ${request.params.id} not found`,
       );
       throw Boom.notFound();
     }
+
+    // Are both password parameters present?
+    if (!request.payload.old_password || !request.payload.new_password) {
+      logger.warn(
+        `[UserController->updatePassword] Could not update user password for user ${user.id}. Request is missing parameters (old or new password)`,
+        { request, security: true, fail: true },
+      );
+      throw Boom.badRequest('Request is missing parameters (old or new password)');
+    }
+
+    // Business logic: is the new password strong enough?
+    //
+    // v2 and v3 have different requirements so we check the request path before
+    // checking the password strength.
+    const requestIsV3 = request.path.indexOf('api/v3') !== -1;
+    if (requestIsV3 && !User.isStrongPasswordV3(request.payload.new_password)) {
+      logger.warn(
+        `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is not strong enough (v3)`,
+        { request, security: true, fail: true },
+      );
+      throw Boom.badRequest('New password does not meet requirements');
+    } else if (!User.isStrongPassword(request.payload.new_password)) {
+      logger.warn(
+        `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is not strong enough (v2)`,
+        { request, security: true, fail: true },
+      );
+      throw Boom.badRequest('New password is not strong enough');
+    }
+
+    // Was the current password entered correctly?
     if (user.validPassword(request.payload.old_password)) {
+      // Business logic: is the new password different than the old one?
+      if (request.payload.old_password === request.payload.new_password) {
+        logger.warn(
+          `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is the same as old password`,
+          { request, security: true, fail: true },
+        );
+        throw Boom.badRequest('New password must be different than previous password');
+      }
+
+      // Proceed with password update.
       user.password = User.hashPassword(request.payload.new_password);
       user.lastModified = new Date();
       await user.save();
       logger.info(
         `[UserController->updatePassword] Successfully updated password for user ${user._id.toString()}`,
-        { security: true },
+        { request, security: true },
       );
     } else {
       logger.warn(
         `[UserController->updatePassword] Could not update password for user ${user._id.toString()}. Old password is wrong`,
-        { security: true, fail: true },
+        { request, security: true, fail: true },
       );
       throw Boom.badRequest('The old password is wrong');
     }
@@ -942,7 +958,7 @@ module.exports = {
       if (!HelperService.isAuthorizedUrl(appResetUrl)) {
         logger.warn(
           `[UserController->resetPasswordEndpoint] app_reset_url ${appResetUrl} is not in authorizedDomains allowlist`,
-          { security: true, fail: true, request },
+          { request, security: true, fail: true },
         );
         throw Boom.badRequest('app_reset_url is invalid');
       }
@@ -956,6 +972,7 @@ module.exports = {
       await EmailService.sendResetPassword(record, appResetUrl);
       logger.info(
         `[UserController->resetPasswordEndpoint] Successfully sent reset password email to ${record.email}`,
+        { request, security: true },
       );
       return '';
     }
@@ -964,14 +981,26 @@ module.exports = {
       || !request.payload.id || !request.payload.time) {
       logger.warn(
         '[UserController->resetPasswordEndpoint] Wrong or missing arguments',
+        { request, security: true },
       );
       throw Boom.badRequest('Wrong arguments');
     }
 
-    if (!User.isStrongPassword(request.payload.password)) {
+    // Business logic: is the new password strong enough?
+    //
+    // v2 and v3 have different requirements so we check the request path before
+    // checking the password strength.
+    const requestIsV3 = request.path.indexOf('api/v3') !== -1;
+    if (requestIsV3 && !User.isStrongPasswordV3(request.payload.password)) {
       logger.warn(
-        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough.',
-        { security: true, fail: true, request },
+        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough (v3)',
+        { request, security: true, fail: true },
+      );
+      throw Boom.badRequest('New password is not strong enough');
+    } else if (!User.isStrongPassword(request.payload.password)) {
+      logger.warn(
+        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough (v2)',
+        { request, security: true, fail: true },
       );
       throw Boom.badRequest('New password is not strong enough');
     }
@@ -980,7 +1009,7 @@ module.exports = {
     if (!record) {
       logger.warn(
         `[UserController->resetPasswordEndpoint] Could not reset password. User ${request.payload.id} not found`,
-        { security: true, fail: true, request },
+        { request, security: true, fail: true },
       );
       throw Boom.badRequest('Reset password link is expired or invalid');
     }
@@ -991,20 +1020,22 @@ module.exports = {
     }
     let domain = null;
     if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
-      const pwd = User.hashPassword(request.payload.password);
-      if (pwd === record.password) {
+      // Check the new password against the old one.
+      if (record.validPassword(request.payload.password)) {
         logger.warn(
           `[UserController->resetPasswordEndpoint] Could not reset password for user ${request.payload.id}. The new password can not be the same as the old one`,
+          { request, security: true, fail: true },
         );
-        throw Boom.badRequest('The new password can not be the same as the old one');
+        throw Boom.badRequest('Could not reset password');
       } else {
-        record.password = pwd;
+        record.password = User.hashPassword(request.payload.password);
         record.verifyEmail(record.email);
         domain = await record.isVerifiableEmail(record.email);
       }
     } else {
       logger.warn(
         '[UserController->resetPasswordEndpoint] Reset password link is expired or invalid',
+        { request, security: true, fail: true },
       );
       throw Boom.badRequest('Reset password link is expired or invalid');
     }
@@ -1037,7 +1068,7 @@ module.exports = {
     await record.save();
     logger.info(
       `[UserController->resetPasswordEndpoint] Password updated successfully for user ${record._id.toString()}`,
-      { security: true, request },
+      { request, security: true },
     );
     return 'Password reset successfully';
   },
@@ -1190,7 +1221,7 @@ module.exports = {
   },
 
   async dropEmail(request) {
-    const userId = request.params.id;
+    const { id, email } = request.params;
 
     if (!request.params.email) {
       logger.warn(
@@ -1199,17 +1230,16 @@ module.exports = {
       throw Boom.badRequest();
     }
 
-    const record = await User.findOne({ _id: userId });
+    const record = await User.findOne({ _id: id });
     if (!record) {
       logger.warn(
-        `[UserController->dropEmail] User ${userId} not found`,
+        `[UserController->dropEmail] User ${id} not found`,
       );
       throw Boom.notFound();
     }
-    const { email } = request.params;
     if (email === record.email) {
       logger.warn(
-        `[UserController->dropEmail] Primary email for user ${userId} can not be removed`,
+        `[UserController->dropEmail] Primary email for user ${id} can not be removed`,
       );
       throw Boom.badRequest('You can not remove the primary email');
     }
@@ -1227,10 +1257,11 @@ module.exports = {
       record.verified = false;
     }
     await record.save();
+
     logger.info(
-      `[UserController->dropEmail] User ${record.id} saved successfully`,
+      `[UserController->dropEmail] User ${id} saved successfully`,
     );
-    // await OutlookService.synchronizeUser(record);
+
     return record;
   },
 

@@ -352,7 +352,17 @@ const UserSchema = new Schema({
     validate: validate({
       validator: 'isURL',
       passIfEmpty: true,
-      arguments: { host_whitelist: ['api.humanitarian.id', 'api.dev.humanitarian.id', 'api.staging.humanitarian.id'] },
+      arguments: {
+        host_whitelist: [
+          'api.humanitarian.id',
+          'api.dev.humanitarian.id',
+          'api.staging.humanitarian.id',
+          'dev.api-humanitarian-id.ahconu.org',
+          'stage.api-humanitarian-id.ahconu.org',
+          'prod-api-humanitarian-id.ahconu.org',
+          'api.hid.vm',
+        ],
+      },
       message: 'picture should be a valid URL',
     }),
     default: '',
@@ -829,11 +839,30 @@ UserSchema.statics = {
     return index;
   },
 
-  // Determines if a password is strong enough for HID
+  // v2 — Password Requirements
+  //
+  // - At least 8 characters total
+  // - At least one number
+  // - At least one lowercase letter
+  // - At least one uppercase letter
   isStrongPassword(password) {
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
-    // At least 8 characters and at least one number, one uppercase and one lowercase.
     return password.length > 7 && regex.test(password);
+  },
+
+  // v3 — Password Requirements
+  //
+  // As of 2020 we follow the most strict guidelines in order to avoid the OICT
+  // requirement that we expire weak passwords after 6 months.
+  //
+  // - At least 12 characters total
+  // - At least one number
+  // - At least one lowercase letter
+  // - At least one uppercase letter
+  // - At least one special character: !@#$%^&*()+=\`{}
+  isStrongPasswordV3(password) {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()+=\\`{}]).+$/;
+    return password.length >= 12 && regex.test(password);
   },
 
   hashPassword(password) {
