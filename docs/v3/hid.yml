@@ -14,6 +14,23 @@ servers:
     description: Production server. For use by HID Integration Partners.
   - url: 'https://dev.api-humanitarian-id.ahconu.org/api/v3'
     description: Dev server. For use by UNOCHA developers.
+tags:
+  - name: user
+    description: User related operations
+  - name: auth
+    description: Authentication related methods
+  - name: list
+    description: List related methods
+  - name: connection
+    description: Methods related to user connections
+  - name: service
+    description: 'Methods related to services (mailchimp, googlegroup)'
+  - name: client
+    description: Methods related to oauth clients
+  - name: notification
+    description: Methods related to notifications
+  - name: totp
+    description: Methods related to 2 Factor Authentication
 paths:
   /jsonwebtoken:
     post:
