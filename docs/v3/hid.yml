@@ -1,0 +1,41 @@
+openapi: 3.0.3
+x-api-id: hid-api
+info:
+  version: 3.0.0-dev
+  title: HID API
+  license:
+    name: Apache-2.0
+host: api.humanitarian.id
+basePath: /api/v3
+schemes:
+  - https
+servers:
+  - url: 'https://api.humanitarian.id/api/v3'
+    description: Production server. For use by HID Integration Partners.
+  - url: 'https://dev.api-humanitarian-id.ahconu.org/api/v3'
+    description: Dev server. For use by UNOCHA developers.
+paths:
+  /jsonwebtoken:
+    post:
+      tags:
+        - auth
+      summary: Generate a jsonwebtoken
+      parameters:
+        - name: body
+          description: User email
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Auth'
+      responses:
+        '200':
+          description: The json web token
+        '400':
+          description: Bad request. Missing email and/or password
+        '401':
+          description: Wrong email and/or password
+        '429':
+          description: >-
+            The account was locked for 5 minutes because there were more than 5
+            unsuccessful login attempts within the last 5 minutes
+

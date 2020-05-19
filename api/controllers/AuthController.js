@@ -111,8 +111,29 @@ function loginRedirect(request, reply, cookie = false) {
 }
 
 module.exports = {
-  /**
-   * Authenticate user through JWT
+  /*
+   * @api [post] /jsonwebtoken
+   * tags:
+   *   - auth
+   * summary: 'Generate a jsonwebtoken'
+   * parameters:
+   *   - name: 'body'
+   *     description: 'User email'
+   *     in: body
+   *     required: true
+   *     schema:
+   *       $ref: '#/definitions/Auth'
+   * responses:
+   *   '200':
+   *     description: 'The json web token'
+   *   '400':
+   *     description: 'Bad request. Missing email and/or password'
+   *   '401':
+   *     description: 'Wrong email and/or password'
+   *   '429':
+   *     description: >-
+   *       The account was locked for 5 minutes because there were more than 5
+   *       unsuccessful login attempts within the last 5 minutes
    */
   async authenticate(request) {
     const result = await loginHelper(request);
