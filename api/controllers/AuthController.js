@@ -564,13 +564,49 @@ module.exports = {
     return out;
   },
 
-  // Provides a list of the json web tokens with no expiration date created by the current user
+  /*
+   * @api [get] /jsonwebtoken
+   *
+   * tags:
+   *   - auth
+   * summary: Retrieve the JWTs of the current user
+   * responses:
+   *   '200':
+   *     description: List of the JWTs of the current user
+   */
   async jwtTokens(request) {
     const tokens = await JwtToken.find({ user: request.auth.credentials._id });
     return tokens;
   },
 
-  // Blacklist a JSON Web Token
+  /*
+   * @api [delete] /jsonwebtoken
+   *
+   * tags:
+   *   - auth
+   * summary: Blacklists a JWT for the current user
+   * responses:
+   *   '200':
+   *     description: JWT was successfully blacklisted
+   *   '400':
+   *     description: Could not blacklist this token because you did not generate it
+   */
+  //
+  // TODO: The following error is also a possible outcome of the blacklist
+  //       operation, but Swagger intentionally avoids a way of specifying more
+  //       than one response message for a specific HTTP status code. In the mean
+  //       time here is the YML we would have in the above definition if it were
+  //       possible to compile.
+  //
+  // *   400:
+  // *     description: Missing token
+  //
+  //       One possible solution would be to issue HTTP 403 when the token
+  //       did not belong to the user making the request. It is specifically a
+  //       matter of perms/authorization so it seems to fit.
+  //
+  // @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
+  //
   async blacklistJwt(request) {
     const token = request.payload ? request.payload.token : null;
     if (!token) {

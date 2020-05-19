@@ -38,4 +38,20 @@ paths:
           description: >-
             The account was locked for 5 minutes because there were more than 5
             unsuccessful login attempts within the last 5 minutes
+    get:
+      tags:
+        - auth
+      summary: Retrieve the JWTs of the current user
+      responses:
+        '200':
+          description: List of the JWTs of the current user
+    delete:
+      tags:
+        - auth
+      summary: Blacklists a JWT for the current user
+      responses:
+        '200':
+          description: JWT was successfully blacklisted
+        '400':
+          description: Could not blacklist this token because you did not generate it
 
