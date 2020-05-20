@@ -589,24 +589,10 @@ module.exports = {
    *   '200':
    *     description: JWT was successfully blacklisted
    *   '400':
+   *     description: Missing token
+   *   '403':
    *     description: Could not blacklist this token because you did not generate it
    */
-  //
-  // TODO: The following error is also a possible outcome of the blacklist
-  //       operation, but Swagger intentionally avoids a way of specifying more
-  //       than one response message for a specific HTTP status code. In the mean
-  //       time here is the YML we would have in the above definition if it were
-  //       possible to compile.
-  //
-  // *   400:
-  // *     description: Missing token
-  //
-  //       One possible solution would be to issue HTTP 403 when the token
-  //       did not belong to the user making the request. It is specifically a
-  //       matter of perms/authorization so it seems to fit.
-  //
-  // @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
-  //
   async blacklistJwt(request) {
     const token = request.payload ? request.payload.token : null;
     if (!token) {
@@ -633,7 +619,7 @@ module.exports = {
       '[AuthController->blacklistJwt] Tried to blacklist a token by a user who does not have the permission',
       { security: true, fail: true, request },
     );
-    throw Boom.badRequest('Could not blacklist this token because you did not generate it');
+    throw Boom.forbidden('Could not blacklist this token because you did not generate it');
   },
 
   /**
