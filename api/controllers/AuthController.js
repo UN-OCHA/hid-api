@@ -116,13 +116,13 @@ module.exports = {
    * tags:
    *   - auth
    * summary: 'Generate a jsonwebtoken'
-   * parameters:
-   *   - name: 'body'
-   *     description: 'User email'
-   *     in: body
-   *     required: true
-   *     schema:
-   *       $ref: '#/definitions/Auth'
+   * requestBody:
+   *   description: 'User email and password'
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         $ref: '#/components/schemas/Auth'
    * responses:
    *   '200':
    *     description: 'The json web token'

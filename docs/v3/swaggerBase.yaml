@@ -5,10 +5,6 @@ info:
   title: HID API
   license:
     name: Apache-2.0
-host: api.humanitarian.id
-basePath: /api/v3
-schemes:
-  - https
 
 servers:
   - url: 'https://api.humanitarian.id/api/v3'
@@ -33,3 +29,15 @@ tags:
     description: 'Methods related to notifications'
   - name: 'totp'
     description: 'Methods related to 2-factor authentication'
+
+components:
+  schemas:
+    Auth:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password

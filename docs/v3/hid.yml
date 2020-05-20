@@ -5,10 +5,6 @@ info:
   title: HID API
   license:
     name: Apache-2.0
-host: api.humanitarian.id
-basePath: /api/v3
-schemes:
-  - https
 servers:
   - url: 'https://api.humanitarian.id/api/v3'
     description: Production server. For use by HID Integration Partners.
@@ -16,11 +12,11 @@ servers:
     description: Dev server. For use by UNOCHA developers.
 tags:
   - name: user
-    description: User related operations
+    description: Methods related to users
   - name: auth
-    description: Authentication related methods
+    description: Methods related to authentication
   - name: list
-    description: List related methods
+    description: Methods related to lists
   - name: connection
     description: Methods related to user connections
   - name: service
@@ -30,20 +26,31 @@ tags:
   - name: notification
     description: Methods related to notifications
   - name: totp
-    description: Methods related to 2 Factor Authentication
+    description: Methods related to 2-factor authentication
+components:
+  schemas:
+    Auth:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
 paths:
   /jsonwebtoken:
     post:
       tags:
         - auth
       summary: Generate a jsonwebtoken
-      parameters:
-        - name: body
-          description: User email
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/Auth'
+      requestBody:
+        description: User email and password
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Auth'
       responses:
         '200':
           description: The json web token
@@ -70,5 +77,7 @@ paths:
         '200':
           description: JWT was successfully blacklisted
         '400':
+          description: Missing token
+        '403':
           description: Could not blacklist this token because you did not generate it
 
