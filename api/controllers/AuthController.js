@@ -333,6 +333,10 @@ module.exports = {
           }
           return done(null, client, redirect);
         } catch (err) {
+          logger.error(
+            `[AuthController->authorizeDialogOauth2] ${err.stack}`,
+            { security: true, fail: true, request },
+          );
           return done('An error occurred while processing the request. Please try logging in again.');
         }
       });
@@ -356,7 +360,10 @@ module.exports = {
         // csrf: req.csrfToken()
       });
     } catch (err) {
-      // TODO: display the error in a view
+      logger.error(
+        `[AuthController->authorizeDialogOauth2] ${err.stack}`,
+        { security: true, fail: true, request },
+      );
       return err;
     }
   },
@@ -406,7 +413,10 @@ module.exports = {
       const response = await oauth.decision(request, reply);
       return response;
     } catch (err) {
-      // TODO: display error in a view
+      logger.error(
+        `[AuthController->authorizeOauth2] ${err.stack}`,
+        { security: true, fail: true, request },
+      );
       return err;
     }
   },
@@ -488,7 +498,10 @@ module.exports = {
         return response;
       }
     } catch (err) {
-      // TODO: display error in a view
+      logger.error(
+        `[AuthController->accessTokenOauth2] ${err.stack}`,
+        { security: true, fail: true, request },
+      );
       return err;
     }
   },
