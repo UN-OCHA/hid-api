@@ -111,8 +111,29 @@ function loginRedirect(request, reply, cookie = false) {
 }
 
 module.exports = {
-  /**
-   * Authenticate user through JWT
+  /*
+   * @api [post] /jsonwebtoken
+   * tags:
+   *   - auth
+   * summary: 'Generate a jsonwebtoken'
+   * requestBody:
+   *   description: 'User email and password'
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         $ref: '#/components/schemas/Auth'
+   * responses:
+   *   '200':
+   *     description: 'The json web token'
+   *   '400':
+   *     description: 'Bad request. Missing email and/or password'
+   *   '401':
+   *     description: 'Wrong email and/or password'
+   *   '429':
+   *     description: >-
+   *       The account was locked for 5 minutes because there were more than 5
+   *       unsuccessful login attempts within the last 5 minutes
    */
   async authenticate(request) {
     const result = await loginHelper(request);
@@ -556,13 +577,35 @@ module.exports = {
     return out;
   },
 
-  // Provides a list of the json web tokens with no expiration date created by the current user
+  /*
+   * @api [get] /jsonwebtoken
+   *
+   * tags:
+   *   - auth
+   * summary: Retrieve the JWTs of the current user
+   * responses:
+   *   '200':
+   *     description: List of the JWTs of the current user
+   */
   async jwtTokens(request) {
     const tokens = await JwtToken.find({ user: request.auth.credentials._id });
     return tokens;
   },
 
-  // Blacklist a JSON Web Token
+  /*
+   * @api [delete] /jsonwebtoken
+   *
+   * tags:
+   *   - auth
+   * summary: Blacklists a JWT for the current user
+   * responses:
+   *   '200':
+   *     description: JWT was successfully blacklisted
+   *   '400':
+   *     description: Missing token
+   *   '403':
+   *     description: Could not blacklist this token because you did not generate it
+   */
   async blacklistJwt(request) {
     const token = request.payload ? request.payload.token : null;
     if (!token) {
@@ -589,7 +632,7 @@ module.exports = {
       '[AuthController->blacklistJwt] Tried to blacklist a token by a user who does not have the permission',
       { security: true, fail: true, request },
     );
-    throw Boom.badRequest('Could not blacklist this token because you did not generate it');
+    throw Boom.forbidden('Could not blacklist this token because you did not generate it');
   },
 
   /**

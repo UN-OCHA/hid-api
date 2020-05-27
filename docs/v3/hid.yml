@@ -1,0 +1,83 @@
+openapi: 3.0.3
+x-api-id: hid-api
+info:
+  version: 3.0.0-dev
+  title: HID API
+  license:
+    name: Apache-2.0
+servers:
+  - url: 'https://api.humanitarian.id/api/v3'
+    description: Production server. For use by HID Integration Partners.
+  - url: 'https://dev.api-humanitarian-id.ahconu.org/api/v3'
+    description: Dev server. For use by UNOCHA developers.
+tags:
+  - name: user
+    description: Methods related to users
+  - name: auth
+    description: Methods related to authentication
+  - name: list
+    description: Methods related to lists
+  - name: connection
+    description: Methods related to user connections
+  - name: service
+    description: 'Methods related to services (mailchimp, googlegroup)'
+  - name: client
+    description: Methods related to oauth clients
+  - name: notification
+    description: Methods related to notifications
+  - name: totp
+    description: Methods related to 2-factor authentication
+components:
+  schemas:
+    Auth:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+paths:
+  /jsonwebtoken:
+    post:
+      tags:
+        - auth
+      summary: Generate a jsonwebtoken
+      requestBody:
+        description: User email and password
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Auth'
+      responses:
+        '200':
+          description: The json web token
+        '400':
+          description: Bad request. Missing email and/or password
+        '401':
+          description: Wrong email and/or password
+        '429':
+          description: >-
+            The account was locked for 5 minutes because there were more than 5
+            unsuccessful login attempts within the last 5 minutes
+    get:
+      tags:
+        - auth
+      summary: Retrieve the JWTs of the current user
+      responses:
+        '200':
+          description: List of the JWTs of the current user
+    delete:
+      tags:
+        - auth
+      summary: Blacklists a JWT for the current user
+      responses:
+        '200':
+          description: JWT was successfully blacklisted
+        '400':
+          description: Missing token
+        '403':
+          description: Could not blacklist this token because you did not generate it
+

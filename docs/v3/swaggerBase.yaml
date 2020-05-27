@@ -1,0 +1,43 @@
+openapi: 3.0.3
+x-api-id: hid-api
+info:
+  version: 3.0.0-dev
+  title: HID API
+  license:
+    name: Apache-2.0
+
+servers:
+  - url: 'https://api.humanitarian.id/api/v3'
+    description: Production server. For use by HID Integration Partners.
+  - url: 'https://dev.api-humanitarian-id.ahconu.org/api/v3'
+    description: Dev server. For use by UNOCHA developers.
+
+tags:
+  - name: 'user'
+    description: 'Methods related to users'
+  - name: 'auth'
+    description: 'Methods related to authentication'
+  - name: 'list'
+    description: 'Methods related to lists'
+  - name: 'connection'
+    description: 'Methods related to user connections'
+  - name: 'service'
+    description: 'Methods related to services (mailchimp, googlegroup)'
+  - name: 'client'
+    description: 'Methods related to oauth clients'
+  - name: 'notification'
+    description: 'Methods related to notifications'
+  - name: 'totp'
+    description: 'Methods related to 2-factor authentication'
+
+components:
+  schemas:
+    Auth:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
