@@ -3039,6 +3039,68 @@ a.btn-small {
         width: 18px;
         height: 18px; } }
 
+.alert {
+  padding: 8px 0;
+  font-size: 14px;
+  font-size: 0.875rem;
+  font-style: italic;
+  margin-bottom: 4px; }
+
+.alert--inline {
+  padding: 8px; }
+
+.alert--dismissable {
+  padding-right: 48px; }
+
+.alert--danger {
+  color: #474747;
+  background-color: #F4AEB0; }
+  .alert--danger .icon {
+    fill: #A42834; }
+  .alert--danger a {
+    color: #474747; }
+
+.alert--success {
+  background-color: #E5F3F6;
+  color: #295A78; }
+  .alert--success .icon {
+    fill: #295A78; }
+
+.alert--warning {
+  background-color: #E5F3F6;
+  color: #295A78; }
+  .alert--warning .icon {
+    fill: #295A78; }
+
+.alert__inner {
+  display: flex;
+  position: relative; }
+
+.alert__close {
+  position: absolute;
+  right: 0;
+  top: -8px; }
+  .alert__close.btn-transparent {
+    padding: 8px; }
+
+.alert__icon {
+  float: left;
+  flex-shrink: 0;
+  margin-right: 8px; }
+  .alert__icon .icon {
+    width: 24px;
+    height: 24px; }
+
+@media (min-width: 768px) {
+  .alert {
+    font-size: 16px;
+    font-size: 1rem;
+    margin-bottom: 8px; }
+  .alert__inner {
+    align-items: center; }
+  .alert__close {
+    top: -6px; } }
+
 .login__heading {
   max-width: 200px; }
 
