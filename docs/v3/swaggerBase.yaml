@@ -7,10 +7,10 @@ info:
     name: Apache-2.0
 
 servers:
-  - url: 'https://api.humanitarian.id/api/v3'
-    description: Production server. For use by HID Integration Partners.
   - url: 'https://dev.api-humanitarian-id.ahconu.org/api/v3'
     description: Dev server. For use by UNOCHA developers.
+  - url: 'https://api.humanitarian.id/api/v3'
+    description: Production server. For use by HID Integration Partners.
 
 tags:
   - name: 'user'
