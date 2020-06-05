@@ -4,8 +4,8 @@ info:
   description: 'Humanitarian ID v2 API'
   version: 2.0.0
   contact:
-    name: 'Guillaume Viguier-Just'
-    email: 'guillaume@viguierjust.com'
+    name: 'UN OCHA'
+    email: 'ops@humanitarianresponse.info'
   license:
     name: ''
 tags:
@@ -25,7 +25,7 @@ tags:
     description: 'Methods related to notifications'
   - name: 'totp'
     description: 'Methods related to 2 Factor Authentication'
-host: 'api.dev.humanitarian.id'
+host: 'dev.api-humanitarian-id.ahconu.org'
 basePath: '/api/v2'
 schemes:
   - https

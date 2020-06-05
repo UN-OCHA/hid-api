@@ -52,5 +52,24 @@ Refer to the [OCHA Developer Handbook regarding use of Mailhog](https://docs.goo
 
 ## Swagger API Docs
 
+### Docs v2
+
 If you change the API in any way, you must update `/docs/specs.yaml`. The docs are not automatically updated when critical aspects — such as a route name — are changed. You MUST change the specs config to match your changes, ideally within one PR.
 
+It is sufficient to edit `specs.yml` — no compile or build step is needed. The changes will be automatically reflected in the published docs available at `/docs/`
+
+### Docs v3
+
+For v3 we are transitioning away from the global `specs.yml` file and instead using `swagger-inline` to provide docblocks alongside each function. Look for comments with markings like the following:
+
+```js
+/*
+ * @api [get] /route/path
+ * summary: 'Example method description'
+ * responses:
+ *   '200':
+ *      description: Sample response description for HTTP 200
+ */
+```
+
+For more info please reference the [official example](https://github.com/readmeio/swagger-inline#examples) and the [official documentation](https://swagger.io/docs/specification/about/) for `swagger-inline`
