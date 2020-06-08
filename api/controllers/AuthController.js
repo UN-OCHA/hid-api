@@ -126,6 +126,10 @@ module.exports = {
    * responses:
    *   '200':
    *     description: 'The json web token'
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/JWT'
    *   '400':
    *     description: 'Bad request. Missing email and/or password'
    *   '401':
