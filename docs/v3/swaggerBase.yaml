@@ -11,7 +11,6 @@ servers:
     description: Dev server. For use by UNOCHA developers.
   - url: 'https://api.humanitarian.id/api/v3'
     description: Production server. For use by HID Integration Partners.
-
 tags:
   - name: 'user'
     description: 'Methods related to users'
@@ -31,6 +30,11 @@ tags:
     description: 'Methods related to 2-factor authentication'
 
 components:
+  securitySchemes:
+    authToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     Auth:
       type: object
@@ -41,3 +45,20 @@ components:
         password:
           type: string
           format: password
+    JWT:
+      type: object
+      properties:
+        token:
+          type: string
+
+# Applying Auth token requirement to our entire API.
+#
+# @see https://swagger.io/docs/specification/authentication/bearer-authentication/
+#
+# To remove security requirements for a particular API method, set `security` to
+# an empty array on that particular method. See `POST /jsonwebtoken` for an
+# example within our codebase.
+#
+# @see https://stackoverflow.com/a/29020676
+security:
+  - authToken: []

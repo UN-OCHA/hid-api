@@ -6,6 +6,8 @@ info:
   license:
     name: Apache-2.0
 servers:
+  - url: 'http://api.hid.vm:3000/api/v3'
+    description: Localhost server. For your own debugging.
   - url: 'https://dev.api-humanitarian-id.ahconu.org/api/v3'
     description: Dev server. For use by UNOCHA developers.
   - url: 'https://api.humanitarian.id/api/v3'
@@ -28,6 +30,11 @@ tags:
   - name: totp
     description: Methods related to 2-factor authentication
 components:
+  securitySchemes:
+    authToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     Auth:
       type: object
@@ -43,6 +50,8 @@ components:
       properties:
         token:
           type: string
+security:
+  - authToken: []
 paths:
   /jsonwebtoken:
     post:
@@ -71,13 +80,16 @@ paths:
           description: >-
             The account was locked for 5 minutes because there were more than 5
             unsuccessful login attempts within the last 5 minutes
+      security: []
     get:
       tags:
         - auth
       summary: Retrieve the JWTs of the current user
       responses:
         '200':
-          description: List of the JWTs of the current user
+          description: >-
+            Array of all JWTs for the current user, including blacklisted
+            tokens.
     delete:
       tags:
         - auth

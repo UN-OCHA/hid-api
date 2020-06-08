@@ -138,6 +138,7 @@ module.exports = {
    *     description: >-
    *       The account was locked for 5 minutes because there were more than 5
    *       unsuccessful login attempts within the last 5 minutes
+   * security: []
    */
   async authenticate(request) {
     const result = await loginHelper(request);
@@ -589,7 +590,8 @@ module.exports = {
    * summary: Retrieve the JWTs of the current user
    * responses:
    *   '200':
-   *     description: List of the JWTs of the current user
+   *     description: >-
+   *       Array of all JWTs for the current user, including blacklisted tokens.
    */
   async jwtTokens(request) {
     const tokens = await JwtToken.find({ user: request.auth.credentials._id });
