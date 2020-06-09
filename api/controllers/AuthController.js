@@ -604,9 +604,20 @@ module.exports = {
    * tags:
    *   - auth
    * summary: Blacklists a JWT for the current user
+   * requestBody:
+   *   description: The token to blacklist.
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         $ref: '#/components/schemas/JWT'
    * responses:
    *   '200':
    *     description: JWT was successfully blacklisted
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/JWT'
    *   '400':
    *     description: Missing token
    *   '403':
