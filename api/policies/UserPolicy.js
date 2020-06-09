@@ -40,7 +40,6 @@ async function canUpdate(request) {
 }
 
 module.exports = {
-
   canCreate(request) {
     if (!request.auth.credentials) {
       if (!request.payload) {
@@ -65,8 +64,6 @@ module.exports = {
     return true;
   },
 
-  canUpdate,
-
   async canDestroy(request) {
     if (request.auth.credentials.is_admin
       || request.auth.credentials.id === request.params.id) {
@@ -85,5 +82,6 @@ module.exports = {
     throw Boom.unauthorized('You are not allowed to do this operation');
   },
 
+  canUpdate,
   canClaim: canUpdate,
 };
