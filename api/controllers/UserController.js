@@ -231,6 +231,46 @@ function _csvExport(users, full = false) {
 
 module.exports = {
 
+  /*
+   * @api [post] /user
+   * tags:
+   *   - user
+   * summary: Create a new user
+   * requestBody:
+   *   description: Required parameters to create a user.
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
+   *           email:
+   *             type: string
+   *             required: true
+   *           family_name:
+   *             type: string
+   *             required: true
+   *           given_name:
+   *             type: string
+   *             required: true
+   *           app_verify_url:
+   *             type: string
+   *             required: true
+   *             description: >-
+   *               Should correspond to the endpoint you are interacting with.
+   * responses:
+   *   '200':
+   *     description: User was successfully created
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request. Missing required parameters.
+   *   '403':
+   *     description: Forbidden. Your account is not allowed to create users.
+   * security: []
+   */
   async create(request) {
     if (!request.payload.app_verify_url) {
       logger.warn(

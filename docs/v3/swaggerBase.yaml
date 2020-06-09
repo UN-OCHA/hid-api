@@ -43,6 +43,49 @@ components:
       properties:
         token:
           type: string
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: 'User unique ID'
+        id:
+          type: string
+          description: 'Shortcut to the user ID'
+        deleted:
+          type: boolean
+          description: 'Whether the user is active or not'
+        email:
+          type: string
+          description: 'The user primary email'
+        email_verified:
+          type: string
+          description: 'Whether the user primary email is verified'
+        emailsVisibility:
+          type: string
+          description: 'Who can view this user emails'
+        expires:
+          type: string
+          format: date-time
+          description: 'When this user account expires (set to the past if it does not)'
+        family_name:
+          type: string
+          description: 'The user family name'
+        given_name:
+          type: string
+          description: 'The user given name'
+        isManager:
+          type: boolean
+          description: 'Whether the user is a global manager'
+        is_admin:
+          type: boolean
+          description: 'Whether the user is an admin'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
 # Applying Auth token requirement to our entire API.
 #

@@ -43,7 +43,13 @@ module.exports = {
 
   canCreate(request) {
     if (!request.auth.credentials) {
-      if (!request.payload.email) {
+      if (!request.payload) {
+        logger.warn(
+          '[UserPolicy->canCreate] No request payload provided for user creation',
+          { fail: true, request: request.payload },
+        );
+        throw Boom.badRequest('Missing request payload');
+      } else if (!request.payload.email) {
         logger.warn(
           '[UserPolicy->canCreate] No email address provided for user creation',
           { request: request.payload },
