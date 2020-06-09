@@ -6,8 +6,6 @@ info:
   license:
     name: Apache-2.0
 servers:
-  - url: 'http://api.hid.vm:3000/api/v3'
-    description: Localhost server. For your own debugging.
   - url: 'https://dev.api-humanitarian-id.ahconu.org/api/v3'
     description: Dev server. For use by UNOCHA developers.
   - url: 'https://api.humanitarian.id/api/v3'
