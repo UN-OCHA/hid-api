@@ -6,8 +6,6 @@ info:
   license:
     name: Apache-2.0
 servers:
-  - url: 'http://api.hid.vm:3000/api/v3'
-    description: Localhost server. For your own debugging.
   - url: 'https://dev.api-humanitarian-id.ahconu.org/api/v3'
     description: Dev server. For use by UNOCHA developers.
   - url: 'https://api.humanitarian.id/api/v3'
@@ -129,9 +127,20 @@ paths:
       tags:
         - auth
       summary: Blacklists a JWT for the current user
+      requestBody:
+        description: The token to blacklist.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JWT'
       responses:
         '200':
           description: JWT was successfully blacklisted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWT'
         '400':
           description: Missing token
         '403':
