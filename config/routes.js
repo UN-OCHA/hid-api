@@ -185,24 +185,6 @@ module.exports = [
 
   {
     method: 'POST',
-    path: '/api/v2/jsonwebtoken',
-    handler: AuthController.authenticate,
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/jsonwebtoken',
-    handler: AuthController.jwtTokens,
-  },
-
-  {
-    method: 'DELETE',
-    path: '/api/v2/jsonwebtoken',
-    handler: AuthController.blacklistJwt,
-  },
-
-  {
-    method: 'POST',
     path: '/login',
     handler: AuthController.login,
     options: {
@@ -241,6 +223,39 @@ module.exports = [
     method: ['GET', 'POST'],
     path: '/account.json',
     handler: UserController.showAccount,
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v2/jsonwebtoken',
+    handler: AuthController.authenticate,
+  },
+  {
+    method: 'POST',
+    path: '/api/v3/jsonwebtoken',
+    handler: AuthController.authenticate,
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v2/jsonwebtoken',
+    handler: AuthController.jwtTokens,
+  },
+  {
+    method: 'GET',
+    path: '/api/v3/jsonwebtoken',
+    handler: AuthController.jwtTokens,
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/v2/jsonwebtoken',
+    handler: AuthController.blacklistJwt,
+  },
+  {
+    method: 'DELETE',
+    path: '/api/v3/jsonwebtoken',
+    handler: AuthController.blacklistJwt,
   },
 
   {

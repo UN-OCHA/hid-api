@@ -7,30 +7,34 @@ info:
     name: Apache-2.0
 
 servers:
-  - url: 'https://api.humanitarian.id/api/v3'
-    description: Production server. For use by HID Integration Partners.
   - url: 'https://dev.api-humanitarian-id.ahconu.org/api/v3'
     description: Dev server. For use by UNOCHA developers.
-
+  - url: 'https://api.humanitarian.id/api/v3'
+    description: Production server. For use by HID Integration Partners.
 tags:
   - name: 'user'
     description: 'Methods related to users'
   - name: 'auth'
     description: 'Methods related to authentication'
-  - name: 'list'
-    description: 'Methods related to lists'
-  - name: 'connection'
-    description: 'Methods related to user connections'
-  - name: 'service'
-    description: 'Methods related to services (mailchimp, googlegroup)'
+  # - name: 'list'
+  #   description: 'Methods related to lists'
+  # - name: 'connection'
+  #   description: 'Methods related to user connections'
+  # - name: 'service'
+  #   description: 'Methods related to services (mailchimp, googlegroup)'
   - name: 'client'
     description: 'Methods related to oauth clients'
-  - name: 'notification'
-    description: 'Methods related to notifications'
+  # - name: 'notification'
+  #   description: 'Methods related to notifications'
   - name: 'totp'
     description: 'Methods related to 2-factor authentication'
 
 components:
+  securitySchemes:
+    authToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     Auth:
       type: object
@@ -41,3 +45,20 @@ components:
         password:
           type: string
           format: password
+    JWT:
+      type: object
+      properties:
+        token:
+          type: string
+
+# Applying Auth token requirement to our entire API.
+#
+# @see https://swagger.io/docs/specification/authentication/bearer-authentication/
+#
+# To remove security requirements for a particular API method, set `security` to
+# an empty array on that particular method. See `POST /jsonwebtoken` for an
+# example within our codebase.
+#
+# @see https://stackoverflow.com/a/29020676
+security:
+  - authToken: []

@@ -126,6 +126,10 @@ module.exports = {
    * responses:
    *   '200':
    *     description: 'The json web token'
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/JWT'
    *   '400':
    *     description: 'Bad request. Missing email and/or password'
    *   '401':
@@ -134,6 +138,7 @@ module.exports = {
    *     description: >-
    *       The account was locked for 5 minutes because there were more than 5
    *       unsuccessful login attempts within the last 5 minutes
+   * security: []
    */
   async authenticate(request) {
     const result = await loginHelper(request);
@@ -585,7 +590,8 @@ module.exports = {
    * summary: Retrieve the JWTs of the current user
    * responses:
    *   '200':
-   *     description: List of the JWTs of the current user
+   *     description: >-
+   *       Array of all JWTs for the current user, including blacklisted tokens.
    */
   async jwtTokens(request) {
     const tokens = await JwtToken.find({ user: request.auth.credentials._id });
@@ -598,9 +604,20 @@ module.exports = {
    * tags:
    *   - auth
    * summary: Blacklists a JWT for the current user
+   * requestBody:
+   *   description: The token to blacklist.
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         $ref: '#/components/schemas/JWT'
    * responses:
    *   '200':
    *     description: JWT was successfully blacklisted
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/JWT'
    *   '400':
    *     description: Missing token
    *   '403':

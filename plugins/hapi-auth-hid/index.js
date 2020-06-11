@@ -62,10 +62,23 @@ internals.tokenToUser = async (token) => {
 internals.implementation = () => ({
   async authenticate(request, reply) {
     acceptLanguage.languages(['en', 'fr', 'es']);
-    // If we are creating a user and we are not authenticated, allow it
-    if ((request.path === '/api/v2/user' || request.path === '/api/v2/jsonwebtoken')
+
+    // This array of paths is allowed to execute without having a token set as
+    // an Authorization header.
+    const allowPathsWithoutAuthentication = [
+      '/api/v2/user',
+      '/api/v2/jsonwebtoken',
+      '/api/v3/user',
+      '/api/v3/jsonwebtoken',
+    ];
+
+    // Check for our special cases that are allowed to execute without an Auth
+    // token being sent.
+    if (
+        allowPathsWithoutAuthentication.includes(request.path)
         && request.method === 'post'
-        && !request.headers.authorization) {
+        && !request.headers.authorization
+    ) {
       return reply.continue;
     }
 
