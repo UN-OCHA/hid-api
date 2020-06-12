@@ -116,6 +116,12 @@ module.exports = {
    * tags:
    *   - auth
    * summary: Generate a JSON web token (JWT)
+   * parameters:
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: The TOTP token. Required if the user has 2FA enabled.
+   *     required: false
+   *     type: string
    * requestBody:
    *   description: 'User email and password'
    *   required: true
