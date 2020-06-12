@@ -465,8 +465,11 @@ module.exports = {
         criteria.is_ghost = false;
       }
       // Do not show user if it is hidden
-      if (!request.auth.credentials.is_admin
-        && request.auth.credentials._id.toString() !== request.params.id) {
+      if (
+        !request.auth.credentials.is_admin
+        && request.auth.credentials._id
+        && request.auth.credentials._id.toString() !== request.params.id
+      ) {
         criteria.hidden = false;
       }
       const user = await User.findOne(criteria);
