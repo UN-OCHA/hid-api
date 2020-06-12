@@ -307,6 +307,18 @@ module.exports = [
       },
     },
   },
+  {
+    method: 'GET',
+    path: '/api/v3/user/{id?}',
+    handler: UserController.find,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
 
   {
     method: 'GET',
