@@ -464,11 +464,11 @@ module.exports = {
    *     default: ''
    * responses:
    *   '200':
-   *     description: A User
-   *     schema:
-   *       type: object
-   *       content:
-   *         $ref: '#/components/schemas/User'
+   *     description: The requested user
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
    *   '400':
    *     description: Bad request.
    *   '401':
