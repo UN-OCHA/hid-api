@@ -183,17 +183,11 @@ paths:
         '403':
           description: Forbidden. Your account is not allowed to create users.
       security: []
-  '/user/{id}':
     get:
       tags:
         - user
       summary: Returns all users the requesting user has access to.
       parameters:
-        - name: id
-          description: A 24-character alphanumeric User ID
-          in: path
-          required: false
-          default: ''
         - name: sort
           description: An attribute to sort by
           in: query
@@ -224,6 +218,28 @@ paths:
             X-Total-Count:
               description: Total number of users
               type: integer
+        '400':
+          description: Bad request.
+        '401':
+          description: Unauthorized.
+  '/user/{id}':
+    get:
+      tags:
+        - user
+      summary: Returns a User by ID.
+      parameters:
+        - name: id
+          description: A 24-character alphanumeric User ID
+          in: path
+          required: true
+          default: ''
+      responses:
+        '200':
+          description: A User
+          schema:
+            type: object
+            content:
+              $ref: '#/components/schemas/User'
         '400':
           description: Bad request.
         '401':
