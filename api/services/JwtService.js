@@ -4,7 +4,7 @@ const rsa2jwk = require('rsa-pem-to-jwk');
 
 /**
  * @module JwtService
- * @description Json Web Tokens Service
+ * @description JSON Web Token Service
  */
 module.exports = {
 

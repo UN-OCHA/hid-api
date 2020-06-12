@@ -90,7 +90,7 @@ paths:
     post:
       tags:
         - auth
-      summary: Generate a jsonwebtoken
+      summary: Generate a JSON web token (JWT)
       requestBody:
         description: User email and password
         required: true
@@ -100,7 +100,7 @@ paths:
               $ref: '#/components/schemas/Auth'
       responses:
         '200':
-          description: The json web token
+          description: The User object with the JWT contained in the `token` property.
           content:
             application/json:
               schema:
