@@ -348,6 +348,21 @@ module.exports = [
       },
     },
   },
+  {
+    method: ['PUT', 'PATCH'],
+    path: '/api/v3/user/{id}',
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.update,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
 
   {
     method: 'DELETE',

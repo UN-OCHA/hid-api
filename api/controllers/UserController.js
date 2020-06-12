@@ -640,6 +640,46 @@ module.exports = {
     return reply.response(results).header('X-Total-Count', number);
   },
 
+  /*
+   * @api [put] /user/{id}
+   * tags:
+   *   - user
+   * summary: Update the user
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric User ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   * requestBody:
+   *   description: The user object
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         $ref: '#/components/schemas/User'
+   * responses:
+   *   '200':
+   *     description: The updated user object
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Unauthorized.
+   *   '403':
+   *     description: Requesting user lacks permission to update requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
+  /*
+   * @api [patch] /user/{id}
+   * tags:
+   *   - user
+   * summary: TODO
+   */
   async update(request) {
     const childAttributes = User.listAttributes();
     HelperService.removeForbiddenAttributes(User, request, childAttributes);
