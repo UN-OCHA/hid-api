@@ -1278,6 +1278,49 @@ module.exports = {
     throw Boom.badRequest('No file found');
   },
 
+  /*
+   * @api [post] /user/{id}/emails
+   * tags:
+   *   - user
+   * summary: Add a new email to the user's profile.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric User ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   * requestBody:
+   *   description: Email address and validation URL.
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
+   *           email:
+   *             type: string
+   *             required: true
+   *           app_validation_url:
+   *             type: string
+   *             required: true
+   *             description: >-
+   *               Should correspond to the endpoint you are interacting with.
+   * responses:
+   *   '200':
+   *     description: The updated user object
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request. Reason will be in response body.
+   *   '401':
+   *     description: Unauthorized.
+   *   '403':
+   *     description: Requesting user lacks permission to update requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
   async addEmail(request) {
     const appValidationUrl = request.payload.app_validation_url;
     const userId = request.params.id;
@@ -1286,7 +1329,7 @@ module.exports = {
       logger.warn(
         '[UserController->addEmail] No email or app_validation_url provided',
       );
-      throw Boom.badRequest();
+      throw Boom.badRequest('Required parameters not present in payload');
     }
 
     if (!HelperService.isAuthorizedUrl(appValidationUrl)) {

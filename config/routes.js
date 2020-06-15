@@ -547,6 +547,21 @@ module.exports = [
       },
     },
   },
+  {
+    method: 'POST',
+    path: '/api/v3/user/{id}/emails',
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.addEmail,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
 
   {
     method: 'PUT',
