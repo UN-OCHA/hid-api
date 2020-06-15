@@ -349,7 +349,7 @@ module.exports = [
     },
   },
   {
-    method: ['PUT', 'PATCH'],
+    method: 'PUT', // No PATCH for v3 bc the function can't actually PATCH.
     path: '/api/v3/user/{id}',
     options: {
       pre: [

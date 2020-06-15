@@ -674,12 +674,6 @@ module.exports = {
    *   '404':
    *     description: Requested user not found.
    */
-  /*
-   * @api [patch] /user/{id}
-   * tags:
-   *   - user
-   * summary: TODO
-   */
   async update(request) {
     const childAttributes = User.listAttributes();
     HelperService.removeForbiddenAttributes(User, request, childAttributes);

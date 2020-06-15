@@ -284,11 +284,4 @@ paths:
           description: Requesting user lacks permission to update requested user.
         '404':
           description: Requested user not found.
-    patch:
-      tags:
-        - user
-      summary: TODO
-      responses:
-        '200':
-          description: Successful response
 
