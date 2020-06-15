@@ -326,6 +326,46 @@ paths:
           description: Requesting user lacks permission to update requested user.
         '404':
           description: Requested user not found.
+  '/user/{id}/password':
+    put:
+      tags:
+        - user
+      summary: Updates the password of a user.
+      parameters:
+        - name: id
+          description: A 24-character alphanumeric User ID
+          in: path
+          required: true
+          default: ''
+      requestBody:
+        description: >-
+          The `new_password` must be different than `old_password` and meet ALL
+          of the following requirements: at least 12 characters, one lowercase
+          letter, one uppercase letter, one number, one special character
+          ``!@#$%^&*()+=\`{}``
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                old_password:
+                  type: string
+                  required: true
+                new_password:
+                  type: string
+                  required: true
+      responses:
+        '204':
+          description: Password updated successfully.
+        '400':
+          description: Bad request. Reason will be in response body.
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Requesting user lacks permission to update requested user.
+        '404':
+          description: Requested user not found.
   '/user/{id}/emails':
     post:
       tags:
