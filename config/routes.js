@@ -621,7 +621,6 @@ module.exports = [
       },
     },
   },
-
   {
     method: 'DELETE',
     path: '/api/v3/user/{id}/emails/{email}',
