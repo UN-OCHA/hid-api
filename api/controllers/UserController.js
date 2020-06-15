@@ -861,6 +861,49 @@ module.exports = {
     return reply.response().code(204);
   },
 
+  /*
+   * @api [put] /user/{id}/email
+   * tags:
+   *   - user
+   * summary: Sets the primary email of a user.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric User ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: The TOTP token. Required if the user has 2FA enabled.
+   *     required: false
+   *     type: string
+   * requestBody:
+   *   description: Email address to be marked primary.
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
+   *           email:
+   *             type: string
+   *             required: true
+   * responses:
+   *   '200':
+   *     description: The updated user object
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Unauthorized.
+   *   '403':
+   *     description: Requesting user lacks permission to update requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
   async setPrimaryEmail(request) {
     const { email } = request.payload;
 
@@ -905,10 +948,7 @@ module.exports = {
     logger.info(
       `[UserController->setPrimaryEmail] Synchronized user ${request.params.id} with google spreadsheets successfully`,
     );
-    // const promises = [];
-    // promises.push(GSSSyncService.synchronizeUser(record));
-    // promises.push(OutlookService.synchronizeUser(record));
-    // await Promise.all(promises);
+
     return record;
   },
 

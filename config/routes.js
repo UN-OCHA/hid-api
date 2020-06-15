@@ -579,6 +579,22 @@ module.exports = [
       },
     },
   },
+  {
+    method: 'PUT',
+    path: '/api/v3/user/{id}/email',
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+        AuthPolicy.isTOTPEnabledAndValid,
+      ],
+      handler: UserController.setPrimaryEmail,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
 
   {
     method: 'PUT',
