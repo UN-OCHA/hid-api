@@ -379,6 +379,21 @@ module.exports = [
       },
     },
   },
+  {
+    method: 'DELETE',
+    path: '/api/v3/user/{id}',
+    options: {
+      pre: [
+        AuthPolicy.isTOTPEnabledAndValid,
+      ],
+      handler: UserController.destroy,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
 
   {
     method: 'POST',

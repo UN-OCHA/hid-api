@@ -837,6 +837,34 @@ module.exports = {
     return user;
   },
 
+  /*
+   * @api [delete] /user/{id}
+   * tags:
+   *   - user
+   * summary: Delete the user.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric User ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: The TOTP token. Required if the user has 2FA enabled.
+   *     required: false
+   *     type: string
+   * responses:
+   *   '204':
+   *     description: User deleted successfully.
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Unauthorized.
+   *   '403':
+   *     description: Requesting user lacks permission to delete requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
   async destroy(request, reply) {
     if (!request.auth.credentials.is_admin
       && request.auth.credentials._id.toString() !== request.params.id) {
