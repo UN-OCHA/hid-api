@@ -321,6 +321,11 @@ paths:
           in: path
           required: true
           default: ''
+        - name: X-HID-TOTP
+          in: header
+          description: The TOTP token. Required if the user has 2FA enabled.
+          required: false
+          type: string
       requestBody:
         description: >-
           The `new_password` must be different than `old_password` and meet ALL
