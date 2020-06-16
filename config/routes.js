@@ -618,6 +618,14 @@ module.exports = [
       auth: false,
     },
   },
+  {
+    method: 'PUT',
+    path: '/api/v3/user/emails/{email?}',
+    handler: UserController.validateEmail,
+    options: {
+      auth: false,
+    },
+  },
 
   {
     method: 'DELETE',

@@ -1483,6 +1483,47 @@ module.exports = {
     return record;
   },
 
+  /*
+   * @TODO: This function does two different tasks based on the input received,
+   *        but our docs tool cannot branch response codes based on input. We
+   *        will split the function into two separate methods which will both
+   *        simplify the code and make accurate docs possible.
+   *
+   * @see HID-2064
+   *
+   * @api [put] /user/emails/{email}
+   * tags:
+   *   - user
+   * summary: >-
+   *   Sends confirmation email, or confirms ownership of an email address.
+   * parameters:
+   *   - name: email
+   *     description: The email address to confirm.
+   *     in: path
+   *     required: true
+   *     default: ''
+   * requestBody:
+   *   description: Required parameters to validate an email address.
+   *   required: false
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
+   *           app_validation_url:
+   *             type: string
+   *             required: true
+   * responses:
+   *   '204':
+   *     description: Email sent successfully.
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Unauthorized.
+   *   '404':
+   *     description: Requested email address not found.
+   * security: []
+   */
   async validateEmail(request) {
     // TODO: make sure current user can do this
 
@@ -1573,6 +1614,12 @@ module.exports = {
       }
       return record;
     }
+
+    // When hash wasn't present, do this stuff instead.
+    //
+    // @TODO: split this into its own function.
+    //
+    // @see HID-2064
     const record = await User.findOne({ 'emails.email': request.params.email });
     if (!record) {
       logger.warn(

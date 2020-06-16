@@ -469,4 +469,36 @@ paths:
           description: Requesting user lacks permission to update requested user.
         '404':
           description: Requested user not found.
+  '/user/emails/{email}':
+    put:
+      tags:
+        - user
+      summary: 'Sends confirmation email, or confirms ownership of an email address.'
+      parameters:
+        - name: email
+          description: The email address to confirm.
+          in: path
+          required: true
+          default: ''
+      requestBody:
+        description: Required parameters to validate an email address.
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                app_validation_url:
+                  type: string
+                  required: true
+      responses:
+        '204':
+          description: Email sent successfully.
+        '400':
+          description: Bad request.
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Requested email address not found.
+      security: []
 
