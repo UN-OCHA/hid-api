@@ -1094,6 +1094,61 @@ module.exports = {
     return record;
   },
 
+  /*
+   * @TODO: This function also needs to be split into two methods because it
+   *        serves two purposes.
+   *
+   * @see HID-2067
+   *
+   * @api [put] /user/password
+   * tags:
+   *   - user
+   * summary: Resets a user password or sends a password reset email.
+   * parameters:
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: The TOTP token. Required if the user has 2FA enabled.
+   *     required: false
+   *     type: string
+   * requestBody:
+   *   description: >-
+   *     Send a payload with `email` and `app_reset_url` to have this method
+   *     send an email with a password recovery email. Send `id`,`time`,`hash`,
+   *     `password` in the payload to have it reset the password. For password
+   *     complexity requirements see `PUT /user/{id}/password`
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
+   *           email:
+   *             type: string
+   *             required: true
+   *           app_reset_url:
+   *             type: string
+   *             required: true
+   *             description: >-
+   *               Should correspond to the endpoint you are interacting with.
+   *           id:
+   *             type: string
+   *             required: true
+   *           time:
+   *             type: string
+   *             required: true
+   *           hash:
+   *             type: string
+   *             required: true
+   *           password:
+   *             type: string
+   *             required: true
+   * responses:
+   *   '200':
+   *     description: Password reset successfully.
+   *   '400':
+   *     description: Bad request. See response body for details.
+   * security: []
+   */
   async resetPasswordEndpoint(request) {
     if (request.payload.email) {
       const appResetUrl = request.payload.app_reset_url;

@@ -468,7 +468,6 @@ module.exports = [
       auth: false,
     },
   },
-
   {
     method: 'PUT',
     path: '/api/v3/user/password',
