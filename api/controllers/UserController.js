@@ -1644,6 +1644,13 @@ module.exports = {
       email._id.toString(),
       appValidationUrl,
     );
+
+    // v3: Send a 204 (empty body)
+    const requestIsV3 = request.path.indexOf('api/v3') !== -1;
+    if (requestIsV3) {
+      return reply.response().code(204);
+    }
+    // v2: Send 200 with this response body.
     return 'Validation email sent successfully';
   },
 
