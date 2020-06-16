@@ -871,7 +871,7 @@ module.exports = {
       logger.warn(
         `[UserController->destroy] User ${request.auth.credentials._id.toString()} is not allowed to delete user ${request.params.id}`,
       );
-      return reply(Boom.forbidden('You are not allowed to delete this account'));
+      throw Boom.forbidden('You are not allowed to delete this account');
     }
 
     const user = await User.findOne({ _id: request.params.id });
