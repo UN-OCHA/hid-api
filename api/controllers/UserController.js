@@ -890,214 +890,6 @@ module.exports = {
   },
 
   /*
-   * @api [put] /user/{id}/email
-   * tags:
-   *   - user
-   * summary: Sets the primary email of a user.
-   * parameters:
-   *   - name: id
-   *     description: A 24-character alphanumeric User ID
-   *     in: path
-   *     required: true
-   *     default: ''
-   *   - name: X-HID-TOTP
-   *     in: header
-   *     description: The TOTP token. Required if the user has 2FA enabled.
-   *     required: false
-   *     type: string
-   * requestBody:
-   *   description: Email address to be marked primary.
-   *   required: true
-   *   content:
-   *     application/json:
-   *       schema:
-   *         type: object
-   *         properties:
-   *           email:
-   *             type: string
-   *             required: true
-   * responses:
-   *   '200':
-   *     description: The updated user object
-   *     content:
-   *       application/json:
-   *         schema:
-   *           $ref: '#/components/schemas/User'
-   *   '400':
-   *     description: Bad request.
-   *   '401':
-   *     description: Unauthorized.
-   *   '403':
-   *     description: Requesting user lacks permission to update requested user.
-   *   '404':
-   *     description: Requested user not found.
-   */
-  async setPrimaryEmail(request) {
-    const { email } = request.payload;
-
-    if (!request.payload.email) {
-      logger.warn(
-        '[UserController->setPrimaryEmail] No email in payload',
-      );
-      throw Boom.badRequest();
-    }
-
-    const record = await User.findOne({ _id: request.params.id });
-    if (!record) {
-      logger.warn(
-        `[UserController->setPrimaryEmail] Could not find user ${request.params.id}`,
-      );
-      throw Boom.notFound();
-    }
-    // Make sure email is validated
-    const index = record.emailIndex(email);
-    if (index === -1) {
-      logger.warn(
-        `[UserController->setPrimaryEmail] Email ${email} does not exist for user ${request.params.id}`,
-      );
-      throw Boom.badRequest('Email does not exist');
-    }
-    if (!record.emails[index].validated) {
-      logger.warn(
-        `[UserController->setPrimaryEmail] Email ${record.emails[index]} has not been validated for user ${request.params.id}`,
-      );
-      throw Boom.badRequest('Email has not been validated. You need to validate it first.');
-    }
-    record.email = email;
-    // If we are there, it means that the email has been validated,
-    // so make sure email_verified is set to true.
-    record.verifyEmail(email);
-    record.lastModified = new Date();
-    await record.save();
-    logger.info(
-      `[UserController->setPrimaryEmail] Saved user ${request.params.id} successfully`,
-    );
-    await GSSSyncService.synchronizeUser(record);
-    logger.info(
-      `[UserController->setPrimaryEmail] Synchronized user ${request.params.id} with google spreadsheets successfully`,
-    );
-
-    return record;
-  },
-
-  async validateEmail(request) {
-    // TODO: make sure current user can do this
-
-    if (request.payload.hash) {
-      const record = await User.findOne({ _id: request.payload.id });
-      if (!record) {
-        logger.warn(
-          `[UserController->validateEmail] Could not find user ${request.payload.id}`,
-        );
-        throw Boom.notFound();
-      }
-      let domain = null;
-      let { email } = record;
-      if (request.payload.emailId) {
-        const emailRecord = record.emails.id(request.payload.emailId);
-        if (emailRecord) {
-          ({ email } = emailRecord);
-        }
-      }
-      // Verify hash
-      if (record.validHash(request.payload.hash, 'verify_email', request.payload.time, email) === true) {
-        // Verify user email
-        if (record.email === email) {
-          record.email_verified = true;
-          record.expires = new Date(0, 0, 1, 0, 0, 0);
-          record.emails[0].validated = true;
-          record.emails.set(0, record.emails[0]);
-          record.lastModified = new Date();
-          domain = await record.isVerifiableEmail(email);
-        } else {
-          for (let i = 0, len = record.emails.length; i < len; i += 1) {
-            if (record.emails[i].email === email) {
-              record.emails[i].validated = true;
-              record.emails.set(i, record.emails[i]);
-            }
-          }
-          record.lastModified = new Date();
-          domain = await record.isVerifiableEmail(email);
-        }
-      } else {
-        logger.warn(
-          `[UserController->validateEmail] Invalid hash ${request.payload.hash} provided`,
-        );
-        throw Boom.badRequest('Invalid hash');
-      }
-      if (domain) {
-        record.verified = true;
-        record.verified_by = hidAccount;
-        record.verifiedOn = new Date();
-        record.verificationExpiryEmail = false;
-        // If the domain is associated to a list, check user in this list automatically
-        if (domain.list) {
-          if (!record.organizations) {
-            record.organizations = [];
-          }
-
-          let isCheckedIn = false;
-          // Make sure user is not already checked in this list
-          for (let i = 0, len = record.organizations.length; i < len; i += 1) {
-            if (record.organizations[i].list.equals(domain.list._id)
-              && record.organizations[i].deleted === false) {
-              isCheckedIn = true;
-            }
-          }
-
-          if (!isCheckedIn) {
-            await ListUserController.checkinHelper(domain.list, record, true, 'organizations', record);
-          }
-        }
-      }
-      const promises = [];
-      const pendingLogs = [];
-      promises.push(record.save());
-      pendingLogs.push({
-        type: 'info',
-        message: `[UserController->validateEmail] Saved user ${record.id} successfully`,
-      });
-      if (record.email === email) {
-        promises.push(EmailService.sendPostRegister(record));
-        pendingLogs.push({
-          type: 'info',
-          message: `[UserController->validateEmail] Sent post_register email to ${record.email} successfully`,
-        });
-      }
-      await Promise.all(promises);
-      for (let i = 0; i < pendingLogs.length; i += 1) {
-        logger.log(pendingLogs[i]);
-      }
-      return record;
-    }
-    const record = await User.findOne({ 'emails.email': request.params.email });
-    if (!record) {
-      logger.warn(
-        `[UserController->validateEmail] Could not find user with email ${request.params.email}`,
-      );
-      throw Boom.notFound();
-    }
-    // Send validation email again
-    const appValidationUrl = request.payload.app_validation_url;
-    if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
-      logger.warn(
-        `[UserController->validateEmail] app_validation_url ${appValidationUrl} is not in authorizedDomains allowlist`,
-        { request, security: true, fail: true },
-      );
-      throw Boom.badRequest('Invalid app_validation_url');
-    }
-    const emailIndex = record.emailIndex(request.params.email);
-    const email = record.emails[emailIndex];
-    await EmailService.sendValidationEmail(
-      record,
-      email.email,
-      email._id.toString(),
-      appValidationUrl,
-    );
-    return 'Validation email sent successfully';
-  },
-
-  /*
    * @api [put] /user/{id}/password
    * tags:
    *   - user
@@ -1204,6 +996,97 @@ module.exports = {
       throw Boom.badRequest('The old password is wrong');
     }
     return reply.response().code(204);
+  },
+
+  /*
+   * @api [put] /user/{id}/email
+   * tags:
+   *   - user
+   * summary: Sets the primary email of a user.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric User ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: The TOTP token. Required if the user has 2FA enabled.
+   *     required: false
+   *     type: string
+   * requestBody:
+   *   description: Email address to be marked primary.
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
+   *           email:
+   *             type: string
+   *             required: true
+   * responses:
+   *   '200':
+   *     description: The updated user object
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Unauthorized.
+   *   '403':
+   *     description: Requesting user lacks permission to update requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
+  async setPrimaryEmail(request) {
+    const { email } = request.payload;
+
+    if (!request.payload.email) {
+      logger.warn(
+        '[UserController->setPrimaryEmail] No email in payload',
+      );
+      throw Boom.badRequest();
+    }
+
+    const record = await User.findOne({ _id: request.params.id });
+    if (!record) {
+      logger.warn(
+        `[UserController->setPrimaryEmail] Could not find user ${request.params.id}`,
+      );
+      throw Boom.notFound();
+    }
+    // Make sure email is validated
+    const index = record.emailIndex(email);
+    if (index === -1) {
+      logger.warn(
+        `[UserController->setPrimaryEmail] Email ${email} does not exist for user ${request.params.id}`,
+      );
+      throw Boom.badRequest('Email does not exist');
+    }
+    if (!record.emails[index].validated) {
+      logger.warn(
+        `[UserController->setPrimaryEmail] Email ${record.emails[index]} has not been validated for user ${request.params.id}`,
+      );
+      throw Boom.badRequest('Email has not been validated. You need to validate it first.');
+    }
+    record.email = email;
+    // If we are there, it means that the email has been validated,
+    // so make sure email_verified is set to true.
+    record.verifyEmail(email);
+    record.lastModified = new Date();
+    await record.save();
+    logger.info(
+      `[UserController->setPrimaryEmail] Saved user ${request.params.id} successfully`,
+    );
+    await GSSSyncService.synchronizeUser(record);
+    logger.info(
+      `[UserController->setPrimaryEmail] Synchronized user ${request.params.id} with google spreadsheets successfully`,
+    );
+
+    return record;
   },
 
   async resetPasswordEndpoint(request) {
@@ -1598,6 +1481,123 @@ module.exports = {
     );
 
     return record;
+  },
+
+  async validateEmail(request) {
+    // TODO: make sure current user can do this
+
+    if (request.payload.hash) {
+      const record = await User.findOne({ _id: request.payload.id });
+      if (!record) {
+        logger.warn(
+          `[UserController->validateEmail] Could not find user ${request.payload.id}`,
+        );
+        throw Boom.notFound();
+      }
+      let domain = null;
+      let { email } = record;
+      if (request.payload.emailId) {
+        const emailRecord = record.emails.id(request.payload.emailId);
+        if (emailRecord) {
+          ({ email } = emailRecord);
+        }
+      }
+      // Verify hash
+      if (record.validHash(request.payload.hash, 'verify_email', request.payload.time, email) === true) {
+        // Verify user email
+        if (record.email === email) {
+          record.email_verified = true;
+          record.expires = new Date(0, 0, 1, 0, 0, 0);
+          record.emails[0].validated = true;
+          record.emails.set(0, record.emails[0]);
+          record.lastModified = new Date();
+          domain = await record.isVerifiableEmail(email);
+        } else {
+          for (let i = 0, len = record.emails.length; i < len; i += 1) {
+            if (record.emails[i].email === email) {
+              record.emails[i].validated = true;
+              record.emails.set(i, record.emails[i]);
+            }
+          }
+          record.lastModified = new Date();
+          domain = await record.isVerifiableEmail(email);
+        }
+      } else {
+        logger.warn(
+          `[UserController->validateEmail] Invalid hash ${request.payload.hash} provided`,
+        );
+        throw Boom.badRequest('Invalid hash');
+      }
+      if (domain) {
+        record.verified = true;
+        record.verified_by = hidAccount;
+        record.verifiedOn = new Date();
+        record.verificationExpiryEmail = false;
+        // If the domain is associated to a list, check user in this list automatically
+        if (domain.list) {
+          if (!record.organizations) {
+            record.organizations = [];
+          }
+
+          let isCheckedIn = false;
+          // Make sure user is not already checked in this list
+          for (let i = 0, len = record.organizations.length; i < len; i += 1) {
+            if (record.organizations[i].list.equals(domain.list._id)
+              && record.organizations[i].deleted === false) {
+              isCheckedIn = true;
+            }
+          }
+
+          if (!isCheckedIn) {
+            await ListUserController.checkinHelper(domain.list, record, true, 'organizations', record);
+          }
+        }
+      }
+      const promises = [];
+      const pendingLogs = [];
+      promises.push(record.save());
+      pendingLogs.push({
+        type: 'info',
+        message: `[UserController->validateEmail] Saved user ${record.id} successfully`,
+      });
+      if (record.email === email) {
+        promises.push(EmailService.sendPostRegister(record));
+        pendingLogs.push({
+          type: 'info',
+          message: `[UserController->validateEmail] Sent post_register email to ${record.email} successfully`,
+        });
+      }
+      await Promise.all(promises);
+      for (let i = 0; i < pendingLogs.length; i += 1) {
+        logger.log(pendingLogs[i]);
+      }
+      return record;
+    }
+    const record = await User.findOne({ 'emails.email': request.params.email });
+    if (!record) {
+      logger.warn(
+        `[UserController->validateEmail] Could not find user with email ${request.params.email}`,
+      );
+      throw Boom.notFound();
+    }
+    // Send validation email again
+    const appValidationUrl = request.payload.app_validation_url;
+    if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
+      logger.warn(
+        `[UserController->validateEmail] app_validation_url ${appValidationUrl} is not in authorizedDomains allowlist`,
+        { request, security: true, fail: true },
+      );
+      throw Boom.badRequest('Invalid app_validation_url');
+    }
+    const emailIndex = record.emailIndex(request.params.email);
+    const email = record.emails[emailIndex];
+    await EmailService.sendValidationEmail(
+      record,
+      email.email,
+      email._id.toString(),
+      appValidationUrl,
+    );
+    return 'Validation email sent successfully';
   },
 
   async addPhone(request) {
