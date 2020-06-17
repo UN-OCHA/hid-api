@@ -66,31 +66,10 @@ module.exports = {
   },
 
   /*
-   * @api [get] /totp
-   * tags:
-   *   - totp
-   * summary: Verify a TOTP token.
-   * parameters:
-   *   - name: X-HID-TOTP
-   *     in: header
-   *     description: The TOTP token. Required.
-   *     required: false
-   *     type: string
-   * responses:
-   *   '204':
-   *     description: TOTP token is valid.
-   *   '401':
-   *     description: Unauthorized.
-   */
-  verifyTOTPToken(request, reply) {
-    return reply.response().code(204);
-  },
-
-  /*
    * @api [post] /totp
    * tags:
    *   - totp
-   * summary: Enables 2-factor authentication for current user.
+   * summary: Enables 2FA for current user.
    * parameters:
    *   - name: X-HID-TOTP
    *     in: header
@@ -146,10 +125,31 @@ module.exports = {
   },
 
   /*
+   * @api [get] /totp
+   * tags:
+   *   - totp
+   * summary: Verify a TOTP token.
+   * parameters:
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: The TOTP token. Required.
+   *     required: false
+   *     type: string
+   * responses:
+   *   '204':
+   *     description: TOTP token is valid.
+   *   '401':
+   *     description: Unauthorized.
+   */
+  verifyTOTPToken(request, reply) {
+    return reply.response().code(204);
+  },
+
+  /*
    * @api [delete] /totp
    * tags:
    *   - totp
-   * summary: Disables 2-factor authentication for current user.
+   * summary: Disables 2FA for current user.
    * parameters:
    *   - name: X-HID-TOTP
    *     in: header
