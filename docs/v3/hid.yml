@@ -151,6 +151,28 @@ paths:
           description: Missing token
         '403':
           description: Could not blacklist this token because you did not generate it
+  /totp/qrcode:
+    post:
+      tags:
+        - totp
+      summary: Provides configuration for 2FA setup.
+      responses:
+        '200':
+          description: 'The 2FA configuration in two formats: QR code, plaintext.'
+          content:
+            application/json:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: byte
+                raw:
+                  type: string
+                  format: uri
+        '400':
+          description: Bad request. See response body for details.
+        '401':
+          description: Unauthorized.
   /totp:
     delete:
       tags:

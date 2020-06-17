@@ -13,7 +13,30 @@ const { logger } = config;
  */
 module.exports = {
 
-  // Creates a shared secret and generates a QRCode based on this shared secret
+  /*
+   * @api [post] /totp/qrcode
+   * tags:
+   *   - totp
+   * summary: Provides configuration for 2FA setup.
+   * responses:
+   *   '200':
+   *     description: >-
+   *       The 2FA configuration in two formats: QR code, plaintext.
+   *     content:
+   *       application/json:
+   *         type: object
+   *         properties:
+   *           url:
+   *             type: string
+   *             format: byte
+   *           raw:
+   *             type: string
+   *             format: uri
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '401':
+   *     description: Unauthorized.
+   */
   async generateQRCode(request) {
     const user = request.auth.credentials;
     if (user.totp === true) {
