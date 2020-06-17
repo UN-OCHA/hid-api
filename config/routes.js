@@ -1191,6 +1191,16 @@ module.exports = [
       handler: TOTPController.verifyTOTPToken,
     },
   },
+  {
+    method: 'GET',
+    path: '/api/v3/totp',
+    options: {
+      pre: [
+        AuthPolicy.isTOTPValidPolicy,
+      ],
+      handler: TOTPController.verifyTOTPToken,
+    },
+  },
 
   {
     method: 'POST',

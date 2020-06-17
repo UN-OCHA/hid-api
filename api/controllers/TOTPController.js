@@ -65,7 +65,23 @@ module.exports = {
     };
   },
 
-  // Empty endpoint to verify a TOTP token
+  /*
+   * @api [get] /totp
+   * tags:
+   *   - totp
+   * summary: Verify a TOTP token.
+   * parameters:
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: The TOTP token. Required.
+   *     required: false
+   *     type: string
+   * responses:
+   *   '204':
+   *     description: TOTP token is valid.
+   *   '401':
+   *     description: Unauthorized.
+   */
   verifyTOTPToken(request, reply) {
     return reply.response().code(204);
   },
