@@ -71,7 +71,29 @@ module.exports = {
     return user;
   },
 
-  // Disables TOTP for current user
+  /*
+   * @api [delete] /totp
+   * tags:
+   *   - totp
+   * summary: Disables 2-factor authentication for current user.
+   * parameters:
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: The TOTP token. Required.
+   *     required: false
+   *     type: string
+   * responses:
+   *   '200':
+   *     description: The updated user object
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '401':
+   *     description: Unauthorized.
+   */
   async disable(request) {
     const user = request.auth.credentials;
     if (user.totp !== true) {

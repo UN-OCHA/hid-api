@@ -1155,6 +1155,16 @@ module.exports = [
       handler: TOTPController.disable,
     },
   },
+  {
+    method: 'DELETE',
+    path: '/api/v3/totp',
+    options: {
+      pre: [
+        AuthPolicy.isTOTPEnabledAndValid,
+      ],
+      handler: TOTPController.disable,
+    },
+  },
 
   {
     method: 'GET',
