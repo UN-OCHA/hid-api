@@ -70,7 +70,42 @@ module.exports = {
     return reply.response().code(204);
   },
 
-  // Enables TOTP for current user
+  /*
+   * @api [post] /totp
+   * tags:
+   *   - totp
+   * summary: Enables 2-factor authentication for current user.
+   * parameters:
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: The TOTP token. Required.
+   *     required: false
+   *     type: string
+   * requestBody:
+   *   description: >-
+   *     Must be an object specifying: `{"method": "app"}`
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
+   *           method:
+   *             type: string
+   *             required: true
+   *             pattern: '^app$'
+   * responses:
+   *   '200':
+   *     description: The updated user object
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '401':
+   *     description: Unauthorized.
+   */
   async enable(request) {
     const user = request.auth.credentials;
     if (user.totp === true) {
