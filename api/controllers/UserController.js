@@ -1004,6 +1004,94 @@ module.exports = {
   },
 
   /*
+   * @TODO: refactor to include both params in route. See HID-2072.
+   *
+   * @api [put] /user/{id}/organization
+   * tags:
+   *   - user
+   * summary: Set primary organization of the user.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric User ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   * requestBody:
+   *   description: Organization to be marked primary.
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
+   *           _id:
+   *             type: string
+   *             required: true
+   * responses:
+   *   '200':
+   *     description: The updated user object
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '401':
+   *     description: Unauthorized.
+   *   '403':
+   *     description: Requesting user lacks permission to update requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
+  async setPrimaryOrganization(request) {
+    if (!request.payload) {
+      logger.warn(
+        '[UserController->setPrimaryOrganization] Missing request payload',
+      );
+      throw Boom.badRequest('Missing listUser id');
+    }
+    if (!request.payload._id) {
+      logger.warn(
+        '[UserController->setPrimaryOrganization] Missing listUser id',
+      );
+      throw Boom.badRequest('Missing listUser id');
+    }
+
+    const user = await User.findOne({ _id: request.params.id });
+    if (!user) {
+      logger.warn(
+        `[UserController->setPrimaryOrganization] User ${request.params.id} not found`,
+      );
+      throw Boom.notFound();
+    }
+    const checkin = user.organizations.id(request.payload._id);
+    if (!checkin) {
+      logger.warn(
+        `[UserController->setPrimaryOrganization] Organization ${request.payload._id.toString()} should be part of user organizations`,
+      );
+      throw Boom.badRequest('Organization should be part of user organizations');
+    }
+    if (user.organization) {
+      user.organization.set(checkin);
+    } else {
+      user.organization = checkin;
+    }
+    user.lastModified = new Date();
+    await Promise.all([
+      user.save(),
+      GSSSyncService.synchronizeUser(user),
+      // OutlookService.synchronizeUser(user),
+    ]);
+    logger.info(
+      `[UserController->setPrimaryPhone] User ${request.params.id} saved successfully`,
+    );
+    logger.info(
+      `[UserController->setPrimaryPhone] Successfully synchronized google spreadsheets for user ${request.params.id}`,
+    );
+    return user;
+  },
+
+  /*
    * @api [put] /user/{id}/email
    * tags:
    *   - user
@@ -1646,94 +1734,6 @@ module.exports = {
       `[UserController->setPrimaryPhone] Successfully synchronized google spreadsheets for user ${request.params.id}`,
     );
     return record;
-  },
-
-  /*
-   * @TODO: refactor to include both params in route. See HID-2072.
-   *
-   * @api [put] /user/{id}/organization
-   * tags:
-   *   - user
-   * summary: Set primary organization of the user.
-   * parameters:
-   *   - name: id
-   *     description: A 24-character alphanumeric User ID
-   *     in: path
-   *     required: true
-   *     default: ''
-   * requestBody:
-   *   description: Organization to be marked primary.
-   *   required: true
-   *   content:
-   *     application/json:
-   *       schema:
-   *         type: object
-   *         properties:
-   *           _id:
-   *             type: string
-   *             required: true
-   * responses:
-   *   '200':
-   *     description: The updated user object
-   *     content:
-   *       application/json:
-   *         schema:
-   *           $ref: '#/components/schemas/User'
-   *   '400':
-   *     description: Bad request. See response body for details.
-   *   '401':
-   *     description: Unauthorized.
-   *   '403':
-   *     description: Requesting user lacks permission to update requested user.
-   *   '404':
-   *     description: Requested user not found.
-   */
-  async setPrimaryOrganization(request) {
-    if (!request.payload) {
-      logger.warn(
-        '[UserController->setPrimaryOrganization] Missing request payload',
-      );
-      throw Boom.badRequest('Missing listUser id');
-    }
-    if (!request.payload._id) {
-      logger.warn(
-        '[UserController->setPrimaryOrganization] Missing listUser id',
-      );
-      throw Boom.badRequest('Missing listUser id');
-    }
-
-    const user = await User.findOne({ _id: request.params.id });
-    if (!user) {
-      logger.warn(
-        `[UserController->setPrimaryOrganization] User ${request.params.id} not found`,
-      );
-      throw Boom.notFound();
-    }
-    const checkin = user.organizations.id(request.payload._id);
-    if (!checkin) {
-      logger.warn(
-        `[UserController->setPrimaryOrganization] Organization ${request.payload._id.toString()} should be part of user organizations`,
-      );
-      throw Boom.badRequest('Organization should be part of user organizations');
-    }
-    if (user.organization) {
-      user.organization.set(checkin);
-    } else {
-      user.organization = checkin;
-    }
-    user.lastModified = new Date();
-    await Promise.all([
-      user.save(),
-      GSSSyncService.synchronizeUser(user),
-      // OutlookService.synchronizeUser(user),
-    ]);
-    logger.info(
-      `[UserController->setPrimaryPhone] User ${request.params.id} saved successfully`,
-    );
-    logger.info(
-      `[UserController->setPrimaryPhone] Successfully synchronized google spreadsheets for user ${request.params.id}`,
-    );
-    return user;
   },
 
   /*
