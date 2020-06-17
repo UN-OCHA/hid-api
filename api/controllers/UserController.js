@@ -1648,6 +1648,46 @@ module.exports = {
     return record;
   },
 
+  /*
+   * @TODO: refactor to include both params in route. See HID-2072.
+   *
+   * @api [put] /user/{id}/organization
+   * tags:
+   *   - user
+   * summary: Set primary organization of the user.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric User ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   * requestBody:
+   *   description: Organization to be marked primary.
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
+   *           _id:
+   *             type: string
+   *             required: true
+   * responses:
+   *   '200':
+   *     description: The updated user object
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '401':
+   *     description: Unauthorized.
+   *   '403':
+   *     description: Requesting user lacks permission to update requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
   async setPrimaryOrganization(request) {
     if (!request.payload) {
       logger.warn(
