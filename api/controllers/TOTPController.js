@@ -184,6 +184,27 @@ module.exports = {
     return user;
   },
 
+  /*
+   * @api [post] /totp/device
+   * tags:
+   *   - totp
+   * summary: Save a trusted device for 30 days.
+   * parameters:
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: The TOTP token. Required.
+   *     required: false
+   *     type: string
+   * responses:
+   *   '200':
+   *     description: >-
+   *       Device was saved successfully. The response contains a secret which
+   *       should be provided in the `x-hid-totp-trust` header.
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Unauthorized.
+   */
   async saveDevice(request, reply) {
     await HelperService.saveTOTPDevice(request, request.auth.credentials);
     logger.info(

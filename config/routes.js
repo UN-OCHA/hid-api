@@ -1130,6 +1130,16 @@ module.exports = [
       handler: TOTPController.saveDevice,
     },
   },
+  {
+    method: 'POST',
+    path: '/api/v3/totp/device',
+    options: {
+      pre: [
+        AuthPolicy.isTOTPEnabledAndValid,
+      ],
+      handler: TOTPController.saveDevice,
+    },
+  },
 
   {
     method: 'DELETE',
