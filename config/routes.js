@@ -1114,6 +1114,11 @@ module.exports = [
     path: '/api/v2/totp/codes',
     handler: TOTPController.generateBackupCodes,
   },
+  {
+    method: 'POST',
+    path: '/api/v3/totp/codes',
+    handler: TOTPController.generateBackupCodes,
+  },
 
   {
     method: 'POST',

@@ -215,6 +215,26 @@ module.exports = {
     throw Boom.notFound();
   },
 
+  /*
+   * @api [post] /totp/codes
+   * tags:
+   *   - totp
+   * summary: Create new backup codes for a 2FA user.
+   * responses:
+   *   '200':
+   *     description: Array of 16 backup codes.
+   *     content:
+   *       application/json:
+   *         schema:
+   *           type: array
+   *           items:
+   *             type: string
+   *             pattern: '^[a-f0-9]{10}$'
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '401':
+   *     description: Unauthorized.
+   */
   async generateBackupCodes(request) {
     const user = request.auth.credentials;
     if (!user.totp) {
