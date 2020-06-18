@@ -1153,6 +1153,18 @@ module.exports = [
       },
     },
   },
+  {
+    method: 'DELETE',
+    path: '/api/v3/totp/device/{id}',
+    handler: TOTPController.destroyDevice,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
 
   {
     method: 'POST',

@@ -218,6 +218,23 @@ module.exports = {
       });
   },
 
+  /*
+   * @api [delete] /totp/device/{id}
+   * tags:
+   *   - totp
+   * summary: Remove trusted device.
+   * parameters:
+   *   - name: id
+   *     in: path
+   *     description: The device ID.
+   *     required: true
+   *     type: string
+   * responses:
+   *   '204':
+   *     description: Successfully deleted trusted device.
+   *   '404':
+   *     description: The device could not be found.
+   */
   async destroyDevice(request, reply) {
     const user = request.auth.credentials;
     const deviceId = request.params.id;

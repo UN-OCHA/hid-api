@@ -263,6 +263,22 @@ paths:
           description: Bad request.
         '401':
           description: Unauthorized.
+  '/totp/device/{id}':
+    delete:
+      tags:
+        - totp
+      summary: Remove trusted device.
+      parameters:
+        - name: id
+          in: path
+          description: The device ID.
+          required: true
+          type: string
+      responses:
+        '204':
+          description: Successfully deleted trusted device.
+        '404':
+          description: The device could not be found.
   /totp/codes:
     post:
       tags:
