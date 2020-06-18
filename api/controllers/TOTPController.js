@@ -185,6 +185,52 @@ module.exports = {
   },
 
   /*
+   * @api [post] /totp/codes
+   * tags:
+   *   - totp
+   * summary: Create new backup codes for a 2FA user.
+   * responses:
+   *   '200':
+   *     description: Array of 16 backup codes.
+   *     content:
+   *       application/json:
+   *         schema:
+   *           type: array
+   *           items:
+   *             type: string
+   *             pattern: '^[a-f0-9]{10}$'
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '401':
+   *     description: Unauthorized.
+   */
+  async generateBackupCodes(request) {
+    const user = request.auth.credentials;
+    if (!user.totp) {
+      logger.warn(
+        `[TOTPController->generateBackupCodes] TOTP needs to be enable for user ${request.auth.credentials.id}`,
+      );
+      throw Boom.badRequest('TOTP needs to be enabled');
+    }
+    const codes = []; const
+      hashedCodes = [];
+    for (let i = 0; i < 16; i += 1) {
+      codes.push(HelperService.generateRandom());
+    }
+    for (let i = 0; i < 16; i += 1) {
+      hashedCodes.push(BCrypt.hashSync(codes[i], 5));
+    }
+    // Save the hashed codes in the user and show the ones which are not hashed
+    user.totpConf.backupCodes = hashedCodes;
+    user.markModified('totpConf');
+    await user.save();
+    logger.info(
+      `[TOTPController->generateBackupCodes] Saved user ${user.id} with new backup codes`,
+    );
+    return codes;
+  },
+
+  /*
    * @api [post] /totp/device
    * tags:
    *   - totp
@@ -251,51 +297,5 @@ module.exports = {
       `[TOTPController->destroyDevice] Could not find device ${deviceId} for ${request.auth.credentials.id}`,
     );
     throw Boom.notFound();
-  },
-
-  /*
-   * @api [post] /totp/codes
-   * tags:
-   *   - totp
-   * summary: Create new backup codes for a 2FA user.
-   * responses:
-   *   '200':
-   *     description: Array of 16 backup codes.
-   *     content:
-   *       application/json:
-   *         schema:
-   *           type: array
-   *           items:
-   *             type: string
-   *             pattern: '^[a-f0-9]{10}$'
-   *   '400':
-   *     description: Bad request. See response body for details.
-   *   '401':
-   *     description: Unauthorized.
-   */
-  async generateBackupCodes(request) {
-    const user = request.auth.credentials;
-    if (!user.totp) {
-      logger.warn(
-        `[TOTPController->generateBackupCodes] TOTP needs to be enable for user ${request.auth.credentials.id}`,
-      );
-      throw Boom.badRequest('TOTP needs to be enabled');
-    }
-    const codes = []; const
-      hashedCodes = [];
-    for (let i = 0; i < 16; i += 1) {
-      codes.push(HelperService.generateRandom());
-    }
-    for (let i = 0; i < 16; i += 1) {
-      hashedCodes.push(BCrypt.hashSync(codes[i], 5));
-    }
-    // Save the hashed codes in the user and show the ones which are not hashed
-    user.totpConf.backupCodes = hashedCodes;
-    user.markModified('totpConf');
-    await user.save();
-    logger.info(
-      `[TOTPController->generateBackupCodes] Saved user ${user.id} with new backup codes`,
-    );
-    return codes;
   },
 };
