@@ -188,6 +188,27 @@ module.exports = {
     return client;
   },
 
+  /*
+   * @api [delete] /client/{id}
+   * tags:
+   *   - client
+   * summary: Deletes the client with the specified ID.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric Client ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   * responses:
+   *   '204':
+   *     description: Client successfully deleted.
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '403':
+   *     description: Unauthorized. You are not an admin.
+   *#   '404':
+   *#     description: Requested client not found.
+   */
   async destroy(request, reply) {
     await Client.remove({ _id: request.params.id });
     logger.info(

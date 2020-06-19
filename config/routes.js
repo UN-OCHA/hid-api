@@ -999,6 +999,21 @@ module.exports = [
       },
     },
   },
+  {
+    method: 'DELETE',
+    path: '/api/v3/client/{id}',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: ClientController.destroy,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
 
   {
     method: 'POST',
