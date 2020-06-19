@@ -309,7 +309,7 @@ module.exports = [
   },
   {
     method: 'GET',
-    path: '/api/v3/user/{id?}',
+    path: '/api/v3/user/{id}',
     handler: UserController.find,
     options: {
       validate: {
