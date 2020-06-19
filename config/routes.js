@@ -968,6 +968,21 @@ module.exports = [
       },
     },
   },
+  {
+    method: 'PUT',
+    path: '/api/v3/client/{id}',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: ClientController.update,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
 
   {
     method: 'DELETE',

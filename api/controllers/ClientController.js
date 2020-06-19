@@ -15,7 +15,7 @@ module.exports = {
    * @api [post] /client
    * tags:
    *   - client
-   * summary:
+   * summary: Create a new client.
    * requestBody:
    *   description: Client object
    *   required: true
@@ -138,13 +138,49 @@ module.exports = {
     return reply.response(results).header('X-Total-Count', number);
   },
 
+  /*
+   * @api [put] /client/{id}
+   * tags:
+   *   - client
+   * summary: Update client with the specified ID.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric Client ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   * requestBody:
+   *   description: Client object
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         $ref: '#/components/schemas/Client'
+   * responses:
+   *   '200':
+   *     description: >-
+   *       The client object. _**NOTE:** at this time, the function returns the
+   *       UNCHANGED client if the object you send contains validation errors._
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/Client'
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '403':
+   *     description: Unauthorized. You are not an admin.
+   *   '404':
+   *     description: Requested client not found.
+   */
   async update(request) {
-    const client = await Client
-      .findOneAndUpdate(
-        { _id: request.params.id },
-        request.payload,
-        { runValidators: true, new: true },
-      );
+    // @TODO: Make this return 401 with validation feedback like POST.
+    //
+    // @see HID-2080
+    const client = await Client.findOneAndUpdate(
+      { _id: request.params.id },
+      request.payload,
+      { runValidators: true, new: true },
+    );
     logger.info(
       `[ClientController->update] Updated client ${request.params.id}`,
       { request: request.payload },
