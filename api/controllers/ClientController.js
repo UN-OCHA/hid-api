@@ -36,7 +36,8 @@ module.exports = {
    *     description: Unauthorized. You are not an admin.
    */
   async create(request) {
-    const client = await Client.create(request.payload);
+    const payload = request.payload || {};
+    const client = await Client.create(payload);
     if (!client) {
       logger.warn(
         '[ClientController->create] Could not create client due to bad request',
@@ -44,6 +45,7 @@ module.exports = {
       );
       throw Boom.badRequest();
     }
+
     logger.info(
       '[ClientController->create] Created a new client',
     );
