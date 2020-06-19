@@ -26,6 +26,31 @@ module.exports = {
     return client;
   },
 
+  /*
+   * @api [get] /client/{id}
+   * tags:
+   *   - client
+   * summary: Returns one client with the specified ID.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric Client ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   * responses:
+   *   '200':
+   *     description: The client object.
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/Client'
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '403':
+   *     description: Unauthorized. You are not an admin.
+   *   '404':
+   *     description: Requested client not found.
+   */
   async find(request, reply) {
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);

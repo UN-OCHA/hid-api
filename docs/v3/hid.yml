@@ -83,6 +83,28 @@ components:
         updatedAt:
           type: string
           format: date-time
+    Client:
+      type: object
+      properties:
+        redirectUrls:
+          type: array
+          items:
+            type: string
+            pattern: uri
+        _id:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        redirectUri:
+          type: string
+          format: uri
+        loginUri:
+          type: string
+          format: uri
+        secret:
+          type: string
 security:
   - authToken: []
 paths:
@@ -151,6 +173,30 @@ paths:
           description: Missing token
         '403':
           description: Could not blacklist this token because you did not generate it
+  '/client/{id}':
+    get:
+      tags:
+        - client
+      summary: Returns one client with the specified ID.
+      parameters:
+        - name: id
+          description: A 24-character alphanumeric Client ID
+          in: path
+          required: true
+          default: ''
+      responses:
+        '200':
+          description: The client object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '400':
+          description: Bad request. See response body for details.
+        '403':
+          description: Unauthorized. You are not an admin.
+        '404':
+          description: Requested client not found.
   /totp/qrcode:
     post:
       tags:

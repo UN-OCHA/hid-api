@@ -927,6 +927,21 @@ module.exports = [
       },
     },
   },
+  {
+    method: 'GET',
+    path: '/api/v3/client/{id?}',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: ClientController.find,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
 
   {
     method: 'PUT',

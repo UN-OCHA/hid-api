@@ -86,6 +86,29 @@ components:
         updatedAt:
           type: string
           format: date-time
+    Client:
+      type: object
+      properties:
+        redirectUrls:
+          type: array
+          items:
+            type: string
+            pattern: uri
+        _id:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        redirectUri:
+          type: string
+          format: uri
+        loginUri:
+          type: string
+          format: uri
+        secret:
+          type: string
+
 
 # Applying Auth token requirement to our entire API.
 #
