@@ -408,50 +408,6 @@ module.exports = {
   },
 
   /*
-   * @api [get] /user
-   * tags:
-   *  - user
-   * summary: Returns all users the requesting user has access to.
-   * parameters:
-   *   - name: sort
-   *     description: An attribute to sort by
-   *     in: query
-   *     type: string
-   *     default: name
-   *   - name: offset
-   *     description: Number of users to offset
-   *     in: query
-   *     type: integer
-   *     default: 0
-   *   - name: limit
-   *     description: Maximum number of users to return
-   *     in: query
-   *     type: integer
-   *     default: 50
-   *   - name: fields
-   *     description: Fields to be returned (leave empty to return all)
-   *     type: string
-   *     default: ''
-   * responses:
-   *   '200':
-   *     description: A list of users
-   *     schema:
-   *       type: array
-   *       items:
-   *         $ref: '#/components/schemas/User'
-   *     headers:
-   *       X-Total-Count:
-   *         description: Total number of users
-   *         type: integer
-   *   '400':
-   *     description: Bad request.
-   *   '401':
-   *     description: Unauthorized.
-   */
-  // OAS 3 needs each definition in its own comment, and we have to split the
-  // callback here into two defintions because it behaves differently when the
-  // ID param is supplied in the path versus being omitted.
-  /*
    * @api [get] /user/{id}
    * tags:
    *  - user
