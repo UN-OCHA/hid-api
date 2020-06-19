@@ -27,6 +27,47 @@ module.exports = {
   },
 
   /*
+   * @api [get] /client
+   * tags:
+   *   - client
+   * summary: Returns all the clients the user has access to.
+   * parameters:
+   *   - name: sort
+   *     description: Sort by this attribute.
+   *     in: query
+   *     type: string
+   *     required: false
+   *     default: name
+   *   - name: offset
+   *     description: Offset list by this many clients.
+   *     in: query
+   *     type: integer
+   *     required: false
+   *     default: 0
+   *   - name: limit
+   *     description: Limit list to this many clients.
+   *     in: query
+   *     type: integer
+   *     required: false
+   *     default: 50
+   * responses:
+   *   '200':
+   *     description: Array of client objects.
+   *     content:
+   *       application/json:
+   *         schema:
+   *           type: array
+   *           items:
+   *             $ref: '#/components/schemas/Client'
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '403':
+   *     description: Unauthorized. You are not an admin.
+   *   '404':
+   *     description: Requested client not found.
+   */
+
+  /*
    * @api [get] /client/{id}
    * tags:
    *   - client

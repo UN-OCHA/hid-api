@@ -106,6 +106,8 @@ components:
         loginUri:
           type: string
           format: uri
+        description:
+          type: string
         secret:
           type: string
 
