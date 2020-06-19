@@ -17,10 +17,10 @@ tags:
     description: 'Methods related to authentication'
   - name: 'user'
     description: 'Methods related to users'
-  - name: 'client'
-    description: 'Methods related to oauth clients'
   - name: 'totp'
     description: 'Methods related to 2-factor authentication (2FA)'
+  - name: 'client'
+    description: 'Methods related to oauth clients'
 
 components:
   securitySchemes:
