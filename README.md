@@ -9,7 +9,7 @@ Humanitarian ID v2 API is built on :
 
 The HID v2 API handles 2 main functionalities:
 
-1. Authentication through Json Web Tokens and OpenID connect
+1. Authentication through JSON Web Tokens and OpenID connect
 2. A user and lists API allowing users to check in & out of lists
 
 A detailed documentation about the API endpoints can be found here: https://api.humanitarian.id/docs
@@ -20,7 +20,7 @@ A detailed documentation about the API endpoints can be found here: https://api.
 * List: a list can be of different types (operation, group, disaster, custom, organization, functional role, office). Users check in
 and out of lists
 * Client: an OAuth client application
-* JwtToken: a blacklisted Json Web Token stored in the database
+* JwtToken: a blacklisted JSON Web Token stored in the database
 * Notification: a notification sent to users
 * OauthToken: an OAuth token
 * Service: a Google Group or Mailchimp list which users can subscribe to or unsubscribe from
@@ -29,7 +29,7 @@ and out of lists
 
 ## Controllers
 
-* AuthController: handles the creation of Json Web Tokens and the OpenID Connect process
+* AuthController: handles the creation of JSON Web Tokens and the OpenID Connect process
 * ClientController: CRUD for OAuth clients
 * DefaultController: used for the migration from HID v1 to HID v2, will be removed after the migration
 * DuplicateController: used for finding duplicate user accounts and removing them
@@ -61,7 +61,7 @@ Services are helper methods provided to the controllers.
 
 * EmailService: service to send emails
 * HelperService: various helper functions for controllers
-* JwtService: issues and verifies Json Web tokens
+* JwtService: issues and verifies JSON Web tokens
 * ListService: helper methods for lists controller
 * NotificationService: helper methods for the notification controller
 

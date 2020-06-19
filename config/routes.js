@@ -307,6 +307,18 @@ module.exports = [
       },
     },
   },
+  {
+    method: 'GET',
+    path: '/api/v3/user/{id}',
+    handler: UserController.find,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
 
   {
     method: 'GET',
@@ -336,10 +348,40 @@ module.exports = [
       },
     },
   },
+  {
+    method: 'PUT', // No PATCH for v3 bc the function can't actually PATCH.
+    path: '/api/v3/user/{id}',
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.update,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
 
   {
     method: 'DELETE',
     path: '/api/v2/user/{id}',
+    options: {
+      pre: [
+        AuthPolicy.isTOTPEnabledAndValid,
+      ],
+      handler: UserController.destroy,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+  {
+    method: 'DELETE',
+    path: '/api/v3/user/{id}',
     options: {
       pre: [
         AuthPolicy.isTOTPEnabledAndValid,
@@ -426,7 +468,6 @@ module.exports = [
       auth: false,
     },
   },
-
   {
     method: 'PUT',
     path: '/api/v3/user/password',
@@ -451,7 +492,6 @@ module.exports = [
       },
     },
   },
-
   {
     method: 'PUT',
     path: '/api/v3/user/{id}/password',
@@ -520,10 +560,41 @@ module.exports = [
       },
     },
   },
+  {
+    method: 'POST',
+    path: '/api/v3/user/{id}/emails',
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.addEmail,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
 
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/email',
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+        AuthPolicy.isTOTPEnabledAndValid,
+      ],
+      handler: UserController.setPrimaryEmail,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+  {
+    method: 'PUT',
+    path: '/api/v3/user/{id}/email',
     options: {
       pre: [
         UserPolicy.canUpdate,
@@ -546,6 +617,14 @@ module.exports = [
       auth: false,
     },
   },
+  {
+    method: 'PUT',
+    path: '/api/v3/user/emails/{email?}',
+    handler: UserController.validateEmail,
+    options: {
+      auth: false,
+    },
+  },
 
   {
     method: 'DELETE',
@@ -563,7 +642,6 @@ module.exports = [
       },
     },
   },
-
   {
     method: 'DELETE',
     path: '/api/v3/user/{id}/emails/{email}',
@@ -633,6 +711,21 @@ module.exports = [
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/organization',
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.setPrimaryOrganization,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+  {
+    method: 'PUT',
+    path: '/api/v3/user/{id}/organization',
     options: {
       pre: [
         UserPolicy.canUpdate,

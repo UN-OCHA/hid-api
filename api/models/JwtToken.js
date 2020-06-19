@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 
 /**
  * @module JwtToken
- * @description Json Web Tokens
+ * @description JSON Web Tokens
  */
 
 const JwtTokenSchema = new Schema({

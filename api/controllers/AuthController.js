@@ -115,7 +115,13 @@ module.exports = {
    * @api [post] /jsonwebtoken
    * tags:
    *   - auth
-   * summary: 'Generate a jsonwebtoken'
+   * summary: Generate a JSON web token (JWT)
+   * parameters:
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: The TOTP token. Required if the user has 2FA enabled.
+   *     required: false
+   *     type: string
    * requestBody:
    *   description: 'User email and password'
    *   required: true
@@ -125,7 +131,8 @@ module.exports = {
    *         $ref: '#/components/schemas/Auth'
    * responses:
    *   '200':
-   *     description: 'The json web token'
+   *     description: >-
+   *       The User object with the JWT contained in the `token` property.
    *     content:
    *       application/json:
    *         schema:
@@ -621,7 +628,8 @@ module.exports = {
    *   '400':
    *     description: Missing token
    *   '403':
-   *     description: Could not blacklist this token because you did not generate it
+   *     description: >-
+   *       Could not blacklist this token because you did not generate it
    */
   async blacklistJwt(request) {
     const token = request.payload ? request.payload.token : null;
