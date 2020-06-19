@@ -11,6 +11,30 @@ const { logger } = config;
  */
 module.exports = {
 
+  /*
+   * @api [post] /client
+   * tags:
+   *   - client
+   * summary:
+   * requestBody:
+   *   description: Client object
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         $ref: '#/components/schemas/Client'
+   * responses:
+   *   '200':
+   *     description: Client created successfully.
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/Client'
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '403':
+   *     description: Unauthorized. You are not an admin.
+   */
   async create(request) {
     const client = await Client.create(request.payload);
     if (!client) {

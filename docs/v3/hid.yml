@@ -176,6 +176,28 @@ paths:
         '403':
           description: Could not blacklist this token because you did not generate it
   /client:
+    post:
+      tags:
+        - client
+      summary: null
+      requestBody:
+        description: Client object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Client'
+      responses:
+        '200':
+          description: Client created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '400':
+          description: Bad request. See response body for details.
+        '403':
+          description: Unauthorized. You are not an admin.
     get:
       tags:
         - client

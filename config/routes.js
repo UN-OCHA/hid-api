@@ -911,6 +911,16 @@ module.exports = [
       handler: ClientController.create,
     },
   },
+  {
+    method: 'POST',
+    path: '/api/v3/client',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: ClientController.create,
+    },
+  },
 
   {
     method: 'GET',
