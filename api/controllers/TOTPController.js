@@ -272,7 +272,7 @@ module.exports = {
    * parameters:
    *   - name: id
    *     in: path
-   *     description: The device ID.
+   *     description: The device ID. Find device IDs in the user object.
    *     required: true
    *     type: string
    * responses:
