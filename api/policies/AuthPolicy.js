@@ -82,14 +82,23 @@ module.exports = {
   },
 
   isAdmin(request) {
-    if (!request.auth.credentials.is_admin) {
-      logger.warn(
-        `[AuthPolicy->isAdmin] User ${request.auth.credentials.id} is not an admin`,
-        { security: true, fail: true, request },
-      );
-      throw Boom.forbidden('You need to be an admin');
+    // First, check if credentials were sent at all. If not, we can instruct the
+    // user to authenticate before trying again by sending 401.
+    if (!request.auth.credentials) {
+      throw Boom.unauthorized();
     }
-    return true;
+
+    // User authenticated correctly, and has admin permissions.
+    if (request.auth.credentials && request.auth.credentials.is_admin) {
+      return true;
+    }
+
+    // If credentials were sent, but the user isn't an admin, send 403.
+    logger.warn(
+      `[AuthPolicy->isAdmin] User ${request.auth.credentials.id} is not an admin`,
+      { security: true, fail: true, request },
+    );
+    throw Boom.forbidden('You need to be an admin');
   },
 
   isAdminOrGlobalManager(request) {
