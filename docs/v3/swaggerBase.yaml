@@ -20,7 +20,7 @@ tags:
   - name: 'client'
     description: 'Methods related to oauth clients'
   - name: 'totp'
-    description: 'Methods related to 2-factor authentication'
+    description: 'Methods related to 2-factor authentication (2FA)'
 
 components:
   securitySchemes:
