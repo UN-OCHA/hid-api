@@ -911,10 +911,35 @@ module.exports = [
       handler: ClientController.create,
     },
   },
+  {
+    method: 'POST',
+    path: '/api/v3/client',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: ClientController.create,
+    },
+  },
 
   {
     method: 'GET',
     path: '/api/v2/client/{id?}',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: ClientController.find,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+  {
+    method: 'GET',
+    path: '/api/v3/client/{id?}',
     options: {
       pre: [
         AuthPolicy.isAdmin,
@@ -943,10 +968,40 @@ module.exports = [
       },
     },
   },
+  {
+    method: 'PUT',
+    path: '/api/v3/client/{id}',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: ClientController.update,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
 
   {
     method: 'DELETE',
     path: '/api/v2/client/{id}',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: ClientController.destroy,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+  {
+    method: 'DELETE',
+    path: '/api/v3/client/{id}',
     options: {
       pre: [
         AuthPolicy.isAdmin,
@@ -1103,10 +1158,20 @@ module.exports = [
     path: '/api/v2/totp/qrcode',
     handler: TOTPController.generateQRCode,
   },
+  {
+    method: 'POST',
+    path: '/api/v3/totp/qrcode',
+    handler: TOTPController.generateQRCode,
+  },
 
   {
     method: 'POST',
     path: '/api/v2/totp/codes',
+    handler: TOTPController.generateBackupCodes,
+  },
+  {
+    method: 'POST',
+    path: '/api/v3/totp/codes',
     handler: TOTPController.generateBackupCodes,
   },
 
@@ -1120,10 +1185,32 @@ module.exports = [
       handler: TOTPController.saveDevice,
     },
   },
+  {
+    method: 'POST',
+    path: '/api/v3/totp/device',
+    options: {
+      pre: [
+        AuthPolicy.isTOTPValidPolicy,
+      ],
+      handler: TOTPController.saveDevice,
+    },
+  },
 
   {
     method: 'DELETE',
     path: '/api/v2/totp/device/{id}',
+    handler: TOTPController.destroyDevice,
+    options: {
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+  {
+    method: 'DELETE',
+    path: '/api/v3/totp/device/{id}',
     handler: TOTPController.destroyDevice,
     options: {
       validate: {
@@ -1144,6 +1231,16 @@ module.exports = [
       handler: TOTPController.enable,
     },
   },
+  {
+    method: 'POST',
+    path: '/api/v3/totp',
+    options: {
+      pre: [
+        AuthPolicy.isTOTPValidPolicy,
+      ],
+      handler: TOTPController.enable,
+    },
+  },
 
   {
     method: 'DELETE',
@@ -1155,10 +1252,30 @@ module.exports = [
       handler: TOTPController.disable,
     },
   },
+  {
+    method: 'DELETE',
+    path: '/api/v3/totp',
+    options: {
+      pre: [
+        AuthPolicy.isTOTPEnabledAndValid,
+      ],
+      handler: TOTPController.disable,
+    },
+  },
 
   {
     method: 'GET',
     path: '/api/v2/totp',
+    options: {
+      pre: [
+        AuthPolicy.isTOTPValidPolicy,
+      ],
+      handler: TOTPController.verifyTOTPToken,
+    },
+  },
+  {
+    method: 'GET',
+    path: '/api/v3/totp',
     options: {
       pre: [
         AuthPolicy.isTOTPValidPolicy,

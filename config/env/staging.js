@@ -1,5 +1,4 @@
 
-
 const winston = require('winston');
 const os = require('os');
 const _ = require('lodash');
@@ -9,13 +8,13 @@ module.exports = {
   database: {
     stores: {
       staging: {
-        // should be 'create' or 'drop'
         migrate: 'create',
         uri: 'mongodb://db:27017/staging',
         options: {
           keepAlive: 600000,
           connectTimeoutMS: 60000,
           useNewUrlParser: true,
+          useUnifiedTopology: true,
         },
       },
     },

@@ -1,4 +1,5 @@
 
+
 const winston = require('winston');
 const os = require('os');
 const _ = require('lodash');
@@ -13,6 +14,7 @@ module.exports = {
           keepAlive: 600000,
           connectTimeoutMS: 60000,
           useNewUrlParser: true,
+          useUnifiedTopology: true,
         },
       },
     },

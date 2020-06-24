@@ -15,10 +15,10 @@ tags:
     description: Methods related to authentication
   - name: user
     description: Methods related to users
+  - name: totp
+    description: Methods related to 2-factor authentication (2FA)
   - name: client
     description: Methods related to oauth clients
-  - name: totp
-    description: Methods related to 2-factor authentication
 components:
   securitySchemes:
     authToken:
@@ -83,6 +83,30 @@ components:
         updatedAt:
           type: string
           format: date-time
+    Client:
+      type: object
+      properties:
+        redirectUrls:
+          type: array
+          items:
+            type: string
+            pattern: uri
+        _id:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        redirectUri:
+          type: string
+          format: uri
+        loginUri:
+          type: string
+          format: uri
+        description:
+          type: string
+        secret:
+          type: string
 security:
   - authToken: []
 paths:
@@ -151,6 +175,287 @@ paths:
           description: Missing token
         '403':
           description: Could not blacklist this token because you did not generate it
+  /client:
+    post:
+      tags:
+        - client
+      summary: Create a new client.
+      requestBody:
+        description: Client object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Client'
+      responses:
+        '200':
+          description: Client created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '400':
+          description: Bad request. See response body for details.
+        '403':
+          description: Unauthorized. You are not an admin.
+    get:
+      tags:
+        - client
+      summary: Returns all the clients the user has access to.
+      parameters:
+        - name: sort
+          description: Sort by this attribute.
+          in: query
+          type: string
+          required: false
+          default: name
+        - name: offset
+          description: Offset list by this many clients.
+          in: query
+          type: integer
+          required: false
+          default: 0
+        - name: limit
+          description: Limit list to this many clients.
+          in: query
+          type: integer
+          required: false
+          default: 50
+      responses:
+        '200':
+          description: Array of client objects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+        '400':
+          description: Bad request. See response body for details.
+        '403':
+          description: Unauthorized. You are not an admin.
+        '404':
+          description: Requested client not found.
+  '/client/{id}':
+    get:
+      tags:
+        - client
+      summary: Returns one client with the specified ID.
+      parameters:
+        - name: id
+          description: A 24-character alphanumeric Client ID
+          in: path
+          required: true
+          default: ''
+      responses:
+        '200':
+          description: The client object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '400':
+          description: Bad request. See response body for details.
+        '403':
+          description: Unauthorized. You are not an admin.
+        '404':
+          description: Requested client not found.
+    put:
+      tags:
+        - client
+      summary: Update client with the specified ID.
+      parameters:
+        - name: id
+          description: A 24-character alphanumeric Client ID
+          in: path
+          required: true
+          default: ''
+      requestBody:
+        description: Client object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Client'
+      responses:
+        '200':
+          description: >-
+            The client object. _**NOTE:** at this time, the function returns the
+            UNCHANGED client if the object you send contains validation errors._
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '400':
+          description: Bad request. See response body for details.
+        '403':
+          description: Unauthorized. You are not an admin.
+        '404':
+          description: Requested client not found.
+    delete:
+      tags:
+        - client
+      summary: Deletes the client with the specified ID.
+      parameters:
+        - name: id
+          description: A 24-character alphanumeric Client ID
+          in: path
+          required: true
+          default: ''
+      responses:
+        '204':
+          description: Client successfully deleted.
+        '400':
+          description: Bad request. See response body for details.
+        '403':
+          description: Unauthorized. You are not an admin.
+  /totp/qrcode:
+    post:
+      tags:
+        - totp
+      summary: Provides configuration for 2FA setup.
+      responses:
+        '200':
+          description: 'The 2FA configuration in two formats: QR code, plaintext.'
+          content:
+            application/json:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: byte
+                raw:
+                  type: string
+                  format: uri
+        '400':
+          description: Bad request. See response body for details.
+        '401':
+          description: Unauthorized.
+  /totp:
+    post:
+      tags:
+        - totp
+      summary: Enables 2FA for current user.
+      parameters:
+        - name: X-HID-TOTP
+          in: header
+          description: The TOTP token. Required.
+          required: false
+          type: string
+      requestBody:
+        description: 'Must be an object specifying: `{"method": "app"}`'
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                method:
+                  type: string
+                  required: true
+                  pattern: ^app$
+      responses:
+        '200':
+          description: The updated user object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request. See response body for details.
+        '401':
+          description: Unauthorized.
+    get:
+      tags:
+        - totp
+      summary: Verify a TOTP token.
+      parameters:
+        - name: X-HID-TOTP
+          in: header
+          description: The TOTP token. Required.
+          required: false
+          type: string
+      responses:
+        '204':
+          description: TOTP token is valid.
+        '401':
+          description: Unauthorized.
+    delete:
+      tags:
+        - totp
+      summary: Disables 2FA for current user.
+      parameters:
+        - name: X-HID-TOTP
+          in: header
+          description: The TOTP token. Required.
+          required: false
+          type: string
+      responses:
+        '200':
+          description: The updated user object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request. See response body for details.
+        '401':
+          description: Unauthorized.
+  /totp/codes:
+    post:
+      tags:
+        - totp
+      summary: Create new backup codes for a 2FA user.
+      responses:
+        '200':
+          description: Array of 16 backup codes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  pattern: '^[a-f0-9]{10}$'
+        '400':
+          description: Bad request. See response body for details.
+        '401':
+          description: Unauthorized.
+  /totp/device:
+    post:
+      tags:
+        - totp
+      summary: Save a trusted device for 30 days.
+      parameters:
+        - name: X-HID-TOTP
+          in: header
+          description: The TOTP token. Required.
+          required: false
+          type: string
+      responses:
+        '200':
+          description: >-
+            Device was saved successfully. The response contains a secret which
+            should be provided in the `x-hid-totp-trust` header.
+        '400':
+          description: Bad request.
+        '401':
+          description: Unauthorized.
+  '/totp/device/{id}':
+    delete:
+      tags:
+        - totp
+      summary: Remove trusted device.
+      parameters:
+        - name: id
+          in: path
+          description: The device ID. Find device IDs in the user object.
+          required: true
+          type: string
+      responses:
+        '204':
+          description: Successfully deleted trusted device.
+        '404':
+          description: The device could not be found.
   /user:
     post:
       tags:

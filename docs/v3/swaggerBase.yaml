@@ -17,10 +17,10 @@ tags:
     description: 'Methods related to authentication'
   - name: 'user'
     description: 'Methods related to users'
+  - name: 'totp'
+    description: 'Methods related to 2-factor authentication (2FA)'
   - name: 'client'
     description: 'Methods related to oauth clients'
-  - name: 'totp'
-    description: 'Methods related to 2-factor authentication'
 
 components:
   securitySchemes:
@@ -86,6 +86,31 @@ components:
         updatedAt:
           type: string
           format: date-time
+    Client:
+      type: object
+      properties:
+        redirectUrls:
+          type: array
+          items:
+            type: string
+            pattern: uri
+        _id:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        redirectUri:
+          type: string
+          format: uri
+        loginUri:
+          type: string
+          format: uri
+        description:
+          type: string
+        secret:
+          type: string
+
 
 # Applying Auth token requirement to our entire API.
 #
