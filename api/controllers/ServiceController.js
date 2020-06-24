@@ -78,7 +78,7 @@ module.exports = {
         logger.warn(
           '[ServiceController->find] Name of a service must have at least 3 characters in find method',
         );
-        return reply(Boom.badRequest('Name must have at least 3 characters'));
+        throw Boom.badRequest('Name must have at least 3 characters');
       }
       criteria.name = criteria.name.replace(/\(|\\|\^|\.|\||\?|\*|\+|\)|\[|\{|<|>|\/|"/, '-');
       criteria.name = new RegExp(criteria.name, 'i');

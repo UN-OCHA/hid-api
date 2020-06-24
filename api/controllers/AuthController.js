@@ -670,7 +670,7 @@ module.exports = {
       logger.warn(
         '[AuthController->signRequest] Missing url to sign request for file downloads',
       );
-      return reply(Boom.badRequest('Missing url'));
+      throw Boom.badRequest('Missing url');
     }
     const credentials = {
       id: request.auth.credentials._id.toString(),
