@@ -11,8 +11,33 @@ const { logger } = config;
  */
 module.exports = {
 
+  /*
+   * @api [post] /client
+   * tags:
+   *   - client
+   * summary: Create a new client.
+   * requestBody:
+   *   description: Client object
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         $ref: '#/components/schemas/Client'
+   * responses:
+   *   '200':
+   *     description: Client created successfully.
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/Client'
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '403':
+   *     description: Unauthorized. You are not an admin.
+   */
   async create(request) {
-    const client = await Client.create(request.payload);
+    const payload = request.payload || {};
+    const client = await Client.create(payload);
     if (!client) {
       logger.warn(
         '[ClientController->create] Could not create client due to bad request',
@@ -20,12 +45,79 @@ module.exports = {
       );
       throw Boom.badRequest();
     }
+
     logger.info(
       '[ClientController->create] Created a new client',
     );
     return client;
   },
 
+  /*
+   * @api [get] /client
+   * tags:
+   *   - client
+   * summary: Returns all the clients the user has access to.
+   * parameters:
+   *   - name: sort
+   *     description: Sort by this attribute.
+   *     in: query
+   *     type: string
+   *     required: false
+   *     default: name
+   *   - name: offset
+   *     description: Offset list by this many clients.
+   *     in: query
+   *     type: integer
+   *     required: false
+   *     default: 0
+   *   - name: limit
+   *     description: Limit list to this many clients.
+   *     in: query
+   *     type: integer
+   *     required: false
+   *     default: 50
+   * responses:
+   *   '200':
+   *     description: Array of client objects.
+   *     content:
+   *       application/json:
+   *         schema:
+   *           type: array
+   *           items:
+   *             $ref: '#/components/schemas/Client'
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '403':
+   *     description: Unauthorized. You are not an admin.
+   *   '404':
+   *     description: Requested client not found.
+   */
+
+  /*
+   * @api [get] /client/{id}
+   * tags:
+   *   - client
+   * summary: Returns one client with the specified ID.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric Client ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   * responses:
+   *   '200':
+   *     description: The client object.
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/Client'
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '403':
+   *     description: Unauthorized. You are not an admin.
+   *   '404':
+   *     description: Requested client not found.
+   */
   async find(request, reply) {
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
@@ -46,13 +138,49 @@ module.exports = {
     return reply.response(results).header('X-Total-Count', number);
   },
 
+  /*
+   * @api [put] /client/{id}
+   * tags:
+   *   - client
+   * summary: Update client with the specified ID.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric Client ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   * requestBody:
+   *   description: Client object
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         $ref: '#/components/schemas/Client'
+   * responses:
+   *   '200':
+   *     description: >-
+   *       The client object. _**NOTE:** at this time, the function returns the
+   *       UNCHANGED client if the object you send contains validation errors._
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/Client'
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '403':
+   *     description: Unauthorized. You are not an admin.
+   *   '404':
+   *     description: Requested client not found.
+   */
   async update(request) {
-    const client = await Client
-      .findOneAndUpdate(
-        { _id: request.params.id },
-        request.payload,
-        { runValidators: true, new: true },
-      );
+    // @TODO: Make this return 401 with validation feedback like POST.
+    //
+    // @see HID-2080
+    const client = await Client.findOneAndUpdate(
+      { _id: request.params.id },
+      request.payload,
+      { runValidators: true, new: true },
+    );
     logger.info(
       `[ClientController->update] Updated client ${request.params.id}`,
       { request: request.payload },
@@ -60,6 +188,27 @@ module.exports = {
     return client;
   },
 
+  /*
+   * @api [delete] /client/{id}
+   * tags:
+   *   - client
+   * summary: Deletes the client with the specified ID.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric Client ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   * responses:
+   *   '204':
+   *     description: Client successfully deleted.
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '403':
+   *     description: Unauthorized. You are not an admin.
+   *#   '404':
+   *#     description: Requested client not found.
+   */
   async destroy(request, reply) {
     await Client.remove({ _id: request.params.id });
     logger.info(

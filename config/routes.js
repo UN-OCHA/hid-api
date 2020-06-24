@@ -911,10 +911,35 @@ module.exports = [
       handler: ClientController.create,
     },
   },
+  {
+    method: 'POST',
+    path: '/api/v3/client',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: ClientController.create,
+    },
+  },
 
   {
     method: 'GET',
     path: '/api/v2/client/{id?}',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: ClientController.find,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+  {
+    method: 'GET',
+    path: '/api/v3/client/{id?}',
     options: {
       pre: [
         AuthPolicy.isAdmin,
@@ -943,10 +968,40 @@ module.exports = [
       },
     },
   },
+  {
+    method: 'PUT',
+    path: '/api/v3/client/{id}',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: ClientController.update,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
 
   {
     method: 'DELETE',
     path: '/api/v2/client/{id}',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: ClientController.destroy,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+  {
+    method: 'DELETE',
+    path: '/api/v3/client/{id}',
     options: {
       pre: [
         AuthPolicy.isAdmin,
