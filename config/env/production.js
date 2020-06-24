@@ -1,12 +1,10 @@
 
-
 const winston = require('winston');
 const os = require('os');
 const _ = require('lodash');
 require('winston-daily-rotate-file');
 
 module.exports = {
-
   database: {
     stores: {
       production: {
@@ -16,6 +14,7 @@ module.exports = {
           keepAlive: 600000,
           connectTimeoutMS: 60000,
           useNewUrlParser: true,
+          useUnifiedTopology: true,
         },
       },
     },

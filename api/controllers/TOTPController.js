@@ -74,7 +74,7 @@ module.exports = {
    *   - name: X-HID-TOTP
    *     in: header
    *     description: The TOTP token. Required.
-   *     required: false
+   *     required: true
    *     type: string
    * requestBody:
    *   description: >-
@@ -133,7 +133,7 @@ module.exports = {
    *   - name: X-HID-TOTP
    *     in: header
    *     description: The TOTP token. Required.
-   *     required: false
+   *     required: true
    *     type: string
    * responses:
    *   '204':
@@ -154,7 +154,7 @@ module.exports = {
    *   - name: X-HID-TOTP
    *     in: header
    *     description: The TOTP token. Required.
-   *     required: false
+   *     required: true
    *     type: string
    * responses:
    *   '200':
@@ -239,7 +239,7 @@ module.exports = {
    *   - name: X-HID-TOTP
    *     in: header
    *     description: The TOTP token. Required.
-   *     required: false
+   *     required: true
    *     type: string
    * responses:
    *   '200':

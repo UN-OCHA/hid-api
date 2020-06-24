@@ -1190,7 +1190,7 @@ module.exports = [
     path: '/api/v3/totp/device',
     options: {
       pre: [
-        AuthPolicy.isTOTPEnabledAndValid,
+        AuthPolicy.isTOTPValidPolicy,
       ],
       handler: TOTPController.saveDevice,
     },
