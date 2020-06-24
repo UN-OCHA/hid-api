@@ -1,13 +1,6 @@
 
 
 module.exports = {
-
-  trailpack: {
-    disabled: [
-      'repl',
-    ],
-  },
-
   database: {
     stores: {
       testing: {
@@ -17,6 +10,7 @@ module.exports = {
           keepAlive: 600000,
           connectTimeoutMS: 60000,
           useNewUrlParser: true,
+          useUnifiedTopology: true,
         },
       },
     },
