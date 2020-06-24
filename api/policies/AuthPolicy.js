@@ -89,7 +89,7 @@ module.exports = {
     }
 
     // User authenticated correctly, and has admin permissions.
-    if (request.auth.credentials && request.auth.credentials.is_admin) {
+    if (request.auth.credentials.is_admin) {
       return true;
     }
 
