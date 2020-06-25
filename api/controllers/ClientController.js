@@ -210,10 +210,19 @@ module.exports = {
    *#     description: Requested client not found.
    */
   async destroy(request, reply) {
-    await Client.remove({ _id: request.params.id });
-    logger.info(
-      `[ClientController->destroy] Removed client ${request.params.id}`,
-    );
-    return reply.response().code(204);
+    const client = await Client.findOne({ _id: request.params.id });
+
+    // If a client was found, delete it and log the event.
+    if (client) {
+      await client.remove();
+
+      logger.info(
+        `[ClientController->destroy] Removed client ${request.params.id}`,
+      );
+      return reply.response().code(204);
+    }
+
+    // If no client was found, return 404.
+    return reply.response().code(404);
   },
 };
