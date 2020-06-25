@@ -206,8 +206,8 @@ module.exports = {
    *     description: Bad request. See response body for details.
    *   '403':
    *     description: Unauthorized. You are not an admin.
-   *#   '404':
-   *#     description: Requested client not found.
+   *   '404':
+   *     description: Requested client not found.
    */
   async destroy(request, reply) {
     const client = await Client.findOne({ _id: request.params.id });

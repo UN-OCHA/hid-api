@@ -309,6 +309,8 @@ paths:
           description: Bad request. See response body for details.
         '403':
           description: Unauthorized. You are not an admin.
+        '404':
+          description: Requested client not found.
   /totp/qrcode:
     post:
       tags:
@@ -340,7 +342,7 @@ paths:
         - name: X-HID-TOTP
           in: header
           description: The TOTP token. Required.
-          required: false
+          required: true
           type: string
       requestBody:
         description: 'Must be an object specifying: `{"method": "app"}`'
@@ -373,7 +375,7 @@ paths:
         - name: X-HID-TOTP
           in: header
           description: The TOTP token. Required.
-          required: false
+          required: true
           type: string
       responses:
         '204':
@@ -388,7 +390,7 @@ paths:
         - name: X-HID-TOTP
           in: header
           description: The TOTP token. Required.
-          required: false
+          required: true
           type: string
       responses:
         '200':
@@ -429,7 +431,7 @@ paths:
         - name: X-HID-TOTP
           in: header
           description: The TOTP token. Required.
-          required: false
+          required: true
           type: string
       responses:
         '200':
