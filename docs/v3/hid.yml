@@ -311,7 +311,7 @@ paths:
           description: Unauthorized. You are not an admin.
         '404':
           description: Requested client not found.
-  /totp/qrcode:
+  /totp/config:
     post:
       tags:
         - totp
@@ -323,10 +323,10 @@ paths:
             application/json:
               type: object
               properties:
-                url:
+                qrcode:
                   type: string
                   format: byte
-                raw:
+                url:
                   type: string
                   format: uri
         '400':

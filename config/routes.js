@@ -1160,8 +1160,8 @@ module.exports = [
   },
   {
     method: 'POST',
-    path: '/api/v3/totp/qrcode',
-    handler: TOTPController.generateQRCode,
+    path: '/api/v3/totp/config',
+    handler: TOTPController.generateConfig,
   },
 
   {
