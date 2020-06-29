@@ -109,7 +109,7 @@ module.exports = {
       throw Boom.badRequest('2FA is already enabled. You need to disable it first');
     }
     const method = request.payload ? request.payload.method : '';
-    if (method !== 'app' && method !== 'sms') {
+    if (method !== 'app') {
       logger.warn(
         `[TOTPController->enable] Invalid 2FA method provided: ${method}`,
       );
