@@ -223,6 +223,6 @@ module.exports = {
     }
 
     // If no client was found, return 404.
-    return reply.response().code(404);
+    throw Boom.notFound();
   },
 };
