@@ -360,12 +360,15 @@ module.exports = {
         delete request.payload.tester;
       }
 
-      // Not showing request payload to avoid showing user passwords in logs.
       const user = await User.create(request.payload);
       if (!user) {
-        // Not showing request payload to avoid showing user passwords in logs.
+        // Delete sensitive fields before logging
+        delete request.payload.password;
+        delete request.payload.confirm_password;
+
         logger.warn(
           '[UserController->create] Create user failed',
+          { request: request.payload, fail: true },
         );
         throw Boom.badRequest();
       }
