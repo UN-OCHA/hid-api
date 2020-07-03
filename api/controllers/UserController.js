@@ -318,13 +318,23 @@ module.exports = {
       const requestIsV3 = request.path.indexOf('api/v3') !== -1;
       if (request.payload.password && request.payload.confirm_password) {
         if (requestIsV3 && !User.isStrongPasswordV3(request.payload.password)) {
+          // Remove sensitive fields before logging payload
+          delete request.payload.password;
+          delete request.payload.confirm_password;
+
           logger.warn(
             '[UserController->create] Provided password is not strong enough (v3)',
+            { request: request.payload, fail: true },
           );
           throw Boom.badRequest('The password is not strong enough');
         } else if (!User.isStrongPassword(request.payload.password)) {
+          // Remove sensitive fields before logging payload
+          delete request.payload.password;
+          delete request.payload.confirm_password;
+
           logger.warn(
             '[UserController->create] Provided password is not strong enough (v2)',
+            { request: request.payload, fail: true },
           );
           throw Boom.badRequest('The password is not strong enough');
         }
