@@ -486,6 +486,16 @@ paths:
                   type: string
                   required: true
                   description: Should correspond to the endpoint you are interacting with.
+                password:
+                  type: string
+                  required: false
+                  description: 'See `/user/{id}/password` for password requirements.'
+                confirm_password:
+                  type: string
+                  required: false
+                  description: >-
+                    See `/user/{id}/password` for password requirements. This
+                    field is REQUIRED if `password` is sent in the payload.
       responses:
         '200':
           description: User was successfully created
