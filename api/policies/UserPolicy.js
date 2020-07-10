@@ -45,13 +45,17 @@ module.exports = {
       if (!request.payload) {
         logger.warn(
           '[UserPolicy->canCreate] No request payload provided for user creation',
-          { fail: true, request: request.payload },
+          { request: request.payload, fail: true },
         );
         throw Boom.badRequest('Missing request payload');
       } else if (!request.payload.email) {
+        // Strip out sensitive fields before logging
+        delete request.payload.password;
+        delete request.payload.confirm_password;
+
         logger.warn(
           '[UserPolicy->canCreate] No email address provided for user creation',
-          { request: request.payload },
+          { request: request.payload, fail: true },
         );
         throw Boom.badRequest('You need to register with an email address');
       }

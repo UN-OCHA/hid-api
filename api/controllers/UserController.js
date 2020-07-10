@@ -258,6 +258,17 @@ module.exports = {
    *             required: true
    *             description: >-
    *               Should correspond to the endpoint you are interacting with.
+   *           password:
+   *             type: string
+   *             required: false
+   *             description: >-
+   *               See `/user/{id}/password` for password requirements.
+   *           confirm_password:
+   *             type: string
+   *             required: false
+   *             description: >-
+   *               See `/user/{id}/password` for password requirements. This
+   *               field is REQUIRED if `password` is sent in the payload.
    * responses:
    *   '200':
    *     description: User was successfully created
@@ -273,17 +284,32 @@ module.exports = {
    */
   async create(request) {
     if (!request.payload.app_verify_url) {
+      if (request.payload && request.payload.password) {
+        delete request.payload.password;
+      }
+      if (request.payload && request.payload.confirm_password) {
+        delete request.payload.confirm_password;
+      }
+
       logger.warn(
         '[UserController->create] Missing app_verify_url',
+        { request, security: true, fail: true }
       );
       throw Boom.badRequest('Missing app_verify_url');
     }
 
     const appVerifyUrl = request.payload.app_verify_url;
     if (!HelperService.isAuthorizedUrl(appVerifyUrl)) {
+      if (request.payload && request.payload.password) {
+        delete request.payload.password;
+      }
+      if (request.payload && request.payload.confirm_password) {
+        delete request.payload.confirm_password;
+      }
+
       logger.warn(
         `[UserController->create] app_verify_url ${appVerifyUrl} is not in authorizedDomains allowlist`,
-        { security: true, fail: true, request },
+        { request, security: true, fail: true },
       );
       throw Boom.badRequest('Invalid app_verify_url');
     }
@@ -307,13 +333,23 @@ module.exports = {
       const requestIsV3 = request.path.indexOf('api/v3') !== -1;
       if (request.payload.password && request.payload.confirm_password) {
         if (requestIsV3 && !User.isStrongPasswordV3(request.payload.password)) {
+          // Remove sensitive fields before logging payload
+          delete request.payload.password;
+          delete request.payload.confirm_password;
+
           logger.warn(
             '[UserController->create] Provided password is not strong enough (v3)',
+            { request: request.payload, fail: true },
           );
           throw Boom.badRequest('The password is not strong enough');
         } else if (!User.isStrongPassword(request.payload.password)) {
+          // Remove sensitive fields before logging payload
+          delete request.payload.password;
+          delete request.payload.confirm_password;
+
           logger.warn(
             '[UserController->create] Provided password is not strong enough (v2)',
+            { request: request.payload, fail: true },
           );
           throw Boom.badRequest('The password is not strong enough');
         }
@@ -360,12 +396,15 @@ module.exports = {
         delete request.payload.tester;
       }
 
-      // Not showing request payload to avoid showing user passwords in logs.
       const user = await User.create(request.payload);
       if (!user) {
-        // Not showing request payload to avoid showing user passwords in logs.
+        // Delete sensitive fields before logging
+        delete request.payload.password;
+        delete request.payload.confirm_password;
+
         logger.warn(
           '[UserController->create] Create user failed',
+          { request: request.payload, fail: true },
         );
         throw Boom.badRequest();
       }
