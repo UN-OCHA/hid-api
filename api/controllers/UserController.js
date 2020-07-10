@@ -1139,7 +1139,15 @@ module.exports = {
       throw Boom.badRequest();
     }
 
-    const record = await User.findOne({ _id: request.params.id });
+    const record = await User.findOne({ _id: request.params.id }).catch(err => {
+      logger.error(
+        err.message,
+        { request, fail: true, security: true },
+      );
+
+      throw Boom.internal('There is a problem querying to the database. Please try again.');
+    });
+
     if (!record) {
       logger.warn(
         `[UserController->setPrimaryEmail] Could not find user ${request.params.id}`,
