@@ -284,17 +284,32 @@ module.exports = {
    */
   async create(request) {
     if (!request.payload.app_verify_url) {
+      if (request.payload && request.payload.password) {
+        delete request.payload.password;
+      }
+      if (request.payload && request.payload.confirm_password) {
+        delete request.payload.confirm_password;
+      }
+
       logger.warn(
         '[UserController->create] Missing app_verify_url',
+        { request, security: true, fail: true }
       );
       throw Boom.badRequest('Missing app_verify_url');
     }
 
     const appVerifyUrl = request.payload.app_verify_url;
     if (!HelperService.isAuthorizedUrl(appVerifyUrl)) {
+      if (request.payload && request.payload.password) {
+        delete request.payload.password;
+      }
+      if (request.payload && request.payload.confirm_password) {
+        delete request.payload.confirm_password;
+      }
+
       logger.warn(
         `[UserController->create] app_verify_url ${appVerifyUrl} is not in authorizedDomains allowlist`,
-        { security: true, fail: true, request },
+        { request, security: true, fail: true },
       );
       throw Boom.badRequest('Invalid app_verify_url');
     }
