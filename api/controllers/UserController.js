@@ -1141,8 +1141,12 @@ module.exports = {
 
     const record = await User.findOne({ _id: request.params.id }).catch(err => {
       logger.error(
-        err.message,
-        { request, fail: true, security: true },
+        `[UserController->setPrimaryEmail] ${err.message}`, {
+          request,
+          security: true,
+          fail: true,
+          stackTrace: err.stack,
+        },
       );
 
       throw Boom.internal('There is a problem querying to the database. Please try again.');
@@ -1502,7 +1506,19 @@ module.exports = {
     // TODO: make sure current user can do this
 
     if (request.payload.hash) {
-      const record = await User.findOne({ _id: request.payload.id });
+      const record = await User.findOne({ _id: request.payload.id }).catch(err => {
+        logger.error(
+          `[UserController->validateEmail] ${err.message}`, {
+            request,
+            security: true,
+            fail: true,
+            stackTrace: err.stack,
+          },
+        );
+
+        throw Boom.internal('There is a problem querying to the database. Please try again.');
+      });
+
       if (!record) {
         logger.warn(
           `[UserController->validateEmail] Could not find user ${request.payload.id}`,
