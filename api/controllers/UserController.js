@@ -490,17 +490,24 @@ module.exports = {
       }
       const user = await User.findOne(criteria);
 
-      if (!user) {
-        logger.warn(
-          `[UserController->find] Could not find user ${request.params.id}`,
-        );
-        throw Boom.notFound();
-      } else {
+      // If we found a user, return it
+      if (user) {
         user.sanitize(request.auth.credentials);
         user.translateListNames(reqLanguage);
         return user;
       }
+
+      // Finally: if we didn't find a user, send a 404.
+      logger.warn(
+        `[UserController->find] Could not find user ${request.params.id}`,
+      );
+      throw Boom.notFound();
     }
+
+    //
+    // No ID was sent so we are returning a list of users.
+    //
+
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
     const childAttributes = User.listAttributes();
