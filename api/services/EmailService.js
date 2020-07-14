@@ -235,18 +235,6 @@ module.exports = {
     return send(mailOptions, not.type, not);
   },
 
-  sendReminderUpdate(user) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      user,
-      userUrl: `${process.env.APP_URL}/user/${user._id}`,
-    };
-    return send(mailOptions, 'reminder_update', context);
-  },
-
   sendAuthToProfile(user, createdBy) {
     const mailOptions = {
       to: user.email,
