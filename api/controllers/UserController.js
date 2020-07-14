@@ -489,6 +489,7 @@ module.exports = {
         criteria.hidden = false;
       }
       const user = await User.findOne(criteria);
+
       if (!user) {
         logger.warn(
           `[UserController->find] Could not find user ${request.params.id}`,
