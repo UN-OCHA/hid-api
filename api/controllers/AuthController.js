@@ -111,8 +111,41 @@ function loginRedirect(request, reply, cookie = false) {
 }
 
 module.exports = {
-  /**
-   * Authenticate user through JWT
+  /*
+   * @api [post] /jsonwebtoken
+   * tags:
+   *   - auth
+   * summary: Generate a JSON web token (JWT)
+   * parameters:
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: The TOTP token. Required if the user has 2FA enabled.
+   *     required: false
+   *     type: string
+   * requestBody:
+   *   description: 'User email and password'
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         $ref: '#/components/schemas/Auth'
+   * responses:
+   *   '200':
+   *     description: >-
+   *       The User object with the JWT contained in the `token` property.
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/JWT'
+   *   '400':
+   *     description: 'Bad request. Missing email and/or password'
+   *   '401':
+   *     description: 'Wrong email and/or password'
+   *   '429':
+   *     description: >-
+   *       The account was locked for 5 minutes because there were more than 5
+   *       unsuccessful login attempts within the last 5 minutes
+   * security: []
    */
   async authenticate(request) {
     const result = await loginHelper(request);
@@ -333,6 +366,10 @@ module.exports = {
           }
           return done(null, client, redirect);
         } catch (err) {
+          logger.error(
+            `[AuthController->authorizeDialogOauth2] ${err.stack}`,
+            { security: true, fail: true, request },
+          );
           return done('An error occurred while processing the request. Please try logging in again.');
         }
       });
@@ -356,7 +393,10 @@ module.exports = {
         // csrf: req.csrfToken()
       });
     } catch (err) {
-      // TODO: display the error in a view
+      logger.error(
+        `[AuthController->authorizeDialogOauth2] ${err.stack}`,
+        { security: true, fail: true, request },
+      );
       return err;
     }
   },
@@ -406,7 +446,10 @@ module.exports = {
       const response = await oauth.decision(request, reply);
       return response;
     } catch (err) {
-      // TODO: display error in a view
+      logger.error(
+        `[AuthController->authorizeOauth2] ${err.stack}`,
+        { security: true, fail: true, request },
+      );
       return err;
     }
   },
@@ -488,7 +531,10 @@ module.exports = {
         return response;
       }
     } catch (err) {
-      // TODO: display error in a view
+      logger.error(
+        `[AuthController->accessTokenOauth2] ${err.stack}`,
+        { security: true, fail: true, request },
+      );
       return err;
     }
   },
@@ -543,13 +589,48 @@ module.exports = {
     return out;
   },
 
-  // Provides a list of the json web tokens with no expiration date created by the current user
+  /*
+   * @api [get] /jsonwebtoken
+   *
+   * tags:
+   *   - auth
+   * summary: Retrieve the JWTs of the current user
+   * responses:
+   *   '200':
+   *     description: >-
+   *       Array of all JWTs for the current user, including blacklisted tokens.
+   */
   async jwtTokens(request) {
     const tokens = await JwtToken.find({ user: request.auth.credentials._id });
     return tokens;
   },
 
-  // Blacklist a JSON Web Token
+  /*
+   * @api [delete] /jsonwebtoken
+   *
+   * tags:
+   *   - auth
+   * summary: Blacklists a JWT for the current user
+   * requestBody:
+   *   description: The token to blacklist.
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         $ref: '#/components/schemas/JWT'
+   * responses:
+   *   '200':
+   *     description: JWT was successfully blacklisted
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/JWT'
+   *   '400':
+   *     description: Missing token
+   *   '403':
+   *     description: >-
+   *       Could not blacklist this token because you did not generate it
+   */
   async blacklistJwt(request) {
     const token = request.payload ? request.payload.token : null;
     if (!token) {
@@ -576,7 +657,7 @@ module.exports = {
       '[AuthController->blacklistJwt] Tried to blacklist a token by a user who does not have the permission',
       { security: true, fail: true, request },
     );
-    throw Boom.badRequest('Could not blacklist this token because you did not generate it');
+    throw Boom.forbidden('Could not blacklist this token because you did not generate it');
   },
 
   /**
@@ -589,7 +670,7 @@ module.exports = {
       logger.warn(
         '[AuthController->signRequest] Missing url to sign request for file downloads',
       );
-      return reply(Boom.badRequest('Missing url'));
+      throw Boom.badRequest('Missing url');
     }
     const credentials = {
       id: request.auth.credentials._id.toString(),

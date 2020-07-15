@@ -153,7 +153,7 @@ module.exports = {
   register(request, reply) {
     const requestUrl = _buildRequestUrl(request, 'verify2');
     return reply.view('register', {
-      title: 'Register in Humanitarian ID',
+      title: 'Register a Humanitarian ID account',
       requestUrl,
       recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY,
     });

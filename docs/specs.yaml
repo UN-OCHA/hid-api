@@ -4,8 +4,8 @@ info:
   description: 'Humanitarian ID v2 API'
   version: 2.0.0
   contact:
-    name: 'Guillaume Viguier-Just'
-    email: 'guillaume@viguierjust.com'
+    name: 'UN OCHA'
+    email: 'ops@humanitarianresponse.info'
   license:
     name: ''
 tags:
@@ -25,7 +25,7 @@ tags:
     description: 'Methods related to notifications'
   - name: 'totp'
     description: 'Methods related to 2 Factor Authentication'
-host: 'api.dev.humanitarian.id'
+host: 'dev.api-humanitarian-id.ahconu.org'
 basePath: '/api/v2'
 schemes:
   - https
@@ -891,7 +891,7 @@ paths:
             $ref: '#/definitions/Auth'
       responses:
         '200':
-          description: 'The json web token'
+          description: 'The JSON web token'
         '400':
           description: 'Bad request. Missing email and/or password'
         '401':
@@ -901,17 +901,17 @@ paths:
     get:
       tags:
         - auth
-      summary: 'Retrieve the json web tokens of the current user'
+      summary: 'Retrieve the JSON web tokens of the current user'
       responses:
         '200':
           description: 'List of the JWTs of the current user'
     delete:
       tags:
         - auth
-      summary: 'Blacklists a json web token'
+      summary: 'Blacklists a JSON web token'
       responses:
         '200':
-          description: 'Json Web Token was successfully blacklisted'
+          description: 'JSON Web Token was successfully blacklisted'
   /totp:
     post:
       tags:

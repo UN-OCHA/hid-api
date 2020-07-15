@@ -40,13 +40,22 @@ async function canUpdate(request) {
 }
 
 module.exports = {
-
   canCreate(request) {
     if (!request.auth.credentials) {
-      if (!request.payload.email) {
+      if (!request.payload) {
+        logger.warn(
+          '[UserPolicy->canCreate] No request payload provided for user creation',
+          { request: request.payload, fail: true },
+        );
+        throw Boom.badRequest('Missing request payload');
+      } else if (!request.payload.email) {
+        // Strip out sensitive fields before logging
+        delete request.payload.password;
+        delete request.payload.confirm_password;
+
         logger.warn(
           '[UserPolicy->canCreate] No email address provided for user creation',
-          { request: request.payload },
+          { request: request.payload, fail: true },
         );
         throw Boom.badRequest('You need to register with an email address');
       }
@@ -58,8 +67,6 @@ module.exports = {
     }
     return true;
   },
-
-  canUpdate,
 
   async canDestroy(request) {
     if (request.auth.credentials.is_admin
@@ -79,5 +86,6 @@ module.exports = {
     throw Boom.unauthorized('You are not allowed to do this operation');
   },
 
+  canUpdate,
   canClaim: canUpdate,
 };

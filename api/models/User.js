@@ -1182,23 +1182,6 @@ UserSchema.methods = {
     return false;
   },
 
-  // Whether we should send an update reminder
-  // (sent out after a user hasn't been updated for 6 months)
-  shouldSendReminderUpdate() {
-    const d = new Date();
-    const revisedOffset = d.valueOf() - this.updatedAt.valueOf();
-    if (revisedOffset < 183 * 24 * 3600 * 1000) { // if not revised during 6 months
-      return false;
-    }
-    if (this.remindedUpdate) {
-      const remindedOffset = d.valueOf() - this.remindedUpdate.valueOf();
-      if (remindedOffset < 183 * 24 * 3600 * 1000) {
-        return false;
-      }
-    }
-    return true;
-  },
-
   hasLocalPhoneNumber(iso2) {
     let found = false;
     const that = this;
