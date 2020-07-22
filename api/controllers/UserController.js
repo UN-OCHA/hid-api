@@ -746,7 +746,7 @@ module.exports = {
     let user = await User.findOne({ _id: request.params.id });
     if (!user) {
       logger.warn(
-        `[UserController->update] Could not find user ${request.params.id}`,
+        '[UserController->update] Could not find user',
         {
           request,
           fail: true,
@@ -779,9 +779,12 @@ module.exports = {
           },
         });
         logger.info(
-          `[UserController->update] User ${user._id.toString()} is becoming invisible. Updated list counts.`,
+          '[UserController->update] User is becoming invisible. Updated list counts.',
           {
             request,
+            user: {
+              id: user._id.toString(),
+            },
           },
         );
       }
@@ -798,9 +801,12 @@ module.exports = {
           },
         });
         logger.info(
-          `[UserController->update] User ${user._id.toString()} is becoming visible. Updated list counts`,
+          '[UserController->update] User is becoming visible. Updated list counts',
           {
             request,
+            user: {
+              id: user._id.toString(),
+            },
           },
         );
       }
@@ -818,9 +824,12 @@ module.exports = {
           },
         });
         logger.info(
-          `[UserController->update] User ${user._id.toString()} is being flagged. Updated list counts`,
+          '[UserController->update] User is being flagged. Updated list counts',
           {
             request,
+            user: {
+              id: user._id.toString(),
+            },
           },
         );
       }
@@ -838,9 +847,12 @@ module.exports = {
           },
         });
         logger.info(
-          `[UserController->update] User ${user._id.toString()} is being unflagged. Updated list counts`,
+          '[UserController->update] User is being unflagged. Updated list counts',
           {
             request,
+            user: {
+              id: user._id.toString(),
+            },
           },
         );
       }
@@ -853,7 +865,7 @@ module.exports = {
     );
 
     logger.info(
-      `[UserController->update] Successfully saved user ${user._id.toString()}`,
+      '[UserController->update] Successfully saved user',
       {
         request,
         user: {
@@ -880,7 +892,7 @@ module.exports = {
               },
             }).then(() => {
               logger.info(
-                `[UserController->update] User ${user._id.toString()} is becoming visible. Updated list counts`,
+                '[UserController->update] User is becoming visible. Updated list counts',
                 {
                   request,
                   user: {
@@ -908,7 +920,7 @@ module.exports = {
           promises.push(
             EmailService.sendAuthToProfile(user, request.auth.credentials).then(() => {
               logger.info(
-                `[UserController->update] Sent auth_to_profile email to user ${user.email}`,
+                '[UserController->update] Sent auth_to_profile email',
                 {
                   request,
                   user: {
@@ -924,7 +936,7 @@ module.exports = {
         promises.push(
           NotificationService.send(notification).then(() => {
             logger.info(
-              `[UserController->update] Sent admin_edit notification to user ${user.id}`,
+              '[UserController->update] Sent admin_edit notification',
               {
                 request,
                 user: {
@@ -940,9 +952,12 @@ module.exports = {
     promises.push(
       GSSSyncService.synchronizeUser(user).then(() => {
         logger.info(
-          `[UserController->update] Synchronized user ${user.id} with google spreadsheet`,
+          '[UserController->update] Synchronized user with google spreadsheet',
           {
             request,
+            user: {
+              id: user.id,
+            },
           },
         );
       }),
