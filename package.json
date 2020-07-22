@@ -41,7 +41,7 @@
     "hapi-rate-limit": "^4.0.2",
     "is-html": "^1.1.0",
     "jsonwebtoken": "^8.1.0",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.19",
     "mailchimp-api-v3": "^1.7.0",
     "moment": "^2.24.0",
     "mongoose": "^5.7.5",
