@@ -4,6 +4,5 @@ WORKDIR /srv/www
 
 COPY . .
 
-RUN rm -rf .git && \
-    cp run_node /etc/services.d/node/run && \
+RUN cp run_node /etc/services.d/node/run && \
     npm install
