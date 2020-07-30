@@ -288,6 +288,13 @@ module.exports = {
    */
   async authenticateAdmin(request) {
     const result = await loginHelper(request);
+
+    // Before proceeding, check if user has admin perms. This is the main
+    // difference between @authenticate and @authenticateAdmin
+    if (!result.is_admin) {
+      throw Boom.forbidden();
+    }
+
     if (result.totp === true) {
       // Check to see if device is not a trusted device
       const trusted = request.state['x-hid-totp-trust'];
@@ -302,12 +309,6 @@ module.exports = {
     }
     const token = JwtService.issue(payload);
     result.sanitize(result);
-
-    // Before proceeding, check if user has admin perms. This is the main
-    // difference between @authenticate and @authenticateAdmin
-    if (!result.is_admin) {
-      throw Boom.forbidden();
-    }
 
     if (!payload.exp) {
       // Creating an API key, store the token in the database
