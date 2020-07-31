@@ -259,6 +259,12 @@ module.exports = [
   },
 
   {
+    method: 'POST',
+    path: '/api/v3/admintoken',
+    handler: AuthController.authenticateAdmin,
+  },
+
+  {
     method: 'GET',
     path: '/api/v2/numbers',
     handler: NumbersController.numbers,

@@ -110,6 +110,7 @@ internals.implementation = () => ({
       '/api/v2/jsonwebtoken',
       '/api/v3/user',
       '/api/v3/jsonwebtoken',
+      '/api/v3/admintoken',
     ];
 
     // Check for our special cases that are allowed to execute without an Auth
