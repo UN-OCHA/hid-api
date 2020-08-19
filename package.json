@@ -41,7 +41,7 @@
     "hapi-rate-limit": "^4.0.2",
     "is-html": "^1.1.0",
     "jsonwebtoken": "^8.1.0",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.19",
     "mailchimp-api-v3": "^1.7.0",
     "moment": "^2.24.0",
     "mongoose": "^5.7.5",
@@ -65,6 +65,7 @@
   "devDependencies": {
     "acorn": "^5.7.4",
     "diff": ">=3.5.0",
+    "dot-prop": ">=4.2.1",
     "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-config-standard": "^12.0.0",
