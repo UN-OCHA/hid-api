@@ -82,7 +82,7 @@
                 <h2 class="element-invisible" translate>User menu</h2>
 
                 <!-- anonymous user-login link -->
-                <div class="content">
+                <div ng-if="!isAuthenticated" class="content">
                   <ul class="menu cd-global-header__dropdown-btn cd-user-menu__item" role="menu">
                     <li class="cd-user-menu__icon-login">
                       <a href="/" class="login-link" translate>Login</a>

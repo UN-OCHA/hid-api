@@ -912,7 +912,7 @@ UserSchema.methods = {
   sanitize(user) {
     this.sanitizeClients();
     this.sanitizeLists(user);
-    if (this._id && user._id && this._id.toString() !== user._id.toString() && !user.is_admin) {
+    if (this._id.toString() !== user._id.toString() && !user.is_admin) {
       if (this.emailsVisibility !== 'anyone') {
         if ((this.emailsVisibility === 'verified' && !user.verified)
         || (this.emailsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
@@ -960,7 +960,7 @@ UserSchema.methods = {
   },
 
   sanitizeLists(user) {
-    if (this._id && user._id && this._id.toString() !== user._id.toString() && !user.is_admin && !user.isManager) {
+    if (this._id.toString() !== user._id.toString() && !user.is_admin && !user.isManager) {
       const that = this;
       listTypes.forEach((attr) => {
         _.remove(that[`${attr}s`], (checkin) => {
@@ -1009,7 +1009,6 @@ UserSchema.methods = {
       });
     }
   },
-
   sanitizeClients() {
     if (this.authorizedClients && this.authorizedClients.length) {
       const sanitized = [];
@@ -1025,7 +1024,6 @@ UserSchema.methods = {
       }
     }
   },
-
   validPassword(password) {
     if (!this.password) {
       return false;
@@ -1197,14 +1195,7 @@ UserSchema.methods = {
         }
       } catch (err) {
         // Invalid phone number
-        that.log.error(
-          'An invalid phone number was found',
-          {
-            error: err.message,
-            error_object: err,
-            stack_trace: err.stack,
-          },
-        );
+        that.log.error('An invalid phone number was found', { error: err });
       }
     });
     return found;

@@ -275,12 +275,7 @@ module.exports = {
         } else {
           logger.error(
             '[ServiceController->subscribe] Error calling Mailchimp API',
-            {
-              fail: true,
-              error: err.message,
-              stack_trace: err.stack,
-              err_object: err,
-            },
+            { error: err },
           );
           throw err;
         }
@@ -351,12 +346,7 @@ module.exports = {
         } else {
           logger.error(
             '[ServiceController->unsubscribe] Error calling google groups API',
-            {
-              fail: true,
-              error: err.message,
-              err_object: err,
-              stack_trace: err.stack,
-            },
+            { error: err },
           );
           throw err;
         }

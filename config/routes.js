@@ -259,12 +259,6 @@ module.exports = [
   },
 
   {
-    method: 'POST',
-    path: '/api/v3/admintoken',
-    handler: AuthController.authenticateAdmin,
-  },
-
-  {
     method: 'GET',
     path: '/api/v2/numbers',
     handler: NumbersController.numbers,
@@ -306,9 +300,6 @@ module.exports = [
     path: '/api/v2/user/{id?}',
     handler: UserController.find,
     options: {
-      pre: [
-        UserPolicy.canFind,
-      ],
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
@@ -321,9 +312,6 @@ module.exports = [
     path: '/api/v3/user/{id}',
     handler: UserController.find,
     options: {
-      pre: [
-        UserPolicy.canFind,
-      ],
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),

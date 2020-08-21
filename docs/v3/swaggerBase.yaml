@@ -7,12 +7,12 @@ info:
     name: Apache-2.0
 
 servers:
-  - url: 'https://stage.api-humanitarian-id.ahconu.org/api/v3'
-    description: Staging server. For use by all UNOCHA developers.
+  - url: 'https://dev.api-humanitarian-id.ahconu.org/api/v3'
+    description: Dev server. For use by UNOCHA developers.
   - url: 'https://api.humanitarian.id/api/v3'
-    description: Production server. For use by HID Authentication Partners.
+    description: Production server. For use by HID Integration Partners.
   - url: 'http://api.hid.vm:3000/api/v3'
-    description: Localhost server. For local dev/debugging.
+    description: Localhost server. For your own debugging.
 
 tags:
   - name: 'auth'

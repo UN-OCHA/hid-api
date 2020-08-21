@@ -37,27 +37,19 @@ module.exports = {
    */
   async create(request) {
     const payload = request.payload || {};
-    const client = await Client.create(payload).catch((err) => {
+    const client = await Client.create(payload);
+    if (!client) {
       logger.warn(
         '[ClientController->create] Could not create client due to bad request',
-        {
-          request,
-          stack_trace: err.message, // err.message contains the most useful error from Mongo
-        },
+        request,
       );
-    });
-
-    if (client) {
-      logger.info(
-        '[ClientController->create] Created a new client',
-        {
-          request,
-        },
-      );
-      return client;
+      throw Boom.badRequest();
     }
 
-    throw Boom.badRequest();
+    logger.info(
+      '[ClientController->create] Created a new client',
+    );
+    return client;
   },
 
   /*
@@ -135,10 +127,7 @@ module.exports = {
       const result = await Client.findOne(criteria);
       if (!result) {
         logger.warn(
-          '[ClientController->find] Could not find client',
-          {
-            request,
-          },
+          `[ClientController->find] Could not find client with ID ${request.params.id}`,
         );
         throw Boom.notFound();
       }
@@ -192,14 +181,10 @@ module.exports = {
       request.payload,
       { runValidators: true, new: true },
     );
-
     logger.info(
-      '[ClientController->update] Updated client',
-      {
-        request,
-      },
+      `[ClientController->update] Updated client ${request.params.id}`,
+      { request: request.payload },
     );
-
     return client;
   },
 
@@ -232,12 +217,8 @@ module.exports = {
       await client.remove();
 
       logger.info(
-        '[ClientController->destroy] Removed client',
-        {
-          request,
-        },
+        `[ClientController->destroy] Removed client ${request.params.id}`,
       );
-
       return reply.response().code(204);
     }
 

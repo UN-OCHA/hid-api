@@ -88,12 +88,4 @@ module.exports = {
 
   canUpdate,
   canClaim: canUpdate,
-
-  async canFind(request) {
-    if (!!request.auth.credentials._id) {
-      return true;
-    }
-
-    throw Boom.unauthorized();
-  },
 };
