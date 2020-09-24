@@ -95,19 +95,23 @@ module.exports = {
         && metadata.request.headers.authorization.indexOf('Bearer') !== -1
       ) {
         let sanitizedJWT = metadata.request.headers.authorization.split('.');
-        const buffer = Buffer.from(sanitizedJWT[1], 'base64');
-        const asciiJWT = buffer.toString('ascii');
+        if (sanitizedJWT.length === 3) {
+          const buffer = Buffer.from(sanitizedJWT[1], 'base64');
+          const asciiJWT = buffer.toString('ascii');
 
-        // Now pop the signature off to neuter the usefulness of the logged JWT
-        // and prevent ELK from storing actionable credentials.
-        sanitizedJWT.pop();
-        sanitizedJWT = sanitizedJWT.join('.');
-        metadata.request.headers.authorization = sanitizedJWT;
+          // Now pop the signature off to neuter the usefulness of the logged JWT
+          // and prevent ELK from storing actionable credentials.
+          sanitizedJWT.pop();
+          sanitizedJWT = sanitizedJWT.join('.');
+          metadata.request.headers.authorization = sanitizedJWT;
 
-        // Auto-populate requesting user ID from JWT unless user.id was explicitly
-        // passed into the log.
-        if (typeof metadata.user.id === 'undefined') {
-          metadata.user.id = JSON.parse(asciiJWT).id;
+          // Auto-populate requesting user ID from JWT unless user.id was explicitly
+          // passed into the log.
+          if (typeof metadata.user.id === 'undefined') {
+            metadata.user.id = JSON.parse(asciiJWT).id;
+          }
+        } else {
+          // Skip JWT parsing
         }
       }
 
