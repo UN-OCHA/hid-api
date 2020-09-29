@@ -66,10 +66,23 @@ module.exports = {
       }
 
       // Sanitize OAuth client secrets
+      //
+      // This will display "00000...00000" in ELK.
       if (typeof metadata.request.query.client_secret === 'string') {
-        // display first/last three characters but scrub the rest
-        const sanitizedSecret = `${metadata.request.query.client_secret.slice(0, 3)}...${metadata.request.query.client_secret.slice(-3)}`;
+        // display first/last five characters but scrub the rest
+        const sanitizedSecret = `${metadata.request.query.client_secret.slice(0, 5)}...${metadata.request.query.client_secret.slice(-5)}`;
         metadata.request.query.client_secret = sanitizedSecret;
+      }
+
+      // Sanitize OAuth client secrets found in Headers
+      //
+      // This will display "Basic 00000...00000" in ELK.
+      if (
+        typeof metadata.request.headers.authorization === 'string'
+        && metadata.request.headers.authorization.indexOf('Basic') !== -1
+      ) {
+        const sanitizedSecret = `${metadata.request.headers.authorization.slice(0, 11)}...${metadata.request.headers.authorization.slice(-5)}`;
+        metadata.request.headers.authorization = sanitizedSecret;
       }
 
       // Sanitize JWTs, which can allow anyone to masquerade as this user.
@@ -77,18 +90,28 @@ module.exports = {
       // server can generate. That way, we can decode and inspect the payload
       // for debugging purposes, without risking the use of the JWT by devs
       // who have access to ELK.
-      if (typeof metadata.request.headers.authorization === 'string') {
+      if (
+        typeof metadata.request.headers.authorization === 'string'
+        && metadata.request.headers.authorization.indexOf('Bearer') !== -1
+      ) {
         let sanitizedJWT = metadata.request.headers.authorization.split('.');
-        const buffer = Buffer.from(sanitizedJWT[1], 'base64');
-        const asciiJWT = buffer.toString('ascii');
-        sanitizedJWT.pop();
-        sanitizedJWT = sanitizedJWT.join('.');
-        metadata.request.headers.authorization = sanitizedJWT;
+        if (sanitizedJWT.length === 3) {
+          const buffer = Buffer.from(sanitizedJWT[1], 'base64');
+          const asciiJWT = buffer.toString('ascii');
 
-        // Auto-populate requesting user ID from JWT unless user.id was explicitly
-        // passed into the log.
-        if (typeof metadata.user.id === 'undefined') {
-          metadata.user.id = JSON.parse(asciiJWT).id;
+          // Now pop the signature off to neuter the usefulness of the logged JWT
+          // and prevent ELK from storing actionable credentials.
+          sanitizedJWT.pop();
+          sanitizedJWT = sanitizedJWT.join('.');
+          metadata.request.headers.authorization = sanitizedJWT;
+
+          // Auto-populate requesting user ID from JWT unless user.id was explicitly
+          // passed into the log.
+          if (typeof metadata.user.id === 'undefined') {
+            metadata.user.id = JSON.parse(asciiJWT).id;
+          }
+        } else {
+          // Skip JWT parsing
         }
       }
 
