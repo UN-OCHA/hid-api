@@ -63,25 +63,43 @@ module.exports = {
         if (metadata.request.payload.new_password) {
           delete metadata.request.payload.new_password;
         }
+        if (metadata.request.payload.confirmPassword) {
+          delete metadata.request.payload.confirmPassword;
+        }
       }
 
-      // Sanitize OAuth client secrets
+      // Sanitize OAuth client secrets in query/payload
       //
-      // This will display "00000...00000" in ELK.
+      // This will display "000...000" in ELK.
       if (typeof metadata.request.query.client_secret === 'string') {
         // display first/last five characters but scrub the rest
-        const sanitizedSecret = `${metadata.request.query.client_secret.slice(0, 5)}...${metadata.request.query.client_secret.slice(-5)}`;
+        const sanitizedSecret = `${metadata.request.query.client_secret.slice(0, 3)}...${metadata.request.query.client_secret.slice(-3)}`;
         metadata.request.query.client_secret = sanitizedSecret;
+      }
+      if (typeof metadata.request.payload.client_secret === 'string') {
+        // display first/last five characters but scrub the rest
+        const sanitizedSecret = `${metadata.request.payload.client_secret.slice(0, 3)}...${metadata.request.payload.client_secret.slice(-3)}`;
+        metadata.request.payload.client_secret = sanitizedSecret;
+      }
+      if (typeof metadata.request.payload.secret === 'string') {
+        // display first/last five characters but scrub the rest
+        const sanitizedSecret = `${metadata.request.payload.secret.slice(0, 3)}...${metadata.request.payload.secret.slice(-3)}`;
+        metadata.request.payload.secret = sanitizedSecret;
+      }
+      if (typeof metadata.request.payload.code === 'string') {
+        // display first/last five characters but scrub the rest
+        const sanitizedSecret = `${metadata.request.payload.code.slice(0, 3)}...${metadata.request.payload.code.slice(-3)}`;
+        metadata.request.payload.code = sanitizedSecret;
       }
 
       // Sanitize OAuth client secrets found in Headers
       //
-      // This will display "Basic 00000...00000" in ELK.
+      // This will display "Basic 000...000" in ELK.
       if (
         typeof metadata.request.headers.authorization === 'string'
         && metadata.request.headers.authorization.indexOf('Basic') !== -1
       ) {
-        const sanitizedSecret = `${metadata.request.headers.authorization.slice(0, 11)}...${metadata.request.headers.authorization.slice(-5)}`;
+        const sanitizedSecret = `${metadata.request.headers.authorization.slice(0, 9)}...${metadata.request.headers.authorization.slice(-3)}`;
         metadata.request.headers.authorization = sanitizedSecret;
       }
 
@@ -133,7 +151,13 @@ module.exports = {
         // Now delete the credentials object.
         delete metadata.request.auth.credentials;
       }
-    }
+
+      // Sanitize auth artifacts, which also contain secrets
+      if (metadata.request.auth && metadata.request.auth.artifacts) {
+        delete metadata.request.auth.artifacts;
+      }
+
+    } // end of request sanitization
 
     return metadata;
   },
