@@ -81,6 +81,16 @@ module.exports = {
         const sanitizedSecret = `${metadata.request.payload.client_secret.slice(0, 3)}...${metadata.request.payload.client_secret.slice(-3)}`;
         metadata.request.payload.client_secret = sanitizedSecret;
       }
+      if (typeof metadata.request.payload.secret === 'string') {
+        // display first/last five characters but scrub the rest
+        const sanitizedSecret = `${metadata.request.payload.secret.slice(0, 3)}...${metadata.request.payload.secret.slice(-3)}`;
+        metadata.request.payload.secret = sanitizedSecret;
+      }
+      if (typeof metadata.request.payload.code === 'string') {
+        // display first/last five characters but scrub the rest
+        const sanitizedSecret = `${metadata.request.payload.code.slice(0, 3)}...${metadata.request.payload.code.slice(-3)}`;
+        metadata.request.payload.code = sanitizedSecret;
+      }
 
       // Sanitize OAuth client secrets found in Headers
       //
