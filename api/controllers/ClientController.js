@@ -52,6 +52,9 @@ module.exports = {
         '[ClientController->create] Created a new client',
         {
           request,
+          oauth: {
+            client_id: payload.client_id,
+          },
         },
       );
       return client;
