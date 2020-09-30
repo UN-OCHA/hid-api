@@ -63,6 +63,9 @@ module.exports = {
         if (metadata.request.payload.new_password) {
           delete metadata.request.payload.new_password;
         }
+        if (metadata.request.payload.confirmPassword) {
+          delete metadata.request.payload.confirmPassword;
+        }
       }
 
       // Sanitize OAuth client secrets
