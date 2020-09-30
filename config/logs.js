@@ -129,7 +129,11 @@ module.exports = {
             metadata.user.id = JSON.parse(asciiJWT).id;
           }
         } else {
-          // Skip JWT parsing
+          // Sanitize the contents without extracting any data
+          //
+          // This will display "Bearer 000...000" in ELK.
+          const sanitizedSecret = `${metadata.request.headers.authorization.slice(0, 10)}...${metadata.request.headers.authorization.slice(-3)}`;
+          metadata.request.headers.authorization = sanitizedSecret;
         }
       }
 
@@ -155,6 +159,14 @@ module.exports = {
       // Sanitize auth artifacts, which also contain secrets
       if (metadata.request.auth && metadata.request.auth.artifacts) {
         delete metadata.request.auth.artifacts;
+      }
+
+      // Sanitize 2FA codes
+      if (metadata.request.headers && metadata.request.headers['x-hid-totp']) {
+        delete metadata.request.headers['x-hid-totp'];
+      }
+      if (metadata.request.headers && metadata.request.headers['X-HID-TOTP']) {
+        delete metadata.request.headers['X-HID-TOTP'];
       }
 
     } // end of request sanitization
