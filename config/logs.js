@@ -141,7 +141,13 @@ module.exports = {
         // Now delete the credentials object.
         delete metadata.request.auth.credentials;
       }
-    }
+
+      // Sanitize auth artifacts, which also contain secrets
+      if (metadata.request.auth && metadata.request.auth.artifacts) {
+        delete metadata.request.auth.artifacts;
+      }
+
+    } // end of request sanitization
 
     return metadata;
   },
