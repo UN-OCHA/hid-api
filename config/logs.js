@@ -68,13 +68,18 @@ module.exports = {
         }
       }
 
-      // Sanitize OAuth client secrets
+      // Sanitize OAuth client secrets in query/payload
       //
       // This will display "00000...00000" in ELK.
       if (typeof metadata.request.query.client_secret === 'string') {
         // display first/last five characters but scrub the rest
         const sanitizedSecret = `${metadata.request.query.client_secret.slice(0, 5)}...${metadata.request.query.client_secret.slice(-5)}`;
         metadata.request.query.client_secret = sanitizedSecret;
+      }
+      if (typeof metadata.request.payload.client_secret === 'string') {
+        // display first/last five characters but scrub the rest
+        const sanitizedSecret = `${metadata.request.payload.client_secret.slice(0, 5)}...${metadata.request.payload.client_secret.slice(-5)}`;
+        metadata.request.payload.client_secret = sanitizedSecret;
       }
 
       // Sanitize OAuth client secrets found in Headers
