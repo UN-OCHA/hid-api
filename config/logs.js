@@ -129,7 +129,11 @@ module.exports = {
             metadata.user.id = JSON.parse(asciiJWT).id;
           }
         } else {
-          // Skip JWT parsing
+          // Sanitize the contents without extracting any data
+          //
+          // This will display "Bearer 000...000" in ELK.
+          const sanitizedSecret = `${metadata.request.headers.authorization.slice(0, 10)}...${metadata.request.headers.authorization.slice(-3)}`;
+          metadata.request.headers.authorization = sanitizedSecret;
         }
       }
 
