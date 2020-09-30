@@ -161,6 +161,14 @@ module.exports = {
         delete metadata.request.auth.artifacts;
       }
 
+      // Sanitize 2FA codes
+      if (metadata.request.headers && metadata.request.headers['x-hid-totp']) {
+        delete metadata.request.headers['x-hid-totp'];
+      }
+      if (metadata.request.headers && metadata.request.headers['X-HID-TOTP']) {
+        delete metadata.request.headers['X-HID-TOTP'];
+      }
+
     } // end of request sanitization
 
     return metadata;
