@@ -70,26 +70,26 @@ module.exports = {
 
       // Sanitize OAuth client secrets in query/payload
       //
-      // This will display "00000...00000" in ELK.
+      // This will display "000...000" in ELK.
       if (typeof metadata.request.query.client_secret === 'string') {
         // display first/last five characters but scrub the rest
-        const sanitizedSecret = `${metadata.request.query.client_secret.slice(0, 5)}...${metadata.request.query.client_secret.slice(-5)}`;
+        const sanitizedSecret = `${metadata.request.query.client_secret.slice(0, 3)}...${metadata.request.query.client_secret.slice(-3)}`;
         metadata.request.query.client_secret = sanitizedSecret;
       }
       if (typeof metadata.request.payload.client_secret === 'string') {
         // display first/last five characters but scrub the rest
-        const sanitizedSecret = `${metadata.request.payload.client_secret.slice(0, 5)}...${metadata.request.payload.client_secret.slice(-5)}`;
+        const sanitizedSecret = `${metadata.request.payload.client_secret.slice(0, 3)}...${metadata.request.payload.client_secret.slice(-3)}`;
         metadata.request.payload.client_secret = sanitizedSecret;
       }
 
       // Sanitize OAuth client secrets found in Headers
       //
-      // This will display "Basic 00000...00000" in ELK.
+      // This will display "Basic 000...000" in ELK.
       if (
         typeof metadata.request.headers.authorization === 'string'
         && metadata.request.headers.authorization.indexOf('Basic') !== -1
       ) {
-        const sanitizedSecret = `${metadata.request.headers.authorization.slice(0, 11)}...${metadata.request.headers.authorization.slice(-5)}`;
+        const sanitizedSecret = `${metadata.request.headers.authorization.slice(0, 9)}...${metadata.request.headers.authorization.slice(-3)}`;
         metadata.request.headers.authorization = sanitizedSecret;
       }
 
