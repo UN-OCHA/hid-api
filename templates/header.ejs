@@ -83,15 +83,36 @@
 
                 <div class="content">
                   <ul class="menu cd-global-header__dropdown-btn cd-user-menu__item" role="menu">
-                    <li class="cd-user-menu__icon-login">
                       <% if (locals.user) { %>
-                        <a href="/profile" class="profile-link" translate><%= user.name %></a>
+                      <li class="cd-user-menu__icon-login">
+                          <button type="button" class="cd-ocha-btn cd-global-header__dropdown-btn" id="cd-ocha-dropdown-toggle" aria-expanded="false" aria-label="User menu" data-toggle="dropdown" uib-dropdown-toggle>
+                              <span class="cd-ocha-btn__label" translate><%= user.name %></span>
+                              <svg class="icon icon--arrow-down">
+                                  <use xlink:href="#arrow-down"></use>
+                              </svg>
+                          </button>
+
+                          <ul id="cd-ocha-dropdown" aria-labelledby="cd-user-menu-dropdown-toggle" class="menu cd-global-header__dropdown cd-user-menu__dropdown cd-dropdown" uib-dropdown-menu>
+                              <li class="menu-item">
+                                <a href="/profile" class="user-profile">Profile</a>
+                              </li>
+                              <li class="menu-item">
+                                <a href="/settings" class="user-settings">Settings </a>
+                              </li>
+                              <li class="menu-item">
+                                <button class="t-user-logout">Log out</button>
+                              </li>
+                          </ul>
+                      </li>
+
                       <%} else { %>
-                        <!-- anonymous user-login link -->
+                      <!-- anonymous user-login link -->
+                        <li class="cd-user-menu__icon-login">
                         <a href="/" class="login-link" translate>Login</a>
+                        </li>
                       <% } %>
-                    </li>
                   </ul>
+
                 </div>
               </div>
             </div>
@@ -140,16 +161,18 @@
   var loginLink = document.querySelector('.login-link');
 
   // Listen for interaction with Login link
-  loginLink.addEventListener('click', function reportLoginClick(ev) {
-    // Prevent full-page refresh
-    ev.preventDefault();
+  if(loginLink) {
+    loginLink.addEventListener('click', function reportLoginClick(ev) {
+      // Prevent full-page refresh
+      ev.preventDefault();
 
-    // Focus on email input
-    var emailInput = document.querySelector('#email');
-    emailInput.focus();
+      // Focus on email input
+      var emailInput = document.querySelector('#email');
+      emailInput.focus();
 
-    // Log interaction in GA
-    ga('send', 'event', 'Auth', 'Login', 'Click');
-  });
+      // Log interaction in GA
+      ga('send', 'event', 'Auth', 'Login', 'Click');
+    });
+  }
 }());
 </script>
