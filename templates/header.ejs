@@ -81,11 +81,15 @@
               <div uib-dropdown keyboard-nav="true">
                 <h2 class="element-invisible" translate>User menu</h2>
 
-                <!-- anonymous user-login link -->
                 <div class="content">
                   <ul class="menu cd-global-header__dropdown-btn cd-user-menu__item" role="menu">
                     <li class="cd-user-menu__icon-login">
-                      <a href="/" class="login-link" translate>Login</a>
+                      <% if (locals.user) { %>
+                        <a href="/profile" class="profile-link" translate><%= user.name %></a>
+                      <%} else { %>
+                        <!-- anonymous user-login link -->
+                        <a href="/" class="login-link" translate>Login</a>
+                      <% } %>
                     </li>
                   </ul>
                 </div>
