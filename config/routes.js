@@ -160,6 +160,15 @@ module.exports = [
 
   {
     method: 'GET',
+    path: '/settings',
+    handler: ViewController.settings,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'GET',
     path: '/docs/{param*}',
     handler: {
       directory: {
