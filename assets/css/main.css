@@ -3390,7 +3390,6 @@ body {
     text-decoration: underline; }
 
 .cd-user-menu__icon a, .cd-user-menu__icon-plus a, .logged-in .region-header-top .menu > li:first-child a, .cd-user-menu__icon-login a, .region-header-top .menu > li:last-child a {
-  padding-left: 6px;
   color: white;
   text-decoration: none; }
 
@@ -3412,13 +3411,12 @@ body {
 
 .cd-user-menu__icon-login::before, .region-header-top .menu > li:last-child::before {
   background-image: url("../img/icons/user--white.svg");
-  left: 18px; }
+  left: 0; }
   .is--authenticated .cd-user-menu__icon-login::before, .is--authenticated .region-header-top .menu > li:last-child::before, .region-header-top .is--authenticated .menu > li:last-child::before {
     left: 10px; }
 
 .cd-user-menu__icon-login a, .region-header-top .menu > li:last-child a {
-  height: 35px;
-  padding-left: 18px; }
+  height: 35px; }
 
 .cd-user-menu__icon-login a:focus, .region-header-top .menu > li:last-child a:focus {
   outline: 3px solid #60b2c9;
