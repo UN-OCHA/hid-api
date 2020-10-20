@@ -154,6 +154,8 @@ article, aside, details, figcaption, figure,
 footer, header, hgroup, menu, nav, section {
   display: block; }
 
+[hidden] { display: none !important; }
+
 body {
   line-height: 1; }
 
@@ -4772,3 +4774,70 @@ a.cd-footer-social__link {
 @media (min-width: 576px) {
   .api-page {
     padding-bottom: 40px; } }
+
+
+/* User Settings tabs */
+/* https://inclusive-components.design/tabbed-interfaces */
+[role="tablist"] {
+  padding: 0;
+}
+
+[role="tablist"] li,
+[role="tablist"] a {
+  display: inline-block;
+}
+
+[role="tablist"] a {
+  text-decoration: none;
+  padding: 0.5rem 1em;
+}
+
+[role="tablist"] [aria-selected] {
+  border: 2px solid #e6ecf1;
+  background: #fff;
+  border-bottom: 0;
+  position: relative;
+  top: 2px;
+}
+
+[role="tabpanel"] {
+  border: 2px solid #e6ecf1;
+  padding: 1.5rem;
+}
+
+[role="tabpanel"] * + * {
+  margin-top: 0.75rem;
+}
+
+[role="tablist"] a:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 4px #60b2c9;
+}
+
+@media (max-width: 550px) {
+  [role="tablist"] li,
+  [role="tablist"] a {
+    display: block;
+    position: static;
+  }
+
+  [role="tablist"] a {
+    border: 2px solid #e6ecf1 !important;
+  }
+
+  [role="tablist"] li + li a {
+    border-top: 0 !important;
+  }
+
+  [role="tablist"] [aria-selected] {
+    position: static;
+  }
+
+  [role="tablist"] [aria-selected]::after {
+    content: '\0020⬅';
+  }
+
+  [role="tabpanel"] {
+    border-top: 0;
+  }
+}
