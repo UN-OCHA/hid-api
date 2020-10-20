@@ -30,14 +30,14 @@
         <div class="cd-global-header">
           <div class="cd-container cd-global-header__inner">
             <div class="cd-ocha dropdown" uib-dropdown keyboard-nav="true">
-              <button type="button" class="cd-ocha-btn cd-global-header__dropdown-btn" id="cd-ocha-dropdown-toggle" aria-expanded="false" aria-label="OCHA Services" data-toggle="dropdown" uib-dropdown-toggle>
+              <button type="button" class="cd-ocha-btn cd-global-header__dropdown-btn" id="cd-ocha-dropdown-toggle" aria-expanded="false" aria-label="OCHA Services" data-toggle="dropdown" data-cd-toggler="" uib-dropdown-toggle>
                 <span class="cd-ocha-btn__logo" aria-hidden="true"></span>
                 <span class="cd-ocha-btn__label" translate>OCHA Services</span>
                 <svg class="icon icon--arrow-down">
                   <use xlink:href="#arrow-down"></use>
                 </svg>
               </button>
-              <div class="cd-global-header__dropdown cd-ocha-dropdown cd-dropdown" role="menu" id="cd-ocha-dropdown" aria-labelledby="cd-ocha-dropdown-toggle" uib-dropdown-menu>
+              <div class="cd-global-header__dropdown cd-ocha-dropdown cd-dropdown" role="menu" id="cd-ocha-dropdown" aria-labelledby="cd-ocha-dropdown-toggle" data-cd-toggable="" uib-dropdown-menu>
                 <div class="cd-ocha-dropdown__inner">
                   <div class="cd-ocha-dropdown__section">
                     <p class="cd-ocha-dropdown__heading" translate>Related Platforms</p>
@@ -82,17 +82,17 @@
                 <h2 class="element-invisible" translate>User menu</h2>
 
                 <div class="content">
-                  <ul class="menu cd-global-header__dropdown-btn cd-user-menu__item" role="menu">
+                  <ul class="menu cd-global-header__dropdown-btn cd-user-menu__item">
                       <% if (locals.user) { %>
-                      <li class="cd-user-menu__icon-login">
-                          <button type="button" class="cd-ocha-btn cd-global-header__dropdown-btn" id="cd-ocha-dropdown-toggle" aria-expanded="false" aria-label="User menu" data-toggle="dropdown" uib-dropdown-toggle>
+                      <li class="cd-user-menu__icon-login cd-user-menu--profile">
+                          <button type="button" class="cd-ocha-btn cd-global-header__dropdown-btn" id="cd-user-menu-toggler" aria-expanded="false" aria-label="User menu" data-toggle="dropdown" data-cd-toggler="" uib-dropdown-toggle>
                               <span class="cd-ocha-btn__label" translate><%= user.name %></span>
                               <svg class="icon icon--arrow-down">
                                   <use xlink:href="#arrow-down"></use>
                               </svg>
                           </button>
 
-                          <ul id="cd-ocha-dropdown" aria-labelledby="cd-user-menu-dropdown-toggle" class="menu cd-global-header__dropdown cd-user-menu__dropdown cd-dropdown" uib-dropdown-menu>
+                          <ul id="cd-ocha-dropdown" aria-labelledby="cd-user-menu-dropdown-toggle" class="menu cd-global-header__dropdown cd-user-menu__dropdown cd-dropdown" data-cd-toggable="" uib-dropdown-menu>
                               <li class="menu-item">
                                 <a href="/profile" class="user-profile">Profile</a>
                               </li>
@@ -140,9 +140,13 @@
     document.documentElement.classList.add('cssgrid');
   }
 
+  document.addEventListener('click', handleClickAway);
+
   // Define OCHA Services elements
   var ochaButton = document.querySelector('#cd-ocha-dropdown-toggle');
   var ochaDropdown = document.querySelector('.cd-ocha');
+  var userMenuButton = document.querySelector('#cd-user-menu-toggler');
+  var userMenuDropdown = document.querySelector('.cd-user-menu--profile');
 
   // Listen for interaction with OCHA Services menu
   ochaButton.addEventListener('click', function toggleDropdown() {
@@ -156,6 +160,62 @@
       ga('send', 'event', 'Auth', 'OCHA Services', 'Open');
     }
   });
+
+  // Listen for interaction with User menu
+  userMenuButton.addEventListener('click', function toggleDropdown() {
+    if (userMenuButton.getAttribute('aria-expanded') === 'true') {
+      userMenuButton.setAttribute('aria-expanded', 'false');
+      userMenuDropdown.classList.remove('open');
+    } else {
+      userMenuButton.setAttribute('aria-expanded', 'true');
+      userMenuDropdown.classList.add('open');
+    }
+  });
+
+  /**
+   * Collapse all toggable elements.
+   */
+  function collapseAll(event) {
+    var elements = document.querySelectorAll('[data-cd-toggler][aria-expanded="true"]');
+
+    elements.forEach(function (element) {
+      // Elements can be directed to stay open:
+      //  * We can apply an attribute directly in DOM
+      //
+      // If neither apply, then close the element.
+      if (!element.hasAttribute('data-cd-toggable-keep')) {
+        element.setAttribute('aria-expanded', 'false');
+        element.parentElement.classList.remove('open');
+      }
+    });
+  }
+
+
+  function handleClickAway(event) {
+    var target = event.target;
+
+    if (target) {
+      if (target.nodeName === 'A' && !target.hasAttribute('data-cd-toggler')) {
+        collapseAll();
+      }
+      else {
+        // Loop until we find a parent which is a toggable or toggler element
+        // or we reach the "context" element.
+        while (target && target !== document) {
+          if (target.hasAttribute) {
+            // Skip if the clicked element belong to a toggler or a toggable
+            // element.
+            if (target.hasAttribute('data-cd-toggler') || target.hasAttribute('data-cd-toggable')) {
+              return;
+            }
+          }
+          target = target.parentNode;
+        }
+      }
+      collapseAll();
+    }
+  }
+
 
   // Define Login element
   var loginLink = document.querySelector('.login-link');
