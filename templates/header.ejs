@@ -507,16 +507,13 @@
 
   // Listen for interaction with Login link
   if(loginLink) {
-    loginLink.addEventListener('click', function reportLoginClick(ev) {
+    loginLink.addEventListener('click', function(ev) {
       // Prevent full-page refresh
       ev.preventDefault();
 
       // Focus on email input
       var emailInput = document.querySelector('#email');
       emailInput.focus();
-
-      // Log interaction in GA
-      ga('send', 'event', 'Auth', 'Login', 'Click');
     });
   }
 }());
