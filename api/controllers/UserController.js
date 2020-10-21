@@ -902,6 +902,7 @@ module.exports = {
                   request,
                   user: {
                     id: user._id.toString(),
+                    email: user.email,
                   },
                 },
               );
@@ -916,6 +917,7 @@ module.exports = {
                 request,
                 user: {
                   id: user._id.toString(),
+                  email: user.email,
                 },
               },
             );
@@ -929,6 +931,7 @@ module.exports = {
                 {
                   request,
                   user: {
+                    id: user.id,
                     email: user.email,
                   },
                 },
@@ -946,6 +949,7 @@ module.exports = {
                 request,
                 user: {
                   id: user.id,
+                  email: user.email,
                 },
               },
             );
@@ -962,6 +966,7 @@ module.exports = {
             request,
             user: {
               id: user.id,
+              email: user.email,
             },
           },
         );
