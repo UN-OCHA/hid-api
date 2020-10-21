@@ -88,7 +88,7 @@ async function loginHelper(request) {
         security: true,
         fail: true,
         user: {
-          id: user._id,
+          id: user.id,
           email,
         },
       },
@@ -103,7 +103,7 @@ async function loginHelper(request) {
         security: true,
         fail: true,
         user: {
-          id: user._id,
+          id: user.id,
           email,
         },
       },
@@ -119,6 +119,7 @@ async function loginHelper(request) {
         security: true,
         fail: true,
         user: {
+          id: user.id,
           email,
         },
       },
@@ -679,7 +680,7 @@ module.exports = {
             request,
             security: true,
             user: {
-              id: user._id,
+              id: user.id,
               email: user.email,
             },
             oauth: {
