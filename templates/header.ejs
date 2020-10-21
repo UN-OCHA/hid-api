@@ -89,10 +89,10 @@
                                 <a href="/profile" class="user-profile">Profile</a>
                               </li>
                               <li class="menu-item">
-                                <a href="/settings" class="user-settings">Settings </a>
+                                <a href="/settings" class="user-settings">Settings</a>
                               </li>
                               <li class="menu-item">
-                                <button class="t-user-logout">Log out</button>
+                                <a href="/logout" class="user-logout">Log out</a>
                               </li>
                           </ul>
                       </li>
@@ -134,11 +134,11 @@
     document.documentElement.classList.add('cssgrid');
   }
 
+
+
+
   // Initialize toggable dropdown.
   initializeToggables();
-
-  // Update nested Drupal menus in the header.
-  updateDrupalTogglableMenus();
 
     /**
      * Toggle the visibility of a toggable element.
@@ -491,22 +491,16 @@
       handleResize();
     }
 
-    /**
-     * Update Drupal toggable nested menus.
-     */
-    function updateDrupalTogglableMenus(selector) {
-      // If selector wasn't supplied, set the default.
-      selector = typeof selector !== 'undefined' ? selector : '.cd-nav .menu a + .menu';
-
-      // Nested drupal menus are always toggable.
-      var elements = document.querySelectorAll(selector);
-      for (var i = 0, l = elements.length; i < l; i++) {
-        setToggable(elements[i]);
-      }
+  // Define OCHA Services elements
+  var ochaButton = document.querySelector('#cd-ocha-dropdown-toggler');
+  // Listen for interaction with OCHA Services menu
+  ochaButton.addEventListener('click', function toggleDropdown() {
+    if (ochaButton.getAttribute('aria-expanded') === 'true') {
+      ga('send', 'event', 'Auth', 'OCHA Services', 'Close');
+    } else {
+      ga('send', 'event', 'Auth', 'OCHA Services', 'Open');
     }
-
-
-
+  });
 
   // Define Login element
   var loginLink = document.querySelector('.login-link');
