@@ -1,70 +1,79 @@
 <% include header %>
 <div class="container api-page">
-  <div class="row">
-    <div class="col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
-      <div class="page-header">
-        <h1 class="page-header__heading" translate><%= user.name %>'s Settings</h1>
+  <main role="main" id="main-content" class="cd-container">
 
-        <div class="tabbed">
-          <ul>
-            <li>
-              <a href="#section-general">General</a>
-            </li>
-            <li>
-              <a href="#section-password">Password</a>
-            </li>
-            <li>
-              <a href="#section-apps">Authorized Apps</a>
-            </li>
-            <li>
-              <a href="#section-security">Security</a>
-            </li>
-            <li>
-              <a href="#section-delete">Delete Account</a>
-            </li>
-          </ul>
+    <div class="cd-layout-content">
 
-          <section id="section-general">
-            <h2>General</h2>
-            <p><strong>Email address:</strong> <%= user.email %></p>
-            <p><strong>Verified:</strong>
-              <% if (user.email_verified) { %>
-              <span translate>Yes</span>
-              <%} else { %>
-              <span translate>No</span>
-              <% } %>
-            </p>
-          </section>
+      <div class="row">
+        <div class="col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+          <div class="page-header">
+            <h1 class="page-header__heading" translate>Settings for <%= user.name %></h1>
 
-          <section id="section-password">
-            <h2>Change Password</h2>
-            <p>Form here</p>
-          </section>
+            <div class="tabbed">
+              <ul>
+                <li>
+                  <a href="#section-general">General</a>
+                </li>
+                <li>
+                  <a href="#section-password">Password</a>
+                </li>
+                <li>
+                  <a href="#section-apps">Authorized Apps</a>
+                </li>
+                <li>
+                  <a href="#section-security">Security</a>
+                </li>
+                <li>
+                  <a href="#section-delete">Delete Account</a>
+                </li>
+              </ul>
 
-          <section id="section-apps">
-            <h2>Authorized Apps</h2>
-            <p>List here</p>
-          </section>
+              <section id="section-general">
+                <h2>General</h2>
+                <p><strong>Email address:</strong> <%= user.email %></p>
+                <p><strong>Verified:</strong>
+                  <% if (user.email_verified) { %>
+                  <span translate>Yes</span>
+                  <%} else { %>
+                  <span translate>No</span>
+                  <% } %>
+                </p>
+              </section>
 
-          <section id="section-security">
-            <h2>Two-factor authentication</h2>
-            <p>Status</p>
-          </section>
+              <section id="section-password">
+                <h2>Change Password</h2>
+                <p>Form here</p>
+              </section>
 
-          <section id="section-delete">
-            <h2>Delete Account</h2>
-            <p>Button here</p>
-          </section>
+              <section id="section-apps">
+                <h2>Authorized Apps</h2>
+                <p>List here</p>
+              </section>
+
+              <section id="section-security">
+                <h2>Two-factor authentication</h2>
+                <p>Status</p>
+              </section>
+
+              <section id="section-delete">
+                <h2>Delete Account</h2>
+                <p>Button here</p>
+              </section>
+            </div>
+
+
+          </div>
         </div>
-
-
       </div>
+
     </div>
-  </div>
+  </main>
+
 </div>
 <% include footer %>
 
 <script>
+  /* https://inclusive-components.design/tabbed-interfaces */
   (function() {
     // Get relevant elements and collections
     const tabbed = document.querySelector('.tabbed');
