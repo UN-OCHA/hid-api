@@ -253,6 +253,7 @@ a.cd-ocha-dropdown__see-all:hover {
 /* https://inclusive-components.design/tabbed-interfaces */
 [role="tablist"] {
   padding: 0;
+  margin: 0;
 }
 
 [role="tablist"] li,
@@ -263,13 +264,15 @@ a.cd-ocha-dropdown__see-all:hover {
 [role="tablist"] a {
   text-decoration: none;
   padding: 0.5rem 1em;
+  border: 2px solid transparent;
+  position: relative;
+  top: 2px;
 }
 
 [role="tablist"] [aria-selected] {
   border: 2px solid #e6ecf1;
+  border-bottom: 2px solid white;
   background: #fff;
-  border-bottom: 0;
-  position: relative;
   top: 2px;
 }
 
@@ -283,8 +286,8 @@ a.cd-ocha-dropdown__see-all:hover {
 }
 
 [role="tablist"] a:focus {
-  outline: none;
-  box-shadow: inset 0 0 0 4px #60b2c9;
+  outline: 4px solid #60b2c9;
+  outline-offset: -4px;
 }
 
 @media (max-width: 550px) {
