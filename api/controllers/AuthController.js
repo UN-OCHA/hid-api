@@ -526,6 +526,8 @@ module.exports = {
             security: true,
             oauth: {
               client_id: request.query.client_id,
+              redirect_uri: request.query.redirect_uri,
+              response_type: request.query.response_type,
             },
           },
         );
@@ -648,6 +650,8 @@ module.exports = {
             request,
             oauth: {
               client_id: request.query.client_id,
+              redirect_uri: request.query.redirect_uri,
+              response_type: request.query.response_type,
             },
           },
         );
@@ -669,6 +673,8 @@ module.exports = {
             fail: true,
             oauth: {
               client_id: request.query.client_id,
+              redirect_uri: request.query.redirect_uri,
+              response_type: request.query.response_type,
             },
           },
         );
@@ -771,6 +777,9 @@ module.exports = {
             request,
             security: true,
             fail: true,
+            oauth: {
+              client_id: clientId,
+            },
           },
         );
         throw Boom.badRequest('invalid client_id');
@@ -783,7 +792,8 @@ module.exports = {
             security: true,
             fail: true,
             oauth: {
-              client_id: client.id,
+              client_id: clientId,
+              client_secret: `${clientSecret.slice(0, 3)}...${clientSecret.slice(-3)}`,
             },
           },
         );
@@ -814,6 +824,10 @@ module.exports = {
           {
             request,
             security: true,
+            oauth: {
+              client_id: request.payload.client_id,
+              client_secret: `${request.payload.client_secret.slice(0, 3)}...${request.payload.client_secret.slice(-3)}`,
+            },
           },
         );
         request.auth.credentials = ocode.client;
