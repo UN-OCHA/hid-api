@@ -226,7 +226,7 @@ module.exports = {
       // Creating an API key, store the token in the database
       await JwtToken.create({
         token,
-        user: result._id,
+        user: result._id.toString(),
         blacklist: false,
         // TODO: add expires
       });
@@ -236,6 +236,7 @@ module.exports = {
           request,
           security: true,
           user: {
+            id: result._id.toString(),
             email: result.email,
           },
         },
