@@ -162,11 +162,19 @@ module.exports = {
       }
 
       // Sanitize 2FA codes
+      // headers
       if (metadata.request.headers && metadata.request.headers['x-hid-totp']) {
         delete metadata.request.headers['x-hid-totp'];
       }
       if (metadata.request.headers && metadata.request.headers['X-HID-TOTP']) {
         delete metadata.request.headers['X-HID-TOTP'];
+      }
+      // payload (during OAuth logins)
+      if (metadata.request.payload && metadata.request.payload['x-hid-totp']) {
+        delete metadata.request.payload['x-hid-totp'];
+      }
+      if (metadata.request.payload && metadata.request.payload['X-HID-TOTP']) {
+        delete metadata.request.payload['X-HID-TOTP'];
       }
 
     } // end of request sanitization
