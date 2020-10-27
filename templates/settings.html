@@ -5,15 +5,12 @@
     <div class="cd-layout-content">
 
       <div class="row">
-        <div class="col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+        <div class="col-sm-10 offset-sm-1 col-md-8 offset-md-2">
           <div class="page-header">
             <h1 class="page-header__heading" translate>Settings for <%= user.name %></h1>
 
             <div class="tabbed">
               <ul>
-                <li>
-                  <a href="#section-general">General</a>
-                </li>
                 <li>
                   <a href="#section-password">Password</a>
                 </li>
@@ -27,18 +24,6 @@
                   <a href="#section-delete">Delete Account</a>
                 </li>
               </ul>
-
-              <section id="section-general">
-                <h2>General</h2>
-                <p><strong>Email address:</strong> <%= user.email %></p>
-                <p><strong>Verified:</strong>
-                  <% if (user.email_verified) { %>
-                  <span translate>Yes</span>
-                  <%} else { %>
-                  <span translate>No</span>
-                  <% } %>
-                </p>
-              </section>
 
               <section id="section-password">
                 <h2>Change Password</h2>

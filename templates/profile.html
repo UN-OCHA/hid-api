@@ -3,20 +3,14 @@
   <main role="main" id="main-content" class="cd-container">
     <div class="cd-layout-content">
       <div class="row">
-        <div class="col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+        <div class="col-sm-10 offset-sm-1 col-md-8 offset-md-2">
           <div class="page-header">
             <h1 class="page-header__heading" translate><%= user.name %></h1>
 
-        <p translate><strong>Given Name:</strong> <%= user.given_name %></p>
+            <p translate><strong>Given Name:</strong> <%= user.given_name %></p>
 
-        <p translate><strong>Family name:</strong> <%= user.family_name %></p>
+            <p translate><strong>Family name:</strong> <%= user.family_name %></p>
 
-        <p translate><strong>Email address:</strong>
-          <ul>
-            <li><%= user.email %></li>
-            <li><%= user.email %></li>
-          </ul>
-        </p>
             <p translate><strong>Email address:</strong>
               <ul>
                 <li><%= user.email %></li>
