@@ -561,7 +561,7 @@ module.exports = {
                   id: cookie.userId,
                 },
                 oauth: {
-                  client_id: false,
+                  client_id: clientID,
                 },
               },
             );
