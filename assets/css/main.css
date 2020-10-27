@@ -317,3 +317,11 @@ a.cd-ocha-dropdown__see-all:hover {
     border-top: 0;
   }
 }
+
+.cd-language-switcher .cd-user-menu__item {
+  padding-right: 0;
+}
+
+.cd-language-switcher .cd-user-menu__item::after {
+  display: none;
+}
