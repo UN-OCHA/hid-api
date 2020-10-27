@@ -154,8 +154,12 @@ function loginRedirect(request, reply, cookie = false) {
     {
       request,
       security: true,
-      client_id: request.payload.client_id,
-      email: request.payload.email,
+      oauth: {
+        client_id: request.payload.client_id,
+      },
+      user: {
+        email: request.payload.email,
+      },
     },
   );
   if (!cookie) {
@@ -231,7 +235,9 @@ module.exports = {
         {
           request,
           security: true,
-          email: result.email,
+          user: {
+            email: result.email,
+          },
         },
       );
       return {
@@ -244,7 +250,9 @@ module.exports = {
       {
         request,
         security: true,
-        email: result.email,
+        user: {
+          email: result.email,
+        },
       },
     );
     return { user: result, token };
@@ -371,7 +379,9 @@ module.exports = {
               request,
               security: true,
               fail: true,
-              user_id: cookie.userId,
+              user: {
+                id: cookie.userId,
+              },
             },
           );
           throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
