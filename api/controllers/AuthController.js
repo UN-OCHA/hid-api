@@ -963,6 +963,10 @@ module.exports = {
           request,
           security: true,
           jwt: jtoken.id,
+          user: {
+            id: request.auth.credentials.id,
+            email: request.auth.credentials.email,
+          },
         },
       );
       const doc = await JwtToken.findOneAndUpdate({ token }, {
@@ -978,6 +982,10 @@ module.exports = {
         request,
         security: true,
         fail: true,
+        user: {
+          id: request.auth.credentials.id,
+          email: request.auth.credentials.email,
+        },
       },
     );
     throw Boom.forbidden('Could not blacklist this token because you did not generate it');
