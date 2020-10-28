@@ -11,17 +11,18 @@
             <p translate><strong>Family name:</strong> <%= user.family_name %></p>
             <p translate><strong>Email addresses:</strong>
               <ul>
-                <li>
-                  <span class="email"><%= user.email %></span><br>
-                  <span class="primary"><em>Primary, validated</em></span>
-                </li>
                 <%
                   user.emails.forEach(function(email) {
-                    if (email.email !== user.email) {
+                    if (email.email === user.email) {
                 %>
                   <li>
-                    <span class="email"><%= email.email %></span><br>
-                    <span class="status"><em><%= email.validated === true ? 'validated' : '' %></em></span>
+                    <span class="email" style="color: black;"><%= user.email %></span><br>
+                    <span class="status" style="color: #777;">Status: <em><strong>Primary</strong></em></span>
+                  </li>
+                <% } else { %>
+                  <li>
+                    <span class="email" style="color: black;"><%= email.email %></span><br>
+                    <span class="status" style="color: #777;">Status: <em><%= email.validated === true ? 'confirmed' : 'not confirmed' %></em></span>
                   </li>
                 <%
                     }
