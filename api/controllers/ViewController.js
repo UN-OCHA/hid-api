@@ -376,4 +376,30 @@ module.exports = {
       user,
     });
   },
+
+  // Display the user profile page when user is logged in.
+  async profile(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+    const user = await User.findOne({ _id: cookie.userId });
+    return reply.view('profile', {
+      user,
+    });
+  },
+
+  // Display the user settings page when user is logged in.
+  async settings(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+    const user = await User.findOne({ _id: cookie.userId });
+    return reply.view('settings', {
+      user,
+    });
+  },
 };
