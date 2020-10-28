@@ -293,7 +293,7 @@ async function updateUser(agsssync, user) {
         {
           fail: true,
           user: {
-            id: user._id,
+            id: user.id,
           },
         },
       );
@@ -308,7 +308,7 @@ async function updateUser(agsssync, user) {
         err_object: err,
         stack_trace: err.stack,
         user: {
-          id: user._id,
+          id: user.id,
         },
       },
     );

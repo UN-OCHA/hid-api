@@ -88,7 +88,7 @@ async function loginHelper(request) {
         security: true,
         fail: true,
         user: {
-          id: user._id,
+          id: user.id,
           email,
         },
       },
@@ -103,7 +103,7 @@ async function loginHelper(request) {
         security: true,
         fail: true,
         user: {
-          id: user._id,
+          id: user.id,
           email,
         },
       },
@@ -119,6 +119,7 @@ async function loginHelper(request) {
         security: true,
         fail: true,
         user: {
+          id: user.id,
           email,
         },
       },
@@ -153,8 +154,12 @@ function loginRedirect(request, reply, cookie = false) {
     {
       request,
       security: true,
-      client_id: request.payload.client_id,
-      email: request.payload.email,
+      oauth: {
+        client_id: request.payload.client_id,
+      },
+      user: {
+        email: request.payload.email,
+      },
     },
   );
   if (!cookie) {
@@ -221,7 +226,7 @@ module.exports = {
       // Creating an API key, store the token in the database
       await JwtToken.create({
         token,
-        user: result._id,
+        user: result._id.toString(),
         blacklist: false,
         // TODO: add expires
       });
@@ -230,7 +235,10 @@ module.exports = {
         {
           request,
           security: true,
-          email: result.email,
+          user: {
+            id: result._id.toString(),
+            email: result.email,
+          },
         },
       );
       return {
@@ -243,7 +251,9 @@ module.exports = {
       {
         request,
         security: true,
-        email: result.email,
+        user: {
+          email: result.email,
+        },
       },
     );
     return { user: result, token };
@@ -370,7 +380,9 @@ module.exports = {
               request,
               security: true,
               fail: true,
-              user_id: cookie.userId,
+              user: {
+                id: cookie.userId,
+              },
             },
           );
           throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
@@ -514,6 +526,8 @@ module.exports = {
             security: true,
             oauth: {
               client_id: request.query.client_id,
+              redirect_uri: request.query.redirect_uri,
+              response_type: request.query.response_type,
             },
           },
         );
@@ -547,7 +561,7 @@ module.exports = {
                   id: cookie.userId,
                 },
                 oauth: {
-                  client_id: false,
+                  client_id: clientID,
                 },
               },
             );
@@ -636,6 +650,8 @@ module.exports = {
             request,
             oauth: {
               client_id: request.query.client_id,
+              redirect_uri: request.query.redirect_uri,
+              response_type: request.query.response_type,
             },
           },
         );
@@ -657,6 +673,8 @@ module.exports = {
             fail: true,
             oauth: {
               client_id: request.query.client_id,
+              redirect_uri: request.query.redirect_uri,
+              response_type: request.query.response_type,
             },
           },
         );
@@ -679,7 +697,7 @@ module.exports = {
             request,
             security: true,
             user: {
-              id: user._id,
+              id: user.id,
               email: user.email,
             },
             oauth: {
@@ -759,6 +777,9 @@ module.exports = {
             request,
             security: true,
             fail: true,
+            oauth: {
+              client_id: clientId,
+            },
           },
         );
         throw Boom.badRequest('invalid client_id');
@@ -771,7 +792,8 @@ module.exports = {
             security: true,
             fail: true,
             oauth: {
-              client_id: client.id,
+              client_id: clientId,
+              client_secret: `${clientSecret.slice(0, 3)}...${clientSecret.slice(-3)}`,
             },
           },
         );
@@ -802,6 +824,10 @@ module.exports = {
           {
             request,
             security: true,
+            oauth: {
+              client_id: request.payload.client_id,
+              client_secret: `${request.payload.client_secret.slice(0, 3)}...${request.payload.client_secret.slice(-3)}`,
+            },
           },
         );
         request.auth.credentials = ocode.client;
@@ -937,6 +963,10 @@ module.exports = {
           request,
           security: true,
           jwt: jtoken.id,
+          user: {
+            id: request.auth.credentials.id,
+            email: request.auth.credentials.email,
+          },
         },
       );
       const doc = await JwtToken.findOneAndUpdate({ token }, {
@@ -952,6 +982,10 @@ module.exports = {
         request,
         security: true,
         fail: true,
+        user: {
+          id: request.auth.credentials.id,
+          email: request.auth.credentials.email,
+        },
       },
     );
     throw Boom.forbidden('Could not blacklist this token because you did not generate it');

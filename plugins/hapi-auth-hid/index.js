@@ -88,7 +88,12 @@ internals.tokenToUser = async (token) => {
       {
         security: true,
         user: {
-          id: tok.client.id,
+          admin: tok.user.is_admin,
+          id: tok.user.id,
+          email: tok.user.email,
+        },
+        oauth: {
+          client_id: tok.client.id,
         },
       },
     );
