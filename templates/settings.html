@@ -3,9 +3,9 @@
   <main role="main" id="main-content" class="cd-container">
 
     <div class="cd-layout-content">
-
-      <div class="row">
-        <div class="col-sm-10 offset-sm-1 col-md-8 offset-md-2">
+      <div class="container mx-auto max-w-sm mx-auto">
+<!--      <div class="row">-->
+<!--        <div class="col-sm-10 offset-sm-1 col-md-8 offset-md-2">-->
           <div class="page-header">
             <h1 class="page-header__heading" translate>Settings for <%= user.name %></h1>
 
@@ -32,39 +32,48 @@
 
                     <p translate>You must enter your current password to set a new password.</p>
 
+                    <label class="block text-gray-700 text-sm font-bold" for="current-password">
+                      Current Password
+                    </label>
+
                     <input
                       id="current-password"
                       name="password"
                       type="password"
-                      label="Password"
-                      autocomplete="current-password"
-                      placeholder=" "
-                      outlined
+                      autocomplete="off"
+                      placeholder="Current password"
                       required
+                      class="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     />
 
                     <p translate>Passwords must be <strong>at least {{ $v.password.$params.minLength.min }} characters long</strong>, contain at least <strong>one number</strong>, <strong>one uppercase character</strong>, <strong>one lowercase character</strong>, and one <strong>special character: <code>!@#$%^&*()+=\`{}</code></strong>. Password has to be different than your previous one.</p>
+
+                    <label class="block text-gray-700 text-sm font-bold" for="new-password">
+                      New Password
+                    </label>
 
                     <input
                       id="new-password"
                       name="password"
                       type="password"
-                      label="Password"
-                      autocomplete="new-password"
-                      placeholder=" "
-                      outlined
+                      autocomplete="off"
+                      placeholder="New password"
                       required
+                      class="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     />
+
+                    <label class="block text-gray-700 text-sm font-bold" for="new-password-confirm">
+                      Confirm New Password
+                    </label>
 
                     <input
                       id="new-password-confirm"
                       name="passwordConfirm"
                       type="password"
-                      label="Confirm Password"
                       autocomplete="new-password"
-                      placeholder=" "
-                      outlined
+                      placeholder="Confirm new password"
                       required
+                      class="appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     />
 
                     <button
@@ -142,7 +151,7 @@
 
 
           </div>
-        </div>
+<!--        </div>-->
       </div>
 
     </div>
