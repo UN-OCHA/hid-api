@@ -78,18 +78,25 @@
               </section>
 
               <section id="section-apps">
-                <h2 translate>Authorized Apps</h2>
+                <h2>Authorized Apps</h2>
+
+                <div class="alert alert--warning alert--inline" role="alert">
+                  <div class="alert__inner" translate>
+                    Currently you cannot revoke access to applications.<br>
+                    Work is in progress to offer this option.
+                  </div>
+                </div>
                 <ul>
                   <%
                     user.authorizedClients.forEach(function(client) {
                   %>
                   <li>
                     <span><%= client.name %></span>
-                    <button type="button" class="cd-button cd-button--small cd-button--cancel" onclick="removeThisClient(client._id);">
-                      <svg class="cd-icon cd-icon--cancel">
-                        <use xlink:href="#cd-icon--cancel"></use>
-                      </svg>
-                    </button>
+<!--                    <button type="button" class="cd-button cd-button&#45;&#45;small cd-button&#45;&#45;cancel" onclick="removeThisClient(client._id);">-->
+<!--                      <svg class="cd-icon cd-icon&#45;&#45;cancel">-->
+<!--                        <use xlink:href="#cd-icon&#45;&#45;cancel"></use>-->
+<!--                      </svg>-->
+<!--                    </button>-->
                   </li>
                   <%
                   });
@@ -139,7 +146,6 @@
                 <p>Button here</p>
               </section>
             </div>
-
 
           </div>
         </div>
@@ -264,6 +270,5 @@
       this.$hid.$put(`/api/v2/user/${this.me}`, this.profile);
     }
   }
-
 
 </script>
