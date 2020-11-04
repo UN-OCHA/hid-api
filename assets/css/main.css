@@ -325,3 +325,8 @@ a.cd-ocha-dropdown__see-all:hover {
 .cd-language-switcher .cd-user-menu__item::after {
   display: none;
 }
+
+/* Override Tailwind p reset */
+p {
+  margin: 0 0 1rem;
+}
