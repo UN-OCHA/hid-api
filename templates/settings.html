@@ -272,7 +272,7 @@
   // }
 
 
-  async function deleteAccount(totpToken) {
+  function deleteAccount(totpToken) {
     // This value should only last as long as the function executes.
     let confirmed = false;
 
@@ -333,9 +333,9 @@
     // }
   }
 
-  function resetTotpPrompt() {
-    this.needsTotp = false;
-    this.alreadyConfirmed = false;
-  }
+  // function resetTotpPrompt() {
+  //   this.needsTotp = false;
+  //   this.alreadyConfirmed = false;
+  // }
 
 </script>
