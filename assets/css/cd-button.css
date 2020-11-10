@@ -79,3 +79,9 @@
 .cd-button--export:focus {
   background: var(--cd-dark-grey);
 }
+
+.cd-button--delete {
+  background: #ff5252;
+  border: 2px solid #ff5252;
+  color: white;
+}

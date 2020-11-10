@@ -151,8 +151,10 @@
               </section>
 
               <section id="section-delete">
-                <h2 translate>Delete Account</h2>
-                <p>Button here</p>
+                <h2>Delete Account</h2>
+                <button type="button" class="cd-button cd-button--bold cd-button--delete" onclick="deleteAccount();">
+                  Delete
+                </button>
               </section>
             </div>
 
@@ -278,6 +280,73 @@
       // Update HID API
       this.$hid.$put(`/api/v2/user/${this.me}`, this.profile);
     }
+  }
+
+
+  async function deleteAccount(totpToken) {
+    // This value should only last as long as the function executes.
+    let confirmed = false;
+
+    window.confirm('Are you sure you want to do this? You will not be able to access Humanitarian ID anymore.');
+
+    // // We don't want to show the confirmation prompt while asking for TOTP so
+    // // we store the result temporariliy. If the user closes TotpPrompt without
+    // // submitting, we'll wipe this value so that a second attempt to delete
+    // // will require new confirmation.
+    // if (!this.alreadyConfirmed) {
+    //   confirmed = await this.$confirm('Are you sure you want to do this? You will not be able to access Humanitarian ID anymore.');
+    // }
+    //
+    // // If the user confirmed, or if TOTP is required (alreadyConfirmed)
+    // if (confirmed || this.alreadyConfirmed) {
+    //   this.alreadyConfirmed = true;
+    //   this.pending = true;
+    //
+    //   // Ensure that we only send a fresh TOTP by setting to null and only
+    //   // adding when the value is sent by the TotpPrompt emitted event.
+    //   //
+    //   // Note: totpToken is the raw event when submitting without TOTP so we
+    //   // have an extra type check to ensure we're not sending garbage.
+    //   this.$hid.setHeader('X-HID-TOTP', null);
+    //   if (typeof totpToken === 'string' && totpToken !== '') {
+    //     this.$hid.setHeader('X-HID-TOTP', totpToken);
+    //   }
+    //
+    //   // Ask HID to delete this user account.
+    //   this.$hid.$delete(`/api/v2/user/${this.me}`)
+    //     .then((res) => {
+    //       this.message = 'Your account was successfully removed. You are now logged out. Sorry to have you go.';
+    //       this.displayMessage = true;
+    //       this.resetTotpPrompt();
+    //       this.logout();
+    //     })
+    //     .catch((err) => {
+    //       if (err.response && err.response.data && err.response.data.message && err.response.data.message === 'No TOTP token') {
+    //         this.needsTotp = true;
+    //       } else if (err.response && err.response.data && err.response.data.message && this.totpInvalid.includes(err.response.data.message)) {
+    //         this.needsTotp = true;
+    //         this.message = 'Your authentication token was invalid. Please try again.';
+    //         this.error = true;
+    //         this.displayMessage = true;
+    //       } else if (err.response && err.response.data && err.response.data.message) {
+    //         this.message = err.response.data.message;
+    //         this.error = true;
+    //         this.displayMessage = true;
+    //       } else {
+    //         this.message = err;
+    //         this.error = true;
+    //         this.displayMessage = true;
+    //       }
+    //     })
+    //     .finally(() => {
+    //       this.pending = false;
+    //     });
+    // }
+  }
+
+  function resetTotpPrompt() {
+    this.needsTotp = false;
+    this.alreadyConfirmed = false;
   }
 
 </script>
