@@ -143,7 +143,9 @@
 
 <!--              <section id="section-delete">-->
 <!--                <h2 translate>Delete Account</h2>-->
-<!--                <p>Button here</p>-->
+<!--                <button type="button" class="cd-button cd-button&#45;&#45;bold cd-button&#45;&#45;delete" onclick="deleteAccount();">-->
+<!--                  Delete-->
+<!--                </button>-->
 <!--              </section>-->
             </div>
 
@@ -283,7 +285,7 @@
     // // submitting, we'll wipe this value so that a second attempt to delete
     // // will require new confirmation.
     // if (!this.alreadyConfirmed) {
-    //   confirmed = await this.$confirm('Are you sure you want to do this? You will not be able to access Humanitarian ID anymore.');
+    //   confirmed = await this.$confirm('Are you sure you want to delete your Humanitarian ID account? You will no longer be able to access any of the HID-integrated platforms.');
     // }
     //
     // // If the user confirmed, or if TOTP is required (alreadyConfirmed)
