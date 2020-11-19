@@ -2,12 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Set Heading sizes */
 @layer base {
+  /* Set Heading sizes */
   h1 {
     @apply text-2xl;
   }
   h2 {
     @apply text-xl;
+  }
+
+  /* Set form styles */
+  input {
+    @apply appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight
+  }
+
+  input:focus {
+    @apply outline-ocha shadow-none
   }
 }
