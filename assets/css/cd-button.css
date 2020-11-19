@@ -1,46 +1,110 @@
-/* https://github.com/UN-OCHA/common_design/blob/master/components/cd-button/cd-button.css */
+:root {
+  /* Define the Primary colour. */
+  /* Currently, --cd-ocha-blue */
+  /* --cd-primary-color: hsl(205, 98%, 36%); */
 
-.cd-button {
-  -webkit-appearance: none;
-  border-radius: 0;
-  box-shadow: none;
-  border: 0;
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  transition: background 0.3s ease;
-  width: auto;
+  --cd-primary-color-h: 210;
+  --cd-primary-color-s: 70%;
+  --cd-primary-color-l: 56%;
+  --cd-primary-color: hsl(var(--cd-primary-color-h), var(--cd-primary-color-s), var(--cd-primary-color-l));
+
+  /* lighten */
+  --cd-primary-color--light: hsl(var(--cd-primary-color-h), var(--cd-primary-color-s), calc(var(--cd-primary-color-l) + 15%));
+
+  /* darken */
+  --cd-primary-color--dark: hsl(var(--cd-primary-color-h), var(--cd-primary-color-s), calc(var(--cd-primary-color-l) - 25%));
+
+  /* cd-button--light */
+  /* Change the lightness. Other values remain the same */
+  --cd-primary-color--lighter: hsl(var(--cd-primary-color-h), var(--cd-primary-color-s), calc(var(--cd-primary-color-l) + 25%));
 }
 
+
+/* Backgrounds */
+.cd-background--dark {
+  background-color: var(--cd-ocha-blue);
+  color: var(--cd-white);
+}
+
+.cd-background--dark,
+.cd-background--light {
+  text-align: center;
+  padding: 1rem;
+  margin-bottom: 3rem;
+}
+
+/* Default button */
+.cd-button {
+  -webkit-appearance: none;
+  border-radius: 3px;
+  box-shadow: none;
+  border: 2px solid transparent;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  text-align: center;
+  transition: background-color 0.6s ease-out;
+  width: auto;
+  color: var(--cd-white);
+  background-color: var(--cd-primary-color);
+}
+
+.cd-button:hover,
+.cd-button:focus {
+  color: var(--cd-white);
+  background-color: var(--cd-primary-color--light);
+}
+
+.cd-button:focus {
+  /* We remove the outline because we are adding a border. */
+  outline: 0 solid var(--cd-primary-color--light);
+  border: 2px solid var(--cd-primary-color--dark);
+}
+
+/* For buttons on dark backgrounds */
+.cd-button--light {
+  color: var(--cd-primary-color--dark);
+  background-color: var(--cd-primary-color--lighter);
+}
+
+.cd-button--light:hover,
+.cd-button--light:focus {
+  color: var(--cd-primary-color--dark);
+  background-color: var(--cd-primary-color--light);
+}
+
+/* When it's an anchor styled as a button */
+a.cd-button {
+  display: inline-block;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.cd-button--style {}
+
+.cd-button--style:hover,
+.cd-button--style:focus {}
+
+.cd-button--style:focus {}
+
+
+/* Utility classes */
 .cd-button--small {
   padding: 0.25rem 0.5rem;
   font-size: 0.8rem;
   font-weight: 400;
 }
 
-.cd-button--icon {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.cd-button--small.cd-button--icon svg {
+  fill: var(--cd-white);
+  width: 1rem;
+  height: 1rem;
+  /* Icon before */
+  padding: 0 0.25rem 0 0;
 }
 
-.cd-button:hover,
-.cd-button:focus {
-  background-color: rbga(0, 0 ,0, 0.1);
-}
-
-.cd-button:focus {
-  outline: 3px solid var(--cd-ocha-blue);
-}
-
-.cd-button--style {
-  background: var(--cd-ocha-blue);
-  color: var(--cd-white);
-}
-
-.cd-button--style:hover,
-.cd-button--style:focus {
-  background: var(--cd-dark-blue);
-  color: var(--cd-white);
+.cd-button--small.cd-button--icon span + svg {
+  /* Icon after */
+  padding: 0 0 0 0.25rem;
 }
 
 .cd-button--bold {
@@ -52,6 +116,12 @@
 }
 
 /* Some buttons have SVG icons */
+.cd-button--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .cd-button--icon svg {
   fill: var(--cd-white);
   width: 2rem;
@@ -70,9 +140,23 @@
   fill: var(--cd-white);
 }
 
+.cd-button--light svg {
+  fill: var(--cd-primary-color--dark);
+}
+
+.cd-button--light:hover svg,
+.cd-button--light:focus svg {
+  fill: var(--cd-primary-color--dark);
+}
+
 .cd-button--export {
   background: var(--cd-mid-grey);
   color: var(--cd-white);
+  fill: var(--cd-white);
+}
+
+.cd-button--export svg {
+  fill: var(--cd-white);
 }
 
 .cd-button--export:hover,
@@ -80,8 +164,6 @@
   background: var(--cd-dark-grey);
 }
 
-.cd-button--delete {
-  background: #ff5252;
-  border: 2px solid #ff5252;
-  color: white;
+.cd-button--export:focus {
+  outline: 3px solid var(--cd-ocha-blue);
 }
