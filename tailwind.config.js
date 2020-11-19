@@ -12,7 +12,11 @@ module.exports = {
     },
   },
   theme: {
-    extend: {},
+    extend: {
+      outline: {
+        ocha: ['2px solid var(--cd-bright-blue)', '2px'],
+      },
+    },
   },
   variants: {},
 }
