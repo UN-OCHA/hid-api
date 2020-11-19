@@ -26,43 +26,56 @@
 </script>
 
 <div class="container api-page">
-  <div class="row">
-    <div class="col-sm-10 offset-sm-1 col-md-8 offset-md-2">
-      <div class="page-header">
+  <main role="main" id="main-content" class="cd-container">
+    <div class="cd-layout-content">
+      <div class="container mx-auto max-w-sm mx-auto [ flow ]">
+
+        <div class="global-header__back">
+          <button type="button" class="cd-button cd-button--icon cd-button--small" onclick="window.history.back()">
+            <svg class="cd-icon cd-icon--arrow-left">
+              <use xlink:href="#cd-icon--arrow-left"></use>
+            </svg>
+            Back
+          </button>
+          </button>
+        </div>
+
         <h1 class="page-header__heading">Register a Humanitarian ID account</h1>
-      </div>
-      <form name="register" action="/register" method="POST" onsubmit="return checkForm(this)">
-        <div class="form-field">
-          <label for="email" translate>Email</label>
-          <input type="email" name="email" id="email" placeholder="Your email address" required>
-        </div>
-        <div class="form-field">
-          <label for="given_name">First Name</label>
-          <input type="text" name="given_name" id="given_name" placeholder="Your first name" required>
-        </div>
-        <div class="form-field">
-          <label for="family_name">Last Name</label>
-          <input type="text" name="family_name" id="family_name" placeholder="Your last name" required>
-        </div>
-        <div class="form-field">
+
+        <form name="register" action="/register" method="POST" onsubmit="return checkForm(this)" class="[ flow ]">
+          <div class="form-field">
+            <label for="email" translate>Email</label>
+            <input type="email" name="email" id="email" placeholder="Your email address" required>
+          </div>
+          <div class="form-field">
+            <label for="given_name">First Name</label>
+            <input type="text" name="given_name" id="given_name" placeholder="Your first name" required>
+          </div>
+          <div class="form-field">
+            <label for="family_name">Last Name</label>
+            <input type="text" name="family_name" id="family_name" placeholder="Your last name" required>
+          </div>
           <p class="help-block">
             Passwords must be at least <strong>8 characters</strong> long, contain at least
             <strong>one number</strong>, one <strong>uppercase character</strong> and one
             <strong>lowercase character</strong>.
           </p>
-          <label for="password">Password</label>
-          <input type="password" name="password" id="password" placeholder="" required>
-        </div>
-        <div class="form-field">
-          <label for="confirm_password">Password (confirm)</label>
-          <input type="password" name="confirm_password" id="confirm_password" placeholder="" required>
-        </div>
-        <div class="g-recaptcha" data-sitekey="<%= recaptcha_site_key %>"></div>
-        <input type="hidden" name="crumb" value="<%= crumb %>" />
-        <input type="hidden" name="app_verify_url" value="<%= requestUrl %>" />
-        <button type="submit" class="btn-primary">Register</button>
-      </form>
+          <div class="form-field">
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" placeholder="" required>
+          </div>
+          <div class="form-field">
+            <label for="confirm_password">Password (confirm)</label>
+            <input type="password" name="confirm_password" id="confirm_password" placeholder="" required>
+          </div>
+          <div class="g-recaptcha" data-sitekey="<%= recaptcha_site_key %>"></div>
+          <input type="hidden" name="crumb" value="<%= crumb %>" />
+          <input type="hidden" name="app_verify_url" value="<%= requestUrl %>" />
+          <button type="submit" class="cd-button cd-button--bold">Register</button>
+        </form>
+
+      </div>
     </div>
-  </div>
+  </main>
 </div>
 <% include footer %>

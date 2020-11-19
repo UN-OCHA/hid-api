@@ -3,11 +3,8 @@
 <div class="container api-page">
   <main role="main" id="main-content" class="cd-container">
     <div class="cd-layout-content">
-      <div class="row">
-        <div class="col-sm-6 offset-sm-3 col-lg-4 offset-lg-4">
-          <div class="page-header">
-            <h1 class="page-header__heading">Two-factor authentication</h1>
-          </div>
+      <div class="container mx-auto max-w-sm mx-auto [ flow ]">
+          <h1 class="page-header__heading">Two-factor authentication</h1>
 
           <% if (alert) { %>
             <div class="alert alert--inline alert--<%= alert.type %>" role="alert">
@@ -17,7 +14,7 @@
             </div>
           <% } %>
 
-          <form method="post" action="<%= destination %>">
+          <form method="post" action="<%= destination %>" class="[ flow ]">
             <div class="form-field">
               <label for="x-hid-totp" translate>Authentication code</label>
               <input type="text" name="x-hid-totp" id="x-hid-totp" autocomplete="off" placeholder="Authentication code" required>
@@ -34,13 +31,9 @@
             <input type="hidden" name="nonce" value="<%= query.nonce %>" />
             <input type="hidden" name="crumb" value="<%= crumb %>" />
 
-            <div class="row form-field">
-              <div class="col-xs-12">
-                <button type="submit" class="btn-primary btn-block">
-                  Verify
-                </button>
-              </div>
-            </div>
+            <button type="submit" class="cd-button cd-button--bold">
+              Verify
+            </button>
           </form>
         </div>
       </div>
