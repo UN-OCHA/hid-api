@@ -1,0 +1,9 @@
+/* https://piccalil.li/cube-css */
+
+/* CUBE CSS is a CSS methodology */
+/* orientated towards simplicity, pragmatism and consistency */
+/* Composition Utility Block Exception */
+
+.flow > * + * {
+  margin-top: var(--flow-space, 1em);
+}
