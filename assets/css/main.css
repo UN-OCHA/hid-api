@@ -326,7 +326,31 @@ a.cd-ocha-dropdown__see-all:hover {
   display: none;
 }
 
-/* Override Tailwind p reset */
-p {
-  margin: 0 0 1rem;
+
+form .form-field > * {
+  display: block;
+}
+
+form .form-field > input[type="checkbox"] {
+  display: inline-block;
+}
+
+.email + .status {
+  margin-left: 1rem;
+}
+
+.cd-button--cancel {
+  --cd-primary-color-h: 70;
+}
+
+.cd-button--dectivate {
+  --cd-primary-color-h: 30;
+}
+
+.cd-button--activate {
+  --cd-primary-color-h: 120;
+}
+
+.cd-button--delete {
+  --cd-primary-color-h: 360;
 }
