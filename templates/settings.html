@@ -101,11 +101,11 @@
                   %>
                   <li>
                     <span><%= client.name %></span>
-<!--                    <button type="button" class="cd-button cd-button&#45;&#45;small cd-button&#45;&#45;cancel" onclick="removeThisClient(client._id);">-->
-<!--                      <svg class="cd-icon cd-icon&#45;&#45;cancel">-->
-<!--                        <use xlink:href="#cd-icon&#45;&#45;cancel"></use>-->
-<!--                      </svg>-->
-<!--                    </button>-->
+                    <button type="button" class="cd-button cd-button--small cd-button--cancel" onclick="removeThisClient(client._id);">
+                      <svg class="cd-icon cd-icon--cancel">
+                        <use xlink:href="#cd-icon--cancel"></use>
+                      </svg>
+                    </button>
                   </li>
                   <%
                   });
@@ -151,7 +151,7 @@
               </section>
 
               <section id="section-delete">
-                <h2>Delete Account</h2>
+                <h2 translate>Delete Account</h2>
                 <button type="button" class="cd-button cd-button--bold cd-button--delete" onclick="deleteAccount();">
                   Delete
                 </button>
@@ -245,45 +245,45 @@
   })();
 
 
-  function sortedClients() {
-    const sorted = this.profile.authorizedClients;
-    return sorted.sort((a, b) => a.name.localeCompare(b.name));
-  }
+  // function sortedClients() {
+  //   const sorted = this.profile.authorizedClients;
+  //   return sorted.sort((a, b) => a.name.localeCompare(b.name));
+  // }
 
-  async function asyncData({ route, app: { $hid } }) {
-    // URL pattern: /settings/:slug
-    const currentTab = '/settings/clients';
+  // function asyncData({ route, app: { $hid } }) {
+  //   // URL pattern: /settings/:slug
+  //   const currentTab = '/settings/clients';
+  //
+  //   // Get latest user account data.
+  //   const profile = await $hid.$get('/account.json');
+  //
+  //   return {
+  //     profile,
+  //     currentTab,
+  //   };
+  // }
 
-    // Get latest user account data.
-    const profile = await $hid.$get('/account.json');
-
-    return {
-      profile,
-      currentTab,
-    };
-  }
-
-  async function removeThisClient(idToBeRemoved) {
-    // Isolate client to be removed so we can prompt user for confirmation.
-    const clientToBeRemoved = this.profile.authorizedClients.filter(client => client._id === idToBeRemoved).pop();
-    const removalMessage = `Are you sure you want to remove ${clientToBeRemoved.name}? You will need to authorize the application again to access it through Humanitarian ID.`;
-
-    // Prompt user to confirm removal.
-    const userConfirmedRemoval = await this.$confirm(removalMessage);
-
-    // If they confirmed, then proceed with removal.
-    if (userConfirmedRemoval) {
-      // Remove client from the user's profile
-      const remainingClients = this.profile.authorizedClients.filter(client => client._id !== idToBeRemoved);
-      this.profile.authorizedClients = remainingClients;
-
-      // Update HID API
-      this.$hid.$put(`/api/v2/user/${this.me}`, this.profile);
-    }
-  }
+  // function removeThisClient(idToBeRemoved) {
+  //   // Isolate client to be removed so we can prompt user for confirmation.
+  //   const clientToBeRemoved = this.profile.authorizedClients.filter(client => client._id === idToBeRemoved).pop();
+  //   const removalMessage = `Are you sure you want to remove ${clientToBeRemoved.name}? You will need to authorize the application again to access it through Humanitarian ID.`;
+  //
+  //   // Prompt user to confirm removal.
+  //   const userConfirmedRemoval = await this.$confirm(removalMessage);
+  //
+  //   // If they confirmed, then proceed with removal.
+  //   if (userConfirmedRemoval) {
+  //     // Remove client from the user's profile
+  //     const remainingClients = this.profile.authorizedClients.filter(client => client._id !== idToBeRemoved);
+  //     this.profile.authorizedClients = remainingClients;
+  //
+  //     // Update HID API
+  //     this.$hid.$put(`/api/v2/user/${this.me}`, this.profile);
+  //   }
+  // }
 
 
-  async function deleteAccount(totpToken) {
+  function deleteAccount(totpToken) {
     // This value should only last as long as the function executes.
     let confirmed = false;
 
@@ -294,7 +294,7 @@
     // // submitting, we'll wipe this value so that a second attempt to delete
     // // will require new confirmation.
     // if (!this.alreadyConfirmed) {
-    //   confirmed = await this.$confirm('Are you sure you want to do this? You will not be able to access Humanitarian ID anymore.');
+    //   confirmed = await this.$confirm('Are you sure you want to delete your Humanitarian ID account? You will no longer be able to access any of the HID-integrated platforms.');
     // }
     //
     // // If the user confirmed, or if TOTP is required (alreadyConfirmed)
@@ -344,9 +344,9 @@
     // }
   }
 
-  function resetTotpPrompt() {
-    this.needsTotp = false;
-    this.alreadyConfirmed = false;
-  }
+  // function resetTotpPrompt() {
+  //   this.needsTotp = false;
+  //   this.alreadyConfirmed = false;
+  // }
 
 </script>
