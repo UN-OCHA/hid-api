@@ -12,7 +12,9 @@
   }
 
   /* Set form styles */
-  input {
+  input[type="text"],
+  input[type="password"],
+  input[type="email"] {
     @apply appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight
   }
 

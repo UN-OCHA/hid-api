@@ -598,7 +598,9 @@ h2 {
 
 /* Set form styles */
 
-input {
+input[type="text"],
+  input[type="password"],
+  input[type="email"] {
   -webkit-appearance: none;
      -moz-appearance: none;
           appearance: none;
@@ -854,4 +856,3 @@ input:focus {
     }
   }
 }
-

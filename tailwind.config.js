@@ -14,7 +14,7 @@ module.exports = {
   theme: {
     extend: {
       outline: {
-        ocha: ['2px solid var(--cd-bright-blue)', '2px'],
+        ocha: ['2px solid var(--cd-bright-blue)', '1px'],
       },
     },
   },
