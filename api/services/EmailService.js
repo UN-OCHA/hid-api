@@ -55,7 +55,6 @@ function send(options, tpl, context) {
       );
     })
     .catch(err => {
-      console.log(err.message, err.stack);
       logger.warn(
         `[EmailService->send] Failed to send ${tpl} email to ${options.to}`,
         {
