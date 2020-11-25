@@ -47,10 +47,22 @@ function send(options, tpl, context) {
     message: options,
     locals: context,
   };
-  logger.info(
-    `[EmailService->send] About to send ${tpl} email to ${options.to}`,
-  );
-  return email.send(args);
+
+  return email.send(args)
+    .then(res => {
+      logger.info(
+        `[EmailService->send] Sent ${tpl} email to ${options.to}`,
+      );
+    })
+    .catch(err => {
+      logger.warn(
+        `[EmailService->send] Failed to send ${tpl} email to ${options.to}`,
+        {
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+    });
 }
 
 module.exports = {
