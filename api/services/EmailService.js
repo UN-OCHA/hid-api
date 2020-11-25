@@ -47,7 +47,7 @@ function send(options, tpl, context) {
     message: options,
     locals: context,
   };
-  console.log(args);
+
   return email.send(args)
     .then(res => {
       logger.info(
