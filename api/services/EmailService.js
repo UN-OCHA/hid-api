@@ -5,11 +5,14 @@ const TransporterSettings = {
   host: process.env.SMTP_HOST || 'localhost',
   port: process.env.SMTP_PORT || 25,
   secure: process.env.SMTP_TLS || false,
-  auth: {
-    user: process.env.SMTP_USER || '',
-    pass: process.env.SMTP_PASS || ''
-  }
 };
+// Only append `auth` property if we have both values to pass.
+if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+  TransporterSettings.auth = {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  }
+}
 
 const Transporter = Nodemailer.createTransport(TransporterSettings);
 const config = require('../../config/env')[process.env.NODE_ENV];
