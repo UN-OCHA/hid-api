@@ -1,0 +1,87 @@
+/* https://github.com/UN-OCHA/common_design/blob/master/components/cd-button/cd-button.css */
+
+.cd-button {
+  -webkit-appearance: none;
+  border-radius: 0;
+  box-shadow: none;
+  border: 0;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  transition: background 0.3s ease;
+  width: auto;
+}
+
+.cd-button--small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.cd-button--icon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cd-button:hover,
+.cd-button:focus {
+  background-color: rbga(0, 0 ,0, 0.1);
+}
+
+.cd-button:focus {
+  outline: 3px solid var(--cd-ocha-blue);
+}
+
+.cd-button--style {
+  background: var(--cd-ocha-blue);
+  color: var(--cd-white);
+}
+
+.cd-button--style:hover,
+.cd-button--style:focus {
+  background: var(--cd-dark-blue);
+  color: var(--cd-white);
+}
+
+.cd-button--bold {
+  font-weight: bold;
+}
+
+.cd-button--uppercase {
+  text-transform: uppercase;
+}
+
+/* Some buttons have SVG icons */
+.cd-button--icon svg {
+  fill: var(--cd-white);
+  width: 2rem;
+  height: 2rem;
+  /* Icon before */
+  padding: 0 0.5rem 0 0;
+}
+
+.cd-button--icon span + svg {
+  /* Icon after */
+  padding: 0 0 0 0.5rem;
+}
+
+.cd-button--icon:hover svg,
+.cd-button--icon:focus svg {
+  fill: var(--cd-white);
+}
+
+.cd-button--export {
+  background: var(--cd-mid-grey);
+  color: var(--cd-white);
+}
+
+.cd-button--export:hover,
+.cd-button--export:focus {
+  background: var(--cd-dark-grey);
+}
+
+.cd-button--delete {
+  background: #ff5252;
+  border: 2px solid #ff5252;
+  color: white;
+}

@@ -429,29 +429,12 @@ module.exports = {
       if (user.email && notify === true) {
         if (!request.auth.credentials) {
           await EmailService.sendRegister(user, appVerifyUrl);
-          logger.info(
-            `[UserController->create] Sent registration email to ${user.email}`,
-            {
-              request,
-            },
-          );
         } else if (registrationType === 'kiosk') {
-          // An admin is creating an orphan user or Kiosk registration
+          // Kiosk registration
           await EmailService.sendRegisterKiosk(user, appVerifyUrl);
-          logger.info(
-            `[UserController->create] Sent registration kiosk email to ${user.email}`,
-            {
-              request,
-            },
-          );
         } else {
+          // An admin is creating an orphan user
           await EmailService.sendRegisterOrphan(user, request.auth.credentials, appVerifyUrl);
-          logger.info(
-            `[UserController->create] Sent registration orphan email to ${user.email}`,
-            {
-              request,
-            },
-          );
         }
       }
       return user;
