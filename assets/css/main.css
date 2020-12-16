@@ -346,9 +346,24 @@ form .form-field > input[type="checkbox"] {
   --cd-primary-color: hsl(var(--cd-primary-color-h), var(--cd-primary-color-s), var(--cd-primary-color-l));
 }
 
+/* For IE11 */
+@media all and (-ms-high-contrast: none) {
+  .cd-button--delete {
+    background-color: #a80000;
+  }
+}
+
 .cd-button--delete:hover,
 .cd-button--delete:focus {
   --cd-primary-color--light: hsl(var(--cd-primary-color-h), var(--cd-primary-color-s), calc(var(--cd-primary-color-l) + 30%));
+}
+
+/* For IE11 */
+@media all and (-ms-high-contrast: none) {
+  .cd-button--delete:hover,
+  .cd-button--delete:focus {
+    background-color: #ff4242;
+  }
 }
 
 .cd-button--cancel svg {
