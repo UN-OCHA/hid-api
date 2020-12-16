@@ -5,10 +5,20 @@
 @layer base {
   /* Set Heading sizes */
   h1 {
-    @apply text-2xl;
+    @apply text-3xl;
+    color: #295a78;
   }
   h2 {
-    @apply text-xl;
+    @apply text-2xl;
+    color: #007faa;
+  }
+  a {
+    @apply underline;
+    color: #007faa;
+  }
+  a:hover,
+  a:focus {
+    color: #007faa;
   }
 
   /* Set form styles */
