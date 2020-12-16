@@ -39,12 +39,13 @@
 }
 
 a.cd-ocha-dropdown__see-all {
-  background: #bddfea;
-  color: #006c91;
+  /*background: #bddfea;*/
+  /*color: #006c91;*/
+  font-size: 14px;
 }
 a.cd-ocha-dropdown__see-all:hover {
-  background: rgba(189, 223, 234, 0.8);
-  color: #28546e;
+  /*background: rgba(189, 223, 234, 0.8);*/
+  /*color: #28546e;*/
 }
 
 #cd-language li button:hover,

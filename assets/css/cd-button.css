@@ -3,7 +3,6 @@
   /* Based on OCHA brand guidelines */
   /* Page 22 https://www.dropbox.com/s/j6tgps8u4u1ht4j/01_visual_identity.pdf?dl=1 */
 
-
 /* Custom properties for IE.
 /* This is needed due to inability to process calc() functions nested within color functions */
   --cd-ie-primary-color: #007faa; /* hsl(195, 100%, 33%) */
@@ -11,6 +10,7 @@
   --cd-ie-primary-color--dark: #001b24;
   --cd-ie-primary-color--lighter: #70dbff;
 
+  /* HID Brand colours */
   --cd-primary-color-h: 195;
   --cd-primary-color-s: 100%;
   --cd-primary-color-l: 33%;
