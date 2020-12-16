@@ -282,9 +282,9 @@ a.cd-ocha-dropdown__see-all:hover {
   padding: 1.5rem;
 }
 
-[role="tabpanel"] * + * {
-  margin-top: 0.75rem;
-}
+/*[role="tabpanel"] * + * {*/
+/*  margin-top: 0.75rem;*/
+/*}*/
 
 [role="tablist"] a:focus {
   outline: 4px solid #60b2c9;
