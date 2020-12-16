@@ -29,6 +29,7 @@
             <form onsubmit="changePassword()" class="[ flow ]">
 
                 <p translate>You must enter your current password to set a new password.</p>
+              <div class="form-field">
 
                 <label class="block text-gray-700 text-sm font-bold" for="current-password">
                   Current Password
@@ -43,9 +44,11 @@
                   required
 
                 />
+              </div>
 
                 <p translate>Passwords must be <strong>at least {{ $v.password.$params.minLength.min }} characters long</strong>, contain at least <strong>one number</strong>, <strong>one uppercase character</strong>, <strong>one lowercase character</strong>, and one <strong>special character: <code>!@#$%^&*()+=\`{}</code></strong>. Password has to be different than your previous one.</p>
 
+              <div class="form-field">
                 <label class="block text-gray-700 text-sm font-bold" for="new-password">
                   New Password
                 </label>
@@ -56,9 +59,11 @@
                   type="password"
                   autocomplete="off"
                   placeholder="New password"
-                  required"
+                  required
                 />
+              </div>
 
+              <div class="form-field">
                 <label class="block text-gray-700 text-sm font-bold" for="new-password-confirm">
                   Confirm New Password
                 </label>
@@ -72,6 +77,7 @@
                   required
 
                 />
+              </div>
 
                 <button
                   id="reset-password"
@@ -92,13 +98,13 @@
                 Work is in progress to offer this option.
               </div>
             </div>
-            <ul>
+            <ul class="[ flow ]">
               <%
                 user.authorizedClients.forEach(function(client) {
               %>
               <li>
                 <span><%= client.name %></span>
-                <button type="button" class="cd-button cd-button--small cd-button--cancel" onclick="removeThisClient(client._id);">
+                <button type="button" class="cd-button cd-button--bold cd-button--small cd-button--cancel" onclick="removeThisClient(client._id);">
                   <svg class="cd-icon cd-icon--cancel" width="16" height="16" aria-hidden="true" focusable="false">>
                     <use xlink:href="#cd-icon--cancel"></use>
                   </svg>
@@ -115,8 +121,7 @@
 
             <% if (user.totp) { %>
 
-            <span class="status" style="color: #757575;" translate>Status: <em>Enabled</em></span>
-            <p>&nbsp;</p>
+            <p><span class="status" style="color: #757575;" translate>Status: <em>Enabled</em></span></p>
 
             <button class="cd-button cd-button--bold cd-button--dectivate" onclick="goTo('deactivate');">
               Deactivate
@@ -124,7 +129,7 @@
 
 
             <%} else { %>
-              <span class="status" style="color: #757575;" translate>Status: <em>Disabled</em></span>
+              <p><span class="status" style="color: #757575;" translate>Status: <em>Disabled</em></span></p>
 
               <p translate>Two-factor authentication is an effective way to protect your account from unauthorized access. What you need to do to enable this feature:</p>
               <ol>
@@ -137,7 +142,7 @@
               <p translate>After enabling two-factor authentication, you'll receive 16 backup codes. Copy these codes or download them and store them securely. Once a backup code is used, it can't be used again.</p>
               <p translate>You can remove the two-factor authentication at any point by clicking on ‘Deactivate’ button.</p>
 
-              <button class="cd-button cd-button--style cd-button--activate" onclick="requestTotpConfig();">
+              <button class="cd-button cd-button--bold cd-button--activate" onclick="requestTotpConfig();">
                 Activate
               </button>
 
@@ -149,6 +154,7 @@
 
           <section id="section-delete" class="[ flow ]">
             <h2 translate>Delete Account</h2>
+            <p translate>Delete your account</p>
             <button type="button" class="cd-button cd-button--bold cd-button--delete" onclick="deleteAccount();">
               Delete
             </button>
