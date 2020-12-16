@@ -8,34 +8,33 @@
         <p translate><strong>Given Name:</strong> <%= user.given_name %></p>
         <p translate><strong>Family name:</strong> <%= user.family_name %></p>
         <p translate><strong>Email addresses:</strong>
-          <ul class="list-disc list-inside [ flow ]">
+          <ul class="pl-3 [ flow ]">
             <%
               user.emails.forEach(function(email) {
                 if (email.email === user.email) {
             %>
               <li>
-                <span class="email" style="color: black;"><%= user.email %></span>
-                <span class="status" style="color: #777;">Status: <em><strong>Primary</strong></em></span>
+                <p><span class="email" style="color: black;"><%= user.email %></span></p>
+                <p><span class="status" style="color: #777;">Status: <em><strong>Primary</strong></em></span></p>
               </li>
             <% } else { %>
               <li>
-                <span class="email" style="color: black;"><%= email.email %></span>
-                <span class="status" style="color: #777;">Status: <em><%= email.validated === true ? 'confirmed' : 'not confirmed' %></em></span>
+                <p><span class="status" style="color: #777;">Status: <em><%= email.validated === true ? 'confirmed' : 'not confirmed' %></em></span></p>
+                <p><span class="email" style="color: black;"><%= email.email %></span></p>
               </li>
             <%
                 }
               });
             %>
           </ul>
-        </p>
 
-        <p translate><strong>Verified:</strong>
-          <% if (user.email_verified) { %>
-          <span translate>Yes</span>
-          <%} else { %>
-          <span translate>No</span>
-          <% } %>
-        </p>
+          <p translate><strong>Verified:</strong>
+            <% if (user.email_verified) { %>
+            <span translate>Yes</span>
+            <%} else { %>
+            <span translate>No</span>
+            <% } %>
+          </p>
       </div>
     </div>
   </main>
