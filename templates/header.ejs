@@ -13,6 +13,14 @@
       <link rel="stylesheet" href="assets/css/cd-button.css">
       <link rel="stylesheet" href="assets/css/cube.css">
       <link rel="stylesheet" href="assets/css/main.css">
+    <!-- Polyfills for IE11 -->
+      <script nomodule src="../assets/js/cd-polyfill.js"></script>
+      <script nomodule src="../assets/js/css-vars-ponyfill.js"></script>
+      <script nomodule>
+        cssVars({
+          rootElement: document // default
+        });
+      </script>
     <!--[if lt IE 9]>
         <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
         <script>window.html5 || document.write('<script src="js/vendor/html5shiv.js"><\/script>')</script>
