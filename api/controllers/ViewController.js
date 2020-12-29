@@ -180,8 +180,17 @@ module.exports = {
     try {
       await recaptcha.validate(request.payload['g-recaptcha-response']);
     } catch (err) {
+      logger.warn(
+        '[ViewController->registerPost] Failure during reCAPTCHA validation.',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+
       return reply.view('login', {
-        alert: { type: 'danger', message: recaptcha.translateErrors(err) },
+        alert: { type: 'danger', message: 'There was a problem validating your registration. Please try again.' },
         query: request.query,
         registerLink,
         passwordLink,
