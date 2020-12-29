@@ -839,18 +839,7 @@ UserSchema.statics = {
     return index;
   },
 
-  // v2 — Password Requirements
-  //
-  // - At least 8 characters total
-  // - At least one number
-  // - At least one lowercase letter
-  // - At least one uppercase letter
-  isStrongPassword(password) {
-    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
-    return password.length > 7 && regex.test(password);
-  },
-
-  // v3 — Password Requirements
+  // Password Requirements
   //
   // As of 2020 we follow the most strict guidelines in order to avoid the OICT
   // requirement that we expire weak passwords after 6 months.
@@ -860,7 +849,7 @@ UserSchema.statics = {
   // - At least one lowercase letter
   // - At least one uppercase letter
   // - At least one special character: !@#$%^&*()+=\`{}
-  isStrongPasswordV3(password) {
+  isStrongPassword(password) {
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()+=\\`{}]).+$/;
     return password.length >= 12 && regex.test(password);
   },

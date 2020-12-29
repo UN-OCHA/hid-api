@@ -331,25 +331,12 @@ module.exports = {
         request.payload.emails.push({ type: 'Work', email: request.payload.email, validated: false });
       }
 
-      // Business logic: is the new password strong enough?
-      //
-      // v2 and v3 have different requirements so we check the request path before
-      // checking the password strength.
-      const requestIsV3 = request.path.indexOf('api/v3') !== -1;
       if (request.payload.password && request.payload.confirm_password) {
-        if (requestIsV3 && !User.isStrongPasswordV3(request.payload.password)) {
+        if (User.isStrongPassword(request.payload.password)) {
+          request.payload.password = User.hashPassword(request.payload.password);
+        } else {
           logger.warn(
-            '[UserController->create] Provided password is not strong enough (v3)',
-            {
-              request,
-              security: true,
-              fail: true,
-            },
-          );
-          throw Boom.badRequest('The password is not strong enough');
-        } else if (!User.isStrongPassword(request.payload.password)) {
-          logger.warn(
-            '[UserController->create] Provided password is not strong enough (v2)',
+            '[UserController->create] Provided password is not strong enough.',
             {
               request,
               security: true,
@@ -358,11 +345,11 @@ module.exports = {
           );
           throw Boom.badRequest('The password is not strong enough');
         }
-        request.payload.password = User.hashPassword(request.payload.password);
       } else {
         // Set a random password
         request.payload.password = User.hashPassword(User.generateRandomPassword());
       }
+
       delete request.payload.app_verify_url;
 
       let notify = true;
@@ -1101,11 +1088,7 @@ module.exports = {
     }
 
     // Business logic: is the new password strong enough?
-    //
-    // v2 and v3 have different requirements so we check the request path before
-    // checking the password strength.
-    const requestIsV3 = request.path.indexOf('api/v3') !== -1;
-    if (requestIsV3 && !User.isStrongPasswordV3(request.payload.new_password)) {
+    if (!User.isStrongPassword(request.payload.new_password)) {
       logger.warn(
         `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is not strong enough (v3)`,
         {
@@ -1115,16 +1098,6 @@ module.exports = {
         },
       );
       throw Boom.badRequest('New password does not meet requirements');
-    } else if (!User.isStrongPassword(request.payload.new_password)) {
-      logger.warn(
-        `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is not strong enough (v2)`,
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('New password is not strong enough');
     }
 
     // Was the current password entered correctly?
@@ -2183,24 +2156,9 @@ module.exports = {
       throw Boom.badRequest('Wrong arguments');
     }
 
-    // Business logic: is the new password strong enough?
-    //
-    // v2 and v3 have different requirements so we check the request path before
-    // checking the password strength.
-    const requestIsV3 = request.path.indexOf('api/v3') !== -1;
-    if (requestIsV3 && !User.isStrongPasswordV3(request.payload.password)) {
+    if (!User.isStrongPassword(request.payload.password)) {
       logger.warn(
-        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough (v3)',
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('New password is not strong enough');
-    } else if (!User.isStrongPassword(request.payload.password)) {
-      logger.warn(
-        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough (v2)',
+        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough',
         {
           request,
           security: true,
@@ -2227,7 +2185,10 @@ module.exports = {
       const token = request.headers['x-hid-totp'];
       record = await AuthPolicy.isTOTPValid(record, token);
     }
+
     let domain = null;
+
+    // Check that the reset hash was correct when the user landed on the page.
     if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
       // Check the new password against the old one.
       if (record.validPassword(request.payload.password)) {
