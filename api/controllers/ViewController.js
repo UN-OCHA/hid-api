@@ -203,7 +203,10 @@ module.exports = {
       });
     }
     try {
+      // Attempt to create a new HID account.
       await UserController.create(request);
+
+      // Render login form with success message.
       return reply.view('login', {
         alert: {
           type: 'success',
@@ -214,11 +217,22 @@ module.exports = {
         passwordLink,
       });
     } catch (err) {
-      let userMessage = err.output && err.output.payload && err.output.payload.message.indexOf('password is not strong') !== -1
-        ? 'Your password was not strong enough. Please check the requirements and try again.'
-        : 'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.';
+      // Check if we have an error worth telling the user about.
+      const errorMessage = err.output && err.output.payload && err.output.payload.message;
+      let userMessage = 'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.';
+
+      // Check the error for a few special cases to provide better user feedback.
+      if (errorMessage && errorMessage.indexOf('password is not strong') !== -1) {
+        userMessage = 'Your password was not strong enough. Please check the requirements and try again.';
+      }
+      if (errorMessage && errorMessage.indexOf('passwords do not match') !== -1) {
+        userMessage = 'Your password fields did not match. Please try again and carefully confirm the password.';
+      }
+
+      // Add a domain from the allow-list.
       const requestUrl = _buildRequestUrl(request, 'register');
 
+      // Render registration form.
       return reply.view('register', {
         alert: {
           type: 'danger',

@@ -332,6 +332,18 @@ module.exports = {
       }
 
       if (request.payload.password && request.payload.confirm_password) {
+        if (request.payload.password !== request.payload.confirm_password) {
+          logger.warn(
+            '[UserController->create] Passwords did not match during registration.',
+            {
+              request,
+              security: true,
+              fail: true,
+            },
+          );
+          throw Boom.badRequest('The passwords do not match');
+        }
+
         if (User.isStrongPassword(request.payload.password)) {
           request.payload.password = User.hashPassword(request.payload.password);
         } else {
