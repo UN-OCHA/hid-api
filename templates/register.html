@@ -8,18 +8,27 @@
       <div class="page-header">
         <h1 class="page-header__heading">Register a Humanitarian ID account</h1>
       </div>
+
+      <% if (typeof alert !== 'undefined') { %>
+        <div class="alert alert--inline alert--<%= alert.type %>" role="alert">
+          <div class="alert__inner">
+            <%= alert.message %>
+          </div>
+        </div>
+      <% } %>
+
       <form name="register" action="/register" method="POST" onsubmit="return checkForm(this)">
         <div class="form-field">
           <label for="email" translate>Email</label>
-          <input type="email" name="email" id="email" placeholder="you@example.com" required>
+          <input type="email" name="email" id="email" value="<%= formEmail %>" placeholder="you@example.com" required>
         </div>
         <div class="form-field">
           <label for="given_name">First Name</label>
-          <input type="text" name="given_name" id="given_name" placeholder="Your first name" required>
+          <input type="text" name="given_name" id="given_name" value="<%= formGivenName %>" placeholder="Your first name" required>
         </div>
         <div class="form-field">
           <label for="family_name">Last Name</label>
-          <input type="text" name="family_name" id="family_name" placeholder="Your last name" required>
+          <input type="text" name="family_name" id="family_name" value="<%= formFamilyName %>" placeholder="Your last name" required>
         </div>
         <div class="form-field">
           <label for="password">Password</label>

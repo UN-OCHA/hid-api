@@ -164,6 +164,9 @@ module.exports = {
     const requestUrl = _buildRequestUrl(request, 'verify2');
     return reply.view('register', {
       title: 'Register a Humanitarian ID account',
+      formEmail: '',
+      formGivenName: '',
+      formFamilyName: '',
       requestUrl,
       recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY,
     });
@@ -208,12 +211,19 @@ module.exports = {
       let userMessage = err.output && err.output.payload && err.output.payload.message.indexOf('password is not strong') !== -1
         ? 'Your password was not strong enough. Please check the requirements and try again.'
         : 'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.';
+      const requestUrl = _buildRequestUrl(request, 'register');
 
-      return reply.view('login', {
-        alert: { type: 'danger', message: userMessage },
+      return reply.view('register', {
+        alert: {
+          type: 'danger',
+          message: userMessage,
+        },
         query: request.query,
-        registerLink,
-        passwordLink,
+        formEmail: request.payload.email,
+        formGivenName: request.payload.given_name,
+        formFamilyName: request.payload.family_name,
+        requestUrl,
+        recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY,
       });
     }
   },
