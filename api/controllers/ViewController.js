@@ -369,11 +369,15 @@ module.exports = {
             passwordLink,
           });
         }
-        return reply.view('message', {
-          alert: { type: 'danger', message: 'There was an error resetting your password.' },
+
+        const requestUrl = _buildRequestUrl(request, 'new_password');
+        return reply.view('password', {
+          alert: {
+            type: 'danger',
+            message: 'There was an error resetting your password. Please try again.',
+          },
           query: request.payload,
-          isSuccess: false,
-          title: 'Password update',
+          requestUrl,
         });
       }
     }
