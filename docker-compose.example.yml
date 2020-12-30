@@ -6,7 +6,7 @@ services:
     volumes:
       - ./db:/srv/db
   dev:
-    image: unocha/nodejs:10.14.2
+    image: unocha/nodejs:12
     volumes:
       - .:/srv/www
     ports:
@@ -16,7 +16,7 @@ services:
       ROOT_URL: http://localhost:3000
       SMTP_HOST: mailhog
       SMTP_PORT: 1025
-      SMTP_USER: 
+      SMTP_USER:
       SMTP_PASS:
       APP_URL: https://app.hid.vm
       COOKIE_PASSWORD: 6*a!_5;1:|7~+%5**WdS:^;X%PN||~:_:_R
