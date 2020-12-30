@@ -193,7 +193,10 @@ module.exports = {
       );
 
       return reply.view('login', {
-        alert: { type: 'danger', message: 'There was a problem validating your registration. Please try again.' },
+        alert: {
+          type: 'danger',
+          message: 'There was a problem validating your registration. Please try again.',
+        },
         query: request.query,
         registerLink,
         passwordLink,
@@ -202,7 +205,10 @@ module.exports = {
     try {
       await UserController.create(request);
       return reply.view('login', {
-        alert: { type: 'success', message: 'Thank you for creating an account. You will soon receive a confirmation email to confirm your account.' },
+        alert: {
+          type: 'success',
+          message: 'Thank you for creating an account. You will soon receive a confirmation email to confirm your account.',
+        },
         query: request.query,
         registerLink,
         passwordLink,
