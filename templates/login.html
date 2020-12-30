@@ -3,7 +3,7 @@
 <div class="container api-page">
   <main role="main" id="main-content" class="cd-container">
     <div class="cd-layout-content">
-      <div class="row">
+      <div class="container [ flow ]">
         <div class="col-sm-6 offset-sm-3 col-lg-4 offset-lg-4">
           <div class="page-header">
             <h1 class="page-header__heading">Log in</h1>
@@ -17,7 +17,7 @@
             </div>
           <% } %>
 
-          <form method="post" action="/login">
+          <form method="post" action="/login" class="[ flow ]">
             <div class="form-field">
               <label for="email" translate>Email</label>
               <input type="email" name="email" id="email" placeholder="Your email address" value="<%= query.email %>" required>
