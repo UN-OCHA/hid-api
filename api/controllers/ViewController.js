@@ -221,7 +221,23 @@ module.exports = {
       const errorMessage = err.output && err.output.payload && err.output.payload.message;
       let userMessage = 'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.';
 
+      // If the error says the email already exists, we'll redirect to login.
+      if (errorMessage && errorMessage.indexOf('is already registered') !== -1) {
+        userMessage = 'That email address is already registered. Please login, or if you\'ve forgotten your password, reset using the link below.';
+
+        return reply.view('login', {
+          alert: {
+            type: 'danger',
+            message: userMessage,
+          },
+          query: request.query,
+          registerLink,
+          passwordLink,
+        });
+      }
+
       // Check the error for a few special cases to provide better user feedback.
+      // All of these will render the registration form.
       if (errorMessage && errorMessage.indexOf('password is not strong') !== -1) {
         userMessage = 'Your password was not strong enough. Please check the requirements and try again.';
       }
