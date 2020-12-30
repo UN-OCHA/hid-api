@@ -339,14 +339,20 @@ module.exports = {
         await UserController.resetPasswordEndpoint(request);
         if (params) {
           return reply.view('login', {
-            alert: { type: 'success', message: 'Your password was successfully reset. You can now login.' },
+            alert: {
+              type: 'success',
+              message: 'Your password was successfully reset. You can now login.',
+            },
             query: request.payload,
             registerLink,
             passwordLink,
           });
         }
         return reply.view('message', {
-          alert: { type: 'success', message: 'Thank you for updating your password.' },
+          alert: {
+            type: 'success',
+            message: 'Thank you for updating your password.',
+          },
           query: request.payload,
           isSuccess: true,
           title: 'Password update',
@@ -354,7 +360,10 @@ module.exports = {
       } catch (err) {
         if (params) {
           return reply.view('login', {
-            alert: { type: 'danger', message: 'There was an error resetting your password.' },
+            alert: {
+              type: 'danger',
+              message: 'There was an error resetting your password. Please try again.',
+            },
             query: request.payload,
             registerLink,
             passwordLink,
