@@ -2198,6 +2198,9 @@ module.exports = {
             request,
             security: true,
             fail: true,
+            user: {
+              id: request.payload.id,
+            },
           },
         );
         throw Boom.badRequest('Could not reset password');
