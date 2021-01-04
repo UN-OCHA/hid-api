@@ -13,6 +13,7 @@
 /**
  * Utility Classes
  */
+
 .element-hidden {
   display: none;
 }
@@ -35,6 +36,7 @@
 /**
  * CD classes for HID
  */
+
 .cd-global-header {
   background: #007faa;
   background-image: linear-gradient(-180deg, #007faa 67%, #006c91 97%);
@@ -82,11 +84,9 @@ a.cd-ocha-dropdown__see-all:hover {
 /**
  * Login page
  */
+
 .login__heading {
   max-width: 200px;
-}
-.login__video {
-  display: none;
 }
 
 .t-login-btn {
