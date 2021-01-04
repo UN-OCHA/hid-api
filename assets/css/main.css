@@ -82,40 +82,8 @@ a.cd-ocha-dropdown__see-all:hover {
 
 
 /**
- * Login page
+ * Global layout
  */
-
-.login__heading {
-  max-width: 200px;
-}
-
-.t-login-btn {
-  max-width: 50%;
-  margin-left: 1em;
-}
-
-@media (min-width: 576px) {
-  .login__heading {
-    max-width: 240px;
-  }
-  .login__form {
-    margin-bottom: 40px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .login__heading {
-    max-width: none;
-  }
-  .login__form {
-    max-width: 500px;
-    margin-bottom: 80px;
-  }
-  .login__video {
-    display: block;
-    padding-top: 24px;
-  }
-}
 
 .api-page {
   width: 100%;
@@ -128,17 +96,6 @@ a.cd-ocha-dropdown__see-all:hover {
     padding-bottom: 40px;
   }
 }
-
-.title-humanitarian {
-  text-transform: uppercase;
-  color: #295A78;
-}
-
-.title-id {
-  text-transform: uppercase;
-  color: #007faa;
-}
-
 
 /**
  * User Settings tabs
