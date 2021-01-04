@@ -164,6 +164,9 @@ module.exports = {
     const requestUrl = _buildRequestUrl(request, 'verify2');
     return reply.view('register', {
       title: 'Register a Humanitarian ID account',
+      formEmail: '',
+      formGivenName: '',
+      formFamilyName: '',
       requestUrl,
       recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY,
     });
@@ -180,27 +183,83 @@ module.exports = {
     try {
       await recaptcha.validate(request.payload['g-recaptcha-response']);
     } catch (err) {
+      logger.warn(
+        '[ViewController->registerPost] Failure during reCAPTCHA validation.',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+
       return reply.view('login', {
-        alert: { type: 'danger', message: recaptcha.translateErrors(err) },
+        alert: {
+          type: 'danger',
+          message: 'There was a problem validating your registration. Please try again.',
+        },
         query: request.query,
         registerLink,
         passwordLink,
       });
     }
     try {
+      // Attempt to create a new HID account.
       await UserController.create(request);
+
+      // Render login form with success message.
       return reply.view('login', {
-        alert: { type: 'success', message: 'Thank you for creating an account. You will soon receive a confirmation email to confirm your account.' },
+        alert: {
+          type: 'success',
+          message: 'Thank you for creating an account. You will soon receive a confirmation email to confirm your account.',
+        },
         query: request.query,
         registerLink,
         passwordLink,
       });
     } catch (err) {
-      return reply.view('login', {
-        alert: { type: 'danger', message: 'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.' },
+      // Check if we have an error worth telling the user about.
+      const errorMessage = err.output && err.output.payload && err.output.payload.message;
+      let userMessage = 'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.';
+
+      // If the error says the email already exists, we'll redirect to login.
+      if (errorMessage && errorMessage.indexOf('is already registered') !== -1) {
+        userMessage = 'That email address is already registered. Please login, or if you\'ve forgotten your password, reset using the link below.';
+
+        return reply.view('login', {
+          alert: {
+            type: 'danger',
+            message: userMessage,
+          },
+          query: request.query,
+          registerLink,
+          passwordLink,
+        });
+      }
+
+      // Check the error for a few special cases to provide better user feedback.
+      // All of these will render the registration form.
+      if (errorMessage && errorMessage.indexOf('password is not strong') !== -1) {
+        userMessage = 'Your password was not strong enough. Please check the requirements and try again.';
+      }
+      if (errorMessage && errorMessage.indexOf('passwords do not match') !== -1) {
+        userMessage = 'Your password fields did not match. Please try again and carefully confirm the password.';
+      }
+
+      // Add a domain from the allow-list.
+      const requestUrl = _buildRequestUrl(request, 'register');
+
+      // Render registration form.
+      return reply.view('register', {
+        alert: {
+          type: 'danger',
+          message: userMessage,
+        },
         query: request.query,
-        registerLink,
-        passwordLink,
+        formEmail: request.payload.email,
+        formGivenName: request.payload.given_name,
+        formFamilyName: request.payload.family_name,
+        requestUrl,
+        recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY,
       });
     }
   },
@@ -326,14 +385,20 @@ module.exports = {
         await UserController.resetPasswordEndpoint(request);
         if (params) {
           return reply.view('login', {
-            alert: { type: 'success', message: 'Your password was successfully reset. You can now login.' },
+            alert: {
+              type: 'success',
+              message: 'Your password was successfully reset. You can now login.',
+            },
             query: request.payload,
             registerLink,
             passwordLink,
           });
         }
         return reply.view('message', {
-          alert: { type: 'success', message: 'Thank you for updating your password.' },
+          alert: {
+            type: 'success',
+            message: 'Thank you for updating your password.',
+          },
           query: request.payload,
           isSuccess: true,
           title: 'Password update',
@@ -341,17 +406,24 @@ module.exports = {
       } catch (err) {
         if (params) {
           return reply.view('login', {
-            alert: { type: 'danger', message: 'There was an error resetting your password.' },
+            alert: {
+              type: 'danger',
+              message: 'There was an error resetting your password. Please try again.',
+            },
             query: request.payload,
             registerLink,
             passwordLink,
           });
         }
-        return reply.view('message', {
-          alert: { type: 'danger', message: 'There was an error resetting your password.' },
+
+        const requestUrl = _buildRequestUrl(request, 'new_password');
+        return reply.view('password', {
+          alert: {
+            type: 'danger',
+            message: 'There was an error resetting your password. Please try again.',
+          },
           query: request.payload,
-          isSuccess: false,
-          title: 'Password update',
+          requestUrl,
         });
       }
     }
