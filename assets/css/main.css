@@ -60,24 +60,6 @@ a.cd-ocha-dropdown__see-all:hover {
   background: #007faa;
 }
 
-/**
- * Fonts
- */
-@font-face {
-  font-family: 'exo_2regular';
-  src: url("../fonts/exo/Exo2-Regular-webfont.eot");
-  src: url("../fonts/exo/Exo2-Regular-webfont.eot?#iefix") format("embedded-opentype"), url("../fonts/exo/Exo2-Regular-webfont.woff") format("woff"), url("../fonts/exo/Exo2-Regular-webfont.ttf") format("truetype"), url("../fonts/exo/Exo2-Regular-webfont.svg#exo_2regular") format("svg");
-  font-weight: normal;
-  font-style: normal; }
-
-@font-face {
-  font-family: 'exo_2semi_bold';
-  src: url("../fonts/exo/Exo2-SemiBold-webfont.eot");
-  src: url("../fonts/exo/Exo2-SemiBold-webfont.eot?#iefix") format("embedded-opentype"), url("../fonts/exo/Exo2-SemiBold-webfont.woff") format("woff"), url("../fonts/exo/Exo2-SemiBold-webfont.ttf") format("truetype"), url("../fonts/exo/Exo2-SemiBold-webfont.svg#exo_2semi_bold") format("svg");
-  font-weight: normal;
-  font-style: normal; }
-
-
 .login__heading {
   max-width: 200px; }
 
@@ -235,12 +217,10 @@ a.cd-ocha-dropdown__see-all:hover {
   padding-bottom: 4px; }
 
 .title-humanitarian {
-  font-family: "exo_2semi_bold", sans-serif;
   text-transform: uppercase;
   color: #295A78; }
 
 .title-id {
-  font-family: "exo_2semi_bold", sans-serif;
   text-transform: uppercase;
   color: #007faa; }
 
