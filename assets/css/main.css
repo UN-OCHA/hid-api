@@ -1,10 +1,6 @@
-/*
- * Styles required for the api (forms and pdfs)
- * Usage:
- * Run `grunt sass:api` to generate the css
- * Copy the generated css into the api css file https://github.com/UN-OCHA/hid_api/blob/dev/assets/css/main.css
+/**
+ * Utility Classes
  */
-
 .element-hidden {
   display: none;
 }
@@ -24,7 +20,9 @@
   height: auto;
 }
 
-/* HID Colour scheme for CD */
+/**
+ * CD classes for HID
+ */
 .cd-global-header {
   background: #007faa;
   background-image: linear-gradient(-180deg, #007faa 67%, #006c91 97%);
@@ -60,6 +58,10 @@ a.cd-ocha-dropdown__see-all:hover {
   background: #007faa;
 }
 
+
+/**
+ * Login page
+ */
 .login__heading {
   max-width: 200px; }
 
@@ -86,135 +88,14 @@ a.cd-ocha-dropdown__see-all:hover {
     display: block;
     padding-top: 24px; } }
 
-.offline-status {
-  font-size: 14px;
-  font-size: 0.875rem;
-  padding: 8px 48px 8px 8px;
-  width: 100%;
-  position: fixed;
-  z-index: 200;
-  margin: auto;
-  left: 0;
-  right: 0;
-  bottom: 0; }
-
-.offline-status--up {
-  background: #d6e9c6;
-  color: #305d30; }
-
-.offline-status--down {
-  background: #ec8787;
-  color: #551313; }
-
-.offline-status__close {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  margin-top: -20px; }
-  .offline-status--up .offline-status__close .icon {
-    fill: #305d30; }
-  .offline-status--down .offline-status__close .icon {
-    fill: #551313; }
-
-@media (min-width: 576px) {
-  .offline-status {
-    font-size: 16px;
-    font-size: 1rem;
-    border-radius: 4px;
-    bottom: 16px;
-    width: 608px;
-    max-width: 100%;
-    padding: 16px 48px 16px 16px; } }
-
-
-.cd-notifications {
-  position: relative;
-  padding-left: 16px; }
-  .cd-notifications::before {
-    content: '';
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    position: absolute;
-    top: 11px;
-    left: 24px;
-    background-image: url("../img/icons/notification--white.svg");
-    background-size: 12px 12px; }
-  .cd-notifications::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    height: 50%;
-    width: 1px;
-    background: rgba(255, 255, 255, 0.25);
-    top: 25%; }
-
-.cd-notifications__link {
-  display: inline-block;
-  padding: 0 12px 0 28px;
-  height: 35px;
-  line-height: 35px;
-  color: white;
-  font-size: 100%;
-  text-decoration: none; }
-  .cd-notifications__link:hover {
-    text-decoration: underline; }
-  .cd-notifications__link:focus {
-    outline: 3px solid #60b2c9; }
-
 .api-page {
   width: 100%;
   padding-top: 16px;
   padding-bottom: 16px; }
 
-.pdf {
-  background-color: white; }
-  .pdf .col-xs-8 {
-    float: left;
-    width: 66.66667%; }
-  .pdf .col-xs-4 {
-    float: left;
-    width: 33.33333%; }
-  .pdf .page-header {
-    padding-top: 24px;
-    margin-bottom: 16px; }
-    .pdf .page-header img {
-      height: auto; }
-
-.table {
-  font-size: 14px;
-  font-size: 0.875rem; }
-
-.table-compact {
-  font-size: 13px;
-  font-size: 0.8125rem; }
-  .table-compact td {
-    padding: 0 8px; }
-
-.filters-param-list {
-  font-size: 14px;
-  font-size: 0.875rem;
-  background: #007faa;
-  color: #FFF;
-  margin-bottom: 16px;
-  padding: 8px; }
-
-.filters-param, .filters-param-label {
-  display: inline-block;
-  padding: 4px 8px;
-  margin: 0 8px 0 0; }
-
-.filters-param {
-  background: white;
-  color: #007faa; }
-
-.print-footer {
-  font-weight: bold;
-  font-size: 14px;
-  font-size: 0.875rem;
-  width: 100%;
-  text-align: left;
-  padding-bottom: 4px; }
+@media (min-width: 576px) {
+  .api-page {
+    padding-bottom: 40px; } }
 
 .title-humanitarian {
   text-transform: uppercase;
@@ -224,12 +105,11 @@ a.cd-ocha-dropdown__see-all:hover {
   text-transform: uppercase;
   color: #007faa; }
 
-@media (min-width: 576px) {
-  .api-page {
-    padding-bottom: 40px; } }
 
+/**
+ * User Settings tabs
+ */
 
-/* User Settings tabs */
 /* https://inclusive-components.design/tabbed-interfaces */
 [role="tablist"] {
   padding: 0;
