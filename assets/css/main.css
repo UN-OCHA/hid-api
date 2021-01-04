@@ -1,4 +1,16 @@
 /**
+ * Composition Classes
+ *
+ * @see https://piccalil.li/cube-css
+ */
+
+.flow > * + * {
+  margin-top: 1em;
+  margin-top: var(--flow-space, 1em);
+}
+
+
+/**
  * Utility Classes
  */
 .element-hidden {

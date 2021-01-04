@@ -1,9 +1,0 @@
-/* https://piccalil.li/cube-css */
-
-/**
- * `flow` is a Composition class to assign vertical rhythm to a container.
- */
-.flow > * + * {
-  margin-top: 1em;
-  margin-top: var(--flow-space, 1em);
-}
