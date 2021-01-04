@@ -54,6 +54,14 @@ a.cd-ocha-dropdown__see-all:hover {
   outline: 3px solid #60b2c9;
 }
 
+.cd-language-switcher .cd-user-menu__item {
+  padding-right: 0;
+}
+
+.cd-language-switcher .cd-user-menu__item::after {
+  display: none;
+}
+
 .cd-footer {
   background: #007faa;
 }
@@ -176,12 +184,4 @@ a.cd-ocha-dropdown__see-all:hover {
   [role="tabpanel"] {
     border-top: 0;
   }
-}
-
-.cd-language-switcher .cd-user-menu__item {
-  padding-right: 0;
-}
-
-.cd-language-switcher .cd-user-menu__item::after {
-  display: none;
 }
