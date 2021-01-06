@@ -178,6 +178,7 @@ module.exports = {
       siteKey: process.env.RECAPTCHA_PUBLIC_KEY,
       secretKey: process.env.RECAPTCHA_PRIVATE_KEY,
     });
+    const requestUrl = _buildRequestUrl(request, 'verify2');
     const registerLink = _getRegisterLink(request.payload);
     const passwordLink = _getPasswordLink(request.payload);
     try {
@@ -192,14 +193,19 @@ module.exports = {
         },
       );
 
-      return reply.view('login', {
+      return reply.view('register', {
         alert: {
           type: 'danger',
           message: 'There was a problem validating your registration. Please try again.',
         },
+        formEmail: request.payload.email,
+        formGivenName: request.payload.given_name,
+        formFamilyName: request.payload.family_name,
         query: request.query,
         registerLink,
         passwordLink,
+        requestUrl,
+        recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY,
       });
     }
     try {
