@@ -1,0 +1,64 @@
+/**
+ * CD classes for HID
+ */
+
+.cd-global-header {
+  background: #007faa;
+  background-image: linear-gradient(-180deg, #007faa 67%, #006c91 97%);
+}
+
+.cd-global-header__dropdown {
+  background: #007faa;
+}
+
+.cd-global-header button[aria-expanded="true"]::before {
+  border-color: transparent transparent #007faa;
+}
+
+a.cd-ocha-dropdown__see-all {
+  background: #bddfea;
+  color: #006c91;
+}
+a.cd-ocha-dropdown__see-all:hover {
+  background: rgba(189, 223, 234, 0.8);
+  color: #28546e;
+}
+
+#cd-language li button:hover,
+#cd-language li button:focus {
+  color: #80cbff;
+}
+
+#cd-language li button:focus {
+  outline: 3px solid #60b2c9;
+}
+
+.cd-language-switcher .cd-user-menu__item {
+  padding-right: 0;
+}
+
+.cd-language-switcher .cd-user-menu__item::after {
+  display: none;
+}
+
+.cd-footer {
+  background: #007faa;
+}
+
+
+/**
+ * Global layout
+ */
+
+.api-page {
+  width: 100%;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+@media (min-width: 576px) {
+  .api-page {
+    padding-bottom: 40px;
+  }
+}
+
