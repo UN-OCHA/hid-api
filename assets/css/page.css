@@ -62,3 +62,27 @@ a.cd-ocha-dropdown__see-all:hover {
   }
 }
 
+/**
+ * Alerts
+ *
+ * Alerts and other messages can appear on any page, so we'll define them here.
+ */
+.alert {
+  padding: 1em;
+  background-color: #eee;
+}
+
+.alert--danger {
+  color: #474747;
+  background-color: #F4AEB0;
+}
+
+.alert--success {
+  background-color: #E5F3F6;
+  color: #295A78;
+}
+
+.alert--warning {
+  background-color: #E5F3F6;
+  color: #295A78;
+}
