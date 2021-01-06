@@ -86,3 +86,56 @@ a.cd-ocha-dropdown__see-all:hover {
   background-color: #E5F3F6;
   color: #295A78;
 }
+
+/**
+ * Forms
+ */
+
+form .form-field > * {
+  display: block;
+}
+
+form .form-field > input[type="checkbox"] {
+  display: inline-block;
+}
+
+input[type="text"],
+  input[type="password"],
+  input[type="email"] {
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  border-width: 1px;
+  border-radius: 0.25rem;
+  width: 100%;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  --text-opacity: 1;
+  color: #4a5568;
+  color: rgba(74, 85, 104, var(--text-opacity));
+  line-height: 1.25
+}
+
+input:focus {
+  outline: 2px solid var(--cd-bright-blue);
+  outline-offset: 1px;
+  box-shadow: none
+}
+
+input:focus:invalid {
+  color: red;
+  border-bottom-color: currentColor;
+  box-shadow: inset 0px -1px 0px 0px currentColor;
+  outline: 2px solid red;
+  outline-offset: 0;
+}
+
+.form-field code {
+  display: inline-block;
+  background: #eee;
+  border-radius: 3px;
+  padding-left: .25em;
+  padding-right: .25em;
+}
