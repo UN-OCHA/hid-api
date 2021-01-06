@@ -1,26 +1,28 @@
 <% include header %>
-<div class="container api-page">
+<style><% include ../assets/css/user-profile.css %></style>
+
+<div class="api-page">
   <main role="main" id="main-content" class="cd-container">
     <div class="cd-layout-content">
-      <div class="container [ flow ]">
+      <div class="profile profile--show [ flow ]">
         <h1 class="page-header__heading"><%= user.name %></h1>
 
         <p><strong>Given Name:</strong> <%= user.given_name %></p>
         <p><strong>Family name:</strong> <%= user.family_name %></p>
         <p><strong>Email addresses:</strong>
-          <ul>
+          <ul class="profile__emails">
             <%
               user.emails.forEach(function(email) {
                 if (email.email === user.email) {
             %>
-              <li>
-                <span class="email" style="color: black;"><%= user.email %></span><br>
-                <span class="status" style="color: #777;">Status: <em><strong>Primary</strong></em></span>
+              <li class="profile__email email">
+                <span class="email__address"><%= user.email %></span><br>
+                <span class="email__status">Status: <em><strong>Primary</strong></em></span>
               </li>
             <% } else { %>
-              <li>
-                <span class="email" style="color: black;"><%= email.email %></span><br>
-                <span class="status" style="color: #777;">Status: <em><%= email.validated === true ? 'confirmed' : 'not confirmed' %></em></span>
+              <li class="profile__email email">
+                <span class="email__address"><%= email.email %></span><br>
+                <span class="email__status">Status: <em><%= email.validated === true ? 'confirmed' : 'not confirmed' %></em></span>
               </li>
             <%
                 }
