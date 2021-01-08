@@ -1,5 +1,37 @@
 /**
- * CD classes for HID
+ * Override :root for all our CD stuff
+ */
+:root {
+  /**
+   * Custom properties for IE.
+   *
+   * This is needed due to inability to process calc() functions nested within
+   * color functions.
+   */
+  --cd-ie-primary-color: #007faa;
+  --cd-ie-primary-color--light: #4ca6c3;
+  --cd-ie-primary-color--dark: #001b24;
+  /*--cd-ie-primary-color--lighter: #a8ccf0;*/
+
+  /**
+   * Define our HSL for HID.
+   */
+  --cd-primary-color-h: 195;
+  --cd-primary-color-s: 100%;
+  --cd-primary-color-l: 33.333%;
+
+  /**
+   * The HID color was too saturated when using CD's default HSL light color.
+   * We're overriding with a less saturated HSL.
+   */
+  --cd-primary-color--light: hsl(var(--cd-primary-color-h), calc(var(--cd-primary-color-s) - 50%), calc(var(--cd-primary-color-l) + 20%));
+
+  /* darken */
+  --cd-primary-color--dark: hsl(var(--cd-primary-color-h), var(--cd-primary-color-s), calc(var(--cd-primary-color-l) - 26%));
+}
+
+/**
+ * CD overrides for HID
  */
 
 .cd-global-header {
@@ -15,13 +47,8 @@
   border-color: transparent transparent #007faa;
 }
 
-a.cd-ocha-dropdown__see-all {
-  background: #bddfea;
-  color: #006c91;
-}
-a.cd-ocha-dropdown__see-all:hover {
-  background: rgba(189, 223, 234, 0.8);
-  color: #28546e;
+.cd-button.cd-ocha-dropdown__see-all {
+  width: 100%;
 }
 
 #cd-language li button:hover,
