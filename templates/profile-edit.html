@@ -4,12 +4,21 @@
 <div class="api-page">
   <main role="main" id="main-content" class="cd-container">
     <div class="cd-layout-content">
-      <div class="profile profile--show [ flow ]">
-        <h1 class="page-header__heading"><%= user.name %></h1>
+      <form action="/profile/edit" method="POST" class="profile profile--edit [ flow ]">
+        <h1 class="page-header__heading">Edit profile</h1>
 
-        <p><strong>Given Name:</strong> <%= user.given_name %></p>
-        <p><strong>Family name:</strong> <%= user.family_name %></p>
-        <p><strong>Email addresses:</strong>
+        <% include alert.html %>
+
+        <div class="form-item">
+          <label for="profile-given_name">Given Name:</label>
+          <input type="text" id="profile-given_name" name="given_name" value="<%= user.given_name %>" required>
+        </div>
+        <div class="form-item">
+          <label for="profile-family_name">Family name:</label>
+          <input type="text" id="profile-family_name" name="family_name" value="<%= user.family_name %>" required>
+        </div>
+        <div class="form-item">
+          <label for="">Email addresses:</label>
           <ul class="profile__emails">
             <%
               user.emails.forEach(function(email) {
@@ -29,16 +38,11 @@
               });
             %>
           </ul>
-        </p>
-
-        <p translate><strong>Verified:</strong>
-          <% if (user.email_verified) { %>
-          <span translate>Yes</span>
-          <%} else { %>
-          <span translate>No</span>
-          <% } %>
-        </p>
-      </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="cd-button cd-button--bold cd-button--uppercase">Save Profile</button>
+        </div>
+      </form>
     </div>
   </main>
 </div>

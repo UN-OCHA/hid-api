@@ -455,17 +455,101 @@ module.exports = {
     });
   },
 
-  // Display the user profile page when user is logged in.
+  // View the user profile.
   async profile(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
       return reply.redirect('/');
     }
+
+    // Look up user in DB.
     const user = await User.findOne({ _id: cookie.userId });
-    return reply.view('profile', {
+
+    // If the cookie has an alert to display, load it into the page and erase it
+    // from the cookie.
+    let alert;
+    if (cookie.alert) {
+      alert = cookie.alert;
+      delete cookie.alert;
+      request.yar.set('session', cookie);
+    }
+
+    // Render profile page.
+    return reply.view('profile-show', {
+      alert,
       user,
     });
+  },
+
+  // Edit the user profile.
+  async profileEdit(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+    const user = await User.findOne({ _id: cookie.userId });
+    return reply.view('profile-edit', {
+      user,
+    });
+  },
+
+  // Save edits to user profile
+  async profileEditSubmit(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // We might need to send feedback. Create an alert object.
+    let alert = {};
+
+    // Validate form submission
+    if (request.payload && request.payload.given_name !== '' && request.payload.family_name !== '') {
+      // Find user and update DB.
+      const user = await User.findOneAndUpdate({ _id: cookie.userId }, {
+        given_name: request.payload.given_name,
+        family_name: request.payload.family_name,
+      }, {
+        new: true,
+      });
+
+      // Create a success confirmation.
+      cookie.alert = {
+        type: 'success',
+        message: 'Your profile was saved.',
+      };
+      request.yar.set('session', cookie);
+
+      // Redirect to profile on success
+      return reply.redirect('/profile');
+    } else {
+      // Validation problems were found. Provide user feedback.
+      let reasons = [];
+      if (request.payload.given_name === '') {
+        reasons.push('You must supply a given name.');
+      }
+      if (request.payload.family_name === '') {
+        reasons.push('You must supply a family name.');
+      }
+
+      // Display the user feedback as an alert.
+      alert = {
+        type: 'danger',
+        message: '<p>Your profile could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
+      };
+
+      // Load their un-edited user object to populate the form.
+      const user = await User.findOne({ _id: cookie.userId });
+
+      // Show user the profile edit form again.
+      return reply.view('profile-edit', {
+        alert,
+        user,
+      });
+    }
   },
 
   // Display the user settings page when user is logged in.
