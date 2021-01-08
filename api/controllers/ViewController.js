@@ -502,6 +502,7 @@ module.exports = {
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
       return reply.redirect('/');
     }
+
     // Load user from DB for some validation operations.
     const user = await User.findOne({ _id: cookie.userId });
 
@@ -555,9 +556,6 @@ module.exports = {
         message: '<p>Your profile could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
       };
 
-      // Load their un-edited user object to populate the form.
-      const user = await User.findOne({ _id: cookie.userId });
-
       // Show user the profile edit form again.
       return reply.view('profile-edit', {
         alert,
@@ -565,13 +563,37 @@ module.exports = {
       });
     } else {
       // No errors were found, so load the user and update DB with the simple
-      // profile fields tht don't need special treatment.
+      // profile fields that don't need special treatment.
+      //
+      // TODO: replace this with UserController.update().
       const user = await User.findOneAndUpdate({ _id: cookie.userId }, {
         given_name: request.payload.given_name,
         family_name: request.payload.family_name,
       }, {
+        runValidators: true,
         new: true,
       });
+
+      logger.info(
+        `[ViewController->profileEditSubmit] Updated user profile for ${cookie.userId}`,
+        {
+          user: {
+            id: cookie.userId,
+          },
+        },
+      );
+
+      // Set primary email address using internal method. The first object is a
+      // mock of the request payload we'd send when making client-side JS calls.
+      if (request.payload.email_primary !== user.email) {
+        UserController.setPrimaryEmail({
+          payload: {
+            email: request.payload.email_primary,
+          }
+        }, {
+          userId: cookie.userId,
+        });
+      }
 
       // Create a success confirmation.
       cookie.alert = {

@@ -1305,7 +1305,7 @@ module.exports = {
    *   '404':
    *     description: Requested user not found.
    */
-  async setPrimaryEmail(request) {
+  async setPrimaryEmail(request, internalArgs) {
     const { email } = request.payload;
 
     if (!request.payload.email) {
@@ -1318,7 +1318,22 @@ module.exports = {
       throw Boom.badRequest();
     }
 
-    const record = await User.findOne({ _id: request.params.id }).catch((err) => {
+    //
+    // Determine userId from two sources.
+    //
+    // If internalArgs is sent to this function then we prefer that value, as it
+    // means we are executing on behalf of the user from within ViewController.
+    //
+    // Otherwise, use the normal URL param to determine userId.
+    //
+    let userId = '';
+    if (internalArgs && internalArgs.userId) {
+      userId = internalArgs.userId;
+    } else {
+      userId = request.params.id;
+    }
+
+    const record = await User.findOne({ _id: userId }).catch((err) => {
       logger.error(
         `[UserController->setPrimaryEmail] ${err.message}`,
         {
@@ -1329,12 +1344,12 @@ module.exports = {
         },
       );
 
-      throw Boom.internal('There is a problem querying to the database. Please try again.');
+      throw Boom.internal('There was a problem querying the database. Please try again.');
     });
 
     if (!record) {
       logger.warn(
-        `[UserController->setPrimaryEmail] Could not find user ${request.params.id}`,
+        `[UserController->setPrimaryEmail] Could not find user ${userId}`,
         {
           request,
           fail: true,
@@ -1346,7 +1361,7 @@ module.exports = {
     const index = record.emailIndex(email);
     if (index === -1) {
       logger.warn(
-        `[UserController->setPrimaryEmail] Email ${email} does not exist for user ${request.params.id}`,
+        `[UserController->setPrimaryEmail] Email ${email} does not exist for user ${userId}`,
         {
           request,
           fail: true,
@@ -1356,7 +1371,7 @@ module.exports = {
     }
     if (!record.emails[index].validated) {
       logger.warn(
-        `[UserController->setPrimaryEmail] Email ${record.emails[index]} has not been validated for user ${request.params.id}`,
+        `[UserController->setPrimaryEmail] Email ${record.emails[index]} has not been validated for user ${userId}`,
         {
           request,
           fail: true,
@@ -1371,22 +1386,22 @@ module.exports = {
     record.lastModified = new Date();
     await record.save();
     logger.info(
-      `[UserController->setPrimaryEmail] Saved user ${request.params.id} successfully`,
+      `[UserController->setPrimaryEmail] Saved user ${userId} successfully`,
       {
         request,
         user: {
-          id: request.params.id,
+          id: userId,
           email,
         }
       },
     );
     await GSSSyncService.synchronizeUser(record);
     logger.info(
-      `[UserController->setPrimaryEmail] Synchronized user ${request.params.id} with google spreadsheets successfully`,
+      `[UserController->setPrimaryEmail] Synchronized user ${userId} with google spreadsheets successfully`,
       {
         request,
         user: {
-          id: request.params.id,
+          id: userId,
         },
       },
     );
