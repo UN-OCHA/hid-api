@@ -34,6 +34,10 @@
  * CD overrides for HID
  */
 
+h1, h2, h3, h4, h5 {
+  color: var(--cd-primary-color);
+}
+
 .cd-global-header {
   background: #007faa;
   background-image: linear-gradient(-180deg, #007faa 67%, #006c91 97%);
