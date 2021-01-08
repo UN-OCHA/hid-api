@@ -114,6 +114,16 @@
   color: #295A78;
 }
 
+.alert p {
+  margin: 0;
+}
+.alert ul {
+  margin: 0;
+}
+.alert li {
+  margin: 0;
+}
+
 /**
  * Forms
  */
