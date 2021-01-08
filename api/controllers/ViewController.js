@@ -502,13 +502,70 @@ module.exports = {
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
       return reply.redirect('/');
     }
+    // Load user from DB for some validation operations.
+    const user = await User.findOne({ _id: cookie.userId });
 
-    // We might need to send feedback. Create an alert object.
+    // We might need to send feedback. Create an alert/errors variables.
     let alert = {};
+    let reasons = [];
 
-    // Validate form submission
-    if (request.payload && request.payload.given_name !== '' && request.payload.family_name !== '') {
-      // Find user and update DB.
+    // Did we get a valid payload object?
+    if (!request.payload) {
+      reasons.push('payload was missing');
+    }
+
+    // Given name must exist.
+    if (typeof request.payload.given_name !== 'undefined' && request.payload.given_name !== '') {
+      // We found a given name.
+    } else {
+      reasons.push('Given name is required.');
+    }
+
+    // Family name must exist
+    if (typeof request.payload.family_name !== 'undefined' && request.payload.family_name !== '') {
+      // We found a family name.
+    } else {
+      reasons.push('Family name is required.');
+    }
+
+    //
+    // The desired primary email address must already be marked as 'validated'
+    // in the DB.
+    //
+    // First, check if the field even has a value.
+    if (request.payload.email_primary !== '') {
+      // Loop through emails to find the one they want to mark as primary.
+      user.emails.forEach(thisEmail => {
+        // We found it, so check if it is already 'validated' in DB.
+        if (request.payload.email_primary === thisEmail.email) {
+          if (thisEmail.validated) {
+            // The email is eligible to be primary.
+          } else {
+            reasons.push(`You selected ${thisEmail} to be your primary address, but it is not confirmed.`);
+          }
+        }
+      });
+    }
+
+    // React to form validation array
+    if (reasons.length > 0) {
+      // Display the user feedback as an alert.
+      alert = {
+        type: 'danger',
+        message: '<p>Your profile could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
+      };
+
+      // Load their un-edited user object to populate the form.
+      const user = await User.findOne({ _id: cookie.userId });
+
+      // Show user the profile edit form again.
+      return reply.view('profile-edit', {
+        alert,
+        user,
+      });
+    } else {
+      // No errors were found, so load the user and update DB with the simple
+      // profile fields tht don't need special treatment.
       const user = await User.findOneAndUpdate({ _id: cookie.userId }, {
         given_name: request.payload.given_name,
         family_name: request.payload.family_name,
@@ -525,30 +582,6 @@ module.exports = {
 
       // Redirect to profile on success
       return reply.redirect('/profile');
-    } else {
-      // Validation problems were found. Provide user feedback.
-      let reasons = [];
-      if (request.payload.given_name === '') {
-        reasons.push('You must supply a given name.');
-      }
-      if (request.payload.family_name === '') {
-        reasons.push('You must supply a family name.');
-      }
-
-      // Display the user feedback as an alert.
-      alert = {
-        type: 'danger',
-        message: '<p>Your profile could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
-      };
-
-      // Load their un-edited user object to populate the form.
-      const user = await User.findOne({ _id: cookie.userId });
-
-      // Show user the profile edit form again.
-      return reply.view('profile-edit', {
-        alert,
-        user,
-      });
     }
   },
 

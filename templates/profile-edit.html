@@ -4,40 +4,37 @@
 <div class="api-page">
   <main role="main" id="main-content" class="cd-container">
     <div class="cd-layout-content">
+      <% include alert.html %>
       <form action="/profile/edit" method="POST" class="profile profile--edit [ flow ]">
         <h1 class="page-header__heading">Edit profile</h1>
 
-        <% include alert.html %>
 
-        <div class="form-item">
+        <div class="form-item form-item--w50">
           <label for="profile-given_name">Given Name:</label>
           <input type="text" id="profile-given_name" name="given_name" value="<%= user.given_name %>" required>
         </div>
-        <div class="form-item">
+        <div class="form-item form-item--w50">
           <label for="profile-family_name">Family name:</label>
           <input type="text" id="profile-family_name" name="family_name" value="<%= user.family_name %>" required>
         </div>
-        <div class="form-item">
-          <label for="">Email addresses:</label>
-          <ul class="profile__emails">
-            <%
-              user.emails.forEach(function(email) {
-                if (email.email === user.email) {
-            %>
-              <li class="profile__email email">
-                <span class="email__address"><%= user.email %></span><br>
-                <span class="email__status">Status: <em><strong>Primary</strong></em></span>
-              </li>
-            <% } else { %>
-              <li class="profile__email email">
-                <span class="email__address"><%= email.email %></span><br>
-                <span class="email__status">Status: <em><%= email.validated === true ? 'confirmed' : 'not confirmed' %></em></span>
-              </li>
-            <%
-                }
-              });
-            %>
-          </ul>
+        <div class="form-item [ flow ]">
+          <h3>Email addresses:</h3>
+          <p>Use the radio buttons to select a new primary email address. You may only select an address which has already been confirmed.</p>
+
+          <% user.emails.forEach(function(thisEmail) { %>
+            <div class="profile__email email">
+              <input type="radio" name="email_primary" id="" value="<%= thisEmail.email %>" <%= user.email === thisEmail.email ? 'checked' : '' %> <%= thisEmail.validated ? '' : 'disabled' %>>
+              <div>
+                <span class="email__address"><%= thisEmail.email %></span>
+                <span class="email__status"><%= thisEmail.validated ? '' : 'unconfirmed' %></span>
+              </div>
+            </div>
+          <% }) %>
+
+          <!-- <h3>Add a new email address:</h3> -->
+          <!-- <div class="profile__new-email"> -->
+            <!-- <input type="email" name="email_new" id="email_new" placeholder="you@example.com" title="Must be a valid email address. You are not required to fill this field."> -->
+          <!-- </div> -->
         </div>
         <div class="form-actions">
           <button type="submit" class="cd-button cd-button--bold cd-button--uppercase">Save Profile</button>
