@@ -2,7 +2,25 @@
  * Edit Profile
  */
 .profile {}
-.profile--edit {}
+.profile--edit {
+  display: flex;
+  flex-flow: row wrap;
+  margin: 0 -1rem;
+}
+.profile--edit > * {
+  flex: 1 0 100%;
+  padding: 0 1rem;
+}
+@media screen and (min-width: 720px) {
+  .profile--edit .form-item--w50 {
+    flex: 1 1 50%;
+  }
+}
+
+.profile--edit label {
+  font-weight: 700;
+  color: var(--cd-primary-color);
+}
 
 .profile__emails {}
 .profile__email {
