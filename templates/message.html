@@ -4,13 +4,7 @@
     <div class="cd-layout-content">
       <div class="[ flow ]">
         <h1 class="page-header__heading"><%= title %></h1>
-        <% if (alert) { %>
-          <div class="alert alert--inline alert--<%= alert.type %>" role="alert">
-            <div class="alert__inner">
-              <%= alert.message %>
-            </div>
-          </div>
-        <% } %>
+        <% include alert.html %>
         <% if (isSuccess) { %>
           <p class="form-field">Now you can login on <a href="https://auth.humanitarian.id">Humanitarian ID</a> or one of our <a href="https://about.humanitarian.id/partners-using-our-authentication-service" target="_blank">partner websites</a>.</p>
         <% } %>

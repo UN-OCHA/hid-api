@@ -6,13 +6,7 @@
       <div class="[ flow ]">
         <h1 class="page-header__heading">Log in</h1>
 
-        <% if (alert) { %>
-          <div class="alert alert--inline alert--<%= alert.type %>" role="alert">
-            <div class="alert__inner">
-              <%= alert.message %>
-            </div>
-          </div>
-        <% } %>
+        <% include alert.html %>
 
         <form method="post" action="/login" class="[ flow ]">
           <div class="form-field">
