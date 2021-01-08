@@ -1,0 +1,18 @@
+/**
+ * Edit Profile
+ */
+.profile {}
+.profile--edit {}
+
+.profile__emails {}
+.profile__email {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+}
+.profile__email [type="radio"] {
+  flex: 0 0 4em;
+}
+.profile__email [type="email"] {
+  flex: 1 0 20em;
+}
