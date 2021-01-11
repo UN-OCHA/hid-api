@@ -1306,31 +1306,34 @@ module.exports = {
    *     description: Requested user not found.
    */
   async setPrimaryEmail(request, internalArgs) {
-    const { email } = request.payload;
+    let email = '';
+    let userId = '';
 
-    if (!request.payload.email) {
+    //
+    // Determine source of arguments.
+    //
+    // If internalArgs is sent to this function then we prefer those values.
+    // We are executing on behalf of the user from within ViewController.
+    //
+    // Otherwise, use the normal URL param + payload to determine arg values.
+    //
+    if (internalArgs && internalArgs.userId && internalArgs.email) {
+      userId = internalArgs.userId;
+      email = internalArgs.email;
+    } else {
+      userId = request.params.id;
+      email = request.payload.email;
+    }
+
+    if (!email) {
       logger.warn(
         '[UserController->setPrimaryEmail] No email in payload',
         {
           request,
+          fail: true,
         },
       );
       throw Boom.badRequest();
-    }
-
-    //
-    // Determine userId from two sources.
-    //
-    // If internalArgs is sent to this function then we prefer that value, as it
-    // means we are executing on behalf of the user from within ViewController.
-    //
-    // Otherwise, use the normal URL param to determine userId.
-    //
-    let userId = '';
-    if (internalArgs && internalArgs.userId) {
-      userId = internalArgs.userId;
-    } else {
-      userId = request.params.id;
     }
 
     const record = await User.findOne({ _id: userId }).catch((err) => {

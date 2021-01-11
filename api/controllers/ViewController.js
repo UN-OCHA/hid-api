@@ -585,26 +585,26 @@ module.exports = {
         },
       );
 
-      // Set primary email address using internal method. The first object is a
-      // mock of the request payload we'd send when making client-side JS calls.
-      if (request.payload.email_primary !== user.email) {
-        UserController.setPrimaryEmail({
-          payload: {
-            email: request.payload.email_primary,
-          }
-        }, {
-          userId: cookie.userId,
-        });
-      }
-
       // Create a success confirmation.
       cookie.alert = {
         type: 'success',
-        message: 'Your profile was saved.',
+        message: '<p>Your profile was saved.</p>',
       };
+
+      // Set primary email address using internal method. The first object is a
+      // mock of the request payload we'd send when making client-side JS calls.
+      if (request.payload.email_primary !== user.email) {
+        await UserController.setPrimaryEmail({}, {
+          userId: cookie.userId,
+          email: request.payload.email_primary,
+        }).then(data => {
+          cookie.alert.message += `<p>Your primary email was set to ${request.payload.email_primary}</p>`;
+        });
+      }
+
       request.yar.set('session', cookie);
 
-      // Redirect to profile on success
+      // Redirect to profile on success.
       return reply.redirect('/profile');
     }
   },
