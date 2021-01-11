@@ -82,3 +82,13 @@ Configuration files are stored in `/config`.
 * session.js: used to configure sessions when authenticating with openId Connect
 * views.js: used to configure the views
 * web.js: used to configure the web server (hapi)
+
+# Distinction between API and Auth
+
+HID API contains functions to administer all of HID. If you have sufficient permissions, you can do everything via cURL or your favorite HTTP client, including user management, OAuth Client management, and so forth.
+
+HID Auth is the portion which serves some HTML/CSS in order to allow OAuth users to manage their profile and OAuth authorizations. It is designed to be as lightweight and simple as possible, since an average HID session may only last a few seconds (provided they have an active session and are only wanting to autorize a new website).
+
+In order to reduce code duplication, many API functions now have a second argument available to them called `internalArgs` which allows the HID Auth pages to take advantage of those same functions via simple HTML form submissions that get handled server-side, instead of requiring a client-side JS framework to fire all the API calls.
+
+If you see a function that doesn't yet have `internalArgs`, feel free to add it by following the exact same conventions from an existing function.
