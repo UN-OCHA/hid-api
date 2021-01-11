@@ -28,7 +28,9 @@ function _getPasswordLink(args) {
 }
 
 function _buildRequestUrl(request, url) {
-  let requestUrl = `https://${request.info.host}/${url}`;
+  const protocol = process.env.NODE_ENV === 'local' ? 'http' : 'https';
+  let requestUrl = `${protocol}://${request.info.host}/${url}`;
+
   if (request.query.client_id) {
     requestUrl += `?client_id=${request.query.client_id}`;
   }
