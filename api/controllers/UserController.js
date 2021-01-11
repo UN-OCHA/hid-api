@@ -1636,6 +1636,8 @@ module.exports = {
       })
     );
     for (let i = 0; i < record.emails.length; i += 1) {
+      // TODO: probably shouldn't send notices to unconfirmed email addresses.
+      // @see HID-2150
       promises.push(
         EmailService.sendEmailAlert(record, record.emails[i].email, request.payload.email).then(() => {
           logger.info(
