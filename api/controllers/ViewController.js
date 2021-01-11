@@ -551,7 +551,11 @@ module.exports = {
       });
     }
 
-    // React to form validation array
+    // No special validation needed for new emails at this time.
+    // If we wanted to validate, do it here.
+    if (request.payload.email_new) {}
+
+    // React to form validation errors.
     if (reasons.length > 0) {
       // Display the user feedback as an alert.
       alert = {
@@ -603,6 +607,24 @@ module.exports = {
         });
       }
 
+      // If a new email address was submitted, add it to the user profile. The
+      // internal function will handle the confirmation email being sent.
+      if (request.payload.email_new) {
+        await UserController.addEmail({}, {
+          userId: cookie.userId,
+          email: request.payload.email_new,
+          appValidationUrl: _buildRequestUrl(request, 'verify2'),
+        }).then(data => {
+          cookie.alert.message += `<p>A confirmation email has been sent to ${request.payload.email_new}.</p>`;
+        }).catch(err => {
+          // Read our error and show some user feedback.
+          if (err.message.indexOf('Email is not unique') !== -1) {
+            cookie.alert.message += `<p>The address ${request.payload.email_new} is already added to your account.</p>`;
+          }
+        });
+      }
+
+      // Finalize the user feedback.
       request.yar.set('session', cookie);
 
       // Redirect to profile on success.
