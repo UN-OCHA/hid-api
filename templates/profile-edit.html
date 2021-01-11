@@ -18,14 +18,16 @@
           <input type="text" id="profile-family_name" name="family_name" value="<%= user.family_name %>" required>
         </div>
         <div class="form-item [ flow ]">
-          <h3>Email addresses:</h3>
+          <h3>Manage email addresses:</h3>
           <p>Use the radio buttons to select a new primary email address. You may only select an address which has already been confirmed.</p>
 
           <% user.emails.forEach(function(thisEmail) { %>
             <div class="profile__email email">
-              <input type="radio" name="email_primary" id="" value="<%= thisEmail.email %>" <%= user.email === thisEmail.email ? 'checked' : '' %> <%= thisEmail.validated ? '' : 'disabled' %>>
+              <div class="email__primary">
+                <input type="radio" name="email_primary" id="email_primary-<%= thisEmail._id.toString() %>" value="<%= thisEmail.email %>" <%= user.email === thisEmail.email ? 'checked' : '' %> <%= thisEmail.validated ? '' : 'disabled' %>>
+              </div>
               <div>
-                <span class="email__address"><%= thisEmail.email %></span>
+                <label for="email_primary-<%= thisEmail._id.toString() %>" class="email__address <%= !thisEmail.validated ? 'email__address--unconfirmed' : 'email__address--confirmed' %>"><%= thisEmail.email %></label>
                 <span class="email__status"><%= thisEmail.validated ? '' : 'unconfirmed' %></span>
               </div>
             </div>

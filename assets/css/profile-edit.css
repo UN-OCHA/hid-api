@@ -28,9 +28,17 @@
   flex-flow: row nowrap;
   align-items: center;
 }
-.profile__email [type="radio"] {
-  flex: 0 0 4em;
+.profile__email .email__primary {
+  flex: 0 0 2em;
+  text-align: center;
 }
-.profile__email [type="email"] {
+.profile__email .email__address {
   flex: 1 0 20em;
+}
+.profile__email .email__address--unconfirmed {
+  color: #444;
+}
+.profile__email .email__address--confirmed {
+  font-weight: 700;
+  color: black;
 }
