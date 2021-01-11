@@ -280,6 +280,7 @@ module.exports = {
       hash: request.query.hash,
       id: request.query.id,
       time: request.query.time,
+      emailId: request.query.emailId,
     };
     const registerLink = _getRegisterLink(request.query);
     const passwordLink = _getPasswordLink(request.query);

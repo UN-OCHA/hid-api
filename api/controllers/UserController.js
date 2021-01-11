@@ -1848,7 +1848,21 @@ module.exports = {
         );
         throw Boom.notFound();
       }
+
+      // For automatic verified status.
       let domain = null;
+      // Assign the primary address as the initial value for `email`
+      //
+      // TODO: determine why we are defaulting to the user's primary email
+      // address before going and explicitly looking up the `_id` of the email
+      // actually being verified. When this code was used during HID-1965,
+      // it did not actually work until an additional "emailId" param was passed
+      // from ViewController.verify(). However, it seemed like that query param
+      // should have been necessary beforehand in order to trigger the emailRecord
+      // lookup happening here.
+      //
+      // - Why did that need to be added?
+      // - Why did it work before?
       let { email } = record;
       if (request.payload.emailId) {
         const emailRecord = record.emails.id(request.payload.emailId);
@@ -1856,6 +1870,7 @@ module.exports = {
           ({ email } = emailRecord);
         }
       }
+
       // Verify hash
       if (record.validHash(request.payload.hash, 'verify_email', request.payload.time, email) === true) {
         // Verify user email
