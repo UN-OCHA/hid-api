@@ -1031,7 +1031,8 @@ UserSchema.methods = {
         timestamp: now,
         hash,
       };
-    } if (type === 'verify_email') {
+    }
+    if (type === 'verify_email') {
       const now = Date.now();
       const value = `${now}:${this._id.toString()}:${email}`;
       const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
@@ -1056,7 +1057,8 @@ UserSchema.methods = {
       const value = `${time}:${this._id.toString()}:${this.password}`;
       const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
       return hash === hashLink;
-    } if (type === 'verify_email') {
+    }
+    if (type === 'verify_email') {
       const now = Date.now();
       if (now - time > 24 * 3600 * 1000) {
         return false;
