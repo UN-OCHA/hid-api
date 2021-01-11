@@ -49,6 +49,7 @@
 
 .cd-button.cd-ocha-dropdown__see-all {
   width: 100%;
+  font-size: 14px;
 }
 
 #cd-language li button:hover,
@@ -72,6 +73,22 @@
   background: #007faa;
 }
 
+h1 {
+  color: #295a78;
+}
+
+h2 {
+  color: #007faa;
+}
+
+a {
+  color: #007faa;
+}
+
+a:hover,
+a:focus {
+  color: #007faa;
+}
 
 /**
  * Global layout
