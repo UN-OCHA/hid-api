@@ -1,0 +1,14 @@
+/**
+ * User profile
+ */
+.profile {}
+.profile--show {}
+
+.profile__emails {}
+.profile__email {}
+.email__address {
+  color: black;
+}
+.email__status {
+  color: #777;
+}

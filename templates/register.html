@@ -2,12 +2,10 @@
 
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
-<div class="container api-page">
-  <div class="row">
-    <div class="col-sm-10 offset-sm-1 col-md-8 offset-md-2">
-      <div class="page-header">
-        <h1 class="page-header__heading">Register a Humanitarian ID account</h1>
-      </div>
+<div class="api-page">
+  <main role="main" id="main-content" class="cd-container">
+    <div class="cd-layout-content [ flow ]">
+      <h1 class="page-header__heading">Register a Humanitarian ID account</h1>
 
       <% if (typeof alert !== 'undefined') { %>
         <div class="alert alert--inline alert--<%= alert.type %>" role="alert">
@@ -17,7 +15,7 @@
         </div>
       <% } %>
 
-      <form name="register" action="/register" method="POST" onsubmit="return checkForm(this)">
+      <form name="register" action="/register" method="POST" onsubmit="return checkForm(this)" class="[ flow ]">
         <div class="form-field">
           <label for="email" translate>Email</label>
           <input type="email" name="email" id="email" value="<%= formEmail %>" placeholder="you@example.com" required>
@@ -59,17 +57,16 @@
             <li>Contain <strong>one uppercase character</strong></li>
             <li>Contain <strong>one lowercase character</strong></li>
             <li>Contain <strong>one special character</strong> <code>!@#$%^&*()+=\`{}</code></li>
-            <li>Be different than your previous password</li>
           </ul>
         </div>
         <div class="g-recaptcha" data-sitekey="<%= recaptcha_site_key %>"></div>
         <input type="hidden" name="crumb" value="<%= crumb %>" />
         <input type="hidden" name="app_verify_url" value="<%= requestUrl %>" />
-        <button type="submit" class="btn-primary">Register</button>
+        <button type="submit" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase">Register</button>
       </form>
     </div>
-  </div>
+  </main>
 </div>
 
-<% include formassets %>
+<script><% include ../assets/js/forms.js %></script>
 <% include footer %>
