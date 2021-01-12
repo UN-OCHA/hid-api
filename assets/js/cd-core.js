@@ -392,30 +392,4 @@ if (typeof ElementPrototype.closest !== 'function') {
     // Initial setup.
     handleResize();
   }
-
-  // Define OCHA Services elements
-  var ochaButton = document.querySelector('#cd-ocha-dropdown-toggler');
-  // Listen for interaction with OCHA Services menu
-  ochaButton.addEventListener('click', function toggleDropdown() {
-    if (ochaButton.getAttribute('aria-expanded') === 'true') {
-      ga('send', 'event', 'Auth', 'OCHA Services', 'Close');
-    } else {
-      ga('send', 'event', 'Auth', 'OCHA Services', 'Open');
-    }
-  });
-
-  // Define Login element
-  var loginLink = document.querySelector('.login-link');
-
-  // Listen for interaction with Login link
-  if(loginLink) {
-    loginLink.addEventListener('click', function(ev) {
-      // Prevent full-page refresh
-      ev.preventDefault();
-
-      // Focus on email input
-      var emailInput = document.querySelector('#email');
-      emailInput.focus();
-    });
-  }
 }());

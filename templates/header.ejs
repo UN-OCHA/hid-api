@@ -87,33 +87,29 @@
 
             <div class="cd-global-header__actions">
               <div class="cd-global-header__user-menu">
-                <h2 class="element-invisible" translate>User menu</h2>
-
-                  <ul class="menu">
-                      <% if (locals.user) { %>
-                      <li class="cd-user-menu__icon-login cd-user-menu--profile">
-
-                          <ul class="menu cd-global-header__dropdown cd-user-menu__dropdown cd-dropdown" id="cd-user-dropdown" aria-label="My Account" data-cd-toggable="My Account" data-cd-hidden="true" data-cd-icon="arrow-down">
-
-                              <li class="menu-item">
-                                <a href="/profile" class="user-profile">Profile</a>
-                              </li>
-                              <li class="menu-item">
-                                <a href="/settings" class="user-settings">Settings</a>
-                              </li>
-                              <li class="menu-item">
-                                <a href="/logout" class="user-logout">Log out</a>
-                              </li>
-                          </ul>
-                      </li>
-
-                      <%} else { %>
-                      <!-- anonymous user-login link -->
-                        <li class="cd-user-menu__icon-login">
-                        <a href="/" class="login-link" translate>Login</a>
+                <h2 class="element-invisible">User menu</h2>
+                <ul class="menu">
+                  <% if (locals.user) { %>
+                    <li class="cd-user-menu__icon-login cd-user-menu--profile">
+                      <ul class="menu cd-global-header__dropdown cd-user-menu__dropdown cd-dropdown" id="cd-user-dropdown" aria-label="My Account" data-cd-toggable="My Account" data-cd-hidden="true" data-cd-icon="arrow-down">
+                        <li class="menu-item">
+                          <a href="/profile" class="user-profile">Profile</a>
                         </li>
-                      <% } %>
-                  </ul>
+                        <li class="menu-item">
+                          <a href="/settings" class="user-settings">Settings</a>
+                        </li>
+                        <li class="menu-item">
+                          <a href="/logout" class="user-logout">Log out</a>
+                        </li>
+                      </ul>
+                    </li>
+                  <% } else { %>
+                    <!-- anonymous user-login link -->
+                    <li class="cd-user-menu__icon-login">
+                      <a href="/" class="login-link">Login</a>
+                    </li>
+                  <% } %>
+                </ul>
               </div>
 
               <div class="cd-global-header__language-switcher">
