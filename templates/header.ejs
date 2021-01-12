@@ -91,7 +91,7 @@
                 <ul class="menu">
                   <% if (locals.user) { %>
                     <li class="cd-user-menu__icon-login cd-user-menu--profile">
-                      <ul class="menu cd-global-header__dropdown cd-user-menu__dropdown cd-dropdown" id="cd-user-dropdown" aria-label="My Account" data-cd-toggable="My Account" data-cd-hidden="true" data-cd-icon="arrow-down">
+                      <ul class="menu cd-global-header__dropdown cd-user-menu__dropdown cd-dropdown" id="cd-user-dropdown" aria-label="<%= locals.user.name %>" data-cd-toggable="<%= locals.user.name %>" data-cd-hidden="true" data-cd-icon="arrow-down">
                         <li class="menu-item">
                           <a href="/profile" class="user-profile">Profile</a>
                         </li>
