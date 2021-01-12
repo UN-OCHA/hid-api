@@ -42,3 +42,9 @@
   font-weight: 700;
   color: black;
 }
+
+.form-actions .cd-button {
+  /* we have a link styled like a back button, and a real button. they have
+  different line-heights due to normalize.css not resetting links */
+  line-height: 1.15;
+}
