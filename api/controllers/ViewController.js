@@ -720,10 +720,14 @@ module.exports = {
         }).then(data => {
           cookie.alert.message += `<p>A confirmation email has been sent to ${request.payload.email_new}.</p>`;
         }).catch(err => {
+          cookie.alert.type = 'danger';
+
           // Read our error and show some user feedback.
-          if (err.message.indexOf('Email is not unique') !== -1) {
-            cookie.alert.type = 'danger';
+          if (err.message && err.message.indexOf('Email already exists') !== -1) {
             cookie.alert.message = `<p>The address ${request.payload.email_new} is already added to your account.</p>`;
+          }
+          else if (err.message && err.message.indexOf('Email is not unique') !== -1) {
+            cookie.alert.message = `<p>The address ${request.payload.email_new} is already registered.</p>`;
           }
         });
       }
