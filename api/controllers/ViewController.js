@@ -529,18 +529,17 @@ module.exports = {
     // Did we get a valid payload object?
     if (!request.payload) {
       reasons.push('There was an server error while processing the form. Please try again.');
-    }
-
-    logger.warn(
-      '[ViewController->profileEmailsSubmit] Received an empty form payload.',
-      {
-        request,
-        fail: true,
-        user: {
-          id: cookie.userId,
+      logger.warn(
+        '[ViewController->profileEmailsSubmit] Received an empty form payload.',
+        {
+          request,
+          fail: true,
+          user: {
+            id: cookie.userId,
+          },
         },
-      },
-    );
+      );
+    }
 
     // Given name must exist.
     if (typeof request.payload.given_name !== 'undefined' && request.payload.given_name !== '') {
@@ -561,7 +560,7 @@ module.exports = {
       // Display the user feedback as an alert.
       alert = {
         type: 'danger',
-        message: '<p>Your profile could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
+        message: '<p>Your basic profile info could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
       };
 
       // Show user the profile edit form again.
@@ -623,18 +622,17 @@ module.exports = {
     // Did we get a valid payload object?
     if (!request.payload) {
       reasons.push('There was an server error while processing the form. Please try again.');
-    }
-
-    logger.warn(
-      '[ViewController->profileEmailsSubmit] Received an empty form payload.',
-      {
-        request,
-        fail: true,
-        user: {
-          id: cookie.userId,
+      logger.warn(
+        '[ViewController->profileEmailsSubmit] Received an empty form payload.',
+        {
+          request,
+          fail: true,
+          user: {
+            id: cookie.userId,
+          },
         },
-      },
-    );
+      );
+    }
 
     //
     // The desired primary email address must already be marked as 'validated'
@@ -664,7 +662,7 @@ module.exports = {
       // Display the user feedback as an alert.
       alert = {
         type: 'danger',
-        message: '<p>Your profile could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
+        message: '<p>Your email settings could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
       };
 
       // Show user the profile edit form again.
