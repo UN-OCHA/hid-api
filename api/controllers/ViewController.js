@@ -274,6 +274,8 @@ module.exports = {
   },
 
   async verify(request, reply) {
+    const cookie = request.yar.get('session');
+
     // Do we have what we need to validate the confirmation link?
     if (!request.query.hash || !request.query.id || !request.query.time || !request.query.emailId) {
       throw Boom.badRequest('Missing necessary parameters');
@@ -293,8 +295,23 @@ module.exports = {
 
     try {
       await UserController.validateEmail(request);
+
+      // If user is logged in, send them to their profile.
+      if (cookie && cookie.userId) {
+        cookie.alert = {
+          type: 'success',
+          message: 'Thank you for confirming your email address. It can now be set as your primary email if you wish.',
+        }
+        request.yar.set('session', cookie);
+
+        return reply.redirect('/profile/edit');
+      }
+
       return reply.view('login', {
-        alert: { type: 'success', message: 'Thank you for confirming your email address. You can now log in' },
+        alert: {
+          type: 'success',
+          message: 'Thank you for confirming your email address. You can now log in',
+        },
         query: request.query,
         registerLink,
         passwordLink,
