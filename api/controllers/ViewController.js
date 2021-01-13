@@ -492,9 +492,22 @@ module.exports = {
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
       return reply.redirect('/');
     }
+
+    // Load user from DB
     const user = await User.findOne({ _id: cookie.userId });
+
+    // If the cookie has an alert to display, load it into the page and erase it
+    // from the cookie.
+    let alert;
+    if (cookie.alert) {
+      alert = cookie.alert;
+      delete cookie.alert;
+      request.yar.set('session', cookie);
+    }
+
     return reply.view('profile-edit', {
       user,
+      alert,
     });
   },
 
@@ -700,7 +713,7 @@ module.exports = {
       request.yar.set('session', cookie);
 
       // Redirect to profile on success.
-      return reply.redirect('/profile');
+      return reply.redirect('/profile/edit');
     }
   },
 
