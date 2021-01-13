@@ -1712,10 +1712,18 @@ module.exports = {
    *   '404':
    *     description: Requested user not found.
    */
-  async dropEmail(request) {
-    const { id, email } = request.params;
+  async dropEmail(request, internalArgs) {
+    let userId, email;
 
-    if (!request.params.email) {
+    if (internalArgs && internalArgs.userId && internalArgs.email) {
+      userId = internalArgs.userId;
+      email = internalArgs.email;
+    } else {
+      userId = request.params.id;
+      email = request.params.email;
+    }
+
+    if (!email) {
       logger.warn(
         '[UserController->dropEmail] No email provided',
         {
@@ -1726,10 +1734,10 @@ module.exports = {
       throw Boom.badRequest();
     }
 
-    const record = await User.findOne({ _id: id });
+    const record = await User.findOne({ _id: userId });
     if (!record) {
       logger.warn(
-        `[UserController->dropEmail] User ${id} not found`,
+        `[UserController->dropEmail] User ${userId} not found`,
         {
           request,
           fail: true,
@@ -1739,7 +1747,7 @@ module.exports = {
     }
     if (email === record.email) {
       logger.warn(
-        `[UserController->dropEmail] Primary email for user ${id} can not be removed`,
+        `[UserController->dropEmail] Primary email for user ${userId} can not be removed`,
         {
           request,
           fail: true,
@@ -1767,11 +1775,12 @@ module.exports = {
     await record.save();
 
     logger.info(
-      `[UserController->dropEmail] User ${id} saved successfully`,
+      `[UserController->dropEmail] User ${userId} saved successfully`,
       {
         request,
         user: {
-          id,
+          userId,
+          email: record.email,
         },
       },
     );
