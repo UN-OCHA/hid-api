@@ -515,8 +515,19 @@ module.exports = {
 
     // Did we get a valid payload object?
     if (!request.payload) {
-      reasons.push('payload was missing');
+      reasons.push('There was an server error while processing the form. Please try again.');
     }
+
+    logger.warn(
+      '[ViewController->profileEmailsSubmit] Received an empty form payload.',
+      {
+        request,
+        fail: true,
+        user: {
+          id: cookie.userId,
+        },
+      },
+    );
 
     // Given name must exist.
     if (typeof request.payload.given_name !== 'undefined' && request.payload.given_name !== '') {
@@ -531,6 +542,86 @@ module.exports = {
     } else {
       reasons.push('Family name is required.');
     }
+
+    // React to form validation errors.
+    if (reasons.length > 0) {
+      // Display the user feedback as an alert.
+      alert = {
+        type: 'danger',
+        message: '<p>Your profile could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
+      };
+
+      // Show user the profile edit form again.
+      return reply.view('profile-edit', {
+        alert,
+        user,
+      });
+    } else {
+      // No errors were found, so load the user and update DB with the simple
+      // profile fields that don't need special treatment.
+      //
+      // TODO: replace this with UserController.update().
+      const user = await User.findOneAndUpdate({ _id: cookie.userId }, {
+        given_name: request.payload.given_name,
+        family_name: request.payload.family_name,
+      }, {
+        runValidators: true,
+        new: true,
+      });
+
+      logger.info(
+        `[ViewController->profileEditSubmit] Updated user profile for ${cookie.userId}`,
+        {
+          user: {
+            id: cookie.userId,
+          },
+        },
+      );
+
+      // Create a success confirmation.
+      cookie.alert = {
+        type: 'success',
+        message: '<p>Your profile was saved.</p>',
+      };
+
+      // Finalize the user feedback.
+      request.yar.set('session', cookie);
+
+      // Redirect to profile on success.
+      return reply.redirect('/profile');
+    }
+  },
+
+  // Handle changes to emails on a profile
+  async profileEmailsSubmit(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // Load user from DB for some validation operations.
+    const user = await User.findOne({ _id: cookie.userId });
+
+    // We might need to send feedback. Create an alert/errors variables.
+    let alert = {};
+    let reasons = [];
+
+    // Did we get a valid payload object?
+    if (!request.payload) {
+      reasons.push('There was an server error while processing the form. Please try again.');
+    }
+
+    logger.warn(
+      '[ViewController->profileEmailsSubmit] Received an empty form payload.',
+      {
+        request,
+        fail: true,
+        user: {
+          id: cookie.userId,
+        },
+      },
+    );
 
     //
     // The desired primary email address must already be marked as 'validated'
@@ -569,26 +660,7 @@ module.exports = {
         user,
       });
     } else {
-      // No errors were found, so load the user and update DB with the simple
-      // profile fields that don't need special treatment.
-      //
-      // TODO: replace this with UserController.update().
-      const user = await User.findOneAndUpdate({ _id: cookie.userId }, {
-        given_name: request.payload.given_name,
-        family_name: request.payload.family_name,
-      }, {
-        runValidators: true,
-        new: true,
-      });
-
-      logger.info(
-        `[ViewController->profileEditSubmit] Updated user profile for ${cookie.userId}`,
-        {
-          user: {
-            id: cookie.userId,
-          },
-        },
-      );
+      // No errors were found, make updates to emails
 
       // Create a success confirmation.
       cookie.alert = {
