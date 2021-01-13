@@ -675,7 +675,7 @@ module.exports = {
           if (thisEmail.validated) {
             // The email is eligible to be primary.
           } else {
-            reasons.push(`You selected ${thisEmail} to be your primary address, but it is not confirmed.`);
+            reasons.push(`You selected ${thisEmail.email} to be your primary address, but it is not confirmed.`);
           }
         }
       });
