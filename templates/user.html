@@ -1,16 +1,17 @@
 <% include header %>
-<div class="api-page">
-  <main role="main" id="main-content" class="cd-container">
-    <div class="cd-layout-content [ flow ]">
-      <h1 class="page-header__heading">Welcome, <%= user.name %></h1>
-      <p class="form-field">You are logged in to HID.</p>
+<style><% include ../assets/css/user.css %></style>
 
-      <p>
-        <a href="/profile" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase">Profile</a>
-        <a href="/settings" class="cd-button cd-button--outline cd-button--wide cd-button--uppercase">Settings</a>
-        <a href="/logout" class="cd-button cd-button--outline cd-button--wide cd-button--uppercase">Logout</a>
-      </p>
-    </div>
-  </main>
-</div>
+<main role="main" id="main-content" class="cd-container">
+  <div class="cd-layout-content lp [ flow ]">
+    <h1 class="page-header__heading">Welcome, <%= user.name %></h1>
+    <p class="form-field">You are logged in to HID.</p>
+
+    <p class="lp__buttons [ flow ]">
+      <a href="/profile" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase">Profile</a>
+      <a href="/settings" class="cd-button cd-button--outline cd-button--wide cd-button--uppercase">Settings</a>
+      <a href="/logout" class="cd-button cd-button--outline cd-button--wide cd-button--uppercase">Logout</a>
+    </p>
+  </div>
+</main>
+
 <% include footer %>

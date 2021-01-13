@@ -34,7 +34,7 @@
   text-align: center;
 }
 .profile__email .email__address {
-  flex: 0 0 20ch;
+  flex: 0 1 20ch;
   font-family: monospace;
   overflow: hidden;
   text-overflow: ellipsis;
