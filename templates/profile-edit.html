@@ -27,7 +27,7 @@
           </div>
         </form>
 
-        <form action="/profile/edit/emails" method="POST" class="[ flow ]">
+        <form name="emailForm" action="/profile/edit/emails" method="POST" class="[ flow ]">
           <div class="form-item [ flow ]">
             <h2>Manage email addresses</h2>
             <p>Use the radio buttons to select a new primary email address. You may only select an address which has already been confirmed.</p>
@@ -45,7 +45,15 @@
                   <% if (user.email === thisEmail.email) { %>
                     <button disabled class="cd-button cd-button--small cd-button--bold cd-button--uppercase">Primary</button>
                   <% } else { %>
-                    <button type="submit" name="email_delete" value="<%= thisEmail.email %>" class="cd-button cd-button--small cd-button--bold cd-button--uppercase cd-button--danger">Delete</button>
+                    <button
+                      type="submit"
+                      name="email_delete"
+                      value="<%= thisEmail.email %>"
+                      class="cd-button cd-button--small cd-button--bold cd-button--uppercase cd-button--danger"
+                      onclick="return confirmDeletion('<%= thisEmail.email %>')"
+                    >
+                      Delete
+                    </button>
                   <% } %>
                 </div>
                 <div class="email__status">
@@ -71,4 +79,6 @@
     </div>
   </main>
 </div>
+
+<script><% include ../assets/js/profile-edit.js %></script>
 <% include footer %>
