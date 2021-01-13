@@ -10,7 +10,7 @@ servers:
     description: Staging server. For use by all UNOCHA developers.
   - url: 'https://api.humanitarian.id/api/v3'
     description: Production server. For use by HID Authentication Partners.
-  - url: 'http://api.hid.vm:3000/api/v3'
+  - url: 'http://api.hid.vm/api/v3'
     description: Localhost server. For local dev/debugging.
 tags:
   - name: auth

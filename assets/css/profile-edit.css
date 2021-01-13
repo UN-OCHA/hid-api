@@ -1,0 +1,50 @@
+/**
+ * Edit Profile
+ */
+.profile {}
+.profile--edit {
+  display: flex;
+  flex-flow: row wrap;
+  margin: 0 -1rem;
+}
+.profile--edit > * {
+  flex: 1 0 100%;
+  padding: 0 1rem;
+}
+@media screen and (min-width: 720px) {
+  .profile--edit .form-item--w50 {
+    flex: 1 0 40%; /* IE11 needs a smaller value than 50% */
+  }
+}
+
+.profile--edit label {
+  font-weight: 700;
+  color: var(--cd-primary-color);
+}
+
+.profile__emails {}
+.profile__email {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+}
+.profile__email .email__primary {
+  flex: 0 0 2em;
+  text-align: center;
+}
+.profile__email .email__address {
+  flex: 1 0 20em;
+}
+.profile__email .email__address--unconfirmed {
+  color: #444;
+}
+.profile__email .email__address--confirmed {
+  font-weight: 700;
+  color: black;
+}
+
+.form-actions .cd-button {
+  /* we have a link styled like a back button, and a real button. they have
+  different line-heights due to normalize.css not resetting links */
+  line-height: 1.15;
+}

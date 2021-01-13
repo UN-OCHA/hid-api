@@ -1305,20 +1305,38 @@ module.exports = {
    *   '404':
    *     description: Requested user not found.
    */
-  async setPrimaryEmail(request) {
-    const { email } = request.payload;
+  async setPrimaryEmail(request, internalArgs) {
+    let email = '';
+    let userId = '';
 
-    if (!request.payload.email) {
+    //
+    // Determine source of arguments.
+    //
+    // If internalArgs is sent to this function then we prefer those values.
+    // We are executing on behalf of the user from within ViewController.
+    //
+    // Otherwise, use the normal URL param + payload to determine arg values.
+    //
+    if (internalArgs && internalArgs.userId && internalArgs.email) {
+      userId = internalArgs.userId;
+      email = internalArgs.email;
+    } else {
+      userId = request.params.id;
+      email = request.payload.email;
+    }
+
+    if (!email) {
       logger.warn(
         '[UserController->setPrimaryEmail] No email in payload',
         {
           request,
+          fail: true,
         },
       );
       throw Boom.badRequest();
     }
 
-    const record = await User.findOne({ _id: request.params.id }).catch((err) => {
+    const record = await User.findOne({ _id: userId }).catch((err) => {
       logger.error(
         `[UserController->setPrimaryEmail] ${err.message}`,
         {
@@ -1329,12 +1347,12 @@ module.exports = {
         },
       );
 
-      throw Boom.internal('There is a problem querying to the database. Please try again.');
+      throw Boom.internal('There was a problem querying the database. Please try again.');
     });
 
     if (!record) {
       logger.warn(
-        `[UserController->setPrimaryEmail] Could not find user ${request.params.id}`,
+        `[UserController->setPrimaryEmail] Could not find user ${userId}`,
         {
           request,
           fail: true,
@@ -1346,7 +1364,7 @@ module.exports = {
     const index = record.emailIndex(email);
     if (index === -1) {
       logger.warn(
-        `[UserController->setPrimaryEmail] Email ${email} does not exist for user ${request.params.id}`,
+        `[UserController->setPrimaryEmail] Email ${email} does not exist for user ${userId}`,
         {
           request,
           fail: true,
@@ -1356,7 +1374,7 @@ module.exports = {
     }
     if (!record.emails[index].validated) {
       logger.warn(
-        `[UserController->setPrimaryEmail] Email ${record.emails[index]} has not been validated for user ${request.params.id}`,
+        `[UserController->setPrimaryEmail] Email ${record.emails[index]} has not been validated for user ${userId}`,
         {
           request,
           fail: true,
@@ -1371,22 +1389,22 @@ module.exports = {
     record.lastModified = new Date();
     await record.save();
     logger.info(
-      `[UserController->setPrimaryEmail] Saved user ${request.params.id} successfully`,
+      `[UserController->setPrimaryEmail] Saved user ${userId} successfully`,
       {
         request,
         user: {
-          id: request.params.id,
+          id: userId,
           email,
         }
       },
     );
     await GSSSyncService.synchronizeUser(record);
     logger.info(
-      `[UserController->setPrimaryEmail] Synchronized user ${request.params.id} with google spreadsheets successfully`,
+      `[UserController->setPrimaryEmail] Synchronized user ${userId} with google spreadsheets successfully`,
       {
         request,
         user: {
-          id: request.params.id,
+          id: userId,
         },
       },
     );
@@ -1518,16 +1536,30 @@ module.exports = {
    *   '404':
    *     description: Requested user not found.
    */
-  async addEmail(request) {
-    const appValidationUrl = request.payload.app_validation_url;
-    const userId = request.params.id;
+  async addEmail(request, internalArgs) {
+    let userId = '';
+    let email = '';
+    let appValidationUrl = '';
 
-    if (!appValidationUrl || !request.payload.email) {
+    if (internalArgs && internalArgs.userId && internalArgs.email && internalArgs.appValidationUrl) {
+      userId = internalArgs.userId;
+      email = internalArgs.email;
+      appValidationUrl = internalArgs.appValidationUrl;
+    } else {
+      userId = request.params.id;
+      email = request.payload.email;
+      appValidationUrl = request.payload.app_validation_url;
+    }
+
+    if (!appValidationUrl || !email) {
       logger.warn(
-        '[UserController->addEmail] No email or app_validation_url provided',
+        '[UserController->addEmail] Either email or app_validation_url was not provided',
         {
           request,
           fail: true,
+          user: {
+            id: userId,
+          },
         },
       );
       throw Boom.badRequest('Required parameters not present in payload');
@@ -1546,10 +1578,10 @@ module.exports = {
     }
 
     // Make sure email added is unique
-    const erecord = await User.findOne({ 'emails.email': request.payload.email });
+    const erecord = await User.findOne({ 'emails.email': email });
     if (erecord) {
       logger.warn(
-        `[UserController->addEmail] Email ${request.payload.email} is not unique`,
+        `[UserController->addEmail] Email ${email} is not unique`,
         {
           request,
           fail: true,
@@ -1568,7 +1600,7 @@ module.exports = {
       );
       throw Boom.notFound();
     }
-    const { email } = request.payload;
+
     if (record.emailIndex(email) !== -1) {
       logger.warn(
         `[UserController->addEmail] Email ${email} already exists`,
@@ -1579,13 +1611,14 @@ module.exports = {
       );
       throw Boom.badRequest('Email already exists');
     }
+
     if (record.emails.length === 0 && record.is_ghost) {
       // Turn ghost into orphan and set main email address
       record.is_ghost = false;
       record.is_orphan = true;
-      record.email = request.payload.email;
+      record.email = email;
     }
-    const data = { email: request.payload.email, type: request.payload.type, validated: false };
+    const data = { email: email, type: 'Work', validated: false };
     record.emails.push(data);
     record.lastModified = new Date();
     const savedRecord = await record.save();
@@ -1621,8 +1654,10 @@ module.exports = {
       })
     );
     for (let i = 0; i < record.emails.length; i += 1) {
+      // TODO: probably shouldn't send notices to unconfirmed email addresses.
+      // @see HID-2150
       promises.push(
-        EmailService.sendEmailAlert(record, record.emails[i].email, request.payload.email).then(() => {
+        EmailService.sendEmailAlert(record, record.emails[i].email, email).then(() => {
           logger.info(
             `[UserController->addEmail] Successfully sent email alert to ${record.emails[i].email}`,
             {
@@ -1813,7 +1848,21 @@ module.exports = {
         );
         throw Boom.notFound();
       }
+
+      // For automatic verified status.
       let domain = null;
+      // Assign the primary address as the initial value for `email`
+      //
+      // TODO: determine why we are defaulting to the user's primary email
+      // address before going and explicitly looking up the `_id` of the email
+      // actually being verified. When this code was used during HID-1965,
+      // it did not actually work until an additional "emailId" param was passed
+      // from ViewController.verify(). However, it seemed like that query param
+      // should have been necessary beforehand in order to trigger the emailRecord
+      // lookup happening here.
+      //
+      // - Why did that need to be added?
+      // - Why did it work before?
       let { email } = record;
       if (request.payload.emailId) {
         const emailRecord = record.emails.id(request.payload.emailId);
@@ -1821,6 +1870,7 @@ module.exports = {
           ({ email } = emailRecord);
         }
       }
+
       // Verify hash
       if (record.validHash(request.payload.hash, 'verify_email', request.payload.time, email) === true) {
         // Verify user email

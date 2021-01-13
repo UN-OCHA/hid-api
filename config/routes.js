@@ -160,6 +160,24 @@ module.exports = [
 
   {
     method: 'GET',
+    path: '/profile/edit',
+    handler: ViewController.profileEdit,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'POST',
+    path: '/profile/edit',
+    handler: ViewController.profileEditSubmit,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'GET',
     path: '/settings',
     handler: ViewController.settings,
     options: {
