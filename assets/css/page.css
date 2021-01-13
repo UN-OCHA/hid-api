@@ -203,7 +203,7 @@ input:focus:invalid {
   outline-offset: 0;
 }
 
-.form-field code {
+form code {
   display: inline-block;
   background: #eee;
   border-radius: 3px;

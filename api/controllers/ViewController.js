@@ -2,6 +2,7 @@ const Boom = require('@hapi/boom');
 const Recaptcha = require('recaptcha2');
 const Client = require('../models/Client');
 const User = require('../models/User');
+const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
 const UserController = require('./UserController');
 const AuthPolicy = require('../policies/AuthPolicy');
@@ -511,7 +512,9 @@ module.exports = {
     });
   },
 
-  // Save edits to user profile
+  /**
+   * Form submission handler for basic profile management.
+   */
   async profileEditSubmit(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
@@ -604,7 +607,9 @@ module.exports = {
     }
   },
 
-  // Handle changes to emails on a profile
+  /**
+   * Form submission handler for email management.
+   */
   async profileEmailsSubmit(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
@@ -653,10 +658,18 @@ module.exports = {
       });
     }
 
-    // If an email was chosen to be deleted, perform some validation.
-    if (request.payload.email_delete) {
+    // If an email was chosen to be deleted.
+    if (typeof request.payload.email_delete !== 'undefined') {
       if (request.payload.email_delete === request.payload.email_primary) {
         reasons.push(`You attempted to delete ${request.payload.email_delete}, but also selected it to be your primary address.`);
+      }
+    }
+
+    // If an email was chosen to receive a confirmation link.
+    if (typeof request.payload.email_confirm !== 'undefined') {
+      const emailIsConfirmedAlready = user.emails.filter(thisEmail => thisEmail.email === request.payload.email_confirm && thisEmail.validated);
+      if (emailIsConfirmedAlready.length > 0) {
+        reasons.push(`You attempted to confirm ${request.payload.email_confirm}, but it doesn't need confirmation.`);
       }
     }
 
@@ -707,6 +720,23 @@ module.exports = {
         }).catch(err => {
           cookie.alert.type = 'danger';
           cookie.alert.message = `There was a problem removing ${request.payload.email_delete} from your account.`;
+        });
+      }
+
+      // If a confirmation email was requested, send it
+      if (request.payload.email_confirm) {
+        const emailIndex = user.emailIndex(request.payload.email_confirm);
+        const confirmEmail = user.emails[emailIndex];
+        await EmailService.sendValidationEmail(
+          user,
+          confirmEmail.email,
+          confirmEmail._id.toString(),
+          _buildRequestUrl(request, 'verify2')
+        ).then(data => {
+          cookie.alert.message += 'The confirmation email will arrive in your inbox shortly.';
+        }).catch(err => {
+          cookie.alert.type = 'danger';
+          cookie.alert.message = 'There was a problem sending the confirmation email.';
         });
       }
 
