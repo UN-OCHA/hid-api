@@ -42,9 +42,9 @@
                 </div>
                 <div class="email__delete">
                   <% if (user.email === thisEmail.email) { %>
-                    <button disabled type="submit" value="<%= thisEmail.email %>" class="cd-button cd-button--small cd-button--bold cd-button--uppercase">Primary</button>
+                    <button disabled class="cd-button cd-button--small cd-button--bold cd-button--uppercase">Primary</button>
                   <% } else { %>
-                    <button type="submit" value="<%= thisEmail.email %>" class="cd-button cd-button--small cd-button--bold cd-button--uppercase cd-button--danger">Delete</button>
+                    <button type="submit" name="email_delete" value="<%= thisEmail.email %>" class="cd-button cd-button--small cd-button--bold cd-button--uppercase cd-button--danger">Delete</button>
                   <% } %>
                 </div>
                 <div class="email__status">

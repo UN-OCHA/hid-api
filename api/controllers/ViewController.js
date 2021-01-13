@@ -653,6 +653,13 @@ module.exports = {
       });
     }
 
+    // If an email was chosen to be deleted, perform some validation.
+    if (request.payload.email_delete) {
+      if (request.payload.email_delete === request.payload.email_primary) {
+        reasons.push(`You attempted to delete ${request.payload.email_delete}, but also selected it to be your primary address.`);
+      }
+    }
+
     // No special validation needed for new emails at this time.
     // If we wanted to validate, do it here.
     if (request.payload.email_new) {}
@@ -676,17 +683,30 @@ module.exports = {
       // Create a success confirmation.
       cookie.alert = {
         type: 'success',
-        message: '<p>Your profile was saved.</p>',
+        message: '<p>Your email settings were saved.</p>',
       };
 
-      // Set primary email address using internal method. The first object is a
-      // mock of the request payload we'd send when making client-side JS calls.
+      // First, set primary email address using internal method.
       if (request.payload.email_primary !== user.email) {
         await UserController.setPrimaryEmail({}, {
           userId: cookie.userId,
           email: request.payload.email_primary,
         }).then(data => {
           cookie.alert.message += `<p>Your primary email was set to ${request.payload.email_primary}</p>`;
+        });
+        // TODO: add a .catch() to avoid sploding the server.
+      }
+
+      // If an email address was chosen to be deleted, drop it from the profile
+      if (request.payload.email_delete) {
+        await UserController.dropEmail({}, {
+          userId: cookie.userId,
+          email: request.payload.email_delete,
+        }).then(data => {
+          cookie.alert.message += `You deleted ${request.payload.email_delete} from your account.`;
+        }).catch(err => {
+          cookie.alert.type = 'danger';
+          cookie.alert.message = `There was a problem removing ${request.payload.email_delete} from your account.`;
         });
       }
 
@@ -702,7 +722,8 @@ module.exports = {
         }).catch(err => {
           // Read our error and show some user feedback.
           if (err.message.indexOf('Email is not unique') !== -1) {
-            cookie.alert.message += `<p>The address ${request.payload.email_new} is already added to your account.</p>`;
+            cookie.alert.type = 'danger';
+            cookie.alert.message = `<p>The address ${request.payload.email_new} is already added to your account.</p>`;
           }
         });
       }
