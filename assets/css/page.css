@@ -81,6 +81,14 @@ h1, h2, h3, h4, h5 {
   background: #007faa;
 }
 
+.cd-button--danger {
+  background-color: var(--cd-highlight-red);
+}
+
+.cd-button[disabled] {
+  opacity: .666;
+}
+
 
 /**
  * Global layout
