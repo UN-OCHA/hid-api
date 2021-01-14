@@ -33,7 +33,7 @@
   padding: 1.5rem;
 }
 
-[role="tabpanel"] * + * {
+[role="tabpanel"] > * + * {
   margin-top: 0.75rem;
 }
 
