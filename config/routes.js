@@ -195,6 +195,15 @@ module.exports = [
   },
 
   {
+    method: 'POST',
+    path: '/settings/oauth-clients',
+    handler: ViewController.settingsOauthSubmit,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
     method: 'GET',
     path: '/docs/{param*}',
     handler: {

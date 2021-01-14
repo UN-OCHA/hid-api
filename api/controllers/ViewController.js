@@ -800,9 +800,84 @@ module.exports = {
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
       return reply.redirect('/');
     }
+
+    // Check for user feedback and display
+    let alert;
+    if (cookie.alert) {
+      alert = cookie.alert;
+      delete(cookie.alert);
+      request.yar.set('session', cookie);
+    }
+
+    // Load user from DB.
     const user = await User.findOne({ _id: cookie.userId });
+
+    // Render settins page.
     return reply.view('settings', {
       user,
+      alert,
     });
   },
+
+  /**
+   * Handle form submissions related to OAuth Client management.
+   */
+  async settingsOauthSubmit(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // Load current user from DB.
+    const user = await User.findOne({ _id: cookie.userId });
+
+    // Set up user feedback.
+    let reasons = [];
+    let alert = {};
+
+    console.log('🐛', request.payload);
+
+    // Did they try to delete an OAuth client?
+    if (request.payload && request.payload.oauth_client_delete) {
+      // TODO: if we can, pull this from a canonical source. This was copied
+      //       from the routes config file and should always stay in sync.
+      //
+      // @see config/routes.js
+      const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+      if (objectIdRegex.test(request.payload.oauth_client_delete)) {
+        // Data seems valid. We will attempt to remove from profile.
+        const clientExists = user.authorizedClients.some(client => client._id.toString() === request.payload.oauth_client_delete);
+        if (clientExists) {
+          // We'll try to revoke the client.
+        } else {
+          reasons.push("We couldn't find the OAuth Client on your profile.");
+        }
+      } else {
+        reasons.push("We didn't recognize the ID for that OAuth Client. Please try to revoke the OAuth Client again.");
+      }
+    }
+
+    // Did we find validation errors?
+    if (reasons.length > 0) {
+      alert.type = 'danger';
+      alert.message = `<p>We couldn't revoke the OAuth Client you requested.</p><p>${ reasons.join('<br>') }</p>`;
+    } else {
+      // No validation errors.
+      // Perform DB operation and provide user feedback.
+      const revokedClient = user.authorizedClients.filter(client => client._id.toString() === request.payload.oauth_client_delete)[0];
+      alert.type = 'success';
+      alert.message = `
+        <p>You successfully revoked <strong>${revokedClient.name}</strong> from your profile.</p>
+        <p>If you wish to restore access just log into that website again using HID.</p>
+      `;
+    }
+
+    // Set user feedback in cookie.
+    cookie.alert = alert;
+    request.yar.set('session', cookie);
+
+    // Redirect back to settings.
+    return reply.redirect('/settings');
+  }
 };

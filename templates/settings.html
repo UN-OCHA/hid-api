@@ -5,6 +5,7 @@
   <main role="main" id="main-content" class="cd-container">
     <div class="cd-layout-content">
       <h1 class="page-header__heading">Settings for <%= user.name %></h1>
+      <% include alert.html %>
       <div class="tabbed">
         <ul>
 <!--          <li> -->
@@ -69,30 +70,33 @@
 
         <section id="section-apps">
           <h2>Authorized Apps</h2>
-          <div class="alert alert--warning alert--inline" role="alert">
-            <div class="alert__inner">
-              <p>Currently you cannot revoke access to applications.</p>
-              <p>Work is in progress to offer this option.</p>
-            </div>
-          </div>
-          <% if (user.authorizedClients.length === 0) { %>
-            <p><em>You haven't authorized any websites yet. After you log in with HID on one of our <a href="https://about.humanitarian.id/partners-using-our-authentication-service.html" target="_blank" rel="noopener">Partner Sites</a> you will see it listed here.</em></p>
-          <% } else { %>
-          <ul class="oauth-clients-list [ flow ]">
-            <% user.authorizedClients.forEach(function(client) { %>
-              <li class="oauth-clients-list__client oac">
-                <span class="oac__delete">
-                  <button type="button" class="cd-button cd-button--small cd-button--cancel cd-button--danger">
-                    <svg class="cd-icon cd-icon--cancel">
-                      <use xlink:href="#cd-icon--cancel"></use>
-                    </svg>
-                  </button>
-                </span>
-                <span class="oac__name"><%= client.name %></span>
-              </li>
-            <% }); %>
-          </ul>
-          <% } %>
+          <form action="/settings/oauth-clients" method="POST">
+            <% if (user.authorizedClients.length === 0) { %>
+              <p><em>You haven't authorized any websites yet. After you log in with HID on one of our <a href="https://about.humanitarian.id/partners-using-our-authentication-service.html" target="_blank" rel="noopener">Partner Sites</a> you will see it listed here.</em></p>
+            <% } else { %>
+            <ul class="oauth-clients-list [ flow ]">
+              <% user.authorizedClients.forEach(function(client) { %>
+                <li class="oauth-clients-list__client oac">
+                  <span class="oac__delete">
+                    <button
+                      type="submit"
+                      name="oauth_client_delete"
+                      value="<%= client._id.toString() %>"
+                      class="cd-button cd-button--small cd-button--cancel cd-button--danger"
+                      onclick="return confirmDeletion('<%= client.name %>');"
+                      aria-label="Delete <%= client.name %>"
+                    >
+                      <svg class="cd-icon cd-icon--cancel">
+                        <use xlink:href="#cd-icon--cancel"></use>
+                      </svg>
+                    </button>
+                  </span>
+                  <span class="oac__name"><%= client.name %></span>
+                </li>
+              <% }); %>
+            </ul>
+            <% } %>
+          </form>
         </section>
 
 <!--        <section id="section-security">-->
@@ -316,3 +320,4 @@
   // }
 
 </script>
+<script><% include ../assets/js/confirmation.js %></script>
