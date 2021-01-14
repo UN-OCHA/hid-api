@@ -866,11 +866,19 @@ module.exports = {
       // No validation errors.
       // Perform DB operation and provide user feedback.
       const revokedClient = user.authorizedClients.filter(client => client._id.toString() === request.payload.oauth_client_delete)[0];
-      alert.type = 'success';
-      alert.message = `
-        <p>You successfully revoked <strong>${revokedClient.name}</strong> from your profile.</p>
-        <p>If you wish to restore access just log into that website again using HID.</p>
-      `;
+      await UserController.revokeOauthClient({}, {
+        userId: cookie.userId,
+        clientId: request.payload.oauth_client_delete,
+      }).then(data => {
+        alert.type = 'success';
+        alert.message = `
+          <p>You successfully revoked <strong>${revokedClient.name}</strong> from your profile.</p>
+          <p>If you wish to restore access you can log into that website again using HID.</p>
+        `;
+      }).catch(err => {
+        alert.type = 'danger';
+        alert.message = err.message;
+      });
     }
 
     // Set user feedback in cookie.
