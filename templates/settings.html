@@ -76,7 +76,10 @@
             <% } else { %>
             <p>You have <strong><%= user.authorizedClients.length %> websites</strong> that have been granted access to your profile.</p>
             <ul class="oauth-clients-list [ flow ]">
-              <% user.authorizedClients.forEach(function(client) { %>
+              <%
+                const sorted = user.authorizedClients.sort((a, b) => a.name.localeCompare(b.name));
+                sorted.forEach(function(client) {
+              %>
                 <li class="oauth-clients-list__client oac">
                   <span class="oac__delete">
                     <button
