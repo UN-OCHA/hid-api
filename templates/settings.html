@@ -71,26 +71,28 @@
           <h2>Authorized Apps</h2>
           <div class="alert alert--warning alert--inline" role="alert">
             <div class="alert__inner">
-              Currently you cannot revoke access to applications.<br>
-              Work is in progress to offer this option.
+              <p>Currently you cannot revoke access to applications.</p>
+              <p>Work is in progress to offer this option.</p>
             </div>
           </div>
-          <ul>
-            <%
-              user.authorizedClients.forEach(function(client) {
-            %>
-            <li>
-              <span><%= client.name %></span>
-<!--              <button type="button" class="cd-button cd-button--small cd-button--cancel" onclick="removeThisClient(client._id);">-->
-<!--                <svg class="cd-icon cd-icon--cancel">-->
-<!--                  <use xlink:href="#cd-icon--cancel"></use>-->
-<!--                </svg>-->
-<!--              </button>-->
-            </li>
-            <%
-            });
-            %>
+          <% if (user.authorizedClients.length === 0) { %>
+            <p><em>You haven't authorized any websites yet. After you log in with HID on one of our <a href="https://about.humanitarian.id/partners-using-our-authentication-service.html" target="_blank" rel="noopener">Partner Sites</a> you will see it listed here.</em></p>
+          <% } else { %>
+          <ul class="oauth-clients-list [ flow ]">
+            <% user.authorizedClients.forEach(function(client) { %>
+              <li class="oauth-clients-list__client oac">
+                <span class="oac__delete">
+                  <button type="button" class="cd-button cd-button--small cd-button--cancel cd-button--danger">
+                    <svg class="cd-icon cd-icon--cancel">
+                      <use xlink:href="#cd-icon--cancel"></use>
+                    </svg>
+                  </button>
+                </span>
+                <span class="oac__name"><%= client.name %></span>
+              </li>
+            <% }); %>
           </ul>
+          <% } %>
         </section>
 
 <!--        <section id="section-security">-->
