@@ -726,6 +726,24 @@ module.exports = [
   },
 
   {
+    method: 'DELETE',
+    path: '/api/v3/user/{id}/clients/{client}',
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.revokeOauthClient,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          client: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+
+
+  {
     method: 'POST',
     path: '/api/v2/user/{id}/phone_numbers',
     options: {

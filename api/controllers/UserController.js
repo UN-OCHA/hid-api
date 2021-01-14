@@ -2559,4 +2559,123 @@ module.exports = {
     );
     return user;
   },
+
+  /*
+   * @api [delete] /user/{id}/clients/{client}
+   * tags:
+   *   - user
+   * summary: Revokes one OAuth Client from a user's profile.
+   * responses:
+   *   '200':
+   *     description: OAuth Client revoked successfully. Returns user object.
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '401':
+   *     description: Requesting user lacks permission to view requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
+  async revokeOauthClient(request, internalArgs) {
+    let userId, clientId;
+
+    if (internalArgs && internalArgs.userId && internalArgs.clientId) {
+      userId = internalArgs.userId;
+      clientId = internalArgs.clientId;
+    } else {
+      userId = request.params.id;
+      clientId = request.params.client;
+    }
+
+    // Validate presence of userId param.
+    if (!userId) {
+      logger.warn(
+        '[UserController->revokeOauthClient] No userId provided',
+        {
+          request,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('No userId provided.');
+    }
+
+    // Validate presence of clientId param.
+    if (!clientId) {
+      logger.warn(
+        '[UserController->revokeOauthClient] No clientId provided',
+        {
+          request,
+          fail: true,
+          user: {
+            id: userId,
+          },
+        },
+      );
+      throw Boom.badRequest('No clientId provided.');
+    }
+
+    // Look up user from DB.
+    const user = await User.findOne({ _id: userId });
+
+    // Validate that user was found in DB.
+    if (!user) {
+      logger.warn(
+        `[UserController->revokeOauthClient] No user found with id ${userId}`,
+        {
+          request,
+          fail: true,
+        },
+      );
+      throw Boom.notFound();
+    }
+
+    // Make sure this OAuth Client exists on the user profile.
+    if (!user.authorizedClients.some(client => client._id.toString() === clientId)) {
+      logger.warn(
+        '[UserController->revokeOauthClient] Requested clientId not found on user profile.',
+        {
+          request,
+          fail: true,
+          user: {
+            id: userId,
+            email: user.email,
+          },
+          oauth: {
+            id: clientId,
+          },
+        },
+      );
+      throw Boom.badRequest('Client ID not found on user profile.');
+    }
+
+    // Validation passed, user exists, client exists on user, so let's remove it.
+    try {
+      const remainingClients = user.authorizedClients.filter(client => client._id.toString() !== clientId);
+      user.authorizedClients = remainingClients;
+      await user.save();
+
+      logger.info(
+        `[UserController->revokeOauthClient] Successfully revoked OAuth Client from user.`,
+        {
+          security: true,
+          user: {
+            id: userId,
+            email: user.email,
+          },
+          oauth: {
+            id: clientId,
+          },
+        },
+      );
+
+      return user;
+    } catch (err) {
+      logger.error(
+        `[UserController->revokeOauthClient] ${err.message}`,
+        {
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+    }
+  },
 };
