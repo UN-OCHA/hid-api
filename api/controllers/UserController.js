@@ -1551,6 +1551,7 @@ module.exports = {
       appValidationUrl = request.payload.app_validation_url;
     }
 
+    // Is the payload complete enough to take action?
     if (!appValidationUrl || !email) {
       logger.warn(
         '[UserController->addEmail] Either email or app_validation_url was not provided',
@@ -1565,6 +1566,7 @@ module.exports = {
       throw Boom.badRequest('Required parameters not present in payload');
     }
 
+    // Is the verification link pointing to a domain in our allow-list?
     if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
       logger.warn(
         `[UserController->addEmail] app_validation_url ${appValidationUrl} is not in authorizedDomains allowlist`,
@@ -1577,18 +1579,7 @@ module.exports = {
       throw Boom.badRequest('Invalid app_validation_url');
     }
 
-    // Make sure email added is unique
-    const erecord = await User.findOne({ 'emails.email': email });
-    if (erecord) {
-      logger.warn(
-        `[UserController->addEmail] Email ${email} is not unique`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Email is not unique');
-    }
+    // Does the target user exist?
     const record = await User.findOne({ _id: userId });
     if (!record) {
       logger.warn(
@@ -1601,15 +1592,39 @@ module.exports = {
       throw Boom.notFound();
     }
 
+    // Make sure the email us unique to the target user's profile. Checking just
+    // the target user first allows us to display better user feedback when the
+    // request comes internally from HID Auth interface.
     if (record.emailIndex(email) !== -1) {
       logger.warn(
-        `[UserController->addEmail] Email ${email} already exists`,
+        `[UserController->addEmail] Email ${email} already belongs to ${userId}.`,
         {
           request,
           fail: true,
+          user: {
+            id: userId,
+            email: record.email,
+          },
         },
       );
       throw Boom.badRequest('Email already exists');
+    }
+
+    // Make sure email added is unique to the entire HID system.
+    const erecord = await User.findOne({ 'emails.email': email });
+    if (erecord) {
+      logger.warn(
+        `[UserController->addEmail] Email ${email} is not unique`,
+        {
+          request,
+          fail: true,
+          user: {
+            id: userId,
+            email: record.email,
+          },
+        },
+      );
+      throw Boom.badRequest('Email is not unique');
     }
 
     if (record.emails.length === 0 && record.is_ghost) {
@@ -1712,10 +1727,18 @@ module.exports = {
    *   '404':
    *     description: Requested user not found.
    */
-  async dropEmail(request) {
-    const { id, email } = request.params;
+  async dropEmail(request, internalArgs) {
+    let userId, email;
 
-    if (!request.params.email) {
+    if (internalArgs && internalArgs.userId && internalArgs.email) {
+      userId = internalArgs.userId;
+      email = internalArgs.email;
+    } else {
+      userId = request.params.id;
+      email = request.params.email;
+    }
+
+    if (!email) {
       logger.warn(
         '[UserController->dropEmail] No email provided',
         {
@@ -1726,10 +1749,10 @@ module.exports = {
       throw Boom.badRequest();
     }
 
-    const record = await User.findOne({ _id: id });
+    const record = await User.findOne({ _id: userId });
     if (!record) {
       logger.warn(
-        `[UserController->dropEmail] User ${id} not found`,
+        `[UserController->dropEmail] User ${userId} not found`,
         {
           request,
           fail: true,
@@ -1739,7 +1762,7 @@ module.exports = {
     }
     if (email === record.email) {
       logger.warn(
-        `[UserController->dropEmail] Primary email for user ${id} can not be removed`,
+        `[UserController->dropEmail] Primary email for user ${userId} can not be removed`,
         {
           request,
           fail: true,
@@ -1767,11 +1790,12 @@ module.exports = {
     await record.save();
 
     logger.info(
-      `[UserController->dropEmail] User ${id} saved successfully`,
+      `[UserController->dropEmail] User ${userId} saved successfully`,
       {
         request,
         user: {
-          id,
+          userId,
+          email: record.email,
         },
       },
     );

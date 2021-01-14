@@ -2,6 +2,7 @@ const Boom = require('@hapi/boom');
 const Recaptcha = require('recaptcha2');
 const Client = require('../models/Client');
 const User = require('../models/User');
+const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
 const UserController = require('./UserController');
 const AuthPolicy = require('../policies/AuthPolicy');
@@ -273,21 +274,44 @@ module.exports = {
   },
 
   async verify(request, reply) {
-    if (!request.query.hash && !request.query.id && !request.query.time) {
-      throw Boom.badRequest('Missing hash parameter');
+    const cookie = request.yar.get('session');
+
+    // Do we have what we need to validate the confirmation link?
+    if (!request.query.hash || !request.query.id || !request.query.time || !request.query.emailId) {
+      throw Boom.badRequest('Missing necessary parameters');
     }
+
+    // Populate payload object.
     request.payload = {
       hash: request.query.hash,
       id: request.query.id,
       time: request.query.time,
       emailId: request.query.emailId,
     };
+
+    // Template variables.
     const registerLink = _getRegisterLink(request.query);
     const passwordLink = _getPasswordLink(request.query);
+
     try {
       await UserController.validateEmail(request);
+
+      // If user is logged in, send them to their profile.
+      if (cookie && cookie.userId) {
+        cookie.alert = {
+          type: 'success',
+          message: 'Thank you for confirming your email address. It can now be set as your primary email if you wish.',
+        }
+        request.yar.set('session', cookie);
+
+        return reply.redirect('/profile/edit');
+      }
+
       return reply.view('login', {
-        alert: { type: 'success', message: 'Thank you for confirming your email address. You can now log in' },
+        alert: {
+          type: 'success',
+          message: 'Thank you for confirming your email address. You can now log in',
+        },
         query: request.query,
         registerLink,
         passwordLink,
@@ -492,13 +516,28 @@ module.exports = {
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
       return reply.redirect('/');
     }
+
+    // Load user from DB
     const user = await User.findOne({ _id: cookie.userId });
+
+    // If the cookie has an alert to display, load it into the page and erase it
+    // from the cookie.
+    let alert;
+    if (cookie.alert) {
+      alert = cookie.alert;
+      delete cookie.alert;
+      request.yar.set('session', cookie);
+    }
+
     return reply.view('profile-edit', {
       user,
+      alert,
     });
   },
 
-  // Save edits to user profile
+  /**
+   * Form submission handler for basic profile management.
+   */
   async profileEditSubmit(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
@@ -515,7 +554,17 @@ module.exports = {
 
     // Did we get a valid payload object?
     if (!request.payload) {
-      reasons.push('payload was missing');
+      reasons.push('There was an server error while processing the form. Please try again.');
+      logger.warn(
+        '[ViewController->profileEmailsSubmit] Received an empty form payload.',
+        {
+          request,
+          fail: true,
+          user: {
+            id: cookie.userId,
+          },
+        },
+      );
     }
 
     // Given name must exist.
@@ -532,35 +581,12 @@ module.exports = {
       reasons.push('Family name is required.');
     }
 
-    //
-    // The desired primary email address must already be marked as 'validated'
-    // in the DB.
-    //
-    // First, check if the field even has a value.
-    if (request.payload.email_primary !== '') {
-      // Loop through emails to find the one they want to mark as primary.
-      user.emails.forEach(thisEmail => {
-        // We found it, so check if it is already 'validated' in DB.
-        if (request.payload.email_primary === thisEmail.email) {
-          if (thisEmail.validated) {
-            // The email is eligible to be primary.
-          } else {
-            reasons.push(`You selected ${thisEmail} to be your primary address, but it is not confirmed.`);
-          }
-        }
-      });
-    }
-
-    // No special validation needed for new emails at this time.
-    // If we wanted to validate, do it here.
-    if (request.payload.email_new) {}
-
     // React to form validation errors.
     if (reasons.length > 0) {
       // Display the user feedback as an alert.
       alert = {
         type: 'danger',
-        message: '<p>Your profile could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
+        message: '<p>Your basic profile info could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
       };
 
       // Show user the profile edit form again.
@@ -596,14 +622,144 @@ module.exports = {
         message: '<p>Your profile was saved.</p>',
       };
 
-      // Set primary email address using internal method. The first object is a
-      // mock of the request payload we'd send when making client-side JS calls.
+      // Finalize the user feedback.
+      request.yar.set('session', cookie);
+
+      // Redirect to profile on success.
+      return reply.redirect('/profile');
+    }
+  },
+
+  /**
+   * Form submission handler for email management.
+   */
+  async profileEmailsSubmit(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // Load user from DB for some validation operations.
+    const user = await User.findOne({ _id: cookie.userId });
+
+    // We might need to send feedback. Create an alert/errors variables.
+    let alert = {};
+    let reasons = [];
+
+    // Did we get a valid payload object?
+    if (!request.payload) {
+      reasons.push('There was an server error while processing the form. Please try again.');
+      logger.warn(
+        '[ViewController->profileEmailsSubmit] Received an empty form payload.',
+        {
+          request,
+          fail: true,
+          user: {
+            id: cookie.userId,
+          },
+        },
+      );
+    }
+
+    //
+    // The desired primary email address must already be marked as 'validated'
+    // in the DB.
+    //
+    // First, check if the field even has a value.
+    if (request.payload.email_primary !== '') {
+      // Loop through emails to find the one they want to mark as primary.
+      user.emails.forEach(thisEmail => {
+        // We found it, so check if it is already 'validated' in DB.
+        if (request.payload.email_primary === thisEmail.email) {
+          if (thisEmail.validated) {
+            // The email is eligible to be primary.
+          } else {
+            reasons.push(`You selected ${thisEmail.email} to be your primary address, but it is not confirmed.`);
+          }
+        }
+      });
+    }
+
+    // If an email was chosen to be deleted.
+    if (typeof request.payload.email_delete !== 'undefined') {
+      if (request.payload.email_delete === request.payload.email_primary) {
+        reasons.push(`You attempted to delete ${request.payload.email_delete}, but also selected it to be your primary address.`);
+      }
+    }
+
+    // If an email was chosen to receive a confirmation link.
+    if (typeof request.payload.email_confirm !== 'undefined') {
+      const emailIsConfirmedAlready = user.emails.filter(thisEmail => thisEmail.email === request.payload.email_confirm && thisEmail.validated);
+      if (emailIsConfirmedAlready.length > 0) {
+        reasons.push(`You attempted to confirm ${request.payload.email_confirm}, but it doesn't need confirmation.`);
+      }
+    }
+
+    // No special validation needed for new emails at this time.
+    // If we wanted to validate, do it here.
+    if (request.payload.email_new) {}
+
+    // React to form validation errors.
+    if (reasons.length > 0) {
+      // Display the user feedback as an alert.
+      alert = {
+        type: 'danger',
+        message: '<p>Your email settings could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
+      };
+
+      // Show user the profile edit form again.
+      return reply.view('profile-edit', {
+        alert,
+        user,
+      });
+    } else {
+      // No errors were found, make updates to emails
+
+      // Create a success confirmation.
+      cookie.alert = {
+        type: 'success',
+        message: '<p>Your email settings were saved.</p>',
+      };
+
+      // First, set primary email address using internal method.
       if (request.payload.email_primary !== user.email) {
         await UserController.setPrimaryEmail({}, {
           userId: cookie.userId,
           email: request.payload.email_primary,
         }).then(data => {
           cookie.alert.message += `<p>Your primary email was set to ${request.payload.email_primary}</p>`;
+        });
+        // TODO: add a .catch() to avoid sploding the server.
+      }
+
+      // If an email address was chosen to be deleted, drop it from the profile
+      if (request.payload.email_delete) {
+        await UserController.dropEmail({}, {
+          userId: cookie.userId,
+          email: request.payload.email_delete,
+        }).then(data => {
+          cookie.alert.message += `You deleted ${request.payload.email_delete} from your account.`;
+        }).catch(err => {
+          cookie.alert.type = 'danger';
+          cookie.alert.message = `There was a problem removing ${request.payload.email_delete} from your account.`;
+        });
+      }
+
+      // If a confirmation email was requested, send it
+      if (request.payload.email_confirm) {
+        const emailIndex = user.emailIndex(request.payload.email_confirm);
+        const confirmEmail = user.emails[emailIndex];
+        await EmailService.sendValidationEmail(
+          user,
+          confirmEmail.email,
+          confirmEmail._id.toString(),
+          _buildRequestUrl(request, 'verify2')
+        ).then(data => {
+          cookie.alert.message += 'The confirmation email will arrive in your inbox shortly.';
+        }).catch(err => {
+          cookie.alert.type = 'danger';
+          cookie.alert.message = 'There was a problem sending the confirmation email.';
         });
       }
 
@@ -617,9 +773,14 @@ module.exports = {
         }).then(data => {
           cookie.alert.message += `<p>A confirmation email has been sent to ${request.payload.email_new}.</p>`;
         }).catch(err => {
+          cookie.alert.type = 'danger';
+
           // Read our error and show some user feedback.
-          if (err.message.indexOf('Email is not unique') !== -1) {
-            cookie.alert.message += `<p>The address ${request.payload.email_new} is already added to your account.</p>`;
+          if (err.message && err.message.indexOf('Email already exists') !== -1) {
+            cookie.alert.message = `<p>The address ${request.payload.email_new} is already added to your account.</p>`;
+          }
+          else if (err.message && err.message.indexOf('Email is not unique') !== -1) {
+            cookie.alert.message = `<p>The address ${request.payload.email_new} is already registered.</p>`;
           }
         });
       }
@@ -628,7 +789,7 @@ module.exports = {
       request.yar.set('session', cookie);
 
       // Redirect to profile on success.
-      return reply.redirect('/profile');
+      return reply.redirect('/profile/edit');
     }
   },
 

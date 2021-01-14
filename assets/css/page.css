@@ -81,6 +81,14 @@ h1, h2, h3, h4, h5 {
   background: #007faa;
 }
 
+.cd-button--danger {
+  background-color: var(--cd-highlight-red);
+}
+
+.cd-button[disabled] {
+  opacity: .666;
+}
+
 h1 {
   color: #295a78;
 }
@@ -97,6 +105,7 @@ a:hover,
 a:focus {
   color: #007faa;
 }
+
 
 /**
  * Global layout
@@ -194,7 +203,7 @@ input:focus:invalid {
   outline-offset: 0;
 }
 
-.form-field code {
+form code {
   display: inline-block;
   background: #eee;
   border-radius: 3px;

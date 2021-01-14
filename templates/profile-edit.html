@@ -3,47 +3,82 @@
 
 <div class="api-page">
   <main role="main" id="main-content" class="cd-container">
-    <div class="cd-layout-content">
+    <div class="cd-layout-content [ flow ]">
+      <h1 class="page-header__heading">Edit profile</h1>
       <% include alert.html %>
-      <form action="/profile/edit" method="POST" class="profile profile--edit [ flow ]">
-        <h1 class="page-header__heading">Edit profile</h1>
+      <div class="profile profile--edit">
 
-
-        <div class="form-item form-item--w50">
-          <label for="profile-given_name">Given Name:</label>
-          <input type="text" id="profile-given_name" name="given_name" value="<%= user.given_name %>" required>
-        </div>
-        <div class="form-item form-item--w50">
-          <label for="profile-family_name">Family name:</label>
-          <input type="text" id="profile-family_name" name="family_name" value="<%= user.family_name %>" required>
-        </div>
-        <div class="form-item [ flow ]">
-          <h3>Manage email addresses:</h3>
-          <p>Use the radio buttons to select a new primary email address. You may only select an address which has already been confirmed.</p>
-
-          <% user.emails.forEach(function(thisEmail) { %>
-            <div class="profile__email email">
-              <div class="email__primary">
-                <input type="radio" name="email_primary" id="email_primary-<%= thisEmail._id.toString() %>" value="<%= thisEmail.email %>" <%= user.email === thisEmail.email ? 'checked' : '' %> <%= thisEmail.validated ? '' : 'disabled' %>>
-              </div>
-              <div>
-                <label for="email_primary-<%= thisEmail._id.toString() %>" class="email__address <%= !thisEmail.validated ? 'email__address--unconfirmed' : 'email__address--confirmed' %>"><%= thisEmail.email %></label>
-                <span class="email__status"><%= thisEmail.validated ? '' : 'unconfirmed' %></span>
-              </div>
-            </div>
-          <% }) %>
-
-          <h3>Add a new email address:</h3>
-          <div class="profile__new-email">
-            <input type="email" name="email_new" id="email_new" placeholder="you@example.com" title="Must be a valid email address. You are not required to fill this field.">
+        <form action="/profile/edit" method="POST" class="[ flow ]">
+          <div class="form-item">
+            <h2>Manage basic info</h2>
+            <p>You are required to provide your family name and given name.</p>
           </div>
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="cd-button cd-button--bold cd-button--uppercase">Save Profile</button>
-          <a href="/profile" class="cd-button cd-button--uppercase cd-button--outline">Cancel</a>
-        </div>
-      </form>
+          <div class="form-item">
+            <label for="profile-given_name">Given Name:</label>
+            <input type="text" id="profile-given_name" name="given_name" value="<%= user.given_name %>" required>
+          </div>
+          <div class="form-item">
+            <label for="profile-family_name">Family name:</label>
+            <input type="text" id="profile-family_name" name="family_name" value="<%= user.family_name %>" required>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="cd-button cd-button--bold cd-button--uppercase">Update Name</button>
+            <a href="/profile" class="cd-button cd-button--uppercase cd-button--outline">Cancel</a>
+          </div>
+        </form>
+
+        <form name="emailForm" action="/profile/edit/emails" method="POST" class="[ flow ]">
+          <div class="form-item [ flow ]">
+            <h2>Manage email addresses</h2>
+            <p>Use the radio buttons to select a new primary email address. You may only select an address which has already been confirmed.</p>
+            <p>Clicking <code aria-label="the Confirm button">[CONFIRM]</code> will re-send the confirmation email with a one-time link. After confirming, you can set that email address as your primary.</p>
+
+            <% user.emails.forEach(function(thisEmail) { %>
+              <div class="profile__email email">
+                <div class="email__select-primary">
+                  <input type="radio" name="email_primary" id="email_primary-<%= thisEmail._id.toString() %>" value="<%= thisEmail.email %>" <%= user.email === thisEmail.email ? 'checked' : '' %> <%= thisEmail.validated ? '' : 'disabled' %>>
+                </div>
+                <div class="email__address">
+                  <label for="email_primary-<%= thisEmail._id.toString() %>" class="<%= !thisEmail.validated ? 'email__address--unconfirmed' : 'email__address--confirmed' %>"><%= thisEmail.email %></label>
+                </div>
+                <div class="email__delete">
+                  <% if (user.email === thisEmail.email) { %>
+                    <button disabled class="cd-button cd-button--small cd-button--bold cd-button--uppercase">Primary</button>
+                  <% } else { %>
+                    <button
+                      type="submit"
+                      name="email_delete"
+                      value="<%= thisEmail.email %>"
+                      class="cd-button cd-button--small cd-button--bold cd-button--uppercase cd-button--danger"
+                      onclick="return confirmDeletion('<%= thisEmail.email %>')"
+                    >
+                      Delete
+                    </button>
+                  <% } %>
+                </div>
+                <div class="email__status">
+                  <% if (!thisEmail.validated) { %>
+                    <button type="submit" name="email_confirm" value="<%= thisEmail.email %>" class="cd-button cd-button--small cd-button--outline cd-button--bold cd-button--uppercase">Confirm</button>
+                  <% } %>
+                </div>
+              </div>
+            <% }) %>
+
+            <h3>Add a new email address:</h3>
+            <div class="profile__new-email">
+              <input type="email" name="email_new" id="email_new" placeholder="you@example.com" title="Must be a valid email address. You are not required to fill this field.">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="cd-button cd-button--bold cd-button--uppercase">Update email</button>
+            <a href="/profile" class="cd-button cd-button--uppercase cd-button--outline">Cancel</a>
+          </div>
+        </form>
+
+      </div>
     </div>
   </main>
 </div>
+
+<script><% include ../assets/js/profile-edit.js %></script>
 <% include footer %>

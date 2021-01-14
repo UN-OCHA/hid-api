@@ -7,12 +7,13 @@
   flex-flow: row wrap;
   margin: 0 -1rem;
 }
-.profile--edit > * {
+.profile--edit form {
   flex: 1 0 100%;
   padding: 0 1rem;
 }
+/* on wider screens, display the two forms in two columns */
 @media screen and (min-width: 720px) {
-  .profile--edit .form-item--w50 {
+  .profile--edit form {
     flex: 1 0 40%; /* IE11 needs a smaller value than 50% */
   }
 }
@@ -25,26 +26,44 @@
 .profile__emails {}
 .profile__email {
   display: flex;
-  flex-flow: row nowrap;
   align-items: center;
+  /* Wrap so when the Confirm and Delete buttons are both present
+  the second button wraps to a new line and prevents horizontal scroll. */
+  flex-wrap: wrap;
 }
-.profile__email .email__primary {
-  flex: 0 0 2em;
+@media screen and (min-width: 720px) {
+  .profile__email {
+    flex-flow: row nowrap;
+  }
+}
+.profile__email .email__select-primary {
+  flex: 0 0 3em;
   text-align: center;
 }
 .profile__email .email__address {
-  flex: 1 0 20em;
+  flex: 0 1 20ch;
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .profile__email .email__address--unconfirmed {
   color: #444;
+  font-style: italic;
 }
 .profile__email .email__address--confirmed {
   font-weight: 700;
   color: black;
 }
+.profile__email .email__status {
+  padding: 0 1em;
+}
+.profile__email .email__delete {
+  padding-left: 1em;
+}
 
 .form-actions .cd-button {
-  /* we have a link styled like a back button, and a real button. they have
+  /* we have a link styled like a back button, plus a real button. they have
   different line-heights due to normalize.css not resetting links */
   line-height: 1.15;
 }

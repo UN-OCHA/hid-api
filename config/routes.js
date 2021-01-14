@@ -177,6 +177,15 @@ module.exports = [
   },
 
   {
+    method: 'POST',
+    path: '/profile/edit/emails',
+    handler: ViewController.profileEmailsSubmit,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
     method: 'GET',
     path: '/settings',
     handler: ViewController.settings,
