@@ -8,58 +8,58 @@
     <div class="cd-layout-content">
       <h1 class="page-header__heading"><%= user.name %></h1>
       <% include alert.html %>
-      <div class="profile profile--show cd-grid cd-grid-2-col">
+      <div class="profile profile--show [ flow ]">
+        <div class="cd-grid cd-grid-2-col">
 
-        <div class="cd-card">
-          <div class="cd-card__container">
-            <div class="cd-card__description [ flow ]">
-              <p><strong>Given Name:</strong> <%= user.given_name %></p>
-              <p><strong>Family name:</strong> <%= user.family_name %></p>
+          <div class="cd-card">
+            <div class="cd-card__container">
+              <div class="cd-card__description [ flow ]">
+                <p><strong>Given Name:</strong> <%= user.given_name %></p>
+                <p><strong>Family name:</strong> <%= user.family_name %></p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="cd-card">
-          <div class="cd-card__container">
-            <div class="cd-card__description [ flow ]">
-              <h2>Email addresses</h2>
-              <div class="profile__emails [ flow ]">
-                <%
-                  user.emails.forEach(function(email) {
-                    if (email.email === user.email) {
-                %>
-                  <div class="profile__email email">
-                    <div class="email__address">
-                      <label><%= user.email %></label>
-                      <div class="email__status">
-                        <button disabled class="cd-button cd-button--small cd-button--bold cd-button--uppercase">Primary</button>
+          <div class="cd-card">
+            <div class="cd-card__container">
+              <div class="cd-card__description [ flow ]">
+                <h2>Email addresses</h2>
+                <div class="profile__emails [ flow ]">
+                  <%
+                    user.emails.forEach(function(email) {
+                      if (email.email === user.email) {
+                  %>
+                    <div class="profile__email email">
+                      <div class="email__address">
+                        <label><%= user.email %></label>
+                        <div class="email__status">
+                          <button disabled class="cd-button cd-button--small cd-button--bold cd-button--uppercase">Primary</button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                <% } else { %>
-                  <div class="profile__email email">
-                    <div class="email__address">
-                      <label><%= email.email %></label>
-                      <div class="email__status">
-                        <button disabled class="cd-button cd-button--small cd-button--outline cd-button--bold cd-button--uppercase">
-                          <%= email.validated === true ? 'confirmed' : 'not confirmed' %>
-                        </button>
+                  <% } else { %>
+                    <div class="profile__email email">
+                      <div class="email__address">
+                        <label><%= email.email %></label>
+                        <div class="email__status">
+                          <button disabled class="cd-button cd-button--small cd-button--outline cd-button--bold cd-button--uppercase">
+                            <%= email.validated === true ? 'confirmed' : 'not confirmed' %>
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                <%
-                    }
-                  });
-                %>
+                  <%
+                      }
+                    });
+                  %>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
         <div class="form-actions">
-          <a href="/profile/edit" class="cd-button cd-button--bold cd-button--uppercase">Edit Profile</a>
+        <a href="/profile/edit" class="cd-button cd-button--bold cd-button--uppercase">Edit Profile</a>
         </div>
-
       </div>
     </div>
   </main>
