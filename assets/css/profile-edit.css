@@ -58,6 +58,9 @@
 .profile__email .email__status {
   padding: 0 1em;
 }
+.profile__email .email__delete {
+  padding-left: 1em;
+}
 
 .form-actions .cd-button {
   /* we have a link styled like a back button, plus a real button. they have
