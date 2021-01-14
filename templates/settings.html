@@ -4,27 +4,27 @@
 <div class="api-page">
   <main role="main" id="main-content" class="cd-container">
     <div class="cd-layout-content">
-      <h1 class="page-header__heading" translate>Settings for <%= user.name %></h1>
+      <h1 class="page-header__heading">Settings for <%= user.name %></h1>
       <div class="tabbed">
         <ul>
 <!--          <li> -->
-<!--            <a href="#section-password" translate>Password</a>-->
+<!--            <a href="#section-password">Password</a>-->
 <!--          </li>-->
           <li>
-            <a href="#section-apps" translate>Authorized Apps</a>
+            <a href="#section-apps">Authorized Apps</a>
           </li>
 <!--          <li>-->
-<!--            <a href="#section-security" translate>Security</a>-->
+<!--            <a href="#section-security">Security</a>-->
 <!--          </li>-->
 <!--          <li>-->
-<!--            <a href="#section-delete" translate>Delete Account</a>-->
+<!--            <a href="#section-delete">Delete Account</a>-->
 <!--          </li>-->
         </ul>
 
 <!--        <section id="section-password">-->
-<!--          <h2 translate>Change Password</h2>-->
+<!--          <h2>Change Password</h2>-->
 <!--          <form onsubmit="changePassword()">-->
-<!--              <p translate>You must enter your current password to set a new password.</p>-->
+<!--              <p>You must enter your current password to set a new password.</p>-->
 <!--              <input-->
 <!--                id="current-password"-->
 <!--                name="password"-->
@@ -35,7 +35,7 @@
 <!--                outlined-->
 <!--                required-->
 <!--              />-->
-<!--              <p translate>Passwords must be <strong>at least {{ $v.password.$params.minLength.min }} characters long</strong>, contain at least <strong>one number</strong>, <strong>one uppercase character</strong>, <strong>one lowercase character</strong>, and one <strong>special character: <code>!@#$%^&*()+=\`{}</code></strong>. Password has to be different than your previous one.</p>-->
+<!--              <p>Passwords must be <strong>at least {{ $v.password.$params.minLength.min }} characters long</strong>, contain at least <strong>one number</strong>, <strong>one uppercase character</strong>, <strong>one lowercase character</strong>, and one <strong>special character: <code>!@#$%^&*()+=\`{}</code></strong>. Password has to be different than your previous one.</p>-->
 <!--              <input-->
 <!--                id="new-password"-->
 <!--                name="password"-->
@@ -70,7 +70,7 @@
         <section id="section-apps">
           <h2>Authorized Apps</h2>
           <div class="alert alert--warning alert--inline" role="alert">
-            <div class="alert__inner" translate>
+            <div class="alert__inner">
               Currently you cannot revoke access to applications.<br>
               Work is in progress to offer this option.
             </div>
@@ -94,25 +94,25 @@
         </section>
 
 <!--        <section id="section-security">-->
-<!--          <h2 translate>Two-factor authentication</h2>-->
+<!--          <h2>Two-factor authentication</h2>-->
 <!--          <% if (user.totp) { %>-->
-<!--          <span class="status" style="color: #777;" translate>Status: <em>Enabled</em></span>-->
+<!--          <span class="status" style="color: #777;">Status: <em>Enabled</em></span>-->
 <!--          <p>&nbsp;</p>-->
 <!--          <button class="cd-button cd-button&#45;&#45;style cd-button&#45;&#45;dectivate" onclick="goTo('deactivate');">-->
 <!--            Deactivate-->
 <!--          </button>-->
 <!--          <%} else { %>-->
-<!--            <span class="status" style="color: #777;" translate>Status: <em>Disabled</em></span>-->
-<!--            <p translate>Two-factor authentication is an effective way to protect your account from unauthorized access. What you need to do to enable this feature:</p>-->
+<!--            <span class="status" style="color: #777;">Status: <em>Disabled</em></span>-->
+<!--            <p>Two-factor authentication is an effective way to protect your account from unauthorized access. What you need to do to enable this feature:</p>-->
 <!--            <ol>-->
-<!--              <li translate>If you don't have one yet, download an authenticator app (e.g. the Google Authenticator - <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en_GB" target="_blank" rel="noopener">Play Store</a>, <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8" target="_blank" rel="noopener">App Store</a>).</li>-->
-<!--              <li translate>Then click on the Activate button below</li>-->
-<!--              <li translate>After you have activated the Two-factor verification on this page you will see a QR-code that you need to scan with your authenticator app or you do the set-up manually.</li>-->
-<!--              <li translate>You'll then be sent a code to your mobile authenticator app.</li>-->
+<!--              <li>If you don't have one yet, download an authenticator app (e.g. the Google Authenticator - <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en_GB" target="_blank" rel="noopener">Play Store</a>, <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8" target="_blank" rel="noopener">App Store</a>).</li>-->
+<!--              <li>Then click on the Activate button below</li>-->
+<!--              <li>After you have activated the Two-factor verification on this page you will see a QR-code that you need to scan with your authenticator app or you do the set-up manually.</li>-->
+<!--              <li>You'll then be sent a code to your mobile authenticator app.</li>-->
 <!--            </ol>-->
-<!--            <p translate>Two-factor authentication is an optional security feature. Once enabled, Humanitarian ID will require a six-digit security code or a security key in addition to your password if you wish to login or change your password. You can also set a device as trusted during login, you will then not be asked a seperate code on this device.</p>-->
-<!--            <p translate>After enabling two-factor authentication, you'll receive 16 backup codes. Copy these codes or download them and store them securely. Once a backup code is used, it can't be used again.</p>-->
-<!--            <p translate>You can remove the two-factor authentication at any point by clicking on ‘Deactivate’ button.</p>-->
+<!--            <p>Two-factor authentication is an optional security feature. Once enabled, Humanitarian ID will require a six-digit security code or a security key in addition to your password if you wish to login or change your password. You can also set a device as trusted during login, you will then not be asked a seperate code on this device.</p>-->
+<!--            <p>After enabling two-factor authentication, you'll receive 16 backup codes. Copy these codes or download them and store them securely. Once a backup code is used, it can't be used again.</p>-->
+<!--            <p>You can remove the two-factor authentication at any point by clicking on ‘Deactivate’ button.</p>-->
 <!--            <button class="cd-button cd-button&#45;&#45;style cd-button&#45;&#45;activate" onclick="requestTotpConfig();">-->
 <!--              Activate-->
 <!--            </button>-->
@@ -121,7 +121,7 @@
 <!--        </section>-->
 
 <!--        <section id="section-delete">-->
-<!--          <h2 translate>Delete Account</h2>-->
+<!--          <h2>Delete Account</h2>-->
 <!--          <button type="button" class="cd-button cd-button&#45;&#45;bold cd-button&#45;&#45;delete" onclick="deleteAccount();">-->
 <!--            Delete-->
 <!--          </button>-->
