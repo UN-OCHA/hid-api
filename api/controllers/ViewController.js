@@ -938,6 +938,7 @@ module.exports = {
     // Load current user from DB.
     const user = await User.findOne({ _id: cookie.userId });
 
+    // Basic form validation
     if (request.payload && request.payload.old_password && request.payload.new_password && request.payload.confirm_password) {
       if (request.payload.new_password === request.payload.confirm_password) {
         // We have the data we need to attempt password update.
@@ -947,6 +948,12 @@ module.exports = {
     } else {
       // missing params
       reasons.push('Fill in all fields to change your password.');
+    }
+
+    // Check for 2FA users.
+    if (user.totp && request.payload && !request.payload.totp) {
+      reasons.push('You need to enter TOTP');
+      // TODO: render form instead of showing this message
     }
 
     // If there are errors/warnings with submission, display them.
@@ -963,8 +970,6 @@ module.exports = {
         alert.type = 'success';
         alert.message = 'Your password has been updated.';
       }).catch(err => {
-        // TODO: react to 2FA prompt
-
         // Set error message.
         alert.type = 'danger';
         alert.message = err.message;
