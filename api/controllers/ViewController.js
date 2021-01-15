@@ -836,8 +836,6 @@ module.exports = {
     let reasons = [];
     let alert = {};
 
-    console.log('🐛', request.payload);
-
     // Did they try to delete an OAuth client?
     if (request.payload && request.payload.oauth_client_delete) {
       // TODO: if we can, pull this from a canonical source. This was copied
