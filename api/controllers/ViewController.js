@@ -938,8 +938,12 @@ module.exports = {
     // Load current user from DB.
     const user = await User.findOne({ _id: cookie.userId });
 
-    if (request.payload && request.payload.old_password && request.payload.new_password) {
-      // We have the data we need to attempt password update.
+    if (request.payload && request.payload.old_password && request.payload.new_password && request.payload.confirm_password) {
+      if (request.payload.new_password === request.payload.confirm_password) {
+        // We have the data we need to attempt password update.
+      } else {
+        reasons.push('The password confirmation field did not match. Please try again.');
+      }
     } else {
       // missing params
       reasons.push('Fill in all fields to change your password.');
