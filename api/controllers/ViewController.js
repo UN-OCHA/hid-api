@@ -899,8 +899,13 @@ module.exports = {
       return reply.redirect('/');
     }
 
-    // Set up user feedback
-    let alert = {};
+    // Check for user feedback and display
+    let alert;
+    if (cookie.alert) {
+      alert = cookie.alert;
+      delete(cookie.alert);
+      request.yar.set('session', cookie);
+    }
 
     // Load current user from DB.
     const user = await User.findOne({ _id: cookie.userId });
@@ -928,13 +933,39 @@ module.exports = {
 
     // Set up user feedback
     let alert = {};
+    let reasons = [];
 
     // Load current user from DB.
     const user = await User.findOne({ _id: cookie.userId });
 
-    // TODO: validate input
-    // TODO: attempt password reset
-    // TODO: react to 2FA prompt
+    if (request.payload && request.payload.old_password && request.payload.new_password) {
+      // We have the data we need to attempt password update.
+    } else {
+      // missing params
+      reasons.push('Fill in all fields to change your password.');
+    }
+
+    // If there are errors/warnings with submission, display them.
+    if (reasons.length > 0) {
+      alert.type = 'warning';
+      alert.message = `<p>${ reasons.join('</p><p>') }</p>`;
+    } else {
+      // Attempt password update.
+      await UserController.updatePassword(request, reply, {
+        userId: cookie.userId,
+        old_password: request.payload.old_password,
+        new_password: request.payload.new_password,
+      }).then(data => {
+        alert.type = 'success';
+        alert.message = 'Your password has been updated.';
+      }).catch(err => {
+        // TODO: react to 2FA prompt
+
+        // Set error message.
+        alert.type = 'danger';
+        alert.message = err.message;
+      });
+    }
 
     // Render settings-password page.
     return reply.view('settings-password', {
