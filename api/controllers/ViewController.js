@@ -899,6 +899,9 @@ module.exports = {
       return reply.redirect('/');
     }
 
+    // Load current user from DB.
+    const user = await User.findOne({ _id: cookie.userId });
+
     // Check for user feedback and display
     let alert;
     if (cookie.alert) {
@@ -906,9 +909,6 @@ module.exports = {
       delete(cookie.alert);
       request.yar.set('session', cookie);
     }
-
-    // Load current user from DB.
-    const user = await User.findOne({ _id: cookie.userId });
 
     // Render settings-password page.
     return reply.view('settings-password', {
@@ -971,10 +971,12 @@ module.exports = {
       });
     }
 
-    // Render settings-password page.
-    return reply.view('settings-password', {
-      user,
-      alert,
-    });
+    // Store user feedback to be shown after redirect.
+    cookie.alert = alert;
+    request.yar.set('session', cookie);
+
+    // Always redirect to password form, to avoid resubmitting when user chooses
+    // to refresh browser.
+    return reply.redirect('/settings/password');
   },
 };
