@@ -27,7 +27,7 @@
   tablist.setAttribute('role', 'tablist');
 
   // Add semantics are remove user focusability for each tab
-  Array.prototype.forEach.call(tabs, (tab, i) => {
+  Array.prototype.forEach.call(tabs, function (tab, i) {
     tab.setAttribute('role', 'tab');
     tab.setAttribute('id', 'tab' + (i + 1));
     tab.setAttribute('tabindex', '-1');
@@ -59,7 +59,7 @@
   });
 
   // Add tab panel semantics and hide them all
-  Array.prototype.forEach.call(panels, (panel, i) => {
+  Array.prototype.forEach.call(panels, function (panel, i) {
     panel.setAttribute('role', 'tabpanel');
     panel.setAttribute('tabindex', '-1');
     let id = panel.getAttribute('id');
