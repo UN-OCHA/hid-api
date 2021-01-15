@@ -64,11 +64,15 @@
     panel.setAttribute('tabindex', '-1');
     let id = panel.getAttribute('id');
     panel.setAttribute('aria-labelledby', tabs[i].id);
-    panel.hidden = true;
+
+    // don't hide them because we only have one tab per URL now.
+    // panel.hidden = true;
   });
 
   // Initially activate the first tab and reveal the first tab panel
-  tabs[0].removeAttribute('tabindex');
-  tabs[0].setAttribute('aria-selected', 'true');
-  panels[0].hidden = false;
+  // tabs[0].removeAttribute('tabindex');
+
+  // This stuff no longer necessary because we set focus in HTML on each URL.
+  // tabs[0].setAttribute('aria-selected', 'true');
+  // panels[0].hidden = false;
 })();
