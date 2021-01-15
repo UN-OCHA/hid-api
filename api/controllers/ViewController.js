@@ -812,7 +812,7 @@ module.exports = {
     // Load user from DB.
     const user = await User.findOne({ _id: cookie.userId });
 
-    // Render settins page.
+    // Render settings page.
     return reply.view('settings', {
       user,
       alert,
@@ -887,5 +887,61 @@ module.exports = {
 
     // Redirect back to settings.
     return reply.redirect('/settings');
-  }
+  },
+
+  /**
+   * User settings: render form to change password
+   *
+   * It shows the three form elements (current, new, confirm).
+   */
+  async settingsPassword(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // Set up user feedback
+    let alert = {};
+
+    // Load current user from DB.
+    const user = await User.findOne({ _id: cookie.userId });
+
+    // Render settings-password page.
+    return reply.view('settings-password', {
+      user,
+      alert,
+    });
+  },
+
+  /**
+   * User settings: handle submissions to change password
+   *
+   * This handles all form submissions for changing password. Initial attempt
+   * might result in a TOTP prompt and we handle that in the submission handler
+   * in order to securely store the original password submissions temporarily.
+   */
+  async settingsPasswordSubmit(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // Set up user feedback
+    let alert = {};
+
+    // Load current user from DB.
+    const user = await User.findOne({ _id: cookie.userId });
+
+    // TODO: validate input
+    // TODO: attempt password reset
+    // TODO: react to 2FA prompt
+
+    // Render settings-password page.
+    return reply.view('settings-password', {
+      user,
+      alert,
+    });
+  },
 };
