@@ -28,6 +28,9 @@
 
   /* darken */
   --cd-primary-color--dark: hsl(var(--cd-primary-color-h), var(--cd-primary-color-s), calc(var(--cd-primary-color-l) - 26%));
+
+  /* CD colours for components */
+  --cd-blue-grey: #e6ecf1;
 }
 
 /**
