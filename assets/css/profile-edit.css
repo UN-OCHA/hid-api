@@ -26,8 +26,15 @@
 .profile__emails {}
 .profile__email {
   display: flex;
-  flex-flow: row nowrap;
   align-items: center;
+  /* Wrap so when the Confirm and Delete buttons are both present
+  the second button wraps to a new line and prevents horizontal scroll. */
+  flex-wrap: wrap;
+}
+@media screen and (min-width: 720px) {
+  .profile__email {
+    flex-flow: row nowrap;
+  }
 }
 .profile__email .email__select-primary {
   flex: 0 0 3em;
@@ -48,8 +55,11 @@
   font-weight: 700;
   color: black;
 }
-.profile__email .email__delete {
+.profile__email .email__status {
   padding: 0 1em;
+}
+.profile__email .email__delete {
+  padding-left: 1em;
 }
 
 .form-actions .cd-button {
