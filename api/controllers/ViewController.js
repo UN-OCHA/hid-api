@@ -260,7 +260,7 @@ module.exports = {
       // Render registration form.
       return reply.view('register', {
         alert: {
-          type: 'danger',
+          type: 'warning',
           message: userMessage,
         },
         query: request.query,
