@@ -1,3 +1,5 @@
+<style><% include ../assets/css/cd-alert.css %></style>
+
 <% if (typeof alert !== 'undefined' && alert.type && alert.message) { %>
   <div class="alert alert--inline alert--<%= alert.type %> [ flow ]" role="alert">
     <div class="alert__inner">
