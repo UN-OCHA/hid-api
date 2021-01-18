@@ -146,6 +146,7 @@ a:focus {
  * Alerts and other messages can appear on any page, so we'll define them here.
  */
 .alert {
+  display: block;
   padding: 1rem;
   margin: 1rem 0 2rem;
   border: 1px solid var(--cd-blue--bright);
@@ -186,11 +187,13 @@ a:focus {
  * Forms
  */
 
-form .form-field > * {
+.form-field {}
+
+.form-field > * {
   display: block;
 }
 
-form .form-field > input[type="checkbox"] {
+.form-field > input[type="checkbox"] {
   display: inline-block;
 }
 

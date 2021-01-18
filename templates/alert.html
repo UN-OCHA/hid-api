@@ -1,5 +1,5 @@
 <% if (typeof alert !== 'undefined' && alert.type && alert.message) { %>
-  <div class="alert alert--inline alert--<%= alert.type %> [ flow ]" role="alert">
+  <div class="alert alert--<%= alert.type %> [ flow ]" role="alert">
     <div class="alert__inner">
       <%- alert.message %>
     </div>
