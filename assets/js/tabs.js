@@ -2,7 +2,7 @@
 (function iife() {
   // Get relevant elements and collections
   const tabbed = document.querySelector('.tabbed');
-  const tablist = tabbed.querySelector('ul');
+  const tablist = tabbed.querySelector('nav');
   const tabs = tablist.querySelectorAll('a');
   const panels = tabbed.querySelectorAll('[id^="section"]');
 
@@ -30,11 +30,12 @@
   Array.prototype.forEach.call(tabs, function (tab, i) {
     tab.setAttribute('role', 'tab');
     tab.setAttribute('id', 'tab' + (i + 1));
-    tab.setAttribute('tabindex', '-1');
+    // we are treating our tab-looking links like links. allow tabbing.
+    // tab.setAttribute('tabindex', '-1');
     tab.parentNode.setAttribute('role', 'presentation');
 
     // Handle clicking of tabs for mouse users
-    // tab.addEventListener('click', e => {
+    // tab.addEventListener('click', function (e) {
     //   e.preventDefault();
     //   let currentTab = tablist.querySelector('[aria-selected]');
     //   if (e.currentTarget !== currentTab) {
@@ -43,7 +44,7 @@
     // });
 
     // Handle keydown events for keyboard users
-    // tab.addEventListener('keydown', e => {
+    // tab.addEventListener('keydown', function (e) {
     //   // Get the index of the current tab in the tabs node list
     //   let index = Array.prototype.indexOf.call(tabs, e.currentTarget);
     //   // Work out which key the user is pressing and
