@@ -2,7 +2,7 @@
 (function iife() {
   // Get relevant elements and collections
   const tabbed = document.querySelector('.tabbed');
-  const tablist = tabbed.querySelector('ul');
+  const tablist = tabbed.querySelector('nav');
   const tabs = tablist.querySelectorAll('a');
   const panels = tabbed.querySelectorAll('[id^="section"]');
 
@@ -30,7 +30,8 @@
   Array.prototype.forEach.call(tabs, function (tab, i) {
     tab.setAttribute('role', 'tab');
     tab.setAttribute('id', 'tab' + (i + 1));
-    tab.setAttribute('tabindex', '-1');
+    // we are treating our tab-looking links like links. allow tabbing.
+    // tab.setAttribute('tabindex', '-1');
     tab.parentNode.setAttribute('role', 'presentation');
 
     // Handle clicking of tabs for mouse users
