@@ -23,7 +23,25 @@
           </li>
         </nav>
 
-        <section id="section-delete"></section>
+        <section id="section-delete">
+          <h2>Delete your HID account</h2>
+          <form action="/settings/delete" method="POST" class="[ flow ]">
+            <div class="form-field">
+              <p>Deleting your account means that you will lose your access to Humanitarian ID.</p>
+            </div>
+            <label for="confirm-primary-email" class="form-field alert alert--danger">
+              <div class="alert__inner [ flow ]">
+                <p>Confirm that you wish to <strong>completely delete your HID account</strong> by typing your primary email address in the field here:</p>
+                <input type="email" name="primary_email" id="confirm-primary-email" placeholder="<%= user.email %>" required pattern="<%= user.email %>" title="Your primary email: <%= user.email %>">
+              </div>
+            </label>
+            <div class="form-actions">
+              <button name="action" value="submit" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase cd-button--danger">
+                Delete Account
+              </button>
+            </div>
+          </form>
+        </section>
       </div>
     </div>
   </main>

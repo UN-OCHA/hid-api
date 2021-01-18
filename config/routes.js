@@ -228,6 +228,9 @@ module.exports = [
     method: 'POST',
     path: '/settings/delete',
     handler: ViewController.settingsDeleteSubmit,
+    options: {
+      auth: false,
+    },
   },
 
   {
