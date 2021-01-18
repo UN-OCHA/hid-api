@@ -193,7 +193,6 @@ module.exports = [
       auth: false,
     },
   },
-
   {
     method: 'POST',
     path: '/settings/oauth-clients',
@@ -211,7 +210,6 @@ module.exports = [
       auth: false,
     },
   },
-
   {
     method: 'POST',
     path: '/settings/password',
@@ -219,6 +217,17 @@ module.exports = [
     options: {
       auth: false,
     },
+  },
+
+  {
+    method: 'GET',
+    path: '/settings/delete',
+    handler: ViewController.settingsDelete,
+  },
+  {
+    method: 'POST',
+    path: '/settings/delete',
+    handler: ViewController.settingsDeleteSubmit,
   },
 
   {

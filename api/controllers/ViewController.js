@@ -1032,8 +1032,67 @@ module.exports = {
     cookie.alert = alert;
     request.yar.set('session', cookie);
 
-    // Always redirect to password form, to avoid resubmitting when user chooses
-    // to refresh browser.
+    // Always redirect, to avoid resubmitting when user refreshes browser.
     return reply.redirect('/settings/password');
+  },
+
+  /**
+   * User settings: render form to delete account
+   */
+  async settingsDelete(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // Load current user from DB.
+    const user = await User.findOne({ _id: cookie.userId });
+
+    // Check for user feedback to display.
+    let alert;
+    if (cookie.alert) {
+      alert = cookie.alert;
+      delete(cookie.alert);
+      request.yar.set('session', cookie);
+    }
+
+    // Check if we need TOTP Prompt.
+    let totpPrompt = false;
+    if (cookie.totpPrompt) {
+      totpPrompt = true;
+      delete(cookie.totpPrompt);
+      request.yar.set('session', cookie);
+    }
+
+    // Render settings-delete page.
+    return reply.view('settings-delete', {
+      user,
+      alert,
+      totpPrompt,
+    });
+  },
+
+  /**
+   * User settings: handle submissions to delete account
+   */
+  async settingsDeleteSubmit(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // Set up user feedback
+    let alert = {};
+    let reasons = [];
+    let destination = '/settings/delete';
+
+    // Finalize cookie (feedback, TOTP status, etc.)
+    cookie.alert = alert;
+    request.yar.set('session', cookie);
+
+    // Always redirect, to avoid resubmitting when user refreshes browser.
+    return reply.redirect(destination);
   },
 };
