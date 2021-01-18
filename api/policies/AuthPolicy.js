@@ -70,9 +70,9 @@ module.exports = {
   async isTOTPEnabledAndValid(request, internalArgs) {
     let user, totp;
 
-    if (internalArgs && internalArgs.user && internalArgs.totp) {
+    if (internalArgs && internalArgs.user) {
       user = internalArgs.user;
-      totp = internalArgs.totp;
+      totp = internalArgs.totp || '';
     } else {
       user = request.auth.credentials;
       totp = request.headers['x-hid-totp'];

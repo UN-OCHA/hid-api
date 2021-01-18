@@ -948,7 +948,7 @@ module.exports = {
     const user = await User.findOne({ _id: cookie.userId });
 
     // Enforce TOTP if necessary.
-    const token = request.payload['x-hid-totp'];
+    const token = request.payload && request.payload['x-hid-totp'];
     await AuthPolicy.isTOTPEnabledAndValid({}, {
       user,
       totp: token,
