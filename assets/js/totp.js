@@ -3,5 +3,6 @@
  */
 (function () {
   // Immediately focus on the text input.
-  document.querySelector('#x-hid-totp').focus();
+  var totpPrompt = document.querySelector('#x-hid-totp');
+  totpPrompt && totpPrompt.focus();
 })();
