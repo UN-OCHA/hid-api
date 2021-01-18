@@ -986,7 +986,7 @@ module.exports = {
       }
 
       // Display error about invalid TOTP.
-      if (err.message.indexOf('Invalid TOTP token') !== -1) {
+      if (err.message.indexOf('Invalid') !== -1) {
         alert.type = 'danger';
         reasons.push('Your two-factor authentication code was invalid.')
       } else {
