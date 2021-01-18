@@ -63,14 +63,30 @@ module.exports = {
 
   isTOTPValid,
 
-  async isTOTPEnabledAndValid(request) {
-    const user = request.auth.credentials;
+  /**
+   * Enforces an _optional_ TOTP requirement. If the user has 2FA enabled, they
+   * must answer this challenge. Users without 2FA enabled will pass through.
+   */
+  async isTOTPEnabledAndValid(request, internalArgs) {
+    let user, totp;
 
+    if (internalArgs && internalArgs.user && internalArgs.totp) {
+      user = internalArgs.user;
+      totp = internalArgs.totp;
+    } else {
+      user = request.auth.credentials;
+      totp = request.headers['x-hid-totp'];
+    }
+
+    // User does not have totp enabled, so return true.
     if (!user.totp) {
-      // User does not have totp enabled, pass
       return true;
     }
-    await isTOTPValid(user, request.headers['x-hid-totp']);
+
+    // Validate the TOTP code.
+    await isTOTPValid(user, totp);
+
+    // If no error was thrown, return true.
     return true;
   },
 
