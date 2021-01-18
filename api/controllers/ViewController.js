@@ -276,24 +276,24 @@ module.exports = {
   async verify(request, reply) {
     const cookie = request.yar.get('session');
 
-    // Do we have what we need to validate the confirmation link?
-    if (!request.query.hash || !request.query.id || !request.query.time || !request.query.emailId) {
-      throw Boom.badRequest('Missing necessary parameters');
-    }
-
-    // Populate payload object.
-    request.payload = {
-      hash: request.query.hash,
-      id: request.query.id,
-      time: request.query.time,
-      emailId: request.query.emailId,
-    };
-
     // Template variables.
     const registerLink = _getRegisterLink(request.query);
     const passwordLink = _getPasswordLink(request.query);
 
     try {
+      // Do we have what we need to validate the confirmation link?
+      if (!request.query.hash || !request.query.id || !request.query.time) {
+        throw Boom.badRequest('Confirmation link was missing parameters.');
+      }
+
+      // Populate payload object.
+      request.payload = {
+        hash: request.query.hash,
+        id: request.query.id,
+        time: request.query.time,
+        emailId: request.query.emailId,
+      };
+
       await UserController.validateEmail(request);
 
       // If user is logged in, send them to their profile.
@@ -310,7 +310,7 @@ module.exports = {
       return reply.view('login', {
         alert: {
           type: 'success',
-          message: 'Thank you for confirming your email address. You can now log in',
+          message: 'Thank you for confirming your account. You can now log in',
         },
         query: request.query,
         registerLink,
@@ -318,7 +318,13 @@ module.exports = {
       });
     } catch (err) {
       return reply.view('login', {
-        alert: { type: 'danger', message: 'There was an error confirming your email address.' },
+        alert: {
+          type: 'danger',
+          message: `
+            <p>There was an internal error because the confirmation link was not well-formed.</p>
+            <p>Please try again, and if the problem persists contact info@humanitarian.id</p>
+          `,
+        },
         query: request.query,
         registerLink,
         passwordLink,
