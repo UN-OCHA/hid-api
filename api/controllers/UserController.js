@@ -2579,6 +2579,17 @@ module.exports = {
    * tags:
    *   - user
    * summary: Revokes one OAuth Client from a user's profile.
+   * parameters:
+   *   - name: id
+   *     in: path
+   *     description: The user ID
+   *     required: true
+   *     type: string
+   *   - name: client
+   *     in: path
+   *     description: The OAuth Client ID
+   *     required: true
+   *     type: string
    * responses:
    *   '200':
    *     description: OAuth Client revoked successfully. Returns user object.
@@ -2690,6 +2701,8 @@ module.exports = {
           stack_trace: err.stack,
         },
       );
+
+      throw Boom.internal('Internal server error.');
     }
   },
 };
