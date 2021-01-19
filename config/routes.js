@@ -205,6 +205,24 @@ module.exports = [
 
   {
     method: 'GET',
+    path: '/settings/password',
+    handler: ViewController.settingsPassword,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'POST',
+    path: '/settings/password',
+    handler: ViewController.settingsPasswordSubmit,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'GET',
     path: '/docs/{param*}',
     handler: {
       directory: {

@@ -1071,13 +1071,27 @@ module.exports = {
    *   '404':
    *     description: Requested user not found.
    */
-  async updatePassword(request, reply) {
-    const user = await User.findOne({ _id: request.params.id });
+  async updatePassword(request, reply, internalArgs) {
+    let userId, old_password, new_password, confirm_password;
+
+    if (internalArgs) {
+      userId = internalArgs.userId;
+      old_password = internalArgs.old_password;
+      new_password = internalArgs.new_password;
+      confirm_password = internalArgs.confirm_password;
+    } else {
+      userId = request.params.id;
+      old_password = request.payload.old_password;
+      new_password = request.payload.new_password;
+    }
+
+    // Look up user in DB.
+    const user = await User.findOne({ _id: userId });
 
     // Was the user parameter supplied?
     if (!user) {
       logger.warn(
-        `[UserController->updatePassword] User ${request.params.id} not found`,
+        `[UserController->updatePassword] User ${userId} not found`,
         {
           request,
           fail: true,
@@ -1087,9 +1101,9 @@ module.exports = {
     }
 
     // Are both password parameters present?
-    if (!request.payload.old_password || !request.payload.new_password) {
+    if (!old_password || !new_password) {
       logger.warn(
-        `[UserController->updatePassword] Could not update user password for user ${user.id}. Request is missing parameters (old or new password)`,
+        `[UserController->updatePassword] Could not update user password for user ${userId}. Request is missing parameters (old or new password)`,
         {
           request,
           security: true,
@@ -1100,9 +1114,9 @@ module.exports = {
     }
 
     // Business logic: is the new password strong enough?
-    if (!User.isStrongPassword(request.payload.new_password)) {
+    if (!User.isStrongPassword(new_password)) {
       logger.warn(
-        `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is not strong enough (v3)`,
+        `[UserController->updatePassword] Could not update user password for user ${userId}. New password is not strong enough (v3)`,
         {
           request,
           security: true,
@@ -1113,11 +1127,11 @@ module.exports = {
     }
 
     // Was the current password entered correctly?
-    if (user.validPassword(request.payload.old_password)) {
+    if (user.validPassword(old_password)) {
       // Business logic: is the new password different than the old one?
-      if (request.payload.old_password === request.payload.new_password) {
+      if (old_password === new_password) {
         logger.warn(
-          `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is the same as old password.`,
+          `[UserController->updatePassword] Could not update user password for user ${userId}. New password is the same as old password.`,
           {
             request,
             security: true,
@@ -1128,11 +1142,11 @@ module.exports = {
       }
 
       // Proceed with password update.
-      user.password = User.hashPassword(request.payload.new_password);
+      user.password = User.hashPassword(new_password);
       user.lastModified = new Date();
       await user.save();
       logger.info(
-        `[UserController->updatePassword] Successfully updated password for user ${user._id.toString()}`,
+        `[UserController->updatePassword] Successfully updated password for user ${userId}`,
         {
           request,
           security: true,
@@ -1140,7 +1154,7 @@ module.exports = {
       );
     } else {
       logger.warn(
-        `[UserController->updatePassword] Could not update password for user ${user._id.toString()}. Old password is wrong.`,
+        `[UserController->updatePassword] Could not update password for user ${userId}. Old password is wrong.`,
         {
           request,
           security: true,

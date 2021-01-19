@@ -1,5 +1,6 @@
 <% include header %>
-<style><% include ../assets/css/user-settings.css %></style>
+<style><% include ../assets/css/tabs.css %></style>
+<style><% include ../assets/css/settings.css %></style>
 
 <div class="api-page">
   <main role="main" id="main-content" class="cd-container">
@@ -7,12 +8,12 @@
       <h1 class="page-header__heading">Settings for <%= user.name %></h1>
       <% include alert.html %>
       <div class="tabbed">
-        <ul>
-<!--          <li> -->
-<!--            <a href="#section-password">Password</a>-->
-<!--          </li>-->
+        <nav>
           <li>
-            <a href="#section-apps">Authorized Apps</a>
+            <a href="/settings" aria-selected="true">Authorized Apps</a>
+          </li>
+          <li>
+            <a href="/settings/password">Password</a>
           </li>
 <!--          <li>-->
 <!--            <a href="#section-security">Security</a>-->
@@ -20,53 +21,7 @@
 <!--          <li>-->
 <!--            <a href="#section-delete">Delete Account</a>-->
 <!--          </li>-->
-        </ul>
-
-<!--        <section id="section-password">-->
-<!--          <h2>Change Password</h2>-->
-<!--          <form onsubmit="changePassword()">-->
-<!--              <p>You must enter your current password to set a new password.</p>-->
-<!--              <input-->
-<!--                id="current-password"-->
-<!--                name="password"-->
-<!--                type="password"-->
-<!--                label="Password"-->
-<!--                autocomplete="current-password"-->
-<!--                placeholder=" "-->
-<!--                outlined-->
-<!--                required-->
-<!--              />-->
-<!--              <p>Passwords must be <strong>at least {{ $v.password.$params.minLength.min }} characters long</strong>, contain at least <strong>one number</strong>, <strong>one uppercase character</strong>, <strong>one lowercase character</strong>, and one <strong>special character: <code>!@#$%^&*()+=\`{}</code></strong>. Password has to be different than your previous one.</p>-->
-<!--              <input-->
-<!--                id="new-password"-->
-<!--                name="password"-->
-<!--                type="password"-->
-<!--                label="Password"-->
-<!--                autocomplete="new-password"-->
-<!--                placeholder=" "-->
-<!--                outlined-->
-<!--                required-->
-<!--              />-->
-<!--              <input-->
-<!--                id="new-password-confirm"-->
-<!--                name="passwordConfirm"-->
-<!--                type="password"-->
-<!--                label="Confirm Password"-->
-<!--                autocomplete="new-password"-->
-<!--                placeholder=" "-->
-<!--                outlined-->
-<!--                required-->
-<!--              />-->
-
-<!--              <button-->
-<!--                id="reset-password"-->
-<!--                class="cd-button cd-button--style"-->
-<!--                type="submit"-->
-<!--              >-->
-<!--                Reset Password-->
-<!--              </button>-->
-<!--          </form>-->
-<!--        </section>-->
+        </nav>
 
         <section id="section-apps">
           <h2>Authorized Apps</h2>

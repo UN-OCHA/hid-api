@@ -812,7 +812,7 @@ module.exports = {
     // Load user from DB.
     const user = await User.findOne({ _id: cookie.userId });
 
-    // Render settins page.
+    // Render settings page.
     return reply.view('settings', {
       user,
       alert,
@@ -885,5 +885,155 @@ module.exports = {
 
     // Redirect back to settings.
     return reply.redirect('/settings');
-  }
+  },
+
+  /**
+   * User settings: render form to change password
+   *
+   * It shows the three form elements (current, new, confirm).
+   */
+  async settingsPassword(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // Load current user from DB.
+    const user = await User.findOne({ _id: cookie.userId });
+
+    // Check for user feedback to display.
+    let alert;
+    if (cookie.alert) {
+      alert = cookie.alert;
+      delete(cookie.alert);
+      request.yar.set('session', cookie);
+    }
+
+    // Check if we need TOTP Prompt.
+    let totpPrompt = false;
+    if (cookie.totpPrompt) {
+      totpPrompt = true;
+      delete(cookie.totpPrompt);
+      request.yar.set('session', cookie);
+    }
+
+    // Render settings-password page.
+    return reply.view('settings-password', {
+      user,
+      alert,
+      totpPrompt,
+    });
+  },
+
+  /**
+   * User settings: handle submissions to change password
+   *
+   * This handles all form submissions for changing password. Initial attempt
+   * might result in a TOTP prompt and we handle that in the submission handler
+   * in order to securely store the original password submissions temporarily.
+   */
+  async settingsPasswordSubmit(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // Set up user feedback
+    let alert = {};
+    let reasons = [];
+
+    // Load current user from DB.
+    const user = await User.findOne({ _id: cookie.userId });
+
+    // Enforce TOTP if necessary.
+    const token = request.payload && request.payload['x-hid-totp'];
+    await AuthPolicy.isTOTPEnabledAndValid({}, {
+      user,
+      totp: token,
+    }).then(data => {
+      // Since all users (whether they use TOTP or not) will make it to this
+      // success stage, check cookie and see if the form data is here.
+      //
+      // If we find it, load the data into request.payload like the initial
+      // form submission.
+      if (cookie.formData) {
+        request.payload.old_password = cookie.formData.old_password;
+        request.payload.new_password = cookie.formData.new_password;
+        request.payload.confirm_password = cookie.formData.confirm_password;
+      }
+
+      // Now clean up the cookie.
+      delete(cookie.totpPrompt);
+      delete(cookie.formData);
+    }).catch(err => {
+      // Cookie the form data so we prompt for TOTP without either populating
+      // the form (and thereby printing their password in HTML) or making the
+      // person re-enter the form data. The cookie is encrypted and only the
+      // server can read the contents.
+      //
+      // We wrap the assignment in a conditional to allow for multiple attempts
+      // at entering the TOTP. If we blindly set the request data, a second TOTP
+      // attempt will erase formDara and set everything to empty strings.
+      cookie.totpPrompt = true;
+      if (!cookie.formData) {
+        cookie.formData = {
+          old_password: request.payload.old_password,
+          new_password: request.payload.new_password,
+          confirm_password: request.payload.confirm_password,
+        };
+      }
+
+      // Display error about invalid TOTP.
+      if (err.message.indexOf('Invalid') !== -1) {
+        alert.type = 'danger';
+        reasons.push('Your two-factor authentication code was invalid.')
+      } else {
+        reasons.push('Enter your two-factor authentication to update the password.');
+      }
+    });
+
+    // Basic form validation. We only run this if the cookie.formData is empty.
+    if (!cookie.formData) {
+      if (request.payload && request.payload.old_password && request.payload.new_password && request.payload.confirm_password) {
+        if (request.payload.new_password === request.payload.confirm_password) {
+          // We have the data we need to attempt password update.
+        } else {
+          reasons.push('The password confirmation field did not match. Please try again.');
+        }
+      } else {
+        // missing params
+        reasons.push('Fill in all fields to change your password.');
+      }
+    }
+
+    // If there are errors/warnings with submission, display them.
+    if (reasons.length > 0) {
+      alert.type = alert.type === 'danger' ? 'danger' : 'warning';
+      alert.message = `<p>${ reasons.join('</p><p>') }</p>`;
+    } else {
+      // Attempt password update.
+      await UserController.updatePassword(request, reply, {
+        userId: cookie.userId,
+        old_password: request.payload.old_password,
+        new_password: request.payload.new_password,
+      }).then(data => {
+        alert.type = 'success';
+        alert.message = 'Your password has been updated.';
+      }).catch(err => {
+        // Set error message.
+        alert.type = 'danger';
+        alert.message = err.message;
+      });
+    }
+
+    // Finalize cookie (feedback, TOTP status, etc.)
+    cookie.alert = alert;
+    request.yar.set('session', cookie);
+
+    // Always redirect to password form, to avoid resubmitting when user chooses
+    // to refresh browser.
+    return reply.redirect('/settings/password');
+  },
 };
