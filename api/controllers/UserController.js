@@ -2687,6 +2687,8 @@ module.exports = {
           stack_trace: err.stack,
         },
       );
+
+      throw Boom.internal('Internal server error.');
     }
   },
 };
