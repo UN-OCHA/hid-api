@@ -7,13 +7,7 @@
     <div class="cd-layout-content [ flow ]">
       <h1 class="page-header__heading">Register a Humanitarian ID account</h1>
 
-      <% if (typeof alert !== 'undefined') { %>
-        <div class="alert alert--inline alert--<%= alert.type %>" role="alert">
-          <div class="alert__inner">
-            <%= alert.message %>
-          </div>
-        </div>
-      <% } %>
+      <% include alert.html %>
 
       <form name="register" action="/register" method="POST" onsubmit="return checkForm(this)" class="[ flow ]">
         <div class="form-field">
