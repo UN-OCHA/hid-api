@@ -140,48 +140,6 @@ a:focus {
   }
 }
 
-/**
- * Alerts
- *
- * Alerts and other messages can appear on any page, so we'll define them here.
- */
-.alert {
-  display: block;
-  padding: 1rem;
-  margin: 1rem 0 2rem;
-  border: 1px solid var(--cd-blue--bright);
-  border-radius: 0.25rem;
-  box-shadow: -8px 0 0 var(--cd-blue--bright);
-  color: var(--cd-grey--dark);
-}
-
-.alert--success {
-  background-color: var(--cd-green--light);
-  border: 1px solid var(--cd-green);
-  box-shadow: -8px 0 0 var(--cd-green);
-}
-
-.alert--warning {
-  background-color: var(--cd-orange--light);
-  border: 1px solid var(--cd-orange);
-  box-shadow: -8px 0 0 var(--cd-orange);
-}
-
-.alert--danger {
-  background-color: var(--cd-red--light);
-  border: 1px solid var(--cd-red);
-  box-shadow: -8px 0 0 var(--cd-red);
-}
-
-.alert p {
-  margin: 0;
-}
-.alert ul {
-  margin: 0;
-}
-.alert li {
-  margin: 0;
-}
 
 /**
  * Forms

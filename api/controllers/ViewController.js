@@ -102,7 +102,7 @@ module.exports = {
           || (client && client.redirectUri !== request.query.redirect_uri
             && !client.redirectUrls.includes(request.query.redirect_uri))) {
           loginArgs.alert = {
-            type: 'danger',
+            type: 'error',
             message: 'The configuration of the client application is invalid. We can not log you in.',
           };
           return reply.view('login', loginArgs);
@@ -110,7 +110,7 @@ module.exports = {
         return reply.view('login', loginArgs);
       } catch (err) {
         loginArgs.alert = {
-          type: 'danger',
+          type: 'error',
           message: 'Internal server error. We can not log you in. Please let us know at info@humanitarian.id',
         };
         return reply.view('login', loginArgs);
@@ -198,7 +198,7 @@ module.exports = {
 
       return reply.view('register', {
         alert: {
-          type: 'danger',
+          type: 'error',
           message: 'There was a problem validating your registration. Please try again.',
         },
         formEmail: request.payload.email,
@@ -218,7 +218,7 @@ module.exports = {
       // Render login form with success message.
       return reply.view('login', {
         alert: {
-          type: 'success',
+          type: 'status',
           message: 'Thank you for creating an account. You will soon receive a confirmation email to confirm your account.',
         },
         query: request.query,
@@ -236,7 +236,7 @@ module.exports = {
 
         return reply.view('login', {
           alert: {
-            type: 'danger',
+            type: 'error',
             message: userMessage,
           },
           query: request.query,
@@ -299,7 +299,7 @@ module.exports = {
       // If user is logged in, send them to their profile.
       if (cookie && cookie.userId) {
         cookie.alert = {
-          type: 'success',
+          type: 'status',
           message: 'Thank you for confirming your email address. It can now be set as your primary email if you wish.',
         }
         request.yar.set('session', cookie);
@@ -309,7 +309,7 @@ module.exports = {
 
       return reply.view('login', {
         alert: {
-          type: 'success',
+          type: 'status',
           message: 'Thank you for confirming your account. You can now log in',
         },
         query: request.query,
@@ -319,7 +319,7 @@ module.exports = {
     } catch (err) {
       return reply.view('login', {
         alert: {
-          type: 'danger',
+          type: 'error',
           message: `
             <p>There was an internal error because the confirmation link was not well-formed.</p>
             <p>Please try again, and if the problem persists contact info@humanitarian.id</p>
@@ -345,14 +345,14 @@ module.exports = {
     try {
       await UserController.resetPasswordEndpoint(request);
       return reply.view('login', {
-        alert: { type: 'success', message: `Password reset was sent to ${request.payload.email}. Please make sure the email address is correct. If not, please reset your password again.` },
+        alert: { type: 'status', message: `Password reset was sent to ${request.payload.email}. Please make sure the email address is correct. If not, please reset your password again.` },
         query: request.query,
         registerLink,
         passwordLink,
       });
     } catch (err) {
       return reply.view('login', {
-        alert: { type: 'danger', message: 'There was an error resetting your password.' },
+        alert: { type: 'error', message: 'There was an error resetting your password.' },
         query: request.query,
         registerLink,
         passwordLink,
@@ -405,7 +405,7 @@ module.exports = {
         });
       } catch (err) {
         const alert = {
-          type: 'danger',
+          type: 'error',
           message: err.output.payload.message,
         };
         return reply.view('totp', {
@@ -425,7 +425,7 @@ module.exports = {
         if (params) {
           return reply.view('login', {
             alert: {
-              type: 'success',
+              type: 'status',
               message: 'Your password was successfully reset. You can now login.',
             },
             query: request.payload,
@@ -435,7 +435,7 @@ module.exports = {
         }
         return reply.view('message', {
           alert: {
-            type: 'success',
+            type: 'status',
             message: 'Thank you for updating your password.',
           },
           query: request.payload,
@@ -446,7 +446,7 @@ module.exports = {
         if (params) {
           return reply.view('login', {
             alert: {
-              type: 'danger',
+              type: 'error',
               message: 'There was an error resetting your password. Please try again.',
             },
             query: request.payload,
@@ -458,7 +458,7 @@ module.exports = {
         const requestUrl = _buildRequestUrl(request, 'new_password');
         return reply.view('password', {
           alert: {
-            type: 'danger',
+            type: 'error',
             message: 'There was an error resetting your password. Please try again.',
           },
           query: request.payload,
@@ -468,7 +468,7 @@ module.exports = {
     }
 
     return reply.view('message', {
-      alert: { type: 'danger', message: 'There was an error resetting your password.' },
+      alert: { type: 'error', message: 'There was an error resetting your password.' },
       query: request.payload,
       isSuccess: false,
       title: 'Password update',
@@ -591,7 +591,7 @@ module.exports = {
     if (reasons.length > 0) {
       // Display the user feedback as an alert.
       alert = {
-        type: 'danger',
+        type: 'error',
         message: '<p>Your basic profile info could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
       };
 
@@ -624,7 +624,7 @@ module.exports = {
 
       // Create a success confirmation.
       cookie.alert = {
-        type: 'success',
+        type: 'status',
         message: '<p>Your profile was saved.</p>',
       };
 
@@ -710,7 +710,7 @@ module.exports = {
     if (reasons.length > 0) {
       // Display the user feedback as an alert.
       alert = {
-        type: 'danger',
+        type: 'error',
         message: '<p>Your email settings could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
       };
 
@@ -724,7 +724,7 @@ module.exports = {
 
       // Create a success confirmation.
       cookie.alert = {
-        type: 'success',
+        type: 'status',
         message: '<p>Your email settings were saved.</p>',
       };
 
@@ -747,7 +747,7 @@ module.exports = {
         }).then(data => {
           cookie.alert.message += `You deleted ${request.payload.email_delete} from your account.`;
         }).catch(err => {
-          cookie.alert.type = 'danger';
+          cookie.alert.type = 'error';
           cookie.alert.message = `There was a problem removing ${request.payload.email_delete} from your account.`;
         });
       }
@@ -764,7 +764,7 @@ module.exports = {
         ).then(data => {
           cookie.alert.message += 'The confirmation email will arrive in your inbox shortly.';
         }).catch(err => {
-          cookie.alert.type = 'danger';
+          cookie.alert.type = 'error';
           cookie.alert.message = 'There was a problem sending the confirmation email.';
         });
       }
@@ -779,7 +779,7 @@ module.exports = {
         }).then(data => {
           cookie.alert.message += `<p>A confirmation email has been sent to ${request.payload.email_new}.</p>`;
         }).catch(err => {
-          cookie.alert.type = 'danger';
+          cookie.alert.type = 'error';
 
           // Read our error and show some user feedback.
           if (err.message && err.message.indexOf('Email already exists') !== -1) {
@@ -864,7 +864,7 @@ module.exports = {
 
     // Did we find validation errors?
     if (reasons.length > 0) {
-      alert.type = 'danger';
+      alert.type = 'error';
       alert.message = `<p>We couldn't revoke the OAuth Client you requested.</p><p>${ reasons.join('<br>') }</p>`;
     } else {
       // No validation errors.
@@ -874,13 +874,13 @@ module.exports = {
         userId: cookie.userId,
         clientId: request.payload.oauth_client_delete,
       }).then(data => {
-        alert.type = 'success';
+        alert.type = 'status';
         alert.message = `
           <p>You successfully revoked <strong>${revokedClient.name}</strong> from your profile.</p>
           <p>If you wish to restore access you can log into that website again using HID.</p>
         `;
       }).catch(err => {
-        alert.type = 'danger';
+        alert.type = 'error';
         alert.message = err.message;
       });
     }
@@ -993,7 +993,7 @@ module.exports = {
 
       // Display error about invalid TOTP.
       if (err.message.indexOf('Invalid') !== -1) {
-        alert.type = 'danger';
+        alert.type = 'error';
         reasons.push('Your two-factor authentication code was invalid.')
       } else {
         reasons.push('Enter your two-factor authentication to update the password.');
@@ -1016,7 +1016,7 @@ module.exports = {
 
     // If there are errors/warnings with submission, display them.
     if (reasons.length > 0) {
-      alert.type = alert.type === 'danger' ? 'danger' : 'warning';
+      alert.type = alert.type === 'error' ? 'error' : 'warning';
       alert.message = `<p>${ reasons.join('</p><p>') }</p>`;
     } else {
       // Attempt password update.
@@ -1025,11 +1025,11 @@ module.exports = {
         old_password: request.payload.old_password,
         new_password: request.payload.new_password,
       }).then(data => {
-        alert.type = 'success';
+        alert.type = 'status';
         alert.message = 'Your password has been updated.';
       }).catch(err => {
         // Set error message.
-        alert.type = 'danger';
+        alert.type = 'error';
         alert.message = err.message;
       });
     }
