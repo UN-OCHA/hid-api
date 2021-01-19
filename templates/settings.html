@@ -4,27 +4,28 @@
 <div class="api-page">
   <main role="main" id="main-content" class="cd-container">
     <div class="cd-layout-content">
-      <h1 class="page-header__heading" translate>Settings for <%= user.name %></h1>
+      <h1 class="page-header__heading">Settings for <%= user.name %></h1>
+      <% include alert.html %>
       <div class="tabbed">
         <ul>
 <!--          <li> -->
-<!--            <a href="#section-password" translate>Password</a>-->
+<!--            <a href="#section-password">Password</a>-->
 <!--          </li>-->
           <li>
-            <a href="#section-apps" translate>Authorized Apps</a>
+            <a href="#section-apps">Authorized Apps</a>
           </li>
 <!--          <li>-->
-<!--            <a href="#section-security" translate>Security</a>-->
+<!--            <a href="#section-security">Security</a>-->
 <!--          </li>-->
 <!--          <li>-->
-<!--            <a href="#section-delete" translate>Delete Account</a>-->
+<!--            <a href="#section-delete">Delete Account</a>-->
 <!--          </li>-->
         </ul>
 
 <!--        <section id="section-password">-->
-<!--          <h2 translate>Change Password</h2>-->
+<!--          <h2>Change Password</h2>-->
 <!--          <form onsubmit="changePassword()">-->
-<!--              <p translate>You must enter your current password to set a new password.</p>-->
+<!--              <p>You must enter your current password to set a new password.</p>-->
 <!--              <input-->
 <!--                id="current-password"-->
 <!--                name="password"-->
@@ -35,7 +36,7 @@
 <!--                outlined-->
 <!--                required-->
 <!--              />-->
-<!--              <p translate>Passwords must be <strong>at least {{ $v.password.$params.minLength.min }} characters long</strong>, contain at least <strong>one number</strong>, <strong>one uppercase character</strong>, <strong>one lowercase character</strong>, and one <strong>special character: <code>!@#$%^&*()+=\`{}</code></strong>. Password has to be different than your previous one.</p>-->
+<!--              <p>Passwords must be <strong>at least {{ $v.password.$params.minLength.min }} characters long</strong>, contain at least <strong>one number</strong>, <strong>one uppercase character</strong>, <strong>one lowercase character</strong>, and one <strong>special character: <code>!@#$%^&*()+=\`{}</code></strong>. Password has to be different than your previous one.</p>-->
 <!--              <input-->
 <!--                id="new-password"-->
 <!--                name="password"-->
@@ -59,7 +60,7 @@
 
 <!--              <button-->
 <!--                id="reset-password"-->
-<!--                class="cd-button cd-button&#45;&#45;style"-->
+<!--                class="cd-button cd-button--style"-->
 <!--                type="submit"-->
 <!--              >-->
 <!--                Reset Password-->
@@ -69,51 +70,60 @@
 
         <section id="section-apps">
           <h2>Authorized Apps</h2>
-          <div class="alert alert--warning alert--inline" role="alert">
-            <div class="alert__inner" translate>
-              Currently you cannot revoke access to applications.<br>
-              Work is in progress to offer this option.
-            </div>
-          </div>
-          <ul>
-            <%
-              user.authorizedClients.forEach(function(client) {
-            %>
-            <li>
-              <span><%= client.name %></span>
-<!--              <button type="button" class="cd-button cd-button&#45;&#45;small cd-button&#45;&#45;cancel" onclick="removeThisClient(client._id);">-->
-<!--                <svg class="cd-icon cd-icon&#45;&#45;cancel">-->
-<!--                  <use xlink:href="#cd-icon&#45;&#45;cancel"></use>-->
-<!--                </svg>-->
-<!--              </button>-->
-            </li>
-            <%
-            });
-            %>
-          </ul>
+          <form action="/settings/oauth-clients" method="POST">
+            <% if (user.authorizedClients.length === 0) { %>
+              <p><em>You haven't authorized any websites yet. After you log in with HID on one of our <a href="https://about.humanitarian.id/partners-using-our-authentication-service.html" target="_blank" rel="noopener">Partner Sites</a> you will see it listed here.</em></p>
+            <% } else { %>
+              <p>You have <strong><%= user.authorizedClients.length %> websites</strong> that have been granted access to your profile.</p>
+              <ul class="oauth-clients-list [ flow ]">
+              <%
+                const sorted = user.authorizedClients.sort((a, b) => a.name.localeCompare(b.name));
+                sorted.forEach(function(client) {
+              %>
+                <li class="oauth-clients-list__client oac">
+                  <span class="oac__delete">
+                    <button
+                      type="submit"
+                      name="oauth_client_delete"
+                      value="<%= client._id.toString() %>"
+                      class="cd-button cd-button--small cd-button--danger"
+                      onclick="return confirmDeletion('<%= client.name %>');"
+                      aria-label="Revoke <%= client.name %>"
+                    >
+                      <svg class="cd-icon cd-icon--cancel" width="16" height="16" aria-hidden="true" focusable="false">
+                        <use xlink:href="#cd-icon--cancel"></use>
+                      </svg>
+                    </button>
+                  </span>
+                  <span class="oac__name"><%= client.name %></span>
+                </li>
+              <% }); %>
+            </ul>
+            <% } %>
+          </form>
         </section>
 
 <!--        <section id="section-security">-->
-<!--          <h2 translate>Two-factor authentication</h2>-->
+<!--          <h2>Two-factor authentication</h2>-->
 <!--          <% if (user.totp) { %>-->
-<!--          <span class="status" style="color: #777;" translate>Status: <em>Enabled</em></span>-->
+<!--          <span class="status" style="color: #777;">Status: <em>Enabled</em></span>-->
 <!--          <p>&nbsp;</p>-->
-<!--          <button class="cd-button cd-button&#45;&#45;style cd-button&#45;&#45;dectivate" onclick="goTo('deactivate');">-->
+<!--          <button class="cd-button cd-button--style cd-button--dectivate" onclick="goTo('deactivate');">-->
 <!--            Deactivate-->
 <!--          </button>-->
 <!--          <%} else { %>-->
-<!--            <span class="status" style="color: #777;" translate>Status: <em>Disabled</em></span>-->
-<!--            <p translate>Two-factor authentication is an effective way to protect your account from unauthorized access. What you need to do to enable this feature:</p>-->
+<!--            <span class="status" style="color: #777;">Status: <em>Disabled</em></span>-->
+<!--            <p>Two-factor authentication is an effective way to protect your account from unauthorized access. What you need to do to enable this feature:</p>-->
 <!--            <ol>-->
-<!--              <li translate>If you don't have one yet, download an authenticator app (e.g. the Google Authenticator - <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en_GB" target="_blank" rel="noopener">Play Store</a>, <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8" target="_blank" rel="noopener">App Store</a>).</li>-->
-<!--              <li translate>Then click on the Activate button below</li>-->
-<!--              <li translate>After you have activated the Two-factor verification on this page you will see a QR-code that you need to scan with your authenticator app or you do the set-up manually.</li>-->
-<!--              <li translate>You'll then be sent a code to your mobile authenticator app.</li>-->
+<!--              <li>If you don't have one yet, download an authenticator app (e.g. the Google Authenticator - <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en_GB" target="_blank" rel="noopener">Play Store</a>, <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8" target="_blank" rel="noopener">App Store</a>).</li>-->
+<!--              <li>Then click on the Activate button below</li>-->
+<!--              <li>After you have activated the Two-factor verification on this page you will see a QR-code that you need to scan with your authenticator app or you do the set-up manually.</li>-->
+<!--              <li>You'll then be sent a code to your mobile authenticator app.</li>-->
 <!--            </ol>-->
-<!--            <p translate>Two-factor authentication is an optional security feature. Once enabled, Humanitarian ID will require a six-digit security code or a security key in addition to your password if you wish to login or change your password. You can also set a device as trusted during login, you will then not be asked a seperate code on this device.</p>-->
-<!--            <p translate>After enabling two-factor authentication, you'll receive 16 backup codes. Copy these codes or download them and store them securely. Once a backup code is used, it can't be used again.</p>-->
-<!--            <p translate>You can remove the two-factor authentication at any point by clicking on ‘Deactivate’ button.</p>-->
-<!--            <button class="cd-button cd-button&#45;&#45;style cd-button&#45;&#45;activate" onclick="requestTotpConfig();">-->
+<!--            <p>Two-factor authentication is an optional security feature. Once enabled, Humanitarian ID will require a six-digit security code or a security key in addition to your password if you wish to login or change your password. You can also set a device as trusted during login, you will then not be asked a seperate code on this device.</p>-->
+<!--            <p>After enabling two-factor authentication, you'll receive 16 backup codes. Copy these codes or download them and store them securely. Once a backup code is used, it can't be used again.</p>-->
+<!--            <p>You can remove the two-factor authentication at any point by clicking on ‘Deactivate’ button.</p>-->
+<!--            <button class="cd-button cd-button--style cd-button--activate" onclick="requestTotpConfig();">-->
 <!--              Activate-->
 <!--            </button>-->
 <!--          <%# Steps to activate should go here #%>-->
@@ -121,8 +131,8 @@
 <!--        </section>-->
 
 <!--        <section id="section-delete">-->
-<!--          <h2 translate>Delete Account</h2>-->
-<!--          <button type="button" class="cd-button cd-button&#45;&#45;bold cd-button&#45;&#45;delete" onclick="deleteAccount();">-->
+<!--          <h2>Delete Account</h2>-->
+<!--          <button type="button" class="cd-button cd-button--bold cd-button--delete" onclick="deleteAccount();">-->
 <!--            Delete-->
 <!--          </button>-->
 <!--        </section>-->
@@ -130,123 +140,12 @@
     </div>
   </main>
 </div>
+
 <% include footer %>
 
+<script><% include ../assets/js/confirmation.js %></script>
+<script><% include ../assets/js/tabs.js %></script>
 <script>
-  /* https://inclusive-components.design/tabbed-interfaces */
-  (function() {
-    // Get relevant elements and collections
-    const tabbed = document.querySelector('.tabbed');
-    const tablist = tabbed.querySelector('ul');
-    const tabs = tablist.querySelectorAll('a');
-    const panels = tabbed.querySelectorAll('[id^="section"]');
-
-    // The tab switching function
-    const switchTab = (oldTab, newTab) => {
-      newTab.focus();
-      // Make the active tab focusable by the user (Tab key)
-      newTab.removeAttribute('tabindex');
-      // Set the selected state
-      newTab.setAttribute('aria-selected', 'true');
-      oldTab.removeAttribute('aria-selected');
-      oldTab.setAttribute('tabindex', '-1');
-      // Get the indices of the new and old tabs to find the correct
-      // tab panels to show and hide
-      let index = Array.prototype.indexOf.call(tabs, newTab);
-      let oldIndex = Array.prototype.indexOf.call(tabs, oldTab);
-      panels[oldIndex].hidden = true;
-      panels[index].hidden = false;
-    };
-
-    // Add the tablist role to the first <ul> in the .tabbed container
-    tablist.setAttribute('role', 'tablist');
-
-    // Add semantics are remove user focusability for each tab
-    Array.prototype.forEach.call(tabs, (tab, i) => {
-      tab.setAttribute('role', 'tab');
-      tab.setAttribute('id', 'tab' + (i + 1));
-      tab.setAttribute('tabindex', '-1');
-      tab.parentNode.setAttribute('role', 'presentation');
-
-      // Handle clicking of tabs for mouse users
-      tab.addEventListener('click', e => {
-        e.preventDefault();
-        let currentTab = tablist.querySelector('[aria-selected]');
-        if (e.currentTarget !== currentTab) {
-          switchTab(currentTab, e.currentTarget);
-        }
-      });
-
-      // Handle keydown events for keyboard users
-      tab.addEventListener('keydown', e => {
-        // Get the index of the current tab in the tabs node list
-        let index = Array.prototype.indexOf.call(tabs, e.currentTarget);
-        // Work out which key the user is pressing and
-        // Calculate the new tab's index where appropriate
-        let dir = e.which === 37 ? index - 1 : e.which === 39 ? index + 1 : e.which === 40 ? 'down' : null;
-        if (dir !== null) {
-          e.preventDefault();
-          // If the down key is pressed, move focus to the open panel,
-          // otherwise switch to the adjacent tab
-          dir === 'down' ? panels[i].focus() : tabs[dir] ? switchTab(e.currentTarget, tabs[dir]) : void 0;
-        }
-      });
-    });
-
-    // Add tab panel semantics and hide them all
-    Array.prototype.forEach.call(panels, (panel, i) => {
-      panel.setAttribute('role', 'tabpanel');
-      panel.setAttribute('tabindex', '-1');
-      let id = panel.getAttribute('id');
-      panel.setAttribute('aria-labelledby', tabs[i].id);
-      panel.hidden = true;
-    });
-
-    // Initially activate the first tab and reveal the first tab panel
-    tabs[0].removeAttribute('tabindex');
-    tabs[0].setAttribute('aria-selected', 'true');
-    panels[0].hidden = false;
-  })();
-
-
-  // function sortedClients() {
-  //   const sorted = this.profile.authorizedClients;
-  //   return sorted.sort((a, b) => a.name.localeCompare(b.name));
-  // }
-
-  // function asyncData({ route, app: { $hid } }) {
-  //   // URL pattern: /settings/:slug
-  //   const currentTab = '/settings/clients';
-  //
-  //   // Get latest user account data.
-  //   const profile = await $hid.$get('/account.json');
-  //
-  //   return {
-  //     profile,
-  //     currentTab,
-  //   };
-  // }
-
-  // function removeThisClient(idToBeRemoved) {
-  //   // Isolate client to be removed so we can prompt user for confirmation.
-  //   const clientToBeRemoved = this.profile.authorizedClients.filter(client => client._id === idToBeRemoved).pop();
-  //   const removalMessage = `Are you sure you want to remove ${clientToBeRemoved.name}? You will need to authorize the application again to access it through Humanitarian ID.`;
-  //
-  //   // Prompt user to confirm removal.
-  //   const userConfirmedRemoval = await this.$confirm(removalMessage);
-  //
-  //   // If they confirmed, then proceed with removal.
-  //   if (userConfirmedRemoval) {
-  //     // Remove client from the user's profile
-  //     const remainingClients = this.profile.authorizedClients.filter(client => client._id !== idToBeRemoved);
-  //     this.profile.authorizedClients = remainingClients;
-  //
-  //     // Update HID API
-  //     this.$hid.$put(`/api/v2/user/${this.me}`, this.profile);
-  //   }
-  // }
-
-
   function deleteAccount(totpToken) {
     // This value should only last as long as the function executes.
     let confirmed = false;

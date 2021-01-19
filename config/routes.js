@@ -195,6 +195,15 @@ module.exports = [
   },
 
   {
+    method: 'POST',
+    path: '/settings/oauth-clients',
+    handler: ViewController.settingsOauthSubmit,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
     method: 'GET',
     path: '/docs/{param*}',
     handler: {
@@ -715,6 +724,24 @@ module.exports = [
       },
     },
   },
+
+  {
+    method: 'DELETE',
+    path: '/api/v3/user/{id}/clients/{client}',
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.revokeOauthClient,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          client: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+
 
   {
     method: 'POST',

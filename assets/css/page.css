@@ -29,7 +29,20 @@
   /* darken */
   --cd-primary-color--dark: hsl(var(--cd-primary-color-h), var(--cd-primary-color-s), calc(var(--cd-primary-color-l) - 26%));
 
-  /* CD colours for components */
+  /**
+   * Adopt the CD colors for alerts
+   *
+   * @see https://feature.commondesign-unocha-org.ahconu.org/demo#cd-alert
+   */
+  --cd-red: #cd3a1f;
+  --cd-red--light: #f8d8d3;
+  --cd-orange: #db7b18;
+  --cd-orange--light: #fae6d1;
+  --cd-yellow: #d5de26;
+  --cd-yellow--light: #f7f8d3;
+  --cd-green: #7fb92f;
+  --cd-green--light: #e8f5d6;
+
   --cd-blue-grey: #e6ecf1;
 }
 
@@ -132,23 +145,30 @@ a:focus {
  * Alerts and other messages can appear on any page, so we'll define them here.
  */
 .alert {
-  padding: 1em;
-  background-color: #eee;
-}
-
-.alert--danger {
-  color: #474747;
-  background-color: #F4AEB0;
+  padding: 1rem;
+  margin: 1rem 0 2rem;
+  border: 1px solid var(--cd-blue--bright);
+  border-radius: 0.25rem;
+  box-shadow: -8px 0 0 var(--cd-blue--bright);
+  color: var(--cd-grey--dark);
 }
 
 .alert--success {
-  background-color: #E5F3F6;
-  color: #295A78;
+  background-color: var(--cd-green--light);
+  border: 1px solid var(--cd-green);
+  box-shadow: -8px 0 0 var(--cd-green);
 }
 
 .alert--warning {
-  background-color: #E5F3F6;
-  color: #295A78;
+  background-color: var(--cd-orange--light);
+  border: 1px solid var(--cd-orange);
+  box-shadow: -8px 0 0 var(--cd-orange);
+}
+
+.alert--danger {
+  background-color: var(--cd-red--light);
+  border: 1px solid var(--cd-red);
+  box-shadow: -8px 0 0 var(--cd-red);
 }
 
 .alert p {
