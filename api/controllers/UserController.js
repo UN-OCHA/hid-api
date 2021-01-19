@@ -990,6 +990,7 @@ module.exports = {
    *     description: Requested user not found.
    */
   async destroy(request, reply) {
+    // Don't allow admins to delete their account.
     if (!request.auth.credentials.is_admin
       && request.auth.credentials._id.toString() !== request.params.id) {
       logger.warn(
@@ -1002,7 +1003,9 @@ module.exports = {
       throw Boom.forbidden('You are not allowed to delete this account');
     }
 
+    // Find user in DB.
     const user = await User.findOne({ _id: request.params.id });
+
     if (!user) {
       logger.warn(
         `[UserController->destroy] Could not find user ${request.params.id}`,
@@ -1014,11 +1017,15 @@ module.exports = {
       throw Boom.notFound();
     }
     await EmailService.sendAdminDelete(user, request.auth.credentials);
+
+    // Delete this user.
     await user.remove();
+
     logger.info(
       `[UserController->destroy] Removed user ${request.params.id}`,
       {
         request,
+        security: true,
       },
     );
 
