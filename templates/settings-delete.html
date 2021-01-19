@@ -25,6 +25,19 @@
 
         <section id="section-delete">
           <h2>Delete your HID account</h2>
+          <% if (user.is_admin) { %>
+            <div class="cd-alert cd-alert--warning">
+              <!-- <svg class="cd-icon cd-icon--alert" aria-hidden="true" focusable="false"> -->
+                <!-- <use xlink:href="#cd-icon--alert"></use> -->
+              <!-- </svg> -->
+              <div class="cd-alert__container [ flow ]">
+                <div class="cd-alert__title">Admins cannot delete their own account</div>
+                <div class="cd-alert__message">
+                  <p>Your account is marked as an Admin, so account deletion is not possible.</p>
+                </div>
+              </div>
+            </div>
+          <% } else { %>
           <form action="/settings/delete" method="POST" class="[ flow ]">
             <div class="form-field">
               <p>Deleting your account means that you will lose your access to Humanitarian ID.</p>
@@ -41,6 +54,7 @@
               </button>
             </div>
           </form>
+          <% } %>
         </section>
       </div>
     </div>
