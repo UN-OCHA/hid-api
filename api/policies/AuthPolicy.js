@@ -56,8 +56,8 @@ async function isTOTPValid(user, token) {
   }
 
   // Remove backup code so it can't be reused.
-  user.totpConf.backupCodes.slice(index, 1);
-  user.markModified('totpConf');
+  user.totpConf.backupCodes.splice(index, 1);
+  user.markModified('totpConf.backupCodes');
   await user.save();
 
   logger.info(
