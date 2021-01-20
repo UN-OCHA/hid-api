@@ -1,0 +1,63 @@
+<% include header %>
+<style><% include ../assets/css/tabs.css %></style>
+<style><% include ../assets/css/settings-security.css %></style>
+
+<main role="main" id="main-content" class="cd-container">
+  <div class="cd-layout-content">
+    <h1 class="page-header__heading">Settings for <%= user.name %></h1>
+    <% include alert.html %>
+    <div class="tabbed">
+      <nav>
+        <li>
+          <a href="/settings">Authorized Apps</a>
+        </li>
+        <li>
+          <a href="/settings/password">Password</a>
+        </li>
+        <li>
+          <a href="/settings/security" aria-selected="true">Security</a>
+        </li>
+<!--          <li>-->
+<!--            <a href="#section-delete">Delete Account</a>-->
+<!--          </li>-->
+      </nav>
+
+      <section id="section-security">
+        <h2>Manage Security</h2>
+        <p>To enhance the security of your account, you can enable <strong>two-factor authentication</strong> (2FA) to protect your HID account in case your password is compromised.</p>
+        <form action="/settings/security" method="POST" class="[ flow ]">
+          <% if (totpPrompt) { %>
+            <div class="form-item [ flow ]">
+              <h3>Two-factor authentication</h3>
+              <label for="x-hid-totp">Authentication code</label>
+              <input
+                type="text"
+                name="x-hid-totp"
+                id="x-hid-totp"
+                autocomplete="one-time-code"
+                placeholder="Authentication code"
+                required>
+              <button name="action" value="totp" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase">
+                Verify
+              </button>
+            </div>
+          <% } else { %>
+            <%
+              let action = user.totp ? 'disable' : 'enable';
+            %>
+            <div class="form-actions">
+              <button name="action" value="<%= action %>" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase">
+                <%= action %> 2FA
+              </button>
+            </div>
+          <% } %>
+        </form>
+      </section>
+    </div>
+  </div>
+</main>
+
+<% include footer %>
+
+<script><% include ../assets/js/tabs.js %></script>
+<script><% include ../assets/js/totp.js %></script>

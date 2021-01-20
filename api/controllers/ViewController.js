@@ -1036,4 +1036,67 @@ module.exports = {
     // to refresh browser.
     return reply.redirect('/settings/password');
   },
+
+  /**
+   * User settings: render form to manage 2FA
+   */
+  async settingsSecurity(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // Load current user from DB.
+    const user = await User.findOne({ _id: cookie.userId });
+
+    // Check for user feedback to display.
+    let alert;
+    if (cookie.alert) {
+      alert = cookie.alert;
+      delete(cookie.alert);
+      request.yar.set('session', cookie);
+    }
+
+    // Check if we need TOTP Prompt.
+    let totpPrompt = false;
+    if (cookie.totpPrompt) {
+      totpPrompt = true;
+      delete(cookie.totpPrompt);
+      request.yar.set('session', cookie);
+    }
+
+    // Render settings-security page.
+    return reply.view('settings-security', {
+      user,
+      alert,
+      totpPrompt,
+    });
+  },
+
+  /**
+   * User settings: handle submissions to manage 2FA
+   */
+  async settingsSecuritySubmit(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // Set up user feedback
+    let alert = {};
+    let reasons = [];
+
+    // Load current user from DB.
+    const user = await User.findOne({ _id: cookie.userId });
+
+    // Finalize cookie (feedback, TOTP status, etc.)
+    cookie.alert = alert;
+    request.yar.set('session', cookie);
+
+    // Always redirect to password form, to avoid resubmitting when user chooses
+    // to refresh browser.
+    return reply.redirect('/settings/security');
+  },
 };
