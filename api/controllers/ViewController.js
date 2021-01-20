@@ -1133,29 +1133,25 @@ module.exports = {
           },
         );
 
-        // Set up feedback for login page.
+        // Overwrite the existing cookie with a fresh, empty object. This will
+        // ensure that no further actions can be taken, and that even browser
+        // refreshes won't be able to re-sumbit the form.
+        request.yar.set('session', {});
+
+        // Set up user feedback.
         alert.type = 'status';
         alert.message = '<p>You have successfully deleted your account.</p>';
 
-        // Redirect to home since the account no longer exists.
-        destination = '/';
-
-        // Overwrite the existing cookie with a fresh, empty object.
-        cookie = {};
+        // Display confirmation of deletion.
+        return reply.view('message', {
+          alert,
+          isSuccess: false,
+          title: 'Account Deleted',
+        });
       }
 
-      //
-      // For now, this cannot function, so we comment out until AuthController
-      // is altered, or we find another way to display the message easily.
-      //
-      // - we could use the `message` template but preventing refreshes from
-      //   resubmitting the form would be best.
-      // - Having the login form work like other pages (by reading cookie.alert)
-      //   would also be nice.
-      //
-      // cookie.alert = alert;
-
       // Finalize cookie (feedback, TOTP status, etc.)
+      cookie.alert = alert;
       request.yar.set('session', cookie);
 
       // Always redirect, to avoid resubmitting when user refreshes browser.
