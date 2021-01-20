@@ -1084,21 +1084,91 @@ module.exports = {
    */
   async settingsDeleteSubmit(request, reply) {
     // If the user is not authenticated, redirect to the login page
-    const cookie = request.yar.get('session');
+    //
+    // NOTE: normally we use const, but using let here since cookie will be
+    //       overwritten if the user successfully deletes their account.
+    let cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
       return reply.redirect('/');
     }
 
-    // Set up user feedback
-    let alert = {};
-    let reasons = [];
-    let destination = '/settings/delete';
+    try {
+      // Load current user from DB.
+      const user = await User.findOne({ _id: cookie.userId });
 
-    // Finalize cookie (feedback, TOTP status, etc.)
-    cookie.alert = alert;
-    request.yar.set('session', cookie);
+      // Set up user feedback
+      let alert = {};
+      let reasons = [];
+      let destination = '/settings/delete';
 
-    // Always redirect, to avoid resubmitting when user refreshes browser.
-    return reply.redirect(destination);
+      // Validate form submission for non-admins.
+      if (request.payload && request.payload.primary_email && request.payload.primary_email === user.email) {
+        // form was validated
+      } else {
+        reasons.push('Please enter your <strong>primary email address</strong> to confirm that you want to delete your account.');
+      }
+
+      // Tell especially persistent admins that they cannot delete their accounts.
+      if (user.is_admin) {
+        alert.type = 'error';
+        // In this case, we want to wipe the old feedback.
+        reasons = [];
+        reasons.push('Admins cannot delete their accounts. Remove your own admin status before deleting the account.');
+      }
+
+      if (reasons.length > 0) {
+        alert.type = alert.type === 'error' ? 'error' : 'warning';
+        alert.message = `<p>${ reasons.join('</p><p>') }</p>`;
+      } else {
+        // So long, and thanks for all the fish!
+        await user.remove();
+
+        logger.info(
+          `[ViewController->settingsDeleteSubmit] Removed user ${cookie.userId}`,
+          {
+            security: true,
+            user: {
+              id: cookie.userId,
+            },
+          },
+        );
+
+        // Set up feedback for login page.
+        alert.type = 'status';
+        alert.message = '<p>You have successfully deleted your account.</p>';
+
+        // Redirect to home since the account no longer exists.
+        destination = '/';
+
+        // Overwrite the existing cookie with a fresh, empty object.
+        cookie = {};
+      }
+
+      //
+      // For now, this cannot function, so we comment out until AuthController
+      // is altered, or we find another way to display the message easily.
+      //
+      // - we could use the `message` template but preventing refreshes from
+      //   resubmitting the form would be best.
+      // - Having the login form work like other pages (by reading cookie.alert)
+      //   would also be nice.
+      //
+      // cookie.alert = alert;
+
+      // Finalize cookie (feedback, TOTP status, etc.)
+      request.yar.set('session', cookie);
+
+      // Always redirect, to avoid resubmitting when user refreshes browser.
+      return reply.redirect(destination);
+    } catch (err) {
+      logger.error(
+        err.message,
+        {
+          fail: true,
+        }
+      );
+
+      // TODO: show something, e.g. message.html
+    }
   },
 };
