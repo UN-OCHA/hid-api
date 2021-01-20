@@ -1,3 +1,12 @@
 /**
  * User settings: 2FA
  */
+.security {}
+
+.security__status {
+  font-size: 1.25em;
+}
+
+.security__status strong {
+  text-transform: capitalize;
+}
