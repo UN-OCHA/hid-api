@@ -1149,6 +1149,45 @@ module.exports = {
       alert.type = alert.type === 'error' ? 'error' : 'warning';
       alert.message = `<p>${ reasons.join('</p><p>' )}</p>`;
     } else {
+
+      // User is starting process to disable 2FA.
+      if (action === 'disable') {
+        cookie.step = 1;
+      }
+
+      // User is disabling 2FA.
+      if (action === 'totp-disable') {
+
+        // Ensure token was valid before disabling 2FA.
+        const token = request.payload['x-hid-totp'];
+        await AuthPolicy.isTOTPValid(user, token).then(async data => {
+
+          // Now disable the 2FA.
+          await TOTPController.disable({}, {
+            user,
+          }).then(data => {
+            // If we made it here, 2FA is already disabled.
+            alert.type = 'status';
+            alert.message = `
+              <p>You have successfully <strong>disabled</strong> two-factor authentication.</p>
+              <p>You should destroy the HID entry on your authenticator app, as well as any backup codes you had. If you wish to re-enable 2FA, you may do so at any time.</p>
+            `;
+            cookie.step = 0;
+          }).catch(err => {
+            throw err;
+          });
+
+        }).catch(err => {
+          // Display error about invalid TOTP, or pass message along.
+          alert.type = 'error';
+          if (err.message.indexOf('Invalid') !== -1) {
+            alert.message = 'Your two-factor authentication code was invalid.';
+          } else {
+            alert.message = err.message;
+          }
+        });
+      }
+
       // User is starting the process to enable their 2FA
       if (action === 'enable') {
         await TOTPController.generateConfig({}, {
@@ -1168,12 +1207,20 @@ module.exports = {
           alert.type = 'error';
           alert.message = err.message;
         });
-      } else if (action === 'totp') {
+      }
+
+      // User is enabling 2FA.
+      if (action === 'totp-enable') {
+        // Ensure token is valid before enabling 2FA.
         const token = request.payload['x-hid-totp'];
         await AuthPolicy.isTOTPValid(user, token).then(async data => {
+
+          // Enable 2FA for this user.
           await TOTPController.enable({}, {
             user,
           }).then(async data => {
+            // If we made it here, 2FA is enabled! Immediately issue backup codes
+            // to be displayed alongside the success message.
             await TOTPController.generateBackupCodes({}, {
               user,
             }).then(data => {
@@ -1193,13 +1240,12 @@ module.exports = {
           });
 
         }).catch(err => {
-          alert.type = 'error';
-
           // Display error about invalid TOTP, or pass message along.
+          alert.type = 'error';
           if (err.message.indexOf('Invalid') !== -1) {
-            reasons.push('Your two-factor authentication code was invalid.')
+            alert.message = 'Your two-factor authentication code was invalid.';
           } else {
-            reasons.push(err.message);
+            alert.message = err.message;
           }
         });
 

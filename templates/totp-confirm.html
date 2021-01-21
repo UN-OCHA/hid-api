@@ -8,7 +8,7 @@
     autocomplete="one-time-code"
     placeholder="Authentication code"
     required>
-  <button name="action" value="totp" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase">
+  <button name="action" value="<%= typeof action !== 'undefined' ? action : 'totp' %>" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase">
     Verify
   </button>
 </div>

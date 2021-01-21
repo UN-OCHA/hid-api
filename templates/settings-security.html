@@ -43,7 +43,7 @@
             <% // The user is about to DISABLE their 2FA by submitting a code.
               if (step === 1) {
             %>
-              <%- include('totp-confirm.html') %>
+              <%- include('totp-confirm.html', { action: 'totp-disable' }) %>
             <% } %>
 
             <% // ENABLING 2FA was just completed, and we have backup codes to show.
@@ -118,7 +118,7 @@
                     <% } %>
                   </div>
 
-                  <%- include('totp-confirm.html') %>
+                  <%- include('totp-confirm.html', {action: 'totp-enable'}) %>
 
                 <% } else { %>
 
