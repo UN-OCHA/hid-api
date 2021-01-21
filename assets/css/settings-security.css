@@ -14,10 +14,6 @@
 }
 
 .security__status--disabled {
-  color: var(--cd-red);
-}
-
-.security__status--partial {
   color: var(--cd-orange);
 }
 
@@ -26,7 +22,7 @@
 }
 
 /**
- * Step 1: Setting up 2FA via QR code or plaintext URL
+ * ENABLE Step 1: Setting up 2FA via QR code or plaintext URL
  */
 .step-1 {}
 
@@ -52,4 +48,29 @@
   background: #eee;
   font-family: monospace;
   line-break: anywhere;
+}
+
+/**
+ * ENABLE Step 2: display backup codes
+ */
+.step-2 {}
+
+.step-2__backup-codes {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
+
+  padding: 1em;
+  color: #111;
+  background: #eee;
+  max-width: 30ch;
+}
+
+.step-2__backup-codes > * {
+  flex: 1 0 10ch;
+  margin: 0 1ch;
+
+  list-style-type: none;
+  font-family: monospace;
+  white-space: nowrap;
 }

@@ -24,7 +24,7 @@
 
       <section id="section-security" class="security">
         <h2>Manage Security</h2>
-        <p class="security__status">Status: <strong class="security__status--<%= status %>"><%= status %></strong></p>
+        <p class="security__status">Extra security: <strong class="security__status--<%= status %>"><%= status %></strong></p>
 
         <form action="/settings/security" method="POST" class="[ flow ]">
           <input type="hidden" name="step" value="<%= step %>">
@@ -32,20 +32,56 @@
           <% if (status === 'enabled') { %>
             <% if (step === 0) { %>
               <p>Manage your <strong>two-factor authentication</strong> (2FA) settings here.</p>
+
+              <div class="form-actions">
+                <button name="action" value="<%= action %>" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase <%= status === 'enabled' ? 'cd-button--danger' : '' %>">
+                  <%= action %> 2FA
+                </button>
+              </div>
             <% } %>
 
-            <% if (step === 1) { %>
+            <% // The user is about to DISABLE their 2FA by submitting a code.
+              if (step === 1) {
+            %>
               <%- include('totp-confirm.html') %>
+            <% } %>
+
+            <% // ENABLING 2FA was just completed, and we have backup codes to show.
+              if (step === 2) {
+            %>
+              <div class="step-2">
+                <%-
+                  include('alert.html', {
+                    alert: {
+                      type: 'status',
+                      message: '<p>Your two-factor authentication is <strong>Enabled</strong>. However, keep reading for the final step.</p>',
+                    },
+                  })
+                %>
+                <%-
+                  include('alert.html', {
+                    alert: {
+                      type: 'warning',
+                      message: `
+                        <p><strong>Store these backup codes in a secure location!</strong> In the event you lose access to your authenticator app the backup codes can be used to log in, restore access to your account, and reconfigure 2FA with a new device.</p>
+                        <p>If you lose both your authenticator app and the backup codes, <strong>we CANNOT restore access to your account!</strong></p>
+                      `,
+                    },
+                  })
+                %>
+
+                <ul class="step-2__backup-codes">
+                  <li>HID 2FA Backup Codes</li>
+                  <li>------------------------</li>
+                  <li><%- formData.backupCodes.join('</li><li>') %></li>
+                </ul>
+              </div>
             <% } %>
           <% } %>
 
           <% if (status !== 'enabled') { %>
             <% if (step === 0) { %>
-              <% if (user.totp) { %>
-                <p>Manage your <strong>two-factor authentication</strong> (2FA) settings here.</p>
-              <% } else { %>
-                <p>To enhance the security of your account, you can enable <strong>two-factor authentication</strong> (2FA) to protect your HID account in case your password is compromised.</p>
-              <% } %>
+              <p>To enhance the security of your account, you can enable <strong>two-factor authentication</strong> (2FA) to protect your HID account in case your password is compromised.</p>
 
               <div class="form-actions">
                 <button name="action" value="<%= action %>" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase <%= status === 'enabled' ? 'cd-button--danger' : '' %>">
@@ -97,9 +133,6 @@
 
                 <% } %>
               </div>
-            <% } %>
-
-            <% if (step === 2) { %>
             <% } %>
           <% } %>
         </form>

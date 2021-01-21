@@ -1088,22 +1088,13 @@ module.exports = {
     //
     // NOTE: The order of these might look strange, but it matches the state of
     //       the user object in DB as the process progresses.
-    let started = user.totpConf && user.totpConf.secret;
     let complete = user.totpConf && user.totpConf.secret && user.totp && user.totpConf.backupCodes;
 
     // Status is a user-facing label
-    let status = started
-      ? complete
-        ? 'enabled'
-        : 'partial'
-      : 'disabled';
+    let status = complete ? 'enabled' : 'disabled';
 
     // Action is a machine-facing value in the HTML forms.
-    let action = started
-      ? complete
-        ? 'disable'
-        : 'finish'
-      : 'enable';
+    let action = complete ? 'disable' : 'enable';
 
     // Render settings-security page.
     return reply.view('settings-security', {
@@ -1177,9 +1168,41 @@ module.exports = {
           alert.type = 'error';
           alert.message = err.message;
         });
-      } else if (action === 'finish') {
-        // TODO: POST /totp
-        // TODO: POST /totp/codes
+      } else if (action === 'totp') {
+        const token = request.payload['x-hid-totp'];
+        await AuthPolicy.isTOTPValid(user, token).then(async data => {
+          await TOTPController.enable({}, {
+            user,
+          }).then(async data => {
+            await TOTPController.generateBackupCodes({}, {
+              user,
+            }).then(data => {
+              // Prepare to display backup codes to user.
+              delete(cookie.formData);
+              cookie.formData = {
+                backupCodes: data,
+              };
+
+              // Proceed to step 2.
+              cookie.step = 2;
+            }).catch(err => {
+              throw err;
+            })
+          }).catch(err => {
+            throw err;
+          });
+
+        }).catch(err => {
+          alert.type = 'error';
+
+          // Display error about invalid TOTP, or pass message along.
+          if (err.message.indexOf('Invalid') !== -1) {
+            reasons.push('Your two-factor authentication code was invalid.')
+          } else {
+            reasons.push(err.message);
+          }
+        });
+
       } else {
         // TODO: reset the user's TOTP boolean/config so they can restart the
         //       process later on.
