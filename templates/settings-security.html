@@ -23,19 +23,17 @@
       </nav>
 
       <%
-        let status = user.totp ? 'enabled' : 'disabled';
+        let status = user.totp
+          ? user.totpConf && user.totpConf.secret && user.totpConf.backupCodes
+            ? 'enabled'
+            : 'partial'
+          : 'disabled';
         let action = user.totp ? 'disable' : 'enable';
       %>
 
       <section id="section-security" class="security">
         <h2>Manage Security</h2>
-        <p class="security__status security__status--<%= status %>">Status: <strong><%= status %></strong></p>
-
-        <% if (user.totp) { %>
-          <p>Manage your <strong>two-factor authentication</strong> (2FA) settings here.</p>
-        <% } else { %>
-          <p>To enhance the security of your account, you can enable <strong>two-factor authentication</strong> (2FA) to protect your HID account in case your password is compromised.</p>
-        <% } %>
+        <p class="security__status">Status: <strong class="security__status--<%= status %>"><%= status %></strong></p>
 
         <form action="/settings/security" method="POST" class="[ flow ]">
           <% if (totpPrompt) { %>
@@ -54,11 +52,25 @@
               </button>
             </div>
           <% } else { %>
-            <div class="form-actions">
-              <button name="action" value="<%= action %>" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase">
-                <%= action %> 2FA
-              </button>
-            </div>
+            <% if (step === 0) { %>
+              <% if (user.totp) { %>
+                <p>Manage your <strong>two-factor authentication</strong> (2FA) settings here.</p>
+              <% } else { %>
+                <p>To enhance the security of your account, you can enable <strong>two-factor authentication</strong> (2FA) to protect your HID account in case your password is compromised.</p>
+              <% } %>
+
+              <div class="form-actions">
+                <button name="action" value="<%= action %>" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase <%= status === 'enabled' ? 'cd-button--danger' : '' %>">
+                  <%= action %> 2FA
+                </button>
+              </div>
+            <% } %>
+
+            <% if (step === 1) { %>
+            <% } %>
+
+            <% if (step === 0) { %>
+            <% } %>
           <% } %>
         </form>
       </section>

@@ -1,5 +1,7 @@
 /**
  * User settings: 2FA
+ *
+ * Dependencies: cd-alert
  */
 .security {}
 
@@ -7,6 +9,18 @@
   font-size: 1.25em;
 }
 
-.security__status strong {
+.security__status {
   text-transform: capitalize;
+}
+
+.security__status--disabled {
+  color: var(--cd-red);
+}
+
+.security__status--partial {
+  color: var(--cd-orange);
+}
+
+.security__status--enabled {
+  color: var(--cd-green);
 }

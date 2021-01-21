@@ -1066,11 +1066,20 @@ module.exports = {
       request.yar.set('session', cookie);
     }
 
+    // Check which step of 2FA process we're on
+    let step = 0;
+    if (cookie.step) {
+      step = cookie.step;
+      delete(cookie.step);
+      request.yar.set('session', cookie);
+    }
+
     // Render settings-security page.
     return reply.view('settings-security', {
       user,
       alert,
       totpPrompt,
+      step,
     });
   },
 
