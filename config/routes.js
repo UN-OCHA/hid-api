@@ -223,6 +223,24 @@ module.exports = [
 
   {
     method: 'GET',
+    path: '/settings/security',
+    handler: ViewController.settingsSecurity,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'POST',
+    path: '/settings/security',
+    handler: ViewController.settingsSecuritySubmit,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'GET',
     path: '/docs/{param*}',
     handler: {
       directory: {

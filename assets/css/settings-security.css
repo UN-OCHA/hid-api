@@ -1,0 +1,82 @@
+/**
+ * User settings: 2FA
+ *
+ * Dependencies: cd-alert
+ */
+.security {}
+
+.security__status {
+  font-size: 1.25em;
+}
+
+.security__status {
+  text-transform: capitalize;
+}
+
+.security__status--disabled {
+  color: var(--cd-orange);
+}
+
+.security__status--enabled {
+  color: var(--cd-green);
+}
+
+/**
+ * ENABLE Step 1: Setting up 2FA via QR code or plaintext URL
+ */
+.step-1 {}
+
+.step-1__config {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
+}
+
+.step-1__config > .step-1__qr {
+  flex: 0 0 228px;
+  height: 228px;
+}
+
+.step-1__config > .step-1__url {
+  flex: 0 0 256px;
+  height: 228px;
+}
+
+@media (-ms-high-contrast:none) {
+  .step-1__config > .step-1__url {
+    flex: 0 0 526px;
+  }
+}
+
+.step-1__url p {
+  padding: 1em;
+  color: #111;
+  background: #eee;
+  font-family: monospace;
+  line-break: anywhere;
+}
+
+/**
+ * ENABLE Step 2: display backup codes
+ */
+.step-2 {}
+
+.step-2__backup-codes {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
+
+  padding: 1em;
+  color: #111;
+  background: #eee;
+  max-width: 30ch;
+}
+
+.step-2__backup-codes > * {
+  flex: 1 0 10ch;
+  margin: 0 1ch;
+
+  list-style-type: none;
+  font-family: monospace;
+  white-space: nowrap;
+}
