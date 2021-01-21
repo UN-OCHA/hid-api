@@ -303,6 +303,7 @@ module.exports = {
     // Disable user's 2FA.
     user.totp = false;
     user.totpConf = {};
+    delete(user.totpMethod);
     await user.save();
 
     logger.info(
