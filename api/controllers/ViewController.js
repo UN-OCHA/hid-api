@@ -4,6 +4,7 @@ const Client = require('../models/Client');
 const User = require('../models/User');
 const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
+const TOTPController = require('./TOTPController');
 const UserController = require('./UserController');
 const AuthPolicy = require('../policies/AuthPolicy');
 const config = require('../../config/env')[process.env.NODE_ENV];
@@ -1040,6 +1041,225 @@ module.exports = {
 
     // Always redirect, to avoid resubmitting when user refreshes browser.
     return reply.redirect('/settings/password');
+  },
+
+  /**
+   * User settings: render form to manage 2FA
+   */
+  async settingsSecurity(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // Load current user from DB.
+    const user = await User.findOne({ _id: cookie.userId });
+
+    // Check for user feedback to display.
+    let alert;
+    if (cookie.alert) {
+      alert = cookie.alert;
+      delete(cookie.alert);
+      request.yar.set('session', cookie);
+    }
+
+    // Check if we need TOTP Prompt.
+    let totpPrompt = false;
+    if (cookie.totpPrompt) {
+      totpPrompt = true;
+      delete(cookie.totpPrompt);
+      request.yar.set('session', cookie);
+    }
+
+    // Check which step of 2FA process we're on
+    let step = 0;
+    if (cookie.step) {
+      step = cookie.step;
+      delete(cookie.step);
+      request.yar.set('session', cookie);
+    }
+
+    // See if we have formData to send
+    let formData;
+    if (cookie.formData) {
+      formData = cookie.formData;
+      delete(cookie.formData);
+      request.yar.set('session', cookie);
+    }
+
+    // Status is a user-facing label
+    let status = user.totp ? 'enabled' : 'disabled';
+
+    // Action is a machine-facing value in the HTML forms.
+    let action = user.totp ? 'disable' : 'enable';
+
+    // Render settings-security page.
+    return reply.view('settings-security', {
+      user,
+      alert,
+      formData,
+      totpPrompt,
+      step,
+      status,
+      action,
+    });
+  },
+
+  /**
+   * User settings: handle submissions to manage 2FA
+   */
+  async settingsSecuritySubmit(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // Set up all our variables for state management
+    let alert = {};
+    let reasons = [];
+    let action = false;
+
+    // Load current user from DB.
+    const user = await User.findOne({ _id: cookie.userId });
+
+    // Check which action we're taking
+    if (request.payload && typeof request.payload.action !== 'undefined') {
+      action = request.payload.action;
+    } else {
+      reasons.push('We apologize, but there was a problem on the server. Please restart the process or if problems persist, contact info@humanitarian.id and include this error code: <code>Error SEC0</code>.');
+
+      logger.warn(
+        '[ViewController->settingsSecuritySubmit] `action` was not defined on 2FA setup form. SEC0',
+        {
+          fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          }
+        },
+      );
+    }
+
+    // Check for validation problems.
+    if (reasons.length > 0) {
+      alert.type = alert.type === 'error' ? 'error' : 'warning';
+      alert.message = `<p>${ reasons.join('</p><p>' )}</p>`;
+    } else {
+
+      // User is starting process to disable 2FA.
+      if (action === 'disable') {
+        cookie.step = 1;
+      }
+
+      // User is disabling 2FA.
+      if (action === 'totp-disable') {
+
+        // Ensure token was valid before disabling 2FA.
+        const token = request.payload['x-hid-totp'];
+        await AuthPolicy.isTOTPValid(user, token).then(async data => {
+
+          // Now disable the 2FA.
+          await TOTPController.disable({}, {
+            user,
+          }).then(data => {
+            // If we made it here, 2FA is already disabled.
+            alert.type = 'status';
+            alert.message = `
+              <p>You have successfully <strong>disabled</strong> two-factor authentication.</p>
+              <p>You should destroy the HID entry on your authenticator app, as well as any backup codes you had. If you wish to re-enable 2FA, you may do so at any time.</p>
+            `;
+            cookie.step = 0;
+          }).catch(err => {
+            throw err;
+          });
+
+        }).catch(err => {
+          // Display error about invalid TOTP, or pass message along.
+          alert.type = 'error';
+          if (err.message.indexOf('Invalid') !== -1) {
+            alert.message = 'Your two-factor authentication code was invalid.';
+          } else {
+            alert.message = err.message;
+          }
+        });
+      }
+
+      // User is starting the process to enable their 2FA
+      if (action === 'enable') {
+        await TOTPController.generateConfig({}, {
+          user,
+        }).then(data => {
+          // Prepare to display configuration to user.
+          cookie.formData = {
+            totpConf: {
+              qr: data.qrcode,
+              url: data.url,
+            },
+          };
+
+          // Proceed to step 1.
+          cookie.step = 1;
+        }).catch(err => {
+          alert.type = 'error';
+          alert.message = err.message;
+        });
+      }
+
+      // User is enabling 2FA.
+      if (action === 'totp-enable') {
+        // Ensure token is valid before enabling 2FA.
+        const token = request.payload['x-hid-totp'];
+        await AuthPolicy.isTOTPValid(user, token).then(async data => {
+
+          // Enable 2FA for this user.
+          await TOTPController.enable({}, {
+            user,
+          }).then(async data => {
+            // If we made it here, 2FA is enabled! Immediately issue backup codes
+            // to be displayed alongside the success message.
+            await TOTPController.generateBackupCodes({}, {
+              user,
+            }).then(data => {
+              // Prepare to display backup codes to user.
+              delete(cookie.formData);
+              cookie.formData = {
+                backupCodes: data,
+              };
+
+              // Proceed to step 2.
+              cookie.step = 2;
+            }).catch(err => {
+              throw err;
+            })
+          }).catch(err => {
+            throw err;
+          });
+
+        }).catch(err => {
+          // Display error about invalid TOTP, or pass message along.
+          alert.type = 'error';
+          if (err.message.indexOf('Invalid') !== -1) {
+            alert.message = 'Your two-factor authentication code was invalid.';
+          } else {
+            alert.message = err.message;
+          }
+        });
+
+      } else {
+        // TODO: reset the user's TOTP boolean/config so they can restart the
+        //       process later on.
+      }
+    }
+
+    // Finalize cookie (feedback, TOTP status, etc.)
+    cookie.alert = alert;
+    request.yar.set('session', cookie);
+
+    // Always redirect to form, so we avoid resubmitting when user chooses to
+    // refresh their browser.
+    return reply.redirect('/settings/security');
   },
 
   /**
