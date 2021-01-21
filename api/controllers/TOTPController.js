@@ -278,10 +278,17 @@ module.exports = {
    *   '401':
    *     description: Unauthorized.
    */
-  async disable(request) {
-    const user = request.auth.credentials;
+  async disable(request, internalArgs) {
+    let user;
+
+    if (internalArgs && internalArgs.user) {
+      user = internalArgs.user;
+    } else {
+      user = request.auth.credentials;
+    }
+
+    // TOTP is already disabled
     if (user.totp !== true) {
-      // TOTP is already disabled
       logger.warn(
         '[TOTPController->disable] 2FA already disabled.',
         {
@@ -292,9 +299,12 @@ module.exports = {
       );
       throw Boom.badRequest('2FA is already disabled.');
     }
+
+    // Disable user's 2FA.
     user.totp = false;
     user.totpConf = {};
     await user.save();
+
     logger.info(
       `[TOTPController->disable] Disabled 2FA for user ${user.id}`,
       {
@@ -305,6 +315,7 @@ module.exports = {
         },
       },
     );
+
     return user;
   },
 
