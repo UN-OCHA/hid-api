@@ -84,8 +84,15 @@ module.exports = {
    *   '401':
    *     description: Unauthorized.
    */
-  async generateConfig(request) {
-    const user = request.auth.credentials;
+  async generateConfig(request, internalArgs) {
+    let user;
+
+    if (internalArgs && internalArgs.user) {
+      user = internalArgs.user;
+    } else {
+      user = request.auth.credentials;
+    }
+
     if (user.totp === true) {
       // TOTP is already enabled, user needs to disable it first
       logger.warn(
@@ -103,7 +110,10 @@ module.exports = {
       secret,
     };
     user.totpConf = mfa;
+
+    // Update user in DB
     await user.save();
+
     logger.info(
       `[TOTPController->generateQRCode] Saved totp secret for user ${user.id}`,
       {
@@ -114,12 +124,15 @@ module.exports = {
         },
       },
     );
+
     let qrCodeName = `HID (${process.env.NODE_ENV})`;
     if (process.env.NODE_ENV === 'production') {
       qrCodeName = 'HID';
     }
+
     const url = authenticator.generateTotpUri(secret, user.name, qrCodeName, 'SHA1', 6, 30);
     const qrcode = await QRCode.toDataURL(url);
+
     return {
       qrcode,
       url,
