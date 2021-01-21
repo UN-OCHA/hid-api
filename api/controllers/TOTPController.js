@@ -328,8 +328,15 @@ module.exports = {
    *   '401':
    *     description: Unauthorized.
    */
-  async generateBackupCodes(request) {
-    const user = request.auth.credentials;
+  async generateBackupCodes(request, internalArgs) {
+    let user;
+
+    if (internalArgs && internalArgs.user) {
+      user = internalArgs.user;
+    } else {
+      user = request.auth.credentials;
+    }
+
     if (!user.totp) {
       logger.warn(
         `[TOTPController->generateBackupCodes] TOTP needs to be enabled for user ${request.auth.credentials.id}`,
@@ -341,18 +348,22 @@ module.exports = {
       );
       throw Boom.badRequest('TOTP needs to be enabled');
     }
-    const codes = []; const
-      hashedCodes = [];
-    for (let i = 0; i < 16; i += 1) {
+
+    const codes = [];
+    for (let i = 0; i < 16; i++) {
       codes.push(HelperService.generateRandom());
     }
-    for (let i = 0; i < 16; i += 1) {
+
+    const hashedCodes = [];
+    for (let i = 0; i < 16; i++) {
       hashedCodes.push(BCrypt.hashSync(codes[i], 5));
     }
+
     // Save the hashed codes in the user and show the ones which are not hashed
     user.totpConf.backupCodes = hashedCodes;
     user.markModified('totpConf');
     await user.save();
+
     logger.info(
       `[TOTPController->generateBackupCodes] Saved new backup codes for user ${user.id}`,
       {
@@ -363,6 +374,7 @@ module.exports = {
         },
       },
     );
+
     return codes;
   },
 
