@@ -42,6 +42,12 @@
   height: 228px;
 }
 
+@media (-ms-high-contrast:none) {
+  .step-1__config > .step-1__url {
+    flex: 0 0 526px;
+  }
+}
+
 .step-1__url p {
   padding: 1em;
   color: #111;
