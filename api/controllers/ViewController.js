@@ -1083,18 +1083,11 @@ module.exports = {
       request.yar.set('session', cookie);
     }
 
-    // Status and Action are somewhat bound, so we put the state detection in
-    // unified variables to avoid terrible quirks.
-    //
-    // NOTE: The order of these might look strange, but it matches the state of
-    //       the user object in DB as the process progresses.
-    let complete = user.totpConf && user.totpConf.secret && user.totp && user.totpConf.backupCodes;
-
     // Status is a user-facing label
-    let status = complete ? 'enabled' : 'disabled';
+    let status = user.totp ? 'enabled' : 'disabled';
 
     // Action is a machine-facing value in the HTML forms.
-    let action = complete ? 'disable' : 'enable';
+    let action = user.totp ? 'disable' : 'enable';
 
     // Render settings-security page.
     return reply.view('settings-security', {
