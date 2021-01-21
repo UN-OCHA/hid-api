@@ -24,3 +24,32 @@
 .security__status--enabled {
   color: var(--cd-green);
 }
+
+/**
+ * Step 1: Setting up 2FA via QR code or plaintext URL
+ */
+.step-1 {}
+
+.step-1__config {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
+}
+
+.step-1__config > .step-1__qr {
+  flex: 0 0 228px;
+  height: 228px;
+}
+
+.step-1__config > .step-1__url {
+  flex: 0 0 256px;
+  height: 228px;
+}
+
+.step-1__url p {
+  padding: 1em;
+  color: #111;
+  background: #eee;
+  font-family: monospace;
+  line-break: anywhere;
+}

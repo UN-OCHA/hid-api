@@ -22,36 +22,24 @@
 <!--          </li>-->
       </nav>
 
-      <%
-        let status = user.totp
-          ? user.totpConf && user.totpConf.secret && user.totpConf.backupCodes
-            ? 'enabled'
-            : 'partial'
-          : 'disabled';
-        let action = user.totp ? 'disable' : 'enable';
-      %>
-
       <section id="section-security" class="security">
         <h2>Manage Security</h2>
         <p class="security__status">Status: <strong class="security__status--<%= status %>"><%= status %></strong></p>
 
         <form action="/settings/security" method="POST" class="[ flow ]">
-          <% if (totpPrompt) { %>
-            <div class="form-item [ flow ]">
-              <h3>Two-factor authentication</h3>
-              <label for="x-hid-totp">Authentication code</label>
-              <input
-                type="text"
-                name="x-hid-totp"
-                id="x-hid-totp"
-                autocomplete="one-time-code"
-                placeholder="Authentication code"
-                required>
-              <button name="action" value="totp" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase">
-                Verify
-              </button>
-            </div>
-          <% } else { %>
+          <input type="hidden" name="step" value="<%= step %>">
+
+          <% if (status === 'enabled') { %>
+            <% if (step === 0) { %>
+              <p>Manage your <strong>two-factor authentication</strong> (2FA) settings here.</p>
+            <% } %>
+
+            <% if (step === 1) { %>
+              <%- include('totp-confirm.html') %>
+            <% } %>
+          <% } %>
+
+          <% if (status !== 'enabled') { %>
             <% if (step === 0) { %>
               <% if (user.totp) { %>
                 <p>Manage your <strong>two-factor authentication</strong> (2FA) settings here.</p>
@@ -67,9 +55,51 @@
             <% } %>
 
             <% if (step === 1) { %>
+              <div class="step-1">
+                <% if (formData && formData.totpConf) { %>
+                  <%-
+                    include('alert.html', {
+                      alert: {
+                        type: 'info',
+                        message: `
+                          <p>Use the QR code to set up the authenticator app of your choice (Google Authenticator, 1Password, Authy, etc)</p>
+                          <p>The plaintext configuration is available if you cannot scan the QR code.</p>
+                        `,
+                      },
+                    })
+                  %>
+
+                  <div class="step-1__config">
+                    <% if (formData.totpConf.qr) { %>
+                      <div class="step-1__qr">
+                        <img src="<%= formData.totpConf.qr %>" width="228" height="228">
+                      </div>
+                    <% } %>
+                    <% if (formData.totpConf.url) { %>
+                      <div class="step-1__url">
+                        <p><%= formData.totpConf.url %></p>
+                      </div>
+                    <% } %>
+                  </div>
+
+                  <%- include('totp-confirm.html') %>
+
+                <% } else { %>
+
+                  <%-
+                    include('alert.html', {
+                      alert: {
+                        type: 'warning',
+                        message: '<p>There was a problem displaying your two-factor authentication setup data. If this problem persists please email info@humanitarian.id and include this error code: SEC-1-QR.</p>',
+                      },
+                    });
+                  %>
+
+                <% } %>
+              </div>
             <% } %>
 
-            <% if (step === 0) { %>
+            <% if (step === 2) { %>
             <% } %>
           <% } %>
         </form>

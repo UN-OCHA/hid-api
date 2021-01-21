@@ -4,6 +4,7 @@ const Client = require('../models/Client');
 const User = require('../models/User');
 const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
+const TOTPController = require('./TOTPController');
 const UserController = require('./UserController');
 const AuthPolicy = require('../policies/AuthPolicy');
 const config = require('../../config/env')[process.env.NODE_ENV];
@@ -1032,8 +1033,8 @@ module.exports = {
     cookie.alert = alert;
     request.yar.set('session', cookie);
 
-    // Always redirect to password form, to avoid resubmitting when user chooses
-    // to refresh browser.
+    // Always redirect to form, so we avoid resubmitting when user chooses to
+    // refresh their browser.
     return reply.redirect('/settings/password');
   },
 
@@ -1074,12 +1075,45 @@ module.exports = {
       request.yar.set('session', cookie);
     }
 
+    // See if we have formData to send
+    let formData;
+    if (cookie.formData) {
+      formData = cookie.formData;
+      delete(cookie.formData);
+      request.yar.set('session', cookie);
+    }
+
+    // Status and Action are somewhat bound, so we put the state detection in
+    // unified variables to avoid terrible quirks.
+    //
+    // NOTE: The order of these might look strange, but it matches the state of
+    //       the user object in DB as the process progresses.
+    let started = user.totpConf && user.totpConf.secret;
+    let complete = user.totpConf && user.totpConf.secret && user.totp && user.totpConf.backupCodes;
+
+    // Status is a user-facing label
+    let status = started
+      ? complete
+        ? 'enabled'
+        : 'partial'
+      : 'disabled';
+
+    // Action is a machine-facing value in the HTML forms.
+    let action = started
+      ? complete
+        ? 'disable'
+        : 'finish'
+      : 'enable';
+
     // Render settings-security page.
     return reply.view('settings-security', {
       user,
       alert,
+      formData,
       totpPrompt,
       step,
+      status,
+      action,
     });
   },
 
@@ -1093,19 +1127,71 @@ module.exports = {
       return reply.redirect('/');
     }
 
-    // Set up user feedback
+    // Set up all our variables for state management
     let alert = {};
     let reasons = [];
+    let action = false;
 
     // Load current user from DB.
     const user = await User.findOne({ _id: cookie.userId });
+
+    // Check which action we're taking
+    if (request.payload && typeof request.payload.action !== 'undefined') {
+      action = request.payload.action;
+    } else {
+      reasons.push('We apologize, but there was a problem on the server. Please restart the process or if problems persist, contact info@humanitarian.id and include this error code: <code>Error SEC0</code>.');
+
+      logger.warn(
+        '[ViewController->settingsSecuritySubmit] `action` was not defined on 2FA setup form. SEC0',
+        {
+          fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          }
+        },
+      );
+    }
+
+    // Check for validation problems.
+    if (reasons.length > 0) {
+      alert.type = alert.type === 'error' ? 'error' : 'warning';
+      alert.message = `<p>${ reasons.join('</p><p>' )}</p>`;
+    } else {
+      // User is starting the process to enable their 2FA
+      if (action === 'enable') {
+        await TOTPController.generateConfig({}, {
+          user,
+        }).then(data => {
+          // Prepare to display configuration to user.
+          cookie.formData = {
+            totpConf: {
+              qr: data.qrcode,
+              url: data.url,
+            },
+          };
+
+          // Proceed to step 1.
+          cookie.step = 1;
+        }).catch(err => {
+          alert.type = 'error';
+          alert.message = err.message;
+        });
+      } else if (action === 'finish') {
+        // TODO: POST /totp
+        // TODO: POST /totp/codes
+      } else {
+        // TODO: reset the user's TOTP boolean/config so they can restart the
+        //       process later on.
+      }
+    }
 
     // Finalize cookie (feedback, TOTP status, etc.)
     cookie.alert = alert;
     request.yar.set('session', cookie);
 
-    // Always redirect to password form, to avoid resubmitting when user chooses
-    // to refresh browser.
+    // Always redirect to form, so we avoid resubmitting when user chooses to
+    // refresh their browser.
     return reply.redirect('/settings/security');
   },
 };
