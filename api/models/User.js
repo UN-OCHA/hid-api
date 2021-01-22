@@ -1317,7 +1317,7 @@ UserSchema.methods = {
 
   backupCodeIndex(code) {
     let index = -1;
-    let numCodes = this.totpConf && this.totpConf.backupCodes && this.totpConf.backupCodes.length;
+    let numCodes = this.totpConf && this.totpConf.backupCodes ? this.totpConf.backupCodes.length : 0;
     for (let i = 0; i < numCodes; i++) {
       if (Bcrypt.compareSync(code, this.totpConf.backupCodes[i])) {
         index = i;
