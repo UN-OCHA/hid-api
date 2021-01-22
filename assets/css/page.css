@@ -159,9 +159,17 @@ a:focus {
   display: inline-block;
 }
 
+label {
+  display: block;
+}
+
+label + input {
+  margin-top: 0;
+}
+
 input[type="text"],
-  input[type="password"],
-  input[type="email"] {
+input[type="password"],
+input[type="email"] {
   -webkit-appearance: none;
      -moz-appearance: none;
           appearance: none;
@@ -175,7 +183,8 @@ input[type="text"],
   --text-opacity: 1;
   color: #4a5568;
   color: rgba(74, 85, 104, var(--text-opacity));
-  line-height: 1.25
+  line-height: 1.25;
+  max-width: 50ch;
 }
 
 input:focus {
