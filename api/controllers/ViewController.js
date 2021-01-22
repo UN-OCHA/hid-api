@@ -261,7 +261,7 @@ module.exports = {
       // Render registration form.
       return reply.view('register', {
         alert: {
-          type: 'error',
+          type: 'warning',
           message: userMessage,
         },
         query: request.query,
@@ -277,24 +277,24 @@ module.exports = {
   async verify(request, reply) {
     const cookie = request.yar.get('session');
 
-    // Do we have what we need to validate the confirmation link?
-    if (!request.query.hash || !request.query.id || !request.query.time || !request.query.emailId) {
-      throw Boom.badRequest('Missing necessary parameters');
-    }
-
-    // Populate payload object.
-    request.payload = {
-      hash: request.query.hash,
-      id: request.query.id,
-      time: request.query.time,
-      emailId: request.query.emailId,
-    };
-
     // Template variables.
     const registerLink = _getRegisterLink(request.query);
     const passwordLink = _getPasswordLink(request.query);
 
     try {
+      // Do we have what we need to validate the confirmation link?
+      if (!request.query.hash || !request.query.id || !request.query.time) {
+        throw Boom.badRequest('Confirmation link was missing parameters.');
+      }
+
+      // Populate payload object.
+      request.payload = {
+        hash: request.query.hash,
+        id: request.query.id,
+        time: request.query.time,
+        emailId: request.query.emailId,
+      };
+
       await UserController.validateEmail(request);
 
       // If user is logged in, send them to their profile.
@@ -311,7 +311,7 @@ module.exports = {
       return reply.view('login', {
         alert: {
           type: 'status',
-          message: 'Thank you for confirming your email address. You can now log in',
+          message: 'Thank you for confirming your account. You can now log in',
         },
         query: request.query,
         registerLink,
@@ -319,7 +319,13 @@ module.exports = {
       });
     } catch (err) {
       return reply.view('login', {
-        alert: { type: 'error', message: 'There was an error confirming your email address.' },
+        alert: {
+          type: 'error',
+          message: `
+            <p>There was an internal error because the confirmation link was not well-formed.</p>
+            <p>Please try again, and if the problem persists contact info@humanitarian.id</p>
+          `,
+        },
         query: request.query,
         registerLink,
         passwordLink,
@@ -1033,8 +1039,7 @@ module.exports = {
     cookie.alert = alert;
     request.yar.set('session', cookie);
 
-    // Always redirect to form, so we avoid resubmitting when user chooses to
-    // refresh their browser.
+    // Always redirect, to avoid resubmitting when user refreshes browser.
     return reply.redirect('/settings/password');
   },
 
@@ -1255,5 +1260,176 @@ module.exports = {
     // Always redirect to form, so we avoid resubmitting when user chooses to
     // refresh their browser.
     return reply.redirect('/settings/security');
+  },
+
+  /**
+   * User settings: render form to delete account
+   */
+  async settingsDelete(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // Load current user from DB.
+    const user = await User.findOne({ _id: cookie.userId });
+
+    // Check for user feedback to display.
+    let alert;
+    if (cookie.alert) {
+      alert = cookie.alert;
+      delete(cookie.alert);
+      request.yar.set('session', cookie);
+    }
+
+    // Check if we need TOTP Prompt.
+    let totpPrompt = false;
+    if (cookie.totpPrompt) {
+      totpPrompt = true;
+      delete(cookie.totpPrompt);
+      request.yar.set('session', cookie);
+    }
+
+    // Render settings-delete page.
+    return reply.view('settings-delete', {
+      user,
+      alert,
+      totpPrompt,
+    });
+  },
+
+  /**
+   * User settings: handle submissions to delete account
+   */
+  async settingsDeleteSubmit(request, reply) {
+    // If the user is not authenticated, redirect to the login page
+    //
+    // NOTE: normally we use const, but using let here since cookie will be
+    //       overwritten if the user successfully deletes their account.
+    let cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    try {
+      // Load current user from DB.
+      const user = await User.findOne({ _id: cookie.userId });
+
+      // Set up user feedback
+      let alert = {};
+      let reasons = [];
+      let destination = '/settings/delete';
+
+      // Validate form submission for non-admins. There are two possibilities:
+      // - cookie.formData implies they already validated email and are submitting TOTP
+      // - otherwise check form submission and verify input
+      if (
+        cookie.formData && cookie.formData.primary_email === user.email
+        || request.payload && request.payload.primary_email && request.payload.primary_email === user.email
+      ) {
+        // form was validated
+      } else {
+        reasons.push('Please enter your <strong>primary email address</strong> to confirm that you want to delete your account.');
+      }
+
+      // Tell especially persistent admins that they cannot delete their accounts.
+      if (user.is_admin) {
+        alert.type = 'error';
+        // In this case, we want to wipe the old feedback.
+        reasons = [];
+        reasons.push('Admins cannot delete their accounts. Remove your own admin status before deleting the account.');
+      } else {
+        // If user is NOT admin, and form was validated, then check if 2FA is
+        // enabled and enforce.
+        if (reasons.length === 0) {
+          const token = request.payload && request.payload['x-hid-totp'];
+          await AuthPolicy.isTOTPEnabledAndValid({}, {
+            user,
+            totp: token,
+          }).then(data => {
+            // Clean up the cookie for 2FA users.
+            delete(cookie.totpPrompt);
+            delete(cookie.formData);
+          }).catch(err => {
+            // Cookie the form data so we prompt for TOTP without populating the
+            // form, potentially allowing someone to alter their previous input
+            // by editing DOM, or forcing them re-enter the email confirmation.
+            //
+            // We wrap the assignment in a conditional to allow for multiple attempts
+            // at entering the TOTP. If we blindly set the request data, a second TOTP
+            // attempt will erase formDara and set everything to empty strings.
+            cookie.totpPrompt = true;
+            if (!cookie.formData) {
+              cookie.formData = {
+                primary_email: request.payload.primary_email,
+              };
+            }
+
+            // Display error about invalid TOTP.
+            //
+            // If we made it this far, the other feedback isn't necessary, so we
+            // clear the reasons array before setting TOTP feedback.
+            reasons = [];
+            if (err.message.indexOf('Invalid') !== -1) {
+              alert.type = 'error';
+              reasons.push('Your two-factor authentication code was invalid.')
+            } else {
+              reasons.push('Enter your two-factor authentication code to delete your account.');
+            }
+          });
+        }
+      }
+
+      if (reasons.length > 0) {
+        alert.type = alert.type === 'error' ? 'error' : 'warning';
+        alert.message = `<p>${ reasons.join('</p><p>') }</p>`;
+      } else {
+        // So long, and thanks for all the fish!
+        await user.remove();
+
+        logger.info(
+          `[ViewController->settingsDeleteSubmit] Removed user ${cookie.userId}`,
+          {
+            security: true,
+            user: {
+              id: cookie.userId,
+            },
+          },
+        );
+
+        // Overwrite the existing cookie with a fresh, empty object. This will
+        // ensure that no further actions can be taken, and that even browser
+        // refreshes won't be able to re-sumbit the form.
+        request.yar.set('session', {});
+
+        // Set up user feedback.
+        alert.type = 'status';
+        alert.message = '<p>You have successfully deleted your account.</p>';
+
+        // Display confirmation of deletion.
+        return reply.view('message', {
+          alert,
+          isSuccess: false,
+          title: 'Account Deleted',
+        });
+      }
+
+      // Finalize cookie (feedback, TOTP status, etc.)
+      cookie.alert = alert;
+      request.yar.set('session', cookie);
+
+      // Always redirect, to avoid resubmitting when user refreshes browser.
+      return reply.redirect(destination);
+    } catch (err) {
+      logger.error(
+        err.message,
+        {
+          fail: true,
+        }
+      );
+
+      // TODO: show something, e.g. message.html
+    }
   },
 };

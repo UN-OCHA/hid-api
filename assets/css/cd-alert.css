@@ -67,3 +67,16 @@
 .cd-alert--status svg {
   fill: var(--cd-green);
 }
+
+/**
+ * HID customizations (temporary)
+ */
+.cd-alert__message p {
+  margin: 0;
+}
+.cd-alert__message ul {
+  margin: 0;
+}
+.cd-alert__message li {
+  margin: 0;
+}

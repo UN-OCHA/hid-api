@@ -34,7 +34,10 @@ async function isTOTPValid(user, token) {
     }
     logger.warn(
       `[AuthPolicy->isTOTPValid] Invalid TOTP token ${token}`,
-      { security: true },
+      {
+        security: true,
+        fail: true,
+      },
     );
     throw Boom.unauthorized('Invalid TOTP token !', 'totp');
   }
@@ -44,18 +47,30 @@ async function isTOTPValid(user, token) {
   if (index === -1) {
     logger.warn(
       `[AuthPolicy->isTOTPValid] Invalid backup code ${token}`,
-      { security: true },
+      {
+        security: true,
+        fail: true,
+      },
     );
     throw Boom.unauthorized('Invalid backup code !', 'totp');
   }
 
-  // remove backup code so it can't be reused
-  user.totpConf.backupCodes.slice(index, 1);
-  user.markModified('totpConf');
+  // Remove backup code so it can't be reused.
+  user.totpConf.backupCodes.splice(index, 1);
+  user.markModified('totpConf.backupCodes');
   await user.save();
+
   logger.info(
-    `[AuthPolicy->isTOTPValid] Successfully removed backup code for user ${user.id}`,
+    `[AuthPolicy->isTOTPValid] Successfully removed a backup code for user ${user.id}`,
+    {
+      security: true,
+      user: {
+        id: user.id,
+        email: user.email,
+      },
+    },
   );
+
   return user;
 }
 

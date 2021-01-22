@@ -990,6 +990,7 @@ module.exports = {
    *     description: Requested user not found.
    */
   async destroy(request, reply) {
+    // Don't allow admins to delete their account.
     if (!request.auth.credentials.is_admin
       && request.auth.credentials._id.toString() !== request.params.id) {
       logger.warn(
@@ -1002,7 +1003,9 @@ module.exports = {
       throw Boom.forbidden('You are not allowed to delete this account');
     }
 
+    // Find user in DB.
     const user = await User.findOne({ _id: request.params.id });
+
     if (!user) {
       logger.warn(
         `[UserController->destroy] Could not find user ${request.params.id}`,
@@ -1014,11 +1017,15 @@ module.exports = {
       throw Boom.notFound();
     }
     await EmailService.sendAdminDelete(user, request.auth.credentials);
+
+    // Delete this user.
     await user.remove();
+
     logger.info(
       `[UserController->destroy] Removed user ${request.params.id}`,
       {
         request,
+        security: true,
       },
     );
 
@@ -1859,8 +1866,6 @@ module.exports = {
    * security: []
    */
   async validateEmail(request) {
-    // TODO: make sure current user can do this
-
     if (request.payload.hash) {
       const record = await User.findOne({ _id: request.payload.id }).catch((err) => {
         logger.error(
@@ -1889,19 +1894,16 @@ module.exports = {
 
       // For automatic verified status.
       let domain = null;
+
       // Assign the primary address as the initial value for `email`
       //
-      // TODO: determine why we are defaulting to the user's primary email
-      // address before going and explicitly looking up the `_id` of the email
-      // actually being verified. When this code was used during HID-1965,
-      // it did not actually work until an additional "emailId" param was passed
-      // from ViewController.verify(). However, it seemed like that query param
-      // should have been necessary beforehand in order to trigger the emailRecord
-      // lookup happening here.
-      //
-      // - Why did that need to be added?
-      // - Why did it work before?
+      // This is necessary for new account registrations, which won't have the
+      // emailId parameter sent along with their confirmation link since the new
+      // account only has a single primary email address and no secondaries.
       let { email } = record;
+
+      // If we are verifying a secondary email on an existing account, we need
+      // to look up the emailId being confirmed in order to validate the hash.
       if (request.payload.emailId) {
         const emailRecord = record.emails.id(request.payload.emailId);
         if (emailRecord) {

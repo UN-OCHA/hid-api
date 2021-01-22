@@ -144,25 +144,18 @@ a:focus {
   }
 }
 
-.alert p {
-  margin: 0;
-}
-.alert ul {
-  margin: 0;
-}
-.alert li {
-  margin: 0;
-}
 
 /**
  * Forms
  */
 
-form .form-field > * {
+.form-field {}
+
+.form-field > * {
   display: block;
 }
 
-form .form-field > input[type="checkbox"] {
+.form-field > input[type="checkbox"] {
   display: inline-block;
 }
 
