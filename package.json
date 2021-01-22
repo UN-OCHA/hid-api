@@ -1,7 +1,7 @@
 {
   "name": "hid-api",
-  "version": "0.0.0",
-  "description": "API for Humanitarian ID",
+  "version": "3.0.0",
+  "description": "Humanitarian ID API+Auth",
   "homepage": "https://about.humanitarian.id",
   "repository": "https://github.com/UN-OCHA/hid_api.git",
   "license": "Apache-2.0",
@@ -13,7 +13,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "node ./node_modules/nodemon/bin/nodemon.js ./server.js -e html,css,js,ejs",
-    "docs": "swagger-inline './api/**/*' --base 'docs/v3/swaggerBase.yaml' > docs/v3/hid.yml",
+    "docs": "swagger-inline './api/**/*' --base 'docs/swaggerBase.yaml' > docs/hid.yml",
     "start": "node ./server.js",
     "test": "eslint ."
   },
