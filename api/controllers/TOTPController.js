@@ -84,8 +84,15 @@ module.exports = {
    *   '401':
    *     description: Unauthorized.
    */
-  async generateConfig(request) {
-    const user = request.auth.credentials;
+  async generateConfig(request, internalArgs) {
+    let user;
+
+    if (internalArgs && internalArgs.user) {
+      user = internalArgs.user;
+    } else {
+      user = request.auth.credentials;
+    }
+
     if (user.totp === true) {
       // TOTP is already enabled, user needs to disable it first
       logger.warn(
@@ -103,7 +110,10 @@ module.exports = {
       secret,
     };
     user.totpConf = mfa;
+
+    // Update user in DB
     await user.save();
+
     logger.info(
       `[TOTPController->generateQRCode] Saved totp secret for user ${user.id}`,
       {
@@ -114,12 +124,15 @@ module.exports = {
         },
       },
     );
+
     let qrCodeName = `HID (${process.env.NODE_ENV})`;
     if (process.env.NODE_ENV === 'production') {
       qrCodeName = 'HID';
     }
+
     const url = authenticator.generateTotpUri(secret, user.name, qrCodeName, 'SHA1', 6, 30);
     const qrcode = await QRCode.toDataURL(url);
+
     return {
       qrcode,
       url,
@@ -162,10 +175,19 @@ module.exports = {
    *   '401':
    *     description: Unauthorized.
    */
-  async enable(request) {
-    const user = request.auth.credentials;
+  async enable(request, internalArgs) {
+    let user, method;
+
+    if (internalArgs && internalArgs.user) {
+      user = internalArgs.user;
+      method = 'app';
+    } else {
+      user = request.auth.credentials;
+      method = request.payload && request.payload.method;
+    }
+
+    // TOTP is already enabled, user needs to disable it first
     if (user.totp === true) {
-      // TOTP is already enabled, user needs to disable it first
       logger.warn(
         '[TOTPController->enable] 2FA already enabled. No need to reenable.',
         {
@@ -176,7 +198,9 @@ module.exports = {
       );
       throw Boom.badRequest('2FA is already enabled. You need to disable it first');
     }
-    const method = request.payload ? request.payload.method : '';
+
+    // Forward-compatbility requires that we set a method of 'app' — if for some
+    // reason we want to offer SMS in the future, that would be the other value.
     if (method !== 'app') {
       logger.warn(
         `[TOTPController->enable] Invalid 2FA method provided: ${method}`,
@@ -188,9 +212,12 @@ module.exports = {
       );
       throw Boom.badRequest('Valid 2FA method is required');
     }
-    user.totpMethod = request.payload.method;
+
+    // Set user's 2FA status to enabled.
+    user.totpMethod = method;
     user.totp = true;
     await user.save();
+
     logger.info(
       `[TOTPController->enable] Saved user ${user.id} with 2FA method ${user.totpMethod}`,
       {
@@ -201,6 +228,7 @@ module.exports = {
         },
       },
     );
+
     return user;
   },
 
@@ -250,10 +278,17 @@ module.exports = {
    *   '401':
    *     description: Unauthorized.
    */
-  async disable(request) {
-    const user = request.auth.credentials;
+  async disable(request, internalArgs) {
+    let user;
+
+    if (internalArgs && internalArgs.user) {
+      user = internalArgs.user;
+    } else {
+      user = request.auth.credentials;
+    }
+
+    // TOTP is already disabled
     if (user.totp !== true) {
-      // TOTP is already disabled
       logger.warn(
         '[TOTPController->disable] 2FA already disabled.',
         {
@@ -264,9 +299,13 @@ module.exports = {
       );
       throw Boom.badRequest('2FA is already disabled.');
     }
+
+    // Disable user's 2FA.
     user.totp = false;
     user.totpConf = {};
+    delete(user.totpMethod);
     await user.save();
+
     logger.info(
       `[TOTPController->disable] Disabled 2FA for user ${user.id}`,
       {
@@ -277,6 +316,7 @@ module.exports = {
         },
       },
     );
+
     return user;
   },
 
@@ -300,8 +340,15 @@ module.exports = {
    *   '401':
    *     description: Unauthorized.
    */
-  async generateBackupCodes(request) {
-    const user = request.auth.credentials;
+  async generateBackupCodes(request, internalArgs) {
+    let user;
+
+    if (internalArgs && internalArgs.user) {
+      user = internalArgs.user;
+    } else {
+      user = request.auth.credentials;
+    }
+
     if (!user.totp) {
       logger.warn(
         `[TOTPController->generateBackupCodes] TOTP needs to be enabled for user ${request.auth.credentials.id}`,
@@ -313,18 +360,22 @@ module.exports = {
       );
       throw Boom.badRequest('TOTP needs to be enabled');
     }
-    const codes = []; const
-      hashedCodes = [];
-    for (let i = 0; i < 16; i += 1) {
+
+    const codes = [];
+    for (let i = 0; i < 16; i++) {
       codes.push(HelperService.generateRandom());
     }
-    for (let i = 0; i < 16; i += 1) {
+
+    const hashedCodes = [];
+    for (let i = 0; i < 16; i++) {
       hashedCodes.push(BCrypt.hashSync(codes[i], 5));
     }
+
     // Save the hashed codes in the user and show the ones which are not hashed
     user.totpConf.backupCodes = hashedCodes;
     user.markModified('totpConf');
     await user.save();
+
     logger.info(
       `[TOTPController->generateBackupCodes] Saved new backup codes for user ${user.id}`,
       {
@@ -335,6 +386,7 @@ module.exports = {
         },
       },
     );
+
     return codes;
   },
 

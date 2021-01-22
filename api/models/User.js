@@ -839,18 +839,7 @@ UserSchema.statics = {
     return index;
   },
 
-  // v2 — Password Requirements
-  //
-  // - At least 8 characters total
-  // - At least one number
-  // - At least one lowercase letter
-  // - At least one uppercase letter
-  isStrongPassword(password) {
-    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
-    return password.length > 7 && regex.test(password);
-  },
-
-  // v3 — Password Requirements
+  // Password Requirements
   //
   // As of 2020 we follow the most strict guidelines in order to avoid the OICT
   // requirement that we expire weak passwords after 6 months.
@@ -860,7 +849,7 @@ UserSchema.statics = {
   // - At least one lowercase letter
   // - At least one uppercase letter
   // - At least one special character: !@#$%^&*()+=\`{}
-  isStrongPasswordV3(password) {
+  isStrongPassword(password) {
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()+=\\`{}]).+$/;
     return password.length >= 12 && regex.test(password);
   },
@@ -1042,7 +1031,8 @@ UserSchema.methods = {
         timestamp: now,
         hash,
       };
-    } if (type === 'verify_email') {
+    }
+    if (type === 'verify_email') {
       const now = Date.now();
       const value = `${now}:${this._id.toString()}:${email}`;
       const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
@@ -1067,7 +1057,8 @@ UserSchema.methods = {
       const value = `${time}:${this._id.toString()}:${this.password}`;
       const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
       return hash === hashLink;
-    } if (type === 'verify_email') {
+    }
+    if (type === 'verify_email') {
       const now = Date.now();
       if (now - time > 24 * 3600 * 1000) {
         return false;
@@ -1326,7 +1317,8 @@ UserSchema.methods = {
 
   backupCodeIndex(code) {
     let index = -1;
-    for (let i = 0; i < this.totpConf.backupCodes.length; i += 1) {
+    let numCodes = this.totpConf && this.totpConf.backupCodes ? this.totpConf.backupCodes.length : 0;
+    for (let i = 0; i < numCodes; i++) {
       if (Bcrypt.compareSync(code, this.totpConf.backupCodes[i])) {
         index = i;
       }

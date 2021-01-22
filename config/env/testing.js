@@ -11,6 +11,7 @@ module.exports = {
           connectTimeoutMS: 60000,
           useNewUrlParser: true,
           useUnifiedTopology: true,
+          useFindAndModify: false,
         },
       },
     },

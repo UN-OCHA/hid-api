@@ -1,49 +1,39 @@
 <% include header %>
 
-<div class="container api-page">
+<div class="api-page">
   <main role="main" id="main-content" class="cd-container">
     <div class="cd-layout-content">
-      <div class="row">
-        <div class="col-sm-6 offset-sm-3 col-lg-4 offset-lg-4">
-          <div class="page-header">
-            <h1 class="page-header__heading">Log in</h1>
+      <div class="[ flow ]">
+        <h1 class="page-header__heading">Log in</h1>
+
+        <% include alert.html %>
+
+        <form method="post" action="/login" class="[ flow ]">
+          <div class="form-field">
+            <label for="email" translate>Email</label>
+            <input type="email" name="email" id="email" placeholder="Your email address" value="<%= query.email %>" required>
           </div>
+          <div class="form-field">
+            <label for="password"><span translate>Password</span></label>
+            <input type="password" name="password" id="password" placeholder="Your password" required>
+          </div>
+          <input type="hidden" name="redirect" value="<%= query.redirect %>" />
+          <input type="hidden" name="client_id" value="<%= query.client_id %>" />
+          <input type="hidden" name="redirect_uri" value="<%= query.redirect_uri %>" />
+          <input type="hidden" name="response_type" value="<%= query.response_type %>" />
+          <input type="hidden" name="state" value="<%= query.state %>" />
+          <input type="hidden" name="scope" value="<%= query.scope %>" />
+          <input type="hidden" name="nonce" value="<%= query.nonce %>" />
+          <input type="hidden" name="crumb" value="<%= crumb %>" />
 
-          <% if (alert) { %>
-            <div class="alert alert--inline alert--<%= alert.type %>" role="alert">
-              <div class="alert__inner">
-                <%= alert.message %>
-              </div>
-            </div>
-          <% } %>
-
-          <form method="post" action="/login">
-            <div class="form-field">
-              <label for="email" translate>Email</label>
-              <input type="email" name="email" id="email" placeholder="Your email address" value="<%= query.email %>" required>
-            </div>
-            <div class="form-field">
-              <label for="password"><span translate>Password</span></label>
-              <input type="password" name="password" id="password" placeholder="Your password" required>
-            </div>
-            <input type="hidden" name="redirect" value="<%= query.redirect %>" />
-            <input type="hidden" name="client_id" value="<%= query.client_id %>" />
-            <input type="hidden" name="redirect_uri" value="<%= query.redirect_uri %>" />
-            <input type="hidden" name="response_type" value="<%= query.response_type %>" />
-            <input type="hidden" name="state" value="<%= query.state %>" />
-            <input type="hidden" name="scope" value="<%= query.scope %>" />
-            <input type="hidden" name="nonce" value="<%= query.nonce %>" />
-            <input type="hidden" name="crumb" value="<%= crumb %>" />
-
-            <div class="row form-field">
-                <button type="submit" class="btn-primary btn-block t-login-btn">
-                  Login
-                </button>
-            </div>
-          </form>
-          <p><a href="<%= registerLink %>">Register a new Humanitarian ID Account</a></p>
-          <p><a href="<%= passwordLink %>">Forgot/Reset password</a></p>
-        </div>
+          <div class="form-field">
+            <button type="submit" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase t-login-btn">
+              Login
+            </button>
+          </div>
+        </form>
+        <p><a href="<%= registerLink %>">Register a new Humanitarian ID Account</a></p>
+        <p><a href="<%= passwordLink %>">Forgot/Reset password</a></p>
       </div>
     </div>
   </main>

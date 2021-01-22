@@ -1,0 +1,71 @@
+/**
+ * Tabs
+ */
+
+/* https://inclusive-components.design/tabbed-interfaces */
+[role="tablist"] {
+  padding: 0;
+  margin: 0;
+}
+
+[role="tablist"] li,
+[role="tablist"] a {
+  display: inline-block;
+}
+
+[role="tablist"] a {
+  text-decoration: none;
+  padding: 0.5rem 1em;
+  border: 2px solid transparent;
+  position: relative;
+  top: 2px;
+}
+
+[role="tablist"] [aria-selected] {
+  border: 2px solid #e6ecf1;
+  border-bottom: 2px solid white;
+  background: #fff;
+  top: 2px;
+}
+
+[role="tabpanel"] {
+  border: 2px solid #e6ecf1;
+  padding: 1.5rem;
+}
+
+[role="tabpanel"] > * + * {
+  margin-top: 0.75rem;
+}
+
+[role="tablist"] a:focus {
+  outline: 4px solid #60b2c9;
+  outline-offset: -4px;
+}
+
+@media (max-width: 550px) {
+  [role="tablist"] li,
+  [role="tablist"] a {
+    display: block;
+    position: static;
+  }
+
+  [role="tablist"] a {
+    border: 2px solid #e6ecf1 !important;
+  }
+
+  [role="tablist"] li + li a {
+    border-top: 0 !important;
+  }
+
+  [role="tablist"] [aria-selected] {
+    position: static;
+  }
+
+  [role="tablist"] [aria-selected]::after {
+    content: '\0020⬅';
+  }
+
+  [role="tabpanel"] {
+    border-top: 0;
+  }
+}

@@ -415,7 +415,7 @@ module.exports = {
         return loginRedirect(request, reply);
       } catch (err) {
         const alert = {
-          type: 'danger',
+          type: 'error',
           message: err.output.payload.message,
         };
         return reply.view('totp', {
@@ -478,7 +478,7 @@ module.exports = {
         registerLink,
         passwordLink,
         alert: {
-          type: 'danger',
+          type: 'error',
           message: alertMessage,
         },
       });

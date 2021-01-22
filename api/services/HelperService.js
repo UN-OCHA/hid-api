@@ -36,6 +36,8 @@ const authorizedDomains = [
   'http://app.hid.vm',
   'http://api.hid.vm',
   'http://v3.hid.vm',
+  'http://admin.hid.vm',
+  'http://hid.vm',
 ];
 
 /**

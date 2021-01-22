@@ -160,8 +160,94 @@ module.exports = [
 
   {
     method: 'GET',
+    path: '/profile/edit',
+    handler: ViewController.profileEdit,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'POST',
+    path: '/profile/edit',
+    handler: ViewController.profileEditSubmit,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'POST',
+    path: '/profile/edit/emails',
+    handler: ViewController.profileEmailsSubmit,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'GET',
     path: '/settings',
     handler: ViewController.settings,
+    options: {
+      auth: false,
+    },
+  },
+  {
+    method: 'POST',
+    path: '/settings/oauth-clients',
+    handler: ViewController.settingsOauthSubmit,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'GET',
+    path: '/settings/password',
+    handler: ViewController.settingsPassword,
+    options: {
+      auth: false,
+    },
+  },
+  {
+    method: 'POST',
+    path: '/settings/password',
+    handler: ViewController.settingsPasswordSubmit,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'GET',
+    path: '/settings/security',
+    handler: ViewController.settingsSecurity,
+    options: {
+      auth: false,
+    },
+  },
+  {
+    method: 'POST',
+    path: '/settings/security',
+    handler: ViewController.settingsSecuritySubmit,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'GET',
+    path: '/settings/delete',
+    handler: ViewController.settingsDelete,
+    options: {
+      auth: false,
+    },
+  },
+  {
+    method: 'POST',
+    path: '/settings/delete',
+    handler: ViewController.settingsDeleteSubmit,
     options: {
       auth: false,
     },
@@ -688,6 +774,24 @@ module.exports = [
       },
     },
   },
+
+  {
+    method: 'DELETE',
+    path: '/api/v3/user/{id}/clients/{client}',
+    options: {
+      pre: [
+        UserPolicy.canUpdate,
+      ],
+      handler: UserController.revokeOauthClient,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+          client: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+
 
   {
     method: 'POST',

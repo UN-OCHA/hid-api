@@ -1,0 +1,18 @@
+/**
+ * Show Profile
+ */
+.profile {}
+.profile--show {}
+.profile__emails {}
+.profile__email {}
+.profile__email .email__address {
+  display: flex;
+  align-items: center;
+  flex-flow: wrap;
+}
+.email__address {
+  color: black;
+}
+.email__address label {
+  padding-right: 1rem;
+}

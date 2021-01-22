@@ -1,0 +1,210 @@
+/**
+ * Override :root for all our CD stuff
+ */
+:root {
+  /**
+   * Custom properties for IE.
+   *
+   * This is needed due to inability to process calc() functions nested within
+   * color functions.
+   */
+  --cd-ie-primary-color: #007faa;
+  --cd-ie-primary-color--light: #4ca6c3;
+  --cd-ie-primary-color--dark: #001b24;
+  /*--cd-ie-primary-color--lighter: #a8ccf0;*/
+
+  /**
+   * Define our HSL for HID.
+   */
+  --cd-primary-color-h: 195;
+  --cd-primary-color-s: 100%;
+  --cd-primary-color-l: 33.333%;
+
+  /**
+   * The HID color was too saturated when using CD's default HSL light color.
+   * We're overriding with a less saturated HSL.
+   */
+  --cd-primary-color--light: hsl(var(--cd-primary-color-h), calc(var(--cd-primary-color-s) - 50%), calc(var(--cd-primary-color-l) + 20%));
+
+  /* darken */
+  --cd-primary-color--dark: hsl(var(--cd-primary-color-h), var(--cd-primary-color-s), calc(var(--cd-primary-color-l) - 26%));
+
+  /**
+   * Adopt the CD colors for alerts
+   *
+   * @see https://feature.commondesign-unocha-org.ahconu.org/demo#cd-alert
+   */
+  --cd-red: #cd3a1f;
+  --cd-red--light: #f8d8d3;
+  --cd-orange: #db7b18;
+  --cd-orange--light: #fae6d1;
+  --cd-yellow: #d5de26;
+  --cd-yellow--light: #f7f8d3;
+  --cd-green: #7fb92f;
+  --cd-green--light: #e8f5d6;
+
+  /* CD colours for components */
+  --cd-blue-grey: #e6ecf1;
+  --cd-blue--bright: #80cbff;
+  --cd-grey--light: #f2f2f2;
+  --cd-grey--mid: #595959;
+  --cd-grey--dark: #4a4a4a;
+}
+
+/**
+ * CD overrides for HID
+ */
+
+h1, h2, h3, h4, h5 {
+  color: var(--cd-primary-color);
+}
+
+.cd-global-header {
+  background: #007faa;
+  background-image: linear-gradient(-180deg, #007faa 67%, #006c91 97%);
+}
+
+.cd-global-header__dropdown {
+  background: #007faa;
+}
+
+.cd-global-header button[aria-expanded="true"]::before {
+  border-color: transparent transparent #007faa;
+}
+
+.cd-button.cd-ocha-dropdown__see-all {
+  width: 100%;
+}
+
+/* IE11 fix */
+#cd-user-dropdown-toggler svg {
+  float: right;
+}
+
+#cd-language li button:hover,
+#cd-language li button:focus {
+  color: #80cbff;
+}
+
+#cd-language li button:focus {
+  outline: 3px solid #60b2c9;
+}
+
+.cd-language-switcher .cd-user-menu__item {
+  padding-right: 0;
+}
+
+.cd-language-switcher .cd-user-menu__item::after {
+  display: none;
+}
+
+.cd-footer {
+  background: #007faa;
+}
+
+.cd-button--danger {
+  background-color: var(--cd-highlight-red);
+}
+
+.cd-button[disabled] {
+  opacity: .666;
+}
+
+h1 {
+  color: #295a78;
+}
+
+h2 {
+  color: #007faa;
+}
+
+a {
+  color: #007faa;
+}
+
+a:hover,
+a:focus {
+  color: #007faa;
+}
+
+
+/**
+ * Global layout
+ */
+
+.api-page {
+  width: 100%;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+@media (min-width: 576px) {
+  .api-page {
+    padding-bottom: 40px;
+  }
+}
+
+
+/**
+ * Forms
+ */
+
+.form-field {}
+
+.form-field > * {
+  display: block;
+}
+
+.form-field > input[type="checkbox"] {
+  display: inline-block;
+}
+
+label {
+  display: block;
+}
+
+label + input {
+  margin-top: 0;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  border-width: 1px;
+  border-radius: 0.25rem;
+  width: 100%;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  --text-opacity: 1;
+  color: #4a5568;
+  color: rgba(74, 85, 104, var(--text-opacity));
+  line-height: 1.25;
+  max-width: 50ch;
+}
+
+input:focus {
+  outline: 2px solid var(--cd-bright-blue);
+  outline-offset: 1px;
+  box-shadow: none
+}
+
+input:focus:invalid {
+  color: red;
+  border-bottom-color: currentColor;
+  box-shadow: inset 0px -1px 0px 0px currentColor;
+  outline: 2px solid red;
+  outline-offset: 0;
+}
+
+form code {
+  display: inline-block;
+  background: #eee;
+  border-radius: 3px;
+  padding-left: .25em;
+  padding-right: .25em;
+}

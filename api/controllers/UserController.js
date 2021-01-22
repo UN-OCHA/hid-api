@@ -331,25 +331,24 @@ module.exports = {
         request.payload.emails.push({ type: 'Work', email: request.payload.email, validated: false });
       }
 
-      // Business logic: is the new password strong enough?
-      //
-      // v2 and v3 have different requirements so we check the request path before
-      // checking the password strength.
-      const requestIsV3 = request.path.indexOf('api/v3') !== -1;
       if (request.payload.password && request.payload.confirm_password) {
-        if (requestIsV3 && !User.isStrongPasswordV3(request.payload.password)) {
+        if (request.payload.password !== request.payload.confirm_password) {
           logger.warn(
-            '[UserController->create] Provided password is not strong enough (v3)',
+            '[UserController->create] Passwords did not match during registration.',
             {
               request,
               security: true,
               fail: true,
             },
           );
-          throw Boom.badRequest('The password is not strong enough');
-        } else if (!User.isStrongPassword(request.payload.password)) {
+          throw Boom.badRequest('The passwords do not match');
+        }
+
+        if (User.isStrongPassword(request.payload.password)) {
+          request.payload.password = User.hashPassword(request.payload.password);
+        } else {
           logger.warn(
-            '[UserController->create] Provided password is not strong enough (v2)',
+            '[UserController->create] Provided password is not strong enough.',
             {
               request,
               security: true,
@@ -358,11 +357,11 @@ module.exports = {
           );
           throw Boom.badRequest('The password is not strong enough');
         }
-        request.payload.password = User.hashPassword(request.payload.password);
       } else {
         // Set a random password
         request.payload.password = User.hashPassword(User.generateRandomPassword());
       }
+
       delete request.payload.app_verify_url;
 
       let notify = true;
@@ -991,6 +990,7 @@ module.exports = {
    *     description: Requested user not found.
    */
   async destroy(request, reply) {
+    // Don't allow admins to delete their account.
     if (!request.auth.credentials.is_admin
       && request.auth.credentials._id.toString() !== request.params.id) {
       logger.warn(
@@ -1003,7 +1003,9 @@ module.exports = {
       throw Boom.forbidden('You are not allowed to delete this account');
     }
 
+    // Find user in DB.
     const user = await User.findOne({ _id: request.params.id });
+
     if (!user) {
       logger.warn(
         `[UserController->destroy] Could not find user ${request.params.id}`,
@@ -1015,11 +1017,15 @@ module.exports = {
       throw Boom.notFound();
     }
     await EmailService.sendAdminDelete(user, request.auth.credentials);
+
+    // Delete this user.
     await user.remove();
+
     logger.info(
       `[UserController->destroy] Removed user ${request.params.id}`,
       {
         request,
+        security: true,
       },
     );
 
@@ -1072,13 +1078,27 @@ module.exports = {
    *   '404':
    *     description: Requested user not found.
    */
-  async updatePassword(request, reply) {
-    const user = await User.findOne({ _id: request.params.id });
+  async updatePassword(request, reply, internalArgs) {
+    let userId, old_password, new_password, confirm_password;
+
+    if (internalArgs) {
+      userId = internalArgs.userId;
+      old_password = internalArgs.old_password;
+      new_password = internalArgs.new_password;
+      confirm_password = internalArgs.confirm_password;
+    } else {
+      userId = request.params.id;
+      old_password = request.payload.old_password;
+      new_password = request.payload.new_password;
+    }
+
+    // Look up user in DB.
+    const user = await User.findOne({ _id: userId });
 
     // Was the user parameter supplied?
     if (!user) {
       logger.warn(
-        `[UserController->updatePassword] User ${request.params.id} not found`,
+        `[UserController->updatePassword] User ${userId} not found`,
         {
           request,
           fail: true,
@@ -1088,9 +1108,9 @@ module.exports = {
     }
 
     // Are both password parameters present?
-    if (!request.payload.old_password || !request.payload.new_password) {
+    if (!old_password || !new_password) {
       logger.warn(
-        `[UserController->updatePassword] Could not update user password for user ${user.id}. Request is missing parameters (old or new password)`,
+        `[UserController->updatePassword] Could not update user password for user ${userId}. Request is missing parameters (old or new password)`,
         {
           request,
           security: true,
@@ -1101,13 +1121,9 @@ module.exports = {
     }
 
     // Business logic: is the new password strong enough?
-    //
-    // v2 and v3 have different requirements so we check the request path before
-    // checking the password strength.
-    const requestIsV3 = request.path.indexOf('api/v3') !== -1;
-    if (requestIsV3 && !User.isStrongPasswordV3(request.payload.new_password)) {
+    if (!User.isStrongPassword(new_password)) {
       logger.warn(
-        `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is not strong enough (v3)`,
+        `[UserController->updatePassword] Could not update user password for user ${userId}. New password is not strong enough (v3)`,
         {
           request,
           security: true,
@@ -1115,24 +1131,14 @@ module.exports = {
         },
       );
       throw Boom.badRequest('New password does not meet requirements');
-    } else if (!User.isStrongPassword(request.payload.new_password)) {
-      logger.warn(
-        `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is not strong enough (v2)`,
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('New password is not strong enough');
     }
 
     // Was the current password entered correctly?
-    if (user.validPassword(request.payload.old_password)) {
+    if (user.validPassword(old_password)) {
       // Business logic: is the new password different than the old one?
-      if (request.payload.old_password === request.payload.new_password) {
+      if (old_password === new_password) {
         logger.warn(
-          `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is the same as old password.`,
+          `[UserController->updatePassword] Could not update user password for user ${userId}. New password is the same as old password.`,
           {
             request,
             security: true,
@@ -1143,11 +1149,11 @@ module.exports = {
       }
 
       // Proceed with password update.
-      user.password = User.hashPassword(request.payload.new_password);
+      user.password = User.hashPassword(new_password);
       user.lastModified = new Date();
       await user.save();
       logger.info(
-        `[UserController->updatePassword] Successfully updated password for user ${user._id.toString()}`,
+        `[UserController->updatePassword] Successfully updated password for user ${userId}`,
         {
           request,
           security: true,
@@ -1155,7 +1161,7 @@ module.exports = {
       );
     } else {
       logger.warn(
-        `[UserController->updatePassword] Could not update password for user ${user._id.toString()}. Old password is wrong.`,
+        `[UserController->updatePassword] Could not update password for user ${userId}. Old password is wrong.`,
         {
           request,
           security: true,
@@ -1320,20 +1326,38 @@ module.exports = {
    *   '404':
    *     description: Requested user not found.
    */
-  async setPrimaryEmail(request) {
-    const { email } = request.payload;
+  async setPrimaryEmail(request, internalArgs) {
+    let email = '';
+    let userId = '';
 
-    if (!request.payload.email) {
+    //
+    // Determine source of arguments.
+    //
+    // If internalArgs is sent to this function then we prefer those values.
+    // We are executing on behalf of the user from within ViewController.
+    //
+    // Otherwise, use the normal URL param + payload to determine arg values.
+    //
+    if (internalArgs && internalArgs.userId && internalArgs.email) {
+      userId = internalArgs.userId;
+      email = internalArgs.email;
+    } else {
+      userId = request.params.id;
+      email = request.payload.email;
+    }
+
+    if (!email) {
       logger.warn(
         '[UserController->setPrimaryEmail] No email in payload',
         {
           request,
+          fail: true,
         },
       );
       throw Boom.badRequest();
     }
 
-    const record = await User.findOne({ _id: request.params.id }).catch((err) => {
+    const record = await User.findOne({ _id: userId }).catch((err) => {
       logger.error(
         `[UserController->setPrimaryEmail] ${err.message}`,
         {
@@ -1344,12 +1368,12 @@ module.exports = {
         },
       );
 
-      throw Boom.internal('There is a problem querying to the database. Please try again.');
+      throw Boom.internal('There was a problem querying the database. Please try again.');
     });
 
     if (!record) {
       logger.warn(
-        `[UserController->setPrimaryEmail] Could not find user ${request.params.id}`,
+        `[UserController->setPrimaryEmail] Could not find user ${userId}`,
         {
           request,
           fail: true,
@@ -1361,7 +1385,7 @@ module.exports = {
     const index = record.emailIndex(email);
     if (index === -1) {
       logger.warn(
-        `[UserController->setPrimaryEmail] Email ${email} does not exist for user ${request.params.id}`,
+        `[UserController->setPrimaryEmail] Email ${email} does not exist for user ${userId}`,
         {
           request,
           fail: true,
@@ -1371,7 +1395,7 @@ module.exports = {
     }
     if (!record.emails[index].validated) {
       logger.warn(
-        `[UserController->setPrimaryEmail] Email ${record.emails[index]} has not been validated for user ${request.params.id}`,
+        `[UserController->setPrimaryEmail] Email ${record.emails[index]} has not been validated for user ${userId}`,
         {
           request,
           fail: true,
@@ -1386,22 +1410,22 @@ module.exports = {
     record.lastModified = new Date();
     await record.save();
     logger.info(
-      `[UserController->setPrimaryEmail] Saved user ${request.params.id} successfully`,
+      `[UserController->setPrimaryEmail] Saved user ${userId} successfully`,
       {
         request,
         user: {
-          id: request.params.id,
+          id: userId,
           email,
         }
       },
     );
     await GSSSyncService.synchronizeUser(record);
     logger.info(
-      `[UserController->setPrimaryEmail] Synchronized user ${request.params.id} with google spreadsheets successfully`,
+      `[UserController->setPrimaryEmail] Synchronized user ${userId} with google spreadsheets successfully`,
       {
         request,
         user: {
-          id: request.params.id,
+          id: userId,
         },
       },
     );
@@ -1533,21 +1557,37 @@ module.exports = {
    *   '404':
    *     description: Requested user not found.
    */
-  async addEmail(request) {
-    const appValidationUrl = request.payload.app_validation_url;
-    const userId = request.params.id;
+  async addEmail(request, internalArgs) {
+    let userId = '';
+    let email = '';
+    let appValidationUrl = '';
 
-    if (!appValidationUrl || !request.payload.email) {
+    if (internalArgs && internalArgs.userId && internalArgs.email && internalArgs.appValidationUrl) {
+      userId = internalArgs.userId;
+      email = internalArgs.email;
+      appValidationUrl = internalArgs.appValidationUrl;
+    } else {
+      userId = request.params.id;
+      email = request.payload.email;
+      appValidationUrl = request.payload.app_validation_url;
+    }
+
+    // Is the payload complete enough to take action?
+    if (!appValidationUrl || !email) {
       logger.warn(
-        '[UserController->addEmail] No email or app_validation_url provided',
+        '[UserController->addEmail] Either email or app_validation_url was not provided',
         {
           request,
           fail: true,
+          user: {
+            id: userId,
+          },
         },
       );
       throw Boom.badRequest('Required parameters not present in payload');
     }
 
+    // Is the verification link pointing to a domain in our allow-list?
     if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
       logger.warn(
         `[UserController->addEmail] app_validation_url ${appValidationUrl} is not in authorizedDomains allowlist`,
@@ -1560,18 +1600,7 @@ module.exports = {
       throw Boom.badRequest('Invalid app_validation_url');
     }
 
-    // Make sure email added is unique
-    const erecord = await User.findOne({ 'emails.email': request.payload.email });
-    if (erecord) {
-      logger.warn(
-        `[UserController->addEmail] Email ${request.payload.email} is not unique`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Email is not unique');
-    }
+    // Does the target user exist?
     const record = await User.findOne({ _id: userId });
     if (!record) {
       logger.warn(
@@ -1583,24 +1612,49 @@ module.exports = {
       );
       throw Boom.notFound();
     }
-    const { email } = request.payload;
+
+    // Make sure the email us unique to the target user's profile. Checking just
+    // the target user first allows us to display better user feedback when the
+    // request comes internally from HID Auth interface.
     if (record.emailIndex(email) !== -1) {
       logger.warn(
-        `[UserController->addEmail] Email ${email} already exists`,
+        `[UserController->addEmail] Email ${email} already belongs to ${userId}.`,
         {
           request,
           fail: true,
+          user: {
+            id: userId,
+            email: record.email,
+          },
         },
       );
       throw Boom.badRequest('Email already exists');
     }
+
+    // Make sure email added is unique to the entire HID system.
+    const erecord = await User.findOne({ 'emails.email': email });
+    if (erecord) {
+      logger.warn(
+        `[UserController->addEmail] Email ${email} is not unique`,
+        {
+          request,
+          fail: true,
+          user: {
+            id: userId,
+            email: record.email,
+          },
+        },
+      );
+      throw Boom.badRequest('Email is not unique');
+    }
+
     if (record.emails.length === 0 && record.is_ghost) {
       // Turn ghost into orphan and set main email address
       record.is_ghost = false;
       record.is_orphan = true;
-      record.email = request.payload.email;
+      record.email = email;
     }
-    const data = { email: request.payload.email, type: request.payload.type, validated: false };
+    const data = { email: email, type: 'Work', validated: false };
     record.emails.push(data);
     record.lastModified = new Date();
     const savedRecord = await record.save();
@@ -1636,8 +1690,10 @@ module.exports = {
       })
     );
     for (let i = 0; i < record.emails.length; i += 1) {
+      // TODO: probably shouldn't send notices to unconfirmed email addresses.
+      // @see HID-2150
       promises.push(
-        EmailService.sendEmailAlert(record, record.emails[i].email, request.payload.email).then(() => {
+        EmailService.sendEmailAlert(record, record.emails[i].email, email).then(() => {
           logger.info(
             `[UserController->addEmail] Successfully sent email alert to ${record.emails[i].email}`,
             {
@@ -1692,10 +1748,18 @@ module.exports = {
    *   '404':
    *     description: Requested user not found.
    */
-  async dropEmail(request) {
-    const { id, email } = request.params;
+  async dropEmail(request, internalArgs) {
+    let userId, email;
 
-    if (!request.params.email) {
+    if (internalArgs && internalArgs.userId && internalArgs.email) {
+      userId = internalArgs.userId;
+      email = internalArgs.email;
+    } else {
+      userId = request.params.id;
+      email = request.params.email;
+    }
+
+    if (!email) {
       logger.warn(
         '[UserController->dropEmail] No email provided',
         {
@@ -1706,10 +1770,10 @@ module.exports = {
       throw Boom.badRequest();
     }
 
-    const record = await User.findOne({ _id: id });
+    const record = await User.findOne({ _id: userId });
     if (!record) {
       logger.warn(
-        `[UserController->dropEmail] User ${id} not found`,
+        `[UserController->dropEmail] User ${userId} not found`,
         {
           request,
           fail: true,
@@ -1719,7 +1783,7 @@ module.exports = {
     }
     if (email === record.email) {
       logger.warn(
-        `[UserController->dropEmail] Primary email for user ${id} can not be removed`,
+        `[UserController->dropEmail] Primary email for user ${userId} can not be removed`,
         {
           request,
           fail: true,
@@ -1747,11 +1811,12 @@ module.exports = {
     await record.save();
 
     logger.info(
-      `[UserController->dropEmail] User ${id} saved successfully`,
+      `[UserController->dropEmail] User ${userId} saved successfully`,
       {
         request,
         user: {
-          id,
+          userId,
+          email: record.email,
         },
       },
     );
@@ -1801,8 +1866,6 @@ module.exports = {
    * security: []
    */
   async validateEmail(request) {
-    // TODO: make sure current user can do this
-
     if (request.payload.hash) {
       const record = await User.findOne({ _id: request.payload.id }).catch((err) => {
         logger.error(
@@ -1828,14 +1891,26 @@ module.exports = {
         );
         throw Boom.notFound();
       }
+
+      // For automatic verified status.
       let domain = null;
+
+      // Assign the primary address as the initial value for `email`
+      //
+      // This is necessary for new account registrations, which won't have the
+      // emailId parameter sent along with their confirmation link since the new
+      // account only has a single primary email address and no secondaries.
       let { email } = record;
+
+      // If we are verifying a secondary email on an existing account, we need
+      // to look up the emailId being confirmed in order to validate the hash.
       if (request.payload.emailId) {
         const emailRecord = record.emails.id(request.payload.emailId);
         if (emailRecord) {
           ({ email } = emailRecord);
         }
       }
+
       // Verify hash
       if (record.validHash(request.payload.hash, 'verify_email', request.payload.time, email) === true) {
         // Verify user email
@@ -2183,24 +2258,9 @@ module.exports = {
       throw Boom.badRequest('Wrong arguments');
     }
 
-    // Business logic: is the new password strong enough?
-    //
-    // v2 and v3 have different requirements so we check the request path before
-    // checking the password strength.
-    const requestIsV3 = request.path.indexOf('api/v3') !== -1;
-    if (requestIsV3 && !User.isStrongPasswordV3(request.payload.password)) {
+    if (!User.isStrongPassword(request.payload.password)) {
       logger.warn(
-        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough (v3)',
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('New password is not strong enough');
-    } else if (!User.isStrongPassword(request.payload.password)) {
-      logger.warn(
-        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough (v2)',
+        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough',
         {
           request,
           security: true,
@@ -2227,7 +2287,10 @@ module.exports = {
       const token = request.headers['x-hid-totp'];
       record = await AuthPolicy.isTOTPValid(record, token);
     }
+
     let domain = null;
+
+    // Check that the reset hash was correct when the user landed on the page.
     if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
       // Check the new password against the old one.
       if (record.validPassword(request.payload.password)) {
@@ -2237,6 +2300,9 @@ module.exports = {
             request,
             security: true,
             fail: true,
+            user: {
+              id: request.payload.id,
+            },
           },
         );
         throw Boom.badRequest('Could not reset password');
@@ -2508,5 +2574,137 @@ module.exports = {
       },
     );
     return user;
+  },
+
+  /*
+   * @api [delete] /user/{id}/clients/{client}
+   * tags:
+   *   - user
+   * summary: Revokes one OAuth Client from a user's profile.
+   * parameters:
+   *   - name: id
+   *     in: path
+   *     description: The user ID
+   *     required: true
+   *     type: string
+   *   - name: client
+   *     in: path
+   *     description: The OAuth Client ID
+   *     required: true
+   *     type: string
+   * responses:
+   *   '200':
+   *     description: OAuth Client revoked successfully. Returns user object.
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '401':
+   *     description: Requesting user lacks permission to view requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
+  async revokeOauthClient(request, internalArgs) {
+    let userId, clientId;
+
+    if (internalArgs && internalArgs.userId && internalArgs.clientId) {
+      userId = internalArgs.userId;
+      clientId = internalArgs.clientId;
+    } else {
+      userId = request.params.id;
+      clientId = request.params.client;
+    }
+
+    // Validate presence of userId param.
+    if (!userId) {
+      logger.warn(
+        '[UserController->revokeOauthClient] No userId provided',
+        {
+          request,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('No userId provided.');
+    }
+
+    // Validate presence of clientId param.
+    if (!clientId) {
+      logger.warn(
+        '[UserController->revokeOauthClient] No clientId provided',
+        {
+          request,
+          fail: true,
+          user: {
+            id: userId,
+          },
+        },
+      );
+      throw Boom.badRequest('No clientId provided.');
+    }
+
+    // Look up user from DB.
+    const user = await User.findOne({ _id: userId });
+
+    // Validate that user was found in DB.
+    if (!user) {
+      logger.warn(
+        `[UserController->revokeOauthClient] No user found with id ${userId}`,
+        {
+          request,
+          fail: true,
+        },
+      );
+      throw Boom.notFound();
+    }
+
+    // Make sure this OAuth Client exists on the user profile.
+    if (!user.authorizedClients.some(client => client._id.toString() === clientId)) {
+      logger.warn(
+        '[UserController->revokeOauthClient] Requested clientId not found on user profile.',
+        {
+          request,
+          fail: true,
+          user: {
+            id: userId,
+            email: user.email,
+          },
+          oauth: {
+            id: clientId,
+          },
+        },
+      );
+      throw Boom.badRequest('Client ID not found on user profile.');
+    }
+
+    // Validation passed, user exists, client exists on user, so let's remove it.
+    try {
+      const remainingClients = user.authorizedClients.filter(client => client._id.toString() !== clientId);
+      user.authorizedClients = remainingClients;
+      await user.save();
+
+      logger.info(
+        `[UserController->revokeOauthClient] Successfully revoked OAuth Client from user.`,
+        {
+          security: true,
+          user: {
+            id: userId,
+            email: user.email,
+          },
+          oauth: {
+            id: clientId,
+          },
+        },
+      );
+
+      return user;
+    } catch (err) {
+      logger.error(
+        `[UserController->revokeOauthClient] ${err.message}`,
+        {
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+
+      throw Boom.internal('Internal server error.');
+    }
   },
 };

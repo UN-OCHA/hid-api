@@ -24,7 +24,7 @@ Sometimes development requires authenticating with various roles or permissions.
 
 ### Downloading DB Snapshots
 
-Snapshots are available at https://snapshots.dev.ahconu.org/hid/ — use your Jenkins user/pass to authenticate. You will need to file an OPS ticket to be added to the HID group before your Jenkins credentials can authenticate you.
+Snapshots are available at https://snapshots.aws.ahconu.org/hid/ — use your Jenkins user/pass to authenticate. You will need to file an OPS ticket to be added to the HID group before your Jenkins credentials can authenticate you.
 
 You will download a set of `.bson` (binary JSON) files. They are used for import/export of MongoDB data. To import the files, place them in the `db` directory of the repository from within your host machine. Make sure you have unzipped them so that the file ends in `.bson` instead of `.gz`. Then log into the MongoDB docker container and run the import script on each individual file:
 
@@ -127,3 +127,14 @@ For v3 we are transitioning away from the global `specs.yml` file and instead us
 ```
 
 For more info please reference the [official example](https://github.com/readmeio/swagger-inline#examples) and the [official documentation](https://swagger.io/docs/specification/about/) for `swagger-inline`
+
+
+## Using `internalArgs` to glue API and Auth together
+
+HID API contains functions to administer all of HID. If you have sufficient permissions, you can do everything via cURL or your favorite HTTP client, including user management, OAuth Client management, and so forth.
+
+HID Auth is the portion which serves some HTML/CSS in order to allow OAuth users to manage their profile and OAuth authorizations. It is designed to be as lightweight and simple as possible, since an average HID session may only last a few seconds (provided they have an active session and are only wanting to autorize a new website).
+
+In order to reduce code duplication, many API functions now have a second argument available to them called `internalArgs` which allows the HID Auth pages to take advantage of those same functions via simple HTML form submissions that get handled server-side, instead of requiring a client-side JS framework to fire all the API calls.
+
+If you see a function that doesn't yet have `internalArgs`, feel free to add it by following the exact same conventions from an existing function.
