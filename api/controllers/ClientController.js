@@ -86,7 +86,7 @@ module.exports = {
    *     in: query
    *     type: integer
    *     required: false
-   *     default: 50
+   *     default: 100
    * responses:
    *   '200':
    *     description: Array of client objects.
@@ -162,6 +162,8 @@ module.exports = {
     }
 
     // Otherwise do a larger query for multiple records.
+    const sort = request.query.sort || 'name';
+    options.sort = sort;
     const results = await HelperService.find(Client, criteria, options);
     const count = results.length;
     const total = await Client.countDocuments(criteria);
