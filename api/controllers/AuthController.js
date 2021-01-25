@@ -554,9 +554,9 @@ module.exports = {
       const clientId = request.query.client_id;
       user.sanitize(user);
       request.auth.credentials = user;
-      const result = await oauth.authorize(request, reply, {}, async (clientID, redirect, done) => {
+      const result = await oauth.authorize(request, reply, {}, async (oauthClientId, redirect, done) => {
         try {
-          const client = await Client.findOne({ id: clientID });
+          const client = await Client.findOne({ id: oauthClientId });
           if (!client || !client.id) {
             logger.warn(
               '[AuthController->authorizeDialogOauth2] Unsuccessful OAuth2 authorization because client was not found',
@@ -568,7 +568,7 @@ module.exports = {
                   id: cookie.userId,
                 },
                 oauth: {
-                  client_id: clientID,
+                  client_id: oauthClientId,
                 },
               },
             );
