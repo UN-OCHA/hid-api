@@ -165,6 +165,8 @@ module.exports = {
     const sort = request.query.sort || 'name';
     options.sort = sort;
     const results = await HelperService.find(Client, criteria, options);
+
+    // Count results and totals for pagination+logging
     const count = results.length;
     const total = await Client.countDocuments(criteria);
 
