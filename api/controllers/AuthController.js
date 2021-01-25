@@ -504,9 +504,12 @@ module.exports = {
           },
         );
 
-        return reply.redirect(`${request.query.redirect_uri}?error=invalid_request&state=${request.query.state
-        }&scope=${request.query.scope
-        }&nonce=${request.query.nonce}`);
+        return reply.redirect(
+          `${request.query.redirect_uri
+          }?error=invalid_request&state=${request.query.state
+          }&scope=${request.query.scope
+          }&nonce=${request.query.nonce
+          }`);
       }
 
       // If the user is not authenticated, redirect to the login page and preserve
@@ -515,9 +518,12 @@ module.exports = {
       if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp) || prompt === 'login') {
         // If user is not logged in and prompt is set to none, throw an error message.
         if (prompt === 'none') {
-          return reply.redirect(`${request.query.redirect_uri}?error=login_required&state=${request.query.state
-          }&scope=${request.query.scope
-          }&nonce=${request.query.nonce}`);
+          return reply.redirect(
+            `${request.query.redirect_uri
+            }?error=login_required&state=${request.query.state
+            }&scope=${request.query.scope
+            }&nonce=${request.query.nonce
+            }`);
         }
         logger.info(
           '[AuthController->authorizeDialogOauth2] Get request to /oauth/authorize without session. Redirecting to the login page.',
@@ -537,7 +543,8 @@ module.exports = {
           }&response_type=${request.query.response_type
           }&state=${request.query.state
           }&scope=${request.query.scope
-          }&nonce=${request.query.nonce}#login`,
+          }&nonce=${request.query.nonce
+          }#login`,
         );
       }
 
@@ -614,9 +621,12 @@ module.exports = {
       // The user has not confirmed authorization, so present the
       // authorization page if prompt != none.
       if (prompt === 'none') {
-        return reply.redirect(`${request.query.redirect_uri}?error=interaction_required&state=${request.query.state
-        }&scope=${request.query.scope
-        }&nonce=${request.query.nonce}`);
+        return reply.redirect(
+          `${request.query.redirect_uri
+          }?error=interaction_required&state=${request.query.state
+          }&scope=${request.query.scope
+          }&nonce=${request.query.nonce
+          }`);
       }
       return reply.view('authorize', {
         user,
@@ -655,12 +665,14 @@ module.exports = {
             },
           },
         );
-        return reply.redirect(`/?redirect=/oauth/authorize&client_id=${request.query.client_id
-        }&redirect_uri=${request.query.redirect_uri
-        }&response_type=${request.query.response_type
-        }&state=${request.query.state
-        }&scope=${request.query.scope
-        }&nonce=${request.query.nonce}#login`);
+        return reply.redirect(
+          `/?redirect=/oauth/authorize&client_id=${request.query.client_id
+          }&redirect_uri=${request.query.redirect_uri
+          }&response_type=${request.query.response_type
+          }&state=${request.query.state
+          }&scope=${request.query.scope
+          }&nonce=${request.query.nonce
+          }#login`);
       }
 
       const user = await User.findOne({ _id: cookie.userId });
