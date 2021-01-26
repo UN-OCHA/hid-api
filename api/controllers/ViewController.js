@@ -95,30 +95,8 @@ module.exports = {
       alert: false,
     };
 
-    // Check client ID and redirect URI at this stage, so we can send an error message if needed.
-    if (request.query.client_id) {
-      try {
-        const client = await Client.findOne({ id: request.query.client_id });
-        if (!client
-          || (client && client.redirectUri !== request.query.redirect_uri
-            && !client.redirectUrls.includes(request.query.redirect_uri))) {
-          loginArgs.alert = {
-            type: 'error',
-            message: 'The configuration of the client application is invalid. We can not log you in.',
-          };
-          return reply.view('login', loginArgs);
-        }
-        return reply.view('login', loginArgs);
-      } catch (err) {
-        loginArgs.alert = {
-          type: 'error',
-          message: 'Internal server error. We can not log you in. Please let us know at info@humanitarian.id',
-        };
-        return reply.view('login', loginArgs);
-      }
-    } else {
-      return reply.view('login', loginArgs);
-    }
+    // Display login page.
+    return reply.view('login', loginArgs);
   },
 
   async logout(request, reply) {
