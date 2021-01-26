@@ -53,11 +53,16 @@ module.exports = {
   async login(request, reply) {
     const cookie = request.yar.get('session');
 
-    if (cookie && cookie.userId && cookie.totp === true) { // User is already logged in
-      if (request.query.client_id
+    // User is already logged in.
+    if (cookie && cookie.userId && cookie.totp === true) {
+      // Check that all required params for OAuth seem intact. If we find all of
+      // these params, assume the user is logging into another website with HID.
+      if (
+        request.query.client_id
         && request.query.redirect_uri
         && request.query.response_type
-        && request.query.scope) {
+        && request.query.scope
+      ) {
         // Redirect to /oauth/authorize
         let redirect = request.query.redirect || '/oauth/authorize';
         redirect += `?client_id=${request.query.client_id}`;
@@ -70,10 +75,13 @@ module.exports = {
 
         return reply.redirect(redirect);
       }
-      // User is already logged in
+
+      // It seems like the user navigated to HID themselves and is just logging
+      // in by their own choice. Show user dashboard.
       return reply.redirect('/user');
     }
 
+    // User is logged in, but TOTP challenge is not answered yet.
     if (cookie && cookie.userId && cookie.totp === false) {
       // Show TOTP form
       return reply.view('totp', {
