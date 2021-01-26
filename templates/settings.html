@@ -29,7 +29,7 @@
             <% if (user.authorizedClients.length === 0) { %>
               <p><em>You haven't authorized any websites yet. After you log in with HID on one of our <a href="https://about.humanitarian.id/partners-using-our-authentication-service.html" target="_blank" rel="noopener">Partner Sites</a> you will see it listed here.</em></p>
             <% } else { %>
-              <p>You have <strong><%= user.authorizedClients.length %> websites</strong> that have been granted access to your profile.</p>
+              <p>You have granted <strong><%= user.authorizedClients.length %> website<%= user.authorizedClients.length === 1 ? '' : 's' %></strong> access to your profile.</p>
               <ul class="oauth-clients-list [ flow ]">
               <%
                 const sorted = user.authorizedClients.sort((a, b) => a.name.localeCompare(b.name));
