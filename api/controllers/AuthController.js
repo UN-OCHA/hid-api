@@ -550,13 +550,18 @@ module.exports = {
 
       // If the user is authenticated, then check whether the user has confirmed
       // authorization for this client/scope combination.
+      const options = {};
       const user = await User.findOne({ _id: cookie.userId }).populate({ path: 'authorizedClients', select: 'id name' });
       const clientId = request.query.client_id;
       user.sanitize(user);
       request.auth.credentials = user;
-      const options = {};
-      const result = await oauth.authorize(request, reply, options, async (oauthClientId, redirect, done) => {
+
+      // Validate the OAuth Authorization request. If any parameters are missing
+      // or invalid, it will throw an error internally, but will show a generic
+      // message about configuration to the user.
+      const [req, res] = await oauth.authorize(request, reply, options, async (oauthClientId, redirect, done) => {
         try {
+          // Verify OAuth Client ID.
           const client = await Client.findOne({ id: oauthClientId });
           if (!client || !client.id) {
             logger.warn(
@@ -573,11 +578,11 @@ module.exports = {
                 },
               },
             );
-            return done(
-              'An error occurred while processing the request. Please try logging in again.',
-            );
+
+            throw Error(`Client ID does not exist: ${oauthClientId}`);
           }
-          // Verify redirect uri
+
+          // Verify redirect_uri
           if (client.redirectUri !== redirect && !client.redirectUrls.includes(redirect)) {
             logger.warn(
               '[AuthController->authorizeDialogOauth2] Unsuccessful OAuth2 authorization due to wrong redirect URI',
@@ -594,33 +599,53 @@ module.exports = {
                 },
               },
             );
-            return done('Wrong redirect URI');
+            throw Error(`Wrong redirect URI: ${redirect}`);
           }
+          // The request passed validation. Proceed.
           return done(null, client, redirect);
         } catch (err) {
-          logger.error(
-            `[AuthController->authorizeDialogOauth2] ${err.message}`,
-            {
-              request,
-              security: true,
-              fail: true,
-              user: {
-                id: cookie.userId,
+          // Check the error object and potentially log the error if it does NOT
+          // contain one of the validation problems we already logged. We log
+          // validation problems before throwing in order to provide contextual
+          // metadata in the logs, so that known problems can be more easily
+          // found in Kibana.
+          //
+          // If we didn't find any known problems, we should log the error. This
+          // conditional needs to have one test for each Error() in the preceding
+          // try() block.
+          if (
+            err.message
+            && err.message.indexOf('Client ID does not exist') === -1
+            && err.message.indexOf('Wrong redirect URI') === -1
+          ) {
+            logger.error(
+              `[AuthController->authorizeDialogOauth2] ${err.message}`,
+              {
+                request,
+                security: true,
+                fail: true,
+                user: {
+                  id: cookie.userId,
+                },
+                stack_trace: err.stack,
               },
-              stack_trace: err.stack,
-            },
-          );
-          return done('An error occurred while processing the request. Please try logging in again.');
+            );
+          }
+
+          // Finish the OAuth validation process.
+          return done('catch()');
         }
       });
-      const req = result[0];
+
+      // If we made it this far, the OAuth config seems legit. Check user data
+      // to see if they already have this client in their approved list.
       if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
         request.payload = { transaction_id: req.oauth2.transactionID };
         const response = await oauth.decision(request, reply);
         return response;
       }
-      // The user has not confirmed authorization, so present the
-      // authorization page if prompt != none.
+
+      // If prompt === none, redirect immediately.
       if (prompt === 'none') {
         return reply.redirect(
           `${request.query.redirect_uri
@@ -629,6 +654,9 @@ module.exports = {
           }&nonce=${request.query.nonce
           }`);
       }
+
+      // The user has not confirmed authorization, so display the authorization
+      // dialog to the user and let them decide to approve/deny.
       return reply.view('authorize', {
         user,
         client: req.oauth2.client,
@@ -636,16 +664,21 @@ module.exports = {
         // csrf: req.csrfToken()
       });
     } catch (err) {
-      logger.error(
-        `[AuthController->authorizeDialogOauth2] ${err.message}`,
-        {
-          request,
-          security: true,
-          fail: true,
-          stack_trace: err.stack,
+      // Display a human-friendly error.
+      //
+      // We're not doing additional logging in this block because we logged the
+      // errors as they were caught in the code above.
+      return reply.view('message', {
+        title: 'Configuration problem on original website',
+        alert: {
+          type: 'error',
+          message: `
+            <p>The website which sent you to HID appears to have invalid configuration.</p>
+            <p>We have logged the problem internally.</p>
+          `,
         },
-      );
-      return err;
+        isSuccess: false,
+      });
     }
   },
 
