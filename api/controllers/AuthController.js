@@ -554,7 +554,8 @@ module.exports = {
       const clientId = request.query.client_id;
       user.sanitize(user);
       request.auth.credentials = user;
-      const result = await oauth.authorize(request, reply, {}, async (oauthClientId, redirect, done) => {
+      const options = {};
+      const result = await oauth.authorize(request, reply, options, async (oauthClientId, redirect, done) => {
         try {
           const client = await Client.findOne({ id: oauthClientId });
           if (!client || !client.id) {
