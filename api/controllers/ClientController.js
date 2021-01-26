@@ -86,7 +86,7 @@ module.exports = {
    *     in: query
    *     type: integer
    *     required: false
-   *     default: 50
+   *     default: 100
    * responses:
    *   '200':
    *     description: Array of client objects.
@@ -133,23 +133,57 @@ module.exports = {
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
 
-    if (request.params.id) {
-      criteria._id = request.params.id;
+    // Log who is doing this.
+    const user = request.auth.credentials;
+
+    // If we have a specific Client ID, try to look it up.
+    const clientId = request.params.id || null;
+    if (clientId) {
+      criteria._id = clientId;
       const result = await Client.findOne(criteria);
       if (!result) {
         logger.warn(
           '[ClientController->find] Could not find client',
           {
-            request,
+            security: true,
+            user: {
+              id: user.id,
+              email: user.email,
+              admin: user.is_admin,
+            },
+            oauth: {
+              id: clientId,
+            },
           },
         );
         throw Boom.notFound();
       }
       return result;
     }
+
+    // Otherwise do a larger query for multiple records.
+    const sort = request.query.sort || 'name';
+    options.sort = sort;
     const results = await HelperService.find(Client, criteria, options);
-    const number = await Client.countDocuments(criteria);
-    return reply.response(results).header('X-Total-Count', number);
+
+    // Count results and totals for pagination+logging
+    const count = results.length;
+    const total = await Client.countDocuments(criteria);
+
+    logger.info(
+      `[ClientController->find] Admin viewed a list of OAuth Clients containing ${count} records`,
+      {
+        security: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          admin: user.is_admin,
+        },
+      }
+    );
+
+    // Send response.
+    return reply.response(results).header('X-Total-Count', total);
   },
 
   /*
