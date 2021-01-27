@@ -129,15 +129,24 @@ module.exports = {
    *   '404':
    *     description: Requested client not found.
    */
-  async find(request, reply) {
-    const options = HelperService.getOptionsFromQuery(request.query);
-    const criteria = HelperService.getCriteriaFromQuery(request.query);
+  async find(request, reply, internalArgs) {
+    let user, options, criteria, clientId, sort;
 
-    // Log who is doing this.
-    const user = request.auth.credentials;
+    if (internalArgs && internalArgs.user) {
+      user = internalArgs.user;
+      options = HelperService.getOptionsFromQuery(internalArgs.options || {});
+      criteria = HelperService.getCriteriaFromQuery(internalArgs.criteria || {});
+      clientId = internalArgs.id || null;
+      sort = internalArgs.sort || 'name';
+    } else {
+      user = request.auth.credentials;
+      options = HelperService.getOptionsFromQuery(request.query);
+      criteria = HelperService.getCriteriaFromQuery(request.query);
+      clientId = request.params.id || null;
+      sort = request.query.sort || 'name';
+    }
 
     // If we have a specific Client ID, try to look it up.
-    const clientId = request.params.id || null;
     if (clientId) {
       criteria._id = clientId;
       const result = await Client.findOne(criteria);
@@ -162,7 +171,6 @@ module.exports = {
     }
 
     // Otherwise do a larger query for multiple records.
-    const sort = request.query.sort || 'name';
     options.sort = sort;
     const results = await HelperService.find(Client, criteria, options);
 
