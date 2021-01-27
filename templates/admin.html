@@ -13,12 +13,19 @@
         </li>
       </nav>
 
-      <section id="section-oauth-clients" class="[ flow ] oac-admin">
+      <section id="section-oauth-clients" class="oac-admin [ flow ]">
         <h2>Showing all OAuth clients</h2>
+
         <p>There are a total of <strong><%= clients.length %> OAuth clients</strong>.</p>
+        <div class="form-field oac-admin__search-section">
+          <input type="text" id="client-search" class="oac-admin__search" placeholder="Search the list">
+          <button type="reset" id="client-search-clear" class="cd-button cd-button--bold cd-button--uppercase">Clear</button>
+        </div>
+
         <ul class="oac-admin__list [ flow ]">
           <% clients.forEach(client => { %>
-            <li class="oac-admin__client client">
+            <% const searchData = `${client.name} ${client.id} ${client.redirectUri || ''} ${client.description || ''}`; %>
+            <li class="oac-admin__client client" data-search="<%= searchData %>">
               <a href="/admin/client/<%= client._id %>" class="cd-button cd-button--uppercase cd-button--small">Edit</a>
               <span class="client__name"><%= client.name %></span>
             </li>
@@ -32,3 +39,4 @@
 <% include footer %>
 
 <script><% include ../assets/js/tabs.js %></script>
+<script><% include ../assets/js/admin.js %></script>

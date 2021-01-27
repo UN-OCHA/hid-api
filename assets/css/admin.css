@@ -7,3 +7,24 @@
   margin: 0;
   padding: 0;
 }
+
+/**
+ * client-side OAuth Client filtering
+ */
+.oac-admin__search-section {
+  display: flex;
+  flex-flow: row nowrap;
+  margin-bottom: 2rem;
+}
+#client-search {
+  flex: 0 0 50ch;
+}
+#client-search-clear {
+  flex: 0 1 140px;
+  margin-left: 1rem;
+}
+
+/* powered by admin.js */
+.client--hidden {
+  display: none;
+}
