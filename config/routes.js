@@ -262,6 +262,20 @@ module.exports = [
       auth: false,
     },
   },
+  {
+    method: 'GET',
+    path: '/admin/client/{id}',
+    handler: AdminController.adminOauthClientEdit,
+    options: {
+      auth: false,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+
 
   {
     method: 'GET',

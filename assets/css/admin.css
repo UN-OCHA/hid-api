@@ -2,3 +2,8 @@
  * Admin: Manage OAuth clients
  */
 .oac-admin {}
+.oac-admin__list {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}

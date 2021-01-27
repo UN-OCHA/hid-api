@@ -14,6 +14,9 @@ const { logger } = config;
 
 module.exports = {
 
+  /**
+   * Admin: OAuth Client list
+   */
   async adminOauthClients(request, reply) {
     // Load user cookie. Redirect to homepage when no cookie found.
     const cookie = request.yar.get('session');
@@ -86,5 +89,71 @@ module.exports = {
       alert,
       clients,
     });
-  }
+  },
+
+
+  /**
+   * Admin: OAuth Client edit form
+   */
+  async adminOauthClientEdit(request, reply) {
+    // Load user cookie. Redirect to homepage when no cookie found.
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // Load current user from DB. We do this now in order to log user metadata,
+    // and also so that the error page can still display the logged-in state of
+    // the non-admin users.
+    const user = await User.findOne({ _id: cookie.userId });
+
+    // Check user authentication and admin permissions.
+    try {
+      AuthPolicy.isLoggedInAsAdmin(user);
+    } catch (err) {
+      logger.error(
+        '[AdminController->adminOauthClients] Non-admin attempted to access admin area',
+        {
+          security: true,
+          fail: true,
+          user: {
+            id: cookie.userId,
+            email: user.email,
+          },
+        },
+      );
+
+      // Display permission error to user.
+      return reply.view('message', {
+        user,
+        title: 'Access forbidden',
+        alert: {
+          type: 'error',
+          message: err.message,
+        },
+      }).code(403);
+    }
+
+    // Lookup the client we are about to edit.
+    let clientResponse, client, alert;
+    if (request.params && request.params.id) {
+      client = await ClientController.find(request, reply, {
+        user,
+        id: request.params.id,
+      }).catch(err => {
+        client = {};
+        alert = {
+          type: 'error',
+          message: '<p>The OAuth client could not be found.</p>',
+        };
+      });
+    }
+
+    // Display page to user.
+    return reply.view('admin-client', {
+      user,
+      alert,
+      client,
+    });
+  },
 };
