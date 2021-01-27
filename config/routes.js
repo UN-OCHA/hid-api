@@ -32,6 +32,7 @@ const TOTPController = require('../api/controllers/TOTPController');
 const UserController = require('../api/controllers/UserController');
 const UserPolicy = require('../api/policies/UserPolicy');
 const AuthController = require('../api/controllers/AuthController');
+const AdminController = require('../api/controllers/AdminController');
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 const childAttributes = [
@@ -248,6 +249,15 @@ module.exports = [
     method: 'POST',
     path: '/settings/delete',
     handler: ViewController.settingsDeleteSubmit,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'GET',
+    path: '/admin',
+    handler: AdminController.adminOauthClients,
     options: {
       auth: false,
     },

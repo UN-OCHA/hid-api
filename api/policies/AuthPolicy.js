@@ -143,4 +143,18 @@ module.exports = {
     return true;
   },
 
+  /**
+   * When a user is logged into HID Auth, check their permissions for admin.
+   *
+   * Since this permission is for HID Auth and not the API, we check the cookie
+   * instead of looking for request.auth.credentials
+   */
+  isLoggedInAsAdmin(user) {
+    // Must be logged in and marked as admin.
+    if (user && user.is_admin) {
+      return true;
+    }
+
+    throw Boom.forbidden('You do not have sufficient permissions');
+  },
 };

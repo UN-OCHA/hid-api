@@ -1,0 +1,26 @@
+<% include header %>
+<style><% include ../assets/css/tabs.css %></style>
+<style><% include ../assets/css/admin.css %></style>
+
+<main role="main" id="main-content" class="cd-container">
+  <div class="cd-layout-content">
+    <h1 class="page-header__heading">Administration Area</h1>
+    <% include alert.html %>
+    <div class="tabbed">
+      <nav>
+        <li>
+          <a href="/admin" aria-selected="true">Manage OAuth Clients</a>
+        </li>
+      </nav>
+
+      <section id="section-oauth-clients" class="[ flow ] oac-admin">
+        <h2>Showing all OAuth clients</h2>
+        <p><em>List TBD</em></p>
+      </section>
+    </div>
+  </div>
+</main>
+
+<% include footer %>
+
+<script><% include ../assets/js/tabs.js %></script>

@@ -1,15 +1,15 @@
 <% include header %>
-<div class="api-page">
-  <main role="main" id="main-content" class="cd-container">
-    <div class="cd-layout-content">
-      <div class="[ flow ]">
-        <h1 class="page-header__heading"><%= title %></h1>
-        <% include alert.html %>
-        <% if (isSuccess) { %>
-          <p class="form-field">Now you can login on <a href="https://auth.humanitarian.id">Humanitarian ID</a> or one of our <a href="https://about.humanitarian.id/partners-using-our-authentication-service" target="_blank">partner websites</a>.</p>
-        <% } %>
-      </div>
+
+<main role="main" id="main-content" class="cd-container">
+  <div class="cd-layout-content">
+    <div class="[ flow ]">
+      <h1 class="page-header__heading"><%= title || '[no title supplied]' %></h1>
+      <% include alert.html %>
+      <% if (typeof isSuccess !== 'undefined') { %>
+        <p>Now you can login on <a href="https://auth.humanitarian.id">Humanitarian ID</a> or one of our <a href="https://about.humanitarian.id/partners-using-our-authentication-service" target="_blank">partner websites</a>.</p>
+      <% } %>
     </div>
-  </main>
-</div>
+  </div>
+</main>
+
 <% include footer %>
