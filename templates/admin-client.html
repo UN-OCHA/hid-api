@@ -4,57 +4,69 @@
 
 <main role="main" id="main-content" class="cd-container">
   <div class="cd-layout-content">
+    <h1 class="page-header__heading">Administration Area</h1>
     <% include alert.html %>
+    <div class="tabbed">
+      <nav>
+        <li>
+          <a href="/admin" aria-selected="true">Manage OAuth Clients</a>
+        </li>
+      </nav>
 
-    <% if (client && client.name && client.id && client.secret) { %>
-    <form class="oac-client-edit [ flow ]">
-      <h1>Editing client: <%= client.name %></h1>
+      <section id="section-edit-client">
+      <% if (client && client.name && client.id && client.secret) { %>
+        <form class="oac-client-edit [ flow ]">
+          <h2>Editing client: <%= client.name %></h2>
 
-      <div class="form-field">
-        <label for="client_name">Name</label>
-        <input type="text" id="client_name" name="client_name" value="<%= client.name %>">
-        <p>This is a human-friendly label that HID users will see when authorizing a website.</p>
-      </div>
-      <div class="form-field">
-        <label for="client_id">Client ID</label>
-        <input type="text" id="client_id" name="client_id" value="<%= client.id %>" required>
-        <p>The Client ID is sent with every OAuth request as <code>client_id</code>. It must be unique within the DB.</p>
-      </div>
-      <div class="form-field">
-        <label for="client_secret">Client secret</label>
-        <input type="text" id="client_secret" name="client_secret" value="<%= client.secret %>" required>
-        <p>This is used during the "Extra Secure" flow as an authorization header. Consider this a password: it should be strong, unique, and lengthy.</p>
-      </div>
-      <div class="form-field">
-        <label for="client_redirect_uri">Redirect URI</label>
-        <input type="url" id="client_redirect_uri" name="client_redirect_uri" value="<%= client.redirectUri %>" required>
-        <p>Where should HID redirect to once the client is authorized by an individual user? This is sent with every OAuth request as <code>redirect_uri</code>.</p>
-      </div>
-      <div class="form-field">
-        <label for="client_redirect_urls">Alternate redirect URLs</label>
-        <textarea id="client_redirect_urls" name="client_redirect_urls"><%= client.redirectUrls.join('\n') %></textarea>
-        <p>A collection of alternate URLs that can be used as a redirect.<br> Enter one per line.</p>
-      </div>
-      <div class="form-field">
-        <label for="client_description">Description</label>
-        <textarea id="client_description" name="client_description"><%= client.description %></textarea>
-        <p>Internal-facing notes. Only you or other admins can see this field.</p>
-      </div>
+          <div class="form-field">
+            <label for="client_name">Name</label>
+            <input type="text" id="client_name" name="client_name" value="<%= client.name %>">
+            <p>This is a human-friendly label that HID users will see when authorizing a website.</p>
+          </div>
+          <div class="form-field">
+            <label for="client_id">Client ID</label>
+            <input type="text" id="client_id" name="client_id" value="<%= client.id %>" required>
+            <p>The Client ID is sent with every OAuth request as <code>client_id</code>. It must be unique within the DB.</p>
+          </div>
+          <div class="form-field">
+            <label for="client_secret">Client secret</label>
+            <input type="text" id="client_secret" name="client_secret" value="<%= client.secret %>" required>
+            <p>This is used during the "Extra Secure" flow as an authorization header. Consider this a password: it should be strong, unique, and lengthy.</p>
+          </div>
+          <div class="form-field">
+            <label for="client_redirect_uri">Redirect URI</label>
+            <input type="url" id="client_redirect_uri" name="client_redirect_uri" value="<%= client.redirectUri %>" required>
+            <p>Where should HID redirect to once the client is authorized by an individual user? This is sent with every OAuth request as <code>redirect_uri</code>.</p>
+          </div>
+          <div class="form-field">
+            <label for="client_redirect_urls">Alternate redirect URLs</label>
+            <textarea id="client_redirect_urls" name="client_redirect_urls" rows="5"><%= client.redirectUrls.join('\n') %></textarea>
+            <p>A collection of alternate URLs that can be used as a redirect.<br> Enter one per line.</p>
+          </div>
+          <div class="form-field">
+            <label for="client_description">Description</label>
+            <textarea id="client_description" name="client_description" rows="5"><%= client.description %></textarea>
+            <p>Internal-facing notes. Only you or other admins can see this field.</p>
+          </div>
 
-      <div class="form-actions">
-        <button type="submit" class="oac-admin-edit__submit cd-button cd-button--bold cd-button--uppercase">
-          Save client configuration
-        </button>
-        <button type="reset" class="oac-admin-edit__reset cd-button cd-button--outline cd-button--uppercase">
-          Reset form data
-        </button>
-        <a href="/admin" class="oac-admin-edit__cancel cd-button cd-button--outline cd-button--uppercase">
-          Cancel
-        </a>
-      </div>
-    </form>
-    <% } %>
+          <div class="form-actions">
+            <button type="submit" class="oac-admin-edit__submit cd-button cd-button--bold cd-button--uppercase">
+              Save client configuration
+            </button>
+            <button type="reset" class="oac-admin-edit__reset cd-button cd-button--outline cd-button--uppercase">
+              Reset form data
+            </button>
+            <a href="/admin" class="oac-admin-edit__cancel cd-button cd-button--outline cd-button--uppercase">
+              Cancel
+            </a>
+          </div>
+        </form>
+      <% } %>
+      </section>
+    </div>
   </div>
 </main>
 
 <% include footer %>
+
+<script><% include ../assets/js/tabs.js %></script>
