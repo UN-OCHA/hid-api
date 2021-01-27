@@ -360,12 +360,20 @@ module.exports = {
   },
 
   /**
-   * Create a session and redirect to /oauth/authorize
+   * POST Handler for login form submissions.
+   *
+   * Create a user session, and potentially redirect when the user arrived from
+   * another website.
    */
   async login(request, reply) {
+    // Grab cookie
     const cookie = request.yar.get('session');
+
+    // It looks like TOTP is needed for this user.
     if (cookie && cookie.userId && cookie.totp === false) {
       try {
+        // Prevent form spamming by counting submissions and locking accounts
+        // which fail to login repeatedly in a short time window.
         const now = Date.now();
         const offset = 5 * 60 * 1000;
         const d5minutes = new Date(now - offset);
@@ -387,6 +395,8 @@ module.exports = {
           );
           throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
         }
+
+        // Check for TOTP codes
         const token = request.payload['x-hid-totp'];
         try {
           await AuthPolicy.isTOTPValid(user, token);
@@ -398,8 +408,12 @@ module.exports = {
           }
           throw err;
         }
+
+        // If we got here, the user passed TOTP.
         cookie.totp = true;
         request.yar.set('session', cookie);
+
+        // If save device was checked, avoid TOTP prompts for 30 days.
         if (request.payload['x-hid-totp-trust']) {
           await HelperService.saveTOTPDevice(request, user);
           const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
@@ -412,12 +426,21 @@ module.exports = {
             },
           });
         }
+
+        // Redirect.
+        //
+        // - For plain logins, this will go to user dashboard.
+        // - For OAuth flows, this will either redirect to the Authorize prompt
+        //   or it will directly send them back to the original site.
         return loginRedirect(request, reply);
       } catch (err) {
+        // User needs TOTP and header wasn't present. Show TOTP prompt.
         const alert = {
           type: 'error',
           message: err.output.payload.message,
         };
+
+        // Display form to user.
         return reply.view('totp', {
           title: 'Enter your Authentication code',
           query: request.payload,
@@ -426,9 +449,12 @@ module.exports = {
         });
       }
     }
+
+    // If the user has submitted the TOTP prompt, redirect.
     if (cookie && cookie.userId && cookie.totp === true) {
       return loginRedirect(request, reply);
     }
+
     try {
       const result = await loginHelper(request);
       if (!result.totp) {
