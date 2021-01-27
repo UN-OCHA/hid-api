@@ -15,7 +15,12 @@
 
       <section id="section-oauth-clients" class="[ flow ] oac-admin">
         <h2>Showing all OAuth clients</h2>
-        <p><em>List TBD</em></p>
+        <p>There are a total of <strong><%= clients.length %> OAuth clients</strong>.</p>
+        <ul class="oac-admin__list">
+          <% clients.forEach(client => { %>
+            <li><%= client.name %></li>
+          <% }); %>
+        </ul>
       </section>
     </div>
   </div>

@@ -4,6 +4,7 @@ const Client = require('../models/Client');
 const User = require('../models/User');
 const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
+const ClientController = require('./ClientController');
 const TOTPController = require('./TOTPController');
 const UserController = require('./UserController');
 const AuthPolicy = require('../policies/AuthPolicy');
@@ -52,9 +53,31 @@ module.exports = {
       }).code(403);
     }
 
-    // User is authenticated as an admin.
+    // User is authenticated as an admin. Proceed to build page.
+    let options = {
+      limit: 10000,
+    };
+    let criteria = {};
+    let clientResponse = await ClientController.find(request, reply, {
+      user,
+      options,
+      criteria,
+    });
+    let clients = clientResponse.source;
+
+    // Check for user feedback to display.
+    let alert;
+    if (cookie.alert) {
+      alert = cookie.alert;
+      delete(cookie.alert);
+      request.yar.set('session', cookie);
+    }
+
+    // Display page to user.
     return reply.view('admin', {
       user,
+      alert,
+      clients,
     });
   }
 };
