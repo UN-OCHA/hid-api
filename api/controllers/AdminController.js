@@ -63,7 +63,14 @@ module.exports = {
       options,
       criteria,
     });
+
+    // Extract clients and sort alphabetically with case-insensitivity
     let clients = clientResponse.source;
+    clients.sort(function (a, b) {
+      return a.name.localeCompare(b.name, {
+        'sensitivity': 'base',
+      });
+    });
 
     // Check for user feedback to display.
     let alert;
