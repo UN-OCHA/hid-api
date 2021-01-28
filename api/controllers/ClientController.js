@@ -149,10 +149,9 @@ module.exports = {
     // If we have a specific Client ID, try to look it up.
     if (clientId) {
       criteria._id = clientId;
-      const result = await Client.findOne(criteria);
-      if (!result) {
-        logger.warn(
-          '[ClientController->find] Could not find client',
+      const result = await Client.findOne(criteria).then(client => {
+        logger.info(
+          `[ClientController->find] Admin viewed a single OAuth Client with ID ${client._id}`,
           {
             security: true,
             user: {
@@ -161,12 +160,29 @@ module.exports = {
               admin: user.is_admin,
             },
             oauth: {
-              id: clientId,
+              client_id: client.id,
+            },
+          }
+        );
+
+        return client;
+      });
+
+      if (!result) {
+        logger.warn(
+          `[ClientController->find] Could not find client with ID ${clientId}`,
+          {
+            security: true,
+            user: {
+              id: user.id,
+              email: user.email,
+              admin: user.is_admin,
             },
           },
         );
         throw Boom.notFound();
       }
+
       return result;
     }
 
