@@ -244,19 +244,30 @@ module.exports = {
    *   '404':
    *     description: Requested client not found.
    */
-  async update(request) {
+  async update(request, internalArgs) {
+    let clientId, clientData;
+
+    if (internalArgs && internalArgs.clientId && internalArgs.clientData) {
+      clientId = internalArgs.clientId;
+      clientData = internalArgs.clientData;
+    } else {
+      clientId = request.params.id;
+      clientData = request.payload;
+    }
+
     // @TODO: Make this return 400 with validation feedback like POST.
     //
     // @see HID-2080
     const client = await Client.findOneAndUpdate(
-      { _id: request.params.id },
-      request.payload,
+      { _id: clientId },
+      clientData,
       { runValidators: true, new: true },
     );
 
     logger.info(
       '[ClientController->update] Updated client',
       {
+        security: true,
         request,
       },
     );
