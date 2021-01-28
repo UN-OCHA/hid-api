@@ -1,8 +1,9 @@
+const crypto = require('crypto');
 const Boom = require('@hapi/boom');
-const Recaptcha = require('recaptcha2');
+const Joi = require('@hapi/joi');
+
 const Client = require('../models/Client');
 const User = require('../models/User');
-const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
 const ClientController = require('./ClientController');
 const TOTPController = require('./TOTPController');
@@ -11,6 +12,25 @@ const AuthPolicy = require('../policies/AuthPolicy');
 const config = require('../../config/env')[process.env.NODE_ENV];
 
 const { logger } = config;
+
+/**
+ * Copied from route.js
+ *
+ * TODO: consolidate validation rules to be accessible in all parts of app.
+ */
+const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+
+/**
+ * Hash the MongoDB ObjectId to confirm it wasn't tampered with during form
+ * submissions. By including a secret environment variable, this hash can't be
+ * easily reproduced.
+ */
+function formHashContents(mongoId) {
+  const hash = crypto.createHash('sha256');
+  hash.update(`id:${mongoId},${process.env.COOKIE_PASSWORD}`);
+
+  return hash.digest('hex');
+}
 
 module.exports = {
 
@@ -135,11 +155,20 @@ module.exports = {
     }
 
     // Lookup the client we are about to edit.
-    let client, alert;
-    if (request.params && request.params.id) {
-      client = await ClientController.find(request, reply, {
+    let alert;
+    let client;
+    let formHash = '';
+    if (request.params && request.params.id && objectIdRegex.test(request.params.id)) {
+      await ClientController.find(request, reply, {
         user,
         id: request.params.id,
+      }).then(data => {
+        // Pass client data along.
+        client = data;
+        // Assemble form identifiers that we'll hash. Form submission handler
+        // will verify this hash before writing to DB, to ensure there's no
+        // way to edit a different client from this form.
+        formHash = formHashContents(client._id);
       }).catch(err => {
         client = {};
         alert = {
@@ -147,6 +176,12 @@ module.exports = {
           message: '<p>The OAuth client could not be found.</p>',
         };
       });
+    } else {
+      client = {};
+      alert = {
+        type: 'warning',
+        message: '<p>The OAuth Client id in the URL seems malformed</p>',
+      };
     }
 
     // Display page to user.
@@ -154,6 +189,56 @@ module.exports = {
       user,
       alert,
       client,
+      formHash,
     });
+  },
+
+  /**
+   * Admin: OAuth Client form submission handler
+   */
+  async adminOauthClientEditSubmit(request, reply) {
+    // Load user cookie. Redirect to homepage when no cookie found.
+    const cookie = request.yar.get('session');
+    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      return reply.redirect('/');
+    }
+
+    // Set up our validation.
+    let alert = {};
+    let reasons = [];
+    let destination = '/admin';
+
+    try {
+      // First, validate form integrity
+      if (request.payload && request.payload.db_id && request.payload.client_id && request.payload.form_hash) {
+        const submissionHash = formHashContents(request.payload.db_id);
+        if (request.payload.form_hash !== submissionHash) {
+          alert.type = 'error';
+          reasons.push(`The form was tampered with. Rejecting your edits to OAuth Client <strong>${ request.payload.client_name }</strong>.`);
+        }
+      }
+
+      // Now validate the rest of the input...
+
+      // Do we have validation problems?
+      if (reasons.length > 0) {
+        alert.type = alert.type === 'error' ? 'error' : 'warning';
+        alert.message = `<p>${ reasons.join('</p><p>') }</p>`;
+      } else {
+        // Write to DB.
+        // Display success to admin.
+        alert.type = 'status';
+        alert.message = `<p>OAuth Client <strong>${ request.payload.client_name }</strong> was updated successfully.</p>`;
+      }
+    } catch (err) {
+      console.log('🔥', err);
+    }
+
+    // Finalize cookie (feedback, TOTP status, etc.)
+    cookie.alert = alert;
+    request.yar.set('session', cookie);
+
+    // Always redirect, to avoid resubmitting when user refreshes browser.
+    return reply.redirect(destination);
   },
 };

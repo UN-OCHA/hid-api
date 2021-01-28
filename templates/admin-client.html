@@ -15,7 +15,7 @@
 
       <section id="section-edit-client">
       <% if (client && client.name && client.id && client.secret) { %>
-        <form class="oac-client-edit [ flow ]">
+        <form action="/admin/client" method="POST" class="oac-client-edit [ flow ]">
           <h2>Editing client: <%= client.name %></h2>
 
           <div class="form-field">
@@ -50,6 +50,9 @@
           </div>
 
           <div class="form-actions">
+            <input type="hidden" name="db_id" value="<%= client._id %>">
+            <input type="hidden" name="form_hash" value="<%= formHash %>">
+
             <button type="submit" class="oac-admin-edit__submit cd-button cd-button--bold cd-button--uppercase">
               Save client configuration
             </button>
