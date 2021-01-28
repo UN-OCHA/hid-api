@@ -14,13 +14,13 @@
       </nav>
 
       <section id="section-edit-client">
-      <% if (client && client.name && client.id && client.secret) { %>
+      <% if (client) { %>
         <form action="/admin/client" method="POST" class="oac-client-edit [ flow ]">
           <h2>Editing client: <%= client.name %></h2>
 
           <div class="form-field">
             <label for="client_name">Name</label>
-            <input type="text" id="client_name" name="client_name" value="<%= client.name %>">
+            <input type="text" id="client_name" name="client_name" value="<%= client.name %>" required>
             <p>This is a human-friendly label that HID users will see when authorizing a website.</p>
           </div>
           <div class="form-field">

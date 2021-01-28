@@ -165,6 +165,7 @@ module.exports = {
       }).then(data => {
         // Pass client data along.
         client = data;
+
         // Assemble form identifiers that we'll hash. Form submission handler
         // will verify this hash before writing to DB, to ensure there's no
         // way to edit a different client from this form.
@@ -182,6 +183,14 @@ module.exports = {
         type: 'warning',
         message: '<p>The OAuth Client id in the URL seems malformed</p>',
       };
+    }
+
+    // Check for feedback from form submissions. If this exists, the errors
+    // above are unlikely to have occurred so we're overwriting.
+    if (cookie.alert) {
+      alert = cookie.alert;
+      delete(cookie.alert);
+      request.yar.set('session', cookie);
     }
 
     // Display page to user.
@@ -209,32 +218,101 @@ module.exports = {
     let destination = '/admin';
 
     try {
-      // First, validate form integrity
-      if (request.payload && request.payload.db_id && request.payload.client_id && request.payload.form_hash) {
+      // Do we have a form submission?
+      if (!request.payload) {
+        throw Error('User feedback:Form submission was not present.');
+      }
+
+      // Validate form integrity
+      if (request.payload.db_id && request.payload.client_id && request.payload.form_hash) {
         const submissionHash = formHashContents(request.payload.db_id);
         if (request.payload.form_hash !== submissionHash) {
-          alert.type = 'error';
-          reasons.push(`The form was tampered with. Rejecting your edits to OAuth Client <strong>${ request.payload.client_name }</strong>.`);
+          throw Error(`User feedback:The form was tampered with. Rejecting your edits to OAuth Client <strong>${ request.payload.client_name }</strong>.`);
         }
       }
 
-      // Now validate the rest of the input...
+      // Validate Client Name
+      if (!request.payload.client_name) {
+        reasons.push('There must be a Client Name. HID users see this name when authorizing the website.');
+      }
+
+      // Validate Client ID
+      if (!request.payload.client_id || !request.payload.client_id.match(/[a-zA-z\-]/)) {
+        reasons.push('There must be a Client ID (alpha with dashes)');
+      }
+
+      // Validate redirect_uri. This simply checks whether it is a valid URL, not
+      // whether it exists or is actually going to work.
+      if (!request.payload.client_redirect_uri) {
+        reasons.push(`There must be a primary redirect URI. If you're updating an existing client just move the alternate URL into the Redirect URI field.`);
+      }
+
+      // Validate Client Secret.
+      if (!request.payload.client_secret) {
+        reasons.push('There must be a Client Secret. Best to use a password manager to generate a strong, unique secret for each OAuth Client.');
+      }
 
       // Do we have validation problems?
       if (reasons.length > 0) {
-        alert.type = alert.type === 'error' ? 'error' : 'warning';
+        // Display user feedback.
+        alert.type = 'warning';
         alert.message = `<p>${ reasons.join('</p><p>') }</p>`;
+
+        // Set destination to be edit form.
+        destination = `/admin/client/${request.payload.db_id}`;
       } else {
-        // Write to DB.
-        // Display success to admin.
-        alert.type = 'status';
-        alert.message = `<p>OAuth Client <strong>${ request.payload.client_name }</strong> was updated successfully.</p>`;
+        // Validation passed. Write to DB.
+        await ClientController.update(request, {
+          clientId: request.payload.db_id,
+          clientData: {
+            id: request.payload.client_id,
+            name: request.payload.client_name,
+            secret: request.payload.client_secret,
+            redirectUri: request.payload.client_redirect_uri,
+            redirectUrls: request.payload.client_redirect_urls ? request.payload.client_redirect_urls.split('\r\n') : [],
+            description: request.payload.client_description,
+          },
+        }).then(data => {
+          // Display success to admin.
+          alert.type = 'status';
+          alert.message = `<p>OAuth Client <strong>${ request.payload.client_name }</strong> was updated successfully.</p>`;
+        }).catch(err => {
+          // Mongo validation error.
+          if (err.message && err.message.indexOf('Client validation failed: ') !== -1) {
+            throw Error('User feedback:' + err.message.replace('Client validation failed: ', ''));
+          }
+          // Another type of Mongo error.
+          else if (err.message && err.message.indexOf('duplicate key')) {
+            throw Error(`User feedback:The Client ID <strong>${ request.payload.client_id }</strong> is already present in the DB. Please pick another one.`);
+          }
+          // We don't know what error this is. pass it along.
+          else {
+            throw err;
+          }
+        });
       }
     } catch (err) {
-      console.log('🔥', err);
+      // Check and see if this is user feedback.
+      if (err.message && err.message.indexOf('User feedback:') !== -1) {
+        alert.type = 'error';
+        alert.message = err.message.split('User feedback:')[1];
+        destination = `/admin/client/${request.payload.db_id}`;
+      } else {
+        alert.type = 'error';
+        alert.message = 'The OAuth Client could not be saved due to an internal server error. Check Kibana for details.';
+
+        // It seems like we caught a genuine error. Log it.
+        logger.error(
+          `[AdminController->adminOauthClientEditSubmit] ${err.message}`,
+          {
+            request,
+            fail: true,
+          },
+        );
+      }
     }
 
-    // Finalize cookie (feedback, TOTP status, etc.)
+    // Finalize cookie (feedback, form data, etc.)
     cookie.alert = alert;
     request.yar.set('session', cookie);
 
