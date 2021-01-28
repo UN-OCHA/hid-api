@@ -33,7 +33,7 @@ module.exports = {
     try {
       AuthPolicy.isLoggedInAsAdmin(user);
     } catch (err) {
-      logger.error(
+      logger.warn(
         '[AdminController->adminOauthClients] Non-admin attempted to access admin area',
         {
           security: true,
@@ -111,7 +111,7 @@ module.exports = {
     try {
       AuthPolicy.isLoggedInAsAdmin(user);
     } catch (err) {
-      logger.error(
+      logger.warn(
         '[AdminController->adminOauthClients] Non-admin attempted to access admin area',
         {
           security: true,
