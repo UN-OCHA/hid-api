@@ -135,7 +135,7 @@ module.exports = {
     }
 
     // Lookup the client we are about to edit.
-    let clientResponse, client, alert;
+    let client, alert;
     if (request.params && request.params.id) {
       client = await ClientController.find(request, reply, {
         user,
