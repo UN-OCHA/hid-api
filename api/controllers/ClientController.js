@@ -231,8 +231,7 @@ module.exports = {
    * responses:
    *   '200':
    *     description: >-
-   *       The client object. _**NOTE:** at this time, the function returns the
-   *       UNCHANGED client if the object you send contains validation errors._
+   *       The client object.
    *     content:
    *       application/json:
    *         schema:
@@ -255,24 +254,33 @@ module.exports = {
       clientData = request.payload;
     }
 
-    // @TODO: Make this return 400 with validation feedback like POST.
-    //
-    // @see HID-2080
-    const client = await Client.findOneAndUpdate(
-      { _id: clientId },
-      clientData,
-      { runValidators: true, new: true },
-    );
+    // Read record from DB.
+    const client = await Client.findOne({ _id: clientId });
 
-    logger.info(
-      '[ClientController->update] Updated client',
-      {
-        security: true,
-        request,
-      },
-    );
+    // Update with the form submission data.
+    client.id = clientData.id;
+    client.name = clientData.name;
+    client.secret = clientData.secret;
+    client.redirectUri = clientData.redirectUri;
+    client.redirectUrls = clientData.redirectUrls;
+    client.description = clientData.description;
 
-    return client;
+    // Write to DB.
+    const result = await client.save().then(data => {
+      logger.info(
+        '[ClientController->update] Updated client',
+        {
+          security: true,
+          request,
+        },
+      );
+
+      return client;
+    }).catch(err => {
+      throw Boom.badRequest(err.message);
+    });
+
+    return result;
   },
 
   /*
