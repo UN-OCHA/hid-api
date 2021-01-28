@@ -245,7 +245,7 @@ module.exports = {
    *     description: Requested client not found.
    */
   async update(request) {
-    // @TODO: Make this return 401 with validation feedback like POST.
+    // @TODO: Make this return 400 with validation feedback like POST.
     //
     // @see HID-2080
     const client = await Client.findOneAndUpdate(
