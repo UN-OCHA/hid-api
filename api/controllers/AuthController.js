@@ -865,7 +865,7 @@ module.exports = {
             fail: true,
           },
         );
-        throw Boom.badRequest('Missing authorization code');
+        return Boom.unauthorized('Missing authorization code');
       }
 
       // Check client_id and client_secret
@@ -899,7 +899,7 @@ module.exports = {
             fail: true,
           },
         );
-        throw Boom.badRequest('invalid client authentication');
+        return Boom.unauthorized('invalid client authentication');
       }
 
       // Look up OAuth Client in DB.
@@ -916,7 +916,7 @@ module.exports = {
             },
           },
         );
-        throw Boom.badRequest('invalid client_id');
+        return Boom.badRequest('invalid client_id');
       }
 
       // Does the client_secret we received match the DB entry?
@@ -933,7 +933,7 @@ module.exports = {
             },
           },
         );
-        throw Boom.badRequest('invalid client_secret');
+        return Boom.unauthorized('invalid client_secret');
       }
 
       // Grab token and type.
@@ -955,10 +955,11 @@ module.exports = {
             },
           },
         );
+
         // OAuth2 standard error.
         const error = Boom.badRequest('invalid authorization code');
         error.output.payload.error = 'invalid_grant';
-        throw error;
+        return error;
       } else {
         logger.info(
           '[AuthController->accessTokenOauth2] Successful access token request',
@@ -985,7 +986,9 @@ module.exports = {
           stack_trace: err.stack,
         },
       );
-      return err;
+
+      // Send a documented error code back.
+      return Boom.badRequest(err.message);
     }
   },
 
