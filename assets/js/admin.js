@@ -12,10 +12,19 @@
     search = searchInput.value.toLowerCase();
 
     if (search) {
-      // Filter arrays by processing the data-search attribute and doing really
-      // naive matching: lowercase, and look for one instance of string
-      const isMatching = [...clients].filter(client => client.getAttribute('data-search').toLowerCase().indexOf(search) !== -1);
-      const notMatching = [...clients].filter(client => client.getAttribute('data-search').toLowerCase().indexOf(search) === -1);
+      // Convert NodeList to Array.
+      const clientArray = [...clients];
+
+      // Filter arrays by processing the data-search attribute convert to lower,
+      // and match each space-separated string.
+      //
+      // Ex: `ocha dev` should match all entries that have "ocha" and "dev", but
+      //     it doesn't have to be exact — "ocha not dev" will also match.
+      const isMatching = clientArray.filter(client => search.split(' ').every(term => client.getAttribute('data-search').toLowerCase().indexOf(term) !== -1));
+
+      // Now diff the array and assume anything else failed to match.
+      const matchSubset = new Set(isMatching);
+      const notMatching = [...new Set(clientArray.filter(x => !matchSubset.has(x)))];
 
       // Remove/add classes as needed.
       isMatching.forEach(client => client.classList.remove('client--hidden'));
