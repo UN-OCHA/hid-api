@@ -4,6 +4,7 @@
 (function iife() {
   const searchInput = document.querySelector('#client-search');
   const searchClear = document.querySelector('#client-search-clear');
+  const searchSummary = document.querySelector('#client-search-summary');
   const clients = document.querySelectorAll('.oac-admin__client');
 
   // Take input and filter list.
@@ -29,21 +30,21 @@
       // Remove/add classes as needed.
       isMatching.forEach(client => client.classList.remove('client--hidden'));
       notMatching.forEach(client => client.classList.add('client--hidden'));
+
+      // Count results and display
+      const numResults = isMatching.length;
+      searchSummary.innerHTML = `, and you filtered down to <strong>${numResults} client${numResults === 1 ? '' : 's' }</strong>`;
     } else {
       // Show all clients
       clients.forEach(client => client.classList.remove('client--hidden'));
+      searchSummary.innerHTML = '';
     }
   });
 
-  // Clear the filter.
+  // Wire up the Clear button.
   searchClear.addEventListener('click', ev => {
-    ev.preventDefault();
-    ev.stopPropagation();
-
-    // Unset all hidden classes
-    clients.forEach(client => client.classList.remove('client--hidden'));
-
-    // Unset search input
     searchInput.value = '';
-  })
+    clients.forEach(client => client.classList.remove('client--hidden'));
+    searchSummary.innerHTML = '';
+  });
 })();
