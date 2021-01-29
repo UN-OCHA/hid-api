@@ -511,6 +511,23 @@ module.exports = {
     }
   },
 
+  /**
+   * User-facing dialog to authorize an OAuth Client.
+   *
+   * This is the entry point for OAuth flows. Here's a list of potential events:
+   *
+   * - It requires an active user session so it first redirects to login form if
+   *   the user isn't logged in.
+   * - Once the user arrives back here with a session, the OAuth Client data is
+   *   validated to ensure that it's a legitimate attempt from the real website.
+   * - Now the user profile is checked to see if they have this OAuth Client in
+   *   their approved list.
+   * - If YES, they redirect back to the website. The end.
+   * - If NO, they are presented with the Allow/Deny buttons. For further
+   *   progress, look at submission handler.
+   *
+   * @see authorizeOauth2()
+   */
   async authorizeDialogOauth2(request, reply) {
     try {
       const oauth = request.server.plugins['hapi-oauth2orize'];
@@ -616,17 +633,18 @@ module.exports = {
                 request,
                 security: true,
                 fail: true,
+                user: {
+                  id: cookie.userId,
+                },
                 oauth: {
                   client_id: client.id,
                   redirect_uri: redirect,
-                },
-                user: {
-                  id: cookie.userId,
                 },
               },
             );
             throw Error(`Wrong redirect URI: ${redirect}`);
           }
+
           // The request passed validation. Proceed.
           return done(null, client, redirect);
         } catch (err) {
@@ -708,11 +726,22 @@ module.exports = {
     }
   },
 
+  /**
+   * Form submission handler to OAuth Client authorizations.
+   *
+   * This function supports the user-facing function by handling all the form
+   * submissions.
+   *
+   *   - If ALLOW, the OAuth Client is added to their profile, and they redirect
+   *     to the original website.
+   *   - If DENY, the process halts and they get redirected to their HID dashboard.
+   */
   async authorizeOauth2(request, reply) {
     try {
       const oauth = request.server.plugins['hapi-oauth2orize'];
       const cookie = request.yar.get('session');
 
+      // Force users without existing sessions to log in.
       if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
         logger.info(
           '[AuthController->authorizeOauth2] Got request to /oauth/authorize without session. Redirecting to the login page.',
@@ -735,6 +764,7 @@ module.exports = {
           }#login`);
       }
 
+      // Look up user in DB.
       const user = await User.findOne({ _id: cookie.userId });
       if (!user) {
         logger.warn(
@@ -755,12 +785,21 @@ module.exports = {
       user.sanitize(user);
       request.auth.credentials = user;
 
-      // Save authorized client if user allowed
+      // Set up OAuth Client to potentially be stored on user profile.
       const clientId = request.yar.authorize[request.payload.transaction_id].client;
+
+      // If user clicked 'Deny', redirect to HID homepage.
       if (!request.payload.bsubmit || request.payload.bsubmit === 'Deny') {
         return reply.redirect('/');
       }
+
+      // If the user clicked 'Allow', save OAuth Client to user profile
       if (!user.hasAuthorizedClient(clientId) && request.payload.bsubmit === 'Allow') {
+        // TODO: we could store an array of objects including the current time
+        //       when adding the client, in order to offer security-related info
+        //       when the user views their OAuth settings.
+        //
+        // @see HID-2156
         user.authorizedClients.push(request.yar.authorize[request.payload.transaction_id].client);
         user.markModified('authorizedClients');
         logger.info(
