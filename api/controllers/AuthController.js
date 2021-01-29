@@ -966,8 +966,8 @@ module.exports = {
             request,
             security: true,
             oauth: {
-              client_id: request.payload.client_id,
-              client_secret: `${request.payload.client_secret.slice(0, 3)}...${request.payload.client_secret.slice(-3)}`,
+              client_id: clientId,
+              client_secret: `${clientSecret.slice(0, 3)}...${clientSecret.slice(-3)}`,
             },
           },
         );
