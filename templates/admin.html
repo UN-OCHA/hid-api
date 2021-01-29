@@ -24,7 +24,7 @@
 
         <ul class="oac-admin__list [ flow ]">
           <% clients.forEach(client => { %>
-            <% const searchData = `${client.name} ${client.id} ${client.redirectUri || ''} ${client.description || ''}`; %>
+            <% const searchData = `${client.name} ${client.id} ${client.redirectUri || ''} ${client.redirectUrls.join(' ') || ''} ${client.description || ''}`; %>
             <li class="oac-admin__client client" data-search="<%= searchData %>">
               <a href="/admin/client/<%= client._id %>" class="client__edit cd-button cd-button--uppercase cd-button--small">Edit</a>
               <span class="client__name"><%= client.name %></span>
