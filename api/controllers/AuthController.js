@@ -846,10 +846,16 @@ module.exports = {
     }
   },
 
+  /**
+   * Issues access tokens during "Extra Secure" OAuth flows.
+   *
+   * @see https://github.com/UN-OCHA/hid_api/wiki/Integrating-with-HID-via-OAuth#step-2--request-access-and-id-tokens
+   */
   async accessTokenOauth2(request, reply) {
     try {
       const oauth = request.server.plugins['hapi-oauth2orize'];
       const { code } = request.payload;
+
       if (!code && request.payload.grant_type !== 'refresh_token') {
         logger.warn(
           '[AuthController->accessTokenOauth2] Unsuccessful access token request due to missing authorization code.',
@@ -861,17 +867,21 @@ module.exports = {
         );
         throw Boom.badRequest('Missing authorization code');
       }
+
       // Check client_id and client_secret
       let client = null;
       let clientId = null;
       let clientSecret = null;
+
+      // How is the authorization configured?
       if (request.payload.client_id && request.payload.client_secret) {
         // Using client_secret_post authorization
         clientId = request.payload.client_id;
         clientSecret = request.payload.client_secret;
-      } else if (request.headers.authorization) {
-        // Using client_secret_basic authorization
-        // Decrypt the Authorization header.
+      }
+      // Using client_secret_basic authorization.
+      // Decrypt the Authorization header.
+      else if (request.headers.authorization) {
         const parts = request.headers.authorization.split(' ');
         if (parts.length === 2) {
           const credentials = parts[1];
@@ -891,7 +901,8 @@ module.exports = {
         );
         throw Boom.badRequest('invalid client authentication');
       }
-      // Using client_secret_post authentication method.
+
+      // Look up OAuth Client in DB.
       client = await Client.findOne({ id: clientId });
       if (!client) {
         logger.warn(
@@ -907,6 +918,8 @@ module.exports = {
         );
         throw Boom.badRequest('invalid client_id');
       }
+
+      // Does the client_secret we received match the DB entry?
       if (clientSecret !== client.secret) {
         logger.warn(
           '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to wrong client authentication.',
@@ -922,8 +935,12 @@ module.exports = {
         );
         throw Boom.badRequest('invalid client_secret');
       }
+
+      // Grab token and type.
       const token = request.payload.code ? request.payload.code : request.payload.refresh_token;
       const type = request.payload.code ? 'code' : 'refresh';
+
+      // Find authorization code.
       const ocode = await OauthToken.findOne({ token, type }).populate('client user');
       if (!ocode) {
         logger.warn(
