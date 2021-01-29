@@ -5,3 +5,4 @@ docker-compose.yml
 keys
 db
 newrelic_agent.log
+docs/hid.yml
