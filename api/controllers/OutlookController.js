@@ -8,7 +8,6 @@ const User = require('../models/User');
 
 /**
  * @module OutlookController
- * @description Generated Trails.js Controller.
  */
 module.exports = {
 
