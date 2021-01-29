@@ -14,7 +14,7 @@
       </nav>
 
       <section id="section-edit-client">
-      <% if (client) { %>
+      <% if (typeof client !== 'undefined') { %>
         <form action="/admin/client" method="POST" class="oac-client-edit [ flow ]">
           <h2>Editing <%= client.name %></h2>
 
