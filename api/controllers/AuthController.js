@@ -847,7 +847,7 @@ module.exports = {
   },
 
   /**
-   * Issues access tokens during "Extra Secure" OAuth flows.
+   * Issues an access_token during "Extra Secure" OAuth flows.
    *
    * @see https://github.com/UN-OCHA/hid_api/wiki/Integrating-with-HID-via-OAuth#step-2--request-access-and-id-tokens
    */
@@ -873,14 +873,12 @@ module.exports = {
       let clientId = null;
       let clientSecret = null;
 
-      // How is the authorization configured?
+      // Are we using POST body authorization?
       if (request.payload.client_id && request.payload.client_secret) {
-        // Using client_secret_post authorization
         clientId = request.payload.client_id;
         clientSecret = request.payload.client_secret;
       }
-      // Using client_secret_basic authorization.
-      // Decrypt the Authorization header.
+      // Are we using Basic Auth?
       else if (request.headers.authorization) {
         const parts = request.headers.authorization.split(' ');
         if (parts.length === 2) {
@@ -890,7 +888,9 @@ module.exports = {
           const cparts = text.split(':');
           [clientId, clientSecret] = cparts;
         }
-      } else {
+      }
+      // Neither authorization method found. Log it.
+      else {
         logger.warn(
           '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to invalid client authentication.',
           {
