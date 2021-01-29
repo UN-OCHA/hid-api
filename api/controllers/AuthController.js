@@ -813,8 +813,10 @@ module.exports = {
         // @see HID-2156
         user.authorizedClients.push(request.yar.authorize[request.payload.transaction_id].client);
         user.markModified('authorizedClients');
+        await user.save();
+
         logger.info(
-          '[AuthController->authorizeOauth2] Added authorizedClient to user',
+          '[AuthController->authorizeOauth2] Added OAuth Client to user profile',
           {
             request,
             security: true,
@@ -827,7 +829,6 @@ module.exports = {
             },
           },
         );
-        await user.save();
       }
       const response = await oauth.decision(request, reply);
       return response;
