@@ -24,7 +24,15 @@
   margin-left: 1rem;
 }
 
-/* powered by admin.js */
+/**
+ * Individual Client in the list
+ */
+.client {}
+
 .client--hidden {
   display: none;
+}
+
+.client__edit {
+  margin-right:.5rem;
 }
