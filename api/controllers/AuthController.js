@@ -529,6 +529,12 @@ module.exports = {
    * @see authorizeOauth2()
    */
   async authorizeDialogOauth2(request, reply) {
+    // For some errors, we end up showing a prompt saying that the problem
+    // originated on the website which sent the user to HID. It's not always
+    // possible, but when we can we populate this URL so we can link them back
+    // to where they came from.
+    let errorRedirectUrl = '';
+
     try {
       const oauth = request.server.plugins['hapi-oauth2orize'];
       const prompt = request.query.prompt ? request.query.prompt : '';
@@ -642,6 +648,10 @@ module.exports = {
                 },
               },
             );
+
+            // extract hostname from redirect URL
+            errorRedirectUrl = new URL(redirect).origin;
+
             throw Error(`Wrong redirect URI: ${redirect}`);
           }
 
@@ -719,6 +729,7 @@ module.exports = {
           message: `
             <p>The website which sent you to HID appears to have invalid configuration.</p>
             <p>We have logged the problem internally.</p>
+            ${ errorRedirectUrl ? '<br><p>Go back to <a href="'+ errorRedirectUrl +'">'+ errorRedirectUrl +'</a></p>' : '' }
           `,
         },
         isSuccess: false,
