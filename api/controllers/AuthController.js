@@ -906,7 +906,7 @@ module.exports = {
       client = await Client.findOne({ id: clientId });
       if (!client) {
         logger.warn(
-          '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to wrong client ID.',
+          '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to non-existent client ID.',
           {
             request,
             security: true,
@@ -950,6 +950,7 @@ module.exports = {
             security: true,
             fail: true,
             oauth: {
+              client_id: clientId,
               code,
             },
           },
