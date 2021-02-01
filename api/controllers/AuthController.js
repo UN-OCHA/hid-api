@@ -951,7 +951,8 @@ module.exports = {
             fail: true,
             oauth: {
               client_id: clientId,
-              code,
+              token: `${token.slice(0, 3)}...${token.slice(-3)}`,
+              type,
             },
           },
         );
