@@ -1,0 +1,38 @@
+/**
+ * Admin: Manage OAuth clients
+ */
+.oac-admin {}
+.oac-admin__list {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+/**
+ * client-side OAuth Client filtering
+ */
+.oac-admin__search-section {
+  display: flex;
+  flex-flow: row nowrap;
+  margin-bottom: 2rem;
+}
+#client-search {
+  flex: 0 0 50ch;
+}
+#client-search-clear {
+  flex: 0 1 140px;
+  margin-left: 1rem;
+}
+
+/**
+ * Individual Client in the list
+ */
+.client {}
+
+.client--hidden {
+  display: none;
+}
+
+.client__edit {
+  margin-right:.5rem;
+}

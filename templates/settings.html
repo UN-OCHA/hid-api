@@ -2,169 +2,65 @@
 <style><% include ../assets/css/tabs.css %></style>
 <style><% include ../assets/css/settings.css %></style>
 
-<div class="api-page">
-  <main role="main" id="main-content" class="cd-container">
-    <div class="cd-layout-content">
-      <h1 class="page-header__heading">Settings for <%= user.name %></h1>
-      <% include alert.html %>
-      <div class="tabbed">
-        <nav>
-          <li>
-            <a href="/settings" aria-selected="true">Authorized Apps</a>
-          </li>
-          <li>
-            <a href="/settings/password">Password</a>
-          </li>
-          <li>
-            <a href="/settings/security">Security</a>
-          </li>
-          <li>
-            <a href="/settings/delete">Delete Account</a>
-          </li>
-        </nav>
+<main role="main" id="main-content" class="cd-container">
+  <div class="cd-layout-content">
+    <h1 class="page-header__heading">Settings for <%= user.name %></h1>
+    <% include alert.html %>
+    <div class="tabbed">
+      <nav>
+        <li>
+          <a href="/settings" aria-selected="true">Authorized Apps</a>
+        </li>
+        <li>
+          <a href="/settings/password">Password</a>
+        </li>
+        <li>
+          <a href="/settings/security">Security</a>
+        </li>
+        <li>
+          <a href="/settings/delete">Delete Account</a>
+        </li>
+      </nav>
 
-        <section id="section-apps">
-          <h2>Authorized Apps</h2>
-          <form action="/settings/oauth-clients" method="POST">
-            <% if (user.authorizedClients.length === 0) { %>
-              <p><em>You haven't authorized any websites yet. After you log in with HID on one of our <a href="https://about.humanitarian.id/partners-using-our-authentication-service.html" target="_blank" rel="noopener">Partner Sites</a> you will see it listed here.</em></p>
-            <% } else { %>
-              <p>You have granted <strong><%= user.authorizedClients.length %> website<%= user.authorizedClients.length === 1 ? '' : 's' %></strong> access to your profile.</p>
-              <ul class="oauth-clients-list [ flow ]">
-              <%
-                const sorted = user.authorizedClients.sort((a, b) => a.name.localeCompare(b.name));
-                sorted.forEach(function(client) {
-              %>
-                <li class="oauth-clients-list__client oac">
-                  <span class="oac__delete">
-                    <button
-                      type="submit"
-                      name="oauth_client_delete"
-                      value="<%= client._id.toString() %>"
-                      class="cd-button cd-button--small cd-button--danger"
-                      onclick="return confirmDeletion('<%= client.name %>');"
-                      aria-label="Revoke <%= client.name %>"
-                    >
-                      <svg class="cd-icon cd-icon--cancel" width="16" height="16" aria-hidden="true" focusable="false">
-                        <use xlink:href="#cd-icon--cancel"></use>
-                      </svg>
-                    </button>
-                  </span>
-                  <span class="oac__name"><%= client.name %></span>
-                </li>
-              <% }); %>
-            </ul>
-            <% } %>
-          </form>
-        </section>
-
-<!--        <section id="section-security">-->
-<!--          <h2>Two-factor authentication</h2>-->
-<!--          <% if (user.totp) { %>-->
-<!--          <span class="status" style="color: #777;">Status: <em>Enabled</em></span>-->
-<!--          <p>&nbsp;</p>-->
-<!--          <button class="cd-button cd-button--style cd-button--dectivate" onclick="goTo('deactivate');">-->
-<!--            Deactivate-->
-<!--          </button>-->
-<!--          <%} else { %>-->
-<!--            <span class="status" style="color: #777;">Status: <em>Disabled</em></span>-->
-<!--            <p>Two-factor authentication is an effective way to protect your account from unauthorized access. What you need to do to enable this feature:</p>-->
-<!--            <ol>-->
-<!--              <li>If you don't have one yet, download an authenticator app (e.g. the Google Authenticator - <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en_GB" target="_blank" rel="noopener">Play Store</a>, <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8" target="_blank" rel="noopener">App Store</a>).</li>-->
-<!--              <li>Then click on the Activate button below</li>-->
-<!--              <li>After you have activated the Two-factor verification on this page you will see a QR-code that you need to scan with your authenticator app or you do the set-up manually.</li>-->
-<!--              <li>You'll then be sent a code to your mobile authenticator app.</li>-->
-<!--            </ol>-->
-<!--            <p>Two-factor authentication is an optional security feature. Once enabled, Humanitarian ID will require a six-digit security code or a security key in addition to your password if you wish to login or change your password. You can also set a device as trusted during login, you will then not be asked a seperate code on this device.</p>-->
-<!--            <p>After enabling two-factor authentication, you'll receive 16 backup codes. Copy these codes or download them and store them securely. Once a backup code is used, it can't be used again.</p>-->
-<!--            <p>You can remove the two-factor authentication at any point by clicking on ‘Deactivate’ button.</p>-->
-<!--            <button class="cd-button cd-button--style cd-button--activate" onclick="requestTotpConfig();">-->
-<!--              Activate-->
-<!--            </button>-->
-<!--          <%# Steps to activate should go here #%>-->
-<!--          <% } %>-->
-<!--        </section>-->
-
-<!--        <section id="section-delete">-->
-<!--          <h2>Delete Account</h2>-->
-<!--          <button type="button" class="cd-button cd-button--bold cd-button--delete" onclick="deleteAccount();">-->
-<!--            Delete-->
-<!--          </button>-->
-<!--        </section>-->
-      </div>
+      <section id="section-apps">
+        <h2>Authorized Apps</h2>
+        <form action="/settings/oauth-clients" method="POST">
+          <% if (user.authorizedClients.length === 0) { %>
+            <p><em>You haven't authorized any websites yet. After you log in with HID on one of our <a href="https://about.humanitarian.id/partners-using-our-authentication-service.html" target="_blank" rel="noopener">Partner Sites</a> you will see it listed here.</em></p>
+          <% } else { %>
+            <p>You have granted <strong><%= user.authorizedClients.length %> website<%= user.authorizedClients.length === 1 ? '' : 's' %></strong> access to your profile.</p>
+            <ul class="oauth-clients-list [ flow ]">
+            <%
+              const sorted = user.authorizedClients.sort((a, b) => a.name.localeCompare(b.name));
+              sorted.forEach(function(client) {
+            %>
+              <li class="oauth-clients-list__client oac">
+                <span class="oac__delete">
+                  <button
+                    type="submit"
+                    name="oauth_client_delete"
+                    value="<%= client._id.toString() %>"
+                    class="cd-button cd-button--small cd-button--danger"
+                    onclick="return confirmDeletion('<%= client.name %>');"
+                    aria-label="Revoke <%= client.name %>"
+                  >
+                    <svg class="cd-icon cd-icon--cancel" width="16" height="16" aria-hidden="true" focusable="false">
+                      <use xlink:href="#cd-icon--cancel"></use>
+                    </svg>
+                  </button>
+                </span>
+                <span class="oac__name"><%= client.name %></span>
+              </li>
+            <% }); %>
+          </ul>
+          <% } %>
+        </form>
+      </section>
     </div>
-  </main>
-</div>
+  </div>
+</main>
 
 <% include footer %>
 
 <script><% include ../assets/js/confirmation.js %></script>
 <script><% include ../assets/js/tabs.js %></script>
-<script>
-  function deleteAccount(totpToken) {
-    // This value should only last as long as the function executes.
-    let confirmed = false;
-
-    window.confirm('Are you sure you want to do this? You will not be able to access Humanitarian ID anymore.');
-
-    // // We don't want to show the confirmation prompt while asking for TOTP so
-    // // we store the result temporariliy. If the user closes TotpPrompt without
-    // // submitting, we'll wipe this value so that a second attempt to delete
-    // // will require new confirmation.
-    // if (!this.alreadyConfirmed) {
-    //   confirmed = await this.$confirm('Are you sure you want to delete your Humanitarian ID account? You will no longer be able to access any of the HID-integrated platforms.');
-    // }
-    //
-    // // If the user confirmed, or if TOTP is required (alreadyConfirmed)
-    // if (confirmed || this.alreadyConfirmed) {
-    //   this.alreadyConfirmed = true;
-    //   this.pending = true;
-    //
-    //   // Ensure that we only send a fresh TOTP by setting to null and only
-    //   // adding when the value is sent by the TotpPrompt emitted event.
-    //   //
-    //   // Note: totpToken is the raw event when submitting without TOTP so we
-    //   // have an extra type check to ensure we're not sending garbage.
-    //   this.$hid.setHeader('X-HID-TOTP', null);
-    //   if (typeof totpToken === 'string' && totpToken !== '') {
-    //     this.$hid.setHeader('X-HID-TOTP', totpToken);
-    //   }
-    //
-    //   // Ask HID to delete this user account.
-    //   this.$hid.$delete(`/api/v2/user/${this.me}`)
-    //     .then((res) => {
-    //       this.message = 'Your account was successfully removed. You are now logged out. Sorry to have you go.';
-    //       this.displayMessage = true;
-    //       this.resetTotpPrompt();
-    //       this.logout();
-    //     })
-    //     .catch((err) => {
-    //       if (err.response && err.response.data && err.response.data.message && err.response.data.message === 'No TOTP token') {
-    //         this.needsTotp = true;
-    //       } else if (err.response && err.response.data && err.response.data.message && this.totpInvalid.includes(err.response.data.message)) {
-    //         this.needsTotp = true;
-    //         this.message = 'Your authentication token was invalid. Please try again.';
-    //         this.error = true;
-    //         this.displayMessage = true;
-    //       } else if (err.response && err.response.data && err.response.data.message) {
-    //         this.message = err.response.data.message;
-    //         this.error = true;
-    //         this.displayMessage = true;
-    //       } else {
-    //         this.message = err;
-    //         this.error = true;
-    //         this.displayMessage = true;
-    //       }
-    //     })
-    //     .finally(() => {
-    //       this.pending = false;
-    //     });
-    // }
-  }
-
-  // function resetTotpPrompt() {
-  //   this.needsTotp = false;
-  //   this.alreadyConfirmed = false;
-  // }
-
-</script>
