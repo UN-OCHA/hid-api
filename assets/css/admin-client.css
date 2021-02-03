@@ -1,0 +1,22 @@
+/**
+ * Admin: Edit an OAuth client
+ */
+.oac-client-edit {}
+
+.oac-client-edit .form-field {}
+
+.oac-client-edit .form-field p {
+  --scale-factor: .8;
+  max-width: calc(50ch / var(--scale-factor));
+  margin: 0;
+  color: #666;
+  font-size: calc(1em * var(--scale-factor));
+}
+
+.oac-admin-edit__submit {}
+
+.oac-admin-edit__reset {}
+
+.oac-admin-edit__cancel {
+  line-height: 1.15; /* match <button> --> @see normalize.css */
+}

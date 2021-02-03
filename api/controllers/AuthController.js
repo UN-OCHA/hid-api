@@ -377,11 +377,19 @@ module.exports = {
         const now = Date.now();
         const offset = 5 * 60 * 1000;
         const d5minutes = new Date(now - offset);
-        const [number, user] = await Promise.all([
-          Flood.count({ type: 'totp', email: cookie.userId, createdAt: { $gte: d5minutes.toISOString() } }),
+        const [floodCount, user] = await Promise.all([
+          Flood.count({
+            type: 'totp',
+            email: cookie.userId,
+            createdAt: {
+              $gte: d5minutes.toISOString(),
+            },
+          }),
           User.findOne({ _id: cookie.userId }),
         ]);
-        if (number >= 5) {
+
+        // If flood-count too high, lock further attempts.
+        if (floodCount >= 5) {
           logger.warn(
             '[AuthController->login] Account locked for 5 minutes',
             {
@@ -403,8 +411,11 @@ module.exports = {
         } catch (err) {
           if (err.output.statusCode === 401) {
             // Create a flood entry
-            await Flood
-              .create({ type: 'totp', email: cookie.userId, user });
+            await Flood.create({
+              type: 'totp',
+              email: cookie.userId,
+              user,
+            });
           }
           throw err;
         }
@@ -422,7 +433,10 @@ module.exports = {
             name: 'x-hid-totp-trust',
             value: random,
             options: {
-              ttl: 30 * 24 * 60 * 60 * 1000, domain: 'humanitarian.id', isSameSite: false, isHttpOnly: false,
+              ttl: 30 * 24 * 60 * 60 * 1000,
+              domain: 'humanitarian.id',
+              isSameSite: false,
+              isHttpOnly: false,
             },
           });
         }
@@ -461,20 +475,37 @@ module.exports = {
         // Store user login time.
         result.auth_time = new Date();
         await result.save();
-        request.yar.set('session', { userId: result._id, totp: true });
+        request.yar.set('session', {
+          userId: result._id,
+          totp: true,
+        });
         return loginRedirect(request, reply);
       }
-      // Check to see if device is not a trusted device
+
+      // Check to see if device is a trusted device.
       const trusted = request.state['x-hid-totp-trust'];
       if (trusted && result.isTrustedDevice(request.headers['user-agent'], trusted)) {
-        // If trusted device, go on
-        // Store user login time.
+        // If trusted device, go onto store user login time.
         result.auth_time = new Date();
         await result.save();
-        request.yar.set('session', { userId: result._id, totp: true });
+
+        // Set cookie.
+        request.yar.set('session', {
+          userId: result._id,
+          totp: true,
+        });
+
+        // Redirect
         return loginRedirect(request, reply);
       }
-      request.yar.set('session', { userId: result._id, totp: false });
+
+      // Set cookie
+      request.yar.set('session', {
+        userId: result._id,
+        totp: false,
+      });
+
+      // Display TOTP prompt
       return reply.view('totp', {
         title: 'Enter your Authentication code',
         query: request.payload,
@@ -498,6 +529,8 @@ module.exports = {
       if (err.message === 'password is expired') {
         alertMessage = 'We could not log you in because your password is expired. Following UN regulations, as a security measure passwords must be udpated every six months. Kindly reset your password by clicking on the "Forgot/Reset password" link below.';
       }
+
+      // Display login form to user.
       return reply.view('login', {
         title: 'Log into Humanitarian ID',
         query: request.payload,
