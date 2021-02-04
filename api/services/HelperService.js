@@ -8,36 +8,28 @@ const queryOptions = [
   'sort',
   'fields',
 ];
+
+// TODO: move to env var
+//
+// @see https://humanitarian.atlassian.net/browse/HID-1894
 const authorizedDomains = [
   // Production
-  'https://humanitarian.id',
   'https://api.humanitarian.id',
   'https://auth.humanitarian.id',
 
-  // Dev
-  'https://dev.humanitarian-id.ahconu.org',
-  'https://legacy.dev.humanitarian-id.ahconu.org',
-  'https://dev.api-humanitarian-id.ahconu.org',
-  'https://dev.auth-humanitarian-id.ahconu.org',
-  'https://v3.dev.humanitarian-id.ahconu.org',
-
   // Staging
-  'https://app.staging.humanitarian.id',
-  'https://api.staging.humanitarian.id',
-  'https://auth.staging.humanitarian.id',
-  'https://stage.humanitarian-id.ahconu.org',
   'https://stage.api-humanitarian-id.ahconu.org',
   'https://stage.auth-humanitarian-id.ahconu.org',
-  'https://v3.stage.humanitarian-id.ahconu.org',
+
+  // Dev
+  'https://dev.api-humanitarian-id.ahconu.org',
+  'https://dev.auth-humanitarian-id.ahconu.org',
 
   // Local
-  'https://app.hid.vm',
   'https://api.hid.vm',
-  'http://app.hid.vm',
+  'https://auth.hid.vm',
   'http://api.hid.vm',
-  'http://v3.hid.vm',
-  'http://admin.hid.vm',
-  'http://hid.vm',
+  'http://auth.hid.vm',
 ];
 
 /**
