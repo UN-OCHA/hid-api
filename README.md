@@ -35,7 +35,6 @@ and out of lists
 * DuplicateController: used for finding duplicate user accounts and removing them
 * ListController: CRUD for lists
 * ListUserController: functions for checking in & out of a list
-* NotificationController: provides an endpoint to pull notifications and another one to mark them as read
 * ServiceController: CRUD for google groups & mailchimp services, as well as subscribe and unsubscribe endpoints
 * ServiceCredentialsController: GET endpoint for service credentials
 * UserController: CRUD and multiple user related endpoints
