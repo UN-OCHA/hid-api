@@ -4,7 +4,7 @@ const Email = require('email-templates');
 const TransporterSettings = {
   host: process.env.SMTP_HOST || 'localhost',
   port: process.env.SMTP_PORT || 25,
-  secure: process.env.SMTP_TLS || false,
+  secure: typeof process.env.SMTP_TLS !== 'undefined' ? JSON.parse(process.env.SMTP_TLS) : false,
 };
 // Only append `auth` property if we have both values to pass.
 if (process.env.SMTP_USER && process.env.SMTP_PASS) {
