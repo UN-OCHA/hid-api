@@ -2317,7 +2317,6 @@ module.exports = {
 
     // This will be what we send back as a response.
     const output = {
-      _id: user._id.toString(),
       id: user.id,
       sub: user.id,
       email: user.email,
@@ -2345,9 +2344,6 @@ module.exports = {
     // Special cases for legacy compat.
     if (request.params.currentClient && (request.params.currentClient.id === 'iasc-prod' || request.params.currentClient.id === 'iasc-dev')) {
       output.sub = user.email;
-    }
-    if (request.params.currentClient && request.params.currentClient.id === 'dart-prod') {
-      delete output._id;
     }
     if (request.params.currentClient && request.params.currentClient.id === 'kaya-prod') {
       output.name = user.name.replace(' ', '');
