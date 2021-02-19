@@ -1,8 +1,8 @@
 /**
- * @module dropNotifications
- * @description Drops the Notifications collection permanently.
+ * @module dropNotification
+ * @description Drops the Notification collection permanently.
  *
- * docker-compose exec dev node ./commands/dropNotifications.js
+ * docker-compose exec dev node ./commands/dropNotification.js
  */
 const mongoose = require('mongoose');
 const app = require('../');
