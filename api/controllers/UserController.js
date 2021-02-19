@@ -749,49 +749,6 @@ module.exports = {
 
     // Update lastModified manually
     request.payload.lastModified = new Date();
-    if (user.authOnly === false && request.payload.authOnly === true) {
-      // User is becoming invisible. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, {
-          $inc: {
-            countVerified: -1,
-            countUnverified: -1,
-          },
-        });
-        logger.info(
-          '[UserController->update] User is becoming invisible. Updated list counts.',
-          {
-            request,
-            user: {
-              id: user._id.toString(),
-            },
-          },
-        );
-      }
-    }
-
-    if (user.authOnly === true && request.payload.authOnly === false) {
-      // User is becoming visible. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, {
-          $inc: {
-            countVerified: 1,
-            countUnverified: 1,
-          },
-        });
-        logger.info(
-          '[UserController->update] User is becoming visible. Updated list counts',
-          {
-            request,
-            user: {
-              id: user._id.toString(),
-            },
-          },
-        );
-      }
-    }
 
     if (user.hidden === false && request.payload.hidden === true) {
       // User is being flagged. Update lists count.
@@ -857,88 +814,6 @@ module.exports = {
 
     user = await user.defaultPopulate();
     const promises = [];
-    if (
-      typeof request.auth.credentials !== 'undefined'
-      && typeof request.auth.credentials._id !== 'undefined'
-      && typeof user._id !== 'undefined'
-      && request.auth.credentials._id.toString() !== user._id.toString()
-    ) {
-      // User is being edited by someone else
-      // If it's an auth account, surface it
-      if (user.authOnly) {
-        user.authOnly = false;
-        // User is becoming visible. Update lists count.
-        const listIds = user.getListIds(true);
-        if (listIds.length) {
-          promises.push(
-            List.updateMany({ _id: { $in: listIds } }, {
-              $inc: {
-                countVerified: 1,
-                countUnverified: 1,
-              },
-            }).then(() => {
-              logger.info(
-                '[UserController->update] User is becoming visible. Updated list counts',
-                {
-                  request,
-                  user: {
-                    id: user._id.toString(),
-                    email: user.email,
-                  },
-                },
-              );
-            }),
-          );
-        }
-        promises.push(
-          user.save().then(() => {
-            logger.info(
-              '[UserController->update] User saved successfully',
-              {
-                request,
-                user: {
-                  id: user._id.toString(),
-                  email: user.email,
-                },
-              },
-            );
-          }),
-        );
-        if (!user.hidden) {
-          promises.push(
-            EmailService.sendAuthToProfile(user, request.auth.credentials).then(() => {
-              logger.info(
-                '[UserController->update] Sent auth_to_profile email',
-                {
-                  request,
-                  user: {
-                    id: user.id,
-                    email: user.email,
-                  },
-                },
-              );
-            }),
-          );
-        }
-      } else if (!user.hidden) {
-        const notification = { type: 'admin_edit', user, createdBy: request.auth.credentials };
-        promises.push(
-          NotificationService.send(notification).then(() => {
-            logger.info(
-              '[UserController->update] Sent admin_edit notification',
-              {
-                request,
-                user: {
-                  id: user.id,
-                  email: user.email,
-                },
-              },
-            );
-          }),
-        );
-      }
-    }
-
     promises.push(
       GSSSyncService.synchronizeUser(user).then(() => {
         logger.info(
