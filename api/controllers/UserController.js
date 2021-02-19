@@ -9,10 +9,8 @@ const validator = require('validator');
 const hidAccount = '5b2128e754a0d6046d6c69f2';
 const List = require('../models/List');
 const User = require('../models/User');
-// const OutlookService = require('../services/OutlookService');
 const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
-const NotificationService = require('../services/NotificationService');
 const GSSSyncService = require('../services/GSSSyncService');
 const AuthPolicy = require('../policies/AuthPolicy');
 const ListUserController = require('./ListUserController');
@@ -920,22 +918,6 @@ module.exports = {
             }),
           );
         }
-      } else if (!user.hidden) {
-        const notification = { type: 'admin_edit', user, createdBy: request.auth.credentials };
-        promises.push(
-          NotificationService.send(notification).then(() => {
-            logger.info(
-              '[UserController->update] Sent admin_edit notification',
-              {
-                request,
-                user: {
-                  id: user.id,
-                  email: user.email,
-                },
-              },
-            );
-          }),
-        );
       }
     }
 
@@ -2355,19 +2337,6 @@ module.exports = {
       throw Boom.notFound();
     }
 
-    const notPayload = {
-      type: 'contact_needs_update',
-      createdBy: request.auth.credentials,
-      user: record,
-    };
-    await NotificationService.send(notPayload);
-    logger.info(
-      `[UserController->notify] Successfully sent contact_needs_update notification to ${record.email}`,
-      {
-        request,
-      },
-    );
-
     return record;
   },
 
@@ -2401,35 +2370,17 @@ module.exports = {
     user.connections.push({ pending: true, user: request.auth.credentials._id });
     user.lastModified = new Date();
 
-    const notification = {
-      type: 'connection_request',
-      createdBy: request.auth.credentials,
-      user,
-    };
-    await Promise.all([
-      user.save().then(() => {
-        logger.info(
-          `[UserController->addConnection] User ${request.params.id} successfully saved`,
-          {
-            request,
-            user: {
-              id: request.params.id,
-            },
+    await user.save().then(() => {
+      logger.info(
+        `[UserController->addConnection] User ${request.params.id} successfully saved`,
+        {
+          request,
+          user: {
+            id: request.params.id,
           },
-        );
-      }),
-      NotificationService.send(notification).then(() => {
-        logger.info(
-          `[UserController->addConnection] Successfully sent connection_request notification to ${user.email}`,
-          {
-            request,
-            user: {
-              email: user.email,
-            },
-          },
-        );
-      }),
-    ]);
+        },
+      );
+    });
 
     return user;
   },
@@ -2480,20 +2431,7 @@ module.exports = {
         },
       },
     );
-    // Send notification
-    const notification = {
-      type: 'connection_approved',
-      createdBy: user,
-      user: cuser,
-    };
-    await NotificationService.send(notification).then(() => {
-      logger.info(
-        `[UserController->updateConnection] Successfully sent connection_approved notification to ${cuser.email}`,
-        {
-          request,
-        },
-      );
-    });
+
     return user;
   },
 

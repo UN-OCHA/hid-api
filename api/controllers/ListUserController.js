@@ -2,8 +2,6 @@ const Boom = require('@hapi/boom');
 const _ = require('lodash');
 const List = require('../models/List');
 const User = require('../models/User');
-// const OutlookService = require('../services/OutlookService');
-const NotificationService = require('../services/NotificationService');
 const GSSSyncService = require('../services/GSSSyncService');
 const config = require('../../config/env')[process.env.NODE_ENV];
 
@@ -16,8 +14,7 @@ const { logger } = config;
 
 /**
  * Helper function used for checkins.
- * Checks a user into a list and sends notifications
- * if needed.
+ * Checks a user into a list.
  */
 function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
   const user = auser;
@@ -109,40 +106,6 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
     type: 'info',
     message: `[ListUserController->checkinHelper] Saved list ${list._id.toString()}`,
   });
-  // Notify list managers of the checkin
-  promises.push(NotificationService.notifyMultiple(managers, {
-    type: 'checkin',
-    createdBy: user,
-    params: { list },
-  }));
-  pendingLogs.push({
-    type: 'info',
-    message: `[ListUserController->checkinHelper] Sent notification of type checkin to list managers for list ${list._id.toString()}`,
-  });
-  // Notify user if needed
-  if (currentUser._id.toString() !== user._id.toString() && list.type !== 'list' && notify === true && !user.hidden) {
-    promises.push(NotificationService.send({
-      type: 'admin_checkin',
-      createdBy: currentUser,
-      user,
-      params: { list },
-    }));
-    pendingLogs.push({
-      type: 'info',
-      message: `[ListUserController->checkinHelper] User ${user._id.toString()} was checked in by ${currentUser._id.toString()}; sent admin_checkin notification`,
-    });
-  }
-  // Notify list owner and managers of the new checkin if needed
-  if (payload.pending) {
-    promises.push(NotificationService.sendMultiple(managers, {
-      type: 'pending_checkin',
-      params: { list, user },
-    }));
-    pendingLogs.push({
-      type: 'info',
-      message: `[ListUserController->checkinHelper] Sent pending_checkin notification to list owners and managers of ${list._id.toString()}`,
-    });
-  }
   // Synchronize google spreadsheets
   promises.push(GSSSyncService.addUserToSpreadsheets(list._id, user));
   pendingLogs.push({
@@ -249,19 +212,6 @@ module.exports = {
     logger.info(
       `[ListUserController->update] Updated user ${record._id.toString()} with new checkin record`,
     );
-    if (listuser.pending === true && request.payload.pending === false) {
-      // Send a notification to inform user that his checkin is not pending anymore
-      const notification = {
-        type: 'approved_checkin',
-        user,
-        createdBy: request.auth.credentials,
-        params: { list },
-      };
-      await NotificationService.send(notification);
-      logger.info(
-        `[ListUserController->update] Sent a notification of type approved_checkin to user ${user._id.toString()}`,
-      );
-    }
     return user;
   },
 
@@ -313,46 +263,26 @@ module.exports = {
         list.countVerified -= 1;
       }
     }
+
     promises.push(list.save());
     pendingLogs.push({
       type: 'info',
       message: `[ListUserController->checkout] Saved list ${list._id.toString()}`,
     });
+
     promises.push(user.save());
     pendingLogs.push({
       type: 'info',
       message: `[ListUserController->checkout] Saved user ${user._id.toString()}`,
     });
-    // Send notification if needed
-    if (request.auth.credentials.id !== userId && !user.hidden) {
-      promises.push(NotificationService.send({
-        type: 'admin_checkout',
-        createdBy: request.auth.credentials,
-        user,
-        params: { list },
-      }));
-      pendingLogs.push({
-        type: 'info',
-        message: `[ListUserController->checkout] Sent notification of type admin_checkout to user ${userId}`,
-      });
-    }
-    // Notify list managers of the checkin
-    promises.push(NotificationService.notifyMultiple(list.managers, {
-      type: 'checkout',
-      createdBy: user,
-      params: { list },
-    }));
-    pendingLogs.push({
-      type: 'info',
-      message: '[ListUserController->checkout] Sent notification of type checkout to list managers',
-    });
+
     // Synchronize google spreadsheets
     promises.push(GSSSyncService.deleteUserFromSpreadsheets(list._id, user.id));
     pendingLogs.push({
       type: 'info',
       message: `[ListUserController->checkout] Deleted user ${user.id} from google spreadsheets associated to list ${list._id.toString()}`,
     });
-    // promises.push(OutlookService.deleteUserFromContactFolders(list._id, user.id));
+
     await Promise.all(promises);
     for (let i = 0; i < pendingLogs.length; i += 1) {
       logger.log(pendingLogs[i]);
