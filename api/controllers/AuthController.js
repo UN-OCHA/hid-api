@@ -972,21 +972,9 @@ module.exports = {
       claims_supported: [
         'iss',
         'sub',
-        'aud',
-        'exp',
-        'iat',
         'name',
-        'given_name',
-        'family_name',
-        'middle_name',
-        'picture',
         'email',
         'email_verified',
-        'zoneinfo',
-        'locale',
-        'phone_number',
-        'phone_number_verified',
-        'updated_at',
       ],
     };
     return out;
