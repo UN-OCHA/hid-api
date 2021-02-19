@@ -1,5 +1,3 @@
-/* eslint no-await-in-loop: "off", no-restricted-syntax: "off", no-console: "off" */
-/* eslint func-names: "off" */
 /**
  * @module removeFieldAuthOnly
  * @description Permanently removes the authOnly field from all users.
@@ -18,42 +16,29 @@ mongoose.connect(store.uri, store.options);
 const User = require('../api/models/User');
 
 async function run() {
-  // Load all users.
-  const cursor = User.find({}).cursor({ noCursorTimeout: true });
-
-  // Loop through the query results.
-  let user;
-  for (user = await cursor.next(); user != null; user = await cursor.next()) {
-    // Drop the `authOnly` field from this user.
-    await User.collection.updateOne({
-      _id: user._id,
-    }, {
-      $unset: {
-        authOnly: 1,
-      },
-    }).catch((err) => {
-      logger.error(
-        `[commands->removeFieldAuthOnly] ${err.message}`,
-        {
-          migration: true,
-          fail: true,
-          stack_trace: err.stack,
-        },
-      );
-    });
-
-    // Log it
-    logger.info(
-      '[commands->removeFieldAuthOnly] Removing authOnly field from a user object',
+  // Drop `authOnly` from all users.
+  await User.collection.updateMany({}, {
+    $unset: {
+      'authOnly': 1,
+    },
+  }).catch(err => {
+    logger.warn(
+      `[commands->removeFieldAuthOnly] ${err.message}`,
       {
         migration: true,
-        user: {
-          id: user._id.toString(),
-          email: user.email || '',
-        },
+        fail: true,
+        stack_trace: err.stack,
       },
     );
-  }
+  });
+
+  // Log it
+  logger.info(
+    '[commands->removeFieldAuthOnly] Removed authOnly field from all user objects',
+    {
+      migration: true,
+    },
+  );
 
   // We're done.
   process.exit();
@@ -61,7 +46,14 @@ async function run() {
 
 (async function () {
   await run();
-}()).catch((e) => {
-  console.log(e);
+}()).catch(err => {
+  logger.error(
+    `[commands->removeFieldAuthOnly] ${err.message}`,
+    {
+      migration: true,
+      fail: true,
+      stack_trace: err.stack,
+    },
+  );
   process.exit(1);
 });
