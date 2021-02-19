@@ -621,11 +621,6 @@ const UserSchema = new Schema({
     default: false,
     adminOnly: true,
   },
-  // Whether this user is only using auth
-  authOnly: {
-    type: Boolean,
-    default: true,
-  },
   // Whether the user uses TOTP for security
   totp: {
     type: Boolean,
