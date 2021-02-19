@@ -1,10 +1,11 @@
 /**
- * Routes optionsuration
- * (trails.options.routes)
+ * Routes for HID Auth + API
  *
- * optionsure how routes map to views and controllers.
+ * - Anything prefixed with "/api" is the API
+ * - Everything else is HID Auth, which is a mix of OAuth-specific routes, plus
+ *   user-facing things like login forms, password resets, profile, and so forth
  *
- * @see http://trailsjs.io/doc/options/routes.js
+ * @see https://hapi.dev/tutorials/routing/
  */
 const Joi = require('@hapi/joi');
 
@@ -658,27 +659,6 @@ module.exports = [
         UserPolicy.canClaim,
       ],
       handler: UserController.claimEmail,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'POST',
-    path: '/api/v2/user/{id}/picture',
-    options: {
-      pre: [
-        UserPolicy.canUpdate,
-      ],
-      handler: UserController.updatePicture,
-      payload: {
-        output: 'data',
-        parse: true,
-        allow: 'multipart/form-data',
-      },
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),

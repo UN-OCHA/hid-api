@@ -1,13 +1,7 @@
 /**
  * Session Configuration
- * (app.config.session)
- *
- * @see http://trailsjs.io/doc/config/session.js
  */
-
-
 module.exports = {
-
   /**
    * Define the session implementation, e.g. 'jwt' or 'cookie'
    */
@@ -28,5 +22,4 @@ module.exports = {
   cookie: {
     maxAge: 24 * 60 * 60 * 1000,
   },
-
 };

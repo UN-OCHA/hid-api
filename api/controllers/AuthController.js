@@ -544,7 +544,30 @@ module.exports = {
     }
   },
 
+  /**
+   * User-facing dialog to authorize an OAuth Client.
+   *
+   * This is the entry point for OAuth flows. Here's a list of potential events:
+   *
+   * - It requires an active user session so it first redirects to login form if
+   *   the user isn't logged in.
+   * - Once the user arrives back here with a session, the OAuth Client data is
+   *   validated to ensure that it's a legitimate attempt from the real website.
+   * - Now the user profile is checked to see if they have this OAuth Client in
+   *   their approved list.
+   * - If YES, they redirect back to the website. The end.
+   * - If NO, they are presented with the Allow/Deny buttons. For further
+   *   progress, look at submission handler.
+   *
+   * @see authorizeOauth2()
+   */
   async authorizeDialogOauth2(request, reply) {
+    // For some errors, we end up showing a prompt saying that the problem
+    // originated on the website which sent the user to HID. It's not always
+    // possible, but when we can we populate this URL so we can link them back
+    // to where they came from.
+    let errorRedirectUrl = '';
+
     try {
       const oauth = request.server.plugins['hapi-oauth2orize'];
       const prompt = request.query.prompt ? request.query.prompt : '';
@@ -649,17 +672,22 @@ module.exports = {
                 request,
                 security: true,
                 fail: true,
+                user: {
+                  id: cookie.userId,
+                },
                 oauth: {
                   client_id: client.id,
                   redirect_uri: redirect,
                 },
-                user: {
-                  id: cookie.userId,
-                },
               },
             );
+
+            // extract hostname from redirect URL
+            errorRedirectUrl = new URL(redirect).origin;
+
             throw Error(`Wrong redirect URI: ${redirect}`);
           }
+
           // The request passed validation. Proceed.
           return done(null, client, redirect);
         } catch (err) {
@@ -734,6 +762,7 @@ module.exports = {
           message: `
             <p>The website which sent you to HID appears to have invalid configuration.</p>
             <p>We have logged the problem internally.</p>
+            ${ errorRedirectUrl ? '<br><p>Go back to <a href="'+ errorRedirectUrl +'">'+ errorRedirectUrl +'</a></p>' : '' }
           `,
         },
         isSuccess: false,
@@ -741,11 +770,22 @@ module.exports = {
     }
   },
 
+  /**
+   * Form submission handler to OAuth Client authorizations.
+   *
+   * This function supports the user-facing function by handling all the form
+   * submissions.
+   *
+   *   - If ALLOW, the OAuth Client is added to their profile, and they redirect
+   *     to the original website.
+   *   - If DENY, the process halts and they get redirected to their HID dashboard.
+   */
   async authorizeOauth2(request, reply) {
     try {
       const oauth = request.server.plugins['hapi-oauth2orize'];
       const cookie = request.yar.get('session');
 
+      // Force users without existing sessions to log in.
       if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
         logger.info(
           '[AuthController->authorizeOauth2] Got request to /oauth/authorize without session. Redirecting to the login page.',
@@ -768,6 +808,7 @@ module.exports = {
           }#login`);
       }
 
+      // Look up user in DB.
       const user = await User.findOne({ _id: cookie.userId });
       if (!user) {
         logger.warn(
@@ -788,16 +829,27 @@ module.exports = {
       user.sanitize(user);
       request.auth.credentials = user;
 
-      // Save authorized client if user allowed
+      // Set up OAuth Client to potentially be stored on user profile.
       const clientId = request.yar.authorize[request.payload.transaction_id].client;
+
+      // If user clicked 'Deny', redirect to HID homepage.
       if (!request.payload.bsubmit || request.payload.bsubmit === 'Deny') {
         return reply.redirect('/');
       }
+
+      // If the user clicked 'Allow', save OAuth Client to user profile
       if (!user.hasAuthorizedClient(clientId) && request.payload.bsubmit === 'Allow') {
+        // TODO: we could store an array of objects including the current time
+        //       when adding the client, in order to offer security-related info
+        //       when the user views their OAuth settings.
+        //
+        // @see HID-2156
         user.authorizedClients.push(request.yar.authorize[request.payload.transaction_id].client);
         user.markModified('authorizedClients');
+        await user.save();
+
         logger.info(
-          '[AuthController->authorizeOauth2] Added authorizedClient to user',
+          '[AuthController->authorizeOauth2] Added OAuth Client to user profile',
           {
             request,
             security: true,
@@ -810,7 +862,6 @@ module.exports = {
             },
           },
         );
-        await user.save();
       }
       const response = await oauth.decision(request, reply);
       return response;
@@ -828,10 +879,16 @@ module.exports = {
     }
   },
 
+  /**
+   * Issues an access_token during "Extra Secure" OAuth flows.
+   *
+   * @see https://github.com/UN-OCHA/hid_api/wiki/Integrating-with-HID-via-OAuth#step-2--request-access-and-id-tokens
+   */
   async accessTokenOauth2(request, reply) {
     try {
       const oauth = request.server.plugins['hapi-oauth2orize'];
       const { code } = request.payload;
+
       if (!code && request.payload.grant_type !== 'refresh_token') {
         logger.warn(
           '[AuthController->accessTokenOauth2] Unsuccessful access token request due to missing authorization code.',
@@ -841,19 +898,21 @@ module.exports = {
             fail: true,
           },
         );
-        throw Boom.badRequest('Missing authorization code');
+        return Boom.unauthorized('Missing authorization code');
       }
+
       // Check client_id and client_secret
       let client = null;
       let clientId = null;
       let clientSecret = null;
+
+      // Are we using POST body authorization?
       if (request.payload.client_id && request.payload.client_secret) {
-        // Using client_secret_post authorization
         clientId = request.payload.client_id;
         clientSecret = request.payload.client_secret;
-      } else if (request.headers.authorization) {
-        // Using client_secret_basic authorization
-        // Decrypt the Authorization header.
+      }
+      // Are we using Basic Auth?
+      else if (request.headers.authorization) {
         const parts = request.headers.authorization.split(' ');
         if (parts.length === 2) {
           const credentials = parts[1];
@@ -862,7 +921,9 @@ module.exports = {
           const cparts = text.split(':');
           [clientId, clientSecret] = cparts;
         }
-      } else {
+      }
+      // Neither authorization method found. Log it.
+      else {
         logger.warn(
           '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to invalid client authentication.',
           {
@@ -871,13 +932,14 @@ module.exports = {
             fail: true,
           },
         );
-        throw Boom.badRequest('invalid client authentication');
+        return Boom.unauthorized('invalid client authentication');
       }
-      // Using client_secret_post authentication method.
+
+      // Look up OAuth Client in DB.
       client = await Client.findOne({ id: clientId });
       if (!client) {
         logger.warn(
-          '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to wrong client ID.',
+          '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to non-existent client ID.',
           {
             request,
             security: true,
@@ -887,8 +949,10 @@ module.exports = {
             },
           },
         );
-        throw Boom.badRequest('invalid client_id');
+        return Boom.badRequest('invalid client_id');
       }
+
+      // Does the client_secret we received match the DB entry?
       if (clientSecret !== client.secret) {
         logger.warn(
           '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to wrong client authentication.',
@@ -902,10 +966,14 @@ module.exports = {
             },
           },
         );
-        throw Boom.badRequest('invalid client_secret');
+        return Boom.unauthorized('invalid client_secret');
       }
+
+      // Grab token and type.
       const token = request.payload.code ? request.payload.code : request.payload.refresh_token;
       const type = request.payload.code ? 'code' : 'refresh';
+
+      // Find authorization code.
       const ocode = await OauthToken.findOne({ token, type }).populate('client user');
       if (!ocode) {
         logger.warn(
@@ -915,14 +983,17 @@ module.exports = {
             security: true,
             fail: true,
             oauth: {
-              code,
+              client_id: clientId,
+              token: `${token.slice(0, 3)}...${token.slice(-3)}`,
+              type,
             },
           },
         );
+
         // OAuth2 standard error.
         const error = Boom.badRequest('invalid authorization code');
         error.output.payload.error = 'invalid_grant';
-        throw error;
+        return error;
       } else {
         logger.info(
           '[AuthController->accessTokenOauth2] Successful access token request',
@@ -930,8 +1001,8 @@ module.exports = {
             request,
             security: true,
             oauth: {
-              client_id: request.payload.client_id,
-              client_secret: `${request.payload.client_secret.slice(0, 3)}...${request.payload.client_secret.slice(-3)}`,
+              client_id: clientId,
+              client_secret: `${clientSecret.slice(0, 3)}...${clientSecret.slice(-3)}`,
             },
           },
         );
@@ -949,7 +1020,9 @@ module.exports = {
           stack_trace: err.stack,
         },
       );
-      return err;
+
+      // Send a documented error code back.
+      return Boom.badRequest(err.message);
     }
   },
 
