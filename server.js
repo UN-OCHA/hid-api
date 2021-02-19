@@ -1,7 +1,5 @@
 /**
  * @module server
- *
- * Start up the Trails Application.Test
  */
 
 const newrelic = require('newrelic');

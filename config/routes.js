@@ -1,10 +1,11 @@
 /**
- * Routes optionsuration
- * (trails.options.routes)
+ * Routes for HID Auth + API
  *
- * optionsure how routes map to views and controllers.
+ * - Anything prefixed with "/api" is the API
+ * - Everything else is HID Auth, which is a mix of OAuth-specific routes, plus
+ *   user-facing things like login forms, password resets, profile, and so forth
  *
- * @see http://trailsjs.io/doc/options/routes.js
+ * @see https://hapi.dev/tutorials/routing/
  */
 const Joi = require('@hapi/joi');
 
