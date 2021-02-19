@@ -1,11 +1,6 @@
 /**
-* Server Configuration
-* (app.config.web)
-*
-* Configure the Web Server
-*
-* @see {@link http://trailsjs.io/doc/config/web}
-*/
+ * Server Configuration
+ */
 const inert = require('@hapi/inert');
 const ejs = require('ejs');
 const vision = require('@hapi/vision');
@@ -20,7 +15,6 @@ const OauthToken = require('../api/models/OauthToken');
 const JwtService = require('../api/services/JwtService');
 
 module.exports = {
-
   /**
   * The port to bind the web server to
   */
@@ -49,7 +43,7 @@ module.exports = {
       plugin: yar,
       options: {
         cache: {
-          expiresIn: 4 * 60 * 60 * 1000, // 4 hours sessions
+          expiresIn: 4 * 60 * 60 * 1000, // 4-hour sessions
         },
         cookieOptions: {
           password: process.env.COOKIE_PASSWORD,

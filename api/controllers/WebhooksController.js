@@ -10,7 +10,6 @@ const { logger } = config;
 
 /**
  * @module WebhooksController
- * @description Generated Trails.js Controller.
  */
 
 // Notify users of a new disaster

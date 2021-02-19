@@ -4,7 +4,6 @@ const ejs = require('ejs');
 const axios = require('axios');
 const moment = require('moment');
 const acceptLanguage = require('accept-language');
-const sharp = require('sharp');
 const validator = require('validator');
 
 const hidAccount = '5b2128e754a0d6046d6c69f2';
@@ -1462,56 +1461,6 @@ module.exports = {
     }
     await EmailService.sendClaim(record, appResetUrl);
     return reply.response('Claim email sent successfully').code(202);
-  },
-
-  async updatePicture(request) {
-    const userId = request.params.id;
-
-    const data = request.payload;
-    if (data.file) {
-      const image = sharp(data.file);
-      const record = await User.findOne({ _id: userId });
-      if (!record) {
-        logger.warn(
-          `[UserController->updatePicture] User ${request.params.id} not found`,
-          {
-            request,
-            fail: true,
-          },
-        );
-        throw Boom.notFound();
-      }
-      const metadata = await image.metadata();
-      if (metadata.format !== 'jpeg' && metadata.format !== 'png') {
-        logger.warn(
-          `[UserController->updatePicture] ${metadata.format} is not a valid image format`,
-          {
-            request,
-            fail: true,
-          },
-        );
-        throw Boom.badRequest('Invalid image format. Only jpeg and png are accepted');
-      }
-      let path = `${__dirname}/../../assets/pictures/${userId}.`;
-      let ext = '';
-      ext = metadata.format;
-      path += ext;
-      await image.resize(200, 200).toFile(path);
-      record.picture = `${process.env.ROOT_URL}/assets/pictures/${userId}.${metadata.format}`;
-      record.lastModified = new Date();
-      await record.save();
-      logger.info(
-        `[UserController->updatePicture] Successfully updated picture for user ${record._id.toString()}`,
-        {
-          request,
-          user: {
-            id: record._id.toString(),
-          },
-        },
-      );
-      return record;
-    }
-    throw Boom.badRequest('No file found');
   },
 
   /*
