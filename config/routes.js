@@ -670,27 +670,6 @@ module.exports = [
 
   {
     method: 'POST',
-    path: '/api/v2/user/{id}/picture',
-    options: {
-      pre: [
-        UserPolicy.canUpdate,
-      ],
-      handler: UserController.updatePicture,
-      payload: {
-        output: 'data',
-        parse: true,
-        allow: 'multipart/form-data',
-      },
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'POST',
     path: '/api/v2/user/{id}/emails',
     options: {
       pre: [
