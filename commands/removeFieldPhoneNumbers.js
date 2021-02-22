@@ -16,12 +16,16 @@ mongoose.connect(store.uri, store.options);
 const User = require('../api/models/User');
 
 async function run() {
-  // Drop `phone_numbers`, `phone_number_verified`, and `phonesVisibility` from
-  // all users.
+  // Drop the following fields from all users:
+  // - phone_numbers
+  // - phone_number_verified
+  // - phone_number_type
+  // - phonesVisibility
   await User.collection.updateMany({}, {
     $unset: {
       'phone_numbers': 1,
       'phone_number_verified': 1,
+      'phone_number_type': 1,
       'phonesVisibility': 1,
     },
   }).catch(err => {
