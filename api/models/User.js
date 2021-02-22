@@ -832,14 +832,6 @@ UserSchema.methods = {
         }
       }
 
-      if (this.phonesVisibility !== 'anyone') {
-        if ((this.phonesVisibility === 'verified' && !user.verified)
-        || (this.phonesVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
-          this.phone_number = null;
-          this.phone_numbers = [];
-        }
-      }
-
       if (this.locationsVisibility !== 'anyone') {
         if ((this.locationsVisibility === 'verified' && !user.verified)
         || (this.locationsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
