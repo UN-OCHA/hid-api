@@ -86,7 +86,7 @@ module.exports = {
    *     in: query
    *     type: integer
    *     required: false
-   *     default: 50
+   *     default: 100
    * responses:
    *   '200':
    *     description: Array of client objects.
@@ -129,27 +129,85 @@ module.exports = {
    *   '404':
    *     description: Requested client not found.
    */
-  async find(request, reply) {
-    const options = HelperService.getOptionsFromQuery(request.query);
-    const criteria = HelperService.getCriteriaFromQuery(request.query);
+  async find(request, reply, internalArgs) {
+    let user, options, criteria, clientId, sort;
 
-    if (request.params.id) {
-      criteria._id = request.params.id;
-      const result = await Client.findOne(criteria);
+    if (internalArgs && internalArgs.user) {
+      user = internalArgs.user;
+      options = HelperService.getOptionsFromQuery(internalArgs.options || {});
+      criteria = HelperService.getCriteriaFromQuery(internalArgs.criteria || {});
+      clientId = internalArgs.id || null;
+      sort = internalArgs.sort || 'name';
+    } else {
+      user = request.auth.credentials;
+      options = HelperService.getOptionsFromQuery(request.query);
+      criteria = HelperService.getCriteriaFromQuery(request.query);
+      clientId = request.params.id || null;
+      sort = request.query.sort || 'name';
+    }
+
+    // If we have a specific Client ID, try to look it up.
+    if (clientId) {
+      criteria._id = clientId;
+      const result = await Client.findOne(criteria).then(client => {
+        logger.info(
+          `[ClientController->find] Admin viewed a single OAuth Client with ID ${client._id}`,
+          {
+            security: true,
+            user: {
+              id: user.id,
+              email: user.email,
+              admin: user.is_admin,
+            },
+            oauth: {
+              client_id: client.id,
+            },
+          }
+        );
+
+        return client;
+      });
+
       if (!result) {
         logger.warn(
-          '[ClientController->find] Could not find client',
+          `[ClientController->find] Could not find client with ID ${clientId}`,
           {
-            request,
+            security: true,
+            user: {
+              id: user.id,
+              email: user.email,
+              admin: user.is_admin,
+            },
           },
         );
         throw Boom.notFound();
       }
+
       return result;
     }
+
+    // Otherwise do a larger query for multiple records.
+    options.sort = sort;
     const results = await HelperService.find(Client, criteria, options);
-    const number = await Client.countDocuments(criteria);
-    return reply.response(results).header('X-Total-Count', number);
+
+    // Count results and totals for pagination+logging
+    const count = results.length;
+    const total = await Client.countDocuments(criteria);
+
+    logger.info(
+      `[ClientController->find] Admin viewed a list of OAuth Clients containing ${count} records`,
+      {
+        security: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          admin: user.is_admin,
+        },
+      }
+    );
+
+    // Send response.
+    return reply.response(results).header('X-Total-Count', total);
   },
 
   /*
@@ -173,8 +231,7 @@ module.exports = {
    * responses:
    *   '200':
    *     description: >-
-   *       The client object. _**NOTE:** at this time, the function returns the
-   *       UNCHANGED client if the object you send contains validation errors._
+   *       The client object.
    *     content:
    *       application/json:
    *         schema:
@@ -186,24 +243,44 @@ module.exports = {
    *   '404':
    *     description: Requested client not found.
    */
-  async update(request) {
-    // @TODO: Make this return 401 with validation feedback like POST.
-    //
-    // @see HID-2080
-    const client = await Client.findOneAndUpdate(
-      { _id: request.params.id },
-      request.payload,
-      { runValidators: true, new: true },
-    );
+  async update(request, internalArgs) {
+    let clientId, clientData;
 
-    logger.info(
-      '[ClientController->update] Updated client',
-      {
-        request,
-      },
-    );
+    if (internalArgs && internalArgs.clientId && internalArgs.clientData) {
+      clientId = internalArgs.clientId;
+      clientData = internalArgs.clientData;
+    } else {
+      clientId = request.params.id;
+      clientData = request.payload;
+    }
 
-    return client;
+    // Read record from DB.
+    const client = await Client.findOne({ _id: clientId });
+
+    // Update with the form submission data.
+    client.id = clientData.id;
+    client.name = clientData.name;
+    client.secret = clientData.secret;
+    client.redirectUri = clientData.redirectUri;
+    client.redirectUrls = clientData.redirectUrls;
+    client.description = clientData.description;
+
+    // Write to DB.
+    const result = await client.save().then(data => {
+      logger.info(
+        '[ClientController->update] Updated client',
+        {
+          security: true,
+          request,
+        },
+      );
+
+      return client;
+    }).catch(err => {
+      throw Boom.badRequest(err.message);
+    });
+
+    return result;
   },
 
   /*

@@ -53,11 +53,16 @@ module.exports = {
   async login(request, reply) {
     const cookie = request.yar.get('session');
 
-    if (cookie && cookie.userId && cookie.totp === true) { // User is already logged in
-      if (request.query.client_id
+    // User is already logged in.
+    if (cookie && cookie.userId && cookie.totp === true) {
+      // Check that all required params for OAuth seem intact. If we find all of
+      // these params, assume the user is logging into another website with HID.
+      if (
+        request.query.client_id
         && request.query.redirect_uri
         && request.query.response_type
-        && request.query.scope) {
+        && request.query.scope
+      ) {
         // Redirect to /oauth/authorize
         let redirect = request.query.redirect || '/oauth/authorize';
         redirect += `?client_id=${request.query.client_id}`;
@@ -70,10 +75,13 @@ module.exports = {
 
         return reply.redirect(redirect);
       }
-      // User is already logged in
+
+      // It seems like the user navigated to HID themselves and is just logging
+      // in by their own choice. Show user dashboard.
       return reply.redirect('/user');
     }
 
+    // User is logged in, but TOTP challenge is not answered yet.
     if (cookie && cookie.userId && cookie.totp === false) {
       // Show TOTP form
       return reply.view('totp', {
@@ -95,30 +103,8 @@ module.exports = {
       alert: false,
     };
 
-    // Check client ID and redirect URI at this stage, so we can send an error message if needed.
-    if (request.query.client_id) {
-      try {
-        const client = await Client.findOne({ id: request.query.client_id });
-        if (!client
-          || (client && client.redirectUri !== request.query.redirect_uri
-            && !client.redirectUrls.includes(request.query.redirect_uri))) {
-          loginArgs.alert = {
-            type: 'error',
-            message: 'The configuration of the client application is invalid. We can not log you in.',
-          };
-          return reply.view('login', loginArgs);
-        }
-        return reply.view('login', loginArgs);
-      } catch (err) {
-        loginArgs.alert = {
-          type: 'error',
-          message: 'Internal server error. We can not log you in. Please let us know at info@humanitarian.id',
-        };
-        return reply.view('login', loginArgs);
-      }
-    } else {
-      return reply.view('login', loginArgs);
-    }
+    // Display login page.
+    return reply.view('login', loginArgs);
   },
 
   async logout(request, reply) {

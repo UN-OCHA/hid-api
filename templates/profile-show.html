@@ -15,8 +15,8 @@
             <div class="cd-card__container">
               <div class="cd-card__description [ flow ]">
                 <h2>Basic profile info</h2>
-                <p><strong>Given Name:</strong> <%= user.given_name %></p>
-                <p><strong>Family name:</strong> <%= user.family_name %></p>
+                <p><strong>Given Name:</strong> <span class="name--given"><%= user.given_name %></span></p>
+                <p><strong>Family name:</strong> <span class="name--family"><%= user.family_name %></span></p>
               </div>
             </div>
           </div>
@@ -59,7 +59,7 @@
           </div>
         </div>
         <div class="form-actions">
-        <a href="/profile/edit" class="cd-button cd-button--bold cd-button--uppercase">Edit Profile</a>
+        <a href="/profile/edit" class="cd-button cd-button--bold cd-button--uppercase t-btn-profile-edit">Edit Profile</a>
         </div>
       </div>
     </div>

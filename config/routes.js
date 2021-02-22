@@ -1,10 +1,11 @@
 /**
- * Routes optionsuration
- * (trails.options.routes)
+ * Routes for HID Auth + API
  *
- * optionsure how routes map to views and controllers.
+ * - Anything prefixed with "/api" is the API
+ * - Everything else is HID Auth, which is a mix of OAuth-specific routes, plus
+ *   user-facing things like login forms, password resets, profile, and so forth
  *
- * @see http://trailsjs.io/doc/options/routes.js
+ * @see https://hapi.dev/tutorials/routing/
  */
 const Joi = require('@hapi/joi');
 
@@ -32,6 +33,7 @@ const TOTPController = require('../api/controllers/TOTPController');
 const UserController = require('../api/controllers/UserController');
 const UserPolicy = require('../api/policies/UserPolicy');
 const AuthController = require('../api/controllers/AuthController');
+const AdminController = require('../api/controllers/AdminController');
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 const childAttributes = [
@@ -252,6 +254,32 @@ module.exports = [
       auth: false,
     },
   },
+
+  {
+    method: 'GET',
+    path: '/admin',
+    handler: AdminController.adminOauthClients,
+    options: {
+      auth: false,
+    },
+  },
+  {
+    method: 'GET',
+    path: '/admin/client/{id}',
+    handler: AdminController.adminOauthClientEdit,
+    options: {
+      auth: false,
+    },
+  },
+  {
+    method: 'POST',
+    path: '/admin/client',
+    handler: AdminController.adminOauthClientEditSubmit,
+    options: {
+      auth: false,
+    },
+  },
+
 
   {
     method: 'GET',
@@ -632,27 +660,6 @@ module.exports = [
         UserPolicy.canClaim,
       ],
       handler: UserController.claimEmail,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'POST',
-    path: '/api/v2/user/{id}/picture',
-    options: {
-      pre: [
-        UserPolicy.canUpdate,
-      ],
-      handler: UserController.updatePicture,
-      payload: {
-        output: 'data',
-        parse: true,
-        allow: 'multipart/form-data',
-      },
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),

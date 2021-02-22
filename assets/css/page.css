@@ -169,7 +169,9 @@ label + input {
 
 input[type="text"],
 input[type="password"],
-input[type="email"] {
+input[type="email"],
+input[type="url"],
+textarea {
   -webkit-appearance: none;
      -moz-appearance: none;
           appearance: none;

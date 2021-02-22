@@ -360,20 +360,36 @@ module.exports = {
   },
 
   /**
-   * Create a session and redirect to /oauth/authorize
+   * POST Handler for login form submissions.
+   *
+   * Create a user session, and potentially redirect when the user arrived from
+   * another website.
    */
   async login(request, reply) {
+    // Grab cookie
     const cookie = request.yar.get('session');
+
+    // It looks like TOTP is needed for this user.
     if (cookie && cookie.userId && cookie.totp === false) {
       try {
+        // Prevent form spamming by counting submissions and locking accounts
+        // which fail to login repeatedly in a short time window.
         const now = Date.now();
         const offset = 5 * 60 * 1000;
         const d5minutes = new Date(now - offset);
-        const [number, user] = await Promise.all([
-          Flood.count({ type: 'totp', email: cookie.userId, createdAt: { $gte: d5minutes.toISOString() } }),
+        const [floodCount, user] = await Promise.all([
+          Flood.count({
+            type: 'totp',
+            email: cookie.userId,
+            createdAt: {
+              $gte: d5minutes.toISOString(),
+            },
+          }),
           User.findOne({ _id: cookie.userId }),
         ]);
-        if (number >= 5) {
+
+        // If flood-count too high, lock further attempts.
+        if (floodCount >= 5) {
           logger.warn(
             '[AuthController->login] Account locked for 5 minutes',
             {
@@ -387,19 +403,28 @@ module.exports = {
           );
           throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
         }
+
+        // Check for TOTP codes
         const token = request.payload['x-hid-totp'];
         try {
           await AuthPolicy.isTOTPValid(user, token);
         } catch (err) {
           if (err.output.statusCode === 401) {
             // Create a flood entry
-            await Flood
-              .create({ type: 'totp', email: cookie.userId, user });
+            await Flood.create({
+              type: 'totp',
+              email: cookie.userId,
+              user,
+            });
           }
           throw err;
         }
+
+        // If we got here, the user passed TOTP.
         cookie.totp = true;
         request.yar.set('session', cookie);
+
+        // If save device was checked, avoid TOTP prompts for 30 days.
         if (request.payload['x-hid-totp-trust']) {
           await HelperService.saveTOTPDevice(request, user);
           const tindex = user.trustedDeviceIndex(request.headers['user-agent']);
@@ -408,16 +433,28 @@ module.exports = {
             name: 'x-hid-totp-trust',
             value: random,
             options: {
-              ttl: 30 * 24 * 60 * 60 * 1000, domain: 'humanitarian.id', isSameSite: false, isHttpOnly: false,
+              ttl: 30 * 24 * 60 * 60 * 1000,
+              domain: 'humanitarian.id',
+              isSameSite: false,
+              isHttpOnly: false,
             },
           });
         }
+
+        // Redirect.
+        //
+        // - For plain logins, this will go to user dashboard.
+        // - For OAuth flows, this will either redirect to the Authorize prompt
+        //   or it will directly send them back to the original site.
         return loginRedirect(request, reply);
       } catch (err) {
+        // User needs TOTP and header wasn't present. Show TOTP prompt.
         const alert = {
           type: 'error',
           message: err.output.payload.message,
         };
+
+        // Display form to user.
         return reply.view('totp', {
           title: 'Enter your Authentication code',
           query: request.payload,
@@ -426,29 +463,49 @@ module.exports = {
         });
       }
     }
+
+    // If the user has submitted the TOTP prompt, redirect.
     if (cookie && cookie.userId && cookie.totp === true) {
       return loginRedirect(request, reply);
     }
+
     try {
       const result = await loginHelper(request);
       if (!result.totp) {
         // Store user login time.
         result.auth_time = new Date();
         await result.save();
-        request.yar.set('session', { userId: result._id, totp: true });
+        request.yar.set('session', {
+          userId: result._id,
+          totp: true,
+        });
         return loginRedirect(request, reply);
       }
-      // Check to see if device is not a trusted device
+
+      // Check to see if device is a trusted device.
       const trusted = request.state['x-hid-totp-trust'];
       if (trusted && result.isTrustedDevice(request.headers['user-agent'], trusted)) {
-        // If trusted device, go on
-        // Store user login time.
+        // If trusted device, go onto store user login time.
         result.auth_time = new Date();
         await result.save();
-        request.yar.set('session', { userId: result._id, totp: true });
+
+        // Set cookie.
+        request.yar.set('session', {
+          userId: result._id,
+          totp: true,
+        });
+
+        // Redirect
         return loginRedirect(request, reply);
       }
-      request.yar.set('session', { userId: result._id, totp: false });
+
+      // Set cookie
+      request.yar.set('session', {
+        userId: result._id,
+        totp: false,
+      });
+
+      // Display TOTP prompt
       return reply.view('totp', {
         title: 'Enter your Authentication code',
         query: request.payload,
@@ -472,6 +529,8 @@ module.exports = {
       if (err.message === 'password is expired') {
         alertMessage = 'We could not log you in because your password is expired. Following UN regulations, as a security measure passwords must be udpated every six months. Kindly reset your password by clicking on the "Forgot/Reset password" link below.';
       }
+
+      // Display login form to user.
       return reply.view('login', {
         title: 'Log into Humanitarian ID',
         query: request.payload,
@@ -485,7 +544,30 @@ module.exports = {
     }
   },
 
+  /**
+   * User-facing dialog to authorize an OAuth Client.
+   *
+   * This is the entry point for OAuth flows. Here's a list of potential events:
+   *
+   * - It requires an active user session so it first redirects to login form if
+   *   the user isn't logged in.
+   * - Once the user arrives back here with a session, the OAuth Client data is
+   *   validated to ensure that it's a legitimate attempt from the real website.
+   * - Now the user profile is checked to see if they have this OAuth Client in
+   *   their approved list.
+   * - If YES, they redirect back to the website. The end.
+   * - If NO, they are presented with the Allow/Deny buttons. For further
+   *   progress, look at submission handler.
+   *
+   * @see authorizeOauth2()
+   */
   async authorizeDialogOauth2(request, reply) {
+    // For some errors, we end up showing a prompt saying that the problem
+    // originated on the website which sent the user to HID. It's not always
+    // possible, but when we can we populate this URL so we can link them back
+    // to where they came from.
+    let errorRedirectUrl = '';
+
     try {
       const oauth = request.server.plugins['hapi-oauth2orize'];
       const prompt = request.query.prompt ? request.query.prompt : '';
@@ -504,9 +586,12 @@ module.exports = {
           },
         );
 
-        return reply.redirect(`${request.query.redirect_uri}?error=invalid_request&state=${request.query.state
-        }&scope=${request.query.scope
-        }&nonce=${request.query.nonce}`);
+        return reply.redirect(
+          `${request.query.redirect_uri
+          }?error=invalid_request&state=${request.query.state
+          }&scope=${request.query.scope
+          }&nonce=${request.query.nonce
+          }`);
       }
 
       // If the user is not authenticated, redirect to the login page and preserve
@@ -515,9 +600,12 @@ module.exports = {
       if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp) || prompt === 'login') {
         // If user is not logged in and prompt is set to none, throw an error message.
         if (prompt === 'none') {
-          return reply.redirect(`${request.query.redirect_uri}?error=login_required&state=${request.query.state
-          }&scope=${request.query.scope
-          }&nonce=${request.query.nonce}`);
+          return reply.redirect(
+            `${request.query.redirect_uri
+            }?error=login_required&state=${request.query.state
+            }&scope=${request.query.scope
+            }&nonce=${request.query.nonce
+            }`);
         }
         logger.info(
           '[AuthController->authorizeDialogOauth2] Get request to /oauth/authorize without session. Redirecting to the login page.',
@@ -537,19 +625,26 @@ module.exports = {
           }&response_type=${request.query.response_type
           }&state=${request.query.state
           }&scope=${request.query.scope
-          }&nonce=${request.query.nonce}#login`,
+          }&nonce=${request.query.nonce
+          }#login`,
         );
       }
 
       // If the user is authenticated, then check whether the user has confirmed
       // authorization for this client/scope combination.
+      const options = {};
       const user = await User.findOne({ _id: cookie.userId }).populate({ path: 'authorizedClients', select: 'id name' });
       const clientId = request.query.client_id;
       user.sanitize(user);
       request.auth.credentials = user;
-      const result = await oauth.authorize(request, reply, {}, async (clientID, redirect, done) => {
+
+      // Validate the OAuth Authorization request. If any parameters are missing
+      // or invalid, it will throw an error internally, but will show a generic
+      // message about configuration to the user.
+      const [req, res] = await oauth.authorize(request, reply, options, async (oauthClientId, redirect, done) => {
         try {
-          const client = await Client.findOne({ id: clientID });
+          // Verify OAuth Client ID.
+          const client = await Client.findOne({ id: oauthClientId });
           if (!client || !client.id) {
             logger.warn(
               '[AuthController->authorizeDialogOauth2] Unsuccessful OAuth2 authorization because client was not found',
@@ -561,15 +656,15 @@ module.exports = {
                   id: cookie.userId,
                 },
                 oauth: {
-                  client_id: clientID,
+                  client_id: oauthClientId,
                 },
               },
             );
-            return done(
-              'An error occurred while processing the request. Please try logging in again.',
-            );
+
+            throw Error(`Client ID does not exist: ${oauthClientId}`);
           }
-          // Verify redirect uri
+
+          // Verify redirect_uri
           if (client.redirectUri !== redirect && !client.redirectUrls.includes(redirect)) {
             logger.warn(
               '[AuthController->authorizeDialogOauth2] Unsuccessful OAuth2 authorization due to wrong redirect URI',
@@ -577,47 +672,78 @@ module.exports = {
                 request,
                 security: true,
                 fail: true,
+                user: {
+                  id: cookie.userId,
+                },
                 oauth: {
                   client_id: client.id,
                   redirect_uri: redirect,
                 },
+              },
+            );
+
+            // extract hostname from redirect URL
+            errorRedirectUrl = new URL(redirect).origin;
+
+            throw Error(`Wrong redirect URI: ${redirect}`);
+          }
+
+          // The request passed validation. Proceed.
+          return done(null, client, redirect);
+        } catch (err) {
+          // Check the error object and potentially log the error if it does NOT
+          // contain one of the validation problems we already logged. We log
+          // validation problems before throwing in order to provide contextual
+          // metadata in the logs, so that known problems can be more easily
+          // found in Kibana.
+          //
+          // If we didn't find any known problems, we should log the error. This
+          // conditional needs to have one test for each Error() in the preceding
+          // try() block.
+          if (
+            err.message
+            && err.message.indexOf('Client ID does not exist') === -1
+            && err.message.indexOf('Wrong redirect URI') === -1
+          ) {
+            logger.error(
+              `[AuthController->authorizeDialogOauth2] ${err.message}`,
+              {
+                request,
+                security: true,
+                fail: true,
                 user: {
                   id: cookie.userId,
                 },
+                stack_trace: err.stack,
               },
             );
-            return done('Wrong redirect URI');
           }
-          return done(null, client, redirect);
-        } catch (err) {
-          logger.error(
-            `[AuthController->authorizeDialogOauth2] ${err.message}`,
-            {
-              request,
-              security: true,
-              fail: true,
-              user: {
-                id: cookie.userId,
-              },
-              stack_trace: err.stack,
-            },
-          );
-          return done('An error occurred while processing the request. Please try logging in again.');
+
+          // Finish the OAuth validation process.
+          return done('catch()');
         }
       });
-      const req = result[0];
+
+      // If we made it this far, the OAuth config seems legit. Check user data
+      // to see if they already have this client in their approved list.
       if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
         request.payload = { transaction_id: req.oauth2.transactionID };
         const response = await oauth.decision(request, reply);
         return response;
       }
-      // The user has not confirmed authorization, so present the
-      // authorization page if prompt != none.
+
+      // If prompt === none, redirect immediately.
       if (prompt === 'none') {
-        return reply.redirect(`${request.query.redirect_uri}?error=interaction_required&state=${request.query.state
-        }&scope=${request.query.scope
-        }&nonce=${request.query.nonce}`);
+        return reply.redirect(
+          `${request.query.redirect_uri
+          }?error=interaction_required&state=${request.query.state
+          }&scope=${request.query.scope
+          }&nonce=${request.query.nonce
+          }`);
       }
+
+      // The user has not confirmed authorization, so display the authorization
+      // dialog to the user and let them decide to approve/deny.
       return reply.view('authorize', {
         user,
         client: req.oauth2.client,
@@ -625,24 +751,41 @@ module.exports = {
         // csrf: req.csrfToken()
       });
     } catch (err) {
-      logger.error(
-        `[AuthController->authorizeDialogOauth2] ${err.message}`,
-        {
-          request,
-          security: true,
-          fail: true,
-          stack_trace: err.stack,
+      // Display a human-friendly error.
+      //
+      // We're not doing additional logging in this block because we logged the
+      // errors as they were caught in the code above.
+      return reply.view('message', {
+        title: 'Configuration problem on original website',
+        alert: {
+          type: 'error',
+          message: `
+            <p>The website which sent you to HID appears to have invalid configuration.</p>
+            <p>We have logged the problem internally.</p>
+            ${ errorRedirectUrl ? '<br><p>Go back to <a href="'+ errorRedirectUrl +'">'+ errorRedirectUrl +'</a></p>' : '' }
+          `,
         },
-      );
-      return err;
+        isSuccess: false,
+      });
     }
   },
 
+  /**
+   * Form submission handler to OAuth Client authorizations.
+   *
+   * This function supports the user-facing function by handling all the form
+   * submissions.
+   *
+   *   - If ALLOW, the OAuth Client is added to their profile, and they redirect
+   *     to the original website.
+   *   - If DENY, the process halts and they get redirected to their HID dashboard.
+   */
   async authorizeOauth2(request, reply) {
     try {
       const oauth = request.server.plugins['hapi-oauth2orize'];
       const cookie = request.yar.get('session');
 
+      // Force users without existing sessions to log in.
       if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
         logger.info(
           '[AuthController->authorizeOauth2] Got request to /oauth/authorize without session. Redirecting to the login page.',
@@ -655,14 +798,17 @@ module.exports = {
             },
           },
         );
-        return reply.redirect(`/?redirect=/oauth/authorize&client_id=${request.query.client_id
-        }&redirect_uri=${request.query.redirect_uri
-        }&response_type=${request.query.response_type
-        }&state=${request.query.state
-        }&scope=${request.query.scope
-        }&nonce=${request.query.nonce}#login`);
+        return reply.redirect(
+          `/?redirect=/oauth/authorize&client_id=${request.query.client_id
+          }&redirect_uri=${request.query.redirect_uri
+          }&response_type=${request.query.response_type
+          }&state=${request.query.state
+          }&scope=${request.query.scope
+          }&nonce=${request.query.nonce
+          }#login`);
       }
 
+      // Look up user in DB.
       const user = await User.findOne({ _id: cookie.userId });
       if (!user) {
         logger.warn(
@@ -683,16 +829,27 @@ module.exports = {
       user.sanitize(user);
       request.auth.credentials = user;
 
-      // Save authorized client if user allowed
+      // Set up OAuth Client to potentially be stored on user profile.
       const clientId = request.yar.authorize[request.payload.transaction_id].client;
+
+      // If user clicked 'Deny', redirect to HID homepage.
       if (!request.payload.bsubmit || request.payload.bsubmit === 'Deny') {
         return reply.redirect('/');
       }
+
+      // If the user clicked 'Allow', save OAuth Client to user profile
       if (!user.hasAuthorizedClient(clientId) && request.payload.bsubmit === 'Allow') {
+        // TODO: we could store an array of objects including the current time
+        //       when adding the client, in order to offer security-related info
+        //       when the user views their OAuth settings.
+        //
+        // @see HID-2156
         user.authorizedClients.push(request.yar.authorize[request.payload.transaction_id].client);
         user.markModified('authorizedClients');
+        await user.save();
+
         logger.info(
-          '[AuthController->authorizeOauth2] Added authorizedClient to user',
+          '[AuthController->authorizeOauth2] Added OAuth Client to user profile',
           {
             request,
             security: true,
@@ -705,7 +862,6 @@ module.exports = {
             },
           },
         );
-        await user.save();
       }
       const response = await oauth.decision(request, reply);
       return response;
@@ -723,10 +879,16 @@ module.exports = {
     }
   },
 
+  /**
+   * Issues an access_token during "Extra Secure" OAuth flows.
+   *
+   * @see https://github.com/UN-OCHA/hid_api/wiki/Integrating-with-HID-via-OAuth#step-2--request-access-and-id-tokens
+   */
   async accessTokenOauth2(request, reply) {
     try {
       const oauth = request.server.plugins['hapi-oauth2orize'];
       const { code } = request.payload;
+
       if (!code && request.payload.grant_type !== 'refresh_token') {
         logger.warn(
           '[AuthController->accessTokenOauth2] Unsuccessful access token request due to missing authorization code.',
@@ -736,19 +898,21 @@ module.exports = {
             fail: true,
           },
         );
-        throw Boom.badRequest('Missing authorization code');
+        return Boom.unauthorized('Missing authorization code');
       }
+
       // Check client_id and client_secret
       let client = null;
       let clientId = null;
       let clientSecret = null;
+
+      // Are we using POST body authorization?
       if (request.payload.client_id && request.payload.client_secret) {
-        // Using client_secret_post authorization
         clientId = request.payload.client_id;
         clientSecret = request.payload.client_secret;
-      } else if (request.headers.authorization) {
-        // Using client_secret_basic authorization
-        // Decrypt the Authorization header.
+      }
+      // Are we using Basic Auth?
+      else if (request.headers.authorization) {
         const parts = request.headers.authorization.split(' ');
         if (parts.length === 2) {
           const credentials = parts[1];
@@ -757,7 +921,9 @@ module.exports = {
           const cparts = text.split(':');
           [clientId, clientSecret] = cparts;
         }
-      } else {
+      }
+      // Neither authorization method found. Log it.
+      else {
         logger.warn(
           '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to invalid client authentication.',
           {
@@ -766,13 +932,14 @@ module.exports = {
             fail: true,
           },
         );
-        throw Boom.badRequest('invalid client authentication');
+        return Boom.unauthorized('invalid client authentication');
       }
-      // Using client_secret_post authentication method.
+
+      // Look up OAuth Client in DB.
       client = await Client.findOne({ id: clientId });
       if (!client) {
         logger.warn(
-          '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to wrong client ID.',
+          '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to non-existent client ID.',
           {
             request,
             security: true,
@@ -782,8 +949,10 @@ module.exports = {
             },
           },
         );
-        throw Boom.badRequest('invalid client_id');
+        return Boom.badRequest('invalid client_id');
       }
+
+      // Does the client_secret we received match the DB entry?
       if (clientSecret !== client.secret) {
         logger.warn(
           '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to wrong client authentication.',
@@ -797,10 +966,14 @@ module.exports = {
             },
           },
         );
-        throw Boom.badRequest('invalid client_secret');
+        return Boom.unauthorized('invalid client_secret');
       }
+
+      // Grab token and type.
       const token = request.payload.code ? request.payload.code : request.payload.refresh_token;
       const type = request.payload.code ? 'code' : 'refresh';
+
+      // Find authorization code.
       const ocode = await OauthToken.findOne({ token, type }).populate('client user');
       if (!ocode) {
         logger.warn(
@@ -810,14 +983,17 @@ module.exports = {
             security: true,
             fail: true,
             oauth: {
-              code,
+              client_id: clientId,
+              token: `${token.slice(0, 3)}...${token.slice(-3)}`,
+              type,
             },
           },
         );
+
         // OAuth2 standard error.
         const error = Boom.badRequest('invalid authorization code');
         error.output.payload.error = 'invalid_grant';
-        throw error;
+        return error;
       } else {
         logger.info(
           '[AuthController->accessTokenOauth2] Successful access token request',
@@ -825,8 +1001,8 @@ module.exports = {
             request,
             security: true,
             oauth: {
-              client_id: request.payload.client_id,
-              client_secret: `${request.payload.client_secret.slice(0, 3)}...${request.payload.client_secret.slice(-3)}`,
+              client_id: clientId,
+              client_secret: `${clientSecret.slice(0, 3)}...${clientSecret.slice(-3)}`,
             },
           },
         );
@@ -844,7 +1020,9 @@ module.exports = {
           stack_trace: err.stack,
         },
       );
-      return err;
+
+      // Send a documented error code back.
+      return Boom.badRequest(err.message);
     }
   },
 
