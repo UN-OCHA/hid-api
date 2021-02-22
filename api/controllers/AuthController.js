@@ -1052,7 +1052,6 @@ module.exports = {
         'given_name',
         'family_name',
         'middle_name',
-        'picture',
         'email',
         'email_verified',
         'zoneinfo',

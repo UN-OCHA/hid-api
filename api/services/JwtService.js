@@ -53,7 +53,6 @@ module.exports = {
       idToken.name = user.name;
       idToken.family_name = user.family_name;
       idToken.given_name = user.given_name;
-      idToken.picture = user.picture;
       idToken.updated_at = user.updatedAt;
     }
     return this.issue(idToken);
