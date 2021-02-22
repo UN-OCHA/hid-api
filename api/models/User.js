@@ -12,7 +12,6 @@ const TrustedDomain = require('./TrustedDomain');
 
 const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
 const userPopulate1 = [
-  { path: 'favoriteLists' },
   { path: 'verified_by', select: '_id name' },
   { path: 'subscriptions.service', select: '_id name' },
   { path: 'connections.user', select: '_id name' },
@@ -567,10 +566,6 @@ const UserSchema = new Schema({
     ref: 'User',
     readonly: true,
   },
-  favoriteLists: [{
-    type: Schema.ObjectId,
-    ref: 'List',
-  }],
   lists: {
     type: [listUserSchema],
     readonly: true,
