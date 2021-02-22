@@ -1041,7 +1041,7 @@ module.exports = {
       response_types_supported: ['code', 'token', 'id_token', 'id_token token'],
       subject_types_supported: ['public'],
       id_token_signing_alg_values_supported: ['RS256'],
-      scopes_supported: ['openid', 'email', 'profile', 'phone'],
+      scopes_supported: ['openid', 'email', 'profile'],
       claims_supported: [
         'iss',
         'sub',
@@ -1057,8 +1057,6 @@ module.exports = {
         'email_verified',
         'zoneinfo',
         'locale',
-        'phone_number',
-        'phone_number_verified',
         'updated_at',
       ],
     };
