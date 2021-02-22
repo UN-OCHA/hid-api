@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
 const Bcrypt = require('bcryptjs');
-const Libphonenumber = require('google-libphonenumber');
 const axios = require('axios');
 const _ = require('lodash');
 const crypto = require('crypto');
@@ -45,36 +44,6 @@ const emailSchema = new Schema({
       passIfEmpty: true,
       message: 'email should be a valid email',
     }),
-  },
-  validated: {
-    type: Boolean,
-    default: false,
-  },
-});
-
-const phoneSchema = new Schema({
-  type: {
-    type: String,
-    enum: ['Landline', 'Mobile', 'Fax', 'Satellite'],
-  },
-  number: {
-    type: String,
-    validate: {
-      validator(v) {
-        if (v !== '') {
-          try {
-            const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
-            const phone = phoneUtil.parse(v);
-            return phoneUtil.isValidNumber(phone);
-          } catch (e) {
-            return false;
-          }
-        } else {
-          return true;
-        }
-      },
-      message: '{VALUE} is not a valid phone number !',
-    },
   },
   validated: {
     type: Boolean,
@@ -438,45 +407,6 @@ const UserSchema = new Schema({
     type: [listUserSchema],
     readonly: true,
   },
-  // Verify valid phone number with libphonenumber and reformat if needed
-  phone_number: {
-    type: String,
-    validate: {
-      validator(v) {
-        if (v !== '') {
-          try {
-            const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
-            const phone = phoneUtil.parse(v);
-            return phoneUtil.isValidNumber(phone);
-          } catch (e) {
-            return false;
-          }
-        } else {
-          return true;
-        }
-      },
-      message: '{VALUE} is not a valid phone number !',
-    },
-  },
-  phone_number_verified: {
-    type: Boolean,
-    default: false,
-    readonly: true,
-  },
-  phone_number_type: {
-    type: String,
-    enum: ['Mobile', 'Landline', 'Fax', 'Satellite', ''],
-  },
-  // TODO: mark this as readonly when HID-1506 is fixed
-  phone_numbers: {
-    type: [phoneSchema],
-    // readonly: true
-  },
-  phonesVisibility: {
-    type: String,
-    enum: visibilities,
-    default: 'anyone',
-  },
   job_title: {
     type: String,
     validate: {
@@ -802,14 +732,6 @@ UserSchema.statics = {
         || (user.emailsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
           user.email = null;
           user.emails = [];
-        }
-      }
-
-      if (user.phonesVisibility !== 'anyone') {
-        if ((user.phonesVisibility === 'verified' && !requester.verified)
-        || (user.phonesVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
-          user.phone_number = null;
-          user.phone_numbers = [];
         }
       }
 
@@ -1173,32 +1095,6 @@ UserSchema.methods = {
       return true;
     }
     return false;
-  },
-
-  hasLocalPhoneNumber(iso2) {
-    let found = false;
-    const that = this;
-    this.phone_numbers.forEach((item) => {
-      const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
-      try {
-        const phoneNumber = phoneUtil.parse(item.number);
-        const regionCode = phoneUtil.getRegionCodeForNumber(phoneNumber);
-        if (regionCode.toUpperCase() === iso2) {
-          found = true;
-        }
-      } catch (err) {
-        // Invalid phone number
-        that.log.error(
-          'An invalid phone number was found',
-          {
-            error: err.message,
-            error_object: err,
-            stack_trace: err.stack,
-          },
-        );
-      }
-    });
-    return found;
   },
 
   // Whether the contact is in country or not
