@@ -374,29 +374,6 @@ const UserSchema = new Schema({
       message: 'HTML code is not allowed in notes',
     },
   },
-  // Validates an array of VoIP objects
-  voips: {
-    type: Array,
-    validate: {
-      validator(v) {
-        if (v.length) {
-          let out = true;
-          const types = ['Skype', 'Google', 'Facebook', 'Yahoo', 'Twitter'];
-          for (let i = 0, len = v.length; i < len; i += 1) {
-            if (!v[i].username || !v[i].type || (v[i].type && types.indexOf(v[i].type) === -1)) {
-              out = false;
-            }
-            if (v[i].username && isHTML(v[i].username)) {
-              out = false;
-            }
-          }
-          return out;
-        }
-        return true;
-      },
-      message: 'Invalid voip found',
-    },
-  },
   // Validates urls
   websites: {
     type: Array,
