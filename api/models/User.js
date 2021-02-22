@@ -603,15 +603,6 @@ const UserSchema = new Schema({
     type: [connectionSchema],
     readonly: true,
   },
-  // TODO: figure out validation
-  appMetadata: {
-    type: Schema.Types.Mixed,
-    /* validate: validate({
-    validator: 'isJSON',
-    passIfEmpty: true,
-    message: 'appMetadata should be valid JSON'
-  }) */
-  },
   deleted: {
     type: Boolean,
     default: false,
