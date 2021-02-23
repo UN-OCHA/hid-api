@@ -1,18 +1,15 @@
-# Humanitarian ID v2 API
+# Humanitarian ID v3
 
 [![Build Status](https://travis-ci.org/UN-OCHA/hid_api.svg?branch=master)](https://travis-ci.org/UN-OCHA/hid_api)
 
-Humanitarian ID v2 API is built on :
+Humanitarian ID v3 API is built with:
 
 * mongoDB as its database backend
 * hapi as its web server
 
-The HID v2 API handles 2 main functionalities:
+The HID v3 API acts as an OAuth 2.0 and OpenID Connect server.
 
-1. Authentication through JSON Web Tokens and OpenID connect
-2. A user and lists API allowing users to check in & out of lists
-
-A detailed documentation about the API endpoints can be found here: https://api.humanitarian.id/docs/
+The API is documented here: https://api.humanitarian.id/docs/
 
 ## Models
 
@@ -21,7 +18,6 @@ A detailed documentation about the API endpoints can be found here: https://api.
 and out of lists
 * Client: an OAuth client application
 * JwtToken: a blacklisted JSON Web Token stored in the database
-* Notification: a notification sent to users
 * OauthToken: an OAuth token
 * Service: a Google Group or Mailchimp list which users can subscribe to or unsubscribe from
 * Service Credentials: used to store google groups API credentials
@@ -31,11 +27,9 @@ and out of lists
 
 * AuthController: handles the creation of JSON Web Tokens and the OpenID Connect process
 * ClientController: CRUD for OAuth clients
-* DefaultController: used for the migration from HID v1 to HID v2, will be removed after the migration
 * DuplicateController: used for finding duplicate user accounts and removing them
 * ListController: CRUD for lists
 * ListUserController: functions for checking in & out of a list
-* NotificationController: provides an endpoint to pull notifications and another one to mark them as read
 * ServiceController: CRUD for google groups & mailchimp services, as well as subscribe and unsubscribe endpoints
 * ServiceCredentialsController: GET endpoint for service credentials
 * UserController: CRUD and multiple user related endpoints
@@ -63,7 +57,6 @@ Services are helper methods provided to the controllers.
 * HelperService: various helper functions for controllers
 * JwtService: issues and verifies JSON Web tokens
 * ListService: helper methods for lists controller
-* NotificationService: helper methods for the notification controller
 
 ## Configuration files
 
@@ -76,7 +69,6 @@ Configuration files are stored in `/config`.
 * i18n.js: configure internationalization (not used currently)
 * log.js: configure logging
 * main.js: configure trailpacks and paths
-* migrate.js: migration code from v1 to v2: will be removed after the migration
 * policies.js: configure policies
 * routes.js: configure routes
 * session.js: used to configure sessions when authenticating with openId Connect

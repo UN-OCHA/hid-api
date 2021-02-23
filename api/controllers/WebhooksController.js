@@ -2,7 +2,6 @@ const Boom = require('@hapi/boom');
 const _ = require('lodash');
 const List = require('../models/List');
 const User = require('../models/User');
-const NotificationService = require('../services/NotificationService');
 const ListController = require('./ListController');
 const config = require('../../config/env')[process.env.NODE_ENV];
 
@@ -26,14 +25,6 @@ async function _notifyNewDisaster(disaster) {
         );
         throw new Error('List not found');
       }
-      const users = await User.find({
-        operations: { $elemMatch: { list: list._id, deleted: false } },
-      });
-      const notification = { type: 'new_disaster', params: { list: disaster } };
-      await NotificationService.sendMultiple(users, notification);
-      logger.info(
-        `[WebhooksController->_notifyNewDisaster] Sent notification of type new_disaster for disaster ${disaster._id.toString()}`,
-      );
     }
   }
 }
