@@ -29,7 +29,7 @@ async function run() {
         && offset < 72 * 3600 * 1000
         && !lu.deleted) {
         const hasLocalPhoneNumber = false;
-        const inCountry = await user.isInCountry(lu.list.metadata.country.pcode);
+        const inCountry = false;
         lu.remindedCheckin = true;
         await user.save();
       }
