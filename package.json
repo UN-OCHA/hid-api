@@ -1,6 +1,6 @@
 {
   "name": "hid-api",
-  "version": "3.0.13",
+  "version": "3.0.14",
   "description": "Humanitarian ID API+Auth",
   "homepage": "https://about.humanitarian.id",
   "repository": "https://github.com/UN-OCHA/hid_api.git",
@@ -36,7 +36,6 @@
     "ejs": "^2.5.2",
     "email-templates": "^7.0.4",
     "google-auth-library": "^5.2.1",
-    "google-libphonenumber": "^3.2.3",
     "googleapis": "^43.0.0",
     "hapi-rate-limit": "^4.0.2",
     "is-html": "^1.1.0",

@@ -798,56 +798,6 @@ module.exports = [
     },
   },
 
-
-  {
-    method: 'POST',
-    path: '/api/v2/user/{id}/phone_numbers',
-    options: {
-      pre: [
-        UserPolicy.canUpdate,
-      ],
-      handler: UserController.addPhone,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'DELETE',
-    path: '/api/v2/user/{id}/phone_numbers/{pid}',
-    options: {
-      pre: [
-        UserPolicy.canUpdate,
-      ],
-      handler: UserController.dropPhone,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-          pid: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'PUT',
-    path: '/api/v2/user/{id}/phone_number',
-    options: {
-      pre: [
-        UserPolicy.canUpdate,
-      ],
-      handler: UserController.setPrimaryPhone,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/organization',

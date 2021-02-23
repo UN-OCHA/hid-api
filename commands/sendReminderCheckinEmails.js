@@ -28,7 +28,7 @@ async function run() {
       if (!lu.remindedCheckin && offset > 48 * 3600 * 1000
         && offset < 72 * 3600 * 1000
         && !lu.deleted) {
-        const hasLocalPhoneNumber = user.hasLocalPhoneNumber(lu.list.metadata.country.pcode);
+        const hasLocalPhoneNumber = false;
         const inCountry = await user.isInCountry(lu.list.metadata.country.pcode);
         lu.remindedCheckin = true;
         await user.save();
