@@ -9,10 +9,8 @@ const validator = require('validator');
 const hidAccount = '5b2128e754a0d6046d6c69f2';
 const List = require('../models/List');
 const User = require('../models/User');
-// const OutlookService = require('../services/OutlookService');
 const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
-const NotificationService = require('../services/NotificationService');
 const GSSSyncService = require('../services/GSSSyncService');
 const AuthPolicy = require('../policies/AuthPolicy');
 const ListUserController = require('./ListUserController');
@@ -749,49 +747,6 @@ module.exports = {
 
     // Update lastModified manually
     request.payload.lastModified = new Date();
-    if (user.authOnly === false && request.payload.authOnly === true) {
-      // User is becoming invisible. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, {
-          $inc: {
-            countVerified: -1,
-            countUnverified: -1,
-          },
-        });
-        logger.info(
-          '[UserController->update] User is becoming invisible. Updated list counts.',
-          {
-            request,
-            user: {
-              id: user._id.toString(),
-            },
-          },
-        );
-      }
-    }
-
-    if (user.authOnly === true && request.payload.authOnly === false) {
-      // User is becoming visible. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, {
-          $inc: {
-            countVerified: 1,
-            countUnverified: 1,
-          },
-        });
-        logger.info(
-          '[UserController->update] User is becoming visible. Updated list counts',
-          {
-            request,
-            user: {
-              id: user._id.toString(),
-            },
-          },
-        );
-      }
-    }
 
     if (user.hidden === false && request.payload.hidden === true) {
       // User is being flagged. Update lists count.
@@ -857,88 +812,6 @@ module.exports = {
 
     user = await user.defaultPopulate();
     const promises = [];
-    if (
-      typeof request.auth.credentials !== 'undefined'
-      && typeof request.auth.credentials._id !== 'undefined'
-      && typeof user._id !== 'undefined'
-      && request.auth.credentials._id.toString() !== user._id.toString()
-    ) {
-      // User is being edited by someone else
-      // If it's an auth account, surface it
-      if (user.authOnly) {
-        user.authOnly = false;
-        // User is becoming visible. Update lists count.
-        const listIds = user.getListIds(true);
-        if (listIds.length) {
-          promises.push(
-            List.updateMany({ _id: { $in: listIds } }, {
-              $inc: {
-                countVerified: 1,
-                countUnverified: 1,
-              },
-            }).then(() => {
-              logger.info(
-                '[UserController->update] User is becoming visible. Updated list counts',
-                {
-                  request,
-                  user: {
-                    id: user._id.toString(),
-                    email: user.email,
-                  },
-                },
-              );
-            }),
-          );
-        }
-        promises.push(
-          user.save().then(() => {
-            logger.info(
-              '[UserController->update] User saved successfully',
-              {
-                request,
-                user: {
-                  id: user._id.toString(),
-                  email: user.email,
-                },
-              },
-            );
-          }),
-        );
-        if (!user.hidden) {
-          promises.push(
-            EmailService.sendAuthToProfile(user, request.auth.credentials).then(() => {
-              logger.info(
-                '[UserController->update] Sent auth_to_profile email',
-                {
-                  request,
-                  user: {
-                    id: user.id,
-                    email: user.email,
-                  },
-                },
-              );
-            }),
-          );
-        }
-      } else if (!user.hidden) {
-        const notification = { type: 'admin_edit', user, createdBy: request.auth.credentials };
-        promises.push(
-          NotificationService.send(notification).then(() => {
-            logger.info(
-              '[UserController->update] Sent admin_edit notification',
-              {
-                request,
-                user: {
-                  id: user.id,
-                  email: user.email,
-                },
-              },
-            );
-          }),
-        );
-      }
-    }
-
     promises.push(
       GSSSyncService.synchronizeUser(user).then(() => {
         logger.info(
@@ -2201,6 +2074,20 @@ module.exports = {
   },
 
   showAccount(request) {
+    // Full user object from DB.
+    const user = JSON.parse(JSON.stringify(request.auth.credentials));
+
+    // This will be what we send back as a response.
+    const output = {
+      id: user.id,
+      sub: user.id,
+      email: user.email,
+      email_verified: user.email_verified.toString(),
+      name: user.name,
+      iss: process.env.ROOT_URL || 'https://auth.humanitarian.id',
+    };
+
+    // Log the request
     logger.info(
       `[UserController->showAccount] calling /account.json for ${request.auth.credentials.email}`,
       {
@@ -2210,25 +2097,34 @@ module.exports = {
           email: request.auth.credentials.email,
           admin: request.auth.credentials.is_admin,
         },
+        oauth: {
+          client_id: request.params.currentClient && request.params.currentClient.id,
+        },
       },
     );
-    const user = JSON.parse(JSON.stringify(request.auth.credentials));
+
+    // Special cases for legacy compat.
+    //
+    // @TODO: in testing this, it seems that the `currentClient` param is not
+    //        present when this function runs. Investigate whether we need these
+    //        special cases at all.
+    //
+    //        @see https://humanitarian.atlassian.net/browse/HID-2192
     if (request.params.currentClient && (request.params.currentClient.id === 'iasc-prod' || request.params.currentClient.id === 'iasc-dev')) {
-      user.sub = user.email;
-    }
-    if (request.params.currentClient && request.params.currentClient.id === 'dart-prod') {
-      delete user._id;
+      output.sub = user.email;
     }
     if (request.params.currentClient && request.params.currentClient.id === 'kaya-prod') {
-      user.name = user.name.replace(' ', '');
+      output.name = user.name.replace(' ', '');
     }
     if (request.params.currentClient
       && (request.params.currentClient.id === 'rc-shelter-database'
         || request.params.currentClient.id === 'rc-shelter-db-2-prod'
         || request.params.currentClient.id === 'deep-prod')) {
-      user.active = !user.deleted;
+      output.active = !user.deleted;
     }
-    return user;
+
+    // Send response
+    return output;
   },
 
   async notify(request) {
@@ -2243,19 +2139,6 @@ module.exports = {
       );
       throw Boom.notFound();
     }
-
-    const notPayload = {
-      type: 'contact_needs_update',
-      createdBy: request.auth.credentials,
-      user: record,
-    };
-    await NotificationService.send(notPayload);
-    logger.info(
-      `[UserController->notify] Successfully sent contact_needs_update notification to ${record.email}`,
-      {
-        request,
-      },
-    );
 
     return record;
   },
@@ -2290,35 +2173,17 @@ module.exports = {
     user.connections.push({ pending: true, user: request.auth.credentials._id });
     user.lastModified = new Date();
 
-    const notification = {
-      type: 'connection_request',
-      createdBy: request.auth.credentials,
-      user,
-    };
-    await Promise.all([
-      user.save().then(() => {
-        logger.info(
-          `[UserController->addConnection] User ${request.params.id} successfully saved`,
-          {
-            request,
-            user: {
-              id: request.params.id,
-            },
+    await user.save().then(() => {
+      logger.info(
+        `[UserController->addConnection] User ${request.params.id} successfully saved`,
+        {
+          request,
+          user: {
+            id: request.params.id,
           },
-        );
-      }),
-      NotificationService.send(notification).then(() => {
-        logger.info(
-          `[UserController->addConnection] Successfully sent connection_request notification to ${user.email}`,
-          {
-            request,
-            user: {
-              email: user.email,
-            },
-          },
-        );
-      }),
-    ]);
+        },
+      );
+    });
 
     return user;
   },
@@ -2369,20 +2234,7 @@ module.exports = {
         },
       },
     );
-    // Send notification
-    const notification = {
-      type: 'connection_approved',
-      createdBy: user,
-      user: cuser,
-    };
-    await NotificationService.send(notification).then(() => {
-      logger.info(
-        `[UserController->updateConnection] Successfully sent connection_approved notification to ${cuser.email}`,
-        {
-          request,
-        },
-      );
-    });
+
     return user;
   },
 
