@@ -88,19 +88,6 @@ function checkinHelper(alist, auser, notify, childAttribute, currentUser) {
     message: `[ListUserController->checkinHelper] Saved user ${user.id}`,
   });
   list.count += 1;
-  if (user.authOnly && !user.hidden) {
-    list.countManager += 1;
-  }
-  if (!user.authOnly && !user.hidden) {
-    if (!user.is_orphan && !user.is_ghost) {
-      list.countManager += 1;
-      list.countVerified += 1;
-      list.countUnverified += 1;
-    } else {
-      list.countManager += 1;
-      list.countVerified += 1;
-    }
-  }
   promises.push(list.save());
   pendingLogs.push({
     type: 'info',
@@ -250,19 +237,6 @@ module.exports = {
     const promises = [];
     const pendingLogs = [];
     list.count -= 1;
-    if (user.authOnly && !user.hidden) {
-      list.countManager -= 1;
-    }
-    if (!user.authOnly && !user.hidden) {
-      if (!user.is_orphan && !user.is_ghost) {
-        list.countManager -= 1;
-        list.countVerified -= 1;
-        list.countUnverified -= 1;
-      } else {
-        list.countManager -= 1;
-        list.countVerified -= 1;
-      }
-    }
 
     promises.push(list.save());
     pendingLogs.push({

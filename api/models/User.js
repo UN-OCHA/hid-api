@@ -621,11 +621,6 @@ const UserSchema = new Schema({
     default: false,
     adminOnly: true,
   },
-  // Whether this user is only using auth
-  authOnly: {
-    type: Boolean,
-    default: true,
-  },
   // Whether the user uses TOTP for security
   totp: {
     type: Boolean,
@@ -713,19 +708,6 @@ UserSchema.pre('remove', async function (next) {
     const updates = {
       count: -1,
     };
-    if (this.authOnly && !this.hidden) {
-      updates.countManager = -1;
-    }
-    if (!this.authOnly && !this.hidden) {
-      if (!this.is_orphan && !this.is_ghost) {
-        updates.countManager = -1;
-        updates.countVerified = -1;
-        updates.countUnverified = -1;
-      } else {
-        updates.countManager = -1;
-        updates.countVerified = -1;
-      }
-    }
     promises.push(this.model('List')
       .updateMany(
         { _id: { $in: listIds } },
@@ -743,9 +725,6 @@ UserSchema.pre('save', function (next) {
     this.name = `${this.given_name} ${this.middle_name} ${this.family_name}`;
   } else {
     this.name = `${this.given_name} ${this.family_name}`;
-  }
-  if (this.is_orphan || this.is_ghost) {
-    this.authOnly = false;
   }
   if (!this.user_id) {
     this.user_id = this._id;
