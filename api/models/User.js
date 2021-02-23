@@ -532,6 +532,8 @@ UserSchema.virtual('sub').get(function () {
 
 UserSchema.pre('remove', async function (next) {
   try {
+    const promises = [];
+
     // Reduce the number of contacts for each list of the user
     const listIds = [];
     listTypes.forEach((attr) => {
