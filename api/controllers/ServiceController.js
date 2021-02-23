@@ -5,7 +5,6 @@ const ServiceCredentials = require('../models/ServiceCredentials');
 const Service = require('../models/Service');
 const User = require('../models/User');
 const HelperService = require('../services/HelperService');
-const NotificationService = require('../services/NotificationService');
 const config = require('../../config/env')[process.env.NODE_ENV];
 
 const { logger } = config;
@@ -260,18 +259,6 @@ module.exports = {
           logger.info(
             `[ServiceController->subscribe] Saved user ${request.params.id} with new mailchimp subscription`,
           );
-          if (user.id !== request.auth.credentials.id) {
-            const notification = {
-              type: 'service_subscription',
-              user,
-              createdBy: request.auth.credentials,
-              params: { service },
-            };
-            await NotificationService.send(notification);
-            logger.info(
-              `[ServiceController->subscribe] Sent a service_subscription notification to ${user.email}`,
-            );
-          }
         } else {
           logger.error(
             '[ServiceController->subscribe] Error calling Mailchimp API',
@@ -286,19 +273,7 @@ module.exports = {
         }
       }
     }
-    // Send notification to user that he was subscribed to a service
-    if (user.id !== request.auth.credentials.id) {
-      const notification = {
-        type: 'service_subscription',
-        user,
-        createdBy: request.auth.credentials,
-        params: { service },
-      };
-      await NotificationService.send(notification);
-      logger.info(
-        `[ServiceController->subscribe] Sent a service_subscription notification to ${user.email}`,
-      );
-    }
+
     return user;
   },
 
@@ -395,19 +370,6 @@ module.exports = {
       }
     }
 
-    // Send notification to user that he was subscribed to a service
-    if (sendNotification && user.id !== request.auth.credentials.id) {
-      const notification = {
-        type: 'service_unsubscription',
-        user,
-        createdBy: request.auth.credentials,
-        params: { service },
-      };
-      await NotificationService.send(notification);
-      logger.info(
-        `[ServiceController->unsubscribe] Sent a service_unsubscription notification to ${user.email}`,
-      );
-    }
     return user;
   },
 };

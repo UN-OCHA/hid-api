@@ -4,7 +4,6 @@ const acceptLanguage = require('accept-language');
 const List = require('../models/List');
 const User = require('../models/User');
 const HelperService = require('../services/HelperService');
-const NotificationService = require('../services/NotificationService');
 const config = require('../../config/env')[process.env.NODE_ENV];
 
 const { logger } = config;
@@ -158,45 +157,6 @@ module.exports = {
     const newlist = _.merge(list, request.payload);
     await newlist.computeCounts();
 
-    // Check whether we need to send notifications
-    const notifications = [];
-    const pendingLogs = [];
-    if (diffAdded.length) {
-      const users = await User.find({ _id: { $in: diffAdded } });
-      for (let i = 0; i < users.length; i += 1) {
-        const user = users[i];
-        notifications.push(NotificationService
-          .send({
-            type: 'added_list_manager',
-            user,
-            createdBy: request.auth.credentials,
-            params: { list: newlist },
-          }));
-        pendingLogs.push({
-          type: 'info',
-          message: `[ListController->update] Sent notification added_list_manager to ${user.email}`,
-        });
-      }
-      newlist.markModified('managers');
-    }
-    if (diffRemoved.length) {
-      const users = await User.find({ _id: { $in: diffRemoved } });
-      for (let i = 0; i < users.length; i += 1) {
-        const user = users[i];
-        notifications.push(NotificationService
-          .send({
-            type: 'removed_list_manager',
-            user,
-            createdBy: request.auth.credentials,
-            params: { list: newlist },
-          }));
-        pendingLogs.push({
-          type: 'info',
-          message: `[ListController->update] Sent notification removed_list_manager to ${user.email}`,
-        });
-      }
-      newlist.markModified('managers');
-    }
 
     // Save the list
     await newlist.save();
@@ -204,12 +164,6 @@ module.exports = {
       '[ListController->update] Updated a list',
       { request: request.payload },
     );
-
-    // Send the notifications
-    await Promise.all(notifications);
-    for (let i = 0; i < pendingLogs.length; i += 1) {
-      logger.log(pendingLogs[i]);
-    }
 
     // Update users
     const criteria = {};
