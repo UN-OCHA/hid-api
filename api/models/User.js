@@ -321,26 +321,6 @@ const UserSchema = new Schema({
       message: 'HTML code is not allowed in notes',
     },
   },
-  // Validates urls
-  websites: {
-    type: Array,
-    validate: {
-      validator(v) {
-        if (v.length) {
-          let out = true;
-          const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/;
-          for (let i = 0, len = v.length; i < len; i += 1) {
-            if (!urlRegex.test(v[i].url)) {
-              out = false;
-            }
-          }
-          return out;
-        }
-        return true;
-      },
-      message: 'There is an invalid url',
-    },
-  },
   // TODO: validate timezone
   zoneinfo: {
     type: String,
