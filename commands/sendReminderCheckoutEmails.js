@@ -21,7 +21,6 @@ const listAttributes = [
   'functional_roles',
 ];
 const User = require('../api/models/User');
-const NotificationService = require('../api/services/NotificationService');
 
 async function run() {
   const now = new Date();
@@ -45,8 +44,6 @@ async function run() {
           if (lu.checkoutDate && lu.remindedCheckout === false && !lu.deleted) {
             const dep = new Date(lu.checkoutDate);
             if (dep.valueOf() - now.valueOf() < 48 * 3600 * 1000) {
-              const notification = { type: 'reminder_checkout', user, params: { listUser: lu, list: lu.list } };
-              await NotificationService.send(notification);
               lu.remindedCheckout = true;
               await user.save();
             }

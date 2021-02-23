@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
 const Bcrypt = require('bcryptjs');
-const Libphonenumber = require('google-libphonenumber');
 const axios = require('axios');
 const _ = require('lodash');
 const crypto = require('crypto');
@@ -44,36 +43,6 @@ const emailSchema = new Schema({
       passIfEmpty: true,
       message: 'email should be a valid email',
     }),
-  },
-  validated: {
-    type: Boolean,
-    default: false,
-  },
-});
-
-const phoneSchema = new Schema({
-  type: {
-    type: String,
-    enum: ['Landline', 'Mobile', 'Fax', 'Satellite'],
-  },
-  number: {
-    type: String,
-    validate: {
-      validator(v) {
-        if (v !== '') {
-          try {
-            const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
-            const phone = phoneUtil.parse(v);
-            return phoneUtil.isValidNumber(phone);
-          } catch (e) {
-            return false;
-          }
-        } else {
-          return true;
-        }
-      },
-      message: '{VALUE} is not a valid phone number !',
-    },
   },
   validated: {
     type: Boolean,
@@ -345,55 +314,11 @@ const UserSchema = new Schema({
     default: false,
     readonly: true,
   },
-  // Makes sure it's a valid URL, and do not allow urls from other domains
-  picture: {
-    type: String,
-    validate: validate({
-      validator: 'isURL',
-      passIfEmpty: true,
-      arguments: {
-        host_whitelist: [
-          'api.humanitarian.id',
-          'api.dev.humanitarian.id',
-          'api.staging.humanitarian.id',
-          'dev.api-humanitarian-id.ahconu.org',
-          'stage.api-humanitarian-id.ahconu.org',
-          'prod-api-humanitarian-id.ahconu.org',
-          'api.hid.vm',
-        ],
-      },
-      message: 'picture should be a valid URL',
-    }),
-    default: '',
-  },
   notes: {
     type: String,
     validate: {
       validator: isHTMLValidator,
       message: 'HTML code is not allowed in notes',
-    },
-  },
-  // Validates an array of VoIP objects
-  voips: {
-    type: Array,
-    validate: {
-      validator(v) {
-        if (v.length) {
-          let out = true;
-          const types = ['Skype', 'Google', 'Facebook', 'Yahoo', 'Twitter'];
-          for (let i = 0, len = v.length; i < len; i += 1) {
-            if (!v[i].username || !v[i].type || (v[i].type && types.indexOf(v[i].type) === -1)) {
-              out = false;
-            }
-            if (v[i].username && isHTML(v[i].username)) {
-              out = false;
-            }
-          }
-          return out;
-        }
-        return true;
-      },
-      message: 'Invalid voip found',
     },
   },
   // Validates urls
@@ -437,45 +362,6 @@ const UserSchema = new Schema({
     type: [listUserSchema],
     readonly: true,
   },
-  // Verify valid phone number with libphonenumber and reformat if needed
-  phone_number: {
-    type: String,
-    validate: {
-      validator(v) {
-        if (v !== '') {
-          try {
-            const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
-            const phone = phoneUtil.parse(v);
-            return phoneUtil.isValidNumber(phone);
-          } catch (e) {
-            return false;
-          }
-        } else {
-          return true;
-        }
-      },
-      message: '{VALUE} is not a valid phone number !',
-    },
-  },
-  phone_number_verified: {
-    type: Boolean,
-    default: false,
-    readonly: true,
-  },
-  phone_number_type: {
-    type: String,
-    enum: ['Mobile', 'Landline', 'Fax', 'Satellite', ''],
-  },
-  // TODO: mark this as readonly when HID-1506 is fixed
-  phone_numbers: {
-    type: [phoneSchema],
-    // readonly: true
-  },
-  phonesVisibility: {
-    type: String,
-    enum: visibilities,
-    default: 'anyone',
-  },
   job_title: {
     type: String,
     validate: {
@@ -501,13 +387,6 @@ const UserSchema = new Schema({
     },
   },
   functional_roles: [listUserSchema],
-  status: {
-    type: String,
-    validate: {
-      validator: isHTMLValidator,
-      message: 'HTML code is not allowed in status field',
-    },
-  },
   // TODO: figure out validation
   location: {
     type: Schema.Types.Mixed,
@@ -598,15 +477,6 @@ const UserSchema = new Schema({
     type: [connectionSchema],
     readonly: true,
   },
-  // TODO: figure out validation
-  appMetadata: {
-    type: Schema.Types.Mixed,
-    /* validate: validate({
-    validator: 'isJSON',
-    passIfEmpty: true,
-    message: 'appMetadata should be valid JSON'
-  }) */
-  },
   deleted: {
     type: Boolean,
     default: false,
@@ -615,11 +485,6 @@ const UserSchema = new Schema({
     type: Boolean,
     default: false,
     adminOnly: true,
-  },
-  // Whether this user is only using auth
-  authOnly: {
-    type: Boolean,
-    default: true,
   },
   // Whether the user uses TOTP for security
   totp: {
@@ -708,19 +573,6 @@ UserSchema.pre('remove', async function (next) {
     const updates = {
       count: -1,
     };
-    if (this.authOnly && !this.hidden) {
-      updates.countManager = -1;
-    }
-    if (!this.authOnly && !this.hidden) {
-      if (!this.is_orphan && !this.is_ghost) {
-        updates.countManager = -1;
-        updates.countVerified = -1;
-        updates.countUnverified = -1;
-      } else {
-        updates.countManager = -1;
-        updates.countVerified = -1;
-      }
-    }
     promises.push(this.model('List')
       .updateMany(
         { _id: { $in: listIds } },
@@ -738,9 +590,6 @@ UserSchema.pre('save', function (next) {
     this.name = `${this.given_name} ${this.middle_name} ${this.family_name}`;
   } else {
     this.name = `${this.given_name} ${this.family_name}`;
-  }
-  if (this.is_orphan || this.is_ghost) {
-    this.authOnly = false;
   }
   if (!this.user_id) {
     this.user_id = this._id;
@@ -797,14 +646,6 @@ UserSchema.statics = {
         || (user.emailsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
           user.email = null;
           user.emails = [];
-        }
-      }
-
-      if (user.phonesVisibility !== 'anyone') {
-        if ((user.phonesVisibility === 'verified' && !requester.verified)
-        || (user.phonesVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
-          user.phone_number = null;
-          user.phone_numbers = [];
         }
       }
 
@@ -902,14 +743,6 @@ UserSchema.methods = {
         || (this.emailsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
           this.email = null;
           this.emails = [];
-        }
-      }
-
-      if (this.phonesVisibility !== 'anyone') {
-        if ((this.phonesVisibility === 'verified' && !user.verified)
-        || (this.phonesVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
-          this.phone_number = null;
-          this.phone_numbers = [];
         }
       }
 
@@ -1168,32 +1001,6 @@ UserSchema.methods = {
       return true;
     }
     return false;
-  },
-
-  hasLocalPhoneNumber(iso2) {
-    let found = false;
-    const that = this;
-    this.phone_numbers.forEach((item) => {
-      const phoneUtil = Libphonenumber.PhoneNumberUtil.getInstance();
-      try {
-        const phoneNumber = phoneUtil.parse(item.number);
-        const regionCode = phoneUtil.getRegionCodeForNumber(phoneNumber);
-        if (regionCode.toUpperCase() === iso2) {
-          found = true;
-        }
-      } catch (err) {
-        // Invalid phone number
-        that.log.error(
-          'An invalid phone number was found',
-          {
-            error: err.message,
-            error_object: err,
-            stack_trace: err.stack,
-          },
-        );
-      }
-    });
-    return found;
   },
 
   // Whether the contact is in country or not

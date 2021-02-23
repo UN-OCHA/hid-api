@@ -15,7 +15,6 @@ const WebhooksPolicy = require('../api/policies/WebhooksPolicy');
 const ServiceCredentialsController = require('../api/controllers/ServiceCredentialsController');
 const AuthPolicy = require('../api/policies/AuthPolicy');
 const OutlookController = require('../api/controllers/OutlookController');
-const NotificationController = require('../api/controllers/NotificationController');
 const ClientController = require('../api/controllers/ClientController');
 const TrustedDomainController = require('../api/controllers/TrustedDomainController');
 const GSSSyncController = require('../api/controllers/GSSSyncController');
@@ -799,56 +798,6 @@ module.exports = [
     },
   },
 
-
-  {
-    method: 'POST',
-    path: '/api/v2/user/{id}/phone_numbers',
-    options: {
-      pre: [
-        UserPolicy.canUpdate,
-      ],
-      handler: UserController.addPhone,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'DELETE',
-    path: '/api/v2/user/{id}/phone_numbers/{pid}',
-    options: {
-      pre: [
-        UserPolicy.canUpdate,
-      ],
-      handler: UserController.dropPhone,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-          pid: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'PUT',
-    path: '/api/v2/user/{id}/phone_number',
-    options: {
-      pre: [
-        UserPolicy.canUpdate,
-      ],
-      handler: UserController.setPrimaryPhone,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
   {
     method: 'PUT',
     path: '/api/v2/user/{id}/organization',
@@ -1191,32 +1140,6 @@ module.exports = [
         AuthPolicy.isAdmin,
       ],
       handler: TrustedDomainController.destroy,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/notification/{id?}',
-    handler: NotificationController.find,
-    options: {
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'PUT',
-    path: '/api/v2/notification/{id?}',
-    handler: NotificationController.update,
-    options: {
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
