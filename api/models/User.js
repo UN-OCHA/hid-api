@@ -481,13 +481,6 @@ const UserSchema = new Schema({
     },
   },
   functional_roles: [listUserSchema],
-  status: {
-    type: String,
-    validate: {
-      validator: isHTMLValidator,
-      message: 'HTML code is not allowed in status field',
-    },
-  },
   // TODO: figure out validation
   location: {
     type: Schema.Types.Mixed,
