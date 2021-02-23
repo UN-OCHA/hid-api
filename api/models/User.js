@@ -13,7 +13,6 @@ const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'f
 const userPopulate1 = [
   { path: 'verified_by', select: '_id name' },
   { path: 'subscriptions.service', select: '_id name' },
-  { path: 'connections.user', select: '_id name' },
   { path: 'authorizedClients', select: '_id id name' },
 ];
 
@@ -25,7 +24,7 @@ function isHTMLValidator(v) {
   return !isHTML(v);
 }
 
-const visibilities = ['anyone', 'verified', 'connections'];
+const visibilities = ['anyone', 'verified'];
 
 const emailSchema = new Schema({
   type: {
@@ -61,21 +60,6 @@ const translationSchema = new Schema({
       validator: isHTMLValidator,
       message: 'HTML code is not allowed in text',
     },
-  },
-});
-
-const connectionSchema = new Schema({
-  pending: {
-    type: Boolean,
-    default: true,
-  },
-  user: {
-    type: Schema.ObjectId,
-    ref: 'User',
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
   },
 });
 
@@ -473,10 +457,6 @@ const UserSchema = new Schema({
     type: [subscriptionSchema],
     readonly: true,
   },
-  connections: {
-    type: [connectionSchema],
-    readonly: true,
-  },
   deleted: {
     type: Boolean,
     default: false,
@@ -552,17 +532,6 @@ UserSchema.virtual('sub').get(function () {
 
 UserSchema.pre('remove', async function (next) {
   try {
-    // Avoid null connections from being created when a user is removed
-    const users = await this.model('User').find({ 'connections.user': this._id });
-    const promises = [];
-    for (let i = 0; i < users.length; i += 1) {
-      for (let j = 0; j < users[i].connections.length; j += 1) {
-        if (users[i].connections[j].user.toString() === this._id.toString()) {
-          users[i].connections.id(users[i].connections[j]._id).remove();
-        }
-      }
-      promises.push(users[i].save());
-    }
     // Reduce the number of contacts for each list of the user
     const listIds = [];
     listTypes.forEach((attr) => {
@@ -642,37 +611,19 @@ UserSchema.statics = {
     const user = auser;
     if (user._id.toString() !== requester._id.toString() && !requester.is_admin) {
       if (user.emailsVisibility !== 'anyone') {
-        if ((user.emailsVisibility === 'verified' && !requester.verified)
-        || (user.emailsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
+        if (user.emailsVisibility === 'verified' && !requester.verified) {
           user.email = null;
           user.emails = [];
         }
       }
 
       if (user.locationsVisibility !== 'anyone') {
-        if ((user.locationsVisibility === 'verified' && !requester.verified)
-        || (user.locationsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
+        if (user.locationsVisibility === 'verified' && !requester.verified) {
           user.location = null;
           user.locations = [];
         }
       }
     }
-  },
-
-  connectionsIndex(user, userId) {
-    let index = -1;
-    let connection = {};
-    if (user.connections && user.connections.length) {
-      for (let i = 0, len = user.connections.length; i < len; i += 1) {
-        connection = user.connections[i];
-        if (connection.pending === false
-          && ((connection.user._id && connection.user._id.toString() === userId.toString())
-          || (!connection.user._id && connection.user.toString() === userId.toString()))) {
-          index = i;
-        }
-      }
-    }
-    return index;
   },
 
   // Password Requirements
@@ -739,16 +690,14 @@ UserSchema.methods = {
     this.sanitizeLists(user);
     if (this._id && user._id && this._id.toString() !== user._id.toString() && !user.is_admin) {
       if (this.emailsVisibility !== 'anyone') {
-        if ((this.emailsVisibility === 'verified' && !user.verified)
-        || (this.emailsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
+        if (this.emailsVisibility === 'verified' && !user.verified) {
           this.email = null;
           this.emails = [];
         }
       }
 
       if (this.locationsVisibility !== 'anyone') {
-        if ((this.locationsVisibility === 'verified' && !user.verified)
-        || (this.locationsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
+        if (this.locationsVisibility === 'verified' && !user.verified) {
           this.location = null;
           this.locations = [];
         }
@@ -927,23 +876,6 @@ UserSchema.methods = {
       this.emails[index].validated = true;
       this.emails.set(index, this.emails[index]);
     }
-  },
-
-  connectionsIndex(userId) {
-    let index = -1;
-    let connection = {};
-    if (this.connections && this.connections.length) {
-      for (let i = 0, len = this.connections.length; i < len; i += 1) {
-        connection = this.connections[i];
-        if (connection.user
-          && connection.pending === false
-          && ((connection.user._id && connection.user._id.toString() === userId.toString())
-          || (!connection.user._id && connection.user.toString() === userId.toString()))) {
-          index = i;
-        }
-      }
-    }
-    return index;
   },
 
   hasAuthorizedClient(clientId) {
