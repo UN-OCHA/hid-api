@@ -734,13 +734,6 @@ module.exports = {
       throw Boom.notFound();
     }
 
-    // If verifying user, set verified_by and verificationExpiryEmail
-    if (request.payload.verified && !user.verified) {
-      request.payload.verified_by = request.auth.credentials._id;
-      request.payload.verifiedOn = new Date();
-      request.payload.verificationExpiryEmail = false;
-    }
-
     if (request.payload.updatedAt) {
       delete request.payload.updatedAt;
     }
@@ -1603,6 +1596,7 @@ module.exports = {
       );
       throw Boom.notFound();
     }
+
     if (email === record.email) {
       logger.warn(
         `[UserController->dropEmail] Primary email for user ${userId} can not be removed`,
@@ -1613,6 +1607,7 @@ module.exports = {
       );
       throw Boom.badRequest('You can not remove the primary email');
     }
+
     const index = record.emailIndex(email);
     if (index === -1) {
       logger.warn(
@@ -1626,12 +1621,8 @@ module.exports = {
     }
     record.emails.splice(index, 1);
     record.lastModified = new Date();
-    const stillVerified = await record.canBeVerifiedAutomatically();
-    if (!stillVerified) {
-      record.verified = false;
-    }
-    await record.save();
 
+    await record.save();
     logger.info(
       `[UserController->dropEmail] User ${userId} saved successfully`,
       {
@@ -1714,9 +1705,6 @@ module.exports = {
         throw Boom.notFound();
       }
 
-      // For automatic verified status.
-      let domain = null;
-
       // Assign the primary address as the initial value for `email`
       //
       // This is necessary for new account registrations, which won't have the
@@ -1742,7 +1730,6 @@ module.exports = {
           record.emails[0].validated = true;
           record.emails.set(0, record.emails[0]);
           record.lastModified = new Date();
-          domain = await record.isVerifiableEmail(email);
         } else {
           for (let i = 0, len = record.emails.length; i < len; i += 1) {
             if (record.emails[i].email === email) {
@@ -1751,7 +1738,6 @@ module.exports = {
             }
           }
           record.lastModified = new Date();
-          domain = await record.isVerifiableEmail(email);
         }
       } else {
         logger.warn(
@@ -1763,31 +1749,7 @@ module.exports = {
         );
         throw Boom.badRequest('Invalid hash');
       }
-      if (domain) {
-        record.verified = true;
-        record.verified_by = hidAccount;
-        record.verifiedOn = new Date();
-        record.verificationExpiryEmail = false;
-        // If the domain is associated to a list, check user in this list automatically
-        if (domain.list) {
-          if (!record.organizations) {
-            record.organizations = [];
-          }
 
-          let isCheckedIn = false;
-          // Make sure user is not already checked in this list
-          for (let i = 0, len = record.organizations.length; i < len; i += 1) {
-            if (record.organizations[i].list.equals(domain.list._id)
-              && record.organizations[i].deleted === false) {
-              isCheckedIn = true;
-            }
-          }
-
-          if (!isCheckedIn) {
-            await ListUserController.checkinHelper(domain.list, record, true, 'organizations', record);
-          }
-        }
-      }
       const promises = [];
       promises.push(record.save().then(() => {
         logger.info(
@@ -1796,10 +1758,12 @@ module.exports = {
             request,
             user: {
               id: record.id,
+              email: record.email,
             },
           },
         );
       }));
+
       if (record.email === email) {
         promises.push(EmailService.sendPostRegister(record).then(() => {
           logger.info(
@@ -1807,6 +1771,7 @@ module.exports = {
             {
               request,
               user: {
+                id: record.id,
                 email: record.email,
               },
             },
@@ -1999,8 +1964,6 @@ module.exports = {
       record = await AuthPolicy.isTOTPValid(record, token);
     }
 
-    let domain = null;
-
     // Check that the reset hash was correct when the user landed on the page.
     if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
       // Check the new password against the old one.
@@ -2020,7 +1983,6 @@ module.exports = {
       } else {
         record.password = User.hashPassword(request.payload.password);
         record.verifyEmail(record.email);
-        domain = await record.isVerifiableEmail(record.email);
       }
     } else {
       logger.warn(
@@ -2033,14 +1995,7 @@ module.exports = {
       );
       throw Boom.badRequest('Reset password link is expired or invalid');
     }
-    if (domain) {
-      // Reset verifiedOn date as user was able to
-      // reset his password via an email from a trusted domain
-      record.verified = true;
-      record.verified_by = hidAccount;
-      record.verifiedOn = new Date();
-      record.verificationExpiryEmail = false;
-    }
+
     record.expires = new Date(0, 0, 1, 0, 0, 0);
     if (record.is_orphan === true || record.is_ghost === true) {
       // User is not an orphan anymore. Update lists count.
@@ -2048,7 +2003,7 @@ module.exports = {
       if (listIds.length) {
         await List.updateMany({ _id: { $in: listIds } }, { $inc: { countUnverified: 1 } });
         logger.info(
-          `[UserController->resetPasswordEndpoint] User ${record._id.toString()} is not an orphan anymore. Updated list counts`,
+          `[UserController->resetPasswordEndpoint] User ${record.id} is not an orphan anymore. Updated list counts`,
           {
             request,
           },
@@ -2062,6 +2017,7 @@ module.exports = {
     record.passwordResetAlert7days = false;
     record.passwordResetAlert = false;
     record.lastModified = new Date();
+
     await record.save();
     logger.info(
       `[UserController->resetPasswordEndpoint] Password updated successfully for user ${record._id.toString()}`,
@@ -2070,6 +2026,7 @@ module.exports = {
         security: true,
       },
     );
+
     return 'Password reset successfully';
   },
 

@@ -11,7 +11,6 @@ const TrustedDomain = require('./TrustedDomain');
 
 const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
 const userPopulate1 = [
-  { path: 'verified_by', select: '_id name' },
   { path: 'subscriptions.service', select: '_id name' },
   { path: 'connections.user', select: '_id name' },
   { path: 'authorizedClients', select: '_id id name' },
@@ -25,7 +24,7 @@ function isHTMLValidator(v) {
   return !isHTML(v);
 }
 
-const visibilities = ['anyone', 'verified', 'connections'];
+const visibilities = ['anyone', 'connections'];
 
 const emailSchema = new Schema({
   type: {
@@ -101,7 +100,7 @@ const listUserSchema = new Schema({
   }],
   visibility: {
     type: String,
-    enum: ['me', 'inlist', 'all', 'verified'],
+    enum: ['me', 'inlist', 'all'],
   },
   orgTypeId: {
     type: Number,
@@ -290,26 +289,6 @@ const UserSchema = new Schema({
     readonly: true,
   },
   passwordResetAlert: {
-    type: Boolean,
-    default: false,
-    readonly: true,
-  },
-  // Only admins can set this
-  verified: {
-    type: Boolean,
-    default: false,
-    managerOnly: true,
-  },
-  verified_by: {
-    type: Schema.ObjectId,
-    ref: 'User',
-    readonly: true,
-  },
-  verifiedOn: {
-    type: Date,
-    readonly: true,
-  },
-  verificationExpiryEmail: {
     type: Boolean,
     default: false,
     readonly: true,
@@ -1135,33 +1114,6 @@ UserSchema.methods = {
       return true;
     }
     return false;
-  },
-
-  isVerifiableEmail(email) {
-    const ind = email.indexOf('@');
-    const domain = email.substr((ind + 1));
-    return TrustedDomain
-      .findOne({ url: domain })
-      .populate('list');
-  },
-
-  async canBeVerifiedAutomatically() {
-    const that = this;
-    const promises = [];
-    // Check all emails
-    this.emails.forEach((email) => {
-      if (email.validated) {
-        promises.push(that.isVerifiableEmail(email.email));
-      }
-    });
-    const values = await Promise.all(promises);
-    let out = false;
-    values.forEach((val) => {
-      if (val) {
-        out = true;
-      }
-    });
-    return out;
   },
 
   toJSON() {
