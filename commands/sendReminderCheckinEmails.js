@@ -13,7 +13,6 @@ const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.N
 mongoose.connect(store.uri, store.options);
 
 const User = require('../api/models/User');
-const NotificationService = require('../api/services/NotificationService');
 
 async function run() {
   const cursor = User
@@ -31,14 +30,6 @@ async function run() {
         && !lu.deleted) {
         const hasLocalPhoneNumber = user.hasLocalPhoneNumber(lu.list.metadata.country.pcode);
         const inCountry = await user.isInCountry(lu.list.metadata.country.pcode);
-        const notification = {
-          type: 'reminder_checkin',
-          user,
-          params: {
-            listUser: lu, list: lu.list, hasLocalPhoneNumber, inCountry,
-          },
-        };
-        await NotificationService.send(notification);
         lu.remindedCheckin = true;
         await user.save();
       }
