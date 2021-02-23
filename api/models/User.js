@@ -346,27 +346,6 @@ const UserSchema = new Schema({
     default: false,
     readonly: true,
   },
-  // Makes sure it's a valid URL, and do not allow urls from other domains
-  picture: {
-    type: String,
-    validate: validate({
-      validator: 'isURL',
-      passIfEmpty: true,
-      arguments: {
-        host_whitelist: [
-          'api.humanitarian.id',
-          'api.dev.humanitarian.id',
-          'api.staging.humanitarian.id',
-          'dev.api-humanitarian-id.ahconu.org',
-          'stage.api-humanitarian-id.ahconu.org',
-          'prod-api-humanitarian-id.ahconu.org',
-          'api.hid.vm',
-        ],
-      },
-      message: 'picture should be a valid URL',
-    }),
-    default: '',
-  },
   notes: {
     type: String,
     validate: {
@@ -596,15 +575,6 @@ const UserSchema = new Schema({
     type: [connectionSchema],
     readonly: true,
   },
-  // TODO: figure out validation
-  appMetadata: {
-    type: Schema.Types.Mixed,
-    /* validate: validate({
-    validator: 'isJSON',
-    passIfEmpty: true,
-    message: 'appMetadata should be valid JSON'
-  }) */
-  },
   deleted: {
     type: Boolean,
     default: false,
@@ -613,11 +583,6 @@ const UserSchema = new Schema({
     type: Boolean,
     default: false,
     adminOnly: true,
-  },
-  // Whether this user is only using auth
-  authOnly: {
-    type: Boolean,
-    default: true,
   },
   // Whether the user uses TOTP for security
   totp: {
@@ -706,19 +671,6 @@ UserSchema.pre('remove', async function (next) {
     const updates = {
       count: -1,
     };
-    if (this.authOnly && !this.hidden) {
-      updates.countManager = -1;
-    }
-    if (!this.authOnly && !this.hidden) {
-      if (!this.is_orphan && !this.is_ghost) {
-        updates.countManager = -1;
-        updates.countVerified = -1;
-        updates.countUnverified = -1;
-      } else {
-        updates.countManager = -1;
-        updates.countVerified = -1;
-      }
-    }
     promises.push(this.model('List')
       .updateMany(
         { _id: { $in: listIds } },
@@ -736,9 +688,6 @@ UserSchema.pre('save', function (next) {
     this.name = `${this.given_name} ${this.middle_name} ${this.family_name}`;
   } else {
     this.name = `${this.given_name} ${this.family_name}`;
-  }
-  if (this.is_orphan || this.is_ghost) {
-    this.authOnly = false;
   }
   if (!this.user_id) {
     this.user_id = this._id;
