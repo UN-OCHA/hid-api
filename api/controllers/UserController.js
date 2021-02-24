@@ -1,3 +1,7 @@
+/**
+ * @module UserController
+ * @description CRUD controller for users.
+ */
 const Boom = require('@hapi/boom');
 const qs = require('qs');
 const ejs = require('ejs');
@@ -7,13 +11,11 @@ const acceptLanguage = require('accept-language');
 const validator = require('validator');
 
 const hidAccount = '5b2128e754a0d6046d6c69f2';
-const List = require('../models/List');
 const User = require('../models/User');
 const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
 const GSSSyncService = require('../services/GSSSyncService');
 const AuthPolicy = require('../policies/AuthPolicy');
-const ListUserController = require('./ListUserController');
 const config = require('../../config/env')[process.env.NODE_ENV];
 
 const { logger } = config;

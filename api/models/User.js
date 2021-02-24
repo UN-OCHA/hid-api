@@ -1,5 +1,8 @@
+/**
+* @module User
+* @description User
+*/
 const mongoose = require('mongoose');
-
 const { Schema } = mongoose;
 const Bcrypt = require('bcryptjs');
 const axios = require('axios');
@@ -14,10 +17,6 @@ const userPopulate1 = [
   { path: 'authorizedClients', select: '_id id name' },
 ];
 
-/**
-* @module User
-* @description User
-*/
 function isHTMLValidator(v) {
   return !isHTML(v);
 }
@@ -332,43 +331,9 @@ const UserSchema = new Schema({
 // Index name with collation en_US
 UserSchema.index({ name: 1 }, { collation: { locale: 'en_US' } });
 
-// Index lists for list of users.
-UserSchema.index({ 'lists.list': 1 });
-UserSchema.index({ 'operations.list': 1 });
-UserSchema.index({ 'bundles.list': 1 });
-UserSchema.index({ 'disasters.list': 1 });
-UserSchema.index({ 'offices.list': 1 });
-UserSchema.index({ 'organizations.list': 1 });
-
 /* eslint prefer-arrow-callback: "off", func-names: "off" */
 UserSchema.virtual('sub').get(function () {
   return this._id;
-});
-
-UserSchema.pre('remove', async function (next) {
-  try {
-    const promises = [];
-
-    // Reduce the number of contacts for each list of the user
-    const listIds = [];
-    listTypes.forEach((attr) => {
-      this[`${attr}s`].forEach((checkin) => {
-        listIds.push(checkin.list);
-      });
-    });
-    const updates = {
-      count: -1,
-    };
-    promises.push(this.model('List')
-      .updateMany(
-        { _id: { $in: listIds } },
-        { $inc: updates },
-      ));
-    await Promise.all(promises);
-    next();
-  } catch (err) {
-    next(err);
-  }
 });
 
 UserSchema.pre('save', function (next) {
@@ -411,18 +376,6 @@ UserSchema.statics = {
     };
   },
 
-  listAttributes() {
-    return [
-      'lists',
-      'operations',
-      'bundles',
-      'disasters',
-      'organization',
-      'organizations',
-      'offices',
-    ];
-  },
-
   sanitizeExportedUser(auser, requester) {
     const user = auser;
     if (user._id.toString() !== requester._id.toString() && !requester.is_admin) {
@@ -455,44 +408,11 @@ UserSchema.statics = {
     const buffer = crypto.randomBytes(256);
     return `${buffer.toString('hex').slice(0, 10)}B`;
   },
-
-  translateCheckin(acheckin, language) {
-    let name = ''; let nameEn = ''; let acronym = ''; let
-      acronymEn = '';
-    const checkin = acheckin;
-    checkin.names.forEach((nameLn) => {
-      if (nameLn.language === language) {
-        name = nameLn.text;
-      }
-      if (nameLn.language === 'en') {
-        nameEn = nameLn.text;
-      }
-    });
-    checkin.acronyms.forEach((acroLn) => {
-      if (acroLn.language === language) {
-        acronym = acroLn.text;
-      }
-      if (acroLn.language === 'en') {
-        acronymEn = acroLn.text;
-      }
-    });
-    if (name !== '') {
-      checkin.name = name;
-    } else if (nameEn !== '') {
-      checkin.name = nameEn;
-    }
-    if (acronym !== '') {
-      checkin.acronym = acronym;
-    } else if (acronymEn !== '') {
-      checkin.acronym = acronymEn;
-    }
-  },
 };
 
 UserSchema.methods = {
   sanitize(user) {
     this.sanitizeClients();
-    this.sanitizeLists(user);
     if (this._id && user._id && this._id.toString() !== user._id.toString() && !user.is_admin) {
       this.email = null;
       this.emails = [];
@@ -501,73 +421,6 @@ UserSchema.methods = {
 
   getAppUrl() {
     return `${process.env.APP_URL}/users/${this._id}`;
-  },
-
-  getListIds(excludePending = false) {
-    const that = this;
-    const listIds = [];
-    listTypes.forEach((attr) => {
-      if (that[`${attr}s`].length > 0) {
-        that[`${attr}s`].forEach((lu) => {
-          if (lu.deleted === false
-            && (excludePending === false || (excludePending === true && lu.pending === false))) {
-            listIds.push(lu.list.toString());
-          }
-        });
-      }
-    });
-    return listIds;
-  },
-
-  sanitizeLists(user) {
-    if (this._id && user._id && this._id.toString() !== user._id.toString() && !user.is_admin && !user.isManager) {
-      const that = this;
-      listTypes.forEach((attr) => {
-        _.remove(that[`${attr}s`], (checkin) => {
-          if (checkin.visibility === 'inlist') {
-            let out = true;
-            // Is user in list ?
-            for (let i = 0; i < user[`${attr}s`].length; i += 1) {
-              if (user[`${attr}s`][i].list.toString() === checkin.list.toString() && !user[`${attr}s`][i].deleted) {
-                out = false;
-              }
-            }
-            // Is user the owner of the list ?
-            if (checkin.owner && checkin.owner.toString() === user._id.toString()) {
-              out = false;
-            }
-            // Is user a manager of the list ?
-            if (checkin.managers && checkin.managers.length) {
-              for (let i = 0; i < checkin.managers.length; i += 1) {
-                if (checkin.managers[i].toString() === user._id.toString()) {
-                  out = false;
-                }
-              }
-            }
-            return out;
-          }
-          if (checkin.visibility === 'me') {
-            let out = true;
-
-            // Is user the owner of the list ?
-            if (checkin.owner && checkin.owner.toString() === user._id.toString()) {
-              out = false;
-            }
-            // Is user a manager of the list ?
-            if (checkin.managers && checkin.managers.length) {
-              for (let i = 0; i < checkin.managers.length; i += 1) {
-                if (checkin.managers[i].toString() === user._id.toString()) {
-                  out = false;
-                }
-              }
-            }
-            return out;
-          }
-
-          return checkin.visibility === 'verified' && !user.verified;
-        });
-      });
-    }
   },
 
   sanitizeClients() {
@@ -766,52 +619,6 @@ UserSchema.methods = {
     }
   },
 
-  translateListNames(language) {
-    const that = this;
-    listTypes.forEach((listType) => {
-      if (that[`${listType}s`] && that[`${listType}s`].length) {
-        that[`${listType}s`].forEach((checkin) => {
-          that.translateCheckin(checkin, language);
-        });
-      }
-    });
-    if (this.organization) {
-      this.translateCheckin(this.organization, language);
-    }
-  },
-
-  updateCheckins(list) {
-    for (let j = 0; j < this[`${list.type}s`].length; j += 1) {
-      if (this[`${list.type}s`][j].list.toString() === list._id.toString()) {
-        this[`${list.type}s`][j].name = list.name;
-        this[`${list.type}s`][j].names = list.names;
-        this[`${list.type}s`][j].acronym = list.acronym;
-        this[`${list.type}s`][j].acronyms = list.acronyms;
-        this[`${list.type}s`][j].owner = list.owner;
-        this[`${list.type}s`][j].managers = list.managers;
-        this[`${list.type}s`][j].visibility = list.visibility;
-        if (list.type === 'organization') {
-          this[`${list.type}s`][j].orgTypeId = list.metadata.type.id;
-          this[`${list.type}s`][j].orgTypeLabel = list.metadata.type.label;
-        }
-      }
-    }
-    if (list.type === 'organization'
-    && this.organization
-    && this.organization.list
-    && this.organization.list.toString() === list._id.toString()) {
-      this.organization.name = list.name;
-      this.organization.names = list.names;
-      this.organization.acronym = list.acronym;
-      this.organization.acronyms = list.acronyms;
-      this.organization.owner = list.owner;
-      this.organization.managers = list.managers;
-      this.organization.visibility = list.visibility;
-      this.organization.orgTypeId = list.metadata.type.id;
-      this.organization.orgTypeLabel = list.metadata.type.label;
-    }
-  },
-
   defaultPopulate() {
     return this
       .populate(userPopulate1)
@@ -880,9 +687,6 @@ UserSchema.methods = {
     } else {
       user.outlookCredentials = false;
     }
-    listTypes.forEach((attr) => {
-      _.remove(user[`${attr}s`], checkin => checkin.deleted);
-    });
     user.sub = user._id.toString();
     return user;
   },
