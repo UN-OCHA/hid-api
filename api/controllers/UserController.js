@@ -32,19 +32,6 @@ function _txtExport(users) {
 }
 
 /**
- * Get the list of functional roles a user is checked into.
- */
-function getRoles(user) {
-  let roles = '';
-  user.functional_roles.forEach((role) => {
-    if (!role.deleted) {
-      roles += `${role.name};`;
-    }
-  });
-  return roles;
-}
-
-/**
  * Helper function to export users to csv
  */
 function _csvExport(users, full = false) {
