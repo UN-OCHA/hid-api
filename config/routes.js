@@ -2,8 +2,8 @@
  * Routes for HID Auth + API
  *
  * - Anything prefixed with "/api" is the API
- * - Everything else is HID Auth, which is a mix of OAuth-specific routes, plus
- *   user-facing things like login forms, password resets, profile, and so forth
+ * - Everything else is HID Auth, which is a mix of OAuth/OpenID routes, plus
+ *   user-facing things like login forms, password resets, profile, etc.
  *
  * @see https://hapi.dev/tutorials/routing/
  */
@@ -19,12 +19,6 @@ const ClientController = require('../api/controllers/ClientController');
 const TrustedDomainController = require('../api/controllers/TrustedDomainController');
 const GSSSyncController = require('../api/controllers/GSSSyncController');
 const GSSSyncPolicy = require('../api/policies/GSSSyncPolicy');
-const ListController = require('../api/controllers/ListController');
-const ListPolicy = require('../api/policies/ListPolicy');
-const OperationController = require('../api/controllers/OperationController');
-const OperationsPolicy = require('../api/policies/OperationsPolicy');
-const ListUserController = require('../api/controllers/ListUserController');
-const ListUserPolicy = require('../api/policies/ListUserPolicy');
 const ServiceController = require('../api/controllers/ServiceController');
 const ServicePolicy = require('../api/policies/ServicePolicy');
 const NumbersController = require('../api/controllers/NumbersController');
@@ -35,15 +29,6 @@ const AuthController = require('../api/controllers/AuthController');
 const AdminController = require('../api/controllers/AdminController');
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
-const childAttributes = [
-  'operations',
-  'bundles',
-  'disasters',
-  'lists',
-  'organization',
-  'organizations',
-  'offices',
-];
 
 module.exports = [
 
@@ -551,58 +536,6 @@ module.exports = [
   },
 
   {
-    method: 'POST',
-    path: '/api/v2/user/{id}/{childAttribute}',
-    options: {
-      pre: [
-        ListUserPolicy.canCheckin,
-      ],
-      handler: ListUserController.checkin,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-          childAttribute: Joi.string().valid(...childAttributes).required(),
-        }),
-      },
-    },
-  },
-
-  {
-    method: ['PUT', 'PATCH'],
-    path: '/api/v2/user/{id}/{childAttribute}/{checkInId}',
-    options: {
-      pre: [
-        ListUserPolicy.canUpdate,
-      ],
-      handler: ListUserController.update,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-          childAttribute: Joi.string().valid(...childAttributes).required(),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'DELETE',
-    path: '/api/v2/user/{id}/{childAttribute}/{checkInId}',
-    options: {
-      pre: [
-        ListUserPolicy.canCheckout,
-      ],
-      handler: ListUserController.checkout,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-          childAttribute: Joi.string().valid(...childAttributes).required(),
-          checkInId: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
     method: 'PUT',
     path: '/api/v2/user/password',
     handler: UserController.resetPasswordEndpoint,
@@ -863,62 +796,6 @@ module.exports = [
     path: '/api/v2/user/{id}/outlookcredentials',
     handler: OutlookController.saveOutlookCredentials,
     options: {
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'POST',
-    path: '/api/v2/list',
-    options: {
-      pre: [
-        ListPolicy.canCreate,
-      ],
-      handler: ListController.create,
-    },
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/list/{id?}',
-    handler: ListController.find,
-    options: {
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'PUT',
-    path: '/api/v2/list/{id}',
-    options: {
-      pre: [
-        ListPolicy.canUpdate,
-      ],
-      handler: ListController.update,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'DELETE',
-    path: '/api/v2/list/{id}',
-    options: {
-      pre: [
-        ListPolicy.canDestroy,
-      ],
-      handler: ListController.destroy,
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
@@ -1316,62 +1193,6 @@ module.exports = [
         WebhooksPolicy.canRun,
       ],
       handler: WebhooksController.hrinfo,
-    },
-  },
-
-  {
-    method: 'POST',
-    path: '/api/v2/operation',
-    options: {
-      pre: [
-        AuthPolicy.isAdminOrGlobalManager,
-      ],
-      handler: OperationController.create,
-    },
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/operation/{id?}',
-    handler: OperationController.find,
-    options: {
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'PUT',
-    path: '/api/v2/operation/{id}',
-    options: {
-      pre: [
-        OperationsPolicy.canUpdateOperation,
-      ],
-      handler: OperationController.update,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'DELETE',
-    path: '/api/v2/operation/{id}',
-    options: {
-      pre: [
-        AuthPolicy.isAdminOrGlobalManager,
-      ],
-      handler: OperationController.destroy,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
     },
   },
 ];

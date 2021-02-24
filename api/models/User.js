@@ -9,7 +9,6 @@ const isHTML = require('is-html');
 const validate = require('mongoose-validator');
 const TrustedDomain = require('./TrustedDomain');
 
-const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
 const userPopulate1 = [
   { path: 'subscriptions.service', select: '_id name' },
   { path: 'authorizedClients', select: '_id id name' },
@@ -22,8 +21,6 @@ const userPopulate1 = [
 function isHTMLValidator(v) {
   return !isHTML(v);
 }
-
-const visibilities = ['anyone'];
 
 const emailSchema = new Schema({
   type: {
@@ -59,79 +56,6 @@ const translationSchema = new Schema({
       validator: isHTMLValidator,
       message: 'HTML code is not allowed in text',
     },
-  },
-});
-
-const listUserSchema = new Schema({
-  list: {
-    type: Schema.ObjectId,
-    ref: 'List',
-  },
-  name: { type: String },
-  names: [translationSchema],
-  acronym: { type: String },
-  acronyms: [translationSchema],
-  acronymsOrNames: {
-    type: Schema.Types.Mixed,
-  },
-  owner: {
-    type: Schema.ObjectId,
-    ref: 'User',
-  },
-  managers: [{
-    type: Schema.ObjectId,
-    ref: 'User',
-  }],
-  visibility: {
-    type: String,
-    enum: ['me', 'inlist', 'all'],
-  },
-  orgTypeId: {
-    type: Number,
-  },
-  orgTypeLabel: {
-    type: String,
-    enum: [
-      'Academic / Research',
-      'Civilian',
-      'Donor',
-      'Embassy',
-      'Government',
-      'International Military Force',
-      'International NGO',
-      'International Organization',
-      'Media',
-      'Military',
-      'National NGO',
-      'Non state armed groups',
-      'Other',
-      'Private sector',
-      'Red Cross / Red Crescent',
-      'Religious',
-      'United Nations',
-      'Unknown',
-    ],
-  },
-  checkoutDate: Date,
-  pending: {
-    type: Boolean,
-    default: true,
-  },
-  remindedCheckout: {
-    type: Boolean,
-    default: false,
-  },
-  remindedCheckin: {
-    type: Boolean,
-    default: false,
-  },
-  deleted: {
-    type: Boolean,
-    default: false,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
   },
 });
 
@@ -292,14 +216,6 @@ const UserSchema = new Schema({
     enum: ['en', 'fr', 'es', 'ar'],
     default: 'en',
   },
-  organization: {
-    type: listUserSchema,
-    readonly: true,
-  },
-  organizations: {
-    type: [listUserSchema],
-    readonly: true,
-  },
   job_title: {
     type: String,
     validate: {
@@ -347,26 +263,6 @@ const UserSchema = new Schema({
   createdBy: {
     type: Schema.ObjectId,
     ref: 'User',
-    readonly: true,
-  },
-  lists: {
-    type: [listUserSchema],
-    readonly: true,
-  },
-  operations: {
-    type: [listUserSchema],
-    readonly: true,
-  },
-  bundles: {
-    type: [listUserSchema],
-    readonly: true,
-  },
-  disasters: {
-    type: [listUserSchema],
-    readonly: true,
-  },
-  offices: {
-    type: [listUserSchema],
     readonly: true,
   },
   authorizedClients: [{
