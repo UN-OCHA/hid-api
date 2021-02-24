@@ -21,93 +21,6 @@ const config = require('../../config/env')[process.env.NODE_ENV];
 const { logger } = config;
 
 /**
- * @module UserController
- * @description CRUD controller for users.
- */
-
-/**
- * Exports users in PDF, using the PDF snap service.
- */
-async function _pdfExport(users, number, lists, req, format) {
-  const filters = [];
-  if (Object.prototype.hasOwnProperty.call(req.query, 'name') && req.query.name.length) {
-    filters.push(req.query.name);
-  }
-  if (Object.prototype.hasOwnProperty.call(req.query, 'verified') && req.query.verified) {
-    filters.push('Verified User');
-  }
-  if (Object.prototype.hasOwnProperty.call(req.query, 'is_admin') && req.query.is_admin) {
-    filters.push('Administrator');
-  }
-  lists.forEach((list, index) => {
-    if (index > 0) {
-      filters.push(list.name);
-    }
-  });
-
-  const data = {
-    lists,
-    number,
-    users,
-    dateGenerated: moment().format('LL'),
-    filters,
-  };
-  let template = 'templates/pdf/printList.html';
-  if (format === 'meeting-compact') {
-    template = 'templates/pdf/printMeetingCompact.html';
-  } else if (format === 'meeting-comfortable') {
-    template = 'templates/pdf/printMeetingComfortable.html';
-  }
-  const str = await ejs.renderFile(template, data, {});
-
-  // Send the HTML to the wkhtmltopdf service to generate a PDF, and
-  // return the output.
-  const postData = qs.stringify({ html: str });
-  const hostname = process.env.WKHTMLTOPDF_HOST;
-  const port = process.env.WKHTMLTOPDF_PORT || 80;
-  const params = {
-    service: 'hid_api',
-    pdfLandscape: true,
-    pdfBackground: true,
-    pdfMarginUnit: 'mm',
-    pdfMarginTop: 10,
-    pdfMarginBottom: 10,
-    pdfMarginRight: 10,
-    pdfMarginLeft: 10,
-    scale: 1,
-  };
-  const clientRes = await axios({
-    method: 'post',
-    url: `http://${hostname}:${port}/snap`,
-    params,
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Content-Length': postData.length,
-      'X-Forwarded-For': req.headers['x-forwarded-for'] || req.connection.remoteAddress,
-      'User-Agent': req.headers['user-agent'],
-    },
-    data: postData,
-    responseType: 'arraybuffer',
-  });
-  if (clientRes && clientRes.status === 200) {
-    // clientRes.setEncoding('binary');
-
-    const pdfSize = parseInt(clientRes.headers['content-length'], 10);
-
-    return [clientRes.data, pdfSize];
-  }
-  logger.error(
-    '[UserController->_pdfExport] An error occurred while generating a PDF',
-    {
-      request: req,
-      fail: true,
-      response: clientRes,
-    },
-  );
-  throw new Error(`An error occurred while generating PDF for list ${data.lists[0].name}`);
-}
-
-/**
  * Exports users to txt.
  */
 function _txtExport(users) {
@@ -116,19 +29,6 @@ function _txtExport(users) {
     out += `${users[i].name} <${users[i].email}>;`;
   }
   return out;
-}
-
-/**
- * Get the list of bundles a user is checked into.
- */
-function getBundles(user) {
-  let bundles = '';
-  user.bundles.forEach((bundle) => {
-    if (!bundle.deleted) {
-      bundles += `${bundle.name};`;
-    }
-  });
-  return bundles;
 }
 
 /**
@@ -644,13 +544,6 @@ module.exports = {
       if (request.params.extension === 'txt') {
         return reply.response(_txtExport(results))
           .type('text/plain');
-      }
-      if (request.params.extension === 'pdf') {
-        const [buffer, bytes] = await _pdfExport(results, number, lists, request, pdfFormat);
-        return reply.response(buffer)
-          .type('application/pdf')
-          .bytes(bytes)
-          .header('Content-Disposition', `attachment; filename="Humanitarian ID Contacts ${moment().format('YYYYMMDD')}.pdf"`);
       }
     }
     for (let i = 0, len = results.length; i < len; i += 1) {
