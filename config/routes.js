@@ -42,7 +42,6 @@ const childAttributes = [
   'lists',
   'organization',
   'organizations',
-  'functional_roles',
   'offices',
 ];
 
