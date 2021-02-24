@@ -277,17 +277,6 @@ module.exports = {
     return send(mailOptions, 'special_password_reset', context);
   },
 
-  sendVerificationExpiryEmail(user) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      user,
-    };
-    return send(mailOptions, 'verification_expiry', context);
-  },
-
   sendAdminDelete(user, admin) {
     const mailOptions = {
       to: user.email,
