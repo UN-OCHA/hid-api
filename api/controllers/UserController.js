@@ -377,18 +377,6 @@ module.exports = {
       const childAttributes = User.listAttributes();
       HelperService.removeForbiddenAttributes(User, request, childAttributes);
 
-      if (request.auth.credentials && registrationType === '') {
-        // Creating an orphan user
-        request.payload.createdBy = request.auth.credentials._id;
-        // If an orphan is being created, do not expire
-        request.payload.expires = new Date(0, 0, 1, 0, 0, 0);
-        if (request.payload.email) {
-          request.payload.is_orphan = true;
-        } else {
-          request.payload.is_ghost = true;
-        }
-      }
-
       // HID-1582: creating a short lived user for testing
       if (request.payload.tester) {
         const now = Date.now();
@@ -428,9 +416,6 @@ module.exports = {
         } else if (registrationType === 'kiosk') {
           // Kiosk registration
           await EmailService.sendRegisterKiosk(user, appVerifyUrl);
-        } else {
-          // An admin is creating an orphan user
-          await EmailService.sendRegisterOrphan(user, request.auth.credentials, appVerifyUrl);
         }
       }
       return user;
@@ -492,10 +477,7 @@ module.exports = {
 
     if (request.params.id) {
       const criteria = { _id: request.params.id };
-      if (!request.auth.credentials.verified) {
-        criteria.is_orphan = false;
-        criteria.is_ghost = false;
-      }
+
       // Do not show user if it is hidden
       if (
         !request.auth.credentials.is_admin
@@ -581,10 +563,6 @@ module.exports = {
       delete criteria.country;
     }
 
-    if (!request.auth.credentials.verified) {
-      criteria.is_orphan = false;
-      criteria.is_ghost = false;
-    }
     const listIds = [];
     let lists = [];
     for (let i = 0; i < childAttributes.length; i += 1) {
@@ -1463,12 +1441,6 @@ module.exports = {
       throw Boom.badRequest('Email is not unique');
     }
 
-    if (record.emails.length === 0 && record.is_ghost) {
-      // Turn ghost into orphan and set main email address
-      record.is_ghost = false;
-      record.is_orphan = true;
-      record.email = email;
-    }
     const data = { email: email, type: 'Work', validated: false };
     record.emails.push(data);
     record.lastModified = new Date();
@@ -1997,35 +1969,26 @@ module.exports = {
     }
 
     record.expires = new Date(0, 0, 1, 0, 0, 0);
-    if (record.is_orphan === true || record.is_ghost === true) {
-      // User is not an orphan anymore. Update lists count.
-      const listIds = record.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, { $inc: { countUnverified: 1 } });
-        logger.info(
-          `[UserController->resetPasswordEndpoint] User ${record.id} is not an orphan anymore. Updated list counts`,
-          {
-            request,
-          },
-        );
-      }
-    }
-    record.is_orphan = false;
-    record.is_ghost = false;
     record.lastPasswordReset = new Date();
     record.passwordResetAlert30days = false;
     record.passwordResetAlert7days = false;
     record.passwordResetAlert = false;
     record.lastModified = new Date();
 
-    await record.save();
-    logger.info(
-      `[UserController->resetPasswordEndpoint] Password updated successfully for user ${record._id.toString()}`,
-      {
-        request,
-        security: true,
-      },
-    );
+    // Update user in DB.
+    await record.save().then(() => {
+      logger.info(
+        `[UserController->resetPasswordEndpoint] Password updated successfully for user ${record.id}`,
+        {
+          request,
+          security: true,
+          user: {
+            id: record.id,
+            email: record.email,
+          },
+        },
+      );
+    });
 
     return 'Password reset successfully';
   },
@@ -2098,129 +2061,6 @@ module.exports = {
     }
 
     return record;
-  },
-
-  async addConnection(request) {
-    const user = await User.findOne({ _id: request.params.id });
-    if (!user) {
-      logger.warn(
-        `[UserController->addConnection] User ${request.params.id} not found`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.notFound();
-    }
-
-    if (!user.connections) {
-      user.connections = [];
-    }
-    if (user.connectionsIndex(request.auth.credentials._id) !== -1) {
-      logger.warn(
-        `[UserController->addConnection] User ${request.params.id} is already a connection of ${request.auth.credentials._id.toString()}`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('User is already a connection');
-    }
-
-    user.connections.push({ pending: true, user: request.auth.credentials._id });
-    user.lastModified = new Date();
-
-    await user.save().then(() => {
-      logger.info(
-        `[UserController->addConnection] User ${request.params.id} successfully saved`,
-        {
-          request,
-          user: {
-            id: request.params.id,
-          },
-        },
-      );
-    });
-
-    return user;
-  },
-
-  async updateConnection(request) {
-    const user = await User.findOne({ _id: request.params.id });
-    if (!user) {
-      logger.warn(
-        `[UserController->updateConnection] User ${request.params.id} not found`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.notFound();
-    }
-    const connection = user.connections.id(request.params.cid);
-    connection.pending = false;
-    user.lastModified = new Date();
-    await user.save();
-    logger.info(
-      `[UserController->updateConnection] User ${request.params.id} added connection to ${request.params.cid}`,
-      {
-        request,
-        user: {
-          id: request.params.id,
-          connection: request.params.cid,
-        },
-      },
-    );
-    const cuser = await User.findOne({ _id: connection.user });
-    // Create connection with current user
-    const cindex = cuser.connectionsIndex(user._id);
-    if (cindex === -1) {
-      cuser.connections.push({ pending: false, user: user._id });
-    } else {
-      cuser.connections[cindex].pending = false;
-    }
-    cuser.lastModified = new Date();
-    await cuser.save();
-    logger.info(
-      `[UserController->updateConnection] User ${cuser.id} added connection to ${user.id}`,
-      {
-        request,
-        user: {
-          id: cuser.id,
-          connection: user.id,
-        },
-      },
-    );
-
-    return user;
-  },
-
-  async deleteConnection(request) {
-    const user = await User.findOne({ _id: request.params.id });
-    if (!user) {
-      logger.warn(
-        `[UserController->deleteConnection] User ${request.params.id} not found`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.notFound();
-    }
-    user.connections.id(request.params.cid).remove();
-    user.lastModified = new Date();
-    await user.save();
-    logger.info(
-      `[UserController->deleteConnection] User ${request.params.id} removed ${request.params.cid} from connections.`,
-      {
-        request,
-        user: {
-          id: request.params.id,
-          connection: request.params.cid,
-        },
-      },
-    );
-    return user;
   },
 
   /*

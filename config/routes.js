@@ -42,7 +42,6 @@ const childAttributes = [
   'lists',
   'organization',
   'organizations',
-  'functional_roles',
   'offices',
 ];
 
@@ -824,53 +823,6 @@ module.exports = [
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'POST',
-    path: '/api/v2/user/{id}/connections',
-    handler: UserController.addConnection,
-    options: {
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'PUT',
-    path: '/api/v2/user/{id}/connections/{cid}',
-    options: {
-      pre: [
-        UserPolicy.canUpdate,
-      ],
-      handler: UserController.updateConnection,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-          cid: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'DELETE',
-    path: '/api/v2/user/{id}/connections/{cid}',
-    options: {
-      pre: [
-        UserPolicy.canUpdate,
-      ],
-      handler: UserController.deleteConnection,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-          cid: Joi.string().regex(objectIdRegex),
         }),
       },
     },

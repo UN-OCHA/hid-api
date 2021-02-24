@@ -63,9 +63,6 @@ components:
         email_verified:
           type: string
           description: 'Whether the user primary email is verified'
-        emailsVisibility:
-          type: string
-          description: 'Who can view this user emails'
         expires:
           type: string
           format: date-time

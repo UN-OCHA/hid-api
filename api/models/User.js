@@ -12,7 +12,6 @@ const TrustedDomain = require('./TrustedDomain');
 const listTypes = ['list', 'operation', 'bundle', 'disaster', 'organization', 'functional_role', 'office'];
 const userPopulate1 = [
   { path: 'subscriptions.service', select: '_id name' },
-  { path: 'connections.user', select: '_id name' },
   { path: 'authorizedClients', select: '_id id name' },
 ];
 
@@ -24,7 +23,7 @@ function isHTMLValidator(v) {
   return !isHTML(v);
 }
 
-const visibilities = ['anyone', 'connections'];
+const visibilities = ['anyone'];
 
 const emailSchema = new Schema({
   type: {
@@ -60,21 +59,6 @@ const translationSchema = new Schema({
       validator: isHTMLValidator,
       message: 'HTML code is not allowed in text',
     },
-  },
-});
-
-const connectionSchema = new Schema({
-  pending: {
-    type: Boolean,
-    default: true,
-  },
-  user: {
-    type: Schema.ObjectId,
-    ref: 'User',
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
   },
 });
 
@@ -264,11 +248,6 @@ const UserSchema = new Schema({
     type: [emailSchema],
     // readonly: true
   },
-  emailsVisibility: {
-    type: String,
-    enum: visibilities,
-    default: 'anyone',
-  },
   password: {
     type: String,
   },
@@ -298,26 +277,6 @@ const UserSchema = new Schema({
     validate: {
       validator: isHTMLValidator,
       message: 'HTML code is not allowed in notes',
-    },
-  },
-  // Validates urls
-  websites: {
-    type: Array,
-    validate: {
-      validator(v) {
-        if (v.length) {
-          let out = true;
-          const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/;
-          for (let i = 0, len = v.length; i < len; i += 1) {
-            if (!urlRegex.test(v[i].url)) {
-              out = false;
-            }
-          }
-          return out;
-        }
-        return true;
-      },
-      message: 'There is an invalid url',
     },
   },
   // TODO: validate timezone
@@ -365,30 +324,6 @@ const UserSchema = new Schema({
       message: 'HTML in job titles is not allowed',
     },
   },
-  functional_roles: [listUserSchema],
-  // TODO: figure out validation
-  location: {
-    type: Schema.Types.Mixed,
-    /* validate: validate({
-    validator: 'isJSON',
-    passIfEmpty: true,
-    message: 'location should be valid JSON'
-  }) */
-  },
-  // TODO: figure out validation
-  locations: {
-    type: Array,
-    /* validate: validate({
-    validator: 'isJSON',
-    passIfEmpty: true,
-    message: 'locations should be valid JSON'
-  }) */
-  },
-  locationsVisibility: {
-    type: String,
-    enum: visibilities,
-    default: 'anyone',
-  },
   // Only an admin can set this
   is_admin: {
     type: Boolean,
@@ -399,16 +334,6 @@ const UserSchema = new Schema({
     type: Boolean,
     default: false,
     adminOnly: true,
-  },
-  is_orphan: {
-    type: Boolean,
-    default: false,
-    readonly: true,
-  },
-  is_ghost: {
-    type: Boolean,
-    default: false,
-    readonly: true,
   },
   expires: {
     type: Date,
@@ -450,10 +375,6 @@ const UserSchema = new Schema({
   }],
   subscriptions: {
     type: [subscriptionSchema],
-    readonly: true,
-  },
-  connections: {
-    type: [connectionSchema],
     readonly: true,
   },
   deleted: {
@@ -522,7 +443,6 @@ UserSchema.index({ 'bundles.list': 1 });
 UserSchema.index({ 'disasters.list': 1 });
 UserSchema.index({ 'offices.list': 1 });
 UserSchema.index({ 'organizations.list': 1 });
-UserSchema.index({ 'functional_roles.list': 1 });
 
 /* eslint prefer-arrow-callback: "off", func-names: "off" */
 UserSchema.virtual('sub').get(function () {
@@ -531,17 +451,8 @@ UserSchema.virtual('sub').get(function () {
 
 UserSchema.pre('remove', async function (next) {
   try {
-    // Avoid null connections from being created when a user is removed
-    const users = await this.model('User').find({ 'connections.user': this._id });
     const promises = [];
-    for (let i = 0; i < users.length; i += 1) {
-      for (let j = 0; j < users[i].connections.length; j += 1) {
-        if (users[i].connections[j].user.toString() === this._id.toString()) {
-          users[i].connections.id(users[i].connections[j]._id).remove();
-        }
-      }
-      promises.push(users[i].save());
-    }
+
     // Reduce the number of contacts for each list of the user
     const listIds = [];
     listTypes.forEach((attr) => {
@@ -612,7 +523,6 @@ UserSchema.statics = {
       'disasters',
       'organization',
       'organizations',
-      'functional_roles',
       'offices',
     ];
   },
@@ -620,38 +530,9 @@ UserSchema.statics = {
   sanitizeExportedUser(auser, requester) {
     const user = auser;
     if (user._id.toString() !== requester._id.toString() && !requester.is_admin) {
-      if (user.emailsVisibility !== 'anyone') {
-        if ((user.emailsVisibility === 'verified' && !requester.verified)
-        || (user.emailsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
-          user.email = null;
-          user.emails = [];
-        }
-      }
-
-      if (user.locationsVisibility !== 'anyone') {
-        if ((user.locationsVisibility === 'verified' && !requester.verified)
-        || (user.locationsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
-          user.location = null;
-          user.locations = [];
-        }
-      }
+      user.email = null;
+      user.emails = [];
     }
-  },
-
-  connectionsIndex(user, userId) {
-    let index = -1;
-    let connection = {};
-    if (user.connections && user.connections.length) {
-      for (let i = 0, len = user.connections.length; i < len; i += 1) {
-        connection = user.connections[i];
-        if (connection.pending === false
-          && ((connection.user._id && connection.user._id.toString() === userId.toString())
-          || (!connection.user._id && connection.user.toString() === userId.toString()))) {
-          index = i;
-        }
-      }
-    }
-    return index;
   },
 
   // Password Requirements
@@ -717,21 +598,8 @@ UserSchema.methods = {
     this.sanitizeClients();
     this.sanitizeLists(user);
     if (this._id && user._id && this._id.toString() !== user._id.toString() && !user.is_admin) {
-      if (this.emailsVisibility !== 'anyone') {
-        if ((this.emailsVisibility === 'verified' && !user.verified)
-        || (this.emailsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
-          this.email = null;
-          this.emails = [];
-        }
-      }
-
-      if (this.locationsVisibility !== 'anyone') {
-        if ((this.locationsVisibility === 'verified' && !user.verified)
-        || (this.locationsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
-          this.location = null;
-          this.locations = [];
-        }
-      }
+      this.email = null;
+      this.emails = [];
     }
   },
 
@@ -908,23 +776,6 @@ UserSchema.methods = {
     }
   },
 
-  connectionsIndex(userId) {
-    let index = -1;
-    let connection = {};
-    if (this.connections && this.connections.length) {
-      for (let i = 0, len = this.connections.length; i < len; i += 1) {
-        connection = this.connections[i];
-        if (connection.user
-          && connection.pending === false
-          && ((connection.user._id && connection.user._id.toString() === userId.toString())
-          || (!connection.user._id && connection.user.toString() === userId.toString()))) {
-          index = i;
-        }
-      }
-    }
-    return index;
-  },
-
   hasAuthorizedClient(clientId) {
     let out = false;
     for (let i = 0, len = this.authorizedClients.length; i < len; i += 1) {
@@ -956,39 +807,35 @@ UserSchema.methods = {
     const created = new Date(this.createdAt);
     const current = Date.now();
     const remindedVerify = new Date(this.remindedVerify);
-    if (this.email_verified || this.is_orphan || this.is_ghost) {
+    if (this.email_verified) {
       return false;
     }
-    if (!this.remindedVerify
+    if (
+      !this.remindedVerify
       && !this.timesRemindedVerify
       && current.valueOf() - created.valueOf() > 48 * 3600 * 1000) {
       return true;
     }
-    if (this.remindedVerify
+    if (
+      this.remindedVerify
       && this.timesRemindedVerify === 1
       && current.valueOf() - remindedVerify.valueOf() > 48 * 3600 * 1000) {
       return true;
     }
-    if (this.remindedVerify
+    if (
+      this.remindedVerify
       && this.timesRemindedVerify === 2
       && current.valueOf() - remindedVerify.valueOf() > 72 * 3600 * 1000) {
       return true;
     }
-    if (this.remindedVerify
+    if (
+      this.remindedVerify
       && this.timesRemindedVerify === 3
       && current.valueOf() - remindedVerify.valueOf() > 23 * 24 * 3600 * 1000) {
       return true;
     }
-    return false;
-  },
 
-  // Whether the contact is in country or not
-  async isInCountry(pcode) {
-    const hrinfoId = this.location.country.id.replace('hrinfo_loc_', '');
-    const url = `https://www.humanitarianresponse.info/api/v1.0/locations/${hrinfoId}`;
-    const response = await axios.get(url);
-    const parsed = JSON.parse(response.data);
-    return parsed.data[0].pcode === pcode;
+    return false;
   },
 
   translateCheckin(acheckin, language) {

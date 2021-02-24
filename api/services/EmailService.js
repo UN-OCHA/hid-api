@@ -95,23 +95,6 @@ module.exports = {
     return send(mailOptions, 'register', context);
   },
 
-  sendRegisterOrphan(user, admin, appVerifyUrl) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale || 'en',
-    };
-    const hash = user.generateHash('reset_password');
-    let resetUrl = addUrlArgument(appVerifyUrl, 'id', user._id.toString());
-    resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
-    resetUrl = addHash(resetUrl, hash.hash);
-    const context = {
-      user,
-      admin,
-      reset_url: resetUrl,
-    };
-    return send(mailOptions, 'register_orphan', context);
-  },
-
   sendRegisterKiosk(user, appVerifyUrl) {
     const mailOptions = {
       to: user.email,
