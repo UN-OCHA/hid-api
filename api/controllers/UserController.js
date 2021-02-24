@@ -416,9 +416,6 @@ module.exports = {
         } else if (registrationType === 'kiosk') {
           // Kiosk registration
           await EmailService.sendRegisterKiosk(user, appVerifyUrl);
-        } else {
-          // An admin is creating an orphan user
-          await EmailService.sendRegisterOrphan(user, request.auth.credentials, appVerifyUrl);
         }
       }
       return user;
