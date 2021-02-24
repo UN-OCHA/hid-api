@@ -1276,37 +1276,6 @@ module.exports = {
     return record;
   },
 
-  async claimEmail(request, reply) {
-    const appResetUrl = request.payload.app_reset_url;
-    const userId = request.params.id;
-
-    if (!HelperService.isAuthorizedUrl(appResetUrl)) {
-      logger.warn(
-        `[UserController->claimEmail] app_reset_url ${appResetUrl} is not in authorizedDomains allowlist`,
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('app_reset_url is invalid');
-    }
-
-    const record = await User.findOne({ _id: userId });
-    if (!record) {
-      logger.warn(
-        `[UserController->claimEmail] User ${userId} not found`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.notFound();
-    }
-    await EmailService.sendClaim(record, appResetUrl);
-    return reply.response('Claim email sent successfully').code(202);
-  },
-
   /*
    * @api [post] /user/{id}/emails
    * tags:

@@ -651,22 +651,6 @@ module.exports = [
   },
 
   {
-    method: 'PUT',
-    path: '/api/v2/user/{id}/orphan',
-    options: {
-      pre: [
-        UserPolicy.canClaim,
-      ],
-      handler: UserController.claimEmail,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
     method: 'POST',
     path: '/api/v2/user/{id}/emails',
     options: {
