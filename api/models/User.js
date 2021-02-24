@@ -265,11 +265,6 @@ const UserSchema = new Schema({
     type: [emailSchema],
     // readonly: true
   },
-  emailsVisibility: {
-    type: String,
-    enum: visibilities,
-    default: 'anyone',
-  },
   password: {
     type: String,
   },
@@ -321,26 +316,6 @@ const UserSchema = new Schema({
       message: 'HTML code is not allowed in notes',
     },
   },
-  // Validates urls
-  websites: {
-    type: Array,
-    validate: {
-      validator(v) {
-        if (v.length) {
-          let out = true;
-          const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/;
-          for (let i = 0, len = v.length; i < len; i += 1) {
-            if (!urlRegex.test(v[i].url)) {
-              out = false;
-            }
-          }
-          return out;
-        }
-        return true;
-      },
-      message: 'There is an invalid url',
-    },
-  },
   // TODO: validate timezone
   zoneinfo: {
     type: String,
@@ -385,30 +360,6 @@ const UserSchema = new Schema({
       },
       message: 'HTML in job titles is not allowed',
     },
-  },
-  functional_roles: [listUserSchema],
-  // TODO: figure out validation
-  location: {
-    type: Schema.Types.Mixed,
-    /* validate: validate({
-    validator: 'isJSON',
-    passIfEmpty: true,
-    message: 'location should be valid JSON'
-  }) */
-  },
-  // TODO: figure out validation
-  locations: {
-    type: Array,
-    /* validate: validate({
-    validator: 'isJSON',
-    passIfEmpty: true,
-    message: 'locations should be valid JSON'
-  }) */
-  },
-  locationsVisibility: {
-    type: String,
-    enum: visibilities,
-    default: 'anyone',
   },
   // Only an admin can set this
   is_admin: {
@@ -533,7 +484,6 @@ UserSchema.index({ 'bundles.list': 1 });
 UserSchema.index({ 'disasters.list': 1 });
 UserSchema.index({ 'offices.list': 1 });
 UserSchema.index({ 'organizations.list': 1 });
-UserSchema.index({ 'functional_roles.list': 1 });
 
 /* eslint prefer-arrow-callback: "off", func-names: "off" */
 UserSchema.virtual('sub').get(function () {
@@ -623,7 +573,6 @@ UserSchema.statics = {
       'disasters',
       'organization',
       'organizations',
-      'functional_roles',
       'offices',
     ];
   },
@@ -631,21 +580,8 @@ UserSchema.statics = {
   sanitizeExportedUser(auser, requester) {
     const user = auser;
     if (user._id.toString() !== requester._id.toString() && !requester.is_admin) {
-      if (user.emailsVisibility !== 'anyone') {
-        if ((user.emailsVisibility === 'verified' && !requester.verified)
-        || (user.emailsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
-          user.email = null;
-          user.emails = [];
-        }
-      }
-
-      if (user.locationsVisibility !== 'anyone') {
-        if ((user.locationsVisibility === 'verified' && !requester.verified)
-        || (user.locationsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
-          user.location = null;
-          user.locations = [];
-        }
-      }
+      user.email = null;
+      user.emails = [];
     }
   },
 
@@ -728,21 +664,8 @@ UserSchema.methods = {
     this.sanitizeClients();
     this.sanitizeLists(user);
     if (this._id && user._id && this._id.toString() !== user._id.toString() && !user.is_admin) {
-      if (this.emailsVisibility !== 'anyone') {
-        if ((this.emailsVisibility === 'verified' && !user.verified)
-        || (this.emailsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
-          this.email = null;
-          this.emails = [];
-        }
-      }
-
-      if (this.locationsVisibility !== 'anyone') {
-        if ((this.locationsVisibility === 'verified' && !user.verified)
-        || (this.locationsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
-          this.location = null;
-          this.locations = [];
-        }
-      }
+      this.email = null;
+      this.emails = [];
     }
   },
 
@@ -996,15 +919,6 @@ UserSchema.methods = {
     }
 
     return false;
-  },
-
-  // Whether the contact is in country or not
-  async isInCountry(pcode) {
-    const hrinfoId = this.location.country.id.replace('hrinfo_loc_', '');
-    const url = `https://www.humanitarianresponse.info/api/v1.0/locations/${hrinfoId}`;
-    const response = await axios.get(url);
-    const parsed = JSON.parse(response.data);
-    return parsed.data[0].pcode === pcode;
   },
 
   translateCheckin(acheckin, language) {

@@ -24,7 +24,6 @@ async function run() {
       { path: 'disasters.list' },
       { path: 'organization.list' },
       { path: 'organizations.list' },
-      { path: 'functional_roles.list' },
       { path: 'offices.list' },
     ])
     .cursor();
