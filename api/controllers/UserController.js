@@ -237,6 +237,26 @@ module.exports = {
   },
 
   /*
+   * @api [get] /user
+   * tags:
+   *  - user
+   * summary: Returns a list of Users
+   * responses:
+   *   '200':
+   *     description: An array of zero or more users.
+   *     content:
+   *       application/json:
+   *         schema:
+   *           type: array
+   *           items:
+   *             $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Requesting user lacks permission to query users.
+   */
+
+  /*
    * @api [get] /user/{id}
    * tags:
    *  - user
@@ -280,6 +300,17 @@ module.exports = {
       // If we found a user, return it
       if (user) {
         user.sanitize(request.auth.credentials);
+
+        logger.info(
+          `[UserController->find] Displaying one user by ID`,
+          {
+            user: {
+              id: user.id,
+              email: user.email,
+            },
+          },
+        );
+
         return user;
       }
 
@@ -410,6 +441,7 @@ module.exports = {
       throw Boom.notFound();
     }
 
+    // Don't keep old values for updatedAt from payload
     if (request.payload.updatedAt) {
       delete request.payload.updatedAt;
     }
