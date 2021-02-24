@@ -328,10 +328,9 @@ module.exports = {
     //
     // No ID was sent so we are returning a list of users.
     //
-
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
-    const childAttributes = User.listAttributes();
+    const childAttributes = [];
 
     // Hide hidden profile to non-admins
     if (request.auth.credentials && !request.auth.credentials.is_admin) {
@@ -422,7 +421,7 @@ module.exports = {
    *     description: Requested user not found.
    */
   async update(request) {
-    const childAttributes = User.listAttributes();
+    const childAttributes = [];
     HelperService.removeForbiddenAttributes(User, request, childAttributes);
     if (request.payload.password) {
       delete request.payload.password;
@@ -448,52 +447,6 @@ module.exports = {
 
     // Update lastModified manually
     request.payload.lastModified = new Date();
-
-    if (user.hidden === false && request.payload.hidden === true) {
-      // User is being flagged. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, {
-          $inc: {
-            countManager: -1,
-            countVerified: -1,
-            countUnverified: -1,
-          },
-        });
-        logger.info(
-          '[UserController->update] User is being flagged. Updated list counts',
-          {
-            request,
-            user: {
-              id: user._id.toString(),
-            },
-          },
-        );
-      }
-    }
-
-    if (user.hidden === true && request.payload.hidden === false) {
-      // User is being unflagged. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, {
-          $inc: {
-            countManager: 1,
-            countVerified: 1,
-            countUnverified: 1,
-          },
-        });
-        logger.info(
-          '[UserController->update] User is being unflagged. Updated list counts',
-          {
-            request,
-            user: {
-              id: user._id.toString(),
-            },
-          },
-        );
-      }
-    }
 
     user = await User.findOneAndUpdate(
       { _id: request.params.id },
