@@ -20,107 +20,8 @@ const config = require('../../config/env')[process.env.NODE_ENV];
 
 const { logger } = config;
 
-/**
- * Exports users to txt.
- */
-function _txtExport(users) {
-  let out = '';
-  for (let i = 0; i < users.length; i += 1) {
-    out += `${users[i].name} <${users[i].email}>;`;
-  }
-  return out;
-}
-
-/**
- * Helper function to export users to csv
- */
-function _csvExport(users, full = false) {
-  let out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes\n';
-  let org = '';
-  let bundles = '';
-  let roles = '';
-  let country = '';
-  let region = '';
-  let jobTitle = '';
-  let phoneNumber = '';
-  let skype = '';
-  let status = '';
-  let orphan = '';
-  let ghost = '';
-  let verified = '';
-  let manager = '';
-  let admin = '';
-  if (full) {
-    out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes,Created At,Updated At,Orphan,Ghost,Verified,Manager,Admin\n';
-  }
-  for (let i = 0; i < users.length; i += 1) {
-    org = '';
-    bundles = '';
-    country = '';
-    region = '';
-    skype = '';
-    roles = '';
-    jobTitle = users[i].job_title || ' ';
-    phoneNumber = users[i].phone_number || ' ';
-    status = users[i].status || ' ';
-    if (users[i].organization && users[i].organization.list) {
-      org = users[i].organization.name;
-    }
-    if (users[i].bundles && users[i].bundles.length) {
-      bundles = getBundles(users[i]);
-    }
-    if (users[i].functional_roles && users[i].functional_roles.length) {
-      roles = getRoles(users[i]);
-    }
-    if (users[i].location && users[i].location.country) {
-      country = users[i].location.country.name;
-    }
-    if (users[i].location && users[i].location.region) {
-      region = users[i].location.region.name;
-    }
-    if (users[i].voips.length) {
-      for (let j = 0; j < users[i].voips.length; j += 1) {
-        if (users[i].voips[j].type === 'Skype') {
-          skype = users[i].voips[j].username;
-        }
-      }
-    }
-    orphan = users[i].is_orphan ? '1' : '0';
-    ghost = users[i].is_ghost ? '1' : '0';
-    verified = users[i].verified ? '1' : '0';
-    manager = users[i].isManager ? '1' : '0';
-    admin = users[i].is_admin ? '1' : '0';
-    out = `${out
-    }"${users[i].given_name}",`
-      + `"${users[i].family_name}",`
-      + `"${jobTitle}",`
-      + `"${org}",`
-      + `"${bundles}",`
-      + `"${roles}",`
-      + `"${country}",`
-      + `"${region}",`
-      + `"${phoneNumber}",`
-      + `"${skype}",`
-      + `"${users[i].email}",`
-      + `"${status}`;
-    if (full) {
-      out = `${out}",`
-        + `"${users[i].createdAt}",`
-        + `"${users[i].updatedAt}",`
-        + `"${orphan}",`
-        + `"${ghost}",`
-        + `"${verified}",`
-        + `"${manager}",`
-        + `"${admin}"\n`;
-    } else {
-      out += '"\n';
-    }
-  }
-  return out;
-}
 
 module.exports = {
-
   /*
    * @api [post] /user
    * tags:
@@ -408,21 +309,6 @@ module.exports = {
       criteria.hidden = false;
     }
 
-    // Do not allow exports for hidden users
-    if (request.params.extension && request.auth.credentials.hidden) {
-      logger.warn(
-        `[UserController->find] Hidden user ${request.auth.credentials.id} tried to export users`,
-        {
-          request,
-          fail: true,
-          user: {
-            id: request.auth.credentials.id,
-          },
-        },
-      );
-      throw Boom.unauthorized();
-    }
-
     if (criteria.q) {
       if (validator.isEmail(criteria.q) && request.auth.credentials.verified) {
         criteria['emails.email'] = new RegExp(criteria.q, 'i');
@@ -447,45 +333,6 @@ module.exports = {
       criteria.name = new RegExp(criteria.name, 'i');
     }
 
-    if (criteria.country) {
-      criteria['location.country.id'] = criteria.country;
-      delete criteria.country;
-    }
-
-    const listIds = [];
-    let lists = [];
-    for (let i = 0; i < childAttributes.length; i += 1) {
-      if (criteria[`${childAttributes[i]}.list`]) {
-        listIds.push(criteria[`${childAttributes[i]}.list`]);
-        delete criteria[`${childAttributes[i]}.list`];
-      }
-    }
-    if (listIds.length) {
-      lists = await List.find({ _id: { $in: listIds } });
-      lists.forEach((list) => {
-        if (list.isVisibleTo(request.auth.credentials)) {
-          criteria[`${list.type}s`] = { $elemMatch: { list: list._id, deleted: false } };
-          if (!list.isOwner(request.auth.credentials)) {
-            criteria[`${list.type}s`].$elemMatch.pending = false;
-          }
-        } else {
-          logger.warn(
-            `[UserController->find] User ${request.auth.credentials.id} is not authorized to view list ${list._id.toString()}`,
-            {
-              request,
-              fail: true,
-            },
-          );
-          throw Boom.unauthorized('You are not authorized to view this list');
-        }
-      });
-    }
-
-    let pdfFormat = '';
-    if (criteria.format) {
-      pdfFormat = criteria.format;
-      delete criteria.format;
-    }
     const query = HelperService.find(User, criteria, options);
     if (criteria.name) {
       query.collation({ locale: 'en_US' });
@@ -493,10 +340,6 @@ module.exports = {
     // HID-1561 - Set export limit to 2000
     if (!options.limit && request.params.extension) {
       query.limit(100000);
-    }
-    if (request.params.extension) {
-      query.select('name given_name family_name email job_title phone_number status organization bundles location voips connections phonesVisibility emailsVisibility locationsVisibility createdAt updatedAt is_orphan is_ghost verified isManager is_admin functional_roles');
-      query.lean();
     }
     const [results, number] = await Promise.all([query, User.countDocuments(criteria)]);
     if (!results) {
@@ -508,30 +351,6 @@ module.exports = {
         },
       );
       throw Boom.notFound();
-    }
-    if (request.params.extension) {
-      // Sanitize users and translate list names from a plain object
-      for (let i = 0, len = results.length; i < len; i += 1) {
-        User.sanitizeExportedUser(results[i], request.auth.credentials);
-        if (results[i].organization) {
-          User.translateCheckin(results[i].organization, reqLanguage);
-        }
-      }
-      if (request.params.extension === 'csv') {
-        let csvExport = '';
-        if (request.auth.credentials.is_admin) {
-          csvExport = _csvExport(results, true);
-        } else {
-          csvExport = _csvExport(results, false);
-        }
-        return reply.response(csvExport)
-          .type('text/csv')
-          .header('Content-Disposition', `attachment; filename="Humanitarian ID Contacts ${moment().format('YYYYMMDD')}.csv"`);
-      }
-      if (request.params.extension === 'txt') {
-        return reply.response(_txtExport(results))
-          .type('text/plain');
-      }
     }
     for (let i = 0, len = results.length; i < len; i += 1) {
       results[i].sanitize(request.auth.credentials);

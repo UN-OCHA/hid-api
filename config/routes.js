@@ -446,19 +446,6 @@ module.exports = [
   },
 
   {
-    method: 'GET',
-    path: '/api/v2/user.{extension}',
-    handler: UserController.find,
-    options: {
-      validate: {
-        params: Joi.object({
-          extension: Joi.string().valid('csv', 'pdf', 'txt').required(),
-        }),
-      },
-    },
-  },
-
-  {
     method: ['PUT', 'PATCH'],
     path: '/api/v2/user/{id}',
     options: {
