@@ -2,8 +2,8 @@
 /* eslint func-names: "off" */
 /**
  * @module sendReminderCheckinEmails
- * @description Sends a notification to users who checked into a list more than 48 hours ago and
- * didn't update their contact details.
+ * @description Sends a notification to users who checked into a list more than
+ * 48 hours ago and didn't update their contact details.
  */
 
 const mongoose = require('mongoose');
@@ -29,7 +29,6 @@ async function run() {
         && offset < 72 * 3600 * 1000
         && !lu.deleted) {
         const hasLocalPhoneNumber = false;
-        const inCountry = false;
         lu.remindedCheckin = true;
         await user.save();
       }

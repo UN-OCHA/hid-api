@@ -6,10 +6,6 @@
 <p>Nous avons remarqué que vous n'avez pas encore ajouté de numéro de téléphone local. Si vous en avez un et que vous souhaitez l'ajouter, mettez à jour votre profil (voir lien ci-dessous).</p>
 <% } %>
 
-<% if (!inCountry) { %>
-<p>Nous avons <% if (!hasLocalPhoneNumber) { %> aussi <% } %> remarqué que vous avez spécifié <%= user.location.country.name %> comme pays dans lequel vous vous trouvez actuellement. Si vous êtes en/au <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a>, nous vous prions de bien vouloir mettre à jour votre pays. Si vous êtes effectivement basé en/au <%= user.location.country.name %>, vous pouvez ignorer cette requête - nous savons que des humanitaires répondent à des crises à distance.</p>
-<% } %>
-
 <p>La possibilité pour les humanitaires de se trouver et se contacter durant une crise est extrêmement importante. Humanitarian ID adopte une approche décentralisée des listes de contact et compte donc sur ses membres tels que vous pour aider à maintenir les listes de contact à jour.</p>
 
 <% include ../../includes/footer_fr %>
