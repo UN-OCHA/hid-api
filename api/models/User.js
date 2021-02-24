@@ -265,11 +265,6 @@ const UserSchema = new Schema({
     type: [emailSchema],
     // readonly: true
   },
-  emailsVisibility: {
-    type: String,
-    enum: visibilities,
-    default: 'anyone',
-  },
   password: {
     type: String,
   },
@@ -319,26 +314,6 @@ const UserSchema = new Schema({
     validate: {
       validator: isHTMLValidator,
       message: 'HTML code is not allowed in notes',
-    },
-  },
-  // Validates urls
-  websites: {
-    type: Array,
-    validate: {
-      validator(v) {
-        if (v.length) {
-          let out = true;
-          const urlRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/;
-          for (let i = 0, len = v.length; i < len; i += 1) {
-            if (!urlRegex.test(v[i].url)) {
-              out = false;
-            }
-          }
-          return out;
-        }
-        return true;
-      },
-      message: 'There is an invalid url',
     },
   },
   // TODO: validate timezone
@@ -618,13 +593,8 @@ UserSchema.statics = {
   sanitizeExportedUser(auser, requester) {
     const user = auser;
     if (user._id.toString() !== requester._id.toString() && !requester.is_admin) {
-      if (user.emailsVisibility !== 'anyone') {
-        if ((user.emailsVisibility === 'verified' && !requester.verified)
-        || (user.emailsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
-          user.email = null;
-          user.emails = [];
-        }
-      }
+      user.email = null;
+      user.emails = [];
     }
   },
 
@@ -707,13 +677,8 @@ UserSchema.methods = {
     this.sanitizeClients();
     this.sanitizeLists(user);
     if (this._id && user._id && this._id.toString() !== user._id.toString() && !user.is_admin) {
-      if (this.emailsVisibility !== 'anyone') {
-        if ((this.emailsVisibility === 'verified' && !user.verified)
-        || (this.emailsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
-          this.email = null;
-          this.emails = [];
-        }
-      }
+      this.email = null;
+      this.emails = [];
     }
   },
 
