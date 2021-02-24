@@ -164,8 +164,7 @@ module.exports = {
         delete request.payload.registration_type;
       }
 
-      const childAttributes = User.listAttributes();
-      HelperService.removeForbiddenAttributes(User, request, childAttributes);
+      HelperService.removeForbiddenAttributes(User, request, []);
 
       // HID-1582: creating a short lived user for testing
       if (request.payload.tester) {
@@ -281,7 +280,6 @@ module.exports = {
       // If we found a user, return it
       if (user) {
         user.sanitize(request.auth.credentials);
-        user.translateListNames(reqLanguage);
         return user;
       }
 
@@ -354,7 +352,6 @@ module.exports = {
     }
     for (let i = 0, len = results.length; i < len; i += 1) {
       results[i].sanitize(request.auth.credentials);
-      results[i].translateListNames(reqLanguage);
     }
     return reply.response(results).header('X-Total-Count', number);
   },
