@@ -377,13 +377,6 @@ module.exports = {
       const childAttributes = User.listAttributes();
       HelperService.removeForbiddenAttributes(User, request, childAttributes);
 
-      if (request.auth.credentials && registrationType === '') {
-        // Creating an orphan user
-        request.payload.createdBy = request.auth.credentials._id;
-        // If an orphan is being created, do not expire
-        request.payload.expires = new Date(0, 0, 1, 0, 0, 0);
-      }
-
       // HID-1582: creating a short lived user for testing
       if (request.payload.tester) {
         const now = Date.now();
