@@ -362,29 +362,6 @@ const UserSchema = new Schema({
     },
   },
   functional_roles: [listUserSchema],
-  // TODO: figure out validation
-  location: {
-    type: Schema.Types.Mixed,
-    /* validate: validate({
-    validator: 'isJSON',
-    passIfEmpty: true,
-    message: 'location should be valid JSON'
-  }) */
-  },
-  // TODO: figure out validation
-  locations: {
-    type: Array,
-    /* validate: validate({
-    validator: 'isJSON',
-    passIfEmpty: true,
-    message: 'locations should be valid JSON'
-  }) */
-  },
-  locationsVisibility: {
-    type: String,
-    enum: visibilities,
-    default: 'anyone',
-  },
   // Only an admin can set this
   is_admin: {
     type: Boolean,
@@ -618,14 +595,6 @@ UserSchema.statics = {
     if (user._id.toString() !== requester._id.toString() && !requester.is_admin) {
       user.email = null;
       user.emails = [];
-
-      if (user.locationsVisibility !== 'anyone') {
-        if ((user.locationsVisibility === 'verified' && !requester.verified)
-        || (user.locationsVisibility === 'connections' && this.connectionsIndex(user, requester._id) === -1)) {
-          user.location = null;
-          user.locations = [];
-        }
-      }
     }
   },
 
@@ -710,14 +679,6 @@ UserSchema.methods = {
     if (this._id && user._id && this._id.toString() !== user._id.toString() && !user.is_admin) {
       this.email = null;
       this.emails = [];
-
-      if (this.locationsVisibility !== 'anyone') {
-        if ((this.locationsVisibility === 'verified' && !user.verified)
-        || (this.locationsVisibility === 'connections' && this.connectionsIndex(user._id) === -1)) {
-          this.location = null;
-          this.locations = [];
-        }
-      }
     }
   },
 
@@ -966,15 +927,6 @@ UserSchema.methods = {
       return true;
     }
     return false;
-  },
-
-  // Whether the contact is in country or not
-  async isInCountry(pcode) {
-    const hrinfoId = this.location.country.id.replace('hrinfo_loc_', '');
-    const url = `https://www.humanitarianresponse.info/api/v1.0/locations/${hrinfoId}`;
-    const response = await axios.get(url);
-    const parsed = JSON.parse(response.data);
-    return parsed.data[0].pcode === pcode;
   },
 
   translateCheckin(acheckin, language) {
