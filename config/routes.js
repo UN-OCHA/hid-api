@@ -10,8 +10,6 @@
 const Joi = require('@hapi/joi');
 
 const ViewController = require('../api/controllers/ViewController');
-const WebhooksController = require('../api/controllers/WebhooksController');
-const WebhooksPolicy = require('../api/policies/WebhooksPolicy');
 const ServiceCredentialsController = require('../api/controllers/ServiceCredentialsController');
 const AuthPolicy = require('../api/policies/AuthPolicy');
 const OutlookController = require('../api/controllers/OutlookController');
@@ -1182,17 +1180,5 @@ module.exports = [
     method: 'POST',
     path: '/api/v2/outlookGroup',
     handler: OutlookController.create,
-  },
-
-  {
-    method: 'POST',
-    path: '/api/v2/webhooks/hrinfo',
-    options: {
-      auth: false,
-      pre: [
-        WebhooksPolicy.canRun,
-      ],
-      handler: WebhooksController.hrinfo,
-    },
   },
 ];
