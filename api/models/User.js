@@ -361,7 +361,6 @@ const UserSchema = new Schema({
       message: 'HTML in job titles is not allowed',
     },
   },
-  functional_roles: [listUserSchema],
   // Only an admin can set this
   is_admin: {
     type: Boolean,
@@ -495,7 +494,6 @@ UserSchema.index({ 'bundles.list': 1 });
 UserSchema.index({ 'disasters.list': 1 });
 UserSchema.index({ 'offices.list': 1 });
 UserSchema.index({ 'organizations.list': 1 });
-UserSchema.index({ 'functional_roles.list': 1 });
 
 /* eslint prefer-arrow-callback: "off", func-names: "off" */
 UserSchema.virtual('sub').get(function () {
@@ -585,7 +583,6 @@ UserSchema.statics = {
       'disasters',
       'organization',
       'organizations',
-      'functional_roles',
       'offices',
     ];
   },
