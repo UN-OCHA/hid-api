@@ -372,16 +372,6 @@ const UserSchema = new Schema({
     default: false,
     adminOnly: true,
   },
-  is_orphan: {
-    type: Boolean,
-    default: false,
-    readonly: true,
-  },
-  is_ghost: {
-    type: Boolean,
-    default: false,
-    readonly: true,
-  },
   expires: {
     type: Date,
     default: () => Date.now() + 7 * 24 * 60 * 60 * 1000,
@@ -900,29 +890,34 @@ UserSchema.methods = {
     const created = new Date(this.createdAt);
     const current = Date.now();
     const remindedVerify = new Date(this.remindedVerify);
-    if (this.email_verified || this.is_orphan || this.is_ghost) {
+    if (this.email_verified) {
       return false;
     }
-    if (!this.remindedVerify
+    if (
+      !this.remindedVerify
       && !this.timesRemindedVerify
       && current.valueOf() - created.valueOf() > 48 * 3600 * 1000) {
       return true;
     }
-    if (this.remindedVerify
+    if (
+      this.remindedVerify
       && this.timesRemindedVerify === 1
       && current.valueOf() - remindedVerify.valueOf() > 48 * 3600 * 1000) {
       return true;
     }
-    if (this.remindedVerify
+    if (
+      this.remindedVerify
       && this.timesRemindedVerify === 2
       && current.valueOf() - remindedVerify.valueOf() > 72 * 3600 * 1000) {
       return true;
     }
-    if (this.remindedVerify
+    if (
+      this.remindedVerify
       && this.timesRemindedVerify === 3
       && current.valueOf() - remindedVerify.valueOf() > 23 * 24 * 3600 * 1000) {
       return true;
     }
+
     return false;
   },
 

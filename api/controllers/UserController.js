@@ -377,18 +377,6 @@ module.exports = {
       const childAttributes = User.listAttributes();
       HelperService.removeForbiddenAttributes(User, request, childAttributes);
 
-      if (request.auth.credentials && registrationType === '') {
-        // Creating an orphan user
-        request.payload.createdBy = request.auth.credentials._id;
-        // If an orphan is being created, do not expire
-        request.payload.expires = new Date(0, 0, 1, 0, 0, 0);
-        if (request.payload.email) {
-          request.payload.is_orphan = true;
-        } else {
-          request.payload.is_ghost = true;
-        }
-      }
-
       // HID-1582: creating a short lived user for testing
       if (request.payload.tester) {
         const now = Date.now();
@@ -428,9 +416,6 @@ module.exports = {
         } else if (registrationType === 'kiosk') {
           // Kiosk registration
           await EmailService.sendRegisterKiosk(user, appVerifyUrl);
-        } else {
-          // An admin is creating an orphan user
-          await EmailService.sendRegisterOrphan(user, request.auth.credentials, appVerifyUrl);
         }
       }
       return user;
@@ -492,10 +477,7 @@ module.exports = {
 
     if (request.params.id) {
       const criteria = { _id: request.params.id };
-      if (!request.auth.credentials.verified) {
-        criteria.is_orphan = false;
-        criteria.is_ghost = false;
-      }
+
       // Do not show user if it is hidden
       if (
         !request.auth.credentials.is_admin
@@ -581,10 +563,6 @@ module.exports = {
       delete criteria.country;
     }
 
-    if (!request.auth.credentials.verified) {
-      criteria.is_orphan = false;
-      criteria.is_ghost = false;
-    }
     const listIds = [];
     let lists = [];
     for (let i = 0; i < childAttributes.length; i += 1) {
@@ -1470,12 +1448,6 @@ module.exports = {
       throw Boom.badRequest('Email is not unique');
     }
 
-    if (record.emails.length === 0 && record.is_ghost) {
-      // Turn ghost into orphan and set main email address
-      record.is_ghost = false;
-      record.is_orphan = true;
-      record.email = email;
-    }
     const data = { email: email, type: 'Work', validated: false };
     record.emails.push(data);
     record.lastModified = new Date();
@@ -2033,6 +2005,7 @@ module.exports = {
       );
       throw Boom.badRequest('Reset password link is expired or invalid');
     }
+
     if (domain) {
       // Reset verifiedOn date as user was able to
       // reset his password via an email from a trusted domain
@@ -2042,34 +2015,27 @@ module.exports = {
       record.verificationExpiryEmail = false;
     }
     record.expires = new Date(0, 0, 1, 0, 0, 0);
-    if (record.is_orphan === true || record.is_ghost === true) {
-      // User is not an orphan anymore. Update lists count.
-      const listIds = record.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, { $inc: { countUnverified: 1 } });
-        logger.info(
-          `[UserController->resetPasswordEndpoint] User ${record._id.toString()} is not an orphan anymore. Updated list counts`,
-          {
-            request,
-          },
-        );
-      }
-    }
-    record.is_orphan = false;
-    record.is_ghost = false;
     record.lastPasswordReset = new Date();
     record.passwordResetAlert30days = false;
     record.passwordResetAlert7days = false;
     record.passwordResetAlert = false;
     record.lastModified = new Date();
-    await record.save();
-    logger.info(
-      `[UserController->resetPasswordEndpoint] Password updated successfully for user ${record._id.toString()}`,
-      {
-        request,
-        security: true,
-      },
-    );
+
+    // Update user in DB.
+    await record.save().then(() => {
+      logger.info(
+        `[UserController->resetPasswordEndpoint] Password updated successfully for user ${record.id}`,
+        {
+          request,
+          security: true,
+          user: {
+            id: record.id,
+            email: record.email,
+          },
+        },
+      );
+    });
+
     return 'Password reset successfully';
   },
 
