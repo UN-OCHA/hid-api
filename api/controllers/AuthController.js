@@ -1,3 +1,7 @@
+/**
+ * @module AuthController
+ * @description Controller for Auth.
+ */
 const Boom = require('@hapi/boom');
 const Hawk = require('@hapi/hawk');
 const Client = require('../models/Client');
@@ -13,11 +17,8 @@ const config = require('../../config/env')[process.env.NODE_ENV];
 const { logger } = config;
 
 /**
- * @module AuthController
- * @description Controller for Auth.
+ * Main helper function used for login. All logins go through this.
  */
-
-// Main helper function used for login. All logins go through this.
 async function loginHelper(request) {
   const password = request.payload ? request.payload.password : false;
   let email = false;
