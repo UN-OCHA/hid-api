@@ -12,11 +12,8 @@ const Joi = require('@hapi/joi');
 const ViewController = require('../api/controllers/ViewController');
 const ServiceCredentialsController = require('../api/controllers/ServiceCredentialsController');
 const AuthPolicy = require('../api/policies/AuthPolicy');
-const OutlookController = require('../api/controllers/OutlookController');
 const ClientController = require('../api/controllers/ClientController');
 const TrustedDomainController = require('../api/controllers/TrustedDomainController');
-const GSSSyncController = require('../api/controllers/GSSSyncController');
-const GSSSyncPolicy = require('../api/policies/GSSSyncPolicy');
 const ServiceController = require('../api/controllers/ServiceController');
 const ServicePolicy = require('../api/policies/ServicePolicy');
 const NumbersController = require('../api/controllers/NumbersController');
@@ -765,32 +762,6 @@ module.exports = [
 
   {
     method: 'POST',
-    path: '/api/v2/user/{id}/googlecredentials',
-    handler: GSSSyncController.saveGoogleCredentials,
-    options: {
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'POST',
-    path: '/api/v2/user/{id}/outlookcredentials',
-    handler: OutlookController.saveOutlookCredentials,
-    options: {
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'POST',
     path: '/api/v2/client',
     options: {
       pre: [
@@ -1144,28 +1115,5 @@ module.exports = [
       ],
       handler: TOTPController.verifyTOTPToken,
     },
-  },
-
-  {
-    method: 'POST',
-    path: '/api/v2/gsssync',
-    handler: GSSSyncController.create,
-  },
-
-  {
-    method: 'DELETE',
-    path: '/api/v2/gsssync',
-    options: {
-      pre: [
-        GSSSyncPolicy.canDestroy,
-      ],
-      handler: GSSSyncController.destroy,
-    },
-  },
-
-  {
-    method: 'POST',
-    path: '/api/v2/outlookGroup',
-    handler: OutlookController.create,
   },
 ];

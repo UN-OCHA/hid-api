@@ -298,16 +298,6 @@ const UserSchema = new Schema({
     type: [trustedDeviceSchema],
     readonly: true,
   },
-  googleCredentials: {
-    type: Schema.Types.Mixed,
-    readonly: true,
-    default: false,
-  },
-  outlookCredentials: {
-    type: Schema.Types.Mixed,
-    readonly: true,
-    default: false,
-  },
   lastModified: {
     type: Date,
     default: Date.now,
@@ -676,16 +666,6 @@ UserSchema.methods = {
       for (let i = 0; i < user.totpTrusted.length; i += 1) {
         delete user.totpTrusted[i].secret;
       }
-    }
-    if (user.googleCredentials && user.googleCredentials.refresh_token) {
-      user.googleCredentials = true;
-    } else {
-      user.googleCredentials = false;
-    }
-    if (user.outlookCredentials) {
-      user.outlookCredentials = true;
-    } else {
-      user.outlookCredentials = false;
     }
     user.sub = user._id.toString();
     return user;

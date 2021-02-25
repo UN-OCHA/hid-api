@@ -1,6 +1,6 @@
 /**
- * @module removeFieldAuthOnly
- * @description Permanently removes the authOnly field from all users.
+ * @module removeFieldGssOutlook
+ * @description Permanently removes the googleCredentials field from all users.
  */
 const mongoose = require('mongoose');
 const app = require('../');
@@ -16,14 +16,15 @@ mongoose.connect(store.uri, store.options);
 const User = require('../api/models/User');
 
 async function run() {
-  // Drop `authOnly` from all users.
+  // Drop `googleCredentials` from all users.
   await User.collection.updateMany({}, {
     $unset: {
-      'authOnly': 1,
+      'googleCredentials': 1,
+      'outlookCredentials': 1,
     },
   }).catch(err => {
     logger.warn(
-      `[commands->removeFieldAuthOnly] ${err.message}`,
+      `[commands->removeFieldGssOutlook] ${err.message}`,
       {
         migration: true,
         fail: true,
@@ -34,7 +35,7 @@ async function run() {
 
   // Log it
   logger.info(
-    '[commands->removeFieldAuthOnly] Removed authOnly field from all users',
+    '[commands->removeFieldGssOutlook] Removed google+outlook credentials fields from all users',
     {
       migration: true,
     },
@@ -48,7 +49,7 @@ async function run() {
   await run();
 }()).catch(err => {
   logger.error(
-    `[commands->removeFieldAuthOnly] ${err.message}`,
+    `[commands->removeFieldGssOutlook] ${err.message}`,
     {
       migration: true,
       fail: true,

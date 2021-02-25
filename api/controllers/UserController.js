@@ -14,7 +14,6 @@ const hidAccount = '5b2128e754a0d6046d6c69f2';
 const User = require('../models/User');
 const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
-const GSSSyncService = require('../services/GSSSyncService');
 const AuthPolicy = require('../policies/AuthPolicy');
 const config = require('../../config/env')[process.env.NODE_ENV];
 
@@ -465,25 +464,6 @@ module.exports = {
     );
 
     user = await user.defaultPopulate();
-    const promises = [];
-    promises.push(
-      GSSSyncService.synchronizeUser(user).then(() => {
-        logger.info(
-          '[UserController->update] Synchronized user with google spreadsheet',
-          {
-            request,
-            user: {
-              id: user.id,
-              email: user.email,
-            },
-          },
-        );
-      }),
-    );
-
-    // Execute all operations simultaneously
-    await Promise.all(promises);
-
     return user;
   },
 
@@ -789,23 +769,15 @@ module.exports = {
       user.organization = checkin;
     }
     user.lastModified = new Date();
-    await Promise.all([
-      user.save(),
-      GSSSyncService.synchronizeUser(user),
-      // OutlookService.synchronizeUser(user),
-    ]);
-    logger.info(
-      `[UserController->setPrimaryPhone] User ${request.params.id} saved successfully`,
-      {
-        request,
-      },
-    );
-    logger.info(
-      `[UserController->setPrimaryPhone] Successfully synchronized google spreadsheets for user ${request.params.id}`,
-      {
-        request,
-      },
-    );
+    await user.save().then(() => {
+      logger.info(
+        `[UserController->setPrimaryPhone] User ${request.params.id} saved successfully`,
+        {
+          request,
+        },
+      );
+    });
+
     return user;
   },
 
@@ -943,16 +915,6 @@ module.exports = {
           id: userId,
           email,
         }
-      },
-    );
-    await GSSSyncService.synchronizeUser(record);
-    logger.info(
-      `[UserController->setPrimaryEmail] Synchronized user ${userId} with google spreadsheets successfully`,
-      {
-        request,
-        user: {
-          id: userId,
-        },
       },
     );
 

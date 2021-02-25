@@ -24,25 +24,7 @@ Sometimes development requires authenticating with various roles or permissions.
 
 ### Downloading DB Snapshots
 
-Snapshots are available at https://snapshots.aws.ahconu.org/hid/ — use your Jenkins user/pass to authenticate. You will need to file an OPS ticket to be added to the HID group before your Jenkins credentials can authenticate you.
-
-You will download a set of `.bson` (binary JSON) files. They are used for import/export of MongoDB data. To import the files, place them in the `db` directory of the repository from within your host machine. Make sure you have unzipped them so that the file ends in `.bson` instead of `.gz`. Then log into the MongoDB docker container and run the import script on each individual file:
-
-```sh
-# Log into MongoDB container:
-docker-compose exec db sh
-
-# Navigate to shared DB directory:
-cd /srv/db
-
-# Run this command once for each file:
-# mongorestore -d DB_NAME -c FILENAME FILENAME.bson
-#
-# For a database `local`, importing the `user` table:
-mongorestore -d local -c user user.bson
-```
-
-**⚠️ NOTE:** if you import the `gsssync.bson` it can have unintended 500 errors on your local API instance. The errors will manifest themselves pertaining to a missing `keys/client-secrets.json` when doing seemingly unrelated operations, such as saving user profile data. If work is being performed on the GSS syncing functionality, then this collection will come in handy, but until then just avoid importing it.
+The `hid-stack` repo has the most up-to-date instructions for importing DB snapshots. Please follow the setup instructionsin the stack.
 
 
 ### Sending/Receiving Test Emails
