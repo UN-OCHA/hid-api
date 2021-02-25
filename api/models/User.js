@@ -13,7 +13,6 @@ const validate = require('mongoose-validator');
 const TrustedDomain = require('./TrustedDomain');
 
 const userPopulate1 = [
-  { path: 'subscriptions.service', select: '_id name' },
   { path: 'authorizedClients', select: '_id id name' },
 ];
 
@@ -55,25 +54,6 @@ const translationSchema = new Schema({
       validator: isHTMLValidator,
       message: 'HTML code is not allowed in text',
     },
-  },
-});
-
-const subscriptionSchema = new Schema({
-  email: {
-    type: String,
-    lowercase: true,
-    trim: true,
-    validate: validate({
-      validator: 'isEmail',
-      passIfEmpty: false,
-      message: 'email should be a valid email',
-    }),
-    required: true,
-  },
-  service: {
-    type: Schema.ObjectId,
-    ref: 'Service',
-    required: true,
   },
 });
 
@@ -268,10 +248,6 @@ const UserSchema = new Schema({
     type: Schema.ObjectId,
     ref: 'Client',
   }],
-  subscriptions: {
-    type: [subscriptionSchema],
-    readonly: true,
-  },
   deleted: {
     type: Boolean,
     default: false,

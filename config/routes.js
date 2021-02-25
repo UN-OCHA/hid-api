@@ -10,12 +10,9 @@
 const Joi = require('@hapi/joi');
 
 const ViewController = require('../api/controllers/ViewController');
-const ServiceCredentialsController = require('../api/controllers/ServiceCredentialsController');
 const AuthPolicy = require('../api/policies/AuthPolicy');
 const ClientController = require('../api/controllers/ClientController');
 const TrustedDomainController = require('../api/controllers/TrustedDomainController');
-const ServiceController = require('../api/controllers/ServiceController');
-const ServicePolicy = require('../api/policies/ServicePolicy');
 const NumbersController = require('../api/controllers/NumbersController');
 const TOTPController = require('../api/controllers/TOTPController');
 const UserController = require('../api/controllers/UserController');
@@ -698,39 +695,6 @@ module.exports = [
 
   {
     method: 'POST',
-    path: '/api/v2/user/{id}/subscriptions',
-    options: {
-      pre: [
-        ServicePolicy.canSubscribe,
-      ],
-      handler: ServiceController.subscribe,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'DELETE',
-    path: '/api/v2/user/{id}/subscriptions/{serviceId}',
-    options: {
-      pre: [
-        ServicePolicy.canUnsubscribe,
-      ],
-      handler: ServiceController.unsubscribe,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-          serviceId: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'POST',
     path: '/api/v2/client',
     options: {
       pre: [
@@ -878,75 +842,6 @@ module.exports = [
         AuthPolicy.isAdmin,
       ],
       handler: TrustedDomainController.destroy,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'POST',
-    path: '/api/v2/service',
-    handler: ServiceController.create,
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/service/{id?}',
-    handler: ServiceController.find,
-    options: {
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/service/mailchimp/lists',
-    handler: ServiceController.mailchimpLists,
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/service/google/groups',
-    handler: ServiceController.googleGroups,
-  },
-
-  {
-    method: 'GET',
-    path: '/api/v2/servicecredentials',
-    handler: ServiceCredentialsController.find,
-  },
-
-  {
-    method: ['PUT', 'PATCH'],
-    path: '/api/v2/service/{id}',
-    options: {
-      pre: [
-        ServicePolicy.canUpdate,
-      ],
-      handler: ServiceController.update,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
-    method: 'DELETE',
-    path: '/api/v2/service/{id}',
-    options: {
-      pre: [
-        ServicePolicy.canDestroy,
-      ],
-      handler: ServiceController.destroy,
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
