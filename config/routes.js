@@ -697,37 +697,6 @@ module.exports = [
   },
 
   {
-    method: 'PUT',
-    path: '/api/v2/user/{id}/organization',
-    options: {
-      pre: [
-        UserPolicy.canUpdate,
-      ],
-      handler: UserController.setPrimaryOrganization,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-  {
-    method: 'PUT',
-    path: '/api/v3/user/{id}/organization',
-    options: {
-      pre: [
-        UserPolicy.canUpdate,
-      ],
-      handler: UserController.setPrimaryOrganization,
-      validate: {
-        params: Joi.object({
-          id: Joi.string().regex(objectIdRegex),
-        }),
-      },
-    },
-  },
-
-  {
     method: 'POST',
     path: '/api/v2/user/{id}/subscriptions',
     options: {
