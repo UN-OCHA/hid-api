@@ -111,8 +111,6 @@ internals.implementation = () => ({
     // This array of paths is allowed to execute without having a token set as
     // an Authorization header.
     const allowPathsWithoutAuthentication = [
-      '/api/v2/user',
-      '/api/v2/jsonwebtoken',
       '/api/v3/user',
       '/api/v3/jsonwebtoken',
       '/api/v3/admintoken',
