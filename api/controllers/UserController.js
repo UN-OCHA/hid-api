@@ -539,7 +539,7 @@ module.exports = {
   },
 
   /*
-   * @api [put] /user/{id}/password
+   * @api [post] /user/{id}/password
    * tags:
    *   - user
    * summary: Updates the password of a user.
