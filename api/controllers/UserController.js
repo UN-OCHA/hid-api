@@ -1141,7 +1141,10 @@ module.exports = {
    *     required: true
    *     default: ''
    * requestBody:
-   *   description: Required parameters to validate an email address.
+   *   description: >-
+   *     Send a payload with `request.params.email` populated, plus a payload
+   *     containing `app_validation_url` in order to have HID send an email to
+   *     validate an address.
    *   required: false
    *   content:
    *     application/json:
@@ -1162,8 +1165,8 @@ module.exports = {
    *     description: Requested email address not found.
    * security: []
    */
-  async validateEmail(request) {
-    if (request.payload.hash) {
+  async validateEmail(request, reply) {
+    if (request.payload && request.payload.hash) {
       const record = await User.findOne({ _id: request.payload.id }).catch((err) => {
         logger.error(
           `[UserController->validateEmail] ${err.message}`,
@@ -1267,11 +1270,13 @@ module.exports = {
       return record;
     }
 
-    // When hash wasn't present, do this stuff instead.
+    // When hash wasn't present, send a validation email to the requested address.
     //
     // @TODO: split this into its own function.
     //
     // @see HID-2064
+
+    // Confirm whether a user exists with the requested email.
     const record = await User.findOne({ 'emails.email': request.params.email });
     if (!record) {
       logger.warn(
@@ -1283,8 +1288,9 @@ module.exports = {
       );
       throw Boom.notFound();
     }
-    // Send validation email again
-    const appValidationUrl = request.payload.app_validation_url;
+
+    // Confirm whether the request came from a valid domain.
+    const appValidationUrl = request.payload && request.payload.app_validation_url ? request.payload.app_validation_url : '';
     if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
       logger.warn(
         `[UserController->validateEmail] app_validation_url ${appValidationUrl} is not in authorizedDomains allowlist`,
@@ -1296,6 +1302,8 @@ module.exports = {
       );
       throw Boom.badRequest('Invalid app_validation_url');
     }
+
+    // Send validation email.
     const emailIndex = record.emailIndex(request.params.email);
     const email = record.emails[emailIndex];
     await EmailService.sendValidationEmail(
@@ -1305,13 +1313,8 @@ module.exports = {
       appValidationUrl,
     );
 
-    // v3: Send a 204 (empty body)
-    const requestIsV3 = request.path.indexOf('api/v3') !== -1;
-    if (requestIsV3) {
-      return reply.response().code(204);
-    }
-    // v2: Send 200 with this response body.
-    return 'Validation email sent successfully';
+    // Send a 204 (empty body)
+    return reply.response().code(204);
   },
 
   /*
