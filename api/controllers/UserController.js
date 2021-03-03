@@ -1367,12 +1367,14 @@ module.exports = {
    *     description: Password reset successfully.
    *   '400':
    *     description: Bad request. See response body for details.
+   *   '404':
+   *     description: No user found with specified email.
    * security: []
    */
-  async resetPasswordEndpoint(request) {
-    if (request.payload.email) {
-      const appResetUrl = request.payload.app_reset_url;
-
+  async resetPasswordEndpoint(request, reply) {
+    if (request.payload && request.payload.email) {
+      // Validate app URL.
+      const appResetUrl = request.payload.app_reset_url || '';
       if (!HelperService.isAuthorizedUrl(appResetUrl)) {
         logger.warn(
           `[UserController->resetPasswordEndpoint] app_reset_url ${appResetUrl} is not in authorizedDomains allowlist`,
@@ -1384,6 +1386,8 @@ module.exports = {
         );
         throw Boom.badRequest('app_reset_url is invalid');
       }
+
+      // Lookup user based on PRIMARY email.
       const record = await User.findOne({ email: request.payload.email.toLowerCase() });
       if (!record) {
         logger.warn(
@@ -1393,8 +1397,10 @@ module.exports = {
             fail: true,
           },
         );
-        return '';
+        throw Boom.notFound('No user found with that email.');
       }
+
+      // Send password reset email.
       await EmailService.sendResetPassword(record, appResetUrl);
       logger.info(
         `[UserController->resetPasswordEndpoint] Successfully sent reset password email to ${record.email}`,
@@ -1403,11 +1409,22 @@ module.exports = {
           security: true,
         },
       );
-      return '';
+
+      // Send HTTP 204 (empty success response)
+      return reply.response().code(204);
     }
+
+    // If `request.payload.email` was empty, we seem to be evaluating the reset
+    // link contained within an email. This is not an API call, instead a normal
+    // page load from a browser.
     const cookie = request.yar.get('session');
-    if (!request.payload.hash || !request.payload.password
-      || !request.payload.id || !request.payload.time) {
+    if (
+      !request.payload
+      || !request.payload.hash
+      || !request.payload.password
+      || !request.payload.id
+      || !request.payload.time
+    ) {
       logger.warn(
         '[UserController->resetPasswordEndpoint] Wrong or missing arguments',
         {
@@ -1415,9 +1432,10 @@ module.exports = {
           security: true,
         },
       );
-      throw Boom.badRequest('Wrong arguments');
+      throw Boom.badRequest('Wrong or missing arguments');
     }
 
+    // Verify whether password requirements were met.
     if (!User.isStrongPassword(request.payload.password)) {
       logger.warn(
         '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough',
@@ -1430,6 +1448,7 @@ module.exports = {
       throw Boom.badRequest('New password is not strong enough');
     }
 
+    // Lookup user by ID.
     let record = await User.findOne({ _id: request.payload.id });
     if (!record) {
       logger.warn(
@@ -1442,8 +1461,9 @@ module.exports = {
       );
       throw Boom.badRequest('Reset password link is expired or invalid');
     }
+
+    // Check that whether a TOTP token is needed, and that it is valid.
     if (record.totp && !cookie) {
-      // Check that there is a TOTP token and that it is valid
       const token = request.headers['x-hid-totp'];
       record = await AuthPolicy.isTOTPValid(record, token);
     }
@@ -1480,6 +1500,7 @@ module.exports = {
       throw Boom.badRequest('Reset password link is expired or invalid');
     }
 
+    // Modify the user metadata now that password was reset.
     record.expires = new Date(0, 0, 1, 0, 0, 0);
     record.lastPasswordReset = new Date();
     record.passwordResetAlert30days = false;
