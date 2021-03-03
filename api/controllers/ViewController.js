@@ -330,7 +330,7 @@ module.exports = {
     const registerLink = _getRegisterLink(request.payload);
     const passwordLink = _getPasswordLink(request.payload);
     try {
-      await UserController.resetPasswordEndpoint(request);
+      await UserController.resetPasswordEndpoint(request, reply);
       return reply.view('login', {
         alert: { type: 'status', message: `Password reset was sent to ${request.payload.email}. Please make sure the email address is correct. If not, please reset your password again.` },
         query: request.query,
