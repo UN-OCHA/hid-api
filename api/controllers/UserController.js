@@ -1390,8 +1390,26 @@ module.exports = {
         return reply.response().code(204);
       }
 
-      // Send password reset email.
-      await EmailService.sendResetPassword(record, appResetUrl, request.payload.email);
+      // Verify that the email has already been validated
+      let targetEmailIsValidated = record.emails.some(e => e.email === request.payload.email.toLowerCase() && e.validated === true);
+
+      // If the user's secondary is validated, send password reset.
+      if (targetEmailIsValidated) {
+        await EmailService.sendResetPassword(record, appResetUrl, request.payload.email);
+      } else {
+        logger.warn(
+          `[UserController->resetPasswordEndpoint] Could not reset password because the secondary email ${request.payload.email} has not been validated.`,
+          {
+            request,
+            security: true,
+            fail: true,
+            user: {
+              id: record.id,
+              email: record.email,
+            },
+          },
+        );
+      }
 
       // Send HTTP 204 (empty success response)
       return reply.response().code(204);
