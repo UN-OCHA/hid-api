@@ -1237,8 +1237,7 @@ module.exports = {
         throw Boom.badRequest('Invalid hash');
       }
 
-      const promises = [];
-      promises.push(record.save().then(() => {
+      await record.save().then(() => {
         logger.info(
           `[UserController->validateEmail] Saved user ${record.id} successfully`,
           {
@@ -1249,10 +1248,10 @@ module.exports = {
             },
           },
         );
-      }));
+      });
 
       if (record.email === email) {
-        promises.push(EmailService.sendPostRegister(record).then(() => {
+        await EmailService.sendPostRegister(record).then(() => {
           logger.info(
             `[UserController->validateEmail] Sent post_register email to ${record.email} successfully`,
             {
@@ -1263,10 +1262,9 @@ module.exports = {
               },
             },
           );
-        }));
+        });
       }
 
-      await Promise.all(promises);
       return record;
     }
 
