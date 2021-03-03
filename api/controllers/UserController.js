@@ -1351,8 +1351,6 @@ module.exports = {
    *     description: Password reset successfully.
    *   '400':
    *     description: Bad request. See response body for details.
-   *   '404':
-   *     description: No user found with specified email.
    * security: []
    */
   async resetPasswordEndpoint(request, reply) {
@@ -1384,7 +1382,12 @@ module.exports = {
             fail: true,
           },
         );
-        throw Boom.notFound('No user found with that email.');
+
+        // Send HTTP 204 (empty success response)
+        //
+        // We send this because disclosing the existence (or lack thereof) of an
+        // email address is considered a security hole, per OICT policy.
+        return reply.response().code(204);
       }
 
       // Send password reset email.
