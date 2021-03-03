@@ -968,45 +968,28 @@ module.exports = {
     );
     const savedEmailIndex = savedRecord.emailIndex(email);
     const savedEmail = savedRecord.emails[savedEmailIndex];
+
     // Send confirmation email
-    const promises = [];
-    promises.push(
-      EmailService.sendValidationEmail(
-        record,
-        email,
-        savedEmail._id.toString(),
-        appValidationUrl,
-      ).then(() => {
-        logger.info(
-          `[UserController->addEmail] Successfully sent validation email to ${email}`,
-          {
-            request,
-            user: {
-              email,
-            },
-          },
-        );
-      })
+    await EmailService.sendValidationEmail(
+      record,
+      email,
+      savedEmail._id.toString(),
+      appValidationUrl,
     );
-    for (let i = 0; i < record.emails.length; i += 1) {
+
+    // If the email sent without error, notify the other emails on this account.
+    const promises = [];
+    for (let i = 0; i < record.emails.length; i++) {
       // TODO: probably shouldn't send notices to unconfirmed email addresses.
+      //
       // @see HID-2150
-      promises.push(
-        EmailService.sendEmailAlert(record, record.emails[i].email, email).then(() => {
-          logger.info(
-            `[UserController->addEmail] Successfully sent email alert to ${record.emails[i].email}`,
-            {
-              request,
-              user: {
-                email: record.emails[i].email,
-              },
-            },
-          );
-        })
-      );
+      promises.push(EmailService.sendEmailAlert(record, record.emails[i].email, email));
     }
 
+    // Send notifications to secondary addresses.
     await Promise.all(promises);
+
+    // Return user object.
     return record;
   },
 
