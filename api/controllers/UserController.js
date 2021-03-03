@@ -956,8 +956,9 @@ module.exports = {
     const data = { email: email, type: 'Work', validated: false };
     record.emails.push(data);
     record.lastModified = new Date();
+
     const savedRecord = await record.save();
-    logger.warn(
+    logger.info(
       `[UserController->addEmail] Successfully saved user ${record.id}`,
       {
         request,
