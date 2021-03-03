@@ -1251,18 +1251,7 @@ module.exports = {
       });
 
       if (record.email === email) {
-        await EmailService.sendPostRegister(record).then(() => {
-          logger.info(
-            `[UserController->validateEmail] Sent post_register email to ${record.email} successfully`,
-            {
-              request,
-              user: {
-                id: record.id,
-                email: record.email,
-              },
-            },
-          );
-        });
+        await EmailService.sendPostRegister(record);
       }
 
       return record;
