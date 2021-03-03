@@ -1386,13 +1386,6 @@ module.exports = {
 
       // Send password reset email.
       await EmailService.sendResetPassword(record, appResetUrl);
-      logger.info(
-        `[UserController->resetPasswordEndpoint] Successfully sent reset password email to ${record.email}`,
-        {
-          request,
-          security: true,
-        },
-      );
 
       // Send HTTP 204 (empty success response)
       return reply.response().code(204);
