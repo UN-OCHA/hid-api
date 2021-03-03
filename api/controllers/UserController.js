@@ -1390,11 +1390,16 @@ module.exports = {
         return reply.response().code(204);
       }
 
-      // Verify that the email has already been validated
-      let targetEmailIsValidated = record.emails.some(e => e.email === request.payload.email.toLowerCase() && e.validated === true);
+      // Determine whether email is primary. We allow unvalidated primary emails
+      // to accept password resets.
+      const emailIsPrimary = record.email === request.payload.email.toLowerCase();
 
-      // If the user's secondary is validated, send password reset.
-      if (targetEmailIsValidated) {
+      // Verify that the email has already been validated
+      const secondaryEmailIsValidated = record.emails.some(e => e.email === request.payload.email.toLowerCase() && e.validated === true);
+
+      // IF the email is primary OR it's a __validated__ secondary email
+      // THEN send password reset.
+      if (emailIsPrimary || secondaryEmailIsValidated) {
         await EmailService.sendResetPassword(record, appResetUrl, request.payload.email);
       } else {
         logger.warn(
