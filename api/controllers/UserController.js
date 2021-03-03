@@ -1250,6 +1250,12 @@ module.exports = {
         );
       });
 
+      // TODO: if someone needs to re-verify an existing primary email address
+      //       we end up sending them a "welcome to HID" email due to this simple
+      //       conditional. We might want to consider a more complex conditional
+      //       to avoid that edge case.
+      //
+      // @see HID-2200
       if (record.email === email) {
         await EmailService.sendPostRegister(record);
       }
