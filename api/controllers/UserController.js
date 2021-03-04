@@ -1,3 +1,7 @@
+/**
+ * @module UserController
+ * @description CRUD controller for users.
+ */
 const Boom = require('@hapi/boom');
 const qs = require('qs');
 const ejs = require('ejs');
@@ -7,231 +11,16 @@ const acceptLanguage = require('accept-language');
 const validator = require('validator');
 
 const hidAccount = '5b2128e754a0d6046d6c69f2';
-const List = require('../models/List');
 const User = require('../models/User');
 const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
-const GSSSyncService = require('../services/GSSSyncService');
 const AuthPolicy = require('../policies/AuthPolicy');
-const ListUserController = require('./ListUserController');
 const config = require('../../config/env')[process.env.NODE_ENV];
 
 const { logger } = config;
 
-/**
- * @module UserController
- * @description CRUD controller for users.
- */
-
-/**
- * Exports users in PDF, using the PDF snap service.
- */
-async function _pdfExport(users, number, lists, req, format) {
-  const filters = [];
-  if (Object.prototype.hasOwnProperty.call(req.query, 'name') && req.query.name.length) {
-    filters.push(req.query.name);
-  }
-  if (Object.prototype.hasOwnProperty.call(req.query, 'verified') && req.query.verified) {
-    filters.push('Verified User');
-  }
-  if (Object.prototype.hasOwnProperty.call(req.query, 'is_admin') && req.query.is_admin) {
-    filters.push('Administrator');
-  }
-  lists.forEach((list, index) => {
-    if (index > 0) {
-      filters.push(list.name);
-    }
-  });
-
-  const data = {
-    lists,
-    number,
-    users,
-    dateGenerated: moment().format('LL'),
-    filters,
-  };
-  let template = 'templates/pdf/printList.html';
-  if (format === 'meeting-compact') {
-    template = 'templates/pdf/printMeetingCompact.html';
-  } else if (format === 'meeting-comfortable') {
-    template = 'templates/pdf/printMeetingComfortable.html';
-  }
-  const str = await ejs.renderFile(template, data, {});
-
-  // Send the HTML to the wkhtmltopdf service to generate a PDF, and
-  // return the output.
-  const postData = qs.stringify({ html: str });
-  const hostname = process.env.WKHTMLTOPDF_HOST;
-  const port = process.env.WKHTMLTOPDF_PORT || 80;
-  const params = {
-    service: 'hid_api',
-    pdfLandscape: true,
-    pdfBackground: true,
-    pdfMarginUnit: 'mm',
-    pdfMarginTop: 10,
-    pdfMarginBottom: 10,
-    pdfMarginRight: 10,
-    pdfMarginLeft: 10,
-    scale: 1,
-  };
-  const clientRes = await axios({
-    method: 'post',
-    url: `http://${hostname}:${port}/snap`,
-    params,
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Content-Length': postData.length,
-      'X-Forwarded-For': req.headers['x-forwarded-for'] || req.connection.remoteAddress,
-      'User-Agent': req.headers['user-agent'],
-    },
-    data: postData,
-    responseType: 'arraybuffer',
-  });
-  if (clientRes && clientRes.status === 200) {
-    // clientRes.setEncoding('binary');
-
-    const pdfSize = parseInt(clientRes.headers['content-length'], 10);
-
-    return [clientRes.data, pdfSize];
-  }
-  logger.error(
-    '[UserController->_pdfExport] An error occurred while generating a PDF',
-    {
-      request: req,
-      fail: true,
-      response: clientRes,
-    },
-  );
-  throw new Error(`An error occurred while generating PDF for list ${data.lists[0].name}`);
-}
-
-/**
- * Exports users to txt.
- */
-function _txtExport(users) {
-  let out = '';
-  for (let i = 0; i < users.length; i += 1) {
-    out += `${users[i].name} <${users[i].email}>;`;
-  }
-  return out;
-}
-
-/**
- * Get the list of bundles a user is checked into.
- */
-function getBundles(user) {
-  let bundles = '';
-  user.bundles.forEach((bundle) => {
-    if (!bundle.deleted) {
-      bundles += `${bundle.name};`;
-    }
-  });
-  return bundles;
-}
-
-/**
- * Get the list of functional roles a user is checked into.
- */
-function getRoles(user) {
-  let roles = '';
-  user.functional_roles.forEach((role) => {
-    if (!role.deleted) {
-      roles += `${role.name};`;
-    }
-  });
-  return roles;
-}
-
-/**
- * Helper function to export users to csv
- */
-function _csvExport(users, full = false) {
-  let out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes\n';
-  let org = '';
-  let bundles = '';
-  let roles = '';
-  let country = '';
-  let region = '';
-  let jobTitle = '';
-  let phoneNumber = '';
-  let skype = '';
-  let status = '';
-  let orphan = '';
-  let ghost = '';
-  let verified = '';
-  let manager = '';
-  let admin = '';
-  if (full) {
-    out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes,Created At,Updated At,Orphan,Ghost,Verified,Manager,Admin\n';
-  }
-  for (let i = 0; i < users.length; i += 1) {
-    org = '';
-    bundles = '';
-    country = '';
-    region = '';
-    skype = '';
-    roles = '';
-    jobTitle = users[i].job_title || ' ';
-    phoneNumber = users[i].phone_number || ' ';
-    status = users[i].status || ' ';
-    if (users[i].organization && users[i].organization.list) {
-      org = users[i].organization.name;
-    }
-    if (users[i].bundles && users[i].bundles.length) {
-      bundles = getBundles(users[i]);
-    }
-    if (users[i].functional_roles && users[i].functional_roles.length) {
-      roles = getRoles(users[i]);
-    }
-    if (users[i].location && users[i].location.country) {
-      country = users[i].location.country.name;
-    }
-    if (users[i].location && users[i].location.region) {
-      region = users[i].location.region.name;
-    }
-    if (users[i].voips.length) {
-      for (let j = 0; j < users[i].voips.length; j += 1) {
-        if (users[i].voips[j].type === 'Skype') {
-          skype = users[i].voips[j].username;
-        }
-      }
-    }
-    orphan = users[i].is_orphan ? '1' : '0';
-    ghost = users[i].is_ghost ? '1' : '0';
-    verified = users[i].verified ? '1' : '0';
-    manager = users[i].isManager ? '1' : '0';
-    admin = users[i].is_admin ? '1' : '0';
-    out = `${out
-    }"${users[i].given_name}",`
-      + `"${users[i].family_name}",`
-      + `"${jobTitle}",`
-      + `"${org}",`
-      + `"${bundles}",`
-      + `"${roles}",`
-      + `"${country}",`
-      + `"${region}",`
-      + `"${phoneNumber}",`
-      + `"${skype}",`
-      + `"${users[i].email}",`
-      + `"${status}`;
-    if (full) {
-      out = `${out}",`
-        + `"${users[i].createdAt}",`
-        + `"${users[i].updatedAt}",`
-        + `"${orphan}",`
-        + `"${ghost}",`
-        + `"${verified}",`
-        + `"${manager}",`
-        + `"${admin}"\n`;
-    } else {
-      out += '"\n';
-    }
-  }
-  return out;
-}
 
 module.exports = {
-
   /*
    * @api [post] /user
    * tags:
@@ -374,8 +163,7 @@ module.exports = {
         delete request.payload.registration_type;
       }
 
-      const childAttributes = User.listAttributes();
-      HelperService.removeForbiddenAttributes(User, request, childAttributes);
+      HelperService.removeForbiddenAttributes(User, request, []);
 
       // HID-1582: creating a short lived user for testing
       if (request.payload.tester) {
@@ -448,6 +236,26 @@ module.exports = {
   },
 
   /*
+   * @api [get] /user
+   * tags:
+   *  - user
+   * summary: Returns a list of Users
+   * responses:
+   *   '200':
+   *     description: An array of zero or more users.
+   *     content:
+   *       application/json:
+   *         schema:
+   *           type: array
+   *           items:
+   *             $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Requesting user lacks permission to query users.
+   */
+
+  /*
    * @api [get] /user/{id}
    * tags:
    *  - user
@@ -491,7 +299,17 @@ module.exports = {
       // If we found a user, return it
       if (user) {
         user.sanitize(request.auth.credentials);
-        user.translateListNames(reqLanguage);
+
+        logger.info(
+          `[UserController->find] Displaying one user by ID`,
+          {
+            user: {
+              id: user.id,
+              email: user.email,
+            },
+          },
+        );
+
         return user;
       }
 
@@ -509,29 +327,13 @@ module.exports = {
     //
     // No ID was sent so we are returning a list of users.
     //
-
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
-    const childAttributes = User.listAttributes();
+    const childAttributes = [];
 
     // Hide hidden profile to non-admins
     if (request.auth.credentials && !request.auth.credentials.is_admin) {
       criteria.hidden = false;
-    }
-
-    // Do not allow exports for hidden users
-    if (request.params.extension && request.auth.credentials.hidden) {
-      logger.warn(
-        `[UserController->find] Hidden user ${request.auth.credentials.id} tried to export users`,
-        {
-          request,
-          fail: true,
-          user: {
-            id: request.auth.credentials.id,
-          },
-        },
-      );
-      throw Boom.unauthorized();
     }
 
     if (criteria.q) {
@@ -558,45 +360,6 @@ module.exports = {
       criteria.name = new RegExp(criteria.name, 'i');
     }
 
-    if (criteria.country) {
-      criteria['location.country.id'] = criteria.country;
-      delete criteria.country;
-    }
-
-    const listIds = [];
-    let lists = [];
-    for (let i = 0; i < childAttributes.length; i += 1) {
-      if (criteria[`${childAttributes[i]}.list`]) {
-        listIds.push(criteria[`${childAttributes[i]}.list`]);
-        delete criteria[`${childAttributes[i]}.list`];
-      }
-    }
-    if (listIds.length) {
-      lists = await List.find({ _id: { $in: listIds } });
-      lists.forEach((list) => {
-        if (list.isVisibleTo(request.auth.credentials)) {
-          criteria[`${list.type}s`] = { $elemMatch: { list: list._id, deleted: false } };
-          if (!list.isOwner(request.auth.credentials)) {
-            criteria[`${list.type}s`].$elemMatch.pending = false;
-          }
-        } else {
-          logger.warn(
-            `[UserController->find] User ${request.auth.credentials.id} is not authorized to view list ${list._id.toString()}`,
-            {
-              request,
-              fail: true,
-            },
-          );
-          throw Boom.unauthorized('You are not authorized to view this list');
-        }
-      });
-    }
-
-    let pdfFormat = '';
-    if (criteria.format) {
-      pdfFormat = criteria.format;
-      delete criteria.format;
-    }
     const query = HelperService.find(User, criteria, options);
     if (criteria.name) {
       query.collation({ locale: 'en_US' });
@@ -604,10 +367,6 @@ module.exports = {
     // HID-1561 - Set export limit to 2000
     if (!options.limit && request.params.extension) {
       query.limit(100000);
-    }
-    if (request.params.extension) {
-      query.select('name given_name family_name email job_title phone_number status organization bundles location voips connections phonesVisibility emailsVisibility locationsVisibility createdAt updatedAt is_orphan is_ghost verified isManager is_admin functional_roles');
-      query.lean();
     }
     const [results, number] = await Promise.all([query, User.countDocuments(criteria)]);
     if (!results) {
@@ -620,40 +379,8 @@ module.exports = {
       );
       throw Boom.notFound();
     }
-    if (request.params.extension) {
-      // Sanitize users and translate list names from a plain object
-      for (let i = 0, len = results.length; i < len; i += 1) {
-        User.sanitizeExportedUser(results[i], request.auth.credentials);
-        if (results[i].organization) {
-          User.translateCheckin(results[i].organization, reqLanguage);
-        }
-      }
-      if (request.params.extension === 'csv') {
-        let csvExport = '';
-        if (request.auth.credentials.is_admin) {
-          csvExport = _csvExport(results, true);
-        } else {
-          csvExport = _csvExport(results, false);
-        }
-        return reply.response(csvExport)
-          .type('text/csv')
-          .header('Content-Disposition', `attachment; filename="Humanitarian ID Contacts ${moment().format('YYYYMMDD')}.csv"`);
-      }
-      if (request.params.extension === 'txt') {
-        return reply.response(_txtExport(results))
-          .type('text/plain');
-      }
-      if (request.params.extension === 'pdf') {
-        const [buffer, bytes] = await _pdfExport(results, number, lists, request, pdfFormat);
-        return reply.response(buffer)
-          .type('application/pdf')
-          .bytes(bytes)
-          .header('Content-Disposition', `attachment; filename="Humanitarian ID Contacts ${moment().format('YYYYMMDD')}.pdf"`);
-      }
-    }
     for (let i = 0, len = results.length; i < len; i += 1) {
       results[i].sanitize(request.auth.credentials);
-      results[i].translateListNames(reqLanguage);
     }
     return reply.response(results).header('X-Total-Count', number);
   },
@@ -693,7 +420,7 @@ module.exports = {
    *     description: Requested user not found.
    */
   async update(request) {
-    const childAttributes = User.listAttributes();
+    const childAttributes = [];
     HelperService.removeForbiddenAttributes(User, request, childAttributes);
     if (request.payload.password) {
       delete request.payload.password;
@@ -712,58 +439,13 @@ module.exports = {
       throw Boom.notFound();
     }
 
+    // Don't keep old values for updatedAt from payload
     if (request.payload.updatedAt) {
       delete request.payload.updatedAt;
     }
 
     // Update lastModified manually
     request.payload.lastModified = new Date();
-
-    if (user.hidden === false && request.payload.hidden === true) {
-      // User is being flagged. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, {
-          $inc: {
-            countManager: -1,
-            countVerified: -1,
-            countUnverified: -1,
-          },
-        });
-        logger.info(
-          '[UserController->update] User is being flagged. Updated list counts',
-          {
-            request,
-            user: {
-              id: user._id.toString(),
-            },
-          },
-        );
-      }
-    }
-
-    if (user.hidden === true && request.payload.hidden === false) {
-      // User is being unflagged. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, {
-          $inc: {
-            countManager: 1,
-            countVerified: 1,
-            countUnverified: 1,
-          },
-        });
-        logger.info(
-          '[UserController->update] User is being unflagged. Updated list counts',
-          {
-            request,
-            user: {
-              id: user._id.toString(),
-            },
-          },
-        );
-      }
-    }
 
     user = await User.findOneAndUpdate(
       { _id: request.params.id },
@@ -782,25 +464,6 @@ module.exports = {
     );
 
     user = await user.defaultPopulate();
-    const promises = [];
-    promises.push(
-      GSSSyncService.synchronizeUser(user).then(() => {
-        logger.info(
-          '[UserController->update] Synchronized user with google spreadsheet',
-          {
-            request,
-            user: {
-              id: user.id,
-              email: user.email,
-            },
-          },
-        );
-      }),
-    );
-
-    // Execute all operations simultaneously
-    await Promise.all(promises);
-
     return user;
   },
 
@@ -1017,116 +680,6 @@ module.exports = {
   },
 
   /*
-   * @TODO: refactor to include both params in route. See HID-2072.
-   *
-   * @api [put] /user/{id}/organization
-   * tags:
-   *   - user
-   * summary: Set primary organization of the user.
-   * parameters:
-   *   - name: id
-   *     description: A 24-character alphanumeric User ID
-   *     in: path
-   *     required: true
-   *     default: ''
-   * requestBody:
-   *   description: Organization to be marked primary.
-   *   required: true
-   *   content:
-   *     application/json:
-   *       schema:
-   *         type: object
-   *         properties:
-   *           _id:
-   *             type: string
-   *             required: true
-   * responses:
-   *   '200':
-   *     description: The updated user object
-   *     content:
-   *       application/json:
-   *         schema:
-   *           $ref: '#/components/schemas/User'
-   *   '400':
-   *     description: Bad request. See response body for details.
-   *   '401':
-   *     description: Unauthorized.
-   *   '403':
-   *     description: Requesting user lacks permission to update requested user.
-   *   '404':
-   *     description: Requested user not found.
-   */
-  async setPrimaryOrganization(request) {
-    if (!request.payload) {
-      logger.warn(
-        '[UserController->setPrimaryOrganization] Missing request payload',
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Missing listUser id');
-    }
-    if (!request.payload._id) {
-      logger.warn(
-        '[UserController->setPrimaryOrganization] Missing listUser id',
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Missing listUser id');
-    }
-
-    const user = await User.findOne({ _id: request.params.id });
-    if (!user) {
-      logger.warn(
-        `[UserController->setPrimaryOrganization] User ${request.params.id} not found`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.notFound();
-    }
-    const checkin = user.organizations.id(request.payload._id);
-    if (!checkin) {
-      logger.warn(
-        `[UserController->setPrimaryOrganization] Organization ${request.payload._id.toString()} should be part of user organizations`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Organization should be part of user organizations');
-    }
-    if (user.organization) {
-      user.organization.set(checkin);
-    } else {
-      user.organization = checkin;
-    }
-    user.lastModified = new Date();
-    await Promise.all([
-      user.save(),
-      GSSSyncService.synchronizeUser(user),
-      // OutlookService.synchronizeUser(user),
-    ]);
-    logger.info(
-      `[UserController->setPrimaryPhone] User ${request.params.id} saved successfully`,
-      {
-        request,
-      },
-    );
-    logger.info(
-      `[UserController->setPrimaryPhone] Successfully synchronized google spreadsheets for user ${request.params.id}`,
-      {
-        request,
-      },
-    );
-    return user;
-  },
-
-  /*
    * @api [put] /user/{id}/email
    * tags:
    *   - user
@@ -1262,49 +815,8 @@ module.exports = {
         }
       },
     );
-    await GSSSyncService.synchronizeUser(record);
-    logger.info(
-      `[UserController->setPrimaryEmail] Synchronized user ${userId} with google spreadsheets successfully`,
-      {
-        request,
-        user: {
-          id: userId,
-        },
-      },
-    );
 
     return record;
-  },
-
-  async claimEmail(request, reply) {
-    const appResetUrl = request.payload.app_reset_url;
-    const userId = request.params.id;
-
-    if (!HelperService.isAuthorizedUrl(appResetUrl)) {
-      logger.warn(
-        `[UserController->claimEmail] app_reset_url ${appResetUrl} is not in authorizedDomains allowlist`,
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('app_reset_url is invalid');
-    }
-
-    const record = await User.findOne({ _id: userId });
-    if (!record) {
-      logger.warn(
-        `[UserController->claimEmail] User ${userId} not found`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.notFound();
-    }
-    await EmailService.sendClaim(record, appResetUrl);
-    return reply.response('Claim email sent successfully').code(202);
   },
 
   /*

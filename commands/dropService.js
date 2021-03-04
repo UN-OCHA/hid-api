@@ -1,8 +1,8 @@
 /**
- * @module dropNotification
- * @description Drops the Notification collection permanently.
+ * @module dropService
+ * @description Drops the Service collection permanently.
  *
- * docker-compose exec dev node ./commands/dropNotification.js
+ * docker-compose exec dev node ./commands/dropService.js
  */
 const mongoose = require('mongoose');
 const app = require('../');
@@ -11,20 +11,20 @@ const logger = app.config.env[process.env.NODE_ENV].logger;
 const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
 mongoose.connect(store.uri, store.options);
 
-const Notification = require('../api/models/Notification');
+const Service = require('../api/models/Service');
 
 async function run() {
-  // Drop the Notifications collection
-  await Notification.collection.drop().then(data => {
+  // Drop the Service collection
+  await Service.collection.drop().then(data => {
     logger.info(
-      '[commands->dropNotification] dropped Notification collection',
+      '[commands->dropService] dropped Service collection',
       {
         migration: true,
       },
     );
   }).catch(err => {
     logger.warn(
-      '[commands->dropNotification] failed to drop Notification collection',
+      '[commands->dropService] failed to drop Service collection',
       {
         migration: true,
         fail: true,
@@ -40,7 +40,7 @@ async function run() {
   await run();
 }()).catch(err => {
   logger.error(
-    `[commands->dropNotification] ${err.message}`,
+    `[commands->dropService] ${err.message}`,
     {
       migration: true,
       fail: true,

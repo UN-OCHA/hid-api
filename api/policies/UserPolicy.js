@@ -9,11 +9,17 @@ const { logger } = config;
 * @description User Policy
 */
 async function canUpdate(request) {
-  if (!request.auth.credentials.is_admin
+  if (
+    !request.auth.credentials.is_admin
     && !request.auth.credentials.isManager
-    && request.auth.credentials.id !== request.params.id) {
+    && request.auth.credentials.id !== request.params.id
+  ) {
     logger.warn(
       `[UserPolicy->canUpdate] User ${request.auth.credentials.id} can not update user ${request.params.id}`,
+      {
+        security: true,
+        fail: true,
+      },
     );
     throw Boom.forbidden('You need to be an admin or a manager or the current user');
   } else {
@@ -90,7 +96,7 @@ module.exports = {
   canClaim: canUpdate,
 
   async canFind(request) {
-    if (!!request.auth.credentials._id) {
+    if (!!request.auth.credentials.is_admin) {
       return true;
     }
 

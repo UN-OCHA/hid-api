@@ -1,6 +1,12 @@
 /**
- * @module removeFieldAuthOnly
- * @description Permanently removes the authOnly field from all users.
+ * @module removeFieldLists
+ * @description Permanently removes the fields related to lists from all users:
+ * - lists
+ * - operations
+ * - bundles
+ * - disasters
+ * - organizations
+ * - offices
  */
 const mongoose = require('mongoose');
 const app = require('../');
@@ -16,14 +22,20 @@ mongoose.connect(store.uri, store.options);
 const User = require('../api/models/User');
 
 async function run() {
-  // Drop `authOnly` from all users.
+  // Drop all list-related fields from all users.
   await User.collection.updateMany({}, {
     $unset: {
-      'authOnly': 1,
+      'organization': 1,
+      'organizations': 1,
+      'lists': 1,
+      'operations': 1,
+      'bundles': 1,
+      'disasters': 1,
+      'offices': 1,
     },
   }).catch(err => {
     logger.warn(
-      `[commands->removeFieldAuthOnly] ${err.message}`,
+      `[commands->removeFieldLists] ${err.message}`,
       {
         migration: true,
         fail: true,
@@ -34,7 +46,7 @@ async function run() {
 
   // Log it
   logger.info(
-    '[commands->removeFieldAuthOnly] Removed authOnly field from all users',
+    '[commands->removeFieldLists] Removed list-related fields from all user objects',
     {
       migration: true,
     },
@@ -48,7 +60,7 @@ async function run() {
   await run();
 }()).catch(err => {
   logger.error(
-    `[commands->removeFieldAuthOnly] ${err.message}`,
+    `[commands->removeFieldLists] ${err.message}`,
     {
       migration: true,
       fail: true,
