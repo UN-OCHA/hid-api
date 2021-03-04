@@ -1,6 +1,6 @@
 {
   "name": "hid-api",
-  "version": "3.0.24",
+  "version": "3.1.0",
   "description": "Humanitarian ID API+Auth",
   "homepage": "https://about.humanitarian.id",
   "repository": "https://github.com/UN-OCHA/hid_api.git",

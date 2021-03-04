@@ -84,6 +84,18 @@ const ClientSchema = new Schema({
       message: 'HTML code is not allowed in description',
     },
   },
+  organization: {
+    type: String,
+    required: false,
+    default: '',
+    maxlength: 16,
+  },
+  environment: {
+    type: String,
+    required: false,
+    default: '',
+    maxlength: 16,
+  },
 }, {
   collection: 'client',
 });
