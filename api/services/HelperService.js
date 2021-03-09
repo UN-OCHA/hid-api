@@ -26,10 +26,8 @@ const authorizedDomains = [
   'https://dev.auth-humanitarian-id.ahconu.org',
 
   // Local
-  'https://api.hid.vm',
-  'https://auth.hid.vm',
-  'http://api.hid.vm',
-  'http://auth.hid.vm',
+  'https://hid.test',
+  'http://hid.test',
 ];
 
 /**
