@@ -332,14 +332,20 @@ module.exports = {
     try {
       await UserController.resetPasswordEndpoint(request);
       return reply.view('login', {
-        alert: { type: 'status', message: `Password reset was sent to ${request.payload.email}. Please make sure the email address is correct. If not, please reset your password again.` },
+        alert: {
+          type: 'status',
+          message: `The request to change your password has been received. If ${request.payload.email} corresponds to one in our system you will receive a link to reset your password. You may need to check your spam folder if the email does not arrive.`,
+        },
         query: request.query,
         registerLink,
         passwordLink,
       });
     } catch (err) {
       return reply.view('login', {
-        alert: { type: 'error', message: 'There was an error resetting your password.' },
+        alert: {
+          type: 'error',
+          message: 'There was an error resetting your password.',
+        },
         query: request.query,
         registerLink,
         passwordLink,
