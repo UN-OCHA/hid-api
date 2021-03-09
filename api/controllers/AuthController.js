@@ -3,7 +3,6 @@
  * @description Controller for Auth.
  */
 const Boom = require('@hapi/boom');
-const Hawk = require('@hapi/hawk');
 const Client = require('../models/Client');
 const Flood = require('../models/Flood');
 const JwtToken = require('../models/JwtToken');
@@ -1057,34 +1056,4 @@ module.exports = {
     );
     throw Boom.forbidden('Could not blacklist this token because you did not generate it');
   },
-
-  /**
-   * Creates short lived (5 minutes) tokens to
-   * sign requests for file downloads.
-   */
-  signRequest(request) {
-    const url = request.payload ? request.payload.url : null;
-    if (!url) {
-      logger.warn(
-        '[AuthController->signRequest] Missing url to sign request for file downloads',
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Missing url');
-    }
-    const credentials = {
-      id: request.auth.credentials._id.toString(),
-      key: process.env.COOKIE_PASSWORD,
-      algorithm: 'sha256',
-    };
-    const bewit = Hawk.uri.getBewit(url, {
-      credentials,
-      ttlSec: 60 * 5,
-    });
-    return { bewit };
-  },
-
 };
