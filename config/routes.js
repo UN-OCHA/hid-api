@@ -417,7 +417,7 @@ module.exports = [
   },
 
   {
-    method: 'PUT',
+    method: 'POST',
     path: '/api/v3/user/{id}/password',
     options: {
       pre: [
