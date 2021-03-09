@@ -1162,7 +1162,7 @@ module.exports = {
    *     description: Requested email address not found.
    * security: []
    */
-  async validateEmail(request) {
+  async validateEmail(request, reply) {
     if (request.payload.hash) {
       const record = await User.findOne({ _id: request.payload.id }).catch((err) => {
         logger.error(
@@ -1305,13 +1305,7 @@ module.exports = {
       appValidationUrl,
     );
 
-    // v3: Send a 204 (empty body)
-    const requestIsV3 = request.path.indexOf('api/v3') !== -1;
-    if (requestIsV3) {
-      return reply.response().code(204);
-    }
-    // v2: Send 200 with this response body.
-    return 'Validation email sent successfully';
+    return reply.response().code(204);
   },
 
   /*
