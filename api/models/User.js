@@ -10,7 +10,6 @@ const _ = require('lodash');
 const crypto = require('crypto');
 const isHTML = require('is-html');
 const validate = require('mongoose-validator');
-const TrustedDomain = require('./TrustedDomain');
 
 const userPopulate1 = [
   { path: 'authorizedClients', select: '_id id name' },

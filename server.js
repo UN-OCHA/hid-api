@@ -1,7 +1,6 @@
 /**
  * @module server
  */
-
 const newrelic = require('newrelic');
 const path = require('path');
 const _ = require('lodash');
@@ -11,10 +10,9 @@ const hapi = require('@hapi/hapi');
 const ejs = require('ejs');
 const app = require('./');
 const config = require('./config/env')[process.env.NODE_ENV];
+const logger = config.logger;
+const store = config.database.stores[process.env.NODE_ENV];
 
-const { logger } = config;
-
-const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
 mongoose.connect(store.uri, store.options);
 
 const webConfig = app.config.web;
@@ -107,7 +105,9 @@ const init = async () => {
   server.ext('onPreResponse', preResponse);
 
   await server.start();
-  // console.log(`Server running at: ${server.info.uri}`);
+  logger.info(
+    `HID server started. Listening on: ${server.info.uri}`,
+  );
 };
 
 process.on('unhandledRejection', (err, p) => {
