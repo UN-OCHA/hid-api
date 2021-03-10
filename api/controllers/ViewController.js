@@ -1,3 +1,4 @@
+const URL = require('url');
 const Boom = require('@hapi/boom');
 const Recaptcha = require('recaptcha2');
 const Client = require('../models/Client');
@@ -810,6 +811,15 @@ module.exports = {
 
     // Load user from DB.
     const user = await User.findOne({ _id: cookie.userId });
+    user.authorizedClients.forEach(client => {
+      let tmpUrl = client.redirectUri
+        ? client.redirectUri
+        : typeof client.redirectUrls === 'object'
+          ? client.redirectUrls[0]
+          : '';
+      client.urlDisplay = URL.parse(tmpUrl).hostname;
+      client.urlHref = URL.parse(tmpUrl).href;
+    });
 
     // Render settings page.
     return reply.view('settings', {
