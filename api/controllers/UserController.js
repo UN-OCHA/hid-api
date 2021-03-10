@@ -1383,12 +1383,13 @@ module.exports = {
       const record = await User.findOne({ email: request.payload.email.toLowerCase() });
       if (!record) {
         logger.warn(
-          `[UserController->resetPasswordEndpoint] User ${request.params.id} not found`,
+          `[UserController->resetPasswordEndpoint] No user found with email: ${request.payload.email}`,
           {
             request,
             fail: true,
           },
         );
+
         return '';
       }
       await EmailService.sendResetPassword(record, appResetUrl);
