@@ -23,30 +23,3 @@
   flex: 0 1 140px;
   margin-left: 1rem;
 }
-
-/**
- * Individual Client in the list
- */
-.client {
-  display: flex;
-  flex-flow: row nowrap;
-  align-items: center;
-}
-
-.client--hidden {
-  display: none;
-}
-
-.client__edit {
-  margin-right: .5rem;
-  flex: 0 0 5rem;
-}
-
-.client__meta {
-  flex: 1 0 auto;
-}
-
-.client__environment,
-.client__organization {
-  font-size: 80%;
-}

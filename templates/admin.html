@@ -1,6 +1,7 @@
 <% include header %>
 <style><% include ../assets/css/tabs.css %></style>
 <style><% include ../assets/css/admin.css %></style>
+<style><% include ../assets/css/client.css %></style>
 
 <main role="main" id="main-content" class="cd-container">
   <div class="cd-layout-content">
@@ -28,7 +29,7 @@
             <li class="oac-admin__client client" data-search="<%= searchData %>">
               <a href="/admin/client/<%= client._id %>" class="client__edit cd-button cd-button--uppercase">Edit</a>
               <span class="client__meta">
-                <span class="client__name"><%= client.name %></span><br>
+                <span class="client__name"><%= client.name %></span>
                 <% if (!!client.environment) { %>
                   <span class="client__environment"><strong><%= client.environment %></strong> environment</span>
                 <% } %>

@@ -1,0 +1,50 @@
+/**
+ * Individual OAuth Client in a list
+ */
+.client {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+}
+
+.client--hidden {
+  display: none;
+}
+
+.client__meta {
+  flex: 1 0 auto;
+}
+
+.client__name {
+  display: block;
+  font-size: 1.125em;
+}
+
+.client__environment,
+.client__organization {
+  display: inline;
+  font-size: 80%;
+}
+
+.client__url {
+  display: inline;
+}
+
+/**
+ * Buttons (admin or user settings)
+ */
+
+.client__edit {
+  margin-right: .5rem;
+  flex: 0 0 5rem;
+}
+
+.client__revoke {
+  flex: 0 0 auto;
+  text-align: center;
+  margin-right: 1rem;
+}
+
+.client__revoke .cd-icon--cancel {
+  fill: white;
+}

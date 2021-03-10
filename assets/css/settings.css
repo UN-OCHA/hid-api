@@ -5,21 +5,3 @@
   margin: 0;
   padding: 0;
 }
-
-.oac {
-  display: flex;
-  flex-flow: row nowrap;
-  align-items: center;
-}
-
-.oac__delete {
-  flex: 0 0 4rem;
-  text-align: center;
-}
-
-.oac__delete .cd-icon--cancel {
-  fill: white;
-}
-
-.oac__name {
-}
