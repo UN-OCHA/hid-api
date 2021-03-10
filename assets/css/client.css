@@ -11,7 +11,7 @@
   display: none;
 }
 
-.client__meta {
+.client__info {
   flex: 1 0 auto;
 }
 
@@ -20,12 +20,12 @@
   font-size: 1.125em;
 }
 
-.client__environment,
-.client__organization {
-  display: inline;
+.client__meta {
   font-size: 80%;
 }
 
+.client__meta,
+.client__organization,
 .client__url {
   display: inline;
 }

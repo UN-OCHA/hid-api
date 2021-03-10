@@ -46,15 +46,20 @@
                     aria-label="Revoke <%= client.name %>"
                   >Revoke</button>
                 </span>
-                <span class="client__meta">
+                <span class="client__info">
                   <span class="client__name"><%= client.name %></span>
-                  <% if (!!client.environment && client.environment !== 'Production') { %>
-                    <span class="client__environment"><strong><%= client.environment %></strong> environment. </span>
-                  <% } %>
-                  <% if (!!client.organization) { %>
-                    <span class="client__organization">Managed by <strong><%= client.organization %></strong></span>
-                  <% } %>
-                  <a href="<%= client.urlHref %>" class="client__url"><%= client.urlDisplay %></a>
+                  <span class="client__meta">
+                    <% if (!!client.environment && client.environment !== 'Production') { %>
+                      <span class="client__environment"><strong><%= client.environment %></strong> environment. </span>
+                    <% } %>
+                    <% if (!!client.organization) { %>
+                      <span class="client__organization">Managed by <strong><%= client.organization %></strong></span>
+                    <% } %>
+                    <% if (!!client.organization && !!client.urlDisplay) { %> — <% } %>
+                    <% if (!!client.urlDisplay) { %>
+                      <a href="<%= client.urlHref %>" class="client__url"><%= client.urlDisplay %></a>
+                    <% } %>
+                  </span>
                 </span>
               </li>
             <% }); %>
