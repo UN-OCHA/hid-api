@@ -26,10 +26,8 @@ const authorizedDomains = [
   'https://dev.auth-humanitarian-id.ahconu.org',
 
   // Local
-  'https://api.hid.vm',
-  'https://auth.hid.vm',
-  'http://api.hid.vm',
-  'http://auth.hid.vm',
+  'https://hid.test',
+  'http://hid.test',
 ];
 
 /**
@@ -149,7 +147,7 @@ module.exports = {
 
   isAuthorizedUrl(url) {
     let out = false;
-    for (let i = 0; i < authorizedDomains.length; i += 1) {
+    for (let i = 0; i < authorizedDomains.length; i++) {
       if (url.indexOf(authorizedDomains[i]) === 0) {
         out = true;
       }

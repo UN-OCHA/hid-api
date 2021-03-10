@@ -31,7 +31,10 @@
           <div class="form-field [ flow ]">
             <h2>Manage email addresses</h2>
             <p>Use the radio buttons to select a new primary email address. You may only select an address which has already been confirmed.</p>
-            <p>Clicking <code aria-label="the Confirm button">[CONFIRM]</code> will re-send the confirmation email with a one-time link. After confirming, you can set that email address as your primary.</p>
+
+            <% if (user.emails.some(e => !e.validated)) { %>
+              <p>Clicking <code aria-label="the Confirm button">[CONFIRM]</code> will re-send the confirmation email with a one-time link. After confirming, you can set that email address as your primary.</p>
+            <% } %>
 
             <% user.emails.forEach(function(thisEmail) { %>
               <div class="profile__email email">

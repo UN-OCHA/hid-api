@@ -195,6 +195,12 @@ module.exports = {
   },
 
   options: {
+    info: {
+      // We always want access to request.info.remoteAddress in hapi@19+
+      //
+      // @see https://github.com/hapijs/hapi/issues/4017
+      remote: true,
+    },
     routes: {
       cors: {
         additionalExposedHeaders: ['X-Total-Count', 'set-cookie'],

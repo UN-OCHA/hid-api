@@ -143,34 +143,6 @@ module.exports = {
     return send(mailOptions, 'reset_password', context);
   },
 
-  sendDecommissionForAuthUsers(user) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      user: {
-        name: user.name,
-      },
-    };
-    logger.info(`[EmailService->sendDecommissionForAuthUsers]`, context);
-    return send(mailOptions, 'decommission_auth', context);
-  },
-
-  sendDecommissionForProfileUsers(user) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      user: {
-        name: user.name,
-      },
-    };
-    logger.info(`[EmailService->sendDecommissionForProfileUsers]`, context);
-    return send(mailOptions, 'decommission_profile', context);
-  },
-
   sendForcedPasswordReset(user) {
     const mailOptions = {
       to: user.email,
