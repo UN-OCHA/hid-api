@@ -11,8 +11,8 @@ const crypto = require('crypto');
 const isHTML = require('is-html');
 const validate = require('mongoose-validator');
 
-const userPopulate1 = [
-  { path: 'authorizedClients', select: '_id id name' },
+const populateClients = [
+  { path: 'authorizedClients', select: '_id id name organization environment redirectUri redirectUrls' },
 ];
 
 function isHTMLValidator(v) {
@@ -323,7 +323,7 @@ UserSchema.post('findOne', async function (result, next) {
     return next();
   }
   try {
-    await result.populate(userPopulate1).execPopulate();
+    await result.populate(populateClients).execPopulate();
     return next();
   } catch (err) {
     return next(err);
@@ -586,7 +586,7 @@ UserSchema.methods = {
 
   defaultPopulate() {
     return this
-      .populate(userPopulate1)
+      .populate(populateClients)
       .execPopulate();
   },
 
