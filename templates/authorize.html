@@ -13,9 +13,10 @@
       </ul>
       <p>
         <em>
-          <strong><%= client.name %></strong> is a website managed by <%= client.organization %>.
+          <% if (!!client.organization) { %>
+            <strong><%= client.name %></strong> is managed by <strong><%= client.organization %></strong>.<br>
+          <% } %>
           <% if (!!client.environment && client.environment.indexOf('Prod') === -1) { %>
-            <br>
             This <strong><%= client.environment %></strong> environment is for development/testing.
           <% } %>
         </em>
