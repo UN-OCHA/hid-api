@@ -539,7 +539,7 @@ module.exports = {
   },
 
   /*
-   * @api [put] /user/{id}/password
+   * @api [post] /user/{id}/password
    * tags:
    *   - user
    * summary: Updates the password of a user.
@@ -1125,7 +1125,10 @@ module.exports = {
    *     required: true
    *     default: ''
    * requestBody:
-   *   description: Required parameters to validate an email address.
+   *   description: >-
+   *     Send a payload with `request.params.email` populated, plus a payload
+   *     containing `app_validation_url` in order to have HID send an email to
+   *     validate an address.
    *   required: false
    *   content:
    *     application/json:
@@ -1146,8 +1149,8 @@ module.exports = {
    *     description: Requested email address not found.
    * security: []
    */
-  async validateEmail(request) {
-    if (request.payload.hash) {
+  async validateEmail(request, reply) {
+    if (request.payload && request.payload.hash) {
       const record = await User.findOne({ _id: request.payload.id }).catch((err) => {
         logger.error(
           `[UserController->validateEmail] ${err.message}`,
@@ -1218,8 +1221,7 @@ module.exports = {
         throw Boom.badRequest('Invalid hash');
       }
 
-      const promises = [];
-      promises.push(record.save().then(() => {
+      await record.save().then(() => {
         logger.info(
           `[UserController->validateEmail] Saved user ${record.id} successfully`,
           {
@@ -1230,32 +1232,28 @@ module.exports = {
             },
           },
         );
-      }));
+      });
 
+      // TODO: if someone needs to re-verify an existing primary email address
+      //       we end up sending them a "welcome to HID" email due to this simple
+      //       conditional. We might want to consider a more complex conditional
+      //       to avoid that edge case.
+      //
+      // @see HID-2200
       if (record.email === email) {
-        promises.push(EmailService.sendPostRegister(record).then(() => {
-          logger.info(
-            `[UserController->validateEmail] Sent post_register email to ${record.email} successfully`,
-            {
-              request,
-              user: {
-                id: record.id,
-                email: record.email,
-              },
-            },
-          );
-        }));
+        await EmailService.sendPostRegister(record);
       }
 
-      await Promise.all(promises);
       return record;
     }
 
-    // When hash wasn't present, do this stuff instead.
+    // When hash wasn't present, send a validation email to the requested address.
     //
     // @TODO: split this into its own function.
     //
     // @see HID-2064
+
+    // Confirm whether a user exists with the requested email.
     const record = await User.findOne({ 'emails.email': request.params.email });
     if (!record) {
       logger.warn(
@@ -1267,8 +1265,9 @@ module.exports = {
       );
       throw Boom.notFound();
     }
-    // Send validation email again
-    const appValidationUrl = request.payload.app_validation_url;
+
+    // Confirm whether the request came from a valid domain.
+    const appValidationUrl = request.payload && request.payload.app_validation_url ? request.payload.app_validation_url : '';
     if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
       logger.warn(
         `[UserController->validateEmail] app_validation_url ${appValidationUrl} is not in authorizedDomains allowlist`,
@@ -1280,6 +1279,8 @@ module.exports = {
       );
       throw Boom.badRequest('Invalid app_validation_url');
     }
+
+    // Send validation email.
     const emailIndex = record.emailIndex(request.params.email);
     const email = record.emails[emailIndex];
     await EmailService.sendValidationEmail(
@@ -1289,13 +1290,8 @@ module.exports = {
       appValidationUrl,
     );
 
-    // v3: Send a 204 (empty body)
-    const requestIsV3 = request.path.indexOf('api/v3') !== -1;
-    if (requestIsV3) {
-      return reply.response().code(204);
-    }
-    // v2: Send 200 with this response body.
-    return 'Validation email sent successfully';
+    // Send a 204 (empty body)
+    return reply.response().code(204);
   },
 
   /*
@@ -1375,13 +1371,14 @@ module.exports = {
       const record = await User.findOne({ email: request.payload.email.toLowerCase() });
       if (!record) {
         logger.warn(
-          `[UserController->resetPasswordEndpoint] User ${request.params.id} not found`,
+          `[UserController->resetPasswordEndpoint] No user found with email: ${request.payload.email}`,
           {
             request,
             fail: true,
           },
         );
-        throw Boom.notFound('No user found with that email.');
+
+        return '';
       }
 
       // Send password reset email.
