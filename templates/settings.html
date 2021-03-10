@@ -35,22 +35,27 @@
               const sorted = user.authorizedClients.sort((a, b) => a.name.localeCompare(b.name));
               sorted.forEach(function(client) {
             %>
-              <li class="oauth-clients-list__client oac">
-                <span class="oac__delete">
+              <li class="oauth-clients-list__client client">
+                <span class="client__revoke">
                   <button
                     type="submit"
                     name="oauth_client_revoke"
                     value="<%= client._id.toString() %>"
-                    class="cd-button cd-button--small cd-button--danger"
+                    class="cd-button cd-button--danger"
                     onclick="return confirmDeletion('<%= client.name %>');"
                     aria-label="Revoke <%= client.name %>"
-                  >
-                    <svg class="cd-icon cd-icon--cancel" width="16" height="16" aria-hidden="true" focusable="false">
-                      <use xlink:href="#cd-icon--cancel"></use>
-                    </svg>
-                  </button>
+                  >Revoke</button>
                 </span>
-                <span class="oac__name"><%= client.name %></span>
+                <span class="client__meta">
+                  <span class="client__name"><%= client.name %></span>
+                  <% if (!!client.environment && client.environment !== 'Production') { %>
+                    <span class="client__environment"><strong><%= client.environment %></strong> environment. </span>
+                  <% } %>
+                  <% if (!!client.organization) { %>
+                    <span class="client__organization">Managed by <strong><%= client.organization %></strong></span>
+                  <% } %>
+                  <a href="<%= client.urlHref %>" class="client__url"><%= client.urlDisplay %></a>
+                </span>
               </li>
             <% }); %>
           </ul>
