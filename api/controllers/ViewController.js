@@ -812,13 +812,14 @@ module.exports = {
     // Load user from DB.
     const user = await User.findOne({ _id: cookie.userId });
     user.authorizedClients.forEach(client => {
-      let tmpUrl = client.redirectUri
+      const tmpUrl = client.redirectUri
         ? client.redirectUri
         : typeof client.redirectUrls === 'object'
           ? client.redirectUrls[0]
           : '';
-      client.urlDisplay = URL.parse(tmpUrl).hostname;
-      client.urlHref = URL.parse(tmpUrl).href;
+      const clientUrl = URL.parse(tmpUrl);
+      client.urlDisplay = clientUrl.hostname;
+      client.urlHref = clientUrl.protocol + clientUrl.hostname;
     });
 
     // Render settings page.
