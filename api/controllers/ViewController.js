@@ -330,7 +330,7 @@ module.exports = {
     const registerLink = _getRegisterLink(request.payload);
     const passwordLink = _getPasswordLink(request.payload);
     try {
-      await UserController.resetPasswordEndpoint(request);
+      await UserController.resetPasswordEndpoint(request, reply);
       return reply.view('login', {
         alert: {
           type: 'status',

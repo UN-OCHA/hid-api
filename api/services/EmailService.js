@@ -123,9 +123,12 @@ module.exports = {
     return send(mailOptions, 'post_register', context);
   },
 
-  sendResetPassword(user, appResetUrl) {
+  sendResetPassword(user, appResetUrl, targetEmail = '') {
+    if (!targetEmail) {
+      targetEmail = user.email;
+    }
     const mailOptions = {
-      to: user.email,
+      to: targetEmail,
       locale: user.locale,
     };
     const hash = user.generateHash('reset_password');

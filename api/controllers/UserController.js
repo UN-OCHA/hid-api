@@ -1347,8 +1347,6 @@ module.exports = {
    *     description: Password reset successfully.
    *   '400':
    *     description: Bad request. See response body for details.
-   *   '404':
-   *     description: No user found with specified email.
    * security: []
    */
   async resetPasswordEndpoint(request, reply) {
@@ -1367,8 +1365,11 @@ module.exports = {
         throw Boom.badRequest('app_reset_url is invalid');
       }
 
-      // Lookup user based on PRIMARY email.
-      const record = await User.findOne({ email: request.payload.email.toLowerCase() });
+      // Lookup user based on the email address. We scan the `emails` array so
+      // that secondary addresses can also receive password resets.
+      const record = await User.findOne({ 'emails.email': request.payload.email.toLowerCase() });
+
+      // No user found.
       if (!record) {
         logger.warn(
           `[UserController->resetPasswordEndpoint] No user found with email: ${request.payload.email}`,
@@ -1378,11 +1379,38 @@ module.exports = {
           },
         );
 
-        return '';
+        // Send HTTP 204 (empty success response)
+        //
+        // We send this because disclosing the existence (or lack thereof) of an
+        // email address is considered a security hole, per OICT policy.
+        return reply.response().code(204);
       }
 
-      // Send password reset email.
-      await EmailService.sendResetPassword(record, appResetUrl);
+      // Determine whether email is primary. We allow unvalidated primary emails
+      // to accept password resets.
+      const emailIsPrimary = record.email === request.payload.email.toLowerCase();
+
+      // Verify that the email has already been validated
+      const secondaryEmailIsValidated = record.emails.some(e => e.email === request.payload.email.toLowerCase() && e.validated === true);
+
+      // IF the email is primary OR it's a __validated__ secondary email
+      // THEN send password reset.
+      if (emailIsPrimary || secondaryEmailIsValidated) {
+        await EmailService.sendResetPassword(record, appResetUrl, request.payload.email);
+      } else {
+        logger.warn(
+          `[UserController->resetPasswordEndpoint] Could not reset password because the secondary email ${request.payload.email} has not been validated.`,
+          {
+            request,
+            security: true,
+            fail: true,
+            user: {
+              id: record.id,
+              email: record.email,
+            },
+          },
+        );
+      }
 
       // Send HTTP 204 (empty success response)
       return reply.response().code(204);
