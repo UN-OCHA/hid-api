@@ -17,7 +17,7 @@
             <strong><%= client.name %></strong> is managed by <strong><%= client.organization %></strong>.<br>
           <% } %>
           <% if (!!client.environment && client.environment.toLowerCase().indexOf('prod') === -1) { %>
-            This <strong><%= client.environment %></strong> environment is for development/testing.
+            This <strong><%= client.environment %> environment</strong> is for development/testing.
           <% } %>
         </em>
       </p>
