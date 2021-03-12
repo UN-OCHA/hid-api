@@ -1,6 +1,6 @@
 {
   "name": "hid-api",
-  "version": "3.0.33",
+  "version": "3.0.34",
   "description": "Humanitarian ID API+Auth",
   "homepage": "https://about.humanitarian.id",
   "repository": "https://github.com/UN-OCHA/hid_api.git",
@@ -52,8 +52,8 @@
     "simple-oauth2": "^2.4.0",
     "swagger-ui-dist": "^3.26.0",
     "validator": "^10.11.0",
-    "winston": "^2.2",
-    "winston-daily-rotate-file": "^1.4.6",
+    "winston": "^3.3.3",
+    "winston-daily-rotate-file": "^4.4.2",
     "yargs": "^15.3.1"
   },
   "devDependencies": {

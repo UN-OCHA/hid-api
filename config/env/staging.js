@@ -23,12 +23,13 @@ module.exports = {
       migrate: 'create',
     },
   },
-  logger: new winston.Logger({
+  logger: winston.createLogger({
     level: 'debug',
     exitOnError: false,
-    rewriters: [
-      hidFormatter,
-    ],
+    format: winston.format.combine(
+      hidFormatter(),
+      winston.format.json(),
+    ),
     transports: [
       new winston.transports.DailyRotateFile({
         name: 'info-file',
