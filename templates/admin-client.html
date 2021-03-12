@@ -35,8 +35,13 @@
               </div>
               <div class="form-field">
                 <label for="client_name">Environment</label>
-                <input type="text" id="client_environment" name="client_environment" value="<%= client.environment %>" maxlength="32">
-                <p><em>Examples: Production, Stage, Dev.</em> This is a secondary human-friendly label that HID users will see when authorizing a website.</p>
+                <select id="client_environment" name="client_environment">
+                  <option value="">- None -</option>
+                  <% environments.forEach(env => { %>
+                    <option value="<%= env %>" <%= client.environment === env ? 'selected' : '' %>><%= env %></option>
+                  <% }); %>
+                </select>
+                <p>This is a secondary human-friendly label that HID users will see when authorizing a non-Production website.</p>
               </div>
             </fieldset>
             <fieldset class="cd-card [ flow ]">

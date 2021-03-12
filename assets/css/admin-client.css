@@ -23,6 +23,11 @@
   font-size: calc(1em * var(--scale-factor));
 }
 
+.oac-client-edit .form-field select {
+  width: 50ch;
+  padding: .25rem .5rem;
+}
+
 .oac-client-edit .form-actions {
   margin-top: 2rem;
 }

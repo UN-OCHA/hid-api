@@ -193,12 +193,16 @@ module.exports = {
       request.yar.set('session', cookie);
     }
 
+    // Options for Environment dropdown
+    let environments = ['Production', 'Staging', 'Development', 'Local'];
+
     // Display page to user.
     return reply.view('admin-client', {
       user,
       alert,
       client,
       formHash,
+      environments,
     });
   },
 
