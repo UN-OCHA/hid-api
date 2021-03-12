@@ -16,7 +16,7 @@
           <% if (!!client.organization) { %>
             <strong><%= client.name %></strong> is managed by <strong><%= client.organization %></strong>.<br>
           <% } %>
-          <% if (!!client.environment && client.environment.indexOf('Prod') === -1) { %>
+          <% if (!!client.environment && client.environment.toLowerCase().indexOf('prod') === -1) { %>
             This <strong><%= client.environment %></strong> environment is for development/testing.
           <% } %>
         </em>
