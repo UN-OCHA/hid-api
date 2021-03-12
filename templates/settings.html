@@ -49,7 +49,7 @@
                 <span class="client__info">
                   <span class="client__name"><%= client.name %></span>
                   <span class="client__meta">
-                    <% if (!!client.environment && client.environment.indexOf('Prod') === -1) { %>
+                    <% if (!!client.environment && client.environment.toLowerCase().indexOf('prod') === -1) { %>
                       <span class="client__environment"><strong><%= client.environment %></strong> environment. </span>
                     <% } %>
                     <% if (!!client.organization) { %>
