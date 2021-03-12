@@ -11,6 +11,16 @@
         <li>Your email address<%= user.emails && user.emails.length > 1 ? 'es' : '' %></li>
         <li>Your HID user ID</li>
       </ul>
+      <p>
+        <em>
+          <% if (!!client.organization) { %>
+            <strong><%= client.name %></strong> is managed by <strong><%= client.organization %></strong>.<br>
+          <% } %>
+          <% if (!!client.environment && client.environment.toLowerCase().indexOf('prod') === -1) { %>
+            This <strong><%= client.environment %> environment</strong> is for development/testing.
+          <% } %>
+        </em>
+      </p>
       <input type="hidden" name="transaction_id" value="<%= transactionID %>" />
       <input type="hidden" name="crumb" value="<%= crumb %>" />
       <input type="submit" value="Allow" name="bsubmit" id="allow" class="cd-button cd-button--bold cd-button--uppercase cd-button--wide">

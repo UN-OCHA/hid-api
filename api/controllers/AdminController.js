@@ -193,12 +193,16 @@ module.exports = {
       request.yar.set('session', cookie);
     }
 
+    // Options for Environment dropdown
+    let environments = ['Production', 'Staging', 'Development', 'Local'];
+
     // Display page to user.
     return reply.view('admin-client', {
       user,
       alert,
       client,
       formHash,
+      environments,
     });
   },
 
@@ -271,6 +275,8 @@ module.exports = {
             redirectUri: request.payload.client_redirect_uri,
             redirectUrls: request.payload.client_redirect_urls ? request.payload.client_redirect_urls.split('\r\n') : [],
             description: request.payload.client_description,
+            organization: request.payload.client_organization,
+            environment: request.payload.client_environment,
           },
         }).then(data => {
           // Display success to admin.

@@ -3,6 +3,16 @@
  */
 .oac-client-edit {}
 
+.oac-client-edit fieldset {
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+.oac-client-edit legend {
+  margin: 0;
+  font-size: 1.2em;
+}
+
 .oac-client-edit .form-field {}
 
 .oac-client-edit .form-field p {
@@ -11,6 +21,15 @@
   margin: 0;
   color: #666;
   font-size: calc(1em * var(--scale-factor));
+}
+
+.oac-client-edit .form-field select {
+  width: 50ch;
+  padding: .25rem .5rem;
+}
+
+.oac-client-edit .form-actions {
+  margin-top: 2rem;
 }
 
 .oac-admin-edit__submit {}
