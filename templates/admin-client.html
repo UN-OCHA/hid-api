@@ -30,12 +30,12 @@
               </div>
               <div class="form-field">
                 <label for="client_name">Organization</label>
-                <input type="text" id="client_organization" name="client_organization" value="<%= client.organization %>">
+                <input type="text" id="client_organization" name="client_organization" value="<%= client.organization %>" maxlength="32">
                 <p><em>Examples: OCHA, CBPF.</em> This is a secondary human-friendly label that HID users will see when authorizing a website.</p>
               </div>
               <div class="form-field">
                 <label for="client_name">Environment</label>
-                <input type="text" id="client_environment" name="client_environment" value="<%= client.environment %>">
+                <input type="text" id="client_environment" name="client_environment" value="<%= client.environment %>" maxlength="32">
                 <p><em>Examples: Production, Stage, Dev.</em> This is a secondary human-friendly label that HID users will see when authorizing a website.</p>
               </div>
             </fieldset>

@@ -88,13 +88,13 @@ const ClientSchema = new Schema({
     type: String,
     required: false,
     default: '',
-    maxlength: 16,
+    maxlength: 32,
   },
   environment: {
     type: String,
     required: false,
     default: '',
-    maxlength: 16,
+    maxlength: 32,
   },
 }, {
   collection: 'client',
