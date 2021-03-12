@@ -9,7 +9,7 @@
 }
 
 /**
- * client-side OAuth Client filtering
+ * Client-side OAuth Client filtering
  */
 .oac-admin__search-section {
   display: flex;
@@ -22,17 +22,4 @@
 #client-search-clear {
   flex: 0 1 140px;
   margin-left: 1rem;
-}
-
-/**
- * Individual Client in the list
- */
-.client {}
-
-.client--hidden {
-  display: none;
-}
-
-.client__edit {
-  margin-right:.5rem;
 }

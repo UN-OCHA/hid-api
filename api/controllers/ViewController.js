@@ -1,3 +1,4 @@
+const URL = require('url');
 const Boom = require('@hapi/boom');
 const Recaptcha = require('recaptcha2');
 const Client = require('../models/Client');
@@ -810,6 +811,16 @@ module.exports = {
 
     // Load user from DB.
     const user = await User.findOne({ _id: cookie.userId });
+    user.authorizedClients.forEach(client => {
+      const tmpUrl = client.redirectUri
+        ? client.redirectUri
+        : typeof client.redirectUrls === 'object'
+          ? client.redirectUrls[0]
+          : '';
+      const clientUrl = URL.parse(tmpUrl);
+      client.urlDisplay = clientUrl.hostname;
+      client.urlHref = clientUrl.protocol + clientUrl.hostname;
+    });
 
     // Render settings page.
     return reply.view('settings', {
@@ -836,15 +847,15 @@ module.exports = {
     let alert = {};
 
     // Did they try to delete an OAuth client?
-    if (request.payload && request.payload.oauth_client_delete) {
+    if (request.payload && request.payload.oauth_client_revoke) {
       // TODO: if we can, pull this from a canonical source. This was copied
       //       from the routes config file and should always stay in sync.
       //
       // @see config/routes.js
       const objectIdRegex = /^[0-9a-fA-F]{24}$/;
-      if (objectIdRegex.test(request.payload.oauth_client_delete)) {
+      if (objectIdRegex.test(request.payload.oauth_client_revoke)) {
         // Data seems valid. We will attempt to remove from profile.
-        const clientExists = user.authorizedClients.some(client => client._id.toString() === request.payload.oauth_client_delete);
+        const clientExists = user.authorizedClients.some(client => client._id.toString() === request.payload.oauth_client_revoke);
         if (clientExists) {
           // We'll try to revoke the client.
         } else {
@@ -862,10 +873,10 @@ module.exports = {
     } else {
       // No validation errors.
       // Perform DB operation and provide user feedback.
-      const revokedClient = user.authorizedClients.filter(client => client._id.toString() === request.payload.oauth_client_delete)[0];
+      const revokedClient = user.authorizedClients.filter(client => client._id.toString() === request.payload.oauth_client_revoke)[0];
       await UserController.revokeOauthClient({}, {
         userId: cookie.userId,
-        clientId: request.payload.oauth_client_delete,
+        clientId: request.payload.oauth_client_revoke,
       }).then(data => {
         alert.type = 'status';
         alert.message = `
