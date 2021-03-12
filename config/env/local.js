@@ -2,6 +2,7 @@ const winston = require('winston');
 const { hidFormatter } = require('../logs');
 
 module.exports = {
+  env: 'local',
   database: {
     stores: {
       local: {
