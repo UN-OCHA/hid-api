@@ -1096,7 +1096,7 @@ module.exports = {
       {
         request,
         user: {
-          userId,
+          id: userId,
           email: record.email,
         },
       },

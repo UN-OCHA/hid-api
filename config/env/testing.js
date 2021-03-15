@@ -1,6 +1,7 @@
 
 
 module.exports = {
+  env: 'testing',
   database: {
     stores: {
       testing: {
