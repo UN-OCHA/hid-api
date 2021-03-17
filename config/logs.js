@@ -1,106 +1,113 @@
 const _ = require('lodash');
+const winston = require('winston');
 
 module.exports = {
-  hidFormatter(level, msg, logObject) {
-    // Clone the logged object to avoid mutating important objects (e.g. request)
-    // in case the code continues executing after being logged.
-    const localLogObject = _.cloneDeep(logObject || {});
+  hidFormatter: winston.format(info => {
+    // In winston 3, the log object is passed by reference and mutated in place.
+    // This is an intentional design decision, so we must be conscious not to
+    // accidentally mutate important data that gets passed in, especially our
+    // request object, which often gets passed into the logger but then used for
+    // additional business logic.
+    //
+    // To avoid mutating important objects, we use lodash to deep-copy and
+    // reassign that particular property so that we can do our sanitization and
+    // other formatting without disrupting further operations that occur after
+    // the logging statement in the actual event handlers.
+    info.request = _.cloneDeep(info.request || {});
 
-    // Define our meta with some defaults.
-    const metadata = {};
-    metadata.level = level;
-    metadata['@timestamp'] = new Date().toJSON();
+    // Set a timestamp
+    info['@timestamp'] = new Date().toJSON();
 
     // Log IP if we have it.
-    if (logObject.request && logObject.request.info && logObject.request.info.remoteAddress) {
-      metadata.ip = localLogObject.request.info.remoteAddress;
+    if (info.request && info.request.info && info.request.info.remoteAddress) {
+      info.ip = info.request.info.remoteAddress;
     }
-    if (logObject.request && logObject.request.headers && logObject.request.headers['x-forwarded-for']) {
-      metadata.ip = localLogObject.request.headers['x-forwarded-for'];
+    if (info.request && info.request.headers && info.request.headers['x-forwarded-for']) {
+      info.ip = info.request.headers['x-forwarded-for'];
     }
 
     // Include custom user object from log
-    metadata.user = localLogObject.user || {};
+    info.user = info.user || {};
 
     // Include custom oauth object from log
-    metadata.oauth = localLogObject.oauth || {};
+    info.oauth = info.oauth || {};
 
     // If this is an error/warning and a stack trace was sent, append to log.
-    if (['error', 'warn'].includes(level) && typeof localLogObject.stack_trace !== 'undefined') {
-      metadata.stack_trace = localLogObject.stack_trace;
+    if (['error', 'warn'].includes(info.level) && typeof info.stack_trace !== 'undefined') {
+      info.stack_trace = info.stack_trace;
     }
 
     // Check if we received a request object
-    if (localLogObject.request) {
+    if (info.request) {
       // Include relevant chunks of the node.js request object. If we include
       // whole object wholesale, the recursion creates gigantic, useless logs.
-      metadata.request = {
-        path: localLogObject.request.path || {},
-        query: localLogObject.request.query || {},
-        payload: localLogObject.request.payload || {},
-        headers: localLogObject.request.headers || {},
-        auth: localLogObject.request.auth || {},
+      info.request = {
+        path: info.request.path || {},
+        query: info.request.query || {},
+        payload: info.request.payload || {},
+        headers: info.request.headers || {},
+        auth: info.request.auth || {},
       };
 
-      // Try to automatically detect user unless logObject.user.id already exists.
-      if (logObject.request.params && logObject.request.params.currentUser) {
-        if (typeof metadata.user.id === 'undefined') {
-          metadata.user.id = logObject.request.params.currentUser._id.toString();
+      // Try to automatically detect user unless info.user.id already exists.
+      if (info.request.params && info.request.params.currentUser) {
+        if (typeof info.user.id === 'undefined') {
+          info.user.id = info.request.params.currentUser._id.toString();
         }
       }
 
       // Sanitize passwords in request payloads
-      if (metadata.request.payload) {
-        if (metadata.request.payload.password) {
-          delete metadata.request.payload.password;
+      if (info.request.payload) {
+        if (info.request.payload.password) {
+          delete info.request.payload.password;
         }
-        if (metadata.request.payload.confirm_password) {
-          delete metadata.request.payload.confirm_password;
+        if (info.request.payload.confirm_password) {
+          delete info.request.payload.confirm_password;
         }
-        if (metadata.request.payload.old_password) {
-          delete metadata.request.payload.old_password;
+        if (info.request.payload.old_password) {
+          delete info.request.payload.old_password;
         }
-        if (metadata.request.payload.new_password) {
-          delete metadata.request.payload.new_password;
+        if (info.request.payload.new_password) {
+          delete info.request.payload.new_password;
         }
-        if (metadata.request.payload.confirmPassword) {
-          delete metadata.request.payload.confirmPassword;
+        if (info.request.payload.confirmPassword) {
+          delete info.request.payload.confirmPassword;
         }
       }
 
       // Sanitize OAuth client secrets in query/payload
       //
       // This will display "000...000" in ELK.
-      if (typeof metadata.request.query.client_secret === 'string') {
+      if (typeof info.request.query.client_secret === 'string') {
         // display first/last five characters but scrub the rest
-        const sanitizedSecret = `${metadata.request.query.client_secret.slice(0, 3)}...${metadata.request.query.client_secret.slice(-3)}`;
-        metadata.request.query.client_secret = sanitizedSecret;
+        const sanitizedSecret = `${info.request.query.client_secret.slice(0, 3)}...${info.request.query.client_secret.slice(-3)}`;
+        info.request.query.client_secret = sanitizedSecret;
       }
-      if (typeof metadata.request.payload.client_secret === 'string') {
+      if (typeof info.request.payload.client_secret === 'string') {
         // display first/last five characters but scrub the rest
-        const sanitizedSecret = `${metadata.request.payload.client_secret.slice(0, 3)}...${metadata.request.payload.client_secret.slice(-3)}`;
-        metadata.request.payload.client_secret = sanitizedSecret;
+        const sanitizedSecret = `${info.request.payload.client_secret.slice(0, 3)}...${info.request.payload.client_secret.slice(-3)}`;
+        info.request.payload.client_secret = sanitizedSecret;
       }
-      if (typeof metadata.request.payload.secret === 'string') {
+      if (typeof info.request.payload.secret === 'string') {
         // display first/last five characters but scrub the rest
-        const sanitizedSecret = `${metadata.request.payload.secret.slice(0, 3)}...${metadata.request.payload.secret.slice(-3)}`;
-        metadata.request.payload.secret = sanitizedSecret;
+        const sanitizedSecret = `${info.request.payload.secret.slice(0, 3)}...${info.request.payload.secret.slice(-3)}`;
+        info.request.payload.secret = sanitizedSecret;
       }
-      if (typeof metadata.request.payload.code === 'string') {
+      if (typeof info.request.payload.code === 'string') {
         // display first/last five characters but scrub the rest
-        const sanitizedSecret = `${metadata.request.payload.code.slice(0, 3)}...${metadata.request.payload.code.slice(-3)}`;
-        metadata.request.payload.code = sanitizedSecret;
+        const sanitizedSecret = `${info.request.payload.code.slice(0, 3)}...${info.request.payload.code.slice(-3)}`;
+        info.request.payload.code = sanitizedSecret;
       }
 
       // Sanitize OAuth client secrets found in Headers
       //
       // This will display "Basic 000...000" in ELK.
       if (
-        typeof metadata.request.headers.authorization === 'string'
-        && metadata.request.headers.authorization.indexOf('Basic') !== -1
+        typeof info.request.headers.authorization === 'string'
+        && info.request.headers.authorization.indexOf('Basic') !== -1
       ) {
-        const sanitizedSecret = `${metadata.request.headers.authorization.slice(0, 9)}...${metadata.request.headers.authorization.slice(-3)}`;
-        metadata.request.headers.authorization = sanitizedSecret;
+        const sanitizedSecret = `${info.request.headers.authorization.slice(0, 9)}...${info.request.headers.authorization.slice(-3)}`;
+        info.request.headers.authorization = sanitizedSecret;
       }
 
       // Sanitize JWTs, which can allow anyone to masquerade as this user.
@@ -109,10 +116,10 @@ module.exports = {
       // for debugging purposes, without risking the use of the JWT by devs
       // who have access to ELK.
       if (
-        typeof metadata.request.headers.authorization === 'string'
-        && metadata.request.headers.authorization.indexOf('Bearer') !== -1
+        typeof info.request.headers.authorization === 'string'
+        && info.request.headers.authorization.indexOf('Bearer') !== -1
       ) {
-        let sanitizedJWT = metadata.request.headers.authorization.split('.');
+        let sanitizedJWT = info.request.headers.authorization.split('.');
         if (sanitizedJWT.length === 3) {
           const buffer = Buffer.from(sanitizedJWT[1], 'base64');
           const asciiJWT = buffer.toString('ascii');
@@ -121,64 +128,64 @@ module.exports = {
           // and prevent ELK from storing actionable credentials.
           sanitizedJWT.pop();
           sanitizedJWT = sanitizedJWT.join('.');
-          metadata.request.headers.authorization = sanitizedJWT;
+          info.request.headers.authorization = sanitizedJWT;
 
           // Auto-populate requesting user ID from JWT unless user.id was explicitly
           // passed into the log.
-          if (typeof metadata.user.id === 'undefined') {
-            metadata.user.id = JSON.parse(asciiJWT).id;
+          if (typeof info.user.id === 'undefined') {
+            info.user.id = JSON.parse(asciiJWT).id;
           }
         } else {
           // Sanitize the contents without extracting any data
           //
           // This will display "Bearer 000...000" in ELK.
-          const sanitizedSecret = `${metadata.request.headers.authorization.slice(0, 10)}...${metadata.request.headers.authorization.slice(-3)}`;
-          metadata.request.headers.authorization = sanitizedSecret;
+          const sanitizedSecret = `${info.request.headers.authorization.slice(0, 10)}...${info.request.headers.authorization.slice(-3)}`;
+          info.request.headers.authorization = sanitizedSecret;
         }
       }
 
       // Sanitize JWT blacklist requests. For the same reason as Authentication
       // headers in generic requests.
-      if (typeof metadata.request.payload.token === 'string') {
-        let sanitizedJWT = metadata.request.payload.token.split('.');
+      if (typeof info.request.payload.token === 'string') {
+        let sanitizedJWT = info.request.payload.token.split('.');
         sanitizedJWT.pop();
         sanitizedJWT = sanitizedJWT.join('.');
-        metadata.request.payload.token = sanitizedJWT;
+        info.request.payload.token = sanitizedJWT;
       }
 
       // Sanitize credentials, which seems to contain the entire user object
       // from HID, including numerous pieces of sensitive data.
-      if (metadata.request.auth && metadata.request.auth.credentials) {
+      if (info.request.auth && info.request.auth.credentials) {
         // Log whether this user is admin or not.
-        metadata.user.admin = metadata.request.auth.credentials.is_admin;
+        info.user.admin = info.request.auth.credentials.is_admin;
 
         // Now delete the credentials object.
-        delete metadata.request.auth.credentials;
+        delete info.request.auth.credentials;
       }
 
       // Sanitize auth artifacts, which also contain secrets
-      if (metadata.request.auth && metadata.request.auth.artifacts) {
-        delete metadata.request.auth.artifacts;
+      if (info.request.auth && info.request.auth.artifacts) {
+        delete info.request.auth.artifacts;
       }
 
       // Sanitize 2FA codes
       // headers
-      if (metadata.request.headers && metadata.request.headers['x-hid-totp']) {
-        delete metadata.request.headers['x-hid-totp'];
+      if (info.request.headers && info.request.headers['x-hid-totp']) {
+        delete info.request.headers['x-hid-totp'];
       }
-      if (metadata.request.headers && metadata.request.headers['X-HID-TOTP']) {
-        delete metadata.request.headers['X-HID-TOTP'];
+      if (info.request.headers && info.request.headers['X-HID-TOTP']) {
+        delete info.request.headers['X-HID-TOTP'];
       }
       // payload (during OAuth logins)
-      if (metadata.request.payload && metadata.request.payload['x-hid-totp']) {
-        delete metadata.request.payload['x-hid-totp'];
+      if (info.request.payload && info.request.payload['x-hid-totp']) {
+        delete info.request.payload['x-hid-totp'];
       }
-      if (metadata.request.payload && metadata.request.payload['X-HID-TOTP']) {
-        delete metadata.request.payload['X-HID-TOTP'];
+      if (info.request.payload && info.request.payload['X-HID-TOTP']) {
+        delete info.request.payload['X-HID-TOTP'];
       }
 
     } // end of request sanitization
 
-    return metadata;
-  },
+    return info;
+  }),
 };

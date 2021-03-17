@@ -264,6 +264,8 @@ module.exports = {
     client.redirectUri = clientData.redirectUri;
     client.redirectUrls = clientData.redirectUrls;
     client.description = clientData.description;
+    client.organization = clientData.organization;
+    client.environment = clientData.environment;
 
     // Write to DB.
     const result = await client.save().then(data => {

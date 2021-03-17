@@ -1,3 +1,7 @@
+/**
+ * @module UserController
+ * @description CRUD controller for users.
+ */
 const Boom = require('@hapi/boom');
 const qs = require('qs');
 const ejs = require('ejs');
@@ -7,233 +11,16 @@ const acceptLanguage = require('accept-language');
 const validator = require('validator');
 
 const hidAccount = '5b2128e754a0d6046d6c69f2';
-const List = require('../models/List');
 const User = require('../models/User');
-// const OutlookService = require('../services/OutlookService');
 const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
-const NotificationService = require('../services/NotificationService');
-const GSSSyncService = require('../services/GSSSyncService');
 const AuthPolicy = require('../policies/AuthPolicy');
-const ListUserController = require('./ListUserController');
 const config = require('../../config/env')[process.env.NODE_ENV];
 
 const { logger } = config;
 
-/**
- * @module UserController
- * @description CRUD controller for users.
- */
-
-/**
- * Exports users in PDF, using the PDF snap service.
- */
-async function _pdfExport(users, number, lists, req, format) {
-  const filters = [];
-  if (Object.prototype.hasOwnProperty.call(req.query, 'name') && req.query.name.length) {
-    filters.push(req.query.name);
-  }
-  if (Object.prototype.hasOwnProperty.call(req.query, 'verified') && req.query.verified) {
-    filters.push('Verified User');
-  }
-  if (Object.prototype.hasOwnProperty.call(req.query, 'is_admin') && req.query.is_admin) {
-    filters.push('Administrator');
-  }
-  lists.forEach((list, index) => {
-    if (index > 0) {
-      filters.push(list.name);
-    }
-  });
-
-  const data = {
-    lists,
-    number,
-    users,
-    dateGenerated: moment().format('LL'),
-    filters,
-  };
-  let template = 'templates/pdf/printList.html';
-  if (format === 'meeting-compact') {
-    template = 'templates/pdf/printMeetingCompact.html';
-  } else if (format === 'meeting-comfortable') {
-    template = 'templates/pdf/printMeetingComfortable.html';
-  }
-  const str = await ejs.renderFile(template, data, {});
-
-  // Send the HTML to the wkhtmltopdf service to generate a PDF, and
-  // return the output.
-  const postData = qs.stringify({ html: str });
-  const hostname = process.env.WKHTMLTOPDF_HOST;
-  const port = process.env.WKHTMLTOPDF_PORT || 80;
-  const params = {
-    service: 'hid_api',
-    pdfLandscape: true,
-    pdfBackground: true,
-    pdfMarginUnit: 'mm',
-    pdfMarginTop: 10,
-    pdfMarginBottom: 10,
-    pdfMarginRight: 10,
-    pdfMarginLeft: 10,
-    scale: 1,
-  };
-  const clientRes = await axios({
-    method: 'post',
-    url: `http://${hostname}:${port}/snap`,
-    params,
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Content-Length': postData.length,
-      'X-Forwarded-For': req.headers['x-forwarded-for'] || req.connection.remoteAddress,
-      'User-Agent': req.headers['user-agent'],
-    },
-    data: postData,
-    responseType: 'arraybuffer',
-  });
-  if (clientRes && clientRes.status === 200) {
-    // clientRes.setEncoding('binary');
-
-    const pdfSize = parseInt(clientRes.headers['content-length'], 10);
-
-    return [clientRes.data, pdfSize];
-  }
-  logger.error(
-    '[UserController->_pdfExport] An error occurred while generating a PDF',
-    {
-      request: req,
-      fail: true,
-      response: clientRes,
-    },
-  );
-  throw new Error(`An error occurred while generating PDF for list ${data.lists[0].name}`);
-}
-
-/**
- * Exports users to txt.
- */
-function _txtExport(users) {
-  let out = '';
-  for (let i = 0; i < users.length; i += 1) {
-    out += `${users[i].name} <${users[i].email}>;`;
-  }
-  return out;
-}
-
-/**
- * Get the list of bundles a user is checked into.
- */
-function getBundles(user) {
-  let bundles = '';
-  user.bundles.forEach((bundle) => {
-    if (!bundle.deleted) {
-      bundles += `${bundle.name};`;
-    }
-  });
-  return bundles;
-}
-
-/**
- * Get the list of functional roles a user is checked into.
- */
-function getRoles(user) {
-  let roles = '';
-  user.functional_roles.forEach((role) => {
-    if (!role.deleted) {
-      roles += `${role.name};`;
-    }
-  });
-  return roles;
-}
-
-/**
- * Helper function to export users to csv
- */
-function _csvExport(users, full = false) {
-  let out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes\n';
-  let org = '';
-  let bundles = '';
-  let roles = '';
-  let country = '';
-  let region = '';
-  let jobTitle = '';
-  let phoneNumber = '';
-  let skype = '';
-  let status = '';
-  let orphan = '';
-  let ghost = '';
-  let verified = '';
-  let manager = '';
-  let admin = '';
-  if (full) {
-    out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes,Created At,Updated At,Orphan,Ghost,Verified,Manager,Admin\n';
-  }
-  for (let i = 0; i < users.length; i += 1) {
-    org = '';
-    bundles = '';
-    country = '';
-    region = '';
-    skype = '';
-    roles = '';
-    jobTitle = users[i].job_title || ' ';
-    phoneNumber = users[i].phone_number || ' ';
-    status = users[i].status || ' ';
-    if (users[i].organization && users[i].organization.list) {
-      org = users[i].organization.name;
-    }
-    if (users[i].bundles && users[i].bundles.length) {
-      bundles = getBundles(users[i]);
-    }
-    if (users[i].functional_roles && users[i].functional_roles.length) {
-      roles = getRoles(users[i]);
-    }
-    if (users[i].location && users[i].location.country) {
-      country = users[i].location.country.name;
-    }
-    if (users[i].location && users[i].location.region) {
-      region = users[i].location.region.name;
-    }
-    if (users[i].voips.length) {
-      for (let j = 0; j < users[i].voips.length; j += 1) {
-        if (users[i].voips[j].type === 'Skype') {
-          skype = users[i].voips[j].username;
-        }
-      }
-    }
-    orphan = users[i].is_orphan ? '1' : '0';
-    ghost = users[i].is_ghost ? '1' : '0';
-    verified = users[i].verified ? '1' : '0';
-    manager = users[i].isManager ? '1' : '0';
-    admin = users[i].is_admin ? '1' : '0';
-    out = `${out
-    }"${users[i].given_name}",`
-      + `"${users[i].family_name}",`
-      + `"${jobTitle}",`
-      + `"${org}",`
-      + `"${bundles}",`
-      + `"${roles}",`
-      + `"${country}",`
-      + `"${region}",`
-      + `"${phoneNumber}",`
-      + `"${skype}",`
-      + `"${users[i].email}",`
-      + `"${status}`;
-    if (full) {
-      out = `${out}",`
-        + `"${users[i].createdAt}",`
-        + `"${users[i].updatedAt}",`
-        + `"${orphan}",`
-        + `"${ghost}",`
-        + `"${verified}",`
-        + `"${manager}",`
-        + `"${admin}"\n`;
-    } else {
-      out += '"\n';
-    }
-  }
-  return out;
-}
 
 module.exports = {
-
   /*
    * @api [post] /user
    * tags:
@@ -376,20 +163,7 @@ module.exports = {
         delete request.payload.registration_type;
       }
 
-      const childAttributes = User.listAttributes();
-      HelperService.removeForbiddenAttributes(User, request, childAttributes);
-
-      if (request.auth.credentials && registrationType === '') {
-        // Creating an orphan user
-        request.payload.createdBy = request.auth.credentials._id;
-        // If an orphan is being created, do not expire
-        request.payload.expires = new Date(0, 0, 1, 0, 0, 0);
-        if (request.payload.email) {
-          request.payload.is_orphan = true;
-        } else {
-          request.payload.is_ghost = true;
-        }
-      }
+      HelperService.removeForbiddenAttributes(User, request, []);
 
       // HID-1582: creating a short lived user for testing
       if (request.payload.tester) {
@@ -430,9 +204,6 @@ module.exports = {
         } else if (registrationType === 'kiosk') {
           // Kiosk registration
           await EmailService.sendRegisterKiosk(user, appVerifyUrl);
-        } else {
-          // An admin is creating an orphan user
-          await EmailService.sendRegisterOrphan(user, request.auth.credentials, appVerifyUrl);
         }
       }
       return user;
@@ -465,6 +236,26 @@ module.exports = {
   },
 
   /*
+   * @api [get] /user
+   * tags:
+   *  - user
+   * summary: Returns a list of Users
+   * responses:
+   *   '200':
+   *     description: An array of zero or more users.
+   *     content:
+   *       application/json:
+   *         schema:
+   *           type: array
+   *           items:
+   *             $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Requesting user lacks permission to query users.
+   */
+
+  /*
    * @api [get] /user/{id}
    * tags:
    *  - user
@@ -494,10 +285,7 @@ module.exports = {
 
     if (request.params.id) {
       const criteria = { _id: request.params.id };
-      if (!request.auth.credentials.verified) {
-        criteria.is_orphan = false;
-        criteria.is_ghost = false;
-      }
+
       // Do not show user if it is hidden
       if (
         !request.auth.credentials.is_admin
@@ -511,7 +299,17 @@ module.exports = {
       // If we found a user, return it
       if (user) {
         user.sanitize(request.auth.credentials);
-        user.translateListNames(reqLanguage);
+
+        logger.info(
+          `[UserController->find] Displaying one user by ID`,
+          {
+            user: {
+              id: user.id,
+              email: user.email,
+            },
+          },
+        );
+
         return user;
       }
 
@@ -529,29 +327,13 @@ module.exports = {
     //
     // No ID was sent so we are returning a list of users.
     //
-
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
-    const childAttributes = User.listAttributes();
+    const childAttributes = [];
 
     // Hide hidden profile to non-admins
     if (request.auth.credentials && !request.auth.credentials.is_admin) {
       criteria.hidden = false;
-    }
-
-    // Do not allow exports for hidden users
-    if (request.params.extension && request.auth.credentials.hidden) {
-      logger.warn(
-        `[UserController->find] Hidden user ${request.auth.credentials.id} tried to export users`,
-        {
-          request,
-          fail: true,
-          user: {
-            id: request.auth.credentials.id,
-          },
-        },
-      );
-      throw Boom.unauthorized();
     }
 
     if (criteria.q) {
@@ -578,49 +360,6 @@ module.exports = {
       criteria.name = new RegExp(criteria.name, 'i');
     }
 
-    if (criteria.country) {
-      criteria['location.country.id'] = criteria.country;
-      delete criteria.country;
-    }
-
-    if (!request.auth.credentials.verified) {
-      criteria.is_orphan = false;
-      criteria.is_ghost = false;
-    }
-    const listIds = [];
-    let lists = [];
-    for (let i = 0; i < childAttributes.length; i += 1) {
-      if (criteria[`${childAttributes[i]}.list`]) {
-        listIds.push(criteria[`${childAttributes[i]}.list`]);
-        delete criteria[`${childAttributes[i]}.list`];
-      }
-    }
-    if (listIds.length) {
-      lists = await List.find({ _id: { $in: listIds } });
-      lists.forEach((list) => {
-        if (list.isVisibleTo(request.auth.credentials)) {
-          criteria[`${list.type}s`] = { $elemMatch: { list: list._id, deleted: false } };
-          if (!list.isOwner(request.auth.credentials)) {
-            criteria[`${list.type}s`].$elemMatch.pending = false;
-          }
-        } else {
-          logger.warn(
-            `[UserController->find] User ${request.auth.credentials.id} is not authorized to view list ${list._id.toString()}`,
-            {
-              request,
-              fail: true,
-            },
-          );
-          throw Boom.unauthorized('You are not authorized to view this list');
-        }
-      });
-    }
-
-    let pdfFormat = '';
-    if (criteria.format) {
-      pdfFormat = criteria.format;
-      delete criteria.format;
-    }
     const query = HelperService.find(User, criteria, options);
     if (criteria.name) {
       query.collation({ locale: 'en_US' });
@@ -628,10 +367,6 @@ module.exports = {
     // HID-1561 - Set export limit to 2000
     if (!options.limit && request.params.extension) {
       query.limit(100000);
-    }
-    if (request.params.extension) {
-      query.select('name given_name family_name email job_title phone_number status organization bundles location voips connections phonesVisibility emailsVisibility locationsVisibility createdAt updatedAt is_orphan is_ghost verified isManager is_admin functional_roles');
-      query.lean();
     }
     const [results, number] = await Promise.all([query, User.countDocuments(criteria)]);
     if (!results) {
@@ -644,40 +379,8 @@ module.exports = {
       );
       throw Boom.notFound();
     }
-    if (request.params.extension) {
-      // Sanitize users and translate list names from a plain object
-      for (let i = 0, len = results.length; i < len; i += 1) {
-        User.sanitizeExportedUser(results[i], request.auth.credentials);
-        if (results[i].organization) {
-          User.translateCheckin(results[i].organization, reqLanguage);
-        }
-      }
-      if (request.params.extension === 'csv') {
-        let csvExport = '';
-        if (request.auth.credentials.is_admin) {
-          csvExport = _csvExport(results, true);
-        } else {
-          csvExport = _csvExport(results, false);
-        }
-        return reply.response(csvExport)
-          .type('text/csv')
-          .header('Content-Disposition', `attachment; filename="Humanitarian ID Contacts ${moment().format('YYYYMMDD')}.csv"`);
-      }
-      if (request.params.extension === 'txt') {
-        return reply.response(_txtExport(results))
-          .type('text/plain');
-      }
-      if (request.params.extension === 'pdf') {
-        const [buffer, bytes] = await _pdfExport(results, number, lists, request, pdfFormat);
-        return reply.response(buffer)
-          .type('application/pdf')
-          .bytes(bytes)
-          .header('Content-Disposition', `attachment; filename="Humanitarian ID Contacts ${moment().format('YYYYMMDD')}.pdf"`);
-      }
-    }
     for (let i = 0, len = results.length; i < len; i += 1) {
       results[i].sanitize(request.auth.credentials);
-      results[i].translateListNames(reqLanguage);
     }
     return reply.response(results).header('X-Total-Count', number);
   },
@@ -717,7 +420,7 @@ module.exports = {
    *     description: Requested user not found.
    */
   async update(request) {
-    const childAttributes = User.listAttributes();
+    const childAttributes = [];
     HelperService.removeForbiddenAttributes(User, request, childAttributes);
     if (request.payload.password) {
       delete request.payload.password;
@@ -736,108 +439,13 @@ module.exports = {
       throw Boom.notFound();
     }
 
-    // If verifying user, set verified_by and verificationExpiryEmail
-    if (request.payload.verified && !user.verified) {
-      request.payload.verified_by = request.auth.credentials._id;
-      request.payload.verifiedOn = new Date();
-      request.payload.verificationExpiryEmail = false;
-    }
-
+    // Don't keep old values for updatedAt from payload
     if (request.payload.updatedAt) {
       delete request.payload.updatedAt;
     }
 
     // Update lastModified manually
     request.payload.lastModified = new Date();
-    if (user.authOnly === false && request.payload.authOnly === true) {
-      // User is becoming invisible. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, {
-          $inc: {
-            countVerified: -1,
-            countUnverified: -1,
-          },
-        });
-        logger.info(
-          '[UserController->update] User is becoming invisible. Updated list counts.',
-          {
-            request,
-            user: {
-              id: user._id.toString(),
-            },
-          },
-        );
-      }
-    }
-
-    if (user.authOnly === true && request.payload.authOnly === false) {
-      // User is becoming visible. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, {
-          $inc: {
-            countVerified: 1,
-            countUnverified: 1,
-          },
-        });
-        logger.info(
-          '[UserController->update] User is becoming visible. Updated list counts',
-          {
-            request,
-            user: {
-              id: user._id.toString(),
-            },
-          },
-        );
-      }
-    }
-
-    if (user.hidden === false && request.payload.hidden === true) {
-      // User is being flagged. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, {
-          $inc: {
-            countManager: -1,
-            countVerified: -1,
-            countUnverified: -1,
-          },
-        });
-        logger.info(
-          '[UserController->update] User is being flagged. Updated list counts',
-          {
-            request,
-            user: {
-              id: user._id.toString(),
-            },
-          },
-        );
-      }
-    }
-
-    if (user.hidden === true && request.payload.hidden === false) {
-      // User is being unflagged. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, {
-          $inc: {
-            countManager: 1,
-            countVerified: 1,
-            countUnverified: 1,
-          },
-        });
-        logger.info(
-          '[UserController->update] User is being unflagged. Updated list counts',
-          {
-            request,
-            user: {
-              id: user._id.toString(),
-            },
-          },
-        );
-      }
-    }
 
     user = await User.findOneAndUpdate(
       { _id: request.params.id },
@@ -856,107 +464,6 @@ module.exports = {
     );
 
     user = await user.defaultPopulate();
-    const promises = [];
-    if (
-      typeof request.auth.credentials !== 'undefined'
-      && typeof request.auth.credentials._id !== 'undefined'
-      && typeof user._id !== 'undefined'
-      && request.auth.credentials._id.toString() !== user._id.toString()
-    ) {
-      // User is being edited by someone else
-      // If it's an auth account, surface it
-      if (user.authOnly) {
-        user.authOnly = false;
-        // User is becoming visible. Update lists count.
-        const listIds = user.getListIds(true);
-        if (listIds.length) {
-          promises.push(
-            List.updateMany({ _id: { $in: listIds } }, {
-              $inc: {
-                countVerified: 1,
-                countUnverified: 1,
-              },
-            }).then(() => {
-              logger.info(
-                '[UserController->update] User is becoming visible. Updated list counts',
-                {
-                  request,
-                  user: {
-                    id: user._id.toString(),
-                    email: user.email,
-                  },
-                },
-              );
-            }),
-          );
-        }
-        promises.push(
-          user.save().then(() => {
-            logger.info(
-              '[UserController->update] User saved successfully',
-              {
-                request,
-                user: {
-                  id: user._id.toString(),
-                  email: user.email,
-                },
-              },
-            );
-          }),
-        );
-        if (!user.hidden) {
-          promises.push(
-            EmailService.sendAuthToProfile(user, request.auth.credentials).then(() => {
-              logger.info(
-                '[UserController->update] Sent auth_to_profile email',
-                {
-                  request,
-                  user: {
-                    id: user.id,
-                    email: user.email,
-                  },
-                },
-              );
-            }),
-          );
-        }
-      } else if (!user.hidden) {
-        const notification = { type: 'admin_edit', user, createdBy: request.auth.credentials };
-        promises.push(
-          NotificationService.send(notification).then(() => {
-            logger.info(
-              '[UserController->update] Sent admin_edit notification',
-              {
-                request,
-                user: {
-                  id: user.id,
-                  email: user.email,
-                },
-              },
-            );
-          }),
-        );
-      }
-    }
-
-    promises.push(
-      GSSSyncService.synchronizeUser(user).then(() => {
-        logger.info(
-          '[UserController->update] Synchronized user with google spreadsheet',
-          {
-            request,
-            user: {
-              id: user.id,
-              email: user.email,
-            },
-          },
-        );
-      }),
-    );
-
-    // Execute all operations simultaneously
-    await Promise.all(promises);
-
     return user;
   },
 
@@ -1032,7 +539,7 @@ module.exports = {
   },
 
   /*
-   * @api [put] /user/{id}/password
+   * @api [post] /user/{id}/password
    * tags:
    *   - user
    * summary: Updates the password of a user.
@@ -1173,116 +680,6 @@ module.exports = {
   },
 
   /*
-   * @TODO: refactor to include both params in route. See HID-2072.
-   *
-   * @api [put] /user/{id}/organization
-   * tags:
-   *   - user
-   * summary: Set primary organization of the user.
-   * parameters:
-   *   - name: id
-   *     description: A 24-character alphanumeric User ID
-   *     in: path
-   *     required: true
-   *     default: ''
-   * requestBody:
-   *   description: Organization to be marked primary.
-   *   required: true
-   *   content:
-   *     application/json:
-   *       schema:
-   *         type: object
-   *         properties:
-   *           _id:
-   *             type: string
-   *             required: true
-   * responses:
-   *   '200':
-   *     description: The updated user object
-   *     content:
-   *       application/json:
-   *         schema:
-   *           $ref: '#/components/schemas/User'
-   *   '400':
-   *     description: Bad request. See response body for details.
-   *   '401':
-   *     description: Unauthorized.
-   *   '403':
-   *     description: Requesting user lacks permission to update requested user.
-   *   '404':
-   *     description: Requested user not found.
-   */
-  async setPrimaryOrganization(request) {
-    if (!request.payload) {
-      logger.warn(
-        '[UserController->setPrimaryOrganization] Missing request payload',
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Missing listUser id');
-    }
-    if (!request.payload._id) {
-      logger.warn(
-        '[UserController->setPrimaryOrganization] Missing listUser id',
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Missing listUser id');
-    }
-
-    const user = await User.findOne({ _id: request.params.id });
-    if (!user) {
-      logger.warn(
-        `[UserController->setPrimaryOrganization] User ${request.params.id} not found`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.notFound();
-    }
-    const checkin = user.organizations.id(request.payload._id);
-    if (!checkin) {
-      logger.warn(
-        `[UserController->setPrimaryOrganization] Organization ${request.payload._id.toString()} should be part of user organizations`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Organization should be part of user organizations');
-    }
-    if (user.organization) {
-      user.organization.set(checkin);
-    } else {
-      user.organization = checkin;
-    }
-    user.lastModified = new Date();
-    await Promise.all([
-      user.save(),
-      GSSSyncService.synchronizeUser(user),
-      // OutlookService.synchronizeUser(user),
-    ]);
-    logger.info(
-      `[UserController->setPrimaryPhone] User ${request.params.id} saved successfully`,
-      {
-        request,
-      },
-    );
-    logger.info(
-      `[UserController->setPrimaryPhone] Successfully synchronized google spreadsheets for user ${request.params.id}`,
-      {
-        request,
-      },
-    );
-    return user;
-  },
-
-  /*
    * @api [put] /user/{id}/email
    * tags:
    *   - user
@@ -1418,49 +815,8 @@ module.exports = {
         }
       },
     );
-    await GSSSyncService.synchronizeUser(record);
-    logger.info(
-      `[UserController->setPrimaryEmail] Synchronized user ${userId} with google spreadsheets successfully`,
-      {
-        request,
-        user: {
-          id: userId,
-        },
-      },
-    );
 
     return record;
-  },
-
-  async claimEmail(request, reply) {
-    const appResetUrl = request.payload.app_reset_url;
-    const userId = request.params.id;
-
-    if (!HelperService.isAuthorizedUrl(appResetUrl)) {
-      logger.warn(
-        `[UserController->claimEmail] app_reset_url ${appResetUrl} is not in authorizedDomains allowlist`,
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('app_reset_url is invalid');
-    }
-
-    const record = await User.findOne({ _id: userId });
-    if (!record) {
-      logger.warn(
-        `[UserController->claimEmail] User ${userId} not found`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.notFound();
-    }
-    await EmailService.sendClaim(record, appResetUrl);
-    return reply.response('Claim email sent successfully').code(202);
   },
 
   /*
@@ -1597,17 +953,12 @@ module.exports = {
       throw Boom.badRequest('Email is not unique');
     }
 
-    if (record.emails.length === 0 && record.is_ghost) {
-      // Turn ghost into orphan and set main email address
-      record.is_ghost = false;
-      record.is_orphan = true;
-      record.email = email;
-    }
     const data = { email: email, type: 'Work', validated: false };
     record.emails.push(data);
     record.lastModified = new Date();
+
     const savedRecord = await record.save();
-    logger.warn(
+    logger.info(
       `[UserController->addEmail] Successfully saved user ${record.id}`,
       {
         request,
@@ -1618,45 +969,28 @@ module.exports = {
     );
     const savedEmailIndex = savedRecord.emailIndex(email);
     const savedEmail = savedRecord.emails[savedEmailIndex];
+
     // Send confirmation email
-    const promises = [];
-    promises.push(
-      EmailService.sendValidationEmail(
-        record,
-        email,
-        savedEmail._id.toString(),
-        appValidationUrl,
-      ).then(() => {
-        logger.info(
-          `[UserController->addEmail] Successfully sent validation email to ${email}`,
-          {
-            request,
-            user: {
-              email,
-            },
-          },
-        );
-      })
+    await EmailService.sendValidationEmail(
+      record,
+      email,
+      savedEmail._id.toString(),
+      appValidationUrl,
     );
-    for (let i = 0; i < record.emails.length; i += 1) {
+
+    // If the email sent without error, notify the other emails on this account.
+    const promises = [];
+    for (let i = 0; i < record.emails.length; i++) {
       // TODO: probably shouldn't send notices to unconfirmed email addresses.
+      //
       // @see HID-2150
-      promises.push(
-        EmailService.sendEmailAlert(record, record.emails[i].email, email).then(() => {
-          logger.info(
-            `[UserController->addEmail] Successfully sent email alert to ${record.emails[i].email}`,
-            {
-              request,
-              user: {
-                email: record.emails[i].email,
-              },
-            },
-          );
-        })
-      );
+      promises.push(EmailService.sendEmailAlert(record, record.emails[i].email, email));
     }
 
+    // Send notifications to secondary addresses.
     await Promise.all(promises);
+
+    // Return user object.
     return record;
   },
 
@@ -1730,6 +1064,7 @@ module.exports = {
       );
       throw Boom.notFound();
     }
+
     if (email === record.email) {
       logger.warn(
         `[UserController->dropEmail] Primary email for user ${userId} can not be removed`,
@@ -1740,6 +1075,7 @@ module.exports = {
       );
       throw Boom.badRequest('You can not remove the primary email');
     }
+
     const index = record.emailIndex(email);
     if (index === -1) {
       logger.warn(
@@ -1753,18 +1089,14 @@ module.exports = {
     }
     record.emails.splice(index, 1);
     record.lastModified = new Date();
-    const stillVerified = await record.canBeVerifiedAutomatically();
-    if (!stillVerified) {
-      record.verified = false;
-    }
-    await record.save();
 
+    await record.save();
     logger.info(
       `[UserController->dropEmail] User ${userId} saved successfully`,
       {
         request,
         user: {
-          userId,
+          id: userId,
           email: record.email,
         },
       },
@@ -1793,7 +1125,10 @@ module.exports = {
    *     required: true
    *     default: ''
    * requestBody:
-   *   description: Required parameters to validate an email address.
+   *   description: >-
+   *     Send a payload with `request.params.email` populated, plus a payload
+   *     containing `app_validation_url` in order to have HID send an email to
+   *     validate an address.
    *   required: false
    *   content:
    *     application/json:
@@ -1814,8 +1149,8 @@ module.exports = {
    *     description: Requested email address not found.
    * security: []
    */
-  async validateEmail(request) {
-    if (request.payload.hash) {
+  async validateEmail(request, reply) {
+    if (request.payload && request.payload.hash) {
       const record = await User.findOne({ _id: request.payload.id }).catch((err) => {
         logger.error(
           `[UserController->validateEmail] ${err.message}`,
@@ -1840,9 +1175,6 @@ module.exports = {
         );
         throw Boom.notFound();
       }
-
-      // For automatic verified status.
-      let domain = null;
 
       // Assign the primary address as the initial value for `email`
       //
@@ -1869,7 +1201,6 @@ module.exports = {
           record.emails[0].validated = true;
           record.emails.set(0, record.emails[0]);
           record.lastModified = new Date();
-          domain = await record.isVerifiableEmail(email);
         } else {
           for (let i = 0, len = record.emails.length; i < len; i += 1) {
             if (record.emails[i].email === email) {
@@ -1878,7 +1209,6 @@ module.exports = {
             }
           }
           record.lastModified = new Date();
-          domain = await record.isVerifiableEmail(email);
         }
       } else {
         logger.warn(
@@ -1890,66 +1220,40 @@ module.exports = {
         );
         throw Boom.badRequest('Invalid hash');
       }
-      if (domain) {
-        record.verified = true;
-        record.verified_by = hidAccount;
-        record.verifiedOn = new Date();
-        record.verificationExpiryEmail = false;
-        // If the domain is associated to a list, check user in this list automatically
-        if (domain.list) {
-          if (!record.organizations) {
-            record.organizations = [];
-          }
 
-          let isCheckedIn = false;
-          // Make sure user is not already checked in this list
-          for (let i = 0, len = record.organizations.length; i < len; i += 1) {
-            if (record.organizations[i].list.equals(domain.list._id)
-              && record.organizations[i].deleted === false) {
-              isCheckedIn = true;
-            }
-          }
-
-          if (!isCheckedIn) {
-            await ListUserController.checkinHelper(domain.list, record, true, 'organizations', record);
-          }
-        }
-      }
-      const promises = [];
-      promises.push(record.save().then(() => {
+      await record.save().then(() => {
         logger.info(
           `[UserController->validateEmail] Saved user ${record.id} successfully`,
           {
             request,
             user: {
               id: record.id,
+              email: record.email,
             },
           },
         );
-      }));
+      });
+
+      // TODO: if someone needs to re-verify an existing primary email address
+      //       we end up sending them a "welcome to HID" email due to this simple
+      //       conditional. We might want to consider a more complex conditional
+      //       to avoid that edge case.
+      //
+      // @see HID-2200
       if (record.email === email) {
-        promises.push(EmailService.sendPostRegister(record).then(() => {
-          logger.info(
-            `[UserController->validateEmail] Sent post_register email to ${record.email} successfully`,
-            {
-              request,
-              user: {
-                email: record.email,
-              },
-            },
-          );
-        }));
+        await EmailService.sendPostRegister(record);
       }
 
-      await Promise.all(promises);
       return record;
     }
 
-    // When hash wasn't present, do this stuff instead.
+    // When hash wasn't present, send a validation email to the requested address.
     //
     // @TODO: split this into its own function.
     //
     // @see HID-2064
+
+    // Confirm whether a user exists with the requested email.
     const record = await User.findOne({ 'emails.email': request.params.email });
     if (!record) {
       logger.warn(
@@ -1961,8 +1265,9 @@ module.exports = {
       );
       throw Boom.notFound();
     }
-    // Send validation email again
-    const appValidationUrl = request.payload.app_validation_url;
+
+    // Confirm whether the request came from a valid domain.
+    const appValidationUrl = request.payload && request.payload.app_validation_url ? request.payload.app_validation_url : '';
     if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
       logger.warn(
         `[UserController->validateEmail] app_validation_url ${appValidationUrl} is not in authorizedDomains allowlist`,
@@ -1974,6 +1279,8 @@ module.exports = {
       );
       throw Boom.badRequest('Invalid app_validation_url');
     }
+
+    // Send validation email.
     const emailIndex = record.emailIndex(request.params.email);
     const email = record.emails[emailIndex];
     await EmailService.sendValidationEmail(
@@ -1983,124 +1290,8 @@ module.exports = {
       appValidationUrl,
     );
 
-    // v3: Send a 204 (empty body)
-    const requestIsV3 = request.path.indexOf('api/v3') !== -1;
-    if (requestIsV3) {
-      return reply.response().code(204);
-    }
-    // v2: Send 200 with this response body.
-    return 'Validation email sent successfully';
-  },
-
-  async addPhone(request) {
-    const userId = request.params.id;
-
-    const record = await User.findOne({ _id: userId });
-    if (!record) {
-      logger.warn(
-        `[UserController->addPhone] User ${userId} not found`,
-      );
-      throw Boom.notFound();
-    }
-    const data = { number: request.payload.number, type: request.payload.type };
-    record.phone_numbers.push(data);
-    record.lastModified = new Date();
-    await record.save();
-    logger.info(
-      `[UserController->addPhone] User ${userId} saved successfully`,
-    );
-    // await Promise.all([
-    //  record.save(),
-    //  OutlookService.synchronizeUser(record),
-    // ]);
-    return record;
-  },
-
-  async dropPhone(request) {
-    const userId = request.params.id;
-    const phoneId = request.params.pid;
-
-    const record = await User.findOne({ _id: userId });
-    if (!record) {
-      logger.warn(
-        `[UserController->dropPhone] User ${userId} not found`,
-      );
-      throw Boom.notFound();
-    }
-    let index = -1;
-    for (let i = 0, len = record.phone_numbers.length; i < len; i += 1) {
-      if (record.phone_numbers[i]._id.toString() === phoneId) {
-        index = i;
-      }
-    }
-    if (index === -1) {
-      logger.warn(
-        `[UserController->dropPhone] Phone number ${phoneId} not found for user ${userId}`,
-      );
-      throw Boom.notFound();
-    }
-    // Do not allow deletion of primary phone number
-    if (record.phone_numbers[index].number === record.phone_number) {
-      record.phone_number = '';
-      record.phone_number_type = '';
-    }
-    record.phone_numbers.splice(index, 1);
-    record.lastModified = new Date();
-    await record.save();
-    logger.info(
-      `[UserController->dropPhone] User ${record.id} saved successfully`,
-    );
-    // await Promise.all([
-    //  record.save(),
-    //  OutlookService.synchronizeUser(record),
-    // ]);
-    return record;
-  },
-
-  async setPrimaryPhone(request) {
-    const { phone } = request.payload;
-
-    if (!request.payload.phone) {
-      logger.warn(
-        '[UserController->setPrimaryPhone] No phone in request payload',
-      );
-      throw Boom.badRequest();
-    }
-    const record = await User.findOne({ _id: request.params.id });
-    if (!record) {
-      logger.warn(
-        `[UserController->setPrimaryPhone] User ${request.params.id} not found`,
-      );
-      throw Boom.notFound();
-    }
-    // Make sure phone is part of phone_numbers
-    let index = -1;
-    for (let i = 0, len = record.phone_numbers.length; i < len; i += 1) {
-      if (record.phone_numbers[i].number === phone) {
-        index = i;
-      }
-    }
-    if (index === -1) {
-      logger.warn(
-        `[UserController->setPrimaryPhone] Phone number ${phone} not found for user ${request.params.id}`,
-      );
-      throw Boom.badRequest('Phone does not exist');
-    }
-    record.phone_number = record.phone_numbers[index].number;
-    record.phone_number_type = record.phone_numbers[index].type;
-    record.lastModified = new Date();
-    await Promise.all([
-      record.save(),
-      GSSSyncService.synchronizeUser(record),
-      // OutlookService.synchronizeUser(record),
-    ]);
-    logger.info(
-      `[UserController->setPrimaryPhone] User ${request.params.id} saved successfully`,
-    );
-    logger.info(
-      `[UserController->setPrimaryPhone] Successfully synchronized google spreadsheets for user ${request.params.id}`,
-    );
-    return record;
+    // Send a 204 (empty body)
+    return reply.response().code(204);
   },
 
   /*
@@ -2158,10 +1349,10 @@ module.exports = {
    *     description: Bad request. See response body for details.
    * security: []
    */
-  async resetPasswordEndpoint(request) {
-    if (request.payload.email) {
-      const appResetUrl = request.payload.app_reset_url;
-
+  async resetPasswordEndpoint(request, reply) {
+    if (request.payload && request.payload.email) {
+      // Validate app URL.
+      const appResetUrl = request.payload.app_reset_url || '';
       if (!HelperService.isAuthorizedUrl(appResetUrl)) {
         logger.warn(
           `[UserController->resetPasswordEndpoint] app_reset_url ${appResetUrl} is not in authorizedDomains allowlist`,
@@ -2173,30 +1364,69 @@ module.exports = {
         );
         throw Boom.badRequest('app_reset_url is invalid');
       }
-      const record = await User.findOne({ email: request.payload.email.toLowerCase() });
+
+      // Lookup user based on the email address. We scan the `emails` array so
+      // that secondary addresses can also receive password resets.
+      const record = await User.findOne({ 'emails.email': request.payload.email.toLowerCase() });
+
+      // No user found.
       if (!record) {
         logger.warn(
-          `[UserController->resetPasswordEndpoint] User ${request.params.id} not found`,
+          `[UserController->resetPasswordEndpoint] No user found with email: ${request.payload.email}`,
           {
             request,
             fail: true,
           },
         );
-        return '';
+
+        // Send HTTP 204 (empty success response)
+        //
+        // We send this because disclosing the existence (or lack thereof) of an
+        // email address is considered a security hole, per OICT policy.
+        return reply.response().code(204);
       }
-      await EmailService.sendResetPassword(record, appResetUrl);
-      logger.info(
-        `[UserController->resetPasswordEndpoint] Successfully sent reset password email to ${record.email}`,
-        {
-          request,
-          security: true,
-        },
-      );
-      return '';
+
+      // Determine whether email is primary. We allow unvalidated primary emails
+      // to accept password resets.
+      const emailIsPrimary = record.email === request.payload.email.toLowerCase();
+
+      // Verify that the email has already been validated
+      const secondaryEmailIsValidated = record.emails.some(e => e.email === request.payload.email.toLowerCase() && e.validated === true);
+
+      // IF the email is primary OR it's a __validated__ secondary email
+      // THEN send password reset.
+      if (emailIsPrimary || secondaryEmailIsValidated) {
+        await EmailService.sendResetPassword(record, appResetUrl, request.payload.email);
+      } else {
+        logger.warn(
+          `[UserController->resetPasswordEndpoint] Could not reset password because the secondary email ${request.payload.email} has not been validated.`,
+          {
+            request,
+            security: true,
+            fail: true,
+            user: {
+              id: record.id,
+              email: record.email,
+            },
+          },
+        );
+      }
+
+      // Send HTTP 204 (empty success response)
+      return reply.response().code(204);
     }
+
+    // If `request.payload.email` was empty, we seem to be evaluating the reset
+    // link contained within an email. This is not an API call, instead a normal
+    // page load from a browser.
     const cookie = request.yar.get('session');
-    if (!request.payload.hash || !request.payload.password
-      || !request.payload.id || !request.payload.time) {
+    if (
+      !request.payload
+      || !request.payload.hash
+      || !request.payload.password
+      || !request.payload.id
+      || !request.payload.time
+    ) {
       logger.warn(
         '[UserController->resetPasswordEndpoint] Wrong or missing arguments',
         {
@@ -2204,9 +1434,10 @@ module.exports = {
           security: true,
         },
       );
-      throw Boom.badRequest('Wrong arguments');
+      throw Boom.badRequest('Wrong or missing arguments');
     }
 
+    // Verify whether password requirements were met.
     if (!User.isStrongPassword(request.payload.password)) {
       logger.warn(
         '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough',
@@ -2219,6 +1450,7 @@ module.exports = {
       throw Boom.badRequest('New password is not strong enough');
     }
 
+    // Lookup user by ID.
     let record = await User.findOne({ _id: request.payload.id });
     if (!record) {
       logger.warn(
@@ -2231,13 +1463,12 @@ module.exports = {
       );
       throw Boom.badRequest('Reset password link is expired or invalid');
     }
+
+    // Check that whether a TOTP token is needed, and that it is valid.
     if (record.totp && !cookie) {
-      // Check that there is a TOTP token and that it is valid
       const token = request.headers['x-hid-totp'];
       record = await AuthPolicy.isTOTPValid(record, token);
     }
-
-    let domain = null;
 
     // Check that the reset hash was correct when the user landed on the page.
     if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
@@ -2258,7 +1489,6 @@ module.exports = {
       } else {
         record.password = User.hashPassword(request.payload.password);
         record.verifyEmail(record.email);
-        domain = await record.isVerifiableEmail(record.email);
       }
     } else {
       logger.warn(
@@ -2271,47 +1501,48 @@ module.exports = {
       );
       throw Boom.badRequest('Reset password link is expired or invalid');
     }
-    if (domain) {
-      // Reset verifiedOn date as user was able to
-      // reset his password via an email from a trusted domain
-      record.verified = true;
-      record.verified_by = hidAccount;
-      record.verifiedOn = new Date();
-      record.verificationExpiryEmail = false;
-    }
+
+    // Modify the user metadata now that password was reset.
     record.expires = new Date(0, 0, 1, 0, 0, 0);
-    if (record.is_orphan === true || record.is_ghost === true) {
-      // User is not an orphan anymore. Update lists count.
-      const listIds = record.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, { $inc: { countUnverified: 1 } });
-        logger.info(
-          `[UserController->resetPasswordEndpoint] User ${record._id.toString()} is not an orphan anymore. Updated list counts`,
-          {
-            request,
-          },
-        );
-      }
-    }
-    record.is_orphan = false;
-    record.is_ghost = false;
     record.lastPasswordReset = new Date();
     record.passwordResetAlert30days = false;
     record.passwordResetAlert7days = false;
     record.passwordResetAlert = false;
     record.lastModified = new Date();
-    await record.save();
-    logger.info(
-      `[UserController->resetPasswordEndpoint] Password updated successfully for user ${record._id.toString()}`,
-      {
-        request,
-        security: true,
-      },
-    );
+
+    // Update user in DB.
+    await record.save().then(() => {
+      logger.info(
+        `[UserController->resetPasswordEndpoint] Password updated successfully for user ${record.id}`,
+        {
+          request,
+          security: true,
+          user: {
+            id: record.id,
+            email: record.email,
+          },
+        },
+      );
+    });
+
     return 'Password reset successfully';
   },
 
   showAccount(request) {
+    // Full user object from DB.
+    const user = JSON.parse(JSON.stringify(request.auth.credentials));
+
+    // This will be what we send back as a response.
+    const output = {
+      id: user.id,
+      sub: user.id,
+      email: user.email,
+      email_verified: user.email_verified.toString(),
+      name: user.name,
+      iss: process.env.ROOT_URL || 'https://auth.humanitarian.id',
+    };
+
+    // Log the request
     logger.info(
       `[UserController->showAccount] calling /account.json for ${request.auth.credentials.email}`,
       {
@@ -2321,25 +1552,34 @@ module.exports = {
           email: request.auth.credentials.email,
           admin: request.auth.credentials.is_admin,
         },
+        oauth: {
+          client_id: request.params.currentClient && request.params.currentClient.id,
+        },
       },
     );
-    const user = JSON.parse(JSON.stringify(request.auth.credentials));
+
+    // Special cases for legacy compat.
+    //
+    // @TODO: in testing this, it seems that the `currentClient` param is not
+    //        present when this function runs. Investigate whether we need these
+    //        special cases at all.
+    //
+    //        @see https://humanitarian.atlassian.net/browse/HID-2192
     if (request.params.currentClient && (request.params.currentClient.id === 'iasc-prod' || request.params.currentClient.id === 'iasc-dev')) {
-      user.sub = user.email;
-    }
-    if (request.params.currentClient && request.params.currentClient.id === 'dart-prod') {
-      delete user._id;
+      output.sub = user.email;
     }
     if (request.params.currentClient && request.params.currentClient.id === 'kaya-prod') {
-      user.name = user.name.replace(' ', '');
+      output.name = user.name.replace(' ', '');
     }
     if (request.params.currentClient
       && (request.params.currentClient.id === 'rc-shelter-database'
         || request.params.currentClient.id === 'rc-shelter-db-2-prod'
         || request.params.currentClient.id === 'deep-prod')) {
-      user.active = !user.deleted;
+      output.active = !user.deleted;
     }
-    return user;
+
+    // Send response
+    return output;
   },
 
   async notify(request) {
@@ -2355,174 +1595,7 @@ module.exports = {
       throw Boom.notFound();
     }
 
-    const notPayload = {
-      type: 'contact_needs_update',
-      createdBy: request.auth.credentials,
-      user: record,
-    };
-    await NotificationService.send(notPayload);
-    logger.info(
-      `[UserController->notify] Successfully sent contact_needs_update notification to ${record.email}`,
-      {
-        request,
-      },
-    );
-
     return record;
-  },
-
-  async addConnection(request) {
-    const user = await User.findOne({ _id: request.params.id });
-    if (!user) {
-      logger.warn(
-        `[UserController->addConnection] User ${request.params.id} not found`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.notFound();
-    }
-
-    if (!user.connections) {
-      user.connections = [];
-    }
-    if (user.connectionsIndex(request.auth.credentials._id) !== -1) {
-      logger.warn(
-        `[UserController->addConnection] User ${request.params.id} is already a connection of ${request.auth.credentials._id.toString()}`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('User is already a connection');
-    }
-
-    user.connections.push({ pending: true, user: request.auth.credentials._id });
-    user.lastModified = new Date();
-
-    const notification = {
-      type: 'connection_request',
-      createdBy: request.auth.credentials,
-      user,
-    };
-    await Promise.all([
-      user.save().then(() => {
-        logger.info(
-          `[UserController->addConnection] User ${request.params.id} successfully saved`,
-          {
-            request,
-            user: {
-              id: request.params.id,
-            },
-          },
-        );
-      }),
-      NotificationService.send(notification).then(() => {
-        logger.info(
-          `[UserController->addConnection] Successfully sent connection_request notification to ${user.email}`,
-          {
-            request,
-            user: {
-              email: user.email,
-            },
-          },
-        );
-      }),
-    ]);
-
-    return user;
-  },
-
-  async updateConnection(request) {
-    const user = await User.findOne({ _id: request.params.id });
-    if (!user) {
-      logger.warn(
-        `[UserController->updateConnection] User ${request.params.id} not found`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.notFound();
-    }
-    const connection = user.connections.id(request.params.cid);
-    connection.pending = false;
-    user.lastModified = new Date();
-    await user.save();
-    logger.info(
-      `[UserController->updateConnection] User ${request.params.id} added connection to ${request.params.cid}`,
-      {
-        request,
-        user: {
-          id: request.params.id,
-          connection: request.params.cid,
-        },
-      },
-    );
-    const cuser = await User.findOne({ _id: connection.user });
-    // Create connection with current user
-    const cindex = cuser.connectionsIndex(user._id);
-    if (cindex === -1) {
-      cuser.connections.push({ pending: false, user: user._id });
-    } else {
-      cuser.connections[cindex].pending = false;
-    }
-    cuser.lastModified = new Date();
-    await cuser.save();
-    logger.info(
-      `[UserController->updateConnection] User ${cuser.id} added connection to ${user.id}`,
-      {
-        request,
-        user: {
-          id: cuser.id,
-          connection: user.id,
-        },
-      },
-    );
-    // Send notification
-    const notification = {
-      type: 'connection_approved',
-      createdBy: user,
-      user: cuser,
-    };
-    await NotificationService.send(notification).then(() => {
-      logger.info(
-        `[UserController->updateConnection] Successfully sent connection_approved notification to ${cuser.email}`,
-        {
-          request,
-        },
-      );
-    });
-    return user;
-  },
-
-  async deleteConnection(request) {
-    const user = await User.findOne({ _id: request.params.id });
-    if (!user) {
-      logger.warn(
-        `[UserController->deleteConnection] User ${request.params.id} not found`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.notFound();
-    }
-    user.connections.id(request.params.cid).remove();
-    user.lastModified = new Date();
-    await user.save();
-    logger.info(
-      `[UserController->deleteConnection] User ${request.params.id} removed ${request.params.cid} from connections.`,
-      {
-        request,
-        user: {
-          id: request.params.id,
-          connection: request.params.cid,
-        },
-      },
-    );
-    return user;
   },
 
   /*

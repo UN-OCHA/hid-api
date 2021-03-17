@@ -1,5 +1,8 @@
+/**
+ * @module AuthController
+ * @description Controller for Auth.
+ */
 const Boom = require('@hapi/boom');
-const Hawk = require('@hapi/hawk');
 const Client = require('../models/Client');
 const Flood = require('../models/Flood');
 const JwtToken = require('../models/JwtToken');
@@ -13,11 +16,8 @@ const config = require('../../config/env')[process.env.NODE_ENV];
 const { logger } = config;
 
 /**
- * @module AuthController
- * @description Controller for Auth.
+ * Main helper function used for login. All logins go through this.
  */
-
-// Main helper function used for login. All logins go through this.
 async function loginHelper(request) {
   const password = request.payload ? request.payload.password : false;
   let email = false;
@@ -252,106 +252,6 @@ module.exports = {
         request,
         security: true,
         user: {
-          email: result.email,
-        },
-      },
-    );
-    return { user: result, token };
-  },
-  /*
-   * @api [post] /admintoken
-   * tags:
-   *   - auth
-   * summary: Admin-only route to generate a JSON web token (JWT)
-   * parameters:
-   *   - name: X-HID-TOTP
-   *     in: header
-   *     description: The TOTP token. Required if the user has 2FA enabled.
-   *     required: false
-   *     type: string
-   * requestBody:
-   *   description: 'User email and password'
-   *   required: true
-   *   content:
-   *     application/json:
-   *       schema:
-   *         $ref: '#/components/schemas/Auth'
-   * responses:
-   *   '200':
-   *     description: >-
-   *       The User object with the JWT contained in the `token` property.
-   *     content:
-   *       application/json:
-   *         schema:
-   *           $ref: '#/components/schemas/JWT'
-   *   '400':
-   *     description: 'Bad request. Missing email and/or password'
-   *   '401':
-   *     description: 'Wrong email and/or password'
-   *   '403':
-   *     description: 'Not an admin'
-   *   '429':
-   *     description: >-
-   *       The account was locked for 5 minutes because there were more than 5
-   *       unsuccessful login attempts within the last 5 minutes
-   * security: []
-   */
-  async authenticateAdmin(request) {
-    const result = await loginHelper(request);
-
-    // Before proceeding, check if user has admin perms. This is the main
-    // difference between @authenticate and @authenticateAdmin
-    if (!result.is_admin) {
-      throw Boom.forbidden();
-    }
-
-    if (result.totp === true) {
-      // Check to see if device is not a trusted device
-      const trusted = request.state['x-hid-totp-trust'];
-      if (!trusted || (trusted && !result.isTrustedDevice(request.headers['user-agent'], trusted))) {
-        const token = request.headers['x-hid-totp'];
-        await AuthPolicy.isTOTPValid(result, token);
-      }
-    }
-    const payload = { id: result._id };
-    if (request.payload && request.payload.exp) {
-      payload.exp = request.payload.exp;
-    }
-    const token = JwtService.issue(payload);
-    result.sanitize(result);
-
-    if (!payload.exp) {
-      // Creating an API key, store the token in the database
-      await JwtToken.create({
-        token,
-        user: result._id,
-        blacklist: false,
-        // TODO: add expires
-      });
-
-      logger.warn(
-        '[AuthController->authenticateAdmin] Created an API key',
-        {
-          request,
-          security: true,
-          user: {
-            email: result.email,
-          },
-        },
-      );
-      return {
-        user: result,
-        token,
-      };
-    }
-
-    logger.info(
-      '[AuthController->authenticateAdmin] Successful user authentication. Returning JWT.',
-      {
-        request,
-        security: true,
-        user: {
-          id: result.id,
           email: result.email,
         },
       },
@@ -1041,25 +941,13 @@ module.exports = {
       response_types_supported: ['code', 'token', 'id_token', 'id_token token'],
       subject_types_supported: ['public'],
       id_token_signing_alg_values_supported: ['RS256'],
-      scopes_supported: ['openid', 'email', 'profile', 'phone'],
+      scopes_supported: ['openid', 'email', 'profile'],
       claims_supported: [
         'iss',
         'sub',
-        'aud',
-        'exp',
-        'iat',
         'name',
-        'given_name',
-        'family_name',
-        'middle_name',
-        'picture',
         'email',
         'email_verified',
-        'zoneinfo',
-        'locale',
-        'phone_number',
-        'phone_number_verified',
-        'updated_at',
       ],
     };
     return out;
@@ -1168,34 +1056,4 @@ module.exports = {
     );
     throw Boom.forbidden('Could not blacklist this token because you did not generate it');
   },
-
-  /**
-   * Creates short lived (5 minutes) tokens to
-   * sign requests for file downloads.
-   */
-  signRequest(request) {
-    const url = request.payload ? request.payload.url : null;
-    if (!url) {
-      logger.warn(
-        '[AuthController->signRequest] Missing url to sign request for file downloads',
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Missing url');
-    }
-    const credentials = {
-      id: request.auth.credentials._id.toString(),
-      key: process.env.COOKIE_PASSWORD,
-      algorithm: 'sha256',
-    };
-    const bewit = Hawk.uri.getBewit(url, {
-      credentials,
-      ttlSec: 60 * 5,
-    });
-    return { bewit };
-  },
-
 };

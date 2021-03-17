@@ -95,23 +95,6 @@ module.exports = {
     return send(mailOptions, 'register', context);
   },
 
-  sendRegisterOrphan(user, admin, appVerifyUrl) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale || 'en',
-    };
-    const hash = user.generateHash('reset_password');
-    let resetUrl = addUrlArgument(appVerifyUrl, 'id', user._id.toString());
-    resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
-    resetUrl = addHash(resetUrl, hash.hash);
-    const context = {
-      user,
-      admin,
-      reset_url: resetUrl,
-    };
-    return send(mailOptions, 'register_orphan', context);
-  },
-
   sendRegisterKiosk(user, appVerifyUrl) {
     const mailOptions = {
       to: user.email,
@@ -140,9 +123,12 @@ module.exports = {
     return send(mailOptions, 'post_register', context);
   },
 
-  sendResetPassword(user, appResetUrl) {
+  sendResetPassword(user, appResetUrl, targetEmail = '') {
+    if (!targetEmail) {
+      targetEmail = user.email;
+    }
     const mailOptions = {
-      to: user.email,
+      to: targetEmail,
       locale: user.locale,
     };
     const hash = user.generateHash('reset_password');
@@ -155,34 +141,6 @@ module.exports = {
       appResetUrl,
     };
     return send(mailOptions, 'reset_password', context);
-  },
-
-  sendDecommissionForAuthUsers(user) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      user: {
-        name: user.name,
-      },
-    };
-    logger.info(`[EmailService->sendDecommissionForAuthUsers]`, context);
-    return send(mailOptions, 'decommission_auth', context);
-  },
-
-  sendDecommissionForProfileUsers(user) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      user: {
-        name: user.name,
-      },
-    };
-    logger.info(`[EmailService->sendDecommissionForProfileUsers]`, context);
-    return send(mailOptions, 'decommission_profile', context);
   },
 
   sendForcedPasswordReset(user) {
@@ -292,17 +250,6 @@ module.exports = {
       user,
     };
     return send(mailOptions, 'special_password_reset', context);
-  },
-
-  sendVerificationExpiryEmail(user) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      user,
-    };
-    return send(mailOptions, 'verification_expiry', context);
   },
 
   sendAdminDelete(user, admin) {

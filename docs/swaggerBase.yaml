@@ -1,7 +1,7 @@
 openapi: 3.0.3
 x-api-id: hid-api
 info:
-  version: 3.0.5
+  version: 3.1.4
   title: HID API
   license:
     name: Apache-2.0
@@ -63,9 +63,6 @@ components:
         email_verified:
           type: string
           description: 'Whether the user primary email is verified'
-        emailsVisibility:
-          type: string
-          description: 'Who can view this user emails'
         expires:
           type: string
           format: date-time

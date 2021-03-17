@@ -1,12 +1,12 @@
 const winston = require('winston');
 const { hidFormatter } = require('../logs');
-require('winston-daily-rotate-file');
+const DailyRotateFile = require('winston-daily-rotate-file');
 
 module.exports = {
+  env: 'development',
   database: {
     stores: {
       development: {
-        // should be 'create' or 'drop'
         migrate: 'create',
         uri: 'mongodb://db:27017/development',
         options: {
@@ -15,6 +15,7 @@ module.exports = {
           useNewUrlParser: true,
           useUnifiedTopology: true,
           useFindAndModify: false,
+          usecreateIndex: true,
         },
       },
     },
@@ -23,20 +24,21 @@ module.exports = {
       migrate: 'create',
     },
   },
-  logger: new winston.Logger({
+  logger: winston.createLogger({
     level: 'debug',
     exitOnError: false,
-    rewriters: [
-      hidFormatter,
-    ],
+    format: winston.format.combine(
+      hidFormatter(),
+      winston.format.json(),
+    ),
     transports: [
-      new winston.transports.DailyRotateFile({
+      new DailyRotateFile({
         name: 'info-file',
         filename: 'trails/info.log',
         level: 'debug',
         timestamp: true,
       }),
-      new winston.transports.DailyRotateFile({
+      new DailyRotateFile({
         name: 'error-file',
         filename: 'trails/error.log',
         level: 'error',

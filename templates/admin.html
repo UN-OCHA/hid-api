@@ -1,6 +1,7 @@
 <% include header %>
 <style><% include ../assets/css/tabs.css %></style>
 <style><% include ../assets/css/admin.css %></style>
+<style><% include ../assets/css/client.css %></style>
 
 <main role="main" id="main-content" class="cd-container">
   <div class="cd-layout-content">
@@ -18,16 +19,26 @@
 
         <p>There are a total of <strong><%= clients.length %> OAuth clients</strong><span id="client-search-summary"></span>.</p>
         <div class="form-field oac-admin__search-section">
-          <input type="text" id="client-search" class="oac-admin__search" placeholder="Search the list">
+          <input type="text" id="client-search" class="oac-admin__search" placeholder="Search by anything: id/title/desc/urls/org/env">
           <button type="reset" id="client-search-clear" class="cd-button cd-button--bold cd-button--uppercase">Clear</button>
         </div>
 
         <ul class="oac-admin__list [ flow ]">
           <% clients.forEach(client => { %>
-            <% const searchData = `${client.name} ${client.id} ${client.redirectUri || ''} ${client.redirectUrls.join(' ') || ''} ${client.description || ''}`; %>
+            <% const searchData = `${client.name} ${client.id} ${client.redirectUri || ''} ${client.redirectUrls.join(' ') || ''} ${client.description || ''} ${client.organization || ''} ${client.environment || ''}`; %>
             <li class="oac-admin__client client" data-search="<%= searchData %>">
-              <a href="/admin/client/<%= client._id %>" class="client__edit cd-button cd-button--uppercase cd-button--small">Edit</a>
-              <span class="client__name"><%= client.name %></span>
+              <a href="/admin/client/<%= client._id %>" class="client__edit cd-button cd-button--uppercase">Edit</a>
+              <span class="client__info">
+                <span class="client__name"><%= client.name %></span>
+                <span class="client__meta">
+                  <% if (!!client.environment) { %>
+                    <span class="client__environment"><strong><%= client.environment %></strong> environment</span>
+                  <% } %>
+                  <% if (!!client.organization) { %>
+                    <span class="client__organization">requested by <strong><%= client.organization %></strong></span>
+                  <% } %>
+                </span>
+              </span>
             </li>
           <% }); %>
         </ul>

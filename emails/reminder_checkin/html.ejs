@@ -2,14 +2,6 @@
 
 <p>Thank you for checking into <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a> two days ago. You can now find contact details of other humanitarians.</p>
 
-<% if (!hasLocalPhoneNumber) { %>
-<p>We noticed that you have not yet added a local phone number. If you have one and would like to add it, simply  update your profile.</p>
-<% } %>
-
-<% if (!inCountry) { %>
-<p>We <% if (!hasLocalPhoneNumber) { %> also <% } %> noticed that you have specified <%= user.location.country.name %>. If you are in <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a>, we ask that you kindly update your location details in your profile using the link below. If you are indeed based in <%= user.location.country.name %>, simply ignore this request - we know that people support emergencies remotely.</p>
-<% } %>
-
 <p>The ability for responders to find and connect during a humanitarian crisis is of utmost importance. Humanitarian ID takes a decentralized approach to contact lists and thus relies on members like yourself to help keep these lists up-to-date.</p>
 
 <% include ../includes/footer_en %>
