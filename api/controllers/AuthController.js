@@ -946,8 +946,11 @@ module.exports = {
         'iss',
         'sub',
         'name',
+        'family_name',
+        'given_name',
         'email',
         'email_verified',
+        'user_id',
       ],
     };
     return out;
