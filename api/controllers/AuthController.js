@@ -926,6 +926,11 @@ module.exports = {
     }
   },
 
+  /**
+   * Returns our supported OpenID Connect configuration so that a client can
+   * be aware of certain properties, scopes, and other attributes supported by
+   * the HID implementation.
+   */
   openIdConfiguration() {
     const root = process.env.ROOT_URL;
     const out = {
@@ -956,6 +961,15 @@ module.exports = {
     return out;
   },
 
+  /**
+   * Serve a user's identity for OpenID Connect.
+   *
+   * This shouldn't be used for anything else when working with API. If you do
+   * want more info about the user, use the dedicated API method:
+   *
+   * @see /api/v3/user/{id}
+   * @see UserController.find()
+   */
   showAccount(request) {
     // Full user object from DB.
     const user = JSON.parse(JSON.stringify(request.auth.credentials));
