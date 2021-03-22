@@ -819,7 +819,7 @@ module.exports = {
           : '';
       const clientUrl = URL.parse(tmpUrl);
       client.urlDisplay = clientUrl.hostname;
-      client.urlHref = clientUrl.protocol + clientUrl.hostname;
+      client.urlHref = `${clientUrl.protocol}//${clientUrl.hostname}`;
     });
 
     // Render settings page.
