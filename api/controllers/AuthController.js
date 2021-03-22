@@ -730,7 +730,8 @@ module.exports = {
       request.auth.credentials = user;
 
       // Set up OAuth Client to potentially be stored on user profile.
-      const clientId = request.yar.authorize[request.payload.transaction_id].client;
+      const clientMongoId = request.yar.authorize[request.payload.transaction_id].client;
+      const clientId = request.yar.authorize[request.payload.transaction_id].req.clientID;
 
       // If user clicked 'Deny', redirect to HID homepage.
       if (!request.payload.bsubmit || request.payload.bsubmit === 'Deny') {
@@ -738,13 +739,13 @@ module.exports = {
       }
 
       // If the user clicked 'Allow', save OAuth Client to user profile
-      if (!user.hasAuthorizedClient(clientId) && request.payload.bsubmit === 'Allow') {
+      if (!user.hasAuthorizedClient(clientMongoId) && request.payload.bsubmit === 'Allow') {
         // TODO: we could store an array of objects including the current time
         //       when adding the client, in order to offer security-related info
         //       when the user views their OAuth settings.
         //
         // @see HID-2156
-        user.authorizedClients.push(request.yar.authorize[request.payload.transaction_id].client);
+        user.authorizedClients.push(clientMongoId);
         user.markModified('authorizedClients');
         await user.save();
 
