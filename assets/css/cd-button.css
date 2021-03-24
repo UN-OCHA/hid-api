@@ -1,14 +1,18 @@
+/* https://github.com/UN-OCHA/common_design/blob/main/components/cd-button/cd-button.css */
+
 :root {
   /* Define the Primary colour. */
   /* Based on OCHA brand guidelines */
   /* Page 22 https://www.dropbox.com/s/j6tgps8u4u1ht4j/01_visual_identity.pdf?dl=1 */
 
-/* Custom properties for IE.
-/* This is needed due to inability to process calc() functions nested within color functions */
+  /* Custom properties for IE.
+  /* This is needed due to inability to process calc() functions nested within color functions */
   --cd-ie-primary-color: #1f69b3;
   --cd-ie-primary-color--light: #82b5e9;
   --cd-ie-primary-color--dark: #0b2641;
   --cd-ie-primary-color--lighter: #a8ccf0;
+  --cd-ie-highlight-red: #eb5c6d;
+  --cd-ie-highlight-red--light: #f08995;
 
   --cd-primary-color-h: 210;
   --cd-primary-color-s: 70%;
@@ -47,9 +51,10 @@
   border: 2px solid transparent;
   padding: 0.5rem 1rem;
   font-size: 1rem;
+  line-height: 1.15;
   text-align: center;
   transition: background-color 0.6s ease-out,
-              color 0.6s ease-out;
+  color 0.6s ease-out;
   width: auto;
   color: var(--cd-white);
   background-color: var(--cd-primary-color);
@@ -174,7 +179,7 @@ a.cd-button {
 /* Utility classes */
 .cd-button--small {
   padding: 0.25rem 0.5rem;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   font-weight: 400;
 }
 
@@ -204,6 +209,14 @@ a.cd-button {
   text-align: left;
 }
 
+[dir='rtl'] .cd-button--icon {
+  text-align: right;
+}
+
+[dir='rtl'] .cd-icon--arrow-right {
+  transform: scale(-1, 1);
+}
+
 /* For IE11 */
 @media all and (-ms-high-contrast: none) {
   .cd-button--icon {
@@ -221,15 +234,29 @@ a.cd-button {
   fill: currentColor;
   width: 1rem;
   height: 1rem;
+  transition: fill 0.3s ease-in;
+}
+
+[dir='ltr'] .cd-button--icon svg {
   /* Icon before */
   margin-right: 0.25rem;
-  transition: fill 0.3s ease-in;
+}
+
+[dir='rtl'] .cd-button--icon svg {
+  /* Icon before */
+  margin-left: 0.25rem;
 }
 
 .cd-button--icon span + svg {
   /* Icon after */
   margin-right: 0;
   margin-left: 2rem;
+}
+
+[dir='rtl'] .cd-button--icon span + svg {
+  /* Icon after */
+  margin-left: 0;
+  margin-right: 2rem;
 }
 
 .cd-button--icon.cd-button--small svg {
@@ -240,6 +267,12 @@ a.cd-button {
 .cd-button--icon.cd-button--small span + svg {
   /* Icon after */
   margin-left: 1rem;
+}
+
+[dir='rtl'] .cd-button--icon.cd-button--small span + svg {
+  /* Icon after */
+  margin-left: 0;
+  margin-right: 1rem;
 }
 
 .cd-button--icon:hover svg,
@@ -260,9 +293,28 @@ a.cd-button {
   }
 }
 
-.cd-button--export,
-.cd-button--export:hover,
-.cd-button--export:focus {
+.cd-button[disabled] {
+  opacity: 0.6;
+}
+
+.cd-button[disabled],
+.cd-button[disabled]:hover,
+.cd-button[disabled]:focus,
+.cd-button[disabled]:hover *,
+.cd-button[disabled]:focus * {
+  /* Prevents hover and focus  */
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* For IE11 */
+@media all and (-ms-high-contrast: none) {
+  .cd-button[disabled] {
+    position: relative;
+  }
+}
+
+.cd-button--export {
   background: var(--cd-grey--mid);
   color: var(--cd-white);
   fill: var(--cd-white);
@@ -277,5 +329,35 @@ a.cd-button {
 .cd-button--export:hover,
 .cd-button--export:focus {
   background: var(--cd-grey--dark);
+  color: var(--cd-white);
   fill: var(--cd-white);
+}
+
+.cd-button--danger {
+  /* --cd-highlight-red: hsl(353, 78%, 64%) */
+  --cd-primary-color-h: 353;
+  --cd-primary-color-s: 78%;
+  --cd-primary-color-l: 64%;
+  --cd-primary-color: hsl(var(--cd-primary-color-h), var(--cd-primary-color-s), var(--cd-primary-color-l));
+  /* lighten */
+  --cd-primary-color--light: hsl(var(--cd-primary-color-h), var(--cd-primary-color-s), calc(var(--cd-primary-color-l) + 10%));
+}
+
+/* For IE11 */
+@media all and (-ms-high-contrast: none) {
+  .cd-button--danger {
+    background-color: var(--cd-ie-highlight-red);
+  }
+}
+
+/* For IE11 */
+@media all and (-ms-high-contrast: none) {
+  .cd-button--danger:hover,
+  .cd-button--danger:focus {
+    background-color: var(--cd-ie-highlight-red--light);
+  }
+}
+
+.cd-button + .cd-button {
+  margin-inline-start: 0.5rem;
 }
