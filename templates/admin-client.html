@@ -6,7 +6,7 @@
 
 <main role="main" id="main-content" class="cd-container">
   <div class="cd-layout-content">
-    <h1 class="page-header__heading">Administration Area</h1>
+    <h1 class="cd-page-title page-header__heading">Administration Area</h1>
     <% include alert.html %>
     <div class="tabbed">
       <nav>
@@ -20,7 +20,7 @@
         <h2 id="oac-title">Editing <%= client.name %></h2>
 
         <form action="/admin/client" method="POST" class="oac-client-edit" aria-labelledby="oac-title">
-          <div class="cd-grid cd-grid-2-col">
+          <div class="cd-grid cd-grid--2-col">
             <fieldset class="cd-card [ flow ]">
               <legend>Labels for HID Users</legend>
               <div class="form-field">
