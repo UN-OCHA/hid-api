@@ -1,35 +1,38 @@
-/* https://github.com/UN-OCHA/common_design/tree/cd-226-design-system/components/cd-alert */
+/* https://github.com/UN-OCHA/common_design/blob/main/components/cd-alert/cd-alert.css */
 
 .cd-alert {
+  --cd-flow-space: 0.5rem;
   padding: 1rem;
   margin: 1rem 0 2rem;
   border-radius: 0.25rem;
+  border: 1px solid var(--cd-blue--bright);
+  box-shadow: -8px 0 0 var(--cd-blue--bright);
+  color: var(--cd-grey--dark);
+  background-color: var(--cd-white);
 }
 
-.cd-alert,
-.cd-alert div[role='alert']{
+.cd-alert >  div {
   display: flex;
   align-items: flex-start;
 }
 
 .cd-alert__title {
-  font-weight: bold;
+  font-weight: 700;
 }
 
 .cd-alert svg {
-  margin-right: 1rem;
+  flex: 0 0 1.5rem;
   width: 1.5rem;
   height: 1.5rem;
-}
-
-.cd-alert {
-  border: 1px solid var(--cd-blue--bright);
-  box-shadow: -8px 0 0 var(--cd-blue--bright);
-  color: var(--cd-grey--dark);
-}
-
-.cd-alert svg {
   fill: var(--cd-blue--bright);
+}
+
+[dir='ltr'] .cd-alert svg {
+  margin-right: 1rem;
+}
+
+[dir='rtl'] .cd-alert svg {
+  margin-left: 1rem;
 }
 
 .cd-alert a,
@@ -68,15 +71,21 @@
   fill: var(--cd-green);
 }
 
-/**
- * HID customizations (temporary)
- */
-.cd-alert__message p {
-  margin: 0;
-}
 .cd-alert__message ul {
+  list-style-type: none;
   margin: 0;
+  padding: 0;
 }
-.cd-alert__message li {
-  margin: 0;
+
+.cd-alert__message p + ul,
+.cd-alert__message p {
+  margin: 0.5rem 0 0;
+}
+
+.cd-alert__message > ul {
+  margin-top: 0;
+}
+
+.cd-alert__message p:first-child {
+  margin-top: 0;
 }
