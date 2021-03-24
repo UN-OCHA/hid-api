@@ -327,7 +327,7 @@ module.exports = [
   {
     method: ['GET', 'POST'],
     path: '/account.json',
-    handler: UserController.showAccount,
+    handler: AuthController.showAccount,
   },
 
   {
