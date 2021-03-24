@@ -1,4 +1,7 @@
+/* https://github.com/UN-OCHA/common_design/blob/main/components/cd-card/cd-card.css */
+
 .cd-card {
+  display: flex;
   flex-direction: column;
   /* Override grid background color from grid */
   background-color: var(--cd-white);
@@ -7,7 +10,7 @@
 
 .cd-card__image img {
   width: 100%;
-  height: 205px;
+  height: 13rem;
 }
 
 @supports (object-fit: cover) {
@@ -18,11 +21,14 @@
 }
 
 .cd-card__image--rounded {
-  min-width: 105px;
-  min-height: 105px;
-  max-width: 205px;
-  max-height: 205px;
+  min-width: 7rem;
+  min-height: 7rem;
+  max-width: 13rem;
+  max-height: 13rem;
   margin-top: 1rem;
+  /* Rounded image centered horizontally in cards */
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .cd-card__image + .cd-card__container {
@@ -32,7 +38,7 @@
 
 .cd-card__container {
   flex-grow: 1;
-  padding: 2rem;
+  padding: 2rem 2rem 1rem;
 }
 
 .cd-card__footer {
@@ -40,18 +46,11 @@
   padding: 0 2rem 2rem;
 }
 
-.cd-card__title {
-  margin: 0 0 1rem;
-}
-
+.cd-card__title,
 .cd-card__title a {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1rem;
   display: block;
-}
-
-.cd-card__description > :first-child {
-  margin-top: 0;
 }
 
 .cd-card__description p:last-child {
