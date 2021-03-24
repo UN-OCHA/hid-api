@@ -78,6 +78,7 @@ if (typeof ElementPrototype.closest !== 'function') {
   function collapseAll(exceptions) {
     var elements = document.querySelectorAll('[data-cd-toggler][aria-expanded="true"]');
     exceptions = exceptions || [];
+    var cdDropdown = this;
 
     elements.forEach(function (element) {
       // Elements can be directed to stay open in two ways:
@@ -86,7 +87,7 @@ if (typeof ElementPrototype.closest !== 'function') {
       //
       // If neither apply, then close the element.
       if (!element.hasAttribute('data-cd-toggable-keep') && exceptions.indexOf(element) === -1) {
-        toggle(element, true);
+        cdDropdown.toggle(element, true);
       }
     });
   }
@@ -199,24 +200,29 @@ if (typeof ElementPrototype.closest !== 'function') {
   /**
    * Create a svg icon.
    */
-  function createIcon(name, component, wrap) {
+  function createIcon(name, component, type) {
     var svgElem = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     var useElem = document.createElementNS('http://www.w3.org/2000/svg', 'use');
     useElem.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#cd-icon--' + name);
-    svgElem.setAttribute('class', 'cd-icon cd-icon--' + name);
     svgElem.setAttribute('width', '16');
     svgElem.setAttribute('height', '16');
     svgElem.setAttribute('aria-hidden', 'true');
     svgElem.setAttribute('focusable', 'false');
 
+    var classes = [
+      'cd-icon',
+      'cd-icon--' + name
+    ];
+
+    if (component && type) {
+      classes.push(component + '__' + type);
+    }
+
+    // Note: IE 11 doesn't support classList on SVG elements.
+    svgElem.setAttribute('class', classes.join(' '));
+
     svgElem.appendChild(useElem);
 
-    if (component && wrap) {
-      var wrapper = document.createElement('span');
-      wrapper.setAttribute('class', component + '__logo');
-      wrapper.appendChild(svgElem);
-      return wrapper;
-    }
     return svgElem;
   }
 
@@ -227,6 +233,7 @@ if (typeof ElementPrototype.closest !== 'function') {
     var id = element.getAttribute('id');
     var label = element.getAttribute('data-cd-toggable');
     var logo = element.getAttribute('data-cd-logo');
+    var logoOnly = element.hasAttribute('data-cd-logo-only');
     var icon = element.getAttribute('data-cd-icon');
     var component = element.getAttribute('data-cd-component');
 
@@ -241,7 +248,7 @@ if (typeof ElementPrototype.closest !== 'function') {
     //  Eg. prefix/suffix or pre/post
     // Pre-label SVG icon.
     if (logo) {
-      button.appendChild(createIcon(logo, component, true));
+      button.appendChild(createIcon(logo, component, 'logo'));
     }
 
     // Button label.
@@ -249,16 +256,22 @@ if (typeof ElementPrototype.closest !== 'function') {
     labelWrapper.appendChild(document.createTextNode(label));
     button.appendChild(labelWrapper);
 
+    // Only show the logo icon if requested but keep the title visible
+    // to assistive technologies.
+    if (logo && logoOnly) {
+      labelWrapper.classList.add('visually-hidden');
+    }
+
     // Post-label SVG icon.
     if (icon) {
       // @todo This could default to dropdown arrow icon.
-      button.appendChild(createIcon(icon));
+      button.appendChild(createIcon(icon, component, 'icon'));
     }
 
     // BEM for class selectors.
     if (component) {
-      button.setAttribute('class', component + '__btn');
-      labelWrapper.setAttribute('class', component + '__btn-label');
+      button.classList.add(component + '__btn');
+      labelWrapper.classList.add(component + '__btn-label');
     }
 
     // Do not collapse the dropdown when clicking outside.
@@ -287,19 +300,24 @@ if (typeof ElementPrototype.closest !== 'function') {
       // mis-processing if, for whatever reason, there is a button which is
       // not the toggler before the toggable element.
       if (toggler.nodeName !== 'BUTTON') {
-        return;
+        // For some dropdown elements, we want to replace a fallback element
+        // (like a link) with the toggler button.
+        if (!element.hasAttribute('data-cd-replace')) {
+          return;
+        }
       }
       // We assume that if a button has the "data-cd-toggler" attribute then
       // it has been processed by the "setToggable" function. That means
       // this attribute should not be used directly in the markup otherwise
       // the toggable element will not be processed by this script and event
       // handlers will not be attached.
-      if (toggler.hasAttribute('data-cd-toggler')) {
+      else if (toggler.hasAttribute('data-cd-toggler')) {
         return;
       }
     }
+
     // Create a button to toggle the element.
-    else {
+    if (!toggler || element.hasAttribute('data-cd-replace')) {
       toggler = createButton(element);
     }
 
@@ -335,6 +353,15 @@ if (typeof ElementPrototype.closest !== 'function') {
 
     // Hide the element.
     element.setAttribute('data-cd-hidden', expand === false);
+
+    // Remove the button fallback element if any.
+    if (element.hasAttribute('data-cd-replace')) {
+      var fallback = document.getElementById(element.getAttribute('data-cd-replace'));
+      if (fallback) {
+        fallback.parentNode.removeChild(fallback);
+      }
+      element.removeAttribute('data-cd-replace');
+    }
 
     // Add the toggler before the toggable element if not already.
     if (element.previousElementSibling !== toggler) {
@@ -374,6 +401,12 @@ if (typeof ElementPrototype.closest !== 'function') {
     }
     else {
       setToggable(element);
+    }
+
+    // Mark the element as processed. This is notably used to remove the
+    // initial hidden state that is used to prevent flash of content.
+    if (!element.hasAttribute('data-cd-processed')) {
+      element.setAttribute('data-cd-processed', true);
     }
   }
 
