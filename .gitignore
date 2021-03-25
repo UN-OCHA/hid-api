@@ -6,3 +6,4 @@ keys
 db
 newrelic_agent.log
 docs/hid.yml
+_tests/e2e/__env/local.js

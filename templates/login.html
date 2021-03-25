@@ -13,11 +13,11 @@
         <form method="post" action="/login" class="[ flow ] t-form-login">
           <div class="form-field">
             <label for="email" translate>Email</label>
-            <input type="email" name="email" id="email" placeholder="Your email address" value="<%= query.email %>" required>
+            <input type="email" name="email" id="email" placeholder="Your email address" value="<%= query.email %>" required class="t-login-email">
           </div>
           <div class="form-field">
             <label for="password"><span translate>Password</span></label>
-            <input type="password" name="password" id="password" placeholder="Your password" required>
+            <input type="password" name="password" id="password" placeholder="Your password" required class="t-login-password">
           </div>
           <input type="hidden" name="redirect" value="<%= query.redirect %>" />
           <input type="hidden" name="client_id" value="<%= query.client_id %>" />
