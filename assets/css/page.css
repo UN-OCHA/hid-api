@@ -57,6 +57,12 @@
 
 h1, h2, h3, h4, h5 {
   color: var(--cd-primary-color);
+  margin-top: 0;
+}
+
+/* Optimal reading width */
+.cd-layout-content p {
+  max-width: var(--cd-max-content-width);
 }
 
 .cd-global-header {
