@@ -142,7 +142,7 @@ npm run e2e -- --debug
 # If you want to run a limited number of tests, specify a string with the -t
 # argument. It will parse all of the describe() blocks and only run tests when
 # it matches the string you supply.
-npm run e2e -- -t '/login'
+npm run e2e -- -t 'Login'
 ```
 
 Sometimes it might be convenient to attach a special class to an element in order to make it quickly selectable within Puppeteer. If you do that, make sure to prefix with `t-` so we can distinguish as a testing-only class:
