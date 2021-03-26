@@ -2,14 +2,25 @@
 
 The best way to set up HID is by using the HID stack repo and following instructions there.
 
+- [Development on OCHA infra](#development-on-ocha-infra)
+  - [Usage of environments](#usage-of-environments)
+  - [Authenticating with API](#authenticating-with-api)
+- [Local development](#local-development)
+  - [Downloading DB Snapshots](#downloading-db-snapshots)
+  - [Testing Emails](#testing-emails)
+  - [Logging](#logging)
+  - [API Docs](#api-docs)
+  - [Using API methods in Auth](#using-api-methods-in-auth)
+  - [E2E testing](#e2e-testing)
+
 ## Development on OCHA Infra
 
-### Testing different environments
+### Usage of environments
 
 The [HID API wiki](https://github.com/UN-OCHA/hid_api/wiki/The-HID-environments) contains up-to-date information on various environments for testing the API or Authentication features.
 
 
-### Authenticating with Dev/Stage/Live
+### Authenticating with API
 
 To generate a JSON Web Token, you'll need to have a **valid, active password** for the environment you want to test. See the "Testing different environments" section to find the correct environment. Especially when working on HID for the first time (or after a long time) you'll have to reset your HID password.
 
@@ -26,7 +37,7 @@ Sometimes development requires authenticating with various roles or permissions.
 The `hid-stack` repo has the most up-to-date instructions for importing DB snapshots. Please follow the setup instructionsin the stack.
 
 
-### Sending/Receiving Test Emails
+### Testing Emails
 
 HID is reliant on email notifications for several critical aspects of its function. You may find yourself needing to send or check for the reception of emails while doing development and testing.
 
@@ -86,7 +97,7 @@ The general format of a log is described in the code block. Each component is ex
 - Finally, our linter will complain if your variable is the same name as the JSON property. That's why `request` is using shorthand instead of being written as `request: request`
 
 
-## Swagger API Docs
+## API Docs
 
 We use `swagger-inline` to provide docblocks alongside each function. Look for comments with markings like the following:
 
@@ -103,7 +114,7 @@ We use `swagger-inline` to provide docblocks alongside each function. Look for c
 For more info please reference the [official example](https://github.com/readmeio/swagger-inline#examples) and the [official documentation](https://swagger.io/docs/specification/about/) for `swagger-inline`
 
 
-## Using `internalArgs` to glue API and Auth together
+## Using API methods in Auth
 
 HID API contains functions to administer all of HID. If you have sufficient permissions, you can do everything via cURL or your favorite HTTP client, including user management, OAuth Client management, and so forth.
 
