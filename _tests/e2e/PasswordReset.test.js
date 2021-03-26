@@ -56,4 +56,36 @@ describe('PasswordReset', () => {
     // Do we see the password reset form?
     expect(await page.content()).toContain('Enter your new password');
   });
+
+  // This test assumes you are on the URL we extracted from Mailhog.
+  it('prevents user from submitting invalid passwords', async () => {
+    const password = await page.$('#password');
+    await password.type('invalid');
+    const confirm = await page.$('#confirm_password');
+    await password.type('not the same');
+
+    await page.click('.t-btn--reset-pw');
+    const passwordInvalid = await page.$$eval('#password:invalid', el => el.length);
+    expect(passwordInvalid).toBeGreaterThan(0);
+    const confirmInvalid = await page.$$eval('#confirm_password:invalid', el => el.length);
+    expect(confirmInvalid).toBeGreaterThan(0);
+  });
+
+  // This test assumes you are on the URL we extracted from Mailhog.
+  it('allows user to reset using an approved password', async () => {
+    const password = await page.$('#password');
+    const confirm = await page.$('#confirm_password');
+
+    // Fill in the form properly. We start by generating a small random number
+    // to ensure that our password reset is successful.
+    const rando = Math.floor(Math.random()*100);
+    await password.click({ clickCount: 3 });
+    await password.type(env.testUserPassword + rando);
+    await confirm.click({ clickCount: 3 });
+    await confirm.type(env.testUserPassword + rando);
+
+    await page.click('.t-btn--reset-pw');
+    await page.waitForTimeout(2000);
+    expect(await page.content()).toContain('Thank you for updating your password.');
+  });
 });
