@@ -1,13 +1,12 @@
 # Installation / Setup
 
-The complete [HID Developer onboarding documentation
-](https://docs.google.com/document/d/1h3MX_ay7EyFr62dyhvdSXAOP2g4ho3j7m3KNdG8ZFxE/edit) can be found in Google docs. This file covers one-time technical setup notes. You should only need these notes when onboarding, or setting up the repo on a new computer.
+The best way to set up HID is by using the HID stack repo and following instructions there.
 
 ## Development on OCHA Infra
 
 ### Testing different environments
 
-The [HID API wiki](https://github.com/UN-OCHA/hid_api/wiki/The-HID-environments) contains up-to-date information on various environments for testing the API or client-side app.
+The [HID API wiki](https://github.com/UN-OCHA/hid_api/wiki/The-HID-environments) contains up-to-date information on various environments for testing the API or Authentication features.
 
 
 ### Authenticating with Dev/Stage/Live
@@ -16,9 +15,9 @@ To generate a JSON Web Token, you'll need to have a **valid, active password** f
 
 Then use the Swagger docs to construct a request (or format your own using cURL, Insomnia, PostMan, etc):
 
-https://api.dev.humanitarian.id/docs/#!/auth/post_jsonwebtoken
+https://api.humanitarian.id/docs/#!/auth/post_jsonwebtoken
 
-Sometimes development requires authenticating with various roles or permissions. **Contact Marina** to get access to the document which contains credentials for accounts with various roles (and thus the ability to authenticate with a different token).
+Sometimes development requires authenticating with various roles or permissions.
 
 ## Local development
 
@@ -63,7 +62,7 @@ logger.warn(
 
 // Logging errors (ERROR)
 // Assuming we're in a catch block with a node.js error assigned to `err`
-catch(err => {
+catch(err) {
   logger.error(
     err.message,
     {
@@ -73,7 +72,7 @@ catch(err => {
       stack_trace: err.stack,
     }
   );
-});
+};
 ```
 
 The general format of a log is described in the code block. Each component is explained here:
@@ -89,9 +88,7 @@ The general format of a log is described in the code block. Each component is ex
 
 ## Swagger API Docs
 
-### Docs v3
-
-For v3 we are transitioning away from the global `specs.yml` file and instead using `swagger-inline` to provide docblocks alongside each function. Look for comments with markings like the following:
+We use `swagger-inline` to provide docblocks alongside each function. Look for comments with markings like the following:
 
 ```js
 /*

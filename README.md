@@ -1,13 +1,13 @@
-# Humanitarian ID v3
+# Humanitarian ID
 
 [![Build Status](https://travis-ci.org/UN-OCHA/hid_api.svg?branch=master)](https://travis-ci.org/UN-OCHA/hid_api)
 
-Humanitarian ID v3 is built with:
+Humanitarian ID is built with:
 
-* mongoDB as its database backend
-* node.js + hapi as the server
+- mongoDB as its database backend
+- node.js + hapi as the server
 
-HID v3 acts as an OAuth 2.0 and OpenID Connect server.
+HID acts as an OAuth 2.0 and OpenID Connect server.
 
 The API is documented here: https://api.humanitarian.id/docs/
 
