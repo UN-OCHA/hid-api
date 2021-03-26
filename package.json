@@ -12,7 +12,7 @@
   "keywords": [],
   "main": "index.js",
   "scripts": {
-    "dev": "node ./node_modules/nodemon/bin/nodemon.js ./server.js -e html,css,js,ejs",
+    "dev": "node ./node_modules/nodemon/bin/nodemon.js ./server.js -e html,css,js,ejs --ignore './_tests/'",
     "docs": "swagger-inline './api/**/*' --base 'docs/swaggerBase.yaml' > docs/hid.yml",
     "start": "node ./server.js",
     "e2e": "jest _tests/e2e/*.test.js",
