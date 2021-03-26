@@ -144,3 +144,13 @@ npm run e2e -- --debug
 # it matches the string you supply.
 npm run e2e -- -t '/login'
 ```
+
+Sometimes it might be convenient to attach a special class to an element in order to make it quickly selectable within Puppeteer. If you do that, make sure to prefix with `t-` so we can distinguish as a testing-only class:
+
+```css
+/* a button we want to press */
+.t-login-button {}
+
+/* a top-level page class for the user dashboard */
+.t-page--dashboard {}
+```
