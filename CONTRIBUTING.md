@@ -149,7 +149,7 @@ Sometimes it might be convenient to attach a special class to an element in orde
 
 ```css
 /* a button we want to press */
-.t-login-button {}
+.t-btn--login {}
 
 /* a top-level page class for the user dashboard */
 .t-page--dashboard {}

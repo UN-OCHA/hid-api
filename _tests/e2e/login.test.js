@@ -10,28 +10,28 @@ describe('/login', () => {
   });
 
   it('presents a form with email and password inputs', async () => {
-    const emailField = await page.$$eval('input[name="email"]', el => el.length);
+    const emailField = await page.$$eval('#email', el => el.length);
     expect(emailField).toBeGreaterThan(0);
-    const passwordField = await page.$$eval('input[name="password"]', el => el.length);
+    const passwordField = await page.$$eval('#password', el => el.length);
     expect(passwordField).toBeGreaterThan(0);
   });
 
   it('prevents form submissions when email is missing', async () => {
-    await page.click('.t-login-btn');
-    const emailFieldInvalid = await page.$$eval('input[name="email"]:invalid', el => el.length);
+    await page.click('.t-btn--login');
+    const emailFieldInvalid = await page.$$eval('#email:invalid', el => el.length);
     expect(emailFieldInvalid).toBeGreaterThan(0);
   });
 
   it('prevents form submissions when email is malformed', async () => {
     await page.type('#email', 'notvalid');
-    await page.click('.t-login-btn');
-    const emailFieldInvalid = await page.$$eval('input[name="email"]:invalid', el => el.length);
+    await page.click('.t-btn--login');
+    const emailFieldInvalid = await page.$$eval('#email:invalid', el => el.length);
     expect(emailFieldInvalid).toBeGreaterThan(0);
   });
 
   it('prevents form submissions when password is missing', async () => {
-    await page.click('.t-login-btn');
-    const passwordFieldInvalid = await page.$$eval('input[name="password"]:invalid', el => el.length);
+    await page.click('.t-btn--login');
+    const passwordFieldInvalid = await page.$$eval('#password:invalid', el => el.length);
     expect(passwordFieldInvalid).toBeGreaterThan(0);
   });
 
@@ -44,8 +44,9 @@ describe('/login', () => {
     await password.click({ clickCount: 3 });
     await password.type(env.testUserPassword);
 
-    await page.click('.t-login-btn');
+    await page.click('.t-btn--login');
     await page.waitForSelector('.t-page--dashboard');
+
     expect(await page.url()).toContain('/user');
     expect(await page.content()).toContain(env.testUserNameGiven);
     expect(await page.content()).toContain(env.testUserNameFamily);
