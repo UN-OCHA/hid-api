@@ -1,7 +1,7 @@
 import env from './__env';
 import util from './_utils';
 
-describe('/password', () => {
+describe('PasswordReset', () => {
   let page;
 
   beforeAll(async () => {

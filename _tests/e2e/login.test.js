@@ -1,7 +1,7 @@
 import env from './__env';
 import util from './_utils';
 
-describe('/login', () => {
+describe('Login', () => {
   let page;
 
   beforeEach(async () => {
