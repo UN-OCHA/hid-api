@@ -3,13 +3,14 @@
  * in order to keep our API docs on the current version.
  */
 const fs = require('fs');
-const package = require('../package.json');
+const packageJson = require('../package.json');
 const app = require('../');
-const logger = app.config.env[process.env.NODE_ENV].logger;
+
+const { logger } = app.config.env[process.env.NODE_ENV];
 
 async function run() {
   // Our official version number
-  const version = package.version;
+  const { version } = packageJson;
 
   // The file we want to edit.
   const swaggerFile = __dirname + '/../docs/swaggerBase.yaml';
@@ -23,7 +24,7 @@ async function run() {
   process.exit();
 }
 
-(async function () {
+(async function iife () {
   await run();
 }()).catch(err => {
   logger.error(

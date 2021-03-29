@@ -1,6 +1,6 @@
 const winston = require('winston');
-const { hidFormatter } = require('../logs');
 const DailyRotateFile = require('winston-daily-rotate-file');
+const { hidFormatter } = require('../logs');
 
 module.exports = {
   env: 'staging',

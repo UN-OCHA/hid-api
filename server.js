@@ -10,6 +10,7 @@ const hapi = require('@hapi/hapi');
 const ejs = require('ejs');
 const app = require('./');
 const config = require('./config/env')[process.env.NODE_ENV];
+
 const logger = config.logger;
 const store = config.database.stores[process.env.NODE_ENV];
 
