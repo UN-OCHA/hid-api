@@ -16,7 +16,7 @@
     "docs": "swagger-inline './api/**/*' --base 'docs/swaggerBase.yaml' > docs/hid.yml",
     "start": "node ./server.js",
     "e2e": "jest _tests/e2e/*.test.js",
-    "test": "eslint ."
+    "test": "eslint . && npm run e2e -- -t '^(?!.*no-ci).*$'"
   },
   "dependencies": {
     "@hapi/boom": "^7.4.3",

@@ -143,6 +143,19 @@ npm run e2e -- --debug
 # argument. It will parse all of the describe() blocks and only run tests when
 # it matches the string you supply.
 npm run e2e -- -t 'Login'
+
+# Some of our Tests could run on CI and some are too "human" for various reasons
+# such as needing to open Mailhog tabs and the like. Since the no-CI are the
+# exception rather than the rule, our convention is to put "no-ci" in any
+# describe() block which should NOT run in Travis, rather than marking all of
+# the CI-friendly tests.
+#
+# Note: you can also put no-ci in one specific test (i.e. the it() block which
+# contains the specific test assetion sentence), but using the top-level
+# describe() block in a particular file will exclude that whole file.
+#
+# @see _tests/e2e/PasswordReset.test.js
+npm run e2e -- -t '^(?!.*no-ci).*$'
 ```
 
 Sometimes it might be convenient to attach a special class to an element in order to make it quickly selectable within Puppeteer. If you do that, make sure to prefix with `t-` so we can distinguish as a testing-only class:
