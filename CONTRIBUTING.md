@@ -115,3 +115,55 @@ HID Auth is the portion which serves some HTML/CSS in order to allow OAuth users
 In order to reduce code duplication, many API functions now have a second argument available to them called `internalArgs` which allows the HID Auth pages to take advantage of those same functions via simple HTML form submissions that get handled server-side, instead of requiring a client-side JS framework to fire all the API calls.
 
 If you see a function that doesn't yet have `internalArgs`, feel free to add it by following the exact same conventions from an existing function.
+
+
+## E2E testing
+
+We do have a few tests to make local development and PR review easier. They do not yet run on our CI infra, but it's the end-goal.
+
+To set up the testing, copy the example config to make a local "environment" for Puppeteer:
+
+```sh
+cp _tests/e2e/_env/example.js _tests/e2e/_env/local.js
+```
+
+Once created, you will have to populate the data to match your local database. Don't worry about getting it all correct. For example there is not yet any test to use the OAuth config. You can safely ignore it as of Mar 2021.
+
+```sh
+# Install dependencies for your host machine.
+npm i
+
+# Run all E2E tests in headless mode. The console will output the results.
+npm run e2e
+
+# See the tests run in a visible browser window with --debug
+npm run e2e -- --debug
+
+# If you want to run a limited number of tests, specify a string with the -t
+# argument. It will parse all of the describe() blocks and only run tests when
+# it matches the string you supply.
+npm run e2e -- -t 'Login'
+
+# Some of our Tests could run on CI and some are too "human" for various reasons
+# such as needing to open Mailhog tabs and the like. Since the no-CI are the
+# exception rather than the rule, our convention is to put "no-ci" in any
+# describe() block which should NOT run in Travis, rather than marking all of
+# the CI-friendly tests.
+#
+# Note: you can also put no-ci in one specific test (i.e. the it() block which
+# contains the specific test assetion sentence), but using the top-level
+# describe() block in a particular file will exclude that whole file.
+#
+# @see _tests/e2e/PasswordReset.test.js
+npm run e2e -- -t '^(?!.*no-ci).*$'
+```
+
+Sometimes it might be convenient to attach a special class to an element in order to make it quickly selectable within Puppeteer. If you do that, make sure to prefix with `t-` so we can distinguish as a testing-only class:
+
+```css
+/* a button we want to press */
+.t-btn--login {}
+
+/* a top-level page class for the user dashboard */
+.t-page--dashboard {}
+```
