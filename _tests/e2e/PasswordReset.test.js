@@ -1,12 +1,11 @@
 import env from './__env';
-import util from './_utils';
 
 describe('PasswordReset [no-ci]', () => {
   let page;
 
   beforeAll(async () => {
     page = await context.newPage();
-    await page.goto(env.baseUrl + '/password');
+    await page.goto(`${env.baseUrl}/password`);
   });
 
   it('can be publicly accessed', async () => {

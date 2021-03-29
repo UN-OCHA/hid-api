@@ -3,6 +3,6 @@
 //
 // Defaults to 'local'
 //
-import env from './local.js';
+import env from './local';
 
 module.exports = env;

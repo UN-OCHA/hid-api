@@ -1,12 +1,11 @@
 import env from './__env';
-import util from './_utils';
 
 describe('Login', () => {
   let page;
 
   beforeEach(async () => {
     page = await context.newPage();
-    await page.goto(env.baseUrl + '/');
+    await page.goto(env.baseUrl);
   });
 
   it('presents a form with email and password inputs', async () => {
