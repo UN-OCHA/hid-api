@@ -124,7 +124,7 @@ We do have a few tests to make local development and PR review easier. They do n
 To set up the testing, copy the example config to make a local "environment" for Puppeteer:
 
 ```sh
-cp _tests/e2e/env/example.js _tests/e2e/env/local.js
+cp _tests/e2e/_env/example.js _tests/e2e/_env/local.js
 ```
 
 Once created, you will have to populate the data to match your local database. Don't worry about getting it all correct. For example there is not yet any test to use the OAuth config. You can safely ignore it as of Mar 2021.

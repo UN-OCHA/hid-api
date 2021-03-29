@@ -1,4 +1,4 @@
-import env from './__env';
+import env from './_env';
 
 describe('PasswordReset [no-ci]', () => {
   let page;
