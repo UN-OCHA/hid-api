@@ -1,6 +1,6 @@
 {
   "name": "hid-api",
-  "version": "3.2.2",
+  "version": "3.2.3",
   "description": "Humanitarian ID API+Auth",
   "homepage": "https://about.humanitarian.id",
   "repository": "https://github.com/UN-OCHA/hid_api.git",
@@ -15,8 +15,9 @@
     "dev": "node ./node_modules/nodemon/bin/nodemon.js ./server.js -e html,css,js,ejs --ignore './_tests/'",
     "docs": "swagger-inline './api/**/*' --base 'docs/swaggerBase.yaml' > docs/hid.yml",
     "start": "node ./server.js",
+    "lint": "eslint .",
     "e2e": "jest _tests/e2e/*.test.js",
-    "test": "eslint . && npm run e2e -- -t '^(?!.*no-ci).*$'"
+    "test": "npm run lint && npm run e2e -- -t '^(?!.*no-ci).*$'"
   },
   "dependencies": {
     "@hapi/boom": "^7.4.3",
