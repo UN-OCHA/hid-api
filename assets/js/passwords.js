@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars, no-param-reassign */
+
 //
 // Password strength
 //
