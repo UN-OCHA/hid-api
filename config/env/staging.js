@@ -5,18 +5,16 @@ const { hidFormatter } = require('../logs');
 module.exports = {
   env: 'staging',
   database: {
-    stores: {
-      staging: {
-        migrate: 'create',
-        uri: 'mongodb://db:27017/staging',
-        options: {
-          keepAlive: 600000,
-          connectTimeoutMS: 60000,
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
-          useFindAndModify: false,
-          useCreateIndex: true,
-        },
+    store: {
+      migrate: 'create',
+      uri: 'mongodb://db:27017/staging',
+      options: {
+        keepAlive: 600000,
+        connectTimeoutMS: 60000,
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        useFindAndModify: false,
+        useCreateIndex: true,
       },
     },
     models: {

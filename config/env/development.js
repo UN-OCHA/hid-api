@@ -5,18 +5,16 @@ const { hidFormatter } = require('../logs');
 module.exports = {
   env: 'development',
   database: {
-    stores: {
-      development: {
-        migrate: 'create',
-        uri: 'mongodb://db:27017/development',
-        options: {
-          keepAlive: 600000,
-          connectTimeoutMS: 60000,
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
-          useFindAndModify: false,
-          usecreateIndex: true,
-        },
+    store: {
+      migrate: 'create',
+      uri: 'mongodb://db:27017/development',
+      options: {
+        keepAlive: 600000,
+        connectTimeoutMS: 60000,
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        useFindAndModify: false,
+        usecreateIndex: true,
       },
     },
     models: {

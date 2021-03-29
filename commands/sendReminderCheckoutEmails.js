@@ -9,7 +9,7 @@
 const mongoose = require('mongoose');
 const app = require('../');
 
-const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
+const store = app.config.env[process.env.NODE_ENV].database.store;
 mongoose.connect(store.uri, store.options);
 
 const listAttributes = [

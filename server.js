@@ -11,8 +11,8 @@ const ejs = require('ejs');
 const app = require('./');
 const config = require('./config/env')[process.env.NODE_ENV];
 
-const logger = config.logger;
-const store = config.database.stores[process.env.NODE_ENV];
+const { logger } = config;
+const { store } = config.database;
 
 mongoose.connect(store.uri, store.options);
 
