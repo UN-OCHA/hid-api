@@ -30,7 +30,7 @@ async function run() {
   const clientInfo = {
     id: 'change-me',
     name: 'CHANGE ME',
-    secret: secret,
+    secret,
     url: 'https://example.com/',
     redirectUri: 'https://example.com/user/login/hid/callback',
   };
@@ -50,17 +50,17 @@ async function run() {
   }
 
   // Attempt to create new OAuth client and log the result.
-  await Client.create(clientInfo).then(data => {
+  await Client.create(clientInfo).then((data) => {
     logger.info(
       '[commands->createOAuthClient] created new OAuth client',
       {
         security: true,
         oauth: {
-          client_id: clientInfo.id,
+          client_id: data.id,
         },
       },
     );
-  }).catch(err => {
+  }).catch((err) => {
     logger.warn(
       '[commands->createOAuthClient] failed to create new OAuth client',
       {
