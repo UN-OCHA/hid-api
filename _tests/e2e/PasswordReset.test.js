@@ -76,13 +76,13 @@ describe('PasswordReset [no-ci]', () => {
     const password = await page.$('#password');
     const confirm = await page.$('#confirm_password');
 
-    // Fill in the form properly. We start by generating a small random number
-    // to ensure that our password reset is successful.
-    const rando = Math.floor(Math.random()*100);
+    // Fill in the form properly. We use the password in the env config, but
+    // reverse the string to make multuple runs a bit easier since the config
+    // can be tested, then reverted back to original in a second run.
     await password.click({ clickCount: 3 });
-    await password.type(env.testUserPassword + rando);
+    await password.type(env.testUserPassword.split('').reverse().join(''));
     await confirm.click({ clickCount: 3 });
-    await confirm.type(env.testUserPassword + rando);
+    await confirm.type(env.testUserPassword.split('').reverse().join(''));
 
     await page.click('.t-btn--reset-pw');
     await page.waitForTimeout(2000);
