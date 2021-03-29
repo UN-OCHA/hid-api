@@ -62,7 +62,7 @@ describe('PasswordReset [no-ci]', () => {
     const password = await page.$('#password');
     await password.type('invalid');
     const confirm = await page.$('#confirm_password');
-    await password.type('not the same');
+    await confirm.type('not the same');
 
     await page.click('.t-btn--reset-pw');
     const passwordInvalid = await page.$$eval('#password:invalid', el => el.length);
