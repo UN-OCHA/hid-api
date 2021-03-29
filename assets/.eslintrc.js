@@ -17,6 +17,7 @@ module.exports = {
     ecmaVersion: 5,
   },
   rules: {
+    'no-alert': 'off',
     'no-underscore-dangle': 'off',
     'no-var': 'off',
     'prefer-arrow-callback': 'off',
