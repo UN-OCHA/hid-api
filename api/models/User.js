@@ -3,14 +3,12 @@
 * @description User
 */
 const mongoose = require('mongoose');
-const { Schema } = mongoose;
 const Bcrypt = require('bcryptjs');
-const axios = require('axios');
-const _ = require('lodash');
 const crypto = require('crypto');
 const isHTML = require('is-html');
 const validate = require('mongoose-validator');
 
+const { Schema } = mongoose;
 const populateClients = [
   { path: 'authorizedClients', select: '_id id name organization environment redirectUri redirectUrls' },
 ];
@@ -613,7 +611,10 @@ UserSchema.methods = {
 
   backupCodeIndex(code) {
     let index = -1;
-    let numCodes = this.totpConf && this.totpConf.backupCodes ? this.totpConf.backupCodes.length : 0;
+    const numCodes = this.totpConf && this.totpConf.backupCodes
+      ? this.totpConf.backupCodes.length
+      : 0;
+
     for (let i = 0; i < numCodes; i++) {
       if (Bcrypt.compareSync(code, this.totpConf.backupCodes[i])) {
         index = i;
