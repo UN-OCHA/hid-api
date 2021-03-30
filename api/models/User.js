@@ -40,20 +40,6 @@ const emailSchema = new Schema({
   },
 });
 
-const translationSchema = new Schema({
-  language: {
-    type: String,
-    enum: ['en', 'fr', 'es'],
-  },
-  text: {
-    type: String,
-    validate: {
-      validator: isHTMLValidator,
-      message: 'HTML code is not allowed in text',
-    },
-  },
-});
-
 const trustedDeviceSchema = new Schema({
   ua: {
     type: String,
@@ -548,38 +534,6 @@ UserSchema.methods = {
     }
 
     return false;
-  },
-
-  translateCheckin(acheckin, language) {
-    let name = ''; let nameEn = ''; let acronym = ''; let
-      acronymEn = '';
-    const checkin = acheckin;
-    checkin.names.forEach((nameLn) => {
-      if (nameLn.language === language) {
-        name = nameLn.text;
-      }
-      if (nameLn.language === 'en') {
-        nameEn = nameLn.text;
-      }
-    });
-    checkin.acronyms.forEach((acroLn) => {
-      if (acroLn.language === language) {
-        acronym = acroLn.text;
-      }
-      if (acroLn.language === 'en') {
-        acronymEn = acroLn.text;
-      }
-    });
-    if (name !== '') {
-      checkin.name = name;
-    } else if (nameEn !== '') {
-      checkin.name = nameEn;
-    }
-    if (acronym !== '') {
-      checkin.acronym = acronym;
-    } else if (acronymEn !== '') {
-      checkin.acronym = acronymEn;
-    }
   },
 
   defaultPopulate() {
