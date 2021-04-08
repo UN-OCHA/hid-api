@@ -1,3 +1,7 @@
+/**
+ * @module ViewController
+ * @description Controller for pages that visitors see.
+ */
 const URL = require('url');
 const Boom = require('@hapi/boom');
 const Recaptcha = require('recaptcha2');
@@ -1174,11 +1178,11 @@ module.exports = {
               <p>You should destroy the HID entry on your authenticator app, as well as any backup codes you had. If you wish to re-enable 2FA, you may do so at any time.</p>
             `;
             cookie.step = 0;
-          }).catch(err => {
+          }).catch((err) => {
             throw err;
           });
 
-        }).catch(err => {
+        }).catch((err) => {
           // Display error about invalid TOTP, or pass message along.
           alert.type = 'error';
           if (err.message.indexOf('Invalid') !== -1) {
@@ -1193,7 +1197,7 @@ module.exports = {
       if (action === 'enable') {
         await TOTPController.generateConfig({}, {
           user,
-        }).then(data => {
+        }).then((data) => {
           // Prepare to display configuration to user.
           cookie.formData = {
             totpConf: {
@@ -1204,7 +1208,7 @@ module.exports = {
 
           // Proceed to step 1.
           cookie.step = 1;
-        }).catch(err => {
+        }).catch((err) => {
           alert.type = 'error';
           alert.message = err.message;
         });
@@ -1278,7 +1282,7 @@ module.exports = {
     let alert;
     if (cookie.alert) {
       alert = cookie.alert;
-      delete(cookie.alert);
+      delete cookie.alert;
       request.yar.set('session', cookie);
     }
 
@@ -1286,7 +1290,7 @@ module.exports = {
     let totpPrompt = false;
     if (cookie.totpPrompt) {
       totpPrompt = true;
-      delete(cookie.totpPrompt);
+      delete cookie.totpPrompt;
       request.yar.set('session', cookie);
     }
 
@@ -1382,7 +1386,7 @@ module.exports = {
 
       if (reasons.length > 0) {
         alert.type = alert.type === 'error' ? 'error' : 'warning';
-        alert.message = `<p>${ reasons.join('</p><p>') }</p>`;
+        alert.message = `<p>${reasons.join('</p><p>')}</p>`;
       } else {
         // So long, and thanks for all the fish!
         await user.remove();
@@ -1425,7 +1429,8 @@ module.exports = {
         err.message,
         {
           fail: true,
-        }
+          stack_trace: err.stack,
+        },
       );
 
       // TODO: show something, e.g. message.html
