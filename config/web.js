@@ -6,6 +6,8 @@ const ejs = require('ejs');
 const vision = require('@hapi/vision');
 const yar = require('@hapi/yar');
 const crumb = require('@hapi/crumb');
+const Scooter = require('@hapi/scooter');
+const Blankie = require('blankie');
 const hapiRateLimit = require('hapi-rate-limit');
 const oauth2orizeExt = require('oauth2orize-openid');
 const hapiOauth2Orize = require('../plugins/hapi-oauth2orize');
@@ -59,8 +61,16 @@ module.exports = {
           isSecure: process.env.NODE_ENV === 'production',
         },
         skip(request) {
-          const paths = ['/', '/login', '/oauth/authorize',
-            '/register', '/verify', '/verify2', '/password', '/new_password'];
+          const paths = [
+            '/',
+            '/login',
+            '/oauth/authorize',
+            '/register',
+            '/verify',
+            '/verify2',
+            '/password',
+            '/new_password',
+          ];
           if (paths.indexOf(request.path) === -1) {
             return true;
           }
@@ -81,6 +91,34 @@ module.exports = {
     },
     {
       plugin: hapiAuthHid,
+    },
+    {
+      plugin: Scooter,
+    },
+    {
+      plugin: Blankie,
+      // Configure our Content Security Policy (CSP)
+      //
+      // Note: the double quotes which contain single quotes is not a mistake.
+      // That is done intentionally in order to create a valid set of headers.
+      options: {
+        styleSrc: [
+          'self',
+          'unsafe-inline',
+        ],
+        scriptSrc: [
+          'self',
+          'unsafe-inline',
+          'https://www.google-analytics.com',
+        ],
+        connectSrc: [
+          'self',
+          'https://www.google-analytics.com',
+        ],
+        // If we allow it to generate nonces, we can't inline scripts/styles via
+        // the 'unsafe-inline' directive.
+        generateNonces: false,
+      },
     },
   ],
 
