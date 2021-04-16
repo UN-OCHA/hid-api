@@ -12,7 +12,7 @@ You can include a stylesheet on an individual page by using the following markup
 
 ```html
 <!-- CSS -->
-<style><% include ../assets/css/component.css %></style>
+<link rel="stylesheet" href="/assets/css/component.css">
 
 <!-- JS -->
 <script><% include ../assets/js/file.js %></script>

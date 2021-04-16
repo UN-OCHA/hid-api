@@ -104,7 +104,10 @@ module.exports = {
       options: {
         styleSrc: [
           'self',
-          'unsafe-inline',
+          // These hashes allow the CD SVG sprite to contain inline style blocks.
+          // When the sprite is replaced, these likely have to be updated.
+          "'sha256-V9AHfwgZGnDP/9HWH+ANrhe++Fn8jBJQ1JVyqSRgb5k='",
+          "'sha256-pJeCB2XoDM3l7akAolEPn5aJZEI3d+buFdkCCtUOcBs='",
         ],
         scriptSrc: [
           'self',
