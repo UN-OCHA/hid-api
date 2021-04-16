@@ -1249,10 +1249,6 @@ module.exports = {
             alert.message = err.message;
           }
         });
-
-      } else {
-        // TODO: reset the user's TOTP boolean/config so they can restart the
-        //       process later on.
       }
     }
 
