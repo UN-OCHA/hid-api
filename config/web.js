@@ -121,6 +121,12 @@ module.exports = {
           'https://www.google-analytics.com',
           'https://stats.g.doubleclick.net',
         ],
+        imgSrc: [
+          'self',
+          // For 2FA setup, we display a dynamically generated image by inlining
+          // base64-encoded QR code. 'data:' allows the image to be displayed.
+          'data:',
+        ],
         // If we allow it to generate nonces, we can't inline scripts/styles via
         // the 'unsafe-inline' directive.
         generateNonces: false,
