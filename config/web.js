@@ -111,12 +111,15 @@ module.exports = {
         ],
         scriptSrc: [
           'self',
-          'unsafe-inline',
           'https://www.google-analytics.com',
+          // These hashes are for GA and our inline JS+feature detection.
+          "'sha256-zITkoAg4eI1v3VSFI+ATEQKWvoymQcxmFNojptzmlNw='",
+          "'sha256-Ch69wX3la/uD7qfUZRHgam3hofEvI6fesgFgtvG9rTM='",
         ],
         connectSrc: [
           'self',
           'https://www.google-analytics.com',
+          'https://stats.g.doubleclick.net',
         ],
         // If we allow it to generate nonces, we can't inline scripts/styles via
         // the 'unsafe-inline' directive.
