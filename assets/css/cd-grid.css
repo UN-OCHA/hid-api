@@ -9,27 +9,23 @@
 }
 
 /* Testing Aid */
-.cd-grid > * {
-  /*background: lightgray;*/
-}
-
 .cd-grid--2-col > * {
-  /*background: lightpink;*/
+  /* background: lightpink; */
 }
 
-.cd-grid--3-col > *  {
-  /*background: lightgreen;*/
+.cd-grid--3-col > * {
+  /* background: lightgreen; */
 }
 
 .cd-grid--4-col > * {
-  /*background: lightblue;*/
+  /* background: lightblue; */
 }
 
 @media (min-width: 576px) {
   .cd-grid {
     display: flex;
-    justify-content: space-between;
     flex-wrap: wrap;
+    justify-content: space-between;
   }
 
   .cd-grid > * {
@@ -70,15 +66,15 @@
   }
 
   .cd-grid > *:nth-child(odd) {
-    margin-right: unset;
     clear: initial;
+    margin-right: unset;
   }
 
   .cd-grid--2-col > * {
     flex: 0 0 48%;
   }
 
-  .cd-grid--3-col > *  {
+  .cd-grid--3-col > * {
     flex: 0 0 32%;
   }
 
@@ -116,7 +112,7 @@
     }
 
     .cd-grid--4-col.cd-grid--grow > *:last-child,
-    .cd-grid--3-col.cd-grid--grow > *:last-child  {
+    .cd-grid--3-col.cd-grid--grow > *:last-child {
       grid-column: -1/1;
     }
   }
@@ -130,8 +126,8 @@
 
     .cd-grid--2-col {
       display: grid;
-      grid-gap: 1rem;
       grid-template-columns: repeat(2, minmax(200px, 1fr));
+      grid-gap: 1rem;
     }
   }
 
@@ -144,8 +140,8 @@
 
     .cd-grid--2-col {
       display: grid;
-      grid-gap: 1rem;
       grid-template-columns: repeat(2, minmax(200px, 1fr));
+      grid-gap: 1rem;
     }
 
     .cd-grid--3-col {
@@ -153,7 +149,6 @@
     }
   }
 }
-
 
 /* IE 11 fix for clearing floated items */
 @media screen and (-ms-high-contrast: none) {
