@@ -127,9 +127,6 @@ module.exports = {
           // base64-encoded QR code. 'data:' allows the image to be displayed.
           'data:',
         ],
-        // If we allow it to generate nonces, we can't inline scripts/styles via
-        // the 'unsafe-inline' directive.
-        generateNonces: false,
       },
     },
   ],
