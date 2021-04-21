@@ -12,10 +12,10 @@ You can include a stylesheet on an individual page by using the following markup
 
 ```html
 <!-- CSS -->
-<style><% include ../assets/css/component.css %></style>
+<link rel="stylesheet" href="/assets/css/component.css">
 
 <!-- JS -->
-<script><% include ../assets/js/file.js %></script>
+<script src="/assets/js/file.js"></script>
 ```
 
 The API should automatically restart once you save any HTML/CSS/JS file, but if it doesn't then your changes won't show up. Sorry, it's just how the current tools operate.

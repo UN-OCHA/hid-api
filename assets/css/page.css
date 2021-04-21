@@ -110,6 +110,11 @@ h1, h2, h3, h4, h5 {
   opacity: .666;
 }
 
+.cd-site-logo {
+  width: 256px;
+  background: url('/assets/img/logos/hid-logo.svg') center no-repeat;
+}
+
 h1 {
   color: #295a78;
 }
