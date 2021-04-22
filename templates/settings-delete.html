@@ -27,17 +27,15 @@
           <h2>Delete your HID account</h2>
 
           <% if (user.is_admin) { %>
-            <div class="cd-alert cd-alert--warning">
-              <!-- <svg class="cd-icon cd-icon--alert" aria-hidden="true" focusable="false"> -->
-                <!-- <use xlink:href="#cd-icon--alert"></use> -->
-              <!-- </svg> -->
-              <div class="cd-alert__container [ flow ]">
-                <div class="cd-alert__title">Admins cannot delete their own account</div>
-                <div class="cd-alert__message">
-                  <p>Your account is marked as an Admin, so account deletion is not possible.</p>
-                </div>
-              </div>
-            </div>
+              <%-
+                include('alert.html', {
+                  alert: {
+                    type: 'warning',
+                    title: 'Admins cannot delete their own account',
+                    message: '<p>Your account is marked as an Admin, so account deletion is not possible.</p>',
+                  },
+                })
+              %>
           <% } else { %>
 
             <form action="/settings/delete" method="POST" class="[ flow ]">
@@ -60,11 +58,18 @@
                 <div class="form-field">
                   <p>Deleting your account means that you will lose your access to Humanitarian ID.</p>
                 </div>
+                <%#
+                 This is a specially-formatted alert where clicking the text
+                 focuses on the input, so we intentionally didn't include the
+                 standard alert component.
+                %>
                 <label for="confirm-primary-email" class="form-field cd-alert cd-alert--error">
-                  <div class="cd-alert__container">
-                    <div class="cd-alert__message [ flow ]">
-                      <p>Confirm that you wish to <strong>completely delete your HID account</strong> by typing your primary email address in the field here:</p>
-                      <input type="email" name="primary_email" id="confirm-primary-email" placeholder="<%= user.email %>" required pattern="<%= user.email %>" title="Your primary email: <%= user.email %>">
+                  <div role="alert">
+                    <div class="cd-alert__container">
+                      <div class="cd-alert__message [ flow ]">
+                        <p>Confirm that you wish to <strong>completely delete your HID account</strong> by typing your primary email address in the field here:</p>
+                        <input type="email" name="primary_email" id="confirm-primary-email" placeholder="<%= user.email %>" required pattern="<%= user.email %>" title="Your primary email: <%= user.email %>">
+                      </div>
                     </div>
                   </div>
                 </label>
