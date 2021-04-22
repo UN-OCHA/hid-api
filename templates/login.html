@@ -1,6 +1,6 @@
 <% include header %>
-<style><% include ../assets/css/cd-grid.css %></style>
-<style><% include ../assets/css/login.css %></style>
+<link rel="stylesheet" href="/assets/css/cd-grid.css">
+<link rel="stylesheet" href="/assets/css/login.css">
 
 <main role="main" id="main-content" class="cd-container page--login">
   <div class="cd-layout-content">
@@ -13,11 +13,11 @@
         <form method="post" action="/login" class="[ flow ] t-form-login">
           <div class="form-field">
             <label for="email" translate>Email</label>
-            <input type="email" name="email" id="email" placeholder="Your email address" value="<%= query.email %>" required>
+            <input type="email" name="email" id="email" placeholder="Your email address" value="<%= query.email %>" required class="t-login-email">
           </div>
           <div class="form-field">
             <label for="password"><span translate>Password</span></label>
-            <input type="password" name="password" id="password" placeholder="Your password" required>
+            <input type="password" name="password" id="password" placeholder="Your password" required class="t-login-password">
           </div>
           <input type="hidden" name="redirect" value="<%= query.redirect %>" />
           <input type="hidden" name="client_id" value="<%= query.client_id %>" />
@@ -29,7 +29,7 @@
           <input type="hidden" name="crumb" value="<%= crumb %>" />
 
           <div class="form-field">
-            <button type="submit" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase t-login-btn">
+            <button type="submit" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase t-btn--login">
               Login
             </button>
           </div>
