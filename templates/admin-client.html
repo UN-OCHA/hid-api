@@ -63,7 +63,7 @@
               </div>
               <div class="form-field">
                 <label for="client_redirect_urls">Alternate redirect URLs</label>
-                <textarea id="client_redirect_urls" name="client_redirect_urls" rows="5"><%= client.redirectUrls.join('\n') %></textarea>
+                <textarea id="client_redirect_urls" name="client_redirect_urls" rows="5"><%= client.redirectUrls && client.redirectUrls.join('\n') %></textarea>
                 <p>A collection of alternate URLs that can be used as a redirect.<br> Enter one per line.</p>
               </div>
               <div class="form-field">
