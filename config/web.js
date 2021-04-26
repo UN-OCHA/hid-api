@@ -120,6 +120,8 @@ module.exports = {
           'self',
           'https://www.google-analytics.com',
           'https://stats.g.doubleclick.net',
+          // API Docs connect to Stage by default
+          'https://stage.api-humanitarian-id.ahconu.org',
         ],
         imgSrc: [
           'self',
