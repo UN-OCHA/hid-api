@@ -1,8 +1,8 @@
 <% include header %>
-<style><% include ../assets/css/tabs.css %></style>
-<style><% include ../assets/css/cd-grid.css %></style>
-<style><% include ../assets/css/cd-card.css %></style>
-<style><% include ../assets/css/admin-client.css %></style>
+<link rel="stylesheet" href="/assets/css/tabs.css">
+<link rel="stylesheet" href="/assets/css/cd-grid.css">
+<link rel="stylesheet" href="/assets/css/cd-card.css">
+<link rel="stylesheet" href="/assets/css/admin-client.css">
 
 <main role="main" id="main-content" class="cd-container">
   <div class="cd-layout-content">
@@ -63,7 +63,7 @@
               </div>
               <div class="form-field">
                 <label for="client_redirect_urls">Alternate redirect URLs</label>
-                <textarea id="client_redirect_urls" name="client_redirect_urls" rows="5"><%= client.redirectUrls.join('\n') %></textarea>
+                <textarea id="client_redirect_urls" name="client_redirect_urls" rows="5"><%= client.redirectUrls && client.redirectUrls.join('\n') %></textarea>
                 <p>A collection of alternate URLs that can be used as a redirect.<br> Enter one per line.</p>
               </div>
               <div class="form-field">
@@ -97,4 +97,4 @@
 
 <% include footer %>
 
-<script><% include ../assets/js/tabs.js %></script>
+<script src="/assets/js/tabs.js"></script>

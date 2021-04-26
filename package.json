@@ -1,6 +1,6 @@
 {
   "name": "hid-api",
-  "version": "3.1.8",
+  "version": "3.2.1",
   "description": "Humanitarian ID API+Auth",
   "homepage": "https://about.humanitarian.id",
   "repository": "https://github.com/UN-OCHA/hid_api.git",
@@ -12,10 +12,11 @@
   "keywords": [],
   "main": "index.js",
   "scripts": {
-    "dev": "node ./node_modules/nodemon/bin/nodemon.js ./server.js -e html,css,js,ejs",
+    "dev": "node ./node_modules/nodemon/bin/nodemon.js ./server.js -e html,css,js,ejs --ignore './_tests/'",
     "docs": "swagger-inline './api/**/*' --base 'docs/swaggerBase.yaml' > docs/hid.yml",
     "start": "node ./server.js",
-    "test": "eslint ."
+    "e2e": "jest _tests/e2e/*.test.js",
+    "test": "eslint . && npm run e2e -- -t '^(?!.*no-ci).*$'"
   },
   "dependencies": {
     "@hapi/boom": "^7.4.3",
@@ -24,6 +25,7 @@
     "@hapi/hoek": "^8.2.4",
     "@hapi/inert": "^5.2.2",
     "@hapi/joi": "^16.1.7",
+    "@hapi/scooter": "^6.0.1",
     "@hapi/vision": "^5.5.4",
     "@hapi/yar": "^9.2.1",
     "accept-language": "^3.0.15",
@@ -31,6 +33,7 @@
     "authenticator": "^1.1.2",
     "axios": "^0.21.1",
     "bcryptjs": "^2.3.0",
+    "blankie": "^5.0.0",
     "ejs": "^2.5.2",
     "email-templates": "^8.0.3",
     "hapi-rate-limit": "^4.0.2",
@@ -57,6 +60,7 @@
     "yargs": "^15.3.1"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.13.12",
     "acorn": "^5.7.4",
     "diff": ">=3.5.0",
     "dot-prop": ">=4.2.1",
@@ -68,8 +72,11 @@
     "eslint-plugin-node": "^8.0.1",
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-standard": "^4.0.0",
+    "jest": "^26.6.3",
+    "jest-puppeteer": "^4.4.0",
     "minimist": "^1.2.5",
     "nodemon": "^2.0.2",
+    "puppeteer": "^8.0.0",
     "swagger-inline": "^3.0.4"
   },
   "engines": {

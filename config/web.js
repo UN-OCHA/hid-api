@@ -6,6 +6,8 @@ const ejs = require('ejs');
 const vision = require('@hapi/vision');
 const yar = require('@hapi/yar');
 const crumb = require('@hapi/crumb');
+const Scooter = require('@hapi/scooter');
+const Blankie = require('blankie');
 const hapiRateLimit = require('hapi-rate-limit');
 const oauth2orizeExt = require('oauth2orize-openid');
 const hapiOauth2Orize = require('../plugins/hapi-oauth2orize');
@@ -59,8 +61,16 @@ module.exports = {
           isSecure: process.env.NODE_ENV === 'production',
         },
         skip(request) {
-          const paths = ['/', '/login', '/oauth/authorize',
-            '/register', '/verify', '/verify2', '/password', '/new_password'];
+          const paths = [
+            '/',
+            '/login',
+            '/oauth/authorize',
+            '/register',
+            '/verify',
+            '/verify2',
+            '/password',
+            '/new_password',
+          ];
           if (paths.indexOf(request.path) === -1) {
             return true;
           }
@@ -81,6 +91,47 @@ module.exports = {
     },
     {
       plugin: hapiAuthHid,
+    },
+    {
+      plugin: Scooter,
+    },
+    {
+      plugin: Blankie,
+      // Configure our Content Security Policy (CSP)
+      //
+      // Note: the double quotes which contain single quotes is not a mistake.
+      // That is done intentionally in order to create a valid set of headers.
+      options: {
+        styleSrc: [
+          'self',
+          'https://fonts.googleapis.com',
+          // These hashes allow the CD SVG sprite to contain inline style blocks.
+          // When the sprite is replaced, these likely have to be updated.
+          "'sha256-V9AHfwgZGnDP/9HWH+ANrhe++Fn8jBJQ1JVyqSRgb5k='",
+          "'sha256-pJeCB2XoDM3l7akAolEPn5aJZEI3d+buFdkCCtUOcBs='",
+        ],
+        fontSrc: [
+          'https://fonts.gstatic.com',
+        ],
+        scriptSrc: [
+          'self',
+          'https://www.google-analytics.com',
+          // These hashes are for GA and our inline JS+feature detection.
+          "'sha256-zITkoAg4eI1v3VSFI+ATEQKWvoymQcxmFNojptzmlNw='",
+          "'sha256-Ch69wX3la/uD7qfUZRHgam3hofEvI6fesgFgtvG9rTM='",
+        ],
+        connectSrc: [
+          'self',
+          'https://www.google-analytics.com',
+          'https://stats.g.doubleclick.net',
+        ],
+        imgSrc: [
+          'self',
+          // For 2FA setup, we display a dynamically generated image by inlining
+          // base64-encoded QR code. 'data:' allows the image to be displayed.
+          'data:',
+        ],
+      },
     },
   ],
 
