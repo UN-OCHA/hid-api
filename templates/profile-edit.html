@@ -1,4 +1,5 @@
 <% include header %>
+<link rel="stylesheet" href="/assets/css/cd-tag.css">
 <link rel="stylesheet" href="/assets/css/profile-edit.css">
 
 <div class="api-page">
@@ -46,7 +47,7 @@
                 </div>
                 <div class="email__delete">
                   <% if (user.email === thisEmail.email) { %>
-                    <button disabled class="cd-button cd-button--small cd-button--bold cd-button--uppercase">Primary</button>
+                    <span class="cd-tag cd-tag--rounded cd-tag--color-6">Primary</span>
                   <% } else { %>
                     <button
                       type="submit"

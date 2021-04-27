@@ -1,6 +1,7 @@
 <% include header %>
 <link rel="stylesheet" href="/assets/css/cd-grid.css">
 <link rel="stylesheet" href="/assets/css/cd-card.css">
+<link rel="stylesheet" href="/assets/css/cd-tag.css">
 <link rel="stylesheet" href="/assets/css/profile-show.css">
 
 <div class="api-page">
@@ -34,7 +35,7 @@
                       <div class="email__address">
                         <label><%= user.email %></label>
                         <div class="email__status">
-                          <button disabled class="cd-button cd-button--small cd-button--bold cd-button--uppercase">Primary</button>
+                          <span class="cd-tag cd-tag--rounded cd-tag--color-6">Primary</span>
                         </div>
                       </div>
                     </div>
@@ -43,9 +44,9 @@
                       <div class="email__address">
                         <label><%= email.email %></label>
                         <div class="email__status">
-                          <button disabled class="cd-button cd-button--small cd-button--outline cd-button--bold cd-button--uppercase">
+                          <span class="cd-tag cd-tag--rounded">
                             <%= email.validated === true ? 'confirmed' : 'not confirmed' %>
-                          </button>
+                          </span>
                         </div>
                       </div>
                     </div>
