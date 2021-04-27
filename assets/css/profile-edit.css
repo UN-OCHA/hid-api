@@ -47,6 +47,9 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.cd-tag {
+  font-size: 0.675em;
+}
 .profile__email .email__address--unconfirmed {
   color: #444;
   font-style: italic;

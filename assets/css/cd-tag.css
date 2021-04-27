@@ -1,10 +1,15 @@
-/* https://raw.githubusercontent.com/UN-OCHA/common_design/v4.0.2/components/cd-tag/cd-tag.css */
+/**
+ * CD Tag
+ * @see https://raw.githubusercontent.com/UN-OCHA/common_design/v4.0.2/components/cd-tag/cd-tag.css
+ *
+ * Minor modifications were made to accomodate a11y feedback from automated tools.
+ */
 
 /**
  * Root vars for CD Tag
  */
 :root {
-  --cd-tag--color: #5090cd;
+  --cd-tag--color: #3070ad;
 }
 
 /**
@@ -103,5 +108,5 @@
   --cd-tag--color: #71dbd4;
 }
 .cd-tag--color-6 {
-  --cd-tag--color: #9063cd;
+  --cd-tag--color: #7043ad;
 }
