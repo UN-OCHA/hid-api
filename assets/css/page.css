@@ -201,9 +201,8 @@ textarea {
 }
 
 input:focus {
-  outline: 2px solid var(--cd-bright-blue);
-  outline-offset: 1px;
-  box-shadow: none
+  outline: 0;
+  box-shadow: 0 0 0 2px black;
 }
 
 input:focus:invalid {
