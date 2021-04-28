@@ -1,6 +1,6 @@
 /**
- * Helper function to confirm an email deletion.
+ * Helper function to confirm a removal.
  */
-function confirmDeletion (identifier) {
+function confirmRemoval (identifier) {
   return window.confirm('Are you sure you want to remove ' + identifier + ' from your profile?');
 }

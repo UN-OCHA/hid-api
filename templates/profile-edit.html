@@ -8,7 +8,7 @@
       <% include alert.html %>
       <div class="profile profile--edit">
 
-        <form action="/profile/edit" method="POST" class="[ flow ]">
+        <form action="/profile/edit" method="POST" class="form--profile-basic [ flow ]">
           <div class="form-field">
             <h2>Manage basic info</h2>
             <p>You are required to provide your family name and given name.</p>
@@ -27,7 +27,7 @@
           </div>
         </form>
 
-        <form name="emailForm" action="/profile/edit/emails" method="POST" class="[ flow ]">
+        <form name="emailForm" action="/profile/edit/emails" method="POST" class="form--profile-emails [ flow ]">
           <div class="form-field [ flow ]">
             <h2>Manage email addresses</h2>
             <p>Use the radio buttons to select a new primary email address. You may only select an address which has already been confirmed.</p>
@@ -53,7 +53,6 @@
                       name="email_delete"
                       value="<%= thisEmail.email %>"
                       class="cd-button cd-button--small cd-button--bold cd-button--uppercase cd-button--danger"
-                      onclick="return confirmDeletion('<%= thisEmail.email %>')"
                     >
                       Delete
                     </button>
@@ -84,4 +83,5 @@
 </div>
 
 <script src="/assets/js/confirmation.js"></script>
+<script src="/assets/js/profile-edit.js"></script>
 <% include footer %>
