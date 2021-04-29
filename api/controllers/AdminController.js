@@ -1,3 +1,7 @@
+/**
+ * @module AdminController
+ * @description Controller for pages that only admins see.
+ */
 const crypto = require('crypto');
 const Boom = require('@hapi/boom');
 const Joi = require('@hapi/joi');
@@ -162,7 +166,7 @@ module.exports = {
       await ClientController.find(request, reply, {
         user,
         id: request.params.id,
-      }).then(data => {
+      }).then((data) => {
         // Pass client data along.
         client = data;
 
@@ -170,7 +174,7 @@ module.exports = {
         // will verify this hash before writing to DB, to ensure there's no
         // way to edit a different client from this form.
         formHash = formHashContents(client._id);
-      }).catch(err => {
+      }).catch((err) => {
         client = {};
         alert = {
           type: 'error',
@@ -278,21 +282,19 @@ module.exports = {
             organization: request.payload.client_organization,
             environment: request.payload.client_environment,
           },
-        }).then(data => {
+        }).then((data) => {
           // Display success to admin.
           alert.type = 'status';
           alert.message = `<p>OAuth Client <strong>${ request.payload.client_name }</strong> was updated successfully.</p>`;
-        }).catch(err => {
+        }).catch((err) => {
           // Mongo validation error.
           if (err.message && err.message.indexOf('Client validation failed: ') !== -1) {
             throw Error('User feedback:' + err.message.replace('Client validation failed: ', ''));
-          }
-          // Another type of Mongo error.
-          else if (err.message && err.message.indexOf('duplicate key')) {
+          } else if (err.message && err.message.indexOf('duplicate key')) {
+            // Another type of Mongo error.
             throw Error(`User feedback:The Client ID <strong>${ request.payload.client_id }</strong> is already present in the DB. Please pick another one.`);
-          }
-          // We don't know what error this is. pass it along.
-          else {
+          } else {
+            // We don't know what error this is. pass it along.
             throw err;
           }
         });

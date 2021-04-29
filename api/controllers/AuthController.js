@@ -1,6 +1,6 @@
 /**
  * @module AuthController
- * @description Controller for Auth.
+ * @description Controller for Authentication, both into HID and OAuth sites.
  */
 const Boom = require('@hapi/boom');
 const Client = require('../models/Client');
@@ -811,9 +811,8 @@ module.exports = {
       if (request.payload.client_id && request.payload.client_secret) {
         clientId = request.payload.client_id;
         clientSecret = request.payload.client_secret;
-      }
-      // Are we using Basic Auth?
-      else if (request.headers.authorization) {
+      } else if (request.headers.authorization) {
+        // Are we using Basic Auth?
         const parts = request.headers.authorization.split(' ');
         if (parts.length === 2) {
           const credentials = parts[1];
@@ -822,9 +821,8 @@ module.exports = {
           const cparts = text.split(':');
           [clientId, clientSecret] = cparts;
         }
-      }
-      // Neither authorization method found. Log it.
-      else {
+      } else {
+        // Neither authorization method found. Log it.
         logger.warn(
           '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to invalid client authentication.',
           {

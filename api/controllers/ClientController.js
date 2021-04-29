@@ -149,7 +149,7 @@ module.exports = {
     // If we have a specific Client ID, try to look it up.
     if (clientId) {
       criteria._id = clientId;
-      const result = await Client.findOne(criteria).then(client => {
+      const result = await Client.findOne(criteria).then((client) => {
         logger.info(
           `[ClientController->find] Admin viewed a single OAuth Client with ID ${client._id}`,
           {
@@ -268,7 +268,7 @@ module.exports = {
     client.environment = clientData.environment;
 
     // Write to DB.
-    const result = await client.save().then(data => {
+    const result = await client.save().then((data) => {
       logger.info(
         '[ClientController->update] Updated client',
         {
@@ -278,7 +278,7 @@ module.exports = {
       );
 
       return client;
-    }).catch(err => {
+    }).catch((err) => {
       throw Boom.badRequest(err.message);
     });
 
