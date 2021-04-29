@@ -673,7 +673,7 @@ module.exports = {
     // First, check if the field even has a value.
     if (request.payload.email_primary !== '') {
       // Loop through emails to find the one they want to mark as primary.
-      user.emails.forEach(thisEmail => {
+      user.emails.forEach((thisEmail) => {
         // We found it, so check if it is already 'validated' in DB.
         if (request.payload.email_primary === thisEmail.email) {
           if (thisEmail.validated) {
@@ -731,7 +731,7 @@ module.exports = {
         await UserController.setPrimaryEmail({}, {
           userId: cookie.userId,
           email: request.payload.email_primary,
-        }).then(data => {
+        }).then((data) => {
           cookie.alert.message += `<p>Your primary email was set to ${request.payload.email_primary}</p>`;
         });
         // TODO: add a .catch() to avoid sploding the server.
@@ -742,9 +742,9 @@ module.exports = {
         await UserController.dropEmail({}, {
           userId: cookie.userId,
           email: request.payload.email_delete,
-        }).then(data => {
+        }).then((data) => {
           cookie.alert.message += `You deleted ${request.payload.email_delete} from your account.`;
-        }).catch(err => {
+        }).catch((err) => {
           cookie.alert.type = 'error';
           cookie.alert.message = `There was a problem removing ${request.payload.email_delete} from your account.`;
         });
@@ -759,9 +759,9 @@ module.exports = {
           confirmEmail.email,
           confirmEmail._id.toString(),
           _buildRequestUrl(request, 'verify2')
-        ).then(data => {
+        ).then((data) => {
           cookie.alert.message += 'The confirmation email will arrive in your inbox shortly.';
-        }).catch(err => {
+        }).catch((err) => {
           cookie.alert.type = 'error';
           cookie.alert.message = 'There was a problem sending the confirmation email.';
         });
@@ -774,16 +774,15 @@ module.exports = {
           userId: cookie.userId,
           email: request.payload.email_new,
           appValidationUrl: _buildRequestUrl(request, 'verify2'),
-        }).then(data => {
+        }).then((data) => {
           cookie.alert.message += `<p>A confirmation email has been sent to ${request.payload.email_new}.</p>`;
-        }).catch(err => {
+        }).catch((err) => {
           cookie.alert.type = 'error';
 
           // Read our error and show some user feedback.
           if (err.message && err.message.indexOf('Email already exists') !== -1) {
             cookie.alert.message = `<p>The address ${request.payload.email_new} is already added to your account.</p>`;
-          }
-          else if (err.message && err.message.indexOf('Email is not unique') !== -1) {
+          } else if (err.message && err.message.indexOf('Email is not unique') !== -1) {
             cookie.alert.message = `<p>The address ${request.payload.email_new} is already registered.</p>`;
           }
         });
@@ -815,7 +814,7 @@ module.exports = {
 
     // Load user from DB.
     const user = await User.findOne({ _id: cookie.userId });
-    user.authorizedClients.forEach(client => {
+    user.authorizedClients.forEach((client) => {
       const tmpUrl = client.redirectUri
         ? client.redirectUri
         : typeof client.redirectUrls === 'object'
@@ -881,13 +880,13 @@ module.exports = {
       await UserController.revokeOauthClient({}, {
         userId: cookie.userId,
         clientId: request.payload.oauth_client_revoke,
-      }).then(data => {
+      }).then((data) => {
         alert.type = 'status';
         alert.message = `
           <p>You successfully revoked <strong>${revokedClient.name}</strong> from your profile.</p>
           <p>If you wish to restore access you can log into that website again using HID.</p>
         `;
-      }).catch(err => {
+      }).catch((err) => {
         alert.type = 'error';
         alert.message = err.message;
       });
@@ -966,7 +965,7 @@ module.exports = {
     await AuthPolicy.isTOTPEnabledAndValid({}, {
       user,
       totp: token,
-    }).then(data => {
+    }).then((data) => {
       // Since all users (whether they use TOTP or not) will make it to this
       // success stage, check cookie and see if the form data is here.
       //
@@ -981,7 +980,7 @@ module.exports = {
       // Now clean up the cookie.
       delete(cookie.totpPrompt);
       delete(cookie.formData);
-    }).catch(err => {
+    }).catch((err) => {
       // Cookie the form data so we prompt for TOTP without either populating
       // the form (and thereby printing their password in HTML) or making the
       // person re-enter the form data. The cookie is encrypted and only the
@@ -1032,10 +1031,10 @@ module.exports = {
         userId: cookie.userId,
         old_password: request.payload.old_password,
         new_password: request.payload.new_password,
-      }).then(data => {
+      }).then((data) => {
         alert.type = 'status';
         alert.message = 'Your password has been updated.';
-      }).catch(err => {
+      }).catch((err) => {
         // Set error message.
         alert.type = 'error';
         alert.message = err.message;
@@ -1165,12 +1164,12 @@ module.exports = {
 
         // Ensure token was valid before disabling 2FA.
         const token = request.payload['x-hid-totp'];
-        await AuthPolicy.isTOTPValid(user, token).then(async data => {
+        await AuthPolicy.isTOTPValid(user, token).then(async (data) => {
 
           // Now disable the 2FA.
           await TOTPController.disable({}, {
             user,
-          }).then(data => {
+          }).then((data) => {
             // If we made it here, 2FA is already disabled.
             alert.type = 'status';
             alert.message = `
@@ -1218,17 +1217,17 @@ module.exports = {
       if (action === 'totp-enable') {
         // Ensure token is valid before enabling 2FA.
         const token = request.payload['x-hid-totp'];
-        await AuthPolicy.isTOTPValid(user, token).then(async data => {
+        await AuthPolicy.isTOTPValid(user, token).then(async (data) => {
 
           // Enable 2FA for this user.
           await TOTPController.enable({}, {
             user,
-          }).then(async data => {
+          }).then(async (data) => {
             // If we made it here, 2FA is enabled! Immediately issue backup codes
             // to be displayed alongside the success message.
             await TOTPController.generateBackupCodes({}, {
               user,
-            }).then(data => {
+            }).then((data) => {
               // Prepare to display backup codes to user.
               delete(cookie.formData);
               cookie.formData = {
@@ -1237,14 +1236,14 @@ module.exports = {
 
               // Proceed to step 2.
               cookie.step = 2;
-            }).catch(err => {
+            }).catch((err) => {
               throw err;
             })
-          }).catch(err => {
+          }).catch((err) => {
             throw err;
           });
 
-        }).catch(err => {
+        }).catch((err) => {
           // Display error about invalid TOTP, or pass message along.
           alert.type = 'error';
           if (err.message.indexOf('Invalid') !== -1) {
@@ -1350,11 +1349,11 @@ module.exports = {
           await AuthPolicy.isTOTPEnabledAndValid({}, {
             user,
             totp: token,
-          }).then(data => {
+          }).then((data) => {
             // Clean up the cookie for 2FA users.
             delete(cookie.totpPrompt);
             delete(cookie.formData);
-          }).catch(err => {
+          }).catch((err) => {
             // Cookie the form data so we prompt for TOTP without populating the
             // form, potentially allowing someone to alter their previous input
             // by editing DOM, or forcing them re-enter the email confirmation.
