@@ -1305,16 +1305,16 @@ module.exports = {
    * User settings: handle submissions to delete account
    */
   async settingsDeleteSubmit(request, reply) {
-    // If the user is not authenticated, redirect to the login page
-    //
-    // NOTE: normally we use const, but using let here since cookie will be
-    //       overwritten if the user successfully deletes their account.
-    let cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
-      return reply.redirect('/');
-    }
-
     try {
+      // If the user is not authenticated, redirect to the login page
+      //
+      // NOTE: normally we use const, but using let here since cookie will be
+      //       overwritten if the user successfully deletes their account.
+      let cookie = request.yar.get('session');
+      if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+        return reply.redirect('/');
+      }
+
       // Load current user from DB.
       const user = await User.findOne({ _id: cookie.userId });
 
@@ -1434,5 +1434,8 @@ module.exports = {
 
       // TODO: show something, e.g. message.html
     }
+
+    // If we somehow fall through, redirect to homepage.
+    return reply.redirect('/');
   },
 };
