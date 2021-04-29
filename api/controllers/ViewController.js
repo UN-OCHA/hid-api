@@ -1341,46 +1341,44 @@ module.exports = {
         // In this case, we want to wipe the old feedback.
         reasons = [];
         reasons.push('Admins cannot delete their accounts. Remove your own admin status before deleting the account.');
-      } else {
+      } else if (reasons.length === 0) {
         // If user is NOT admin, and form was validated, then check if 2FA is
         // enabled and enforce.
-        if (reasons.length === 0) {
-          const token = request.payload && request.payload['x-hid-totp'];
-          await AuthPolicy.isTOTPEnabledAndValid({}, {
-            user,
-            totp: token,
-          }).then((data) => {
-            // Clean up the cookie for 2FA users.
-            delete(cookie.totpPrompt);
-            delete(cookie.formData);
-          }).catch((err) => {
-            // Cookie the form data so we prompt for TOTP without populating the
-            // form, potentially allowing someone to alter their previous input
-            // by editing DOM, or forcing them re-enter the email confirmation.
-            //
-            // We wrap the assignment in a conditional to allow for multiple attempts
-            // at entering the TOTP. If we blindly set the request data, a second TOTP
-            // attempt will erase formDara and set everything to empty strings.
-            cookie.totpPrompt = true;
-            if (!cookie.formData) {
-              cookie.formData = {
-                primary_email: request.payload.primary_email,
-              };
-            }
+        const token = request.payload && request.payload['x-hid-totp'];
+        await AuthPolicy.isTOTPEnabledAndValid({}, {
+          user,
+          totp: token,
+        }).then(() => {
+          // Clean up the cookie for 2FA users.
+          delete cookie.totpPrompt;
+          delete cookie.formData;
+        }).catch((err) => {
+          // Cookie the form data so we prompt for TOTP without populating the
+          // form, potentially allowing someone to alter their previous input
+          // by editing DOM, or forcing them re-enter the email confirmation.
+          //
+          // We wrap the assignment in a conditional to allow for multiple attempts
+          // at entering the TOTP. If we blindly set the request data, a second TOTP
+          // attempt will erase formDara and set everything to empty strings.
+          cookie.totpPrompt = true;
+          if (!cookie.formData) {
+            cookie.formData = {
+              primary_email: request.payload.primary_email,
+            };
+          }
 
-            // Display error about invalid TOTP.
-            //
-            // If we made it this far, the other feedback isn't necessary, so we
-            // clear the reasons array before setting TOTP feedback.
-            reasons = [];
-            if (err.message.indexOf('Invalid') !== -1) {
-              alert.type = 'error';
-              reasons.push('Your two-factor authentication code was invalid.')
-            } else {
-              reasons.push('Enter your two-factor authentication code to delete your account.');
-            }
-          });
-        }
+          // Display error about invalid TOTP.
+          //
+          // If we made it this far, the other feedback isn't necessary, so we
+          // clear the reasons array before setting TOTP feedback.
+          reasons = [];
+          if (err.message.indexOf('Invalid') !== -1) {
+            alert.type = 'error';
+            reasons.push('Your two-factor authentication code was invalid.');
+          } else {
+            reasons.push('Enter your two-factor authentication code to delete your account.');
+          }
+        });
       }
 
       if (reasons.length > 0) {
