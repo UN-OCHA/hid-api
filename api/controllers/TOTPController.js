@@ -1,3 +1,7 @@
+/**
+ * @module TOTPController
+ * @description Controller for 2FA functions.
+ */
 const authenticator = require('authenticator');
 const Boom = require('@hapi/boom');
 const QRCode = require('qrcode');
@@ -7,59 +11,7 @@ const config = require('../../config/env')[process.env.NODE_ENV];
 
 const { logger } = config;
 
-/**
- * @module TOTPController
- * @description Controller for 2FA functions.
- */
 module.exports = {
-
-  //
-  // v2 callback for TOTP config
-  //
-  async generateQRCode(request) {
-    const user = request.auth.credentials;
-    if (user.totp === true) {
-      // TOTP is already enabled, user needs to disable it first
-      logger.warn(
-        '[TOTPController->generateQRCode] 2FA already enabled. Can not generate QRCode.',
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('You have already enabled 2FA. You need to disable it first');
-    }
-    const secret = authenticator.generateKey();
-    const mfa = {
-      secret,
-    };
-    user.totpConf = mfa;
-    await user.save();
-    logger.info(
-      `[TOTPController->generateQRCode] Saved totp secret for user ${user.id}`,
-      {
-        request,
-        security: true,
-        user: {
-          id: user.id,
-        },
-      },
-    );
-    let qrCodeName = `HID (${process.env.NODE_ENV})`;
-    if (process.env.NODE_ENV === 'production') {
-      qrCodeName = 'HID';
-    }
-    const otpauthUrl = authenticator.generateTotpUri(secret, user.name, qrCodeName, 'SHA1', 6, 30);
-    const qrcode = await QRCode.toDataURL(otpauthUrl);
-
-    return {
-      url: qrcode,
-      raw: otpauthUrl,
-    };
-  },
-
-
   /*
    * @api [post] /totp/config
    * tags:
