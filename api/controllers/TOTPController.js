@@ -128,7 +128,8 @@ module.exports = {
    *     description: Unauthorized.
    */
   async enable(request, internalArgs) {
-    let user, method;
+    let user;
+    let method;
 
     if (internalArgs && internalArgs.user) {
       user = internalArgs.user;
@@ -151,7 +152,7 @@ module.exports = {
       throw Boom.badRequest('2FA is already enabled. You need to disable it first');
     }
 
-    // Forward-compatbility requires that we set a method of 'app' — if for some
+    // Forward-compatbility requires that we set a method of 'app' — if for some
     // reason we want to offer SMS in the future, that would be the other value.
     if (method !== 'app') {
       logger.warn(
@@ -255,7 +256,7 @@ module.exports = {
     // Disable user's 2FA.
     user.totp = false;
     user.totpConf = {};
-    delete(user.totpMethod);
+    delete user.totpMethod;
     await user.save();
 
     logger.info(
