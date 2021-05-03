@@ -3,15 +3,9 @@
  * @description Controller for pages that only admins see.
  */
 const crypto = require('crypto');
-const Boom = require('@hapi/boom');
-const Joi = require('@hapi/joi');
 
-const Client = require('../models/Client');
 const User = require('../models/User');
-const HelperService = require('../services/HelperService');
 const ClientController = require('./ClientController');
-const TOTPController = require('./TOTPController');
-const UserController = require('./UserController');
 const AuthPolicy = require('../policies/AuthPolicy');
 const config = require('../../config/env')[process.env.NODE_ENV];
 
@@ -81,29 +75,27 @@ module.exports = {
     }
 
     // User is authenticated as an admin. Proceed to build page.
-    let options = {
+    const options = {
       limit: 10000,
     };
-    let criteria = {};
-    let clientResponse = await ClientController.find(request, reply, {
+    const criteria = {};
+    const clientResponse = await ClientController.find(request, reply, {
       user,
       options,
       criteria,
     });
 
     // Extract clients and sort alphabetically with case-insensitivity
-    let clients = clientResponse.source;
-    clients.sort(function (a, b) {
-      return a.name.localeCompare(b.name, {
-        'sensitivity': 'base',
-      });
-    });
+    const clients = clientResponse.source;
+    clients.sort((a, b) => a.name.localeCompare(b.name, {
+      sensitivity: 'base',
+    }));
 
     // Check for user feedback to display.
     let alert;
     if (cookie.alert) {
       alert = cookie.alert;
-      delete(cookie.alert);
+      delete cookie.alert;
       request.yar.set('session', cookie);
     }
 
@@ -174,7 +166,7 @@ module.exports = {
         // will verify this hash before writing to DB, to ensure there's no
         // way to edit a different client from this form.
         formHash = formHashContents(client._id);
-      }).catch((err) => {
+      }).catch(() => {
         client = {};
         alert = {
           type: 'error',
@@ -193,12 +185,12 @@ module.exports = {
     // above are unlikely to have occurred so we're overwriting.
     if (cookie.alert) {
       alert = cookie.alert;
-      delete(cookie.alert);
+      delete cookie.alert;
       request.yar.set('session', cookie);
     }
 
     // Options for Environment dropdown
-    let environments = ['Production', 'Staging', 'Development', 'Local'];
+    const environments = ['Production', 'Staging', 'Development', 'Local'];
 
     // Display page to user.
     return reply.view('admin-client', {
@@ -221,8 +213,8 @@ module.exports = {
     }
 
     // Set up our validation.
-    let alert = {};
-    let reasons = [];
+    const alert = {};
+    const reasons = [];
     let destination = '/admin';
 
     try {
@@ -235,7 +227,7 @@ module.exports = {
       if (request.payload.db_id && request.payload.client_id && request.payload.form_hash) {
         const submissionHash = formHashContents(request.payload.db_id);
         if (request.payload.form_hash !== submissionHash) {
-          throw Error(`User feedback:The form was tampered with. Rejecting your edits to OAuth Client <strong>${ request.payload.client_name }</strong>.`);
+          throw Error(`User feedback:The form was tampered with. Rejecting your edits to OAuth Client <strong>${request.payload.client_name}</strong>.`);
         }
       }
 
@@ -245,14 +237,14 @@ module.exports = {
       }
 
       // Validate Client ID
-      if (!request.payload.client_id || !request.payload.client_id.match(/[a-zA-z\-]/)) {
+      if (!request.payload.client_id || !request.payload.client_id.match(/[a-zA-z-]/)) {
         reasons.push('There must be a Client ID (alpha with dashes)');
       }
 
       // Validate redirect_uri. This simply checks whether it is a valid URL, not
       // whether it exists or is actually going to work.
       if (!request.payload.client_redirect_uri) {
-        reasons.push(`There must be a primary redirect URI. If you're updating an existing client just move the alternate URL into the Redirect URI field.`);
+        reasons.push('There must be a primary redirect URI. If you are updating an existing client just move the alternate URL into the Redirect URI field.');
       }
 
       // Validate Client Secret.
@@ -264,7 +256,7 @@ module.exports = {
       if (reasons.length > 0) {
         // Display user feedback.
         alert.type = 'warning';
-        alert.message = `<p>${ reasons.join('</p><p>') }</p>`;
+        alert.message = `<p>${reasons.join('</p><p>')}</p>`;
 
         // Set destination to be edit form.
         destination = `/admin/client/${request.payload.db_id}`;
@@ -282,19 +274,19 @@ module.exports = {
             organization: request.payload.client_organization,
             environment: request.payload.client_environment,
           },
-        }).then((data) => {
+        }).then(() => {
           // Display success to admin.
           alert.type = 'status';
-          alert.message = `<p>OAuth Client <strong>${ request.payload.client_name }</strong> was updated successfully.</p>`;
+          alert.message = `<p>OAuth Client <strong>${request.payload.client_name}</strong> was updated successfully.</p>`;
         }).catch((err) => {
           // Mongo validation error.
           if (err.message && err.message.indexOf('Client validation failed: ') !== -1) {
-            throw Error('User feedback:' + err.message.replace('Client validation failed: ', ''));
+            throw Error(`User feedback: ${err.message.replace('Client validation failed: ', '')}`);
           } else if (err.message && err.message.indexOf('duplicate key')) {
             // Another type of Mongo error.
-            throw Error(`User feedback:The Client ID <strong>${ request.payload.client_id }</strong> is already present in the DB. Please pick another one.`);
+            throw Error(`User feedback:The Client ID <strong>${request.payload.client_id}</strong> is already present in the DB. Please pick another one.`);
           } else {
-            // We don't know what error this is. pass it along.
+            // We don't know what error this is. Pass it along.
             throw err;
           }
         });
