@@ -1,7 +1,41 @@
 <% if (typeof alert !== 'undefined' && alert.type && alert.message) { %>
-  <div class="cd-alert cd-alert--<%= alert.type %>" role="alert">
-    <div class="cd-alert__message">
-      <%- alert.message %>
+  <div class="cd-alert cd-alert--<%= alert.type %>">
+
+  <%#
+    If the alert is warning/error, we want role="alert"
+    If the alert is info/status, we want aria-live="off|polite"
+  %>
+  <% if (alert.type === 'warning' || alert.type === 'error') { %>
+    <div role="alert">
+  <% } else { %>
+    <div aria-live="<%= alert.type === 'info' ? 'off' : 'polite' %>">
+  <% } %>
+
+      <%
+        const icon = alert.type === 'info'
+          ? 'about'
+          : alert.type === 'status'
+            ? 'selected'
+            : alert.type === 'warning' || alert.type === 'error'
+              ? 'alert'
+              : false;
+      %>
+      <% if (icon) { %>
+      <svg class="cd-icon cd-icon--<%= icon %>" aria-hidden="true" focusable="false" width="16" height="16">
+        <use xlink:href="#cd-icon--<%= icon %>"></use>
+      </svg>
+      <% } %>
+
+      <div class="cd-alert__container cd-max-width [ cd-flow ]">
+      <% if (typeof alert.title !== 'undefined') { %>
+        <div class="cd-alert__title">
+          <%- alert.title %>
+        </div>
+      <% } %>
+        <div class="cd-alert__message">
+          <%- alert.message %>
+        </div>
+      </div>
     </div>
   </div>
 <% } %>

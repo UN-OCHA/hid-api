@@ -6,21 +6,17 @@
     <title>Humanitarian ID</title>
     <meta name="description" content="Authentication page for Humanitarian ID">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <base href="/">
-    <link rel="stylesheet" href="assets/css/_normalize.css">
-    <link rel="stylesheet" href="assets/css/_cube.css">
-    <link rel="stylesheet" href="assets/css/cd-alert.css">
-    <link rel="stylesheet" href="assets/css/cd-button.css">
-    <link rel="stylesheet" href="assets/css/cd.css">
-    <link rel="stylesheet" href="assets/css/page.css">
-    <!--[if lt IE 9]>
-      <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <link rel="stylesheet" href="/assets/css/_normalize.css">
+    <link rel="stylesheet" href="/assets/css/_cube.css">
+    <link rel="stylesheet" href="/assets/css/cd-alert.css">
+    <link rel="stylesheet" href="/assets/css/cd-button.css">
+    <link rel="stylesheet" href="/assets/css/cd.css">
+    <link rel="stylesheet" href="/assets/css/page.css">
     <script>
       (function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
       function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
       e=o.createElement(i);r=o.getElementsByTagName(i)[0];
-      e.src='//www.google-analytics.com/analytics.js';
+      e.src='https://www.google-analytics.com/analytics.js';
       r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
       ga('create','UA-60189654-2','auto');
       ga('send','pageview');
@@ -41,7 +37,7 @@
     <script async defer nomodule src="/assets/js/css-vars-ponyfill.js"></script>
   </head>
   <body>
-    <a href="#main-content" class="visually-hidden element-invisible element-focusable" tabindex="-1">
+    <a href="#main-content" class="visually-hidden focusable skip-link">
       Skip to main content
     </a>
     <div class="cd-layout-container"><!-- intentionally unclosed! -->
@@ -49,8 +45,10 @@
         <div class="cd-global-header">
           <div class="cd-container cd-global-header__inner">
 
-            <div class="cd-ocha dropdown">
-              <div class="cd-global-header__dropdown cd-ocha-dropdown cd-dropdown" id="cd-ocha-dropdown" aria-label="OCHA Services" data-cd-toggable="OCHA Services" data-cd-hidden="true" data-cd-icon="arrow-down" data-cd-logo="ocha-logo" data-cd-component="cd-ocha">
+            <section id="cd-ocha-services" class="cd-ocha">
+              <h2 id="cd-ocha-services-title" translate>OCHA Services</h2>
+
+              <div class="cd-global-header__dropdown cd-ocha-dropdown cd-dropdown" id="cd-ocha-dropdown" aria-labelledby="cd-ocha-services-title" data-cd-toggable="OCHA Services" data-cd-icon="arrow-down" data-cd-logo="ocha-logo" data-cd-component="cd-ocha" data-cd-replace="cd-ocha-services-title">
                 <div class="cd-ocha-dropdown__inner">
                   <div class="cd-ocha-dropdown__section">
                     <p class="cd-ocha-dropdown__heading" translate>Related Platforms</p>
@@ -84,7 +82,7 @@
                   </div>
                 </div>
               </div>
-            </div>
+            </section>
 
             <div class="cd-global-header__actions">
               <div class="cd-global-header__user-menu">
@@ -133,7 +131,7 @@
         <div class="cd-site-header">
           <div class="cd-container cd-site-header__inner">
             <h1>
-              <a href="/" class="cd-site-logo t-logo-link" style="background: url('/assets/img/logos/hid-logo.svg') center no-repeat; width: 256px;">
+              <a href="/" class="cd-site-logo t-logo-link">
                 <span class="element-invisible">Humanitarian ID</span>
               </a>
             </h1>

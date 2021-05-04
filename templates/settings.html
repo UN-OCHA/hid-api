@@ -1,11 +1,11 @@
 <% include header %>
-<style><% include ../assets/css/tabs.css %></style>
-<style><% include ../assets/css/settings.css %></style>
-<style><% include ../assets/css/client.css %></style>
+<link rel="stylesheet" href="/assets/css/tabs.css">
+<link rel="stylesheet" href="/assets/css/settings.css">
+<link rel="stylesheet" href="/assets/css/client.css">
 
 <main role="main" id="main-content" class="cd-container">
   <div class="cd-layout-content">
-    <h1 class="page-header__heading">Settings for <%= user.name %></h1>
+    <h1 class="cd-page-title page-header__heading">Settings for <%= user.name %></h1>
     <% include alert.html %>
     <div class="tabbed">
       <nav>
@@ -25,7 +25,7 @@
 
       <section id="section-apps">
         <h2>Authorized Apps</h2>
-        <form action="/settings/oauth-clients" method="POST">
+        <form action="/settings/oauth-clients" method="POST" class="form--settings-oauth-clients">
           <% if (user.authorizedClients.length === 0) { %>
             <p><em>You haven't authorized any websites yet. After you log in with HID on one of our <a href="https://about.humanitarian.id/partners-using-our-authentication-service.html" target="_blank" rel="noopener">Partner Sites</a> you will see it listed here.</em></p>
           <% } else { %>
@@ -42,8 +42,8 @@
                     name="oauth_client_revoke"
                     value="<%= client._id.toString() %>"
                     class="cd-button cd-button--danger"
-                    onclick="return confirmDeletion('<%= client.name %>');"
                     aria-label="Revoke <%= client.name %>"
+                    data-client-name="<%= client.name %>"
                   >Revoke</button>
                 </span>
                 <span class="client__info">
@@ -71,7 +71,8 @@
   </div>
 </main>
 
-<% include footer %>
+<script src="/assets/js/tabs.js"></script>
+<script src="/assets/js/confirmation.js"></script>
+<script src="/assets/js/settings.js"></script>
 
-<script><% include ../assets/js/confirmation.js %></script>
-<script><% include ../assets/js/tabs.js %></script>
+<% include footer %>

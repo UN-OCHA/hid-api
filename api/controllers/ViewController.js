@@ -819,7 +819,7 @@ module.exports = {
           : '';
       const clientUrl = URL.parse(tmpUrl);
       client.urlDisplay = clientUrl.hostname;
-      client.urlHref = clientUrl.protocol + clientUrl.hostname;
+      client.urlHref = `${clientUrl.protocol}//${clientUrl.hostname}`;
     });
 
     // Render settings page.
@@ -1249,10 +1249,6 @@ module.exports = {
             alert.message = err.message;
           }
         });
-
-      } else {
-        // TODO: reset the user's TOTP boolean/config so they can restart the
-        //       process later on.
       }
     }
 

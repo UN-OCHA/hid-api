@@ -1,11 +1,11 @@
 <% include header %>
-<style><% include ../assets/css/tabs.css %></style>
-<style><% include ../assets/css/settings-delete.css %></style>
+<link rel="stylesheet" href="/assets/css/tabs.css">
+<link rel="stylesheet" href="/assets/css/settings-delete.css">
 
 <div class="api-page">
   <main role="main" id="main-content" class="cd-container">
     <div class="cd-layout-content">
-      <h1 class="page-header__heading">Settings for <%= user.name %></h1>
+      <h1 class="cd-page-title page-header__heading">Settings for <%= user.name %></h1>
       <% include alert.html %>
       <div class="tabbed">
         <nav>
@@ -27,17 +27,15 @@
           <h2>Delete your HID account</h2>
 
           <% if (user.is_admin) { %>
-            <div class="cd-alert cd-alert--warning">
-              <!-- <svg class="cd-icon cd-icon--alert" aria-hidden="true" focusable="false"> -->
-                <!-- <use xlink:href="#cd-icon--alert"></use> -->
-              <!-- </svg> -->
-              <div class="cd-alert__container [ flow ]">
-                <div class="cd-alert__title">Admins cannot delete their own account</div>
-                <div class="cd-alert__message">
-                  <p>Your account is marked as an Admin, so account deletion is not possible.</p>
-                </div>
-              </div>
-            </div>
+              <%-
+                include('alert.html', {
+                  alert: {
+                    type: 'warning',
+                    title: 'Admins cannot delete their own account',
+                    message: '<p>Your account is marked as an Admin, so account deletion is not possible.</p>',
+                  },
+                })
+              %>
           <% } else { %>
 
             <form action="/settings/delete" method="POST" class="[ flow ]">
@@ -60,11 +58,18 @@
                 <div class="form-field">
                   <p>Deleting your account means that you will lose your access to Humanitarian ID.</p>
                 </div>
+                <%#
+                 This is a specially-formatted alert where clicking the text
+                 focuses on the input, so we intentionally didn't include the
+                 standard alert component.
+                %>
                 <label for="confirm-primary-email" class="form-field cd-alert cd-alert--error">
-                  <div class="cd-alert__container">
-                    <div class="cd-alert__message [ flow ]">
-                      <p>Confirm that you wish to <strong>completely delete your HID account</strong> by typing your primary email address in the field here:</p>
-                      <input type="email" name="primary_email" id="confirm-primary-email" placeholder="<%= user.email %>" required pattern="<%= user.email %>" title="Your primary email: <%= user.email %>">
+                  <div role="alert">
+                    <div class="cd-alert__container">
+                      <div class="cd-alert__message [ flow ]">
+                        <p>Confirm that you wish to <strong>completely delete your HID account</strong> by typing your primary email address in the field here:</p>
+                        <input type="email" name="primary_email" id="confirm-primary-email" placeholder="<%= user.email %>" required pattern="<%= user.email %>" title="Your primary email: <%= user.email %>">
+                      </div>
                     </div>
                   </div>
                 </label>
@@ -85,5 +90,5 @@
 
 <% include footer %>
 
-<script><% include ../assets/js/tabs.js %></script>
-<script><% include ../assets/js/totp.js %></script>
+<script src="/assets/js/tabs.js"></script>
+<script src="/assets/js/totp.js"></script>

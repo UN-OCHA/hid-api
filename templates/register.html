@@ -5,7 +5,7 @@
 <div class="api-page">
   <main role="main" id="main-content" class="cd-container">
     <div class="cd-layout-content [ flow ]">
-      <h1 class="page-header__heading">Register a Humanitarian ID account</h1>
+      <h1 class="cd-page-title page-header__heading">Register a Humanitarian ID account</h1>
 
       <% include alert.html %>
 
@@ -28,7 +28,7 @@
             type="password"
             name="password"
             id="password"
-            autocomplete="new-password"
+            autocomplete="off"
             required
             minlength="12"
             pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()+=\\`{}]).+$"
@@ -40,7 +40,7 @@
             type="password"
             name="confirm_password"
             id="confirm_password"
-            autocomplete="new-password"
+            autocomplete="off"
             required
             minlength="12"
             pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()+=\\`{}]).+$"
@@ -64,5 +64,5 @@
   </main>
 </div>
 
-<script><% include ../assets/js/passwords.js %></script>
+<script src="/assets/js/passwords.js"></script>
 <% include footer %>

@@ -57,6 +57,12 @@
 
 h1, h2, h3, h4, h5 {
   color: var(--cd-primary-color);
+  margin-top: 0;
+}
+
+/* Optimal reading width */
+.cd-layout-content p {
+  max-width: var(--cd-max-content-width);
 }
 
 .cd-global-header {
@@ -108,6 +114,11 @@ h1, h2, h3, h4, h5 {
 
 .cd-button[disabled] {
   opacity: .666;
+}
+
+.cd-site-logo {
+  width: 256px;
+  background: url('/assets/img/logos/hid-logo.svg') center no-repeat;
 }
 
 h1 {
@@ -190,9 +201,8 @@ textarea {
 }
 
 input:focus {
-  outline: 2px solid var(--cd-bright-blue);
-  outline-offset: 1px;
-  box-shadow: none
+  outline: 0;
+  box-shadow: 0 0 0 2px black;
 }
 
 input:focus:invalid {

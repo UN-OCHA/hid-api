@@ -1,23 +1,23 @@
 <% include header %>
-<style><% include ../assets/css/cd-grid.css %></style>
-<style><% include ../assets/css/login.css %></style>
+<link rel="stylesheet" href="/assets/css/cd-grid.css">
+<link rel="stylesheet" href="/assets/css/login.css">
 
 <main role="main" id="main-content" class="cd-container page--login">
   <div class="cd-layout-content">
-    <div class="cd-grid cd-grid-2-col">
+    <div class="cd-grid cd-grid--2-col">
       <div class="cd-grid__col">
-        <h1 class="page-header__heading">Log in</h1>
+        <h1 class="cd-page-title page-header__heading">Log in</h1>
 
         <% include alert.html %>
 
         <form method="post" action="/login" class="[ flow ] t-form-login">
           <div class="form-field">
             <label for="email" translate>Email</label>
-            <input type="email" name="email" id="email" placeholder="Your email address" value="<%= query.email %>" required>
+            <input type="email" name="email" id="email" placeholder="Your email address" value="<%= query.email %>" required class="t-login-email">
           </div>
           <div class="form-field">
             <label for="password"><span translate>Password</span></label>
-            <input type="password" name="password" id="password" placeholder="Your password" required>
+            <input type="password" name="password" id="password" placeholder="Your password" required class="t-login-password">
           </div>
           <input type="hidden" name="redirect" value="<%= query.redirect %>" />
           <input type="hidden" name="client_id" value="<%= query.client_id %>" />
@@ -29,7 +29,7 @@
           <input type="hidden" name="crumb" value="<%= crumb %>" />
 
           <div class="form-field">
-            <button type="submit" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase t-login-btn">
+            <button type="submit" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase t-btn--login">
               Login
             </button>
           </div>
@@ -38,7 +38,7 @@
         <p><a href="<%= passwordLink %>">Forgot/Reset password</a></p>
       </div>
       <div class="cd-grid__col">
-        <h1 class="page-header__heading">What is Humanitarian ID?</h1>
+        <h1 class="cd-page-title page-header__heading">What is Humanitarian ID?</h1>
         <p>Humanitarian ID is an authentication service managed by the United Nations Office for the Coordination of Humanitarian Affairs (UNOCHA).</p>
         <p>The service is provided freely to the humanitarian community. More information is available at <a href="https://about.humanitarian.id">about.humanitarian.id</a> and our team can be contacted at <a href="mailto:info@humanitarian.id">info@humanitarian.id</a></p>
       </div>
