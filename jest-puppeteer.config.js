@@ -1,13 +1,15 @@
-// Determine which mode we're running.
-const DEBUG_MODE = process.argv.includes('--debug');
-
 // Default config
 const config = {
+  browserContext: 'incognito',
   launch: {
     slowMo: 10,
+    headless: true,
   },
-  browserContext: 'incognito',
+  testTimeout: 5000,
 };
+
+// Determine which mode we're running.
+const DEBUG_MODE = process.argv.includes('--debug');
 
 // When debugging we want to see the browser do its work.
 if (DEBUG_MODE) {

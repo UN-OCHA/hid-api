@@ -2,7 +2,7 @@
 
 <main role="main" id="main-content" class="cd-container">
   <div class="cd-layout-content">
-    <h1 class="page-header__heading">Authorize <%= client.name %>?</h1>
+    <h1 class="cd-page-title page-header__heading">Authorize <%= client.name %>?</h1>
 
     <form action="/oauth/authorize" method="post" class="[ flow ] t-form-authorize">
       <p><%= user.given_name %>, <strong><%= client.name %></strong> is requesting access to:</p>
