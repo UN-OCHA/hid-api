@@ -173,9 +173,10 @@ module.exports = {
       siteKey: process.env.RECAPTCHA_PUBLIC_KEY,
       secretKey: process.env.RECAPTCHA_PRIVATE_KEY,
     });
-    const requestUrl = _buildRequestUrl(request, 'verify2');
     const registerLink = _getRegisterLink(request.payload);
     const passwordLink = _getPasswordLink(request.payload);
+    let requestUrl = _buildRequestUrl(request, 'verify2');
+
     try {
       await recaptcha.validate(request.payload['g-recaptcha-response']);
     } catch (err) {
@@ -247,7 +248,7 @@ module.exports = {
       }
 
       // Add a domain from the allow-list.
-      const requestUrl = _buildRequestUrl(request, 'register');
+      requestUrl = _buildRequestUrl(request, 'register');
 
       // Render registration form.
       return reply.view('register', {
@@ -293,7 +294,7 @@ module.exports = {
         cookie.alert = {
           type: 'status',
           message: 'Thank you for confirming your email address. It can now be set as your primary email if you wish.',
-        }
+        };
         request.yar.set('session', cookie);
 
         return reply.redirect('/profile/edit');
@@ -363,10 +364,13 @@ module.exports = {
     request.yar.set('session', {
       hash: request.query.hash, id: request.query.id, time: request.query.time, totp: false,
     });
+
     const user = await User.findOne({ _id: request.query.id });
+
     if (!user) {
       return reply.view('error');
     }
+
     if (user.totp) {
       return reply.view('totp', {
         query: request.query,
@@ -374,9 +378,11 @@ module.exports = {
         alert: false,
       });
     }
+
     request.yar.set('session', {
       hash: request.query.hash, id: request.query.id, time: request.query.time, totp: true,
     });
+
     return reply.view('new_password', {
       query: request.query,
       hash: request.query.hash,
@@ -554,7 +560,7 @@ module.exports = {
 
     // We might need to send feedback. Create an alert/errors variables.
     let alert = {};
-    let reasons = [];
+    const reasons = [];
 
     // Did we get a valid payload object?
     if (!request.payload) {
@@ -590,7 +596,7 @@ module.exports = {
       // Display the user feedback as an alert.
       alert = {
         type: 'error',
-        message: '<p>Your basic profile info could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
+        message: `<p>Your basic profile info could not be saved.</p><ul><li>${reasons.join('</li><li>')}</li></ul>`,
       };
 
       // Show user the profile edit form again.
@@ -598,40 +604,40 @@ module.exports = {
         alert,
         user,
       });
-    } else {
-      // No errors were found, so load the user and update DB with the simple
-      // profile fields that don't need special treatment.
-      //
-      // TODO: replace this with UserController.update().
-      const user = await User.findOneAndUpdate({ _id: cookie.userId }, {
-        given_name: request.payload.given_name,
-        family_name: request.payload.family_name,
-      }, {
-        runValidators: true,
-        new: true,
-      });
-
-      logger.info(
-        `[ViewController->profileEditSubmit] Updated user profile for ${cookie.userId}`,
-        {
-          user: {
-            id: cookie.userId,
-          },
-        },
-      );
-
-      // Create a success confirmation.
-      cookie.alert = {
-        type: 'status',
-        message: '<p>Your profile was saved.</p>',
-      };
-
-      // Finalize the user feedback.
-      request.yar.set('session', cookie);
-
-      // Redirect to profile on success.
-      return reply.redirect('/profile');
     }
+
+    // No errors were found, so load the user and update DB with the simple
+    // profile fields that don't need special treatment.
+    //
+    // TODO: replace this with UserController.update().
+    await User.findOneAndUpdate({ _id: cookie.userId }, {
+      given_name: request.payload.given_name,
+      family_name: request.payload.family_name,
+    }, {
+      runValidators: true,
+      new: true,
+    });
+
+    logger.info(
+      `[ViewController->profileEditSubmit] Updated user profile for ${cookie.userId}`,
+      {
+        user: {
+          id: cookie.userId,
+        },
+      },
+    );
+
+    // Create a success confirmation.
+    cookie.alert = {
+      type: 'status',
+      message: '<p>Your profile was saved.</p>',
+    };
+
+    // Finalize the user feedback.
+    request.yar.set('session', cookie);
+
+    // Redirect to profile on success.
+    return reply.redirect('/profile');
   },
 
   /**
@@ -649,7 +655,7 @@ module.exports = {
 
     // We might need to send feedback. Create an alert/errors variables.
     let alert = {};
-    let reasons = [];
+    const reasons = [];
 
     // Did we get a valid payload object?
     if (!request.payload) {
@@ -694,6 +700,7 @@ module.exports = {
 
     // If an email was chosen to receive a confirmation link.
     if (typeof request.payload.email_confirm !== 'undefined') {
+      // eslint-disable-next-line max-len
       const emailIsConfirmedAlready = user.emails.filter(thisEmail => thisEmail.email === request.payload.email_confirm && thisEmail.validated);
       if (emailIsConfirmedAlready.length > 0) {
         reasons.push(`You attempted to confirm ${request.payload.email_confirm}, but it doesn't need confirmation.`);
@@ -702,14 +709,14 @@ module.exports = {
 
     // No special validation needed for new emails at this time.
     // If we wanted to validate, do it here.
-    if (request.payload.email_new) {}
+    // if (request.payload.email_new) {}
 
     // React to form validation errors.
     if (reasons.length > 0) {
       // Display the user feedback as an alert.
       alert = {
         type: 'error',
-        message: '<p>Your email settings could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
+        message: `<p>Your email settings could not be saved.</p><ul><li>${reasons.join('</li><li>')}</li></ul>`,
       };
 
       // Show user the profile edit form again.
@@ -717,83 +724,87 @@ module.exports = {
         alert,
         user,
       });
-    } else {
-      // No errors were found, make updates to emails
-
-      // Create a success confirmation.
-      cookie.alert = {
-        type: 'status',
-        message: '<p>Your email settings were saved.</p>',
-      };
-
-      // First, set primary email address using internal method.
-      if (request.payload.email_primary !== user.email) {
-        await UserController.setPrimaryEmail({}, {
-          userId: cookie.userId,
-          email: request.payload.email_primary,
-        }).then((data) => {
-          cookie.alert.message += `<p>Your primary email was set to ${request.payload.email_primary}</p>`;
-        });
-        // TODO: add a .catch() to avoid sploding the server.
-      }
-
-      // If an email address was chosen to be deleted, drop it from the profile
-      if (request.payload.email_delete) {
-        await UserController.dropEmail({}, {
-          userId: cookie.userId,
-          email: request.payload.email_delete,
-        }).then((data) => {
-          cookie.alert.message += `You deleted ${request.payload.email_delete} from your account.`;
-        }).catch((err) => {
-          cookie.alert.type = 'error';
-          cookie.alert.message = `There was a problem removing ${request.payload.email_delete} from your account.`;
-        });
-      }
-
-      // If a confirmation email was requested, send it
-      if (request.payload.email_confirm) {
-        const emailIndex = user.emailIndex(request.payload.email_confirm);
-        const confirmEmail = user.emails[emailIndex];
-        await EmailService.sendValidationEmail(
-          user,
-          confirmEmail.email,
-          confirmEmail._id.toString(),
-          _buildRequestUrl(request, 'verify2')
-        ).then((data) => {
-          cookie.alert.message += 'The confirmation email will arrive in your inbox shortly.';
-        }).catch((err) => {
-          cookie.alert.type = 'error';
-          cookie.alert.message = 'There was a problem sending the confirmation email.';
-        });
-      }
-
-      // If a new email address was submitted, add it to the user profile. The
-      // internal function will handle the confirmation email being sent.
-      if (request.payload.email_new) {
-        await UserController.addEmail({}, {
-          userId: cookie.userId,
-          email: request.payload.email_new,
-          appValidationUrl: _buildRequestUrl(request, 'verify2'),
-        }).then((data) => {
-          cookie.alert.message += `<p>A confirmation email has been sent to ${request.payload.email_new}.</p>`;
-        }).catch((err) => {
-          cookie.alert.type = 'error';
-
-          // Read our error and show some user feedback.
-          if (err.message && err.message.indexOf('Email already exists') !== -1) {
-            cookie.alert.message = `<p>The address ${request.payload.email_new} is already added to your account.</p>`;
-          } else if (err.message && err.message.indexOf('Email is not unique') !== -1) {
-            cookie.alert.message = `<p>The address ${request.payload.email_new} is already registered.</p>`;
-          }
-        });
-      }
-
-      // Finalize the user feedback.
-      request.yar.set('session', cookie);
-
-      // Redirect to profile on success.
-      return reply.redirect('/profile/edit');
     }
+
+    //
+    // No errors were found, make updates to emails
+    //
+
+    // Create a success confirmation.
+    cookie.alert = {
+      type: 'status',
+      message: '<p>Your email settings were saved.</p>',
+    };
+
+    // First, set primary email address using internal method.
+    if (request.payload.email_primary !== user.email) {
+      await UserController.setPrimaryEmail({}, {
+        userId: cookie.userId,
+        email: request.payload.email_primary,
+      }).then(() => {
+        cookie.alert.message += `<p>Your primary email was set to ${request.payload.email_primary}</p>`;
+      }).catch(() => {
+        cookie.alert.type = 'error';
+        cookie.alert.message = '<p>There was a problem setting your primary email address.</p>';
+      });
+    }
+
+    // If an email address was chosen to be deleted, drop it from the profile
+    if (request.payload.email_delete) {
+      await UserController.dropEmail({}, {
+        userId: cookie.userId,
+        email: request.payload.email_delete,
+      }).then(() => {
+        cookie.alert.message += `<p>You deleted ${request.payload.email_delete} from your account.</p>`;
+      }).catch(() => {
+        cookie.alert.type = 'error';
+        cookie.alert.message = `<p>There was a problem removing ${request.payload.email_delete} from your account.</p>`;
+      });
+    }
+
+    // If a confirmation email was requested, send it
+    if (request.payload.email_confirm) {
+      const emailIndex = user.emailIndex(request.payload.email_confirm);
+      const confirmEmail = user.emails[emailIndex];
+      await EmailService.sendValidationEmail(
+        user,
+        confirmEmail.email,
+        confirmEmail._id.toString(),
+        _buildRequestUrl(request, 'verify2'),
+      ).then(() => {
+        cookie.alert.message += '<p>The confirmation email will arrive in your inbox shortly.</p>';
+      }).catch(() => {
+        cookie.alert.type = 'error';
+        cookie.alert.message = '<p>There was a problem sending the confirmation email.</p>';
+      });
+    }
+
+    // If a new email address was submitted, add it to the user profile. The
+    // internal function will handle the confirmation email being sent.
+    if (request.payload.email_new) {
+      await UserController.addEmail({}, {
+        userId: cookie.userId,
+        email: request.payload.email_new,
+        appValidationUrl: _buildRequestUrl(request, 'verify2'),
+      }).then((data) => {
+        cookie.alert.message += `<p>A confirmation email has been sent to ${request.payload.email_new}.</p>`;
+      }).catch((err) => {
+        cookie.alert.type = 'error';
+
+        // Read our error and show some user feedback.
+        if (err.message && err.message.indexOf('Email already exists') !== -1) {
+          cookie.alert.message = `<p>The address ${request.payload.email_new} is already added to your account.</p>`;
+        } else if (err.message && err.message.indexOf('Email is not unique') !== -1) {
+          cookie.alert.message = `<p>The address ${request.payload.email_new} is already registered.</p>`;
+        }
+      });
+    }
+
+    // Finalize the user feedback.
+    request.yar.set('session', cookie);
+
+    // Redirect to profile on success.
+    return reply.redirect('/profile/edit');
   },
 
   // Display the user settings page when user is logged in.
