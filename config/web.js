@@ -124,12 +124,16 @@ module.exports = {
           'self',
           'https://www.google-analytics.com',
           'https://stats.g.doubleclick.net',
+          // API Docs connect to Stage by default
+          'https://stage.api-humanitarian-id.ahconu.org',
         ],
         imgSrc: [
           'self',
           // For 2FA setup, we display a dynamically generated image by inlining
           // base64-encoded QR code. 'data:' allows the image to be displayed.
           'data:',
+          // API Docs show a validator image
+          'https://validator.swagger.io',
         ],
       },
     },
