@@ -13,8 +13,8 @@ module.exports = {
     sourceType: 'module',
   },
   rules: {
+    "no-plusplus": "off",
     "no-underscore-dangle": "off",
     "prefer-destructuring": "off",
-    "no-plusplus": "off",
   },
 };
