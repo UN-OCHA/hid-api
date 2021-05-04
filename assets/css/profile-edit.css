@@ -47,6 +47,9 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.cd-tag {
+  font-size: 0.675em;
+}
 .profile__email .email__address--unconfirmed {
   color: #444;
   font-style: italic;
@@ -60,10 +63,4 @@
 }
 .profile__email .email__delete {
   padding-left: 1em;
-}
-
-.form-actions .cd-button {
-  /* we have a link styled like a back button, plus a real button. they have
-  different line-heights due to normalize.css not resetting links */
-  line-height: 1.15;
 }
