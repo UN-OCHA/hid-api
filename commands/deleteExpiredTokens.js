@@ -1,6 +1,3 @@
-/* eslint no-await-in-loop: "off", no-restricted-syntax: "off", no-console: "off" */
-/* eslint func-names: "off" */
-
 /**
  * @module deleteExpiredTokens
  * @description Deletes the expired OAuth tokens from the database.
@@ -19,7 +16,7 @@ async function run() {
   process.exit();
 }
 
-(async function () {
+(async function iife() {
   await run();
 }()).catch((e) => {
   console.log(e);

@@ -1,5 +1,3 @@
-/* eslint no-await-in-loop: "off", no-restricted-syntax: "off", no-console: "off" */
-/* eslint func-names: "off" */
 /**
  * @module createDummyUser
  * @description Create a test user.
@@ -52,7 +50,7 @@ async function run() {
   process.exit();
 }
 
-(async function () {
+(async function iife() {
   await run();
 }()).catch((e) => {
   console.log(e);
