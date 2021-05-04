@@ -1,12 +1,12 @@
 language: node_js
 node_js:
-  - "10.14.2"
+  - "14"
 
 services:
   - mongodb
 
 script:
-  - yarn run test
+  - npm run lint
 
 notifications:
   email: ops@humanitarianresponse.info
