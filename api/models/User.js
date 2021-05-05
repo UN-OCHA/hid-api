@@ -307,7 +307,9 @@ UserSchema.post('findOne', async function (result, next) {
     return next();
   }
   try {
-    await result.populate(populateClients).execPopulate();
+    if (typeof result.populate === 'function') {
+      await result.populate(populateClients).execPopulate();
+    }
     return next();
   } catch (err) {
     return next(err);
@@ -537,9 +539,7 @@ UserSchema.methods = {
   },
 
   defaultPopulate() {
-    return this
-      .populate(populateClients)
-      .execPopulate();
+    return this.populate(populateClients).execPopulate();
   },
 
   trustedDeviceIndex(ua) {
