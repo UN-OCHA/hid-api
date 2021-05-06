@@ -2,7 +2,6 @@
  * @module ViewController
  * @description Controller for pages that visitors see.
  */
-const URL = require('url');
 const Boom = require('@hapi/boom');
 const Recaptcha = require('recaptcha2');
 const Client = require('../models/Client');
@@ -824,31 +823,7 @@ module.exports = {
     }
 
     // Load user from DB.
-    const user = await User.findOne({ _id: cookie.userId });
-    user.authorizedClients.forEach((client) => {
-      /* eslint no-param-reassign: ["error", { "props": false }] */
-      // We disable the default linter rule because we do want to mutate the
-      // argument passed in, in order to add presentational data to the user's
-      // OAuth Clients list in order to display it.
-      let tmpUrl;
-      if (client.redirectUri) {
-        tmpUrl = client.redirectUri;
-      } else if (typeof client.redirectUrls === 'object') {
-        tmpUrl = client.redirectUrls[0];
-      } else {
-        tmpUrl = false;
-      }
-
-      // If found, format the URL.
-      if (tmpUrl) {
-        const clientUrl = URL.parse(tmpUrl);
-        client.urlDisplay = clientUrl.hostname;
-        client.urlHref = `${clientUrl.protocol}//${clientUrl.hostname}`;
-      } else {
-        client.urlDisplay = '';
-        client.urlHref = '';
-      }
-    });
+    const user = await User.findById(cookie.userId);
 
     // Render settings page.
     return reply.view('settings', {
@@ -868,7 +843,7 @@ module.exports = {
     }
 
     // Load current user from DB.
-    const user = await User.findOne({ _id: cookie.userId });
+    const user = await User.findById(cookie.userId);
 
     // Set up user feedback.
     const alert = {};
