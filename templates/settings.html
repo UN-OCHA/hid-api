@@ -56,7 +56,7 @@
                       <span class="client__organization">Managed by <strong><%= client.organization %></strong></span>
                     <% } %>
                     <% if (!!client.organization && !!client.urlDisplay) { %> — <% } %>
-                    <% if (!!client.urlDisplay) { %>
+                    <% if (!!client.urlDisplay && !!client.urlHref) { %>
                       <a href="<%= client.urlHref %>" class="client__url"><%= client.urlDisplay %></a>
                     <% } %>
                   </span>

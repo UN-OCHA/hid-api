@@ -1,3 +1,7 @@
+/**
+ * @module ViewController
+ * @description Controller for pages that visitors see.
+ */
 const URL = require('url');
 const Boom = require('@hapi/boom');
 const Recaptcha = require('recaptcha2');
@@ -169,9 +173,10 @@ module.exports = {
       siteKey: process.env.RECAPTCHA_PUBLIC_KEY,
       secretKey: process.env.RECAPTCHA_PRIVATE_KEY,
     });
-    const requestUrl = _buildRequestUrl(request, 'verify2');
     const registerLink = _getRegisterLink(request.payload);
     const passwordLink = _getPasswordLink(request.payload);
+    let requestUrl = _buildRequestUrl(request, 'verify2');
+
     try {
       await recaptcha.validate(request.payload['g-recaptcha-response']);
     } catch (err) {
@@ -243,7 +248,7 @@ module.exports = {
       }
 
       // Add a domain from the allow-list.
-      const requestUrl = _buildRequestUrl(request, 'register');
+      requestUrl = _buildRequestUrl(request, 'register');
 
       // Render registration form.
       return reply.view('register', {
@@ -289,7 +294,7 @@ module.exports = {
         cookie.alert = {
           type: 'status',
           message: 'Thank you for confirming your email address. It can now be set as your primary email if you wish.',
-        }
+        };
         request.yar.set('session', cookie);
 
         return reply.redirect('/profile/edit');
@@ -359,10 +364,13 @@ module.exports = {
     request.yar.set('session', {
       hash: request.query.hash, id: request.query.id, time: request.query.time, totp: false,
     });
+
     const user = await User.findOne({ _id: request.query.id });
+
     if (!user) {
       return reply.view('error');
     }
+
     if (user.totp) {
       return reply.view('totp', {
         query: request.query,
@@ -370,9 +378,11 @@ module.exports = {
         alert: false,
       });
     }
+
     request.yar.set('session', {
       hash: request.query.hash, id: request.query.id, time: request.query.time, totp: true,
     });
+
     return reply.view('new_password', {
       query: request.query,
       hash: request.query.hash,
@@ -550,7 +560,7 @@ module.exports = {
 
     // We might need to send feedback. Create an alert/errors variables.
     let alert = {};
-    let reasons = [];
+    const reasons = [];
 
     // Did we get a valid payload object?
     if (!request.payload) {
@@ -586,7 +596,7 @@ module.exports = {
       // Display the user feedback as an alert.
       alert = {
         type: 'error',
-        message: '<p>Your basic profile info could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
+        message: `<p>Your basic profile info could not be saved.</p><ul><li>${reasons.join('</li><li>')}</li></ul>`,
       };
 
       // Show user the profile edit form again.
@@ -594,40 +604,40 @@ module.exports = {
         alert,
         user,
       });
-    } else {
-      // No errors were found, so load the user and update DB with the simple
-      // profile fields that don't need special treatment.
-      //
-      // TODO: replace this with UserController.update().
-      const user = await User.findOneAndUpdate({ _id: cookie.userId }, {
-        given_name: request.payload.given_name,
-        family_name: request.payload.family_name,
-      }, {
-        runValidators: true,
-        new: true,
-      });
-
-      logger.info(
-        `[ViewController->profileEditSubmit] Updated user profile for ${cookie.userId}`,
-        {
-          user: {
-            id: cookie.userId,
-          },
-        },
-      );
-
-      // Create a success confirmation.
-      cookie.alert = {
-        type: 'status',
-        message: '<p>Your profile was saved.</p>',
-      };
-
-      // Finalize the user feedback.
-      request.yar.set('session', cookie);
-
-      // Redirect to profile on success.
-      return reply.redirect('/profile');
     }
+
+    // No errors were found, so load the user and update DB with the simple
+    // profile fields that don't need special treatment.
+    //
+    // TODO: replace this with UserController.update().
+    await User.findOneAndUpdate({ _id: cookie.userId }, {
+      given_name: request.payload.given_name,
+      family_name: request.payload.family_name,
+    }, {
+      runValidators: true,
+      new: true,
+    });
+
+    logger.info(
+      `[ViewController->profileEditSubmit] Updated user profile for ${cookie.userId}`,
+      {
+        user: {
+          id: cookie.userId,
+        },
+      },
+    );
+
+    // Create a success confirmation.
+    cookie.alert = {
+      type: 'status',
+      message: '<p>Your profile was saved.</p>',
+    };
+
+    // Finalize the user feedback.
+    request.yar.set('session', cookie);
+
+    // Redirect to profile on success.
+    return reply.redirect('/profile');
   },
 
   /**
@@ -645,7 +655,7 @@ module.exports = {
 
     // We might need to send feedback. Create an alert/errors variables.
     let alert = {};
-    let reasons = [];
+    const reasons = [];
 
     // Did we get a valid payload object?
     if (!request.payload) {
@@ -669,7 +679,7 @@ module.exports = {
     // First, check if the field even has a value.
     if (request.payload.email_primary !== '') {
       // Loop through emails to find the one they want to mark as primary.
-      user.emails.forEach(thisEmail => {
+      user.emails.forEach((thisEmail) => {
         // We found it, so check if it is already 'validated' in DB.
         if (request.payload.email_primary === thisEmail.email) {
           if (thisEmail.validated) {
@@ -690,6 +700,7 @@ module.exports = {
 
     // If an email was chosen to receive a confirmation link.
     if (typeof request.payload.email_confirm !== 'undefined') {
+      // eslint-disable-next-line max-len
       const emailIsConfirmedAlready = user.emails.filter(thisEmail => thisEmail.email === request.payload.email_confirm && thisEmail.validated);
       if (emailIsConfirmedAlready.length > 0) {
         reasons.push(`You attempted to confirm ${request.payload.email_confirm}, but it doesn't need confirmation.`);
@@ -698,14 +709,14 @@ module.exports = {
 
     // No special validation needed for new emails at this time.
     // If we wanted to validate, do it here.
-    if (request.payload.email_new) {}
+    // if (request.payload.email_new) {}
 
     // React to form validation errors.
     if (reasons.length > 0) {
       // Display the user feedback as an alert.
       alert = {
         type: 'error',
-        message: '<p>Your email settings could not be saved.</p><ul><li>' + reasons.join('</li><li>') + '</li></ul>',
+        message: `<p>Your email settings could not be saved.</p><ul><li>${reasons.join('</li><li>')}</li></ul>`,
       };
 
       // Show user the profile edit form again.
@@ -713,84 +724,87 @@ module.exports = {
         alert,
         user,
       });
-    } else {
-      // No errors were found, make updates to emails
-
-      // Create a success confirmation.
-      cookie.alert = {
-        type: 'status',
-        message: '<p>Your email settings were saved.</p>',
-      };
-
-      // First, set primary email address using internal method.
-      if (request.payload.email_primary !== user.email) {
-        await UserController.setPrimaryEmail({}, {
-          userId: cookie.userId,
-          email: request.payload.email_primary,
-        }).then(data => {
-          cookie.alert.message += `<p>Your primary email was set to ${request.payload.email_primary}</p>`;
-        });
-        // TODO: add a .catch() to avoid sploding the server.
-      }
-
-      // If an email address was chosen to be deleted, drop it from the profile
-      if (request.payload.email_delete) {
-        await UserController.dropEmail({}, {
-          userId: cookie.userId,
-          email: request.payload.email_delete,
-        }).then(data => {
-          cookie.alert.message += `You deleted ${request.payload.email_delete} from your account.`;
-        }).catch(err => {
-          cookie.alert.type = 'error';
-          cookie.alert.message = `There was a problem removing ${request.payload.email_delete} from your account.`;
-        });
-      }
-
-      // If a confirmation email was requested, send it
-      if (request.payload.email_confirm) {
-        const emailIndex = user.emailIndex(request.payload.email_confirm);
-        const confirmEmail = user.emails[emailIndex];
-        await EmailService.sendValidationEmail(
-          user,
-          confirmEmail.email,
-          confirmEmail._id.toString(),
-          _buildRequestUrl(request, 'verify2')
-        ).then(data => {
-          cookie.alert.message += 'The confirmation email will arrive in your inbox shortly.';
-        }).catch(err => {
-          cookie.alert.type = 'error';
-          cookie.alert.message = 'There was a problem sending the confirmation email.';
-        });
-      }
-
-      // If a new email address was submitted, add it to the user profile. The
-      // internal function will handle the confirmation email being sent.
-      if (request.payload.email_new) {
-        await UserController.addEmail({}, {
-          userId: cookie.userId,
-          email: request.payload.email_new,
-          appValidationUrl: _buildRequestUrl(request, 'verify2'),
-        }).then(data => {
-          cookie.alert.message += `<p>A confirmation email has been sent to ${request.payload.email_new}.</p>`;
-        }).catch(err => {
-          cookie.alert.type = 'error';
-
-          // Read our error and show some user feedback.
-          if (err.message && err.message.indexOf('Email already exists') !== -1) {
-            cookie.alert.message = `<p>The address ${request.payload.email_new} is already added to your account.</p>`;
-          }
-          else if (err.message && err.message.indexOf('Email is not unique') !== -1) {
-            cookie.alert.message = `<p>The address ${request.payload.email_new} is already registered.</p>`;
-          }
-        });
-      }
-
-      // Finalize the user feedback.
-      request.yar.set('session', cookie);
-
-      // Redirect to profile on success.
-      return reply.redirect('/profile/edit');
     }
+
+    //
+    // No errors were found, make updates to emails
+    //
+
+    // Create a success confirmation.
+    cookie.alert = {
+      type: 'status',
+      message: '<p>Your email settings were saved.</p>',
+    };
+
+    // First, set primary email address using internal method.
+    if (request.payload.email_primary !== user.email) {
+      await UserController.setPrimaryEmail({}, {
+        userId: cookie.userId,
+        email: request.payload.email_primary,
+      }).then(() => {
+        cookie.alert.message += `<p>Your primary email was set to ${request.payload.email_primary}</p>`;
+      }).catch(() => {
+        cookie.alert.type = 'error';
+        cookie.alert.message = '<p>There was a problem setting your primary email address.</p>';
+      });
+    }
+
+    // If an email address was chosen to be deleted, drop it from the profile
+    if (request.payload.email_delete) {
+      await UserController.dropEmail({}, {
+        userId: cookie.userId,
+        email: request.payload.email_delete,
+      }).then(() => {
+        cookie.alert.message += `<p>You deleted ${request.payload.email_delete} from your account.</p>`;
+      }).catch(() => {
+        cookie.alert.type = 'error';
+        cookie.alert.message = `<p>There was a problem removing ${request.payload.email_delete} from your account.</p>`;
+      });
+    }
+
+    // If a confirmation email was requested, send it
+    if (request.payload.email_confirm) {
+      const emailIndex = user.emailIndex(request.payload.email_confirm);
+      const confirmEmail = user.emails[emailIndex];
+      await EmailService.sendValidationEmail(
+        user,
+        confirmEmail.email,
+        confirmEmail._id.toString(),
+        _buildRequestUrl(request, 'verify2'),
+      ).then(() => {
+        cookie.alert.message += '<p>The confirmation email will arrive in your inbox shortly.</p>';
+      }).catch(() => {
+        cookie.alert.type = 'error';
+        cookie.alert.message = '<p>There was a problem sending the confirmation email.</p>';
+      });
+    }
+
+    // If a new email address was submitted, add it to the user profile. The
+    // internal function will handle the confirmation email being sent.
+    if (request.payload.email_new) {
+      await UserController.addEmail({}, {
+        userId: cookie.userId,
+        email: request.payload.email_new,
+        appValidationUrl: _buildRequestUrl(request, 'verify2'),
+      }).then(() => {
+        cookie.alert.message += `<p>A confirmation email has been sent to ${request.payload.email_new}.</p>`;
+      }).catch((err) => {
+        cookie.alert.type = 'error';
+
+        // Read our error and show some user feedback.
+        if (err.message && err.message.indexOf('Email already exists') !== -1) {
+          cookie.alert.message = `<p>The address ${request.payload.email_new} is already added to your account.</p>`;
+        } else if (err.message && err.message.indexOf('Email is not unique') !== -1) {
+          cookie.alert.message = `<p>The address ${request.payload.email_new} is already registered.</p>`;
+        }
+      });
+    }
+
+    // Finalize the user feedback.
+    request.yar.set('session', cookie);
+
+    // Redirect to profile on success.
+    return reply.redirect('/profile/edit');
   },
 
   // Display the user settings page when user is logged in.
@@ -805,21 +819,35 @@ module.exports = {
     let alert;
     if (cookie.alert) {
       alert = cookie.alert;
-      delete(cookie.alert);
+      delete cookie.alert;
       request.yar.set('session', cookie);
     }
 
     // Load user from DB.
     const user = await User.findOne({ _id: cookie.userId });
-    user.authorizedClients.forEach(client => {
-      const tmpUrl = client.redirectUri
-        ? client.redirectUri
-        : typeof client.redirectUrls === 'object'
-          ? client.redirectUrls[0]
-          : '';
-      const clientUrl = URL.parse(tmpUrl);
-      client.urlDisplay = clientUrl.hostname;
-      client.urlHref = `${clientUrl.protocol}//${clientUrl.hostname}`;
+    user.authorizedClients.forEach((client) => {
+      /* eslint no-param-reassign: ["error", { "props": false }] */
+      // We disable the default linter rule because we do want to mutate the
+      // argument passed in, in order to add presentational data to the user's
+      // OAuth Clients list in order to display it.
+      let tmpUrl;
+      if (client.redirectUri) {
+        tmpUrl = client.redirectUri;
+      } else if (typeof client.redirectUrls === 'object') {
+        tmpUrl = client.redirectUrls[0];
+      } else {
+        tmpUrl = false;
+      }
+
+      // If found, format the URL.
+      if (tmpUrl) {
+        const clientUrl = URL.parse(tmpUrl);
+        client.urlDisplay = clientUrl.hostname;
+        client.urlHref = `${clientUrl.protocol}//${clientUrl.hostname}`;
+      } else {
+        client.urlDisplay = '';
+        client.urlHref = '';
+      }
     });
 
     // Render settings page.
@@ -843,8 +871,8 @@ module.exports = {
     const user = await User.findOne({ _id: cookie.userId });
 
     // Set up user feedback.
-    let reasons = [];
-    let alert = {};
+    const alert = {};
+    const reasons = [];
 
     // Did they try to delete an OAuth client?
     if (request.payload && request.payload.oauth_client_revoke) {
@@ -855,35 +883,36 @@ module.exports = {
       const objectIdRegex = /^[0-9a-fA-F]{24}$/;
       if (objectIdRegex.test(request.payload.oauth_client_revoke)) {
         // Data seems valid. We will attempt to remove from profile.
+        // eslint-disable-next-line max-len
         const clientExists = user.authorizedClients.some(client => client._id.toString() === request.payload.oauth_client_revoke);
         if (clientExists) {
           // We'll try to revoke the client.
         } else {
-          reasons.push("We couldn't find the OAuth Client on your profile.");
+          reasons.push('We couldn\'t find the OAuth Client on your profile.');
         }
       } else {
-        reasons.push("We didn't recognize the ID for that OAuth Client. Please try to revoke the OAuth Client again.");
+        reasons.push('We didn\'t recognize the ID for that OAuth Client. Please try to revoke the OAuth Client again.');
       }
     }
 
     // Did we find validation errors?
     if (reasons.length > 0) {
       alert.type = 'error';
-      alert.message = `<p>We couldn't revoke the OAuth Client you requested.</p><p>${ reasons.join('<br>') }</p>`;
+      alert.message = `<p>We couldn't revoke the OAuth Client you requested.</p><p>${reasons.join('<br>')}</p>`;
     } else {
-      // No validation errors.
-      // Perform DB operation and provide user feedback.
+      // No validation errors. Perform DB operation and provide user feedback.
+      // eslint-disable-next-line max-len
       const revokedClient = user.authorizedClients.filter(client => client._id.toString() === request.payload.oauth_client_revoke)[0];
       await UserController.revokeOauthClient({}, {
         userId: cookie.userId,
         clientId: request.payload.oauth_client_revoke,
-      }).then(data => {
+      }).then(() => {
         alert.type = 'status';
         alert.message = `
           <p>You successfully revoked <strong>${revokedClient.name}</strong> from your profile.</p>
           <p>If you wish to restore access you can log into that website again using HID.</p>
         `;
-      }).catch(err => {
+      }).catch((err) => {
         alert.type = 'error';
         alert.message = err.message;
       });
@@ -916,7 +945,7 @@ module.exports = {
     let alert;
     if (cookie.alert) {
       alert = cookie.alert;
-      delete(cookie.alert);
+      delete cookie.alert;
       request.yar.set('session', cookie);
     }
 
@@ -924,7 +953,7 @@ module.exports = {
     let totpPrompt = false;
     if (cookie.totpPrompt) {
       totpPrompt = true;
-      delete(cookie.totpPrompt);
+      delete cookie.totpPrompt;
       request.yar.set('session', cookie);
     }
 
@@ -951,8 +980,8 @@ module.exports = {
     }
 
     // Set up user feedback
-    let alert = {};
-    let reasons = [];
+    const alert = {};
+    const reasons = [];
 
     // Load current user from DB.
     const user = await User.findOne({ _id: cookie.userId });
@@ -962,7 +991,7 @@ module.exports = {
     await AuthPolicy.isTOTPEnabledAndValid({}, {
       user,
       totp: token,
-    }).then(data => {
+    }).then(() => {
       // Since all users (whether they use TOTP or not) will make it to this
       // success stage, check cookie and see if the form data is here.
       //
@@ -975,9 +1004,9 @@ module.exports = {
       }
 
       // Now clean up the cookie.
-      delete(cookie.totpPrompt);
-      delete(cookie.formData);
-    }).catch(err => {
+      delete cookie.totpPrompt;
+      delete cookie.formData;
+    }).catch((err) => {
       // Cookie the form data so we prompt for TOTP without either populating
       // the form (and thereby printing their password in HTML) or making the
       // person re-enter the form data. The cookie is encrypted and only the
@@ -998,7 +1027,7 @@ module.exports = {
       // Display error about invalid TOTP.
       if (err.message.indexOf('Invalid') !== -1) {
         alert.type = 'error';
-        reasons.push('Your two-factor authentication code was invalid.')
+        reasons.push('Your two-factor authentication code was invalid.');
       } else {
         reasons.push('Enter your two-factor authentication to update the password.');
       }
@@ -1006,7 +1035,12 @@ module.exports = {
 
     // Basic form validation. We only run this if the cookie.formData is empty.
     if (!cookie.formData) {
-      if (request.payload && request.payload.old_password && request.payload.new_password && request.payload.confirm_password) {
+      if (
+        request.payload
+        && request.payload.old_password
+        && request.payload.new_password
+        && request.payload.confirm_password
+      ) {
         if (request.payload.new_password === request.payload.confirm_password) {
           // We have the data we need to attempt password update.
         } else {
@@ -1021,17 +1055,17 @@ module.exports = {
     // If there are errors/warnings with submission, display them.
     if (reasons.length > 0) {
       alert.type = alert.type === 'error' ? 'error' : 'warning';
-      alert.message = `<p>${ reasons.join('</p><p>') }</p>`;
+      alert.message = `<p>${reasons.join('</p><p>')}</p>`;
     } else {
       // Attempt password update.
       await UserController.updatePassword(request, reply, {
         userId: cookie.userId,
         old_password: request.payload.old_password,
         new_password: request.payload.new_password,
-      }).then(data => {
+      }).then(() => {
         alert.type = 'status';
         alert.message = 'Your password has been updated.';
-      }).catch(err => {
+      }).catch((err) => {
         // Set error message.
         alert.type = 'error';
         alert.message = err.message;
@@ -1063,7 +1097,7 @@ module.exports = {
     let alert;
     if (cookie.alert) {
       alert = cookie.alert;
-      delete(cookie.alert);
+      delete cookie.alert;
       request.yar.set('session', cookie);
     }
 
@@ -1071,7 +1105,7 @@ module.exports = {
     let totpPrompt = false;
     if (cookie.totpPrompt) {
       totpPrompt = true;
-      delete(cookie.totpPrompt);
+      delete cookie.totpPrompt;
       request.yar.set('session', cookie);
     }
 
@@ -1079,7 +1113,7 @@ module.exports = {
     let step = 0;
     if (cookie.step) {
       step = cookie.step;
-      delete(cookie.step);
+      delete cookie.step;
       request.yar.set('session', cookie);
     }
 
@@ -1087,15 +1121,15 @@ module.exports = {
     let formData;
     if (cookie.formData) {
       formData = cookie.formData;
-      delete(cookie.formData);
+      delete cookie.formData;
       request.yar.set('session', cookie);
     }
 
     // Status is a user-facing label
-    let status = user.totp ? 'enabled' : 'disabled';
+    const status = user.totp ? 'enabled' : 'disabled';
 
     // Action is a machine-facing value in the HTML forms.
-    let action = user.totp ? 'disable' : 'enable';
+    const action = user.totp ? 'disable' : 'enable';
 
     // Render settings-security page.
     return reply.view('settings-security', {
@@ -1120,8 +1154,8 @@ module.exports = {
     }
 
     // Set up all our variables for state management
-    let alert = {};
-    let reasons = [];
+    const alert = {};
+    const reasons = [];
     let action = false;
 
     // Load current user from DB.
@@ -1140,7 +1174,7 @@ module.exports = {
           user: {
             id: user.id,
             email: user.email,
-          }
+          },
         },
       );
     }
@@ -1148,9 +1182,8 @@ module.exports = {
     // Check for validation problems.
     if (reasons.length > 0) {
       alert.type = alert.type === 'error' ? 'error' : 'warning';
-      alert.message = `<p>${ reasons.join('</p><p>' )}</p>`;
+      alert.message = `<p>${reasons.join('</p><p>')}</p>`;
     } else {
-
       // User is starting process to disable 2FA.
       if (action === 'disable') {
         cookie.step = 1;
@@ -1158,15 +1191,13 @@ module.exports = {
 
       // User is disabling 2FA.
       if (action === 'totp-disable') {
-
         // Ensure token was valid before disabling 2FA.
         const token = request.payload['x-hid-totp'];
-        await AuthPolicy.isTOTPValid(user, token).then(async data => {
-
+        await AuthPolicy.isTOTPValid(user, token).then(async () => {
           // Now disable the 2FA.
           await TOTPController.disable({}, {
             user,
-          }).then(data => {
+          }).then(() => {
             // If we made it here, 2FA is already disabled.
             alert.type = 'status';
             alert.message = `
@@ -1174,11 +1205,10 @@ module.exports = {
               <p>You should destroy the HID entry on your authenticator app, as well as any backup codes you had. If you wish to re-enable 2FA, you may do so at any time.</p>
             `;
             cookie.step = 0;
-          }).catch(err => {
+          }).catch((err) => {
             throw err;
           });
-
-        }).catch(err => {
+        }).catch((err) => {
           // Display error about invalid TOTP, or pass message along.
           alert.type = 'error';
           if (err.message.indexOf('Invalid') !== -1) {
@@ -1193,7 +1223,7 @@ module.exports = {
       if (action === 'enable') {
         await TOTPController.generateConfig({}, {
           user,
-        }).then(data => {
+        }).then((data) => {
           // Prepare to display configuration to user.
           cookie.formData = {
             totpConf: {
@@ -1204,7 +1234,7 @@ module.exports = {
 
           // Proceed to step 1.
           cookie.step = 1;
-        }).catch(err => {
+        }).catch((err) => {
           alert.type = 'error';
           alert.message = err.message;
         });
@@ -1214,37 +1244,35 @@ module.exports = {
       if (action === 'totp-enable') {
         // Ensure token is valid before enabling 2FA.
         const token = request.payload['x-hid-totp'];
-        await AuthPolicy.isTOTPValid(user, token).then(async data => {
-
+        await AuthPolicy.isTOTPValid(user, token).then(async () => {
           // Enable 2FA for this user.
           await TOTPController.enable({}, {
             user,
-          }).then(async data => {
+          }).then(async () => {
             // If we made it here, 2FA is enabled! Immediately issue backup codes
             // to be displayed alongside the success message.
             await TOTPController.generateBackupCodes({}, {
               user,
-            }).then(data => {
+            }).then((data) => {
               // Prepare to display backup codes to user.
-              delete(cookie.formData);
+              delete cookie.formData;
               cookie.formData = {
                 backupCodes: data,
               };
 
               // Proceed to step 2.
               cookie.step = 2;
-            }).catch(err => {
+            }).catch((err) => {
               throw err;
-            })
-          }).catch(err => {
+            });
+          }).catch((err) => {
             throw err;
           });
-
-        }).catch(err => {
+        }).catch((err) => {
           // Display error about invalid TOTP, or pass message along.
           alert.type = 'error';
           if (err.message.indexOf('Invalid') !== -1) {
-            alert.message = 'Your two-factor authentication code was invalid.';
+            alert.message = '<p>Your two-factor authentication code was invalid.</p>';
           } else {
             alert.message = err.message;
           }
@@ -1278,7 +1306,7 @@ module.exports = {
     let alert;
     if (cookie.alert) {
       alert = cookie.alert;
-      delete(cookie.alert);
+      delete cookie.alert;
       request.yar.set('session', cookie);
     }
 
@@ -1286,7 +1314,7 @@ module.exports = {
     let totpPrompt = false;
     if (cookie.totpPrompt) {
       totpPrompt = true;
-      delete(cookie.totpPrompt);
+      delete cookie.totpPrompt;
       request.yar.set('session', cookie);
     }
 
@@ -1302,31 +1330,28 @@ module.exports = {
    * User settings: handle submissions to delete account
    */
   async settingsDeleteSubmit(request, reply) {
-    // If the user is not authenticated, redirect to the login page
-    //
-    // NOTE: normally we use const, but using let here since cookie will be
-    //       overwritten if the user successfully deletes their account.
-    let cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
-      return reply.redirect('/');
-    }
-
     try {
+      // If the user is not authenticated, redirect to the login page
+      const cookie = request.yar.get('session');
+      if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+        return reply.redirect('/');
+      }
+
       // Load current user from DB.
       const user = await User.findOne({ _id: cookie.userId });
 
       // Set up user feedback
-      let alert = {};
+      const alert = {};
       let reasons = [];
-      let destination = '/settings/delete';
 
       // Validate form submission for non-admins. There are two possibilities:
       // - cookie.formData implies they already validated email and are submitting TOTP
+      const deletionConfirmed = cookie.formData && cookie.formData.primary_email === user.email;
       // - otherwise check form submission and verify input
-      if (
-        cookie.formData && cookie.formData.primary_email === user.email
-        || request.payload && request.payload.primary_email && request.payload.primary_email === user.email
-      ) {
+      // eslint-disable-next-line max-len
+      const payloadIsValid = request.payload && request.payload.primary_email && request.payload.primary_email === user.email;
+
+      if (deletionConfirmed || payloadIsValid) {
         // form was validated
       } else {
         reasons.push('Please enter your <strong>primary email address</strong> to confirm that you want to delete your account.');
@@ -1338,51 +1363,49 @@ module.exports = {
         // In this case, we want to wipe the old feedback.
         reasons = [];
         reasons.push('Admins cannot delete their accounts. Remove your own admin status before deleting the account.');
-      } else {
+      } else if (reasons.length === 0) {
         // If user is NOT admin, and form was validated, then check if 2FA is
         // enabled and enforce.
-        if (reasons.length === 0) {
-          const token = request.payload && request.payload['x-hid-totp'];
-          await AuthPolicy.isTOTPEnabledAndValid({}, {
-            user,
-            totp: token,
-          }).then(data => {
-            // Clean up the cookie for 2FA users.
-            delete(cookie.totpPrompt);
-            delete(cookie.formData);
-          }).catch(err => {
-            // Cookie the form data so we prompt for TOTP without populating the
-            // form, potentially allowing someone to alter their previous input
-            // by editing DOM, or forcing them re-enter the email confirmation.
-            //
-            // We wrap the assignment in a conditional to allow for multiple attempts
-            // at entering the TOTP. If we blindly set the request data, a second TOTP
-            // attempt will erase formDara and set everything to empty strings.
-            cookie.totpPrompt = true;
-            if (!cookie.formData) {
-              cookie.formData = {
-                primary_email: request.payload.primary_email,
-              };
-            }
+        const token = request.payload && request.payload['x-hid-totp'];
+        await AuthPolicy.isTOTPEnabledAndValid({}, {
+          user,
+          totp: token,
+        }).then(() => {
+          // Clean up the cookie for 2FA users.
+          delete cookie.totpPrompt;
+          delete cookie.formData;
+        }).catch((err) => {
+          // Cookie the form data so we prompt for TOTP without populating the
+          // form, potentially allowing someone to alter their previous input
+          // by editing DOM, or forcing them re-enter the email confirmation.
+          //
+          // We wrap the assignment in a conditional to allow for multiple attempts
+          // at entering the TOTP. If we blindly set the request data, a second TOTP
+          // attempt will erase formDara and set everything to empty strings.
+          cookie.totpPrompt = true;
+          if (!cookie.formData) {
+            cookie.formData = {
+              primary_email: request.payload.primary_email,
+            };
+          }
 
-            // Display error about invalid TOTP.
-            //
-            // If we made it this far, the other feedback isn't necessary, so we
-            // clear the reasons array before setting TOTP feedback.
-            reasons = [];
-            if (err.message.indexOf('Invalid') !== -1) {
-              alert.type = 'error';
-              reasons.push('Your two-factor authentication code was invalid.')
-            } else {
-              reasons.push('Enter your two-factor authentication code to delete your account.');
-            }
-          });
-        }
+          // Display error about invalid TOTP.
+          //
+          // If we made it this far, the other feedback isn't necessary, so we
+          // clear the reasons array before setting TOTP feedback.
+          reasons = [];
+          if (err.message.indexOf('Invalid') !== -1) {
+            alert.type = 'error';
+            reasons.push('Your two-factor authentication code was invalid.');
+          } else {
+            reasons.push('Enter your two-factor authentication code to delete your account.');
+          }
+        });
       }
 
       if (reasons.length > 0) {
         alert.type = alert.type === 'error' ? 'error' : 'warning';
-        alert.message = `<p>${ reasons.join('</p><p>') }</p>`;
+        alert.message = `<p>${reasons.join('</p><p>')}</p>`;
       } else {
         // So long, and thanks for all the fish!
         await user.remove();
@@ -1419,16 +1442,20 @@ module.exports = {
       request.yar.set('session', cookie);
 
       // Always redirect, to avoid resubmitting when user refreshes browser.
-      return reply.redirect(destination);
+      return reply.redirect('/settings/delete');
     } catch (err) {
       logger.error(
         err.message,
         {
           fail: true,
-        }
+          stack_trace: err.stack,
+        },
       );
 
       // TODO: show something, e.g. message.html
     }
+
+    // If we somehow fall through, redirect to homepage.
+    return reply.redirect('/');
   },
 };

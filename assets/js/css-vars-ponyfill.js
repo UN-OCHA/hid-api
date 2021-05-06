@@ -1,3 +1,4 @@
+/* eslint-disable */
 /*!
  * css-vars-ponyfill
  * v2.4.2

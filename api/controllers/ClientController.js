@@ -1,3 +1,7 @@
+/**
+ * @module ClientController
+ * @description Controller for OAuth Client management.
+ */
 const Boom = require('@hapi/boom');
 const Client = require('../models/Client');
 const HelperService = require('../services/HelperService');
@@ -5,12 +9,7 @@ const config = require('../../config/env')[process.env.NODE_ENV];
 
 const { logger } = config;
 
-/**
- * @module ClientController
- * @description Controller for Clients.
- */
 module.exports = {
-
   /*
    * @api [post] /client
    * tags:
@@ -130,7 +129,11 @@ module.exports = {
    *     description: Requested client not found.
    */
   async find(request, reply, internalArgs) {
-    let user, options, criteria, clientId, sort;
+    let user;
+    let options;
+    let criteria;
+    let clientId;
+    let sort;
 
     if (internalArgs && internalArgs.user) {
       user = internalArgs.user;
@@ -149,7 +152,7 @@ module.exports = {
     // If we have a specific Client ID, try to look it up.
     if (clientId) {
       criteria._id = clientId;
-      const result = await Client.findOne(criteria).then(client => {
+      const result = await Client.findOne(criteria).then((client) => {
         logger.info(
           `[ClientController->find] Admin viewed a single OAuth Client with ID ${client._id}`,
           {
@@ -162,7 +165,7 @@ module.exports = {
             oauth: {
               client_id: client.id,
             },
-          }
+          },
         );
 
         return client;
@@ -203,7 +206,7 @@ module.exports = {
           email: user.email,
           admin: user.is_admin,
         },
-      }
+      },
     );
 
     // Send response.
@@ -244,7 +247,8 @@ module.exports = {
    *     description: Requested client not found.
    */
   async update(request, internalArgs) {
-    let clientId, clientData;
+    let clientId;
+    let clientData;
 
     if (internalArgs && internalArgs.clientId && internalArgs.clientData) {
       clientId = internalArgs.clientId;
@@ -268,7 +272,7 @@ module.exports = {
     client.environment = clientData.environment;
 
     // Write to DB.
-    const result = await client.save().then(data => {
+    const result = await client.save().then(() => {
       logger.info(
         '[ClientController->update] Updated client',
         {
@@ -278,7 +282,7 @@ module.exports = {
       );
 
       return client;
-    }).catch(err => {
+    }).catch((err) => {
       throw Boom.badRequest(err.message);
     });
 

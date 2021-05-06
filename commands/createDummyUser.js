@@ -1,5 +1,3 @@
-/* eslint no-await-in-loop: "off", no-restricted-syntax: "off", no-console: "off" */
-/* eslint func-names: "off" */
 /**
  * @module createDummyUser
  * @description Create a test user.
@@ -10,7 +8,7 @@ const mongoose = require('mongoose');
 const args = require('yargs').argv;
 const app = require('../');
 
-const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
+const store = app.config.env[process.env.NODE_ENV].database.store;
 mongoose.connect(store.uri, store.options);
 
 const User = require('../api/models/User');
@@ -52,7 +50,7 @@ async function run() {
   process.exit();
 }
 
-(async function () {
+(async function iife() {
   await run();
 }()).catch((e) => {
   console.log(e);

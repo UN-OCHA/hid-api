@@ -3,14 +3,7 @@
  * @description CRUD controller for users.
  */
 const Boom = require('@hapi/boom');
-const qs = require('qs');
-const ejs = require('ejs');
-const axios = require('axios');
-const moment = require('moment');
-const acceptLanguage = require('accept-language');
 const validator = require('validator');
-
-const hidAccount = '5b2128e754a0d6046d6c69f2';
 const User = require('../models/User');
 const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
@@ -229,7 +222,7 @@ module.exports = {
           user: {
             id: record._id.toString(),
           },
-        }
+        },
       );
       throw Boom.badRequest(`This user already exists. user_id=${record._id.toString()}`);
     }
@@ -281,8 +274,6 @@ module.exports = {
    *     description: Requested user not found.
    */
   async find(request, reply) {
-    const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
-
     if (request.params.id) {
       const criteria = { _id: request.params.id };
 
@@ -301,7 +292,7 @@ module.exports = {
         user.sanitize(request.auth.credentials);
 
         logger.info(
-          `[UserController->find] Displaying one user by ID`,
+          '[UserController->find] Displaying one user by ID',
           {
             user: {
               id: user.id,
@@ -329,7 +320,6 @@ module.exports = {
     //
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
-    const childAttributes = [];
 
     // Hide hidden profile to non-admins
     if (request.auth.credentials && !request.auth.credentials.is_admin) {
@@ -585,17 +575,18 @@ module.exports = {
    *     description: Requested user not found.
    */
   async updatePassword(request, reply, internalArgs) {
-    let userId, old_password, new_password, confirm_password;
+    let userId;
+    let oldPassword;
+    let newPassword;
 
     if (internalArgs) {
       userId = internalArgs.userId;
-      old_password = internalArgs.old_password;
-      new_password = internalArgs.new_password;
-      confirm_password = internalArgs.confirm_password;
+      oldPassword = internalArgs.old_password;
+      newPassword = internalArgs.new_password;
     } else {
       userId = request.params.id;
-      old_password = request.payload.old_password;
-      new_password = request.payload.new_password;
+      oldPassword = request.payload.old_password;
+      newPassword = request.payload.new_password;
     }
 
     // Look up user in DB.
@@ -614,22 +605,22 @@ module.exports = {
     }
 
     // Are both password parameters present?
-    if (!old_password || !new_password) {
+    if (!oldPassword || !newPassword) {
       logger.warn(
-        `[UserController->updatePassword] Could not update user password for user ${userId}. Request is missing parameters (old or new password)`,
+        `[UserController->updatePassword] Could not update user password for user ${userId}. Request is missing parameters (old_password or new_password)`,
         {
           request,
           security: true,
           fail: true,
         },
       );
-      throw Boom.badRequest('Request is missing parameters (old or new password)');
+      throw Boom.badRequest('Request is missing parameters (old_password or new_password)');
     }
 
     // Business logic: is the new password strong enough?
-    if (!User.isStrongPassword(new_password)) {
+    if (!User.isStrongPassword(newPassword)) {
       logger.warn(
-        `[UserController->updatePassword] Could not update user password for user ${userId}. New password is not strong enough (v3)`,
+        `[UserController->updatePassword] Could not update user password for user ${userId}. New password is not strong enough.`,
         {
           request,
           security: true,
@@ -640,9 +631,9 @@ module.exports = {
     }
 
     // Was the current password entered correctly?
-    if (user.validPassword(old_password)) {
+    if (user.validPassword(oldPassword)) {
       // Business logic: is the new password different than the old one?
-      if (old_password === new_password) {
+      if (oldPassword === newPassword) {
         logger.warn(
           `[UserController->updatePassword] Could not update user password for user ${userId}. New password is the same as old password.`,
           {
@@ -655,7 +646,7 @@ module.exports = {
       }
 
       // Proceed with password update.
-      user.password = User.hashPassword(new_password);
+      user.password = User.hashPassword(newPassword);
       user.lastModified = new Date();
       await user.save();
       logger.info(
@@ -676,6 +667,7 @@ module.exports = {
       );
       throw Boom.badRequest('The old password is wrong');
     }
+
     return reply.response().code(204);
   },
 
@@ -812,7 +804,7 @@ module.exports = {
         user: {
           id: userId,
           email,
-        }
+        },
       },
     );
 
@@ -867,6 +859,7 @@ module.exports = {
     let email = '';
     let appValidationUrl = '';
 
+    // eslint-disable-next-line max-len
     if (internalArgs && internalArgs.userId && internalArgs.email && internalArgs.appValidationUrl) {
       userId = internalArgs.userId;
       email = internalArgs.email;
@@ -953,7 +946,11 @@ module.exports = {
       throw Boom.badRequest('Email is not unique');
     }
 
-    const data = { email: email, type: 'Work', validated: false };
+    const data = {
+      email,
+      type: 'Work',
+      validated: false,
+    };
     record.emails.push(data);
     record.lastModified = new Date();
 
@@ -1032,7 +1029,8 @@ module.exports = {
    *     description: Requested user not found.
    */
   async dropEmail(request, internalArgs) {
-    let userId, email;
+    let userId;
+    let email;
 
     if (internalArgs && internalArgs.userId && internalArgs.email) {
       userId = internalArgs.userId;
@@ -1391,6 +1389,7 @@ module.exports = {
       const emailIsPrimary = record.email === request.payload.email.toLowerCase();
 
       // Verify that the email has already been validated
+      // eslint-disable-next-line max-len
       const secondaryEmailIsValidated = record.emails.some(e => e.email === request.payload.email.toLowerCase() && e.validated === true);
 
       // IF the email is primary OR it's a __validated__ secondary email
@@ -1571,7 +1570,8 @@ module.exports = {
    *     description: Requested user not found.
    */
   async revokeOauthClient(request, internalArgs) {
-    let userId, clientId;
+    let userId;
+    let clientId;
 
     if (internalArgs && internalArgs.userId && internalArgs.clientId) {
       userId = internalArgs.userId;
@@ -1644,12 +1644,13 @@ module.exports = {
 
     // Validation passed, user exists, client exists on user, so let's remove it.
     try {
+      // eslint-disable-next-line max-len
       const remainingClients = user.authorizedClients.filter(client => client._id.toString() !== clientId);
       user.authorizedClients = remainingClients;
       await user.save();
 
       logger.info(
-        `[UserController->revokeOauthClient] Successfully revoked OAuth Client from user.`,
+        '[UserController->revokeOauthClient] Successfully revoked OAuth Client from user.',
         {
           security: true,
           user: {

@@ -83,7 +83,8 @@ module.exports = {
    * must answer this challenge. Users without 2FA enabled will pass through.
    */
   async isTOTPEnabledAndValid(request, internalArgs) {
-    let user, totp;
+    let user;
+    let totp;
 
     if (internalArgs && internalArgs.user) {
       user = internalArgs.user;

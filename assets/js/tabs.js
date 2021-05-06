@@ -27,7 +27,7 @@
   tablist.setAttribute('role', 'tablist');
 
   // Add semantics are remove user focusability for each tab
-  Array.prototype.forEach.call(tabs, function (tab, i) {
+  Array.prototype.forEach.call(tabs, function removeFocusability(tab, i) {
     tab.setAttribute('role', 'tab');
     tab.setAttribute('id', 'tab' + (i + 1));
     // we are treating our tab-looking links like links. allow tabbing.
@@ -49,21 +49,31 @@
     //   let index = Array.prototype.indexOf.call(tabs, e.currentTarget);
     //   // Work out which key the user is pressing and
     //   // Calculate the new tab's index where appropriate
-    //   let dir = e.which === 37 ? index - 1 : e.which === 39 ? index + 1 : e.which === 40 ? 'down' : null;
+    //   let dir = e.which === 37
+    //     ? index - 1
+    //     : e.which === 39
+    //       ? index + 1
+    //       : e.which === 40
+    //         ? 'down'
+    //         : null;
     //   if (dir !== null) {
     //     e.preventDefault();
     //     // If the down key is pressed, move focus to the open panel,
     //     // otherwise switch to the adjacent tab
-    //     dir === 'down' ? panels[i].focus() : tabs[dir] ? switchTab(e.currentTarget, tabs[dir]) : void 0;
+    //     dir === 'down'
+    //       ? panels[i].focus()
+    //       : tabs[dir]
+    //         ? switchTab(e.currentTarget, tabs[dir])
+    //         : void 0;
     //   }
     // });
   });
 
   // Add tab panel semantics and hide them all
-  Array.prototype.forEach.call(panels, function (panel, i) {
+  Array.prototype.forEach.call(panels, function prepPanels(panel, i) {
     panel.setAttribute('role', 'tabpanel');
     panel.setAttribute('tabindex', '-1');
-    let id = panel.getAttribute('id');
+    // var id = panel.getAttribute('id');
     panel.setAttribute('aria-labelledby', tabs[i].id);
 
     // don't hide them because we only have one tab per URL now.
@@ -76,4 +86,4 @@
   // This stuff no longer necessary because we set focus in HTML on each URL.
   // tabs[0].setAttribute('aria-selected', 'true');
   // panels[0].hidden = false;
-})();
+}());

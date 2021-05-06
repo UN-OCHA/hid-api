@@ -1,6 +1,3 @@
-/* eslint no-await-in-loop: "off", no-restricted-syntax: "off", no-console: "off" */
-/* eslint func-names: "off" */
-
 /**
  * @module createOAuthClient
  * @description Create OAuth client.
@@ -14,7 +11,7 @@ const config = require('../config/env')[process.env.NODE_ENV];
 
 const { logger } = config;
 
-const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
+const store = app.config.env[process.env.NODE_ENV].database.store;
 mongoose.connect(store.uri, store.options);
 
 const Client = require('../api/models/Client');
@@ -30,7 +27,7 @@ async function run() {
   const clientInfo = {
     id: 'change-me',
     name: 'CHANGE ME',
-    secret: secret,
+    secret,
     url: 'https://example.com/',
     redirectUri: 'https://example.com/user/login/hid/callback',
   };
@@ -50,17 +47,17 @@ async function run() {
   }
 
   // Attempt to create new OAuth client and log the result.
-  await Client.create(clientInfo).then(data => {
+  await Client.create(clientInfo).then((data) => {
     logger.info(
       '[commands->createOAuthClient] created new OAuth client',
       {
         security: true,
         oauth: {
-          client_id: clientInfo.id,
+          client_id: data.id,
         },
       },
     );
-  }).catch(err => {
+  }).catch((err) => {
     logger.warn(
       '[commands->createOAuthClient] failed to create new OAuth client',
       {
@@ -77,7 +74,7 @@ async function run() {
   process.exit();
 }
 
-(async function () {
+(async function iife() {
   await run();
 }()).catch((e) => {
   console.log(e);
