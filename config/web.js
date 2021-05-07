@@ -115,7 +115,9 @@ module.exports = {
         ],
         scriptSrc: [
           'self',
+          // GA allowed, plus anything it wants to cram in afterwards via data:
           'https://www.google-analytics.com',
+          'data:',
           // These hashes are for GA and our inline JS+feature detection.
           "'sha256-zITkoAg4eI1v3VSFI+ATEQKWvoymQcxmFNojptzmlNw='",
           "'sha256-Ch69wX3la/uD7qfUZRHgam3hofEvI6fesgFgtvG9rTM='",
