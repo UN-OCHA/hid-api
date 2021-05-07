@@ -585,8 +585,9 @@ module.exports = {
               },
             );
 
-            // extract hostname from redirect URL
-            errorRedirectUrl = new URL(redirect).origin;
+            // Extract hostname from redirect URL
+            const officialRedirect = client.redirectUri || client.redirectUrls[0];
+            errorRedirectUrl = new URL(officialRedirect).origin;
 
             throw Error(`Wrong redirect URI: ${redirect}`);
           }
