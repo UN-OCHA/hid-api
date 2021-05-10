@@ -118,7 +118,7 @@ module.exports = {
           // GA allowed, plus anything it wants to cram in afterwards via data:
           'https://www.google-analytics.com',
           'data:',
-          // Google reCAPTCHA v2 scripts
+          // Google reCAPTCHA v2: scripts to load UI. See frameSrc.
           'https://www.google.com',
           'https://www.gstatic.com',
           // These hashes are for GA and our inline JS+feature detection.
@@ -133,6 +133,7 @@ module.exports = {
           'https://stage.api-humanitarian-id.ahconu.org',
         ],
         frameSrc: [
+          // Google reCAPTCHA v2: this allows the UI to be displayed
           'https://www.google.com',
         ],
         imgSrc: [
