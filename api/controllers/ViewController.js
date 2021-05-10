@@ -191,7 +191,7 @@ module.exports = {
       return reply.view('register', {
         alert: {
           type: 'error',
-          message: 'There was a problem validating your registration. Please try again.',
+          message: 'There was an internal server error while processing your registration. Please try again, and if the problem persists notify info@humanitarian.id',
         },
         formEmail: request.payload.email,
         formGivenName: request.payload.given_name,
