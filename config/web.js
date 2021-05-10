@@ -118,6 +118,8 @@ module.exports = {
           // GA allowed, plus anything it wants to cram in afterwards via data:
           'https://www.google-analytics.com',
           'data:',
+          // Google reCAPTCHA v2 is hosted on the main google domain.
+          'https://www.google.com',
           // These hashes are for GA and our inline JS+feature detection.
           "'sha256-zITkoAg4eI1v3VSFI+ATEQKWvoymQcxmFNojptzmlNw='",
           "'sha256-Ch69wX3la/uD7qfUZRHgam3hofEvI6fesgFgtvG9rTM='",
