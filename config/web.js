@@ -132,6 +132,9 @@ module.exports = {
           // API Docs connect to Stage by default
           'https://stage.api-humanitarian-id.ahconu.org',
         ],
+        frameSrc: [
+          'https://www.google.com',
+        ],
         imgSrc: [
           'self',
           // For 2FA setup, we display a dynamically generated image by inlining
