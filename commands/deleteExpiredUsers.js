@@ -1,5 +1,3 @@
-/* eslint no-await-in-loop: "off", no-restricted-syntax: "off", no-console: "off" */
-/* eslint func-names: "off" */
 /**
  * @module deleteExpiredUsers
  * @description Deletes the expired users from the database.
@@ -7,7 +5,7 @@
 const mongoose = require('mongoose');
 const app = require('../');
 
-const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
+const store = app.config.env[process.env.NODE_ENV].database.store;
 mongoose.connect(store.uri, store.options);
 
 const hidAccount = '5b2128e754a0d6046d6c69f2';
@@ -30,7 +28,7 @@ async function run() {
   process.exit();
 }
 
-(async function () {
+(async function iife() {
   await run();
 }()).catch((e) => {
   console.log(e);

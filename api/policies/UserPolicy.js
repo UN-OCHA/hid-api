@@ -96,7 +96,7 @@ module.exports = {
   canClaim: canUpdate,
 
   async canFind(request) {
-    if (!!request.auth.credentials.is_admin) {
+    if (request.auth.credentials.is_admin) {
       return true;
     }
 

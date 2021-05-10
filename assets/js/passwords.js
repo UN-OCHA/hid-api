@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars, no-param-reassign */
+
 //
 // Password strength
 //
@@ -19,21 +21,19 @@ function checkForm(form) {
     if (checkPassword(form.password.value)) {
       // Submit form.
       return true;
-    } else {
-      // Password needs to be stronger.
-      alert("The password you have entered is not strong enough! Make sure it has at least 12 characters with one number, one lowercase, one uppercase, and one special character.");
-      form.password.focus();
-
-      return false;
     }
-  } else {
-    // Passwords didn't match.
-    alert("The passwords do not match. Please confirm your password by entering it again.");
-    form.confirm_password.value = '';
-    form.confirm_password.focus();
+
+    // Password needs to be stronger.
+    alert('The password you have entered is not strong enough! Make sure it has at least 12 characters with one number, one lowercase, one uppercase, and one special character.');
+    form.password.focus();
 
     return false;
   }
+
+  // If we got here, the passwords didn't match.
+  alert('The passwords do not match. Please confirm your password by entering it again.');
+  form.confirm_password.value = '';
+  form.confirm_password.focus();
 
   // If we fall through all conditions, return false and allow the HTML5 form
   // validation to kick in.

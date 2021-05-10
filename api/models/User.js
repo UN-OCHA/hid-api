@@ -3,14 +3,12 @@
 * @description User
 */
 const mongoose = require('mongoose');
-const { Schema } = mongoose;
 const Bcrypt = require('bcryptjs');
-const axios = require('axios');
-const _ = require('lodash');
 const crypto = require('crypto');
 const isHTML = require('is-html');
 const validate = require('mongoose-validator');
 
+const { Schema } = mongoose;
 const populateClients = [
   { path: 'authorizedClients', select: '_id id name organization environment redirectUri redirectUrls' },
 ];
@@ -39,20 +37,6 @@ const emailSchema = new Schema({
   validated: {
     type: Boolean,
     default: false,
-  },
-});
-
-const translationSchema = new Schema({
-  language: {
-    type: String,
-    enum: ['en', 'fr', 'es'],
-  },
-  text: {
-    type: String,
-    validate: {
-      validator: isHTMLValidator,
-      message: 'HTML code is not allowed in text',
-    },
   },
 });
 
@@ -323,7 +307,9 @@ UserSchema.post('findOne', async function (result, next) {
     return next();
   }
   try {
-    await result.populate(populateClients).execPopulate();
+    if (typeof result.populate === 'function') {
+      await result.populate(populateClients).execPopulate();
+    }
     return next();
   } catch (err) {
     return next(err);
@@ -552,42 +538,8 @@ UserSchema.methods = {
     return false;
   },
 
-  translateCheckin(acheckin, language) {
-    let name = ''; let nameEn = ''; let acronym = ''; let
-      acronymEn = '';
-    const checkin = acheckin;
-    checkin.names.forEach((nameLn) => {
-      if (nameLn.language === language) {
-        name = nameLn.text;
-      }
-      if (nameLn.language === 'en') {
-        nameEn = nameLn.text;
-      }
-    });
-    checkin.acronyms.forEach((acroLn) => {
-      if (acroLn.language === language) {
-        acronym = acroLn.text;
-      }
-      if (acroLn.language === 'en') {
-        acronymEn = acroLn.text;
-      }
-    });
-    if (name !== '') {
-      checkin.name = name;
-    } else if (nameEn !== '') {
-      checkin.name = nameEn;
-    }
-    if (acronym !== '') {
-      checkin.acronym = acronym;
-    } else if (acronymEn !== '') {
-      checkin.acronym = acronymEn;
-    }
-  },
-
   defaultPopulate() {
-    return this
-      .populate(populateClients)
-      .execPopulate();
+    return this.populate(populateClients).execPopulate();
   },
 
   trustedDeviceIndex(ua) {
@@ -613,7 +565,10 @@ UserSchema.methods = {
 
   backupCodeIndex(code) {
     let index = -1;
-    let numCodes = this.totpConf && this.totpConf.backupCodes ? this.totpConf.backupCodes.length : 0;
+    const numCodes = this.totpConf && this.totpConf.backupCodes
+      ? this.totpConf.backupCodes.length
+      : 0;
+
     for (let i = 0; i < numCodes; i++) {
       if (Bcrypt.compareSync(code, this.totpConf.backupCodes[i])) {
         index = i;

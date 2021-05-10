@@ -11,7 +11,7 @@ if (process.env.SMTP_USER && process.env.SMTP_PASS) {
   TransporterSettings.auth = {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
-  }
+  };
 }
 
 const Transporter = Nodemailer.createTransport(TransporterSettings);
@@ -61,12 +61,12 @@ function send(options, tpl, context) {
   };
 
   return email.send(args)
-    .then(res => {
+    .then(() => {
       logger.info(
         `[EmailService->send] Sent ${tpl} email to ${options.to}`,
       );
     })
-    .catch(err => {
+    .catch((err) => {
       logger.warn(
         `[EmailService->send] Failed to send ${tpl} email to ${options.to}`,
         {
@@ -123,10 +123,8 @@ module.exports = {
     return send(mailOptions, 'post_register', context);
   },
 
-  sendResetPassword(user, appResetUrl, targetEmail = '') {
-    if (!targetEmail) {
-      targetEmail = user.email;
-    }
+  sendResetPassword(user, appResetUrl, emailToTarget) {
+    const targetEmail = emailToTarget || user.email;
     const mailOptions = {
       to: targetEmail,
       locale: user.locale,

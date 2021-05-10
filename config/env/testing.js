@@ -3,18 +3,16 @@
 module.exports = {
   env: 'testing',
   database: {
-    stores: {
-      testing: {
-        migrate: 'create',
-        uri: 'mongodb://127.0.0.1/testing',
-        options: {
-          keepAlive: 600000,
-          connectTimeoutMS: 60000,
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
-          useFindAndModify: false,
-          useCreateIndex: true,
-        },
+    store: {
+      migrate: 'create',
+      uri: 'mongodb://127.0.0.1/testing',
+      options: {
+        keepAlive: 600000,
+        connectTimeoutMS: 60000,
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        useFindAndModify: false,
+        useCreateIndex: true,
       },
     },
     models: {

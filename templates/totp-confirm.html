@@ -7,7 +7,8 @@
     id="x-hid-totp"
     autocomplete="one-time-code"
     placeholder="Authentication code"
-    required>
+    required
+    autofocus>
   <button name="action" value="<%= typeof action !== 'undefined' ? action : 'totp' %>" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase">
     Verify
   </button>

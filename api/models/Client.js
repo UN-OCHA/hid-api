@@ -1,13 +1,13 @@
+/**
+ * @module Client
+ * @description OAuth Client
+ */
+const URL = require('url');
 const mongoose = require('mongoose');
 const isHTML = require('is-html');
 const validate = require('mongoose-validator');
 
 const { Schema } = mongoose;
-
-/**
- * @module Client
- * @description OAuth Client
- */
 
 function isHTMLValidator(v) {
   return !isHTML(v);
@@ -98,6 +98,46 @@ const ClientSchema = new Schema({
   },
 }, {
   collection: 'client',
+});
+
+ClientSchema.virtual('urlDisplay').get(function buildVirtual() {
+  let tmpUrl;
+  if (this.redirectUri) {
+    tmpUrl = this.redirectUri;
+  } else if (typeof this.redirectUrls === 'object') {
+    tmpUrl = this.redirectUrls[0];
+  } else {
+    tmpUrl = false;
+  }
+
+  // If found, format the URL.
+  if (tmpUrl) {
+    const clientUrl = URL.parse(tmpUrl);
+    return clientUrl.hostname;
+  }
+
+  // If all else fails, return empty string.
+  return '';
+});
+
+ClientSchema.virtual('urlHref').get(function buildVirtual() {
+  let tmpUrl;
+  if (this.redirectUri) {
+    tmpUrl = this.redirectUri;
+  } else if (typeof this.redirectUrls === 'object') {
+    tmpUrl = this.redirectUrls[0];
+  } else {
+    tmpUrl = false;
+  }
+
+  // If found, format the URL.
+  if (tmpUrl) {
+    const clientUrl = URL.parse(tmpUrl);
+    return `${clientUrl.protocol}//${clientUrl.hostname}`;
+  }
+
+  // If all else fails, return empty string.
+  return '';
 });
 
 module.exports = mongoose.model('Client', ClientSchema);

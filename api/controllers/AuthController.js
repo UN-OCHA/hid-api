@@ -1,6 +1,6 @@
 /**
  * @module AuthController
- * @description Controller for Auth.
+ * @description Controller for Authentication, both into HID and OAuth sites.
  */
 const Boom = require('@hapi/boom');
 const Client = require('../models/Client');
@@ -491,7 +491,8 @@ module.exports = {
           }?error=invalid_request&state=${request.query.state
           }&scope=${request.query.scope
           }&nonce=${request.query.nonce
-          }`);
+          }`,
+        );
       }
 
       // If the user is not authenticated, redirect to the login page and preserve
@@ -505,7 +506,8 @@ module.exports = {
             }?error=login_required&state=${request.query.state
             }&scope=${request.query.scope
             }&nonce=${request.query.nonce
-            }`);
+            }`,
+          );
         }
         logger.info(
           '[AuthController->authorizeDialogOauth2] Get request to /oauth/authorize without session. Redirecting to the login page.',
@@ -541,7 +543,8 @@ module.exports = {
       // Validate the OAuth Authorization request. If any parameters are missing
       // or invalid, it will throw an error internally, but will show a generic
       // message about configuration to the user.
-      const [req, res] = await oauth.authorize(request, reply, options, async (oauthClientId, redirect, done) => {
+      // eslint-disable-next-line max-len
+      const [req] = await oauth.authorize(request, reply, options, async (oauthClientId, redirect, done) => {
         try {
           // Verify OAuth Client ID.
           const client = await Client.findOne({ id: oauthClientId });
@@ -639,7 +642,8 @@ module.exports = {
           }?error=interaction_required&state=${request.query.state
           }&scope=${request.query.scope
           }&nonce=${request.query.nonce
-          }`);
+          }`,
+        );
       }
 
       // The user has not confirmed authorization, so display the authorization
@@ -655,6 +659,7 @@ module.exports = {
       //
       // We're not doing additional logging in this block because we logged the
       // errors as they were caught in the code above.
+      const linktoPartnerSite = errorRedirectUrl && `<br><p>Go back to <a href="${errorRedirectUrl}">${errorRedirectUrl}</a></p>`;
       return reply.view('message', {
         title: 'Configuration problem on original website',
         alert: {
@@ -662,7 +667,7 @@ module.exports = {
           message: `
             <p>The website which sent you to HID appears to have invalid configuration.</p>
             <p>We have logged the problem internally.</p>
-            ${ errorRedirectUrl ? '<br><p>Go back to <a href="'+ errorRedirectUrl +'">'+ errorRedirectUrl +'</a></p>' : '' }
+            ${linktoPartnerSite || ''}
           `,
         },
         isSuccess: false,
@@ -705,7 +710,8 @@ module.exports = {
           }&state=${request.query.state
           }&scope=${request.query.scope
           }&nonce=${request.query.nonce
-          }#login`);
+          }#login`,
+        );
       }
 
       // Look up user in DB.
@@ -811,9 +817,8 @@ module.exports = {
       if (request.payload.client_id && request.payload.client_secret) {
         clientId = request.payload.client_id;
         clientSecret = request.payload.client_secret;
-      }
-      // Are we using Basic Auth?
-      else if (request.headers.authorization) {
+      } else if (request.headers.authorization) {
+        // Are we using Basic Auth?
         const parts = request.headers.authorization.split(' ');
         if (parts.length === 2) {
           const credentials = parts[1];
@@ -822,9 +827,8 @@ module.exports = {
           const cparts = text.split(':');
           [clientId, clientSecret] = cparts;
         }
-      }
-      // Neither authorization method found. Log it.
-      else {
+      } else {
+        // Neither authorization method found. Log it.
         logger.warn(
           '[AuthController->accessTokenOAuth2] Unsuccessful access token request due to invalid client authentication.',
           {
@@ -895,22 +899,23 @@ module.exports = {
         const error = Boom.badRequest('invalid authorization code');
         error.output.payload.error = 'invalid_grant';
         return error;
-      } else {
-        logger.info(
-          '[AuthController->accessTokenOauth2] Successful access token request',
-          {
-            request,
-            security: true,
-            oauth: {
-              client_id: clientId,
-              client_secret: `${clientSecret.slice(0, 3)}...${clientSecret.slice(-3)}`,
-            },
-          },
-        );
-        request.auth.credentials = ocode.client;
-        const response = await oauth.token(request, reply);
-        return response;
       }
+
+      // If we got here, the authorization code exists.
+      logger.info(
+        '[AuthController->accessTokenOauth2] Successful access token request',
+        {
+          request,
+          security: true,
+          oauth: {
+            client_id: clientId,
+            client_secret: `${clientSecret.slice(0, 3)}...${clientSecret.slice(-3)}`,
+          },
+        },
+      );
+      request.auth.credentials = ocode.client;
+      const response = await oauth.token(request, reply);
+      return response;
     } catch (err) {
       logger.error(
         `[AuthController->accessTokenOauth2] ${err.message}`,

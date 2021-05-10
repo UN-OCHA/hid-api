@@ -1,8 +1,9 @@
+/* eslint no-param-reassign: "off" */
 const _ = require('lodash');
 const winston = require('winston');
 
 module.exports = {
-  hidFormatter: winston.format(info => {
+  hidFormatter: winston.format((info) => {
     // In winston 3, the log object is passed by reference and mutated in place.
     // This is an intentional design decision, so we must be conscious not to
     // accidentally mutate important data that gets passed in, especially our
@@ -183,7 +184,6 @@ module.exports = {
       if (info.request.payload && info.request.payload['X-HID-TOTP']) {
         delete info.request.payload['X-HID-TOTP'];
       }
-
     } // end of request sanitization
 
     return info;
