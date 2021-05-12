@@ -28,6 +28,11 @@ const authorizedDomains = [
   // Local
   'https://hid.test',
   'http://hid.test',
+
+  // Disaster recovery
+  'hid.dr.aws.ahconu.org',
+  'api.hid.dr.aws.ahconu.org',
+  'auth.hid.dr.aws.ahconu.org',
 ];
 
 /**
