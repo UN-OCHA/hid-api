@@ -9,14 +9,14 @@ const logLevel = process.env.LOG_LEVEL || 'debug';
 
 const loggerInfo = new DailyRotateFile({
   name: 'info-file',
-  filename: 'trails/info.log',
+  filename: 'logs/info.log',
   level: logLevel,
   timestamp: true,
 });
 
 const loggerError = new DailyRotateFile({
   name: 'error-file',
-  filename: 'trails/error.log',
+  filename: 'logs/error.log',
   level: logLevel,
   timestamp: true,
 });
