@@ -48,7 +48,7 @@ const config = {
         useNewUrlParser: true,
         useUnifiedTopology: true,
         useFindAndModify: false,
-        usecreateIndex: true,
+        useCreateIndex: true,
       },
     },
     models: {
