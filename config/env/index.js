@@ -30,14 +30,14 @@ const loggerLocal = new winston.transports.File({
 
 const transports = [];
 
-if (env == 'local') {
+if (env === 'local') {
   transports.push(loggerConsole, loggerLocal);
 } else {
   transports.push(loggerInfo, loggerError);
-};
+}
 
 const config = {
-  env: env,
+  env,
   database: {
     store: {
       migrate: 'create',
@@ -52,7 +52,7 @@ const config = {
       },
     },
     models: {
-      defaultStore: defaultStore,
+      defaultStore,
       migrate: 'create',
     },
   },
@@ -63,7 +63,7 @@ const config = {
       hidFormatter(),
       winston.format.json(),
     ),
-    transports: transports,
+    transports,
   }),
 };
 
