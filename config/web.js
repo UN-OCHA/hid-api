@@ -115,7 +115,12 @@ module.exports = {
         ],
         scriptSrc: [
           'self',
+          // GA allowed, plus anything it wants to cram in afterwards via data:
           'https://www.google-analytics.com',
+          'data:',
+          // Google reCAPTCHA v2: scripts to load UI. See frameSrc.
+          'https://www.google.com',
+          'https://www.gstatic.com',
           // These hashes are for GA and our inline JS+feature detection.
           "'sha256-zITkoAg4eI1v3VSFI+ATEQKWvoymQcxmFNojptzmlNw='",
           "'sha256-Ch69wX3la/uD7qfUZRHgam3hofEvI6fesgFgtvG9rTM='",
@@ -126,6 +131,10 @@ module.exports = {
           'https://stats.g.doubleclick.net',
           // API Docs connect to Stage by default
           'https://stage.api-humanitarian-id.ahconu.org',
+        ],
+        frameSrc: [
+          // Google reCAPTCHA v2: this allows the UI to be displayed
+          'https://www.google.com',
         ],
         imgSrc: [
           'self',
