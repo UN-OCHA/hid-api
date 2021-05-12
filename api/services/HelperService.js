@@ -30,9 +30,9 @@ const authorizedDomains = [
   'http://hid.test',
 
   // Disaster recovery
-  'hid.dr.aws.ahconu.org',
-  'api.hid.dr.aws.ahconu.org',
-  'auth.hid.dr.aws.ahconu.org',
+  'https://hid.dr.aws.ahconu.org',
+  'https://api.hid.dr.aws.ahconu.org',
+  'https://auth.hid.dr.aws.ahconu.org',
 ];
 
 /**
