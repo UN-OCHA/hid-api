@@ -7,15 +7,6 @@ const databaseUri = process.env.DATABASE || 'mongodb://db:27017/local';
 const defaultStore = databaseUri.split('/').pop();
 const logLevel = process.env.LOG_LEVEL || 'debug';
 
-const transports = [];
-
-if (env === 'local') {
-  transports.push(loggerConsole, loggerLocal);
-} else {
-  transports.push(loggerInfo, loggerError);
-}
-
-
 const loggerInfo = new DailyRotateFile({
   name: 'info-file',
   filename: 'logs/info.log',
@@ -36,6 +27,14 @@ const loggerLocal = new winston.transports.File({
   filename: '/var/log/local.log',
   timestamp: true,
 });
+
+const transports = [];
+
+if (env === 'local') {
+  transports.push(loggerConsole, loggerLocal);
+} else {
+  transports.push(loggerInfo, loggerError);
+}
 
 const config = {
   env,
