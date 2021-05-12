@@ -11,7 +11,7 @@ const User = require('../models/User');
 const JwtService = require('../services/JwtService');
 const HelperService = require('../services/HelperService');
 const AuthPolicy = require('../policies/AuthPolicy');
-const config = require('../../config/env')[process.env.NODE_ENV];
+const config = require('../../config/env');
 
 const { logger } = config;
 

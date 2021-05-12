@@ -7,7 +7,7 @@ const Boom = require('@hapi/boom');
 const QRCode = require('qrcode');
 const BCrypt = require('bcryptjs');
 const HelperService = require('../services/HelperService');
-const config = require('../../config/env')[process.env.NODE_ENV];
+const config = require('../../config/env');
 
 const { logger } = config;
 

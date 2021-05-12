@@ -9,7 +9,7 @@ const Boom = require('@hapi/boom');
 const hapi = require('@hapi/hapi');
 const ejs = require('ejs');
 const app = require('./');
-const config = require('./config/env')[process.env.NODE_ENV];
+const config = require('./config/env');
 
 const { logger } = config;
 const { store } = config.database;

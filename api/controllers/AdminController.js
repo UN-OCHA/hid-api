@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const User = require('../models/User');
 const ClientController = require('./ClientController');
 const AuthPolicy = require('../policies/AuthPolicy');
-const config = require('../../config/env')[process.env.NODE_ENV];
+const config = require('../../config/env');
 
 const { logger } = config;
 
