@@ -11,7 +11,7 @@ const HelperService = require('../services/HelperService');
 const TOTPController = require('./TOTPController');
 const UserController = require('./UserController');
 const AuthPolicy = require('../policies/AuthPolicy');
-const config = require('../../config/env')[process.env.NODE_ENV];
+const config = require('../../config/env');
 
 const { logger } = config;
 

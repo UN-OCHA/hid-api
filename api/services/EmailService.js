@@ -15,7 +15,7 @@ if (process.env.SMTP_USER && process.env.SMTP_PASS) {
 }
 
 const Transporter = Nodemailer.createTransport(TransporterSettings);
-const config = require('../../config/env')[process.env.NODE_ENV];
+const config = require('../../config/env');
 
 const { logger } = config;
 
