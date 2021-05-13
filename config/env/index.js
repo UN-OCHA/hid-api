@@ -36,8 +36,30 @@ if (env === 'local') {
   transports.push(loggerInfo, loggerError);
 }
 
+// just trim this back in a while, maybe just to http://hid.test
+const fallbackAllowedDomains = [
+  // Production
+  'https://api.humanitarian.id',
+  'https://auth.humanitarian.id',
+
+  // Staging
+  'https://stage.api-humanitarian-id.ahconu.org',
+  'https://stage.auth-humanitarian-id.ahconu.org',
+
+  // Dev
+  'https://dev.api-humanitarian-id.ahconu.org',
+  'https://dev.auth-humanitarian-id.ahconu.org',
+
+  // Local
+  'https://hid.test',
+  'http://hid.test',
+];
+
+const allowedDomains = process.env.ALLOWED_DOMAINS || fallbackAllowedDomains;
+
 const config = {
   env,
+  allowedDomains,
   database: {
     store: {
       migrate: 'create',
