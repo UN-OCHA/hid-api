@@ -36,7 +36,7 @@ if (env === 'local') {
   transports.push(loggerInfo, loggerError);
 }
 
-const allowedDomains = [ 'hid.test' ];
+const allowedDomains = ['hid.test'];
 
 if (process.env.ALLOWED_DOMAINS) {
   allowedDomains.push(...process.env.ALLOWED_DOMAINS.split(','));
