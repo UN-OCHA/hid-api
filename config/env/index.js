@@ -55,7 +55,7 @@ const fallbackAllowedDomains = [
   'http://hid.test',
 ];
 
-const allowedDomains = process.env.ALLOWED_DOMAINS || fallbackAllowedDomains;
+const allowedDomains = process.env.ALLOWED_DOMAINS.split(',') || fallbackAllowedDomains;
 
 const config = {
   env,
