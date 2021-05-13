@@ -36,8 +36,15 @@ if (env === 'local') {
   transports.push(loggerInfo, loggerError);
 }
 
+const allowedDomains = ['http://hid.test'];
+
+if (process.env.ALLOWED_DOMAINS) {
+  allowedDomains.push(...process.env.ALLOWED_DOMAINS.split(','));
+}
+
 const config = {
   env,
+  allowedDomains,
   database: {
     store: {
       migrate: 'create',
