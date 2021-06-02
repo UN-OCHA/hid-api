@@ -7,7 +7,7 @@ const path = require('path');
 const packageJson = require('../package.json');
 const app = require('../');
 
-const { logger } = app.config.env[process.env.NODE_ENV];
+const { logger } = app.config.env;
 
 async function run() {
   // Our official version number

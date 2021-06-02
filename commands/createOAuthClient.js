@@ -11,7 +11,7 @@ const config = require('../config/env');
 
 const { logger } = config;
 
-const store = app.config.env[process.env.NODE_ENV].database.store;
+const store = app.config.env.database.store;
 mongoose.connect(store.uri, store.options);
 
 const Client = require('../api/models/Client');
