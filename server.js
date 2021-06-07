@@ -1,6 +1,7 @@
 /**
  * @module server
  */
+
 const newrelic = require('newrelic');
 const path = require('path');
 const _ = require('lodash');
