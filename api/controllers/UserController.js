@@ -8,7 +8,7 @@ const User = require('../models/User');
 const EmailService = require('../services/EmailService');
 const HelperService = require('../services/HelperService');
 const AuthPolicy = require('../policies/AuthPolicy');
-const config = require('../../config/env')[process.env.NODE_ENV];
+const config = require('../../config/env');
 
 const { logger } = config;
 
@@ -88,7 +88,7 @@ module.exports = {
       }
 
       logger.warn(
-        `[UserController->create] app_verify_url ${appVerifyUrl} is not in authorizedDomains allowlist`,
+        `[UserController->create] app_verify_url ${appVerifyUrl} is not in allowedDomains list`,
         {
           request,
           security: true,
@@ -888,7 +888,7 @@ module.exports = {
     // Is the verification link pointing to a domain in our allow-list?
     if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
       logger.warn(
-        `[UserController->addEmail] app_validation_url ${appValidationUrl} is not in authorizedDomains allowlist`,
+        `[UserController->addEmail] app_validation_url ${appValidationUrl} is not in allowedDomains list`,
         {
           request,
           security: true,
@@ -1268,7 +1268,7 @@ module.exports = {
     const appValidationUrl = request.payload && request.payload.app_validation_url ? request.payload.app_validation_url : '';
     if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
       logger.warn(
-        `[UserController->validateEmail] app_validation_url ${appValidationUrl} is not in authorizedDomains allowlist`,
+        `[UserController->validateEmail] app_validation_url ${appValidationUrl} is not in allowedDomains list`,
         {
           request,
           security: true,
@@ -1353,7 +1353,7 @@ module.exports = {
       const appResetUrl = request.payload.app_reset_url || '';
       if (!HelperService.isAuthorizedUrl(appResetUrl)) {
         logger.warn(
-          `[UserController->resetPasswordEndpoint] app_reset_url ${appResetUrl} is not in authorizedDomains allowlist`,
+          `[UserController->resetPasswordEndpoint] app_reset_url ${appResetUrl} is not in allowedDomains list`,
           {
             request,
             security: true,

@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const _ = require('lodash');
+const { allowedDomains } = require('../../config/env');
 
 const queryOptions = [
   'populate',
@@ -7,32 +8,6 @@ const queryOptions = [
   'offset',
   'sort',
   'fields',
-];
-
-// TODO: move to env var
-//
-// @see https://humanitarian.atlassian.net/browse/HID-1894
-const authorizedDomains = [
-  // Production
-  'https://api.humanitarian.id',
-  'https://auth.humanitarian.id',
-
-  // Staging
-  'https://stage.api-humanitarian-id.ahconu.org',
-  'https://stage.auth-humanitarian-id.ahconu.org',
-
-  // Dev
-  'https://dev.api-humanitarian-id.ahconu.org',
-  'https://dev.auth-humanitarian-id.ahconu.org',
-
-  // Local
-  'https://hid.test',
-  'http://hid.test',
-
-  // Disaster recovery
-  'hid.dr.aws.ahconu.org',
-  'api.hid.dr.aws.ahconu.org',
-  'auth.hid.dr.aws.ahconu.org',
 ];
 
 /**
@@ -152,8 +127,8 @@ module.exports = {
 
   isAuthorizedUrl(url) {
     let out = false;
-    for (let i = 0; i < authorizedDomains.length; i++) {
-      if (url.indexOf(authorizedDomains[i]) === 0) {
+    for (let i = 0; i < allowedDomains.length; i++) {
+      if (url.indexOf(allowedDomains[i]) === 0) {
         out = true;
       }
     }

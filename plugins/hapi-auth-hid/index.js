@@ -4,7 +4,7 @@ const JwtToken = require('../../api/models/JwtToken');
 const OauthToken = require('../../api/models/OauthToken');
 const User = require('../../api/models/User');
 const JwtService = require('../../api/services/JwtService');
-const config = require('../../config/env')[process.env.NODE_ENV];
+const config = require('../../config/env');
 
 const { logger } = config;
 

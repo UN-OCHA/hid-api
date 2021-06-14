@@ -1,6 +1,6 @@
 const Boom = require('@hapi/boom');
 const authenticator = require('authenticator');
-const config = require('../../config/env')[process.env.NODE_ENV];
+const config = require('../../config/env');
 
 const { logger } = config;
 
