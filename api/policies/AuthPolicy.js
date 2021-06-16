@@ -119,19 +119,15 @@ module.exports = {
    * Does the user have an HID account?
    */
   isUser(request) {
-    // First, check if credentials were sent at all. If not, we can instruct the
-    // user to authenticate before trying again by sending 401.
-    if (!request.auth.credentials) {
-      throw Boom.unauthorized();
-    }
-
     // User authenticated correctly, and has a user ID.
-    if (request.auth.credentials.id) {
+    if (request && request.auth && request.auth.credentials && request.auth.credentials.id) {
       return true;
     }
 
-    // If something else happens that we didn't predict, send HTTP 401.
-    throw Boom.unauthorized();
+    // Request lacked the proper Authorization header. If the header was sent
+    // with an invalid token, the 401 will get thrown before this function ever
+    // executes, and it will return a response saying the token was invalid.
+    throw Boom.unauthorized('Send an Authorization header with the Bearer token of the user account you wish to load. For more info see: https://github.com/UN-OCHA/hid_api/wiki/Integrating-with-HID-via-OAuth#step-3--request-user-account-info');
   },
 
   /**
