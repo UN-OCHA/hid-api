@@ -115,6 +115,28 @@ module.exports = {
     return true;
   },
 
+  /**
+   * Does the user have an HID account?
+   */
+  isUser(request) {
+    // First, check if credentials were sent at all. If not, we can instruct the
+    // user to authenticate before trying again by sending 401.
+    if (!request.auth.credentials) {
+      throw Boom.unauthorized();
+    }
+
+    // User authenticated correctly, and has a user ID.
+    if (request.auth.credentials.id) {
+      return true;
+    }
+
+    // If something else happens that we didn't predict, send HTTP 401.
+    throw Boom.unauthorized();
+  },
+
+  /**
+   * Is the user an admin?
+   */
   isAdmin(request) {
     // First, check if credentials were sent at all. If not, we can instruct the
     // user to authenticate before trying again by sending 401.

@@ -327,7 +327,12 @@ module.exports = [
   {
     method: ['GET', 'POST'],
     path: '/account.json',
-    handler: AuthController.showAccount,
+    options: {
+      pre: [
+        AuthPolicy.isUser,
+      ],
+      handler: AuthController.showAccount,
+    },
   },
 
   {
