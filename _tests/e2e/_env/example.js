@@ -1,10 +1,6 @@
 module.exports = {
   baseUrl: 'http://hid.test',
 
-  // Test params
-  timeoutLong: 15000,
-  timeoutLonger: 30000,
-
   // Users/data
   testUserId: '',
   testUserNameGiven: 'Test',
