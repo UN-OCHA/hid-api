@@ -1,82 +1,84 @@
+/**
+* @module AuthPolicy
+* @description a collection of functions to enforce authentication and user
+* permissions for HID.
+*/
 const Boom = require('@hapi/boom');
 const authenticator = require('authenticator');
 const config = require('../../config/env');
 
 const { logger } = config;
 
-/**
-* @module AuthPolicy
-* @description Is the request authenticated
-*/
-
-async function isTOTPValid(user, token) {
-  if (!user.totpConf || !user.totpConf.secret) {
-    logger.warn(
-      `[AuthPolicy->isTOTPValid] TOTP was not configured for user ${user.id}`,
-      { security: true },
-    );
-    throw Boom.unauthorized('TOTP was not configured for this user', 'totp');
-  }
-
-  if (!token) {
-    logger.warn(
-      '[AuthPolicy->isTOTPValid] No TOTP token',
-      { security: true },
-    );
-    throw Boom.unauthorized('No TOTP token', 'totp');
-  }
-
-  if (token.length === 6) {
-    const success = authenticator.verifyToken(user.totpConf.secret, token);
-
-    if (success) {
-      return user;
-    }
-    logger.warn(
-      `[AuthPolicy->isTOTPValid] Invalid TOTP token ${token}`,
-      {
-        security: true,
-        fail: true,
-      },
-    );
-    throw Boom.unauthorized('Invalid TOTP token !', 'totp');
-  }
-
-  // Using backup code
-  const index = user.backupCodeIndex(token);
-  if (index === -1) {
-    logger.warn(
-      `[AuthPolicy->isTOTPValid] Invalid backup code ${token}`,
-      {
-        security: true,
-        fail: true,
-      },
-    );
-    throw Boom.unauthorized('Invalid backup code !', 'totp');
-  }
-
-  // Remove backup code so it can't be reused.
-  user.totpConf.backupCodes.splice(index, 1);
-  user.markModified('totpConf.backupCodes');
-  await user.save();
-
-  logger.info(
-    `[AuthPolicy->isTOTPValid] Successfully removed a backup code for user ${user.id}`,
-    {
-      security: true,
-      user: {
-        id: user.id,
-        email: user.email,
-      },
-    },
-  );
-
-  return user;
-}
-
 module.exports = {
+  /**
+   * Enforces a _mandatory_ 2FA code requirement. If the user doesn't have 2FA
+   * enabled, then this function will unconditionally return false. User can
+   * supply either TOTPs or backup codes.
+   */
+  async isTOTPValid(user, token) {
+    if (!user.totpConf || !user.totpConf.secret) {
+      logger.warn(
+        `[AuthPolicy->isTOTPValid] TOTP was not configured for user ${user.id}`,
+        { security: true },
+      );
+      throw Boom.unauthorized('TOTP was not configured for this user', 'totp');
+    }
 
-  isTOTPValid,
+    if (!token) {
+      logger.warn(
+        '[AuthPolicy->isTOTPValid] No TOTP token',
+        { security: true },
+      );
+      throw Boom.unauthorized('No TOTP token', 'totp');
+    }
+
+    if (token.length === 6) {
+      const success = authenticator.verifyToken(user.totpConf.secret, token);
+
+      if (success) {
+        return user;
+      }
+      logger.warn(
+        `[AuthPolicy->isTOTPValid] Invalid TOTP token ${token}`,
+        {
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.unauthorized('Invalid TOTP token !', 'totp');
+    }
+
+    // Using backup code
+    const index = user.backupCodeIndex(token);
+    if (index === -1) {
+      logger.warn(
+        `[AuthPolicy->isTOTPValid] Invalid backup code ${token}`,
+        {
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.unauthorized('Invalid backup code !', 'totp');
+    }
+
+    // Remove backup code so it can't be reused.
+    user.totpConf.backupCodes.splice(index, 1);
+    user.markModified('totpConf.backupCodes');
+    await user.save();
+
+    logger.info(
+      `[AuthPolicy->isTOTPValid] Successfully removed a backup code for user ${user.id}`,
+      {
+        security: true,
+        user: {
+          id: user.id,
+          email: user.email,
+        },
+      },
+    );
+
+    return user;
+  },
 
   /**
    * Enforces an _optional_ TOTP requirement. If the user has 2FA enabled, they
@@ -100,7 +102,7 @@ module.exports = {
     }
 
     // Validate the TOTP code.
-    await isTOTPValid(user, totp);
+    await this.isTOTPValid(user, totp);
 
     // If no error was thrown, return true.
     return true;
@@ -109,10 +111,28 @@ module.exports = {
   async isTOTPValidPolicy(request) {
     const user = request.auth.credentials;
     const token = request.headers['x-hid-totp'];
-    await isTOTPValid(user, token);
+    await this.isTOTPValid(user, token);
     return true;
   },
 
+  /**
+   * Does the user have an HID account?
+   */
+  isUser(request) {
+    // User authenticated correctly, and has a user ID.
+    if (request && request.auth && request.auth.credentials && request.auth.credentials.id) {
+      return true;
+    }
+
+    // Request lacked the proper Authorization header. If the header was sent
+    // with an invalid token, the 401 will get thrown before this function ever
+    // executes, and it will return a response saying the token was invalid.
+    throw Boom.unauthorized('Send an Authorization header with the Bearer token of the user account you wish to load. For more info see: https://github.com/UN-OCHA/hid_api/wiki/Integrating-with-HID-via-OAuth#step-3--request-user-account-info');
+  },
+
+  /**
+   * Is the user an admin?
+   */
   isAdmin(request) {
     // First, check if credentials were sent at all. If not, we can instruct the
     // user to authenticate before trying again by sending 401.
