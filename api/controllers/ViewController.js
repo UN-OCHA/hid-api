@@ -370,7 +370,12 @@ module.exports = {
     const user = await User.findOne({ _id: request.query.id });
 
     if (!user) {
-      return reply.view('error');
+      return reply.view('error', {
+        alert: {
+          type: 'error',
+          message: 'The password reset link is malformed. <a href="/password">Request a new password reset link</a>.',
+        },
+      });
     }
 
     if (user.totp) {
