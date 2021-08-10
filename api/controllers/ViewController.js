@@ -457,6 +457,16 @@ module.exports = {
           title: 'Password update',
         });
       } catch (err) {
+        logger.error(
+          `[ViewController->newPasswordPost] ${err.message}`,
+          {
+            request,
+            security: true,
+            fail: true,
+            stack_trace: err.stack,
+          },
+        );
+
         if (params) {
           return reply.view('login', {
             alert: {
