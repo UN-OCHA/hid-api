@@ -361,13 +361,21 @@ module.exports = {
   async newPassword(request, reply) {
     request.yar.reset();
     request.yar.set('session', {
-      hash: request.query.hash, id: request.query.id, time: request.query.time, totp: false,
+      hash: request.query.hash,
+      id: request.query.id,
+      time: request.query.time,
+      totp: false,
     });
 
     const user = await User.findOne({ _id: request.query.id });
 
     if (!user) {
-      return reply.view('error');
+      return reply.view('error', {
+        alert: {
+          type: 'error',
+          message: 'The password reset link is malformed. <a href="/password">Request a new password reset link</a>.',
+        },
+      });
     }
 
     if (user.totp) {
@@ -379,7 +387,10 @@ module.exports = {
     }
 
     request.yar.set('session', {
-      hash: request.query.hash, id: request.query.id, time: request.query.time, totp: true,
+      hash: request.query.hash,
+      id: request.query.id,
+      time: request.query.time,
+      totp: true,
     });
 
     return reply.view('new_password', {
@@ -397,9 +408,11 @@ module.exports = {
       try {
         const user = await User.findOne({ _id: cookie.id });
         const token = request.payload['x-hid-totp'];
+
         await AuthPolicy.isTOTPValid(user, token);
         cookie.totp = true;
         request.yar.set('session', cookie);
+
         return reply.view('new_password', {
           query: request.payload,
           hash: cookie.hash,
@@ -423,8 +436,10 @@ module.exports = {
       const params = HelperService.getOauthParams(request.payload);
       const registerLink = _getRegisterLink(request.payload);
       const passwordLink = _getPasswordLink(request.payload);
+
       try {
         await UserController.resetPasswordEndpoint(request);
+
         if (params) {
           return reply.view('login', {
             alert: {
@@ -436,6 +451,7 @@ module.exports = {
             passwordLink,
           });
         }
+
         return reply.view('message', {
           alert: {
             type: 'status',
@@ -446,6 +462,16 @@ module.exports = {
           title: 'Password update',
         });
       } catch (err) {
+        logger.error(
+          `[ViewController->newPasswordPost] ${err.message}`,
+          {
+            request,
+            security: true,
+            fail: true,
+            stack_trace: err.stack,
+          },
+        );
+
         if (params) {
           return reply.view('login', {
             alert: {
@@ -471,7 +497,10 @@ module.exports = {
     }
 
     return reply.view('message', {
-      alert: { type: 'error', message: 'There was an error resetting your password.' },
+      alert: {
+        type: 'error',
+        message: 'There was an error resetting your password.',
+      },
       query: request.payload,
       isSuccess: false,
       title: 'Password update',
