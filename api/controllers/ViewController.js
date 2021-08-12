@@ -181,7 +181,7 @@ module.exports = {
     try {
       await recaptcha.validate(request.payload['g-recaptcha-response']);
     } catch (err) {
-      const errorCode = 'RC-1';
+      const errorCode = 'RECAPTCHA';
 
       logger.warn(
         '[ViewController->registerPost] Failure during reCAPTCHA validation.',
@@ -199,7 +199,7 @@ module.exports = {
           type: 'error',
           message: `
             <p>Bot detection registered your attempt as spam.</p>
-            <p>Please try again, and if the problem persists notify info@humanitarian.id</p>
+            <p>Please try again, and if the problem persists notify info@humanitarian.id with this error code:</p>
           `,
           error_code: errorCode,
         },
