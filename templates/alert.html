@@ -34,8 +34,9 @@
       <% } %>
         <div class="cd-alert__message">
           <%- alert.message %>
-          <% if (typeof alert.error_code !== 'undefined') { %>
-            <p>Error code: <%- alert.error_code %>_<%- Date.now() %></p>
+          <% if (typeof alert.error_type !== 'undefined') { %>
+            <p>Error type: <%- alert.error_type %></p>
+            <p>Timestamp: <%- Date.now() %></p>
           <% } %>
         </div>
       </div>

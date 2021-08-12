@@ -176,12 +176,11 @@ module.exports = {
     const passwordLink = _getPasswordLink(request.payload);
     let requestUrl = _buildRequestUrl(request, 'verify2');
 
-    // Validate the visitor's response to reCAPTCHA challenge, to ensure they
-    // are a human.
+    // Validate the visitor's response to reCAPTCHA challenge.
     try {
       await recaptcha.validate(request.payload['g-recaptcha-response']);
     } catch (err) {
-      const errorCode = 'RECAPTCHA';
+      const errorType = 'RECAPTCHA';
 
       logger.warn(
         '[ViewController->registerPost] Failure during reCAPTCHA validation.',
@@ -190,7 +189,7 @@ module.exports = {
           security: true,
           fail: true,
           stack_trace: err.stack,
-          error_code: errorCode,
+          error_type: errorType,
         },
       );
 
@@ -198,10 +197,10 @@ module.exports = {
         alert: {
           type: 'error',
           message: `
-            <p>Bot detection registered your attempt as spam.</p>
-            <p>Please try again, and if the problem persists notify info@humanitarian.id with this error code:</p>
+            <p>Our system detected your registration attempt as spam. We apologize for the inconvenience.</p>
+            <p>Please try registering again. If the problem persists notify info@humanitarian.id and include the following information:</p>
           `,
-          error_code: errorCode,
+          error_type: errorType,
         },
         formEmail: request.payload.email,
         formGivenName: request.payload.given_name,
