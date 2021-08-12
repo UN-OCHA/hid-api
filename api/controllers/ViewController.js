@@ -181,6 +181,8 @@ module.exports = {
     try {
       await recaptcha.validate(request.payload['g-recaptcha-response']);
     } catch (err) {
+      const errorCode = 'RC-1';
+
       logger.warn(
         '[ViewController->registerPost] Failure during reCAPTCHA validation.',
         {
@@ -188,13 +190,18 @@ module.exports = {
           security: true,
           fail: true,
           stack_trace: err.stack,
+          error_code: errorCode,
         },
       );
 
       return reply.view('register', {
         alert: {
           type: 'error',
-          message: 'There was an internal server error while processing your registration. Please try again, and if the problem persists notify info@humanitarian.id',
+          message: `
+            <p>Bot detection registered your attempt as spam.</p>
+            <p>Please try again, and if the problem persists notify info@humanitarian.id</p>
+          `,
+          error_code: errorCode,
         },
         formEmail: request.payload.email,
         formGivenName: request.payload.given_name,
