@@ -176,6 +176,8 @@ module.exports = {
     const passwordLink = _getPasswordLink(request.payload);
     let requestUrl = _buildRequestUrl(request, 'verify2');
 
+    // Validate the visitor's response to reCAPTCHA challenge, to ensure they
+    // are a human.
     try {
       await recaptcha.validate(request.payload['g-recaptcha-response']);
     } catch (err) {
@@ -185,6 +187,7 @@ module.exports = {
           request,
           security: true,
           fail: true,
+          stack_trace: err.stack,
         },
       );
 
@@ -203,6 +206,8 @@ module.exports = {
         recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY,
       });
     }
+
+    // reCAPTCHA validation was successful. Proceed.
     try {
       // Attempt to create a new HID account.
       await UserController.create(request);
