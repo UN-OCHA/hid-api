@@ -332,28 +332,35 @@ module.exports = {
   },
 
   async passwordPost(request, reply) {
-    const registerLink = _getRegisterLink(request.payload);
-    const passwordLink = _getPasswordLink(request.payload);
+    const requestUrl = _buildRequestUrl(request, 'new_password');
     try {
-      await UserController.resetPasswordEndpoint(request, reply);
-      return reply.view('login', {
+      await UserController.resetPasswordEmail(request, reply);
+      return reply.view('password', {
         alert: {
           type: 'status',
-          message: `The request to change your password has been received. If ${request.payload.email} corresponds to one in our system you will receive a link to reset your password. You may need to check your spam folder if the email does not arrive.`,
+          message: `The request to change your password has been received. If ${request.payload.email} exists in our system you will receive a link to reset your password. You may need to check your spam folder if the email does not arrive.`,
         },
         query: request.query,
-        registerLink,
-        passwordLink,
+        requestUrl,
       });
     } catch (err) {
-      return reply.view('login', {
+      logger.warn(
+        `[Viewcontroller->passwordPost] ${err.message}`,
+        {
+          request,
+          security: true,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+
+      return reply.view('password', {
         alert: {
           type: 'error',
-          message: 'There was an error resetting your password.',
+          message: 'There was an error generating the email to reset your password. Please try again.',
         },
         query: request.query,
-        registerLink,
-        passwordLink,
+        requestUrl,
       });
     }
   },
@@ -438,7 +445,7 @@ module.exports = {
       const passwordLink = _getPasswordLink(request.payload);
 
       try {
-        await UserController.resetPasswordEndpoint(request);
+        await UserController.resetPassword(request, reply);
 
         if (params) {
           return reply.view('login', {
@@ -462,15 +469,7 @@ module.exports = {
           title: 'Password update',
         });
       } catch (err) {
-        logger.error(
-          `[ViewController->newPasswordPost] ${err.message}`,
-          {
-            request,
-            security: true,
-            fail: true,
-            stack_trace: err.stack,
-          },
-        );
+        // No need to log the error; UserController.resetPassword logged it.
 
         if (params) {
           return reply.view('login', {

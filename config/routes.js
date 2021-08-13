@@ -413,9 +413,17 @@ module.exports = [
   },
 
   {
-    method: 'PUT',
+    method: 'POST',
+    path: '/api/v3/user/password-email',
+    handler: UserController.resetPasswordEmail,
+    options: {
+      auth: false,
+    },
+  },
+  {
+    method: 'POST',
     path: '/api/v3/user/password',
-    handler: UserController.resetPasswordEndpoint,
+    handler: UserController.resetPassword,
     options: {
       auth: false,
     },
