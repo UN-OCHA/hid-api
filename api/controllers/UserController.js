@@ -1467,7 +1467,7 @@ module.exports = {
     }
 
     // Look up user by ID.
-    let record = await User.findOne({ _id: request.payload.id }).catch((err) => {
+    let user = await User.findOne({ _id: request.payload.id }).catch((err) => {
       logger.error(
         `[UserController->resetPassword] ${err.message}`,
         {
@@ -1481,7 +1481,7 @@ module.exports = {
 
     // If we can't find the User we return a generic error, but log the detailed
     // reason internally so we can debug or provide support.
-    if (!record) {
+    if (!user) {
       logger.warn(
         `[UserController->resetPassword] Could not reset password. User ${request.payload.id} not found`,
         {
@@ -1494,13 +1494,13 @@ module.exports = {
     }
 
     // Check that whether a TOTP token is needed, and that it is valid.
-    if (record.totp && !cookie) {
+    if (user.totp && !cookie) {
       const token = request.headers['x-hid-totp'];
-      record = await AuthPolicy.isTOTPValid(record, token);
+      user = await AuthPolicy.isTOTPValid(user, token);
     }
 
     // Verify that the hash was correct.
-    if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === false) {
+    if (user.validHash(request.payload.hash, 'reset_password', request.payload.time) === false) {
       logger.warn(
         '[UserController->resetPassword] Reset password link is expired or invalid',
         {
@@ -1527,7 +1527,7 @@ module.exports = {
 
     // Compare new password to the old one. If our comparison is TRUE, then the
     // reset attempt should be rejected, since the passwords are the same.
-    if (record.validPassword(request.payload.password)) {
+    if (user.validPassword(request.payload.password)) {
       logger.warn(
         `[UserController->resetPassword] Could not reset password for user ${request.payload.id}. The new password can not be the same as the old one`,
         {
@@ -1543,27 +1543,27 @@ module.exports = {
     }
 
     // Success! We are resetting the password
-    record.password = User.hashPassword(request.payload.password);
-    record.verifyEmail(record.email);
+    user.password = User.hashPassword(request.payload.password);
+    user.verifyEmail(user.email);
 
     // Modify the user metadata now that password was reset.
-    record.expires = new Date(0, 0, 1, 0, 0, 0);
-    record.lastPasswordReset = new Date();
-    record.passwordResetAlert30days = false;
-    record.passwordResetAlert7days = false;
-    record.passwordResetAlert = false;
-    record.lastModified = new Date();
+    user.expires = new Date(0, 0, 1, 0, 0, 0);
+    user.lastPasswordReset = new Date();
+    user.passwordResetAlert30days = false;
+    user.passwordResetAlert7days = false;
+    user.passwordResetAlert = false;
+    user.lastModified = new Date();
 
     // Update user in DB.
-    await record.save().then(() => {
+    await user.save().then(() => {
       logger.info(
-        `[UserController->resetPassword] Password updated successfully for user ${record.id}`,
+        `[UserController->resetPassword] Password updated successfully for user ${user.id}`,
         {
           request,
           security: true,
           user: {
-            id: record.id,
-            email: record.email,
+            id: user.id,
+            email: user.email,
           },
         },
       );
