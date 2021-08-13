@@ -374,25 +374,51 @@ module.exports = {
       totp: false,
     });
 
-    const user = await User.findOne({ _id: request.query.id });
+    // Look up User by ID.
+    const user = await User.findOne({ _id: request.query.id }).catch((err) => {
+      logger.error(
+        `[ViewController->newPassword] ${err.message}`,
+        {
+          request,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+    });
 
+    // Show error if we couldn't find a User.
     if (!user) {
       return reply.view('error', {
         alert: {
           type: 'error',
-          message: 'The password reset link is malformed. <a href="/password">Request a new password reset link</a>.',
+          title: 'Your password reset link is either invalid or expired.',
+          message: `
+            <p>Please <a href="/password">generate a new link</a> and try again. If you see this error multiple times, contact <a href="mailto:info@humanitarian.id">info@humanitarian.id</a> and include the following information:</p>
+          `,
+          error_type: 'PW-RESET-USER',
         },
       });
     }
 
+    // If the user has 2FA enabled, we need them to enter a TOTP before allowing
+    // them to continue.
     if (user.totp) {
       return reply.view('totp', {
         query: request.query,
         destination: '/new_password',
-        alert: false,
+        alert: {
+          type: 'warning',
+          title: 'Enter your two-factor authentication code.',
+          message: `
+            <p><a href="https://about.humanitarian.id/faqs.html#What-two-factor-authentication" target="_blank" rel="noopener noreferrer">Read about 2FA in our FAQs</a></p>
+          `,
+        },
       });
     }
 
+    // Assuming the user either passed 2FA challenge, or they don't have it
+    // enabled, we cookie their reset data and pass them to the actual password
+    // reset form.
     request.yar.set('session', {
       hash: request.query.hash,
       id: request.query.id,
@@ -400,6 +426,7 @@ module.exports = {
       totp: true,
     });
 
+    // Display the password reset form.
     return reply.view('new_password', {
       query: request.query,
       hash: request.query.hash,
