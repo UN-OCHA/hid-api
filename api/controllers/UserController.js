@@ -1512,9 +1512,6 @@ module.exports = {
     }
 
     // Check that the reset hash was correct when the user landed on the page.
-    //
-    // TODO: HID-2249 - copy this validation to initial page load so user can
-    //       try again without wasting time. It should be kept here too.
     if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
       // Check the new password against the old one.
       if (record.validPassword(request.payload.password)) {

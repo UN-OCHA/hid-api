@@ -400,6 +400,21 @@ module.exports = {
       });
     }
 
+    // Before continuing, check that password link is valid. No sense in making
+    // the user do anthing if the link expired.
+    if (user.validHash(request.query.hash, 'reset_password', request.query.time) === false) {
+      return reply.view('error', {
+        alert: {
+          type: 'error',
+          title: 'Your password reset link is either invalid or expired.',
+          message: `
+            <p>Please <a href="/password">generate a new link</a> and try again. If you see this error multiple times, contact <a href="mailto:info@humanitarian.id">info@humanitarian.id</a> and include the following information:</p>
+          `,
+          error_type: 'PW-RESET-LINK',
+        },
+      });
+    }
+
     // If the user has 2FA enabled, we need them to enter a TOTP before allowing
     // them to continue.
     if (user.totp) {
