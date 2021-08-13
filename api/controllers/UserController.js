@@ -1440,10 +1440,11 @@ module.exports = {
   async resetPassword(request, reply) {
     const cookie = request.yar.get('session');
 
-    // There are several reasons we might want to return this response from the
-    // API, but we want to ensure the message is identical so that the true
-    // nature of the error can't be inferred from the public response.
+    // There are several reasons we might want to return some responses from the
+    // API, but we want to ensure the messages are identical so that an error
+    // with a sensitive nature can't be inferred from the public response.
     const resetLinkInvalidMessage = 'Reset password link is expired or invalid';
+    const cannotResetPasswordMessage = 'Could not reset password';
 
     // Basic requirements for resetting password. If any of these params are
     // missing then we cannot proceed.
@@ -1498,40 +1499,8 @@ module.exports = {
       record = await AuthPolicy.isTOTPValid(record, token);
     }
 
-    // Check that the reset hash was correct when the user landed on the page.
-    if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
-      // Verify that password is strong enough.
-      if (!User.isStrongPassword(request.payload.password)) {
-        logger.warn(
-          '[UserController->resetPassword] Could not reset password. New password is not strong enough',
-          {
-            request,
-            security: true,
-            fail: true,
-          },
-        );
-        throw Boom.badRequest('New password is not strong enough');
-      }
-
-      // Check the new password against the old one.
-      if (record.validPassword(request.payload.password)) {
-        logger.warn(
-          `[UserController->resetPassword] Could not reset password for user ${request.payload.id}. The new password can not be the same as the old one`,
-          {
-            request,
-            security: true,
-            fail: true,
-            user: {
-              id: request.payload.id,
-            },
-          },
-        );
-        throw Boom.badRequest('Could not reset password');
-      } else {
-        record.password = User.hashPassword(request.payload.password);
-        record.verifyEmail(record.email);
-      }
-    } else {
+    // Verify that the hash was correct.
+    if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === false) {
       logger.warn(
         '[UserController->resetPassword] Reset password link is expired or invalid',
         {
@@ -1542,6 +1511,40 @@ module.exports = {
       );
       throw Boom.badRequest(resetLinkInvalidMessage);
     }
+
+    // Verify that password is strong enough.
+    if (!User.isStrongPassword(request.payload.password)) {
+      logger.warn(
+        '[UserController->resetPassword] Could not reset password. New password is not strong enough',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest(cannotResetPasswordMessage);
+    }
+
+    // Compare new password to the old one. If our comparison is TRUE, then the
+    // reset attempt should be rejected, since the passwords are the same.
+    if (record.validPassword(request.payload.password)) {
+      logger.warn(
+        `[UserController->resetPassword] Could not reset password for user ${request.payload.id}. The new password can not be the same as the old one`,
+        {
+          request,
+          security: true,
+          fail: true,
+          user: {
+            id: request.payload.id,
+          },
+        },
+      );
+      throw Boom.badRequest(cannotResetPasswordMessage);
+    }
+
+    // Success! We are resetting the password
+    record.password = User.hashPassword(request.payload.password);
+    record.verifyEmail(record.email);
 
     // Modify the user metadata now that password was reset.
     record.expires = new Date(0, 0, 1, 0, 0, 0);
