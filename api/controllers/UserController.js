@@ -1401,17 +1401,17 @@ module.exports = {
    * @api [post] /user/password
    * tags:
    *   - user
-   * summary: Resets a user password or sends a password reset email.
+   * summary: Resets a user password.
    * parameters:
    *   - name: X-HID-TOTP
    *     in: header
-   *     description: The TOTP token. Required if the user has 2FA enabled.
+   *     description: Required if the user has 2FA enabled.
    *     required: false
    *     type: string
    * requestBody:
    *   description: >-
    *     Use a password reset link.For password complexity requirements see
-   *     `PUT /user/{id}/password`
+   *     `POST /user/{id}/password`
    *   required: true
    *   content:
    *     application/json:
