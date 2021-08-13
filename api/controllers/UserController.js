@@ -1498,21 +1498,21 @@ module.exports = {
       record = await AuthPolicy.isTOTPValid(record, token);
     }
 
-    // Verify that password is strong enough.
-    if (!User.isStrongPassword(request.payload.password)) {
-      logger.warn(
-        '[UserController->resetPassword] Could not reset password. New password is not strong enough',
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('New password is not strong enough');
-    }
-
     // Check that the reset hash was correct when the user landed on the page.
     if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
+      // Verify that password is strong enough.
+      if (!User.isStrongPassword(request.payload.password)) {
+        logger.warn(
+          '[UserController->resetPassword] Could not reset password. New password is not strong enough',
+          {
+            request,
+            security: true,
+            fail: true,
+          },
+        );
+        throw Boom.badRequest('New password is not strong enough');
+      }
+
       // Check the new password against the old one.
       if (record.validPassword(request.payload.password)) {
         logger.warn(
