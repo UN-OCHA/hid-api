@@ -1440,6 +1440,13 @@ module.exports = {
   async resetPassword(request, reply) {
     const cookie = request.yar.get('session');
 
+    // There are several reasons we might want to return this response from the
+    // API, but we want to ensure the message is identical so that the true
+    // nature of the error can't be inferred from the public response.
+    const resetLinkInvalidMessage = 'Reset password link is expired or invalid';
+
+    // Basic requirements for resetting password. If any of these params are
+    // missing then we cannot proceed.
     if (
       !request.payload
       || !request.payload.hash
@@ -1458,7 +1465,40 @@ module.exports = {
       throw Boom.badRequest('Wrong or missing arguments');
     }
 
-    // Verify whether password requirements were met.
+    // Look up user by ID.
+    let record = await User.findOne({ _id: request.payload.id }).catch((err) => {
+      logger.error(
+        `[UserController->resetPassword] ${err.message}`,
+        {
+          request,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+      throw Boom.badRequest(resetLinkInvalidMessage);
+    });
+
+    // If we can't find the User we return a generic error, but log the detailed
+    // reason internally so we can debug or provide support.
+    if (!record) {
+      logger.warn(
+        `[UserController->resetPassword] Could not reset password. User ${request.payload.id} not found`,
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest(resetLinkInvalidMessage);
+    }
+
+    // Check that whether a TOTP token is needed, and that it is valid.
+    if (record.totp && !cookie) {
+      const token = request.headers['x-hid-totp'];
+      record = await AuthPolicy.isTOTPValid(record, token);
+    }
+
+    // Verify that password is strong enough.
     if (!User.isStrongPassword(request.payload.password)) {
       logger.warn(
         '[UserController->resetPassword] Could not reset password. New password is not strong enough',
@@ -1469,26 +1509,6 @@ module.exports = {
         },
       );
       throw Boom.badRequest('New password is not strong enough');
-    }
-
-    // Lookup user by ID.
-    let record = await User.findOne({ _id: request.payload.id });
-    if (!record) {
-      logger.warn(
-        `[UserController->resetPassword] Could not reset password. User ${request.payload.id} not found`,
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Reset password link is expired or invalid');
-    }
-
-    // Check that whether a TOTP token is needed, and that it is valid.
-    if (record.totp && !cookie) {
-      const token = request.headers['x-hid-totp'];
-      record = await AuthPolicy.isTOTPValid(record, token);
     }
 
     // Check that the reset hash was correct when the user landed on the page.
@@ -1523,7 +1543,7 @@ module.exports = {
           fail: true,
         },
       );
-      throw Boom.badRequest('Reset password link is expired or invalid');
+      throw Boom.badRequest(resetLinkInvalidMessage);
     }
 
     // Modify the user metadata now that password was reset.
