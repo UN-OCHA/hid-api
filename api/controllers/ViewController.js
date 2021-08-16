@@ -176,22 +176,31 @@ module.exports = {
     const passwordLink = _getPasswordLink(request.payload);
     let requestUrl = _buildRequestUrl(request, 'verify2');
 
+    // Validate the visitor's response to reCAPTCHA challenge.
     try {
       await recaptcha.validate(request.payload['g-recaptcha-response']);
     } catch (err) {
+      const errorType = 'RECAPTCHA';
+
       logger.warn(
         '[ViewController->registerPost] Failure during reCAPTCHA validation.',
         {
           request,
           security: true,
           fail: true,
+          stack_trace: err.stack,
+          error_type: errorType,
         },
       );
 
       return reply.view('register', {
         alert: {
           type: 'error',
-          message: 'There was an internal server error while processing your registration. Please try again, and if the problem persists notify info@humanitarian.id',
+          message: `
+            <p>Our system detected your registration attempt as spam. We apologize for the inconvenience.</p>
+            <p>Please try registering again. If the problem persists notify info@humanitarian.id and include the following information:</p>
+          `,
+          error_type: errorType,
         },
         formEmail: request.payload.email,
         formGivenName: request.payload.given_name,
@@ -203,6 +212,8 @@ module.exports = {
         recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY,
       });
     }
+
+    // reCAPTCHA validation was successful. Proceed.
     try {
       // Attempt to create a new HID account.
       await UserController.create(request);
