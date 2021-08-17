@@ -479,9 +479,17 @@ module.exports = [
   },
 
   {
-    method: 'PUT',
+    method: 'POST',
     path: '/api/v3/user/emails/{email?}',
-    handler: UserController.validateEmail,
+    handler: UserController.sendValidationEmail,
+    options: {
+      auth: false,
+    },
+  },
+  {
+    method: 'POST',
+    path: '/api/v3/user/emails/validate',
+    handler: UserController.validateEmailAddress,
     options: {
       auth: false,
     },

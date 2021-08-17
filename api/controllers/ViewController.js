@@ -297,7 +297,7 @@ module.exports = {
         emailId: request.query.emailId,
       };
 
-      await UserController.validateEmail(request);
+      await UserController.validateEmailAddress(request, reply);
 
       // If user is logged in, send them to their profile.
       if (cookie && cookie.userId) {
