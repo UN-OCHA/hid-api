@@ -1,4 +1,5 @@
 import env from './_env';
+import utils from './_utils';
 
 describe('Login', () => {
   let page;
@@ -35,15 +36,7 @@ describe('Login', () => {
   });
 
   it('allows user to log in when credentials are valid', async () => {
-    const email = await page.$('#email');
-    await email.click({ clickCount: 3 });
-    await email.type(env.testUserEmail);
-
-    const password = await page.$('#password');
-    await password.click({ clickCount: 3 });
-    await password.type(env.testUserPassword);
-
-    await page.click('.t-btn--login');
+    await utils.login(page);
     await page.waitForSelector('.t-page--dashboard');
 
     expect(await page.url()).toContain('/user');
