@@ -471,7 +471,7 @@ module.exports = [
 
   {
     method: 'POST',
-    path: '/api/v3/user/emails/{email?}',
+    path: '/api/v3/user/emails/{email}',
     handler: UserController.sendValidationEmail,
     options: {
       auth: false,
