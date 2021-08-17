@@ -1115,20 +1115,6 @@ module.exports = {
    *     in: path
    *     required: true
    *     default: ''
-   * requestBody:
-   *   description: >-
-   *     The `app_validation_url` is the base URL of the confirmation link. It
-   *     must match an entry in our private `ALLOWED_DOMAINS` list, or the
-   *     request will be rejected with HTTP 400.
-   *   required: true
-   *   content:
-   *     application/json:
-   *       schema:
-   *         type: object
-   *         properties:
-   *           app_validation_url:
-   *             type: string
-   *             required: true
    * responses:
    *   '204':
    *     description: Request to send an email confirmation was received.
@@ -1156,20 +1142,6 @@ module.exports = {
       return reply.response().code(204);
     }
 
-    // Confirm whether the request came from a valid domain.
-    const appValidationUrl = request.payload && request.payload.app_validation_url ? request.payload.app_validation_url : '';
-    if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
-      logger.warn(
-        `[UserController->validateEmail] app_validation_url ${appValidationUrl} is not in allowedDomains list`,
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Invalid app_validation_url');
-    }
-
     // Send validation email.
     const emailIndex = record.emailIndex(request.params.email);
     const email = record.emails[emailIndex];
@@ -1177,7 +1149,6 @@ module.exports = {
       record,
       email.email,
       email._id.toString(),
-      appValidationUrl,
     );
 
     // Report that the request was received. We don't want to reveal the outcome
