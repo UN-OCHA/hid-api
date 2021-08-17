@@ -1131,13 +1131,11 @@ module.exports = {
    *             required: true
    * responses:
    *   '204':
-   *     description: Email sent successfully.
+   *     description: Request to send an email confirmation was received.
    *   '400':
    *     description: Bad request.
    *   '401':
    *     description: Unauthorized.
-   *   '404':
-   *     description: Requested email address not found.
    * security: []
    */
   async sendValidationEmail(request, reply) {
@@ -1151,7 +1149,11 @@ module.exports = {
           fail: true,
         },
       );
-      throw Boom.notFound();
+
+      // Disclosing with anything other than 204 allows an attacker to determine
+      // the existence of email addresses within the system. We continue logging
+      // the email-not-found error, but publicly respond with 204.
+      return reply.response().code(204);
     }
 
     // Confirm whether the request came from a valid domain.
@@ -1178,7 +1180,8 @@ module.exports = {
       appValidationUrl,
     );
 
-    // Send a 204 (empty body)
+    // Report that the request was received. We don't want to reveal the outcome
+    // of the request, only that we understood it.
     return reply.response().code(204);
   },
 
