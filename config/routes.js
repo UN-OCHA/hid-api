@@ -55,15 +55,6 @@ module.exports = [
   {
     method: 'GET',
     path: '/verify',
-    handler: ViewController.newPassword,
-    options: {
-      auth: false,
-    },
-  },
-
-  {
-    method: 'GET',
-    path: '/verify2',
     handler: ViewController.verify,
     options: {
       auth: false,

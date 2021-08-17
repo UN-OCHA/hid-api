@@ -196,7 +196,7 @@ module.exports = {
       to: email,
       locale: user.locale,
     };
-    const baseUrl = `${process.env.APP_URL}/verify2`;
+    const baseUrl = `${process.env.APP_URL}/verify`;
     const hash = user.generateHash('verify_email', email);
     let resetUrl = addUrlArgument(baseUrl, 'id', user._id.toString());
     resetUrl = addUrlArgument(resetUrl, 'emailId', emailId);

@@ -155,7 +155,7 @@ module.exports = {
   },
 
   register(request, reply) {
-    const requestUrl = _buildRequestUrl(request, 'verify2');
+    const requestUrl = _buildRequestUrl(request, 'verify');
     return reply.view('register', {
       title: 'Register a Humanitarian ID account',
       formEmail: '',
@@ -174,7 +174,7 @@ module.exports = {
     });
     const registerLink = _getRegisterLink(request.payload);
     const passwordLink = _getPasswordLink(request.payload);
-    let requestUrl = _buildRequestUrl(request, 'verify2');
+    let requestUrl = _buildRequestUrl(request, 'verify');
 
     // Validate the visitor's response to reCAPTCHA challenge.
     try {
@@ -850,7 +850,7 @@ module.exports = {
         user,
         confirmEmail.email,
         confirmEmail._id.toString(),
-        _buildRequestUrl(request, 'verify2'),
+        _buildRequestUrl(request, 'verify'),
       ).then(() => {
         cookie.alert.message += '<p>The confirmation email will arrive in your inbox shortly.</p>';
       }).catch(() => {
@@ -865,7 +865,7 @@ module.exports = {
       await UserController.addEmail({}, {
         userId: cookie.userId,
         email: request.payload.email_new,
-        appValidationUrl: _buildRequestUrl(request, 'verify2'),
+        appValidationUrl: _buildRequestUrl(request, 'verify'),
       }).then(() => {
         cookie.alert.message += `<p>A confirmation email has been sent to ${request.payload.email_new}.</p>`;
       }).catch((err) => {

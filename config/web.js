@@ -67,7 +67,6 @@ module.exports = {
             '/oauth/authorize',
             '/register',
             '/verify',
-            '/verify2',
             '/password',
             '/new_password',
           ];
