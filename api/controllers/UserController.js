@@ -1126,8 +1126,8 @@ module.exports = {
    */
   async sendValidationEmail(request, reply) {
     // Confirm whether a user exists with the requested email.
-    const record = await User.findOne({ 'emails.email': request.params.email });
-    if (!record) {
+    const user = await User.findOne({ 'emails.email': request.params.email });
+    if (!user) {
       logger.warn(
         `[UserController->validateEmail] Could not find user with email ${request.params.email}`,
         {
@@ -1143,10 +1143,10 @@ module.exports = {
     }
 
     // Send validation email.
-    const emailIndex = record.emailIndex(request.params.email);
-    const email = record.emails[emailIndex];
+    const emailIndex = user.emailIndex(request.params.email);
+    const email = user.emails[emailIndex];
     await EmailService.sendValidationEmail(
-      record,
+      user,
       email.email,
       email._id.toString(),
     );
@@ -1203,7 +1203,7 @@ module.exports = {
       throw Boom.badRequest();
     }
 
-    const record = await User.findOne({ _id: request.payload.id }).catch((err) => {
+    const user = await User.findOne({ _id: request.payload.id }).catch((err) => {
       logger.error(
         `[UserController->validateEmail] ${err.message}`,
         {
@@ -1217,7 +1217,7 @@ module.exports = {
       throw Boom.internal('There is a problem querying to the database. Please try again.');
     });
 
-    if (!record) {
+    if (!user) {
       logger.warn(
         `[UserController->validateEmail] Could not find user ${request.payload.id}`,
         {
@@ -1233,34 +1233,34 @@ module.exports = {
     // This is necessary for new account registrations, which won't have the
     // emailId parameter sent along with their confirmation link since the new
     // account only has a single primary email address and no secondaries.
-    let { email } = record;
+    let { email } = user;
 
     // If we are verifying a secondary email on an existing account, we need
     // to look up the emailId being confirmed in order to validate the hash.
     if (request.payload.emailId) {
-      const emailRecord = record.emails.id(request.payload.emailId);
+      const emailRecord = user.emails.id(request.payload.emailId);
       if (emailRecord) {
-        ({ email } = emailRecord);
+        email = emailRecord.email;
       }
     }
 
     // Verify hash
-    if (record.validHash(request.payload.hash, 'verify_email', request.payload.time, email) === true) {
+    if (user.validHash(request.payload.hash, 'verify_email', request.payload.time, email) === true) {
       // Verify user email
-      if (record.email === email) {
-        record.email_verified = true;
-        record.expires = new Date(0, 0, 1, 0, 0, 0);
-        record.emails[0].validated = true;
-        record.emails.set(0, record.emails[0]);
-        record.lastModified = new Date();
+      if (user.email === email) {
+        user.email_verified = true;
+        user.expires = new Date(0, 0, 1, 0, 0, 0);
+        user.emails[0].validated = true;
+        user.emails.set(0, user.emails[0]);
+        user.lastModified = new Date();
       } else {
-        for (let i = 0, len = record.emails.length; i < len; i += 1) {
-          if (record.emails[i].email === email) {
-            record.emails[i].validated = true;
-            record.emails.set(i, record.emails[i]);
+        for (let i = 0, len = user.emails.length; i < len; i += 1) {
+          if (user.emails[i].email === email) {
+            user.emails[i].validated = true;
+            user.emails.set(i, user.emails[i]);
           }
         }
-        record.lastModified = new Date();
+        user.lastModified = new Date();
       }
     } else {
       logger.warn(
@@ -1273,14 +1273,14 @@ module.exports = {
       throw Boom.badRequest('Invalid hash');
     }
 
-    await record.save().then(() => {
+    await user.save().then(() => {
       logger.info(
-        `[UserController->validateEmail] Saved user ${record.id} successfully`,
+        `[UserController->validateEmail] Saved user ${user.id} successfully`,
         {
           request,
           user: {
-            id: record.id,
-            email: record.email,
+            id: user.id,
+            email: user.email,
           },
         },
       );
@@ -1292,8 +1292,8 @@ module.exports = {
     //       to avoid that edge case.
     //
     // @see HID-2200
-    if (record.email === email) {
-      await EmailService.sendPostRegister(record);
+    if (user.email === email) {
+      await EmailService.sendPostRegister(user);
     }
 
     return reply.response().code(204);
