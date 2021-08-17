@@ -20,4 +20,37 @@ module.exports = {
 
     await page.click('.t-btn--login');
   },
+
+  //
+  // Open Mailhog and return contents of the specified message. Defaults to 1st.
+  //
+  async openMailhogMessage(page, which) {
+    const whichMessage = typeof which === 'number' ? which : 1;
+
+    // Mailhog is here when you set up via hid-stack
+    await page.goto('http://localhost:8025');
+    // We always want the first message in Mailhog.
+    await page.click(`.messages > *:nth-child(${whichMessage})`);
+    // Target this message's iframe in Mailhog.
+    return page.frames()[1];
+  },
+
+
+  //
+  // Clear Mailhog.
+  //
+  async clearMailhog(page, expect) {
+    // Mailhog is here when you set up via hid-stack
+    await page.goto('http://localhost:8025');
+
+    // Delete all Mailhog messages.
+    await page.click('a[ng-click="deleteAll()"]');
+    await page.waitForTimeout(1000);
+    await page.click('.modal-dialog .btn-danger');
+    await page.waitForTimeout(1000);
+
+    // Confirm everything got cleared out.
+    const numMessages = await page.$$eval('.messages > *', el => el.length);
+    expect(numMessages).toBe(0);
+  },
 };

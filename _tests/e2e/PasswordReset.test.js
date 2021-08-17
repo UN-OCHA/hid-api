@@ -1,4 +1,5 @@
 import env from './_env';
+import utils from './_utils';
 
 describe('PasswordReset [no-ci]', () => {
   let page;
@@ -41,12 +42,8 @@ describe('PasswordReset [no-ci]', () => {
   });
 
   it('allows user to initiate password reset via email', async () => {
-    // Mailhog is here when you set up via hid-stack
-    await page.goto('http://localhost:8025');
-    // We always want the first message in Mailhog.
-    await page.click('.messages > *:first-child');
-    // Target this message's iframe in Mailhog.
-    const message = await page.frames()[1];
+    const message = await utils.openMailhogMessage(page, 1);
+
     // Mailhog has iframes and the link has target="_blank" and all of that makes
     // it a real PITA to truly click the link and follow it. Let's instead grab
     // the URL and go directly to it:
@@ -89,14 +86,10 @@ describe('PasswordReset [no-ci]', () => {
   });
 
   it('immediately shows an error when password reset link is invalid', async () => {
-    // Mailhog is here when you set up via hid-stack
-    await page.goto('http://localhost:8025');
-    // We always want the first message in Mailhog. In this case we're using the
-    // SAME link as in the test above. It should now show an error if the
-    // password reset was successful.
-    await page.click('.messages > *:first-child');
-    // Target this message's iframe in Mailhog.
-    const message = await page.frames()[1];
+    // In this case we want the SAME link as the firs time, to verify that it
+    // can't be reused.
+    const message = await utils.openMailhogMessage(page);
+
     // Mailhog has iframes and the link has target="_blank" and all of that makes
     // it a real PITA to truly click the link and follow it. Let's instead grab
     // the URL and go directly to it:
@@ -104,5 +97,9 @@ describe('PasswordReset [no-ci]', () => {
     await page.goto(pwResetUrl);
     // Do we see the password reset error?
     expect(await page.content()).toContain('Your password reset link is either invalid or expired.');
+  });
+
+  it('successfully cleaned up Mailhog', async () => {
+    await utils.clearMailhog(page, expect);
   });
 });
