@@ -1,8 +1,17 @@
 //
-// This should pick up the value of your NODE_ENV.
+// Import any possible environment.
 //
-// Defaults to 'local'
+import local from './local';
+
 //
-import env from './example';
+// Provide config for any environment here. It will be loaded dynamically based
+// on the process.env.NODE_ENV when it runs. Defaults to `local`
+//
+const environments = {
+  local,
+};
+
+const environmentExists = typeof environments[process.env.NODE_ENV] !== 'undefined';
+const env = environmentExists ? environments[process.env.NODE_ENV] : environments.local;
 
 module.exports = env;
