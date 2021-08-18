@@ -1373,32 +1373,8 @@ module.exports = {
       return reply.response().code(204);
     }
 
-    // Determine whether email is primary. We allow unvalidated primary emails
-    // to accept password resets.
-    const emailIsPrimary = record.email === request.payload.email.toLowerCase();
-
-    // Verify that the email has already been validated
-    // eslint-disable-next-line max-len
-    const secondaryEmailIsValidated = record.emails.some(e => e.email === request.payload.email.toLowerCase() && e.validated === true);
-
-    // IF the email is primary OR it's a __validated__ secondary email
-    // THEN send password reset.
-    if (emailIsPrimary || secondaryEmailIsValidated) {
-      await EmailService.sendResetPassword(record, resetUrl, request.payload.email);
-    } else {
-      logger.warn(
-        `[UserController->resetPasswordEmail] Could not reset password because the secondary email ${request.payload.email} has not been validated.`,
-        {
-          request,
-          security: true,
-          fail: true,
-          user: {
-            id: record.id,
-            email: record.email,
-          },
-        },
-      );
-    }
+    // If we made it this far, we can send the password reset email.
+    await EmailService.sendResetPassword(record, resetUrl, request.payload.email);
 
     // Send HTTP 204 (empty success response)
     return reply.response().code(204);
