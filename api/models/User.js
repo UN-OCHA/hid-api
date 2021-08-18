@@ -425,19 +425,25 @@ UserSchema.methods = {
   // Validate the hash of a confirmation link
   validHash(hashLink, type, time, email) {
     if (type === 'reset_password') {
+      // Confirm that 24 hours haven't passed.
       const now = Date.now();
       if (now - time > 24 * 3600 * 1000) {
         return false;
       }
+
+      // Create and compare hash
       const value = `${time}:${this._id.toString()}:${this.password}`;
       const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
       return hash === hashLink;
     }
     if (type === 'verify_email') {
+      // Confirm that 24 hours haven't passed.
       const now = Date.now();
       if (now - time > 24 * 3600 * 1000) {
         return false;
       }
+
+      // Create and compare hash
       const value = `${time}:${this._id.toString()}:${email}`;
       const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
       return hash === hashLink;

@@ -1292,28 +1292,14 @@ module.exports = {
     return reply.response().code(204);
   },
 
-  /*
-   * @TODO: This function also needs to be split into two methods because it
-   *        serves two purposes.
-   *
-   * @see HID-2067
-   *
-   * @api [put] /user/password
+  /**
+   * @api [post] /user/password-email
    * tags:
    *   - user
-   * summary: Resets a user password or sends a password reset email.
-   * parameters:
-   *   - name: X-HID-TOTP
-   *     in: header
-   *     description: The TOTP token. Required if the user has 2FA enabled.
-   *     required: false
-   *     type: string
+   * summary: Sends a password reset email.
    * requestBody:
    *   description: >-
-   *     Send a payload with `email` and `app_reset_url` to have this method
-   *     send an email with a password recovery email. Send `id`,`time`,`hash`,
-   *     `password` in the payload to have it reset the password. For password
-   *     complexity requirements see `PUT /user/{id}/password`
+   *     Send an email with a password recovery email.
    *   required: true
    *   content:
    *     application/json:
@@ -1323,11 +1309,115 @@ module.exports = {
    *           email:
    *             type: string
    *             required: true
-   *           app_reset_url:
+   *           reset_url:
    *             type: string
    *             required: true
    *             description: >-
    *               Should correspond to the endpoint you are interacting with.
+   * responses:
+   *   '204':
+   *     description: >-
+   *       The request to send a password reset email was received and processed
+   *       successfully. NOTE: due to security requirements regarding disclosure
+   *       of email addresses in our system, the response does NOT guarantee the
+   *       email exists, and thus does NOT guarantee that an email was sent.
+   *   '400':
+   *     description: Bad request. See response body for details.
+   * security: []
+   */
+  async resetPasswordEmail(request, reply) {
+    // Look for required params and fail if either are missing.
+    if (!request.payload || !request.payload.email || !request.payload.reset_url) {
+      throw Boom.badRequest('Missing email and/or reset_url parameters in request body.');
+    }
+
+    // Validate app URL.
+    const resetUrl = request.payload.reset_url || '';
+    if (!HelperService.isAuthorizedUrl(resetUrl)) {
+      logger.warn(
+        `[UserController->resetPasswordEmail] reset_url ${resetUrl} is not in allowedDomains list`,
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('reset_url is invalid');
+    }
+
+    // Lookup user based on the email address. We scan the `emails` array so
+    // that secondary addresses can also receive password resets.
+    const record = await User.findOne({ 'emails.email': request.payload.email.toLowerCase() });
+
+    // No user found.
+    if (!record) {
+      logger.warn(
+        `[UserController->resetPasswordEmail] No user found with email: ${request.payload.email}`,
+        {
+          request,
+          fail: true,
+        },
+      );
+
+      // Send HTTP 204 (empty success response)
+      //
+      // We send this because disclosing the existence (or lack thereof) of an
+      // email address is considered a security hole, per OICT policy.
+      return reply.response().code(204);
+    }
+
+    // Determine whether email is primary. We allow unvalidated primary emails
+    // to accept password resets.
+    const emailIsPrimary = record.email === request.payload.email.toLowerCase();
+
+    // Verify that the email has already been validated
+    // eslint-disable-next-line max-len
+    const secondaryEmailIsValidated = record.emails.some(e => e.email === request.payload.email.toLowerCase() && e.validated === true);
+
+    // IF the email is primary OR it's a __validated__ secondary email
+    // THEN send password reset.
+    if (emailIsPrimary || secondaryEmailIsValidated) {
+      await EmailService.sendResetPassword(record, resetUrl, request.payload.email);
+    } else {
+      logger.warn(
+        `[UserController->resetPasswordEmail] Could not reset password because the secondary email ${request.payload.email} has not been validated.`,
+        {
+          request,
+          security: true,
+          fail: true,
+          user: {
+            id: record.id,
+            email: record.email,
+          },
+        },
+      );
+    }
+
+    // Send HTTP 204 (empty success response)
+    return reply.response().code(204);
+  },
+
+  /**
+   * @api [post] /user/password
+   * tags:
+   *   - user
+   * summary: Resets a user password.
+   * parameters:
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: Required if the user has 2FA enabled.
+   *     required: false
+   *     type: string
+   * requestBody:
+   *   description: >-
+   *     Use a password reset link.For password complexity requirements see
+   *     `POST /user/{id}/password`
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
    *           id:
    *             type: string
    *             required: true
@@ -1341,84 +1431,23 @@ module.exports = {
    *             type: string
    *             required: true
    * responses:
-   *   '200':
+   *   '204':
    *     description: Password reset successfully.
    *   '400':
    *     description: Bad request. See response body for details.
    * security: []
    */
-  async resetPasswordEndpoint(request, reply) {
-    if (request.payload && request.payload.email) {
-      // Validate app URL.
-      const appResetUrl = request.payload.app_reset_url || '';
-      if (!HelperService.isAuthorizedUrl(appResetUrl)) {
-        logger.warn(
-          `[UserController->resetPasswordEndpoint] app_reset_url ${appResetUrl} is not in allowedDomains list`,
-          {
-            request,
-            security: true,
-            fail: true,
-          },
-        );
-        throw Boom.badRequest('app_reset_url is invalid');
-      }
-
-      // Lookup user based on the email address. We scan the `emails` array so
-      // that secondary addresses can also receive password resets.
-      const record = await User.findOne({ 'emails.email': request.payload.email.toLowerCase() });
-
-      // No user found.
-      if (!record) {
-        logger.warn(
-          `[UserController->resetPasswordEndpoint] No user found with email: ${request.payload.email}`,
-          {
-            request,
-            fail: true,
-          },
-        );
-
-        // Send HTTP 204 (empty success response)
-        //
-        // We send this because disclosing the existence (or lack thereof) of an
-        // email address is considered a security hole, per OICT policy.
-        return reply.response().code(204);
-      }
-
-      // Determine whether email is primary. We allow unvalidated primary emails
-      // to accept password resets.
-      const emailIsPrimary = record.email === request.payload.email.toLowerCase();
-
-      // Verify that the email has already been validated
-      // eslint-disable-next-line max-len
-      const secondaryEmailIsValidated = record.emails.some(e => e.email === request.payload.email.toLowerCase() && e.validated === true);
-
-      // IF the email is primary OR it's a __validated__ secondary email
-      // THEN send password reset.
-      if (emailIsPrimary || secondaryEmailIsValidated) {
-        await EmailService.sendResetPassword(record, appResetUrl, request.payload.email);
-      } else {
-        logger.warn(
-          `[UserController->resetPasswordEndpoint] Could not reset password because the secondary email ${request.payload.email} has not been validated.`,
-          {
-            request,
-            security: true,
-            fail: true,
-            user: {
-              id: record.id,
-              email: record.email,
-            },
-          },
-        );
-      }
-
-      // Send HTTP 204 (empty success response)
-      return reply.response().code(204);
-    }
-
-    // If `request.payload.email` was empty, we seem to be evaluating the reset
-    // link contained within an email. This is not an API call, instead a normal
-    // page load from a browser.
+  async resetPassword(request, reply) {
     const cookie = request.yar.get('session');
+
+    // There are several reasons we might want to return some responses from the
+    // API, but we want to ensure the messages are identical so that an error
+    // with a sensitive nature can't be inferred from the public response.
+    const resetLinkInvalidMessage = 'Reset password link is expired or invalid';
+    const cannotResetPasswordMessage = 'Could not reset password';
+
+    // Basic requirements for resetting password. If any of these params are
+    // missing then we cannot proceed.
     if (
       !request.payload
       || !request.payload.hash
@@ -1427,104 +1456,120 @@ module.exports = {
       || !request.payload.time
     ) {
       logger.warn(
-        '[UserController->resetPasswordEndpoint] Wrong or missing arguments',
+        '[UserController->resetPassword] Wrong or missing arguments',
         {
           request,
           security: true,
+          fail: true,
         },
       );
       throw Boom.badRequest('Wrong or missing arguments');
     }
 
-    // Verify whether password requirements were met.
-    if (!User.isStrongPassword(request.payload.password)) {
-      logger.warn(
-        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough',
+    // Look up user by ID.
+    let user = await User.findOne({ _id: request.payload.id }).catch((err) => {
+      logger.error(
+        `[UserController->resetPassword] ${err.message}`,
         {
           request,
-          security: true,
           fail: true,
+          stack_trace: err.stack,
         },
       );
-      throw Boom.badRequest('New password is not strong enough');
-    }
+      throw Boom.badRequest(resetLinkInvalidMessage);
+    });
 
-    // Lookup user by ID.
-    let record = await User.findOne({ _id: request.payload.id });
-    if (!record) {
+    // If we can't find the User we return a generic error, but log the detailed
+    // reason internally so we can debug or provide support.
+    if (!user) {
       logger.warn(
-        `[UserController->resetPasswordEndpoint] Could not reset password. User ${request.payload.id} not found`,
+        `[UserController->resetPassword] Could not reset password. User ${request.payload.id} not found`,
         {
           request,
           security: true,
           fail: true,
         },
       );
-      throw Boom.badRequest('Reset password link is expired or invalid');
+      throw Boom.badRequest(resetLinkInvalidMessage);
     }
 
     // Check that whether a TOTP token is needed, and that it is valid.
-    if (record.totp && !cookie) {
+    if (user.totp && !cookie) {
       const token = request.headers['x-hid-totp'];
-      record = await AuthPolicy.isTOTPValid(record, token);
+      user = await AuthPolicy.isTOTPValid(user, token);
     }
 
-    // Check that the reset hash was correct when the user landed on the page.
-    if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
-      // Check the new password against the old one.
-      if (record.validPassword(request.payload.password)) {
-        logger.warn(
-          `[UserController->resetPasswordEndpoint] Could not reset password for user ${request.payload.id}. The new password can not be the same as the old one`,
-          {
-            request,
-            security: true,
-            fail: true,
-            user: {
-              id: request.payload.id,
-            },
-          },
-        );
-        throw Boom.badRequest('Could not reset password');
-      } else {
-        record.password = User.hashPassword(request.payload.password);
-        record.verifyEmail(record.email);
-      }
-    } else {
+    // Verify that the hash was correct.
+    if (user.validHash(request.payload.hash, 'reset_password', request.payload.time) === false) {
       logger.warn(
-        '[UserController->resetPasswordEndpoint] Reset password link is expired or invalid',
+        '[UserController->resetPassword] Reset password link is expired or invalid',
         {
           request,
           security: true,
           fail: true,
         },
       );
-      throw Boom.badRequest('Reset password link is expired or invalid');
+      throw Boom.badRequest(resetLinkInvalidMessage);
     }
 
+    // Verify that password is strong enough.
+    if (!User.isStrongPassword(request.payload.password)) {
+      logger.warn(
+        '[UserController->resetPassword] Could not reset password. New password is not strong enough',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest(cannotResetPasswordMessage);
+    }
+
+    // Compare new password to the old one. If our comparison is TRUE, then the
+    // reset attempt should be rejected, since the passwords are the same.
+    if (user.validPassword(request.payload.password)) {
+      logger.warn(
+        `[UserController->resetPassword] Could not reset password for user ${request.payload.id}. The new password can not be the same as the old one`,
+        {
+          request,
+          security: true,
+          fail: true,
+          user: {
+            id: request.payload.id,
+          },
+        },
+      );
+      throw Boom.badRequest(cannotResetPasswordMessage);
+    }
+
+    // Success! We are resetting the password
+    user.password = User.hashPassword(request.payload.password);
+    user.verifyEmail(user.email);
+
     // Modify the user metadata now that password was reset.
-    record.expires = new Date(0, 0, 1, 0, 0, 0);
-    record.lastPasswordReset = new Date();
-    record.passwordResetAlert30days = false;
-    record.passwordResetAlert7days = false;
-    record.passwordResetAlert = false;
-    record.lastModified = new Date();
+    user.expires = new Date(0, 0, 1, 0, 0, 0);
+    user.lastPasswordReset = new Date();
+    user.passwordResetAlert30days = false;
+    user.passwordResetAlert7days = false;
+    user.passwordResetAlert = false;
+    user.lastModified = new Date();
 
     // Update user in DB.
-    await record.save().then(() => {
+    await user.save().then(() => {
       logger.info(
-        `[UserController->resetPasswordEndpoint] Password updated successfully for user ${record.id}`,
+        `[UserController->resetPassword] Password updated successfully for user ${user.id}`,
         {
           request,
           security: true,
           user: {
-            id: record.id,
-            email: record.email,
+            id: user.id,
+            email: user.email,
           },
         },
       );
     });
 
-    return 'Password reset successfully';
+    return reply.response().code(204);
   },
 
   async notify(request) {
