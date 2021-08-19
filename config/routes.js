@@ -55,15 +55,6 @@ module.exports = [
   {
     method: 'GET',
     path: '/verify',
-    handler: ViewController.newPassword,
-    options: {
-      auth: false,
-    },
-  },
-
-  {
-    method: 'GET',
-    path: '/verify2',
     handler: ViewController.verify,
     options: {
       auth: false,
@@ -479,9 +470,17 @@ module.exports = [
   },
 
   {
-    method: 'PUT',
-    path: '/api/v3/user/emails/{email?}',
-    handler: UserController.validateEmail,
+    method: 'POST',
+    path: '/api/v3/user/emails/{email}',
+    handler: UserController.sendValidationEmail,
+    options: {
+      auth: false,
+    },
+  },
+  {
+    method: 'POST',
+    path: '/api/v3/user/emails/validate',
+    handler: UserController.validateEmailAddress,
     options: {
       auth: false,
     },

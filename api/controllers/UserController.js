@@ -1103,159 +1103,123 @@ module.exports = {
     return record;
   },
 
-  /*
-   * @TODO: This function does two different tasks based on the input received,
-   *        but our docs tool cannot branch response codes based on input. We
-   *        will split the function into two separate methods which will both
-   *        simplify the code and make accurate docs possible.
-   *
-   * @see HID-2064
-   *
-   * @api [put] /user/emails/{email}
+  /**
+   * @api [post] /user/emails/{email}
    * tags:
    *   - user
    * summary: >-
-   *   Sends confirmation email, or confirms ownership of an email address.
+   *   Have HID send a confirmation email in order to validate an email address.
    * parameters:
    *   - name: email
-   *     description: The email address to confirm.
+   *     description: The email address that will receive the confirmation link.
    *     in: path
    *     required: true
    *     default: ''
+   * responses:
+   *   '204':
+   *     description: Request to send an email confirmation was received.
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Unauthorized.
+   * security: []
+   */
+  async sendValidationEmail(request, reply) {
+    // Confirm whether a user exists with the requested email.
+    const user = await User.findOne({ 'emails.email': request.params.email });
+    if (!user) {
+      logger.warn(
+        `[UserController->validateEmail] Could not find user with email ${request.params.email}`,
+        {
+          request,
+          fail: true,
+        },
+      );
+
+      // Disclosing with anything other than 204 allows an attacker to determine
+      // the existence of email addresses within the system. We continue logging
+      // the email-not-found error, but publicly respond with 204.
+      return reply.response().code(204);
+    }
+
+    // Send validation email.
+    const emailIndex = user.emailIndex(request.params.email);
+    const email = user.emails[emailIndex];
+    await EmailService.sendValidationEmail(
+      user,
+      email.email,
+      email._id.toString(),
+    );
+
+    // Report that the request was received. We don't want to reveal the outcome
+    // of the request, only that we understood it.
+    return reply.response().code(204);
+  },
+
+  /**
+   * @api [post] /user/emails/validate
+   * tags:
+   *   - user
+   * summary: >-
+   *   Confirms ownership of an email address.
    * requestBody:
    *   description: >-
-   *     Send a payload with `request.params.email` populated, plus a payload
-   *     containing `app_validation_url` in order to have HID send an email to
-   *     validate an address.
-   *   required: false
+   *     A payload containing `id`, `time`, `hash`, and an optional `emailId`
+   *     property make up the confirmation criteria. This normally happens when
+   *     the user clicks a confirmation link in an email message, but the API
+   *     can also validate email addresses if necessary.
+   *   required: true
    *   content:
    *     application/json:
    *       schema:
    *         type: object
    *         properties:
-   *           app_validation_url:
+   *           id:
    *             type: string
    *             required: true
+   *           time:
+   *             type: string
+   *             required: true
+   *           hash:
+   *             type: string
+   *             required: true
+   *           emailId:
+   *             type: string
+   *             required: false
    * responses:
    *   '204':
-   *     description: Email sent successfully.
+   *     description: Email was validated.
    *   '400':
    *     description: Bad request.
    *   '401':
    *     description: Unauthorized.
    *   '404':
-   *     description: Requested email address not found.
+   *     description: Requested user account not found.
    * security: []
    */
-  async validateEmail(request, reply) {
-    if (request.payload && request.payload.hash) {
-      const record = await User.findOne({ _id: request.payload.id }).catch((err) => {
-        logger.error(
-          `[UserController->validateEmail] ${err.message}`,
-          {
-            request,
-            security: true,
-            fail: true,
-            stack_trace: err.stack,
-          },
-        );
-
-        throw Boom.internal('There is a problem querying to the database. Please try again.');
-      });
-
-      if (!record) {
-        logger.warn(
-          `[UserController->validateEmail] Could not find user ${request.payload.id}`,
-          {
-            request,
-            fail: true,
-          },
-        );
-        throw Boom.notFound();
-      }
-
-      // Assign the primary address as the initial value for `email`
-      //
-      // This is necessary for new account registrations, which won't have the
-      // emailId parameter sent along with their confirmation link since the new
-      // account only has a single primary email address and no secondaries.
-      let { email } = record;
-
-      // If we are verifying a secondary email on an existing account, we need
-      // to look up the emailId being confirmed in order to validate the hash.
-      if (request.payload.emailId) {
-        const emailRecord = record.emails.id(request.payload.emailId);
-        if (emailRecord) {
-          ({ email } = emailRecord);
-        }
-      }
-
-      // Verify hash
-      if (record.validHash(request.payload.hash, 'verify_email', request.payload.time, email) === true) {
-        // Verify user email
-        if (record.email === email) {
-          record.email_verified = true;
-          record.expires = new Date(0, 0, 1, 0, 0, 0);
-          record.emails[0].validated = true;
-          record.emails.set(0, record.emails[0]);
-          record.lastModified = new Date();
-        } else {
-          for (let i = 0, len = record.emails.length; i < len; i += 1) {
-            if (record.emails[i].email === email) {
-              record.emails[i].validated = true;
-              record.emails.set(i, record.emails[i]);
-            }
-          }
-          record.lastModified = new Date();
-        }
-      } else {
-        logger.warn(
-          `[UserController->validateEmail] Invalid hash ${request.payload.hash} provided`,
-          {
-            request,
-            fail: true,
-          },
-        );
-        throw Boom.badRequest('Invalid hash');
-      }
-
-      await record.save().then(() => {
-        logger.info(
-          `[UserController->validateEmail] Saved user ${record.id} successfully`,
-          {
-            request,
-            user: {
-              id: record.id,
-              email: record.email,
-            },
-          },
-        );
-      });
-
-      // TODO: if someone needs to re-verify an existing primary email address
-      //       we end up sending them a "welcome to HID" email due to this simple
-      //       conditional. We might want to consider a more complex conditional
-      //       to avoid that edge case.
-      //
-      // @see HID-2200
-      if (record.email === email) {
-        await EmailService.sendPostRegister(record);
-      }
-
-      return record;
+  async validateEmailAddress(request, reply) {
+    // If we don't have the required payload params, throw an error.
+    if (!request.payload || !request.payload.id || !request.payload.hash || !request.payload.time) {
+      throw Boom.badRequest();
     }
 
-    // When hash wasn't present, send a validation email to the requested address.
-    //
-    // @TODO: split this into its own function.
-    //
-    // @see HID-2064
+    const user = await User.findOne({ _id: request.payload.id }).catch((err) => {
+      logger.error(
+        `[UserController->validateEmail] ${err.message}`,
+        {
+          request,
+          security: true,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
 
-    // Confirm whether a user exists with the requested email.
-    const record = await User.findOne({ 'emails.email': request.params.email });
-    if (!record) {
+      throw Boom.internal('There is a problem querying to the database. Please try again.');
+    });
+
+    if (!user) {
       logger.warn(
-        `[UserController->validateEmail] Could not find user with email ${request.params.email}`,
+        `[UserController->validateEmail] Could not find user ${request.payload.id}`,
         {
           request,
           fail: true,
@@ -1264,31 +1228,74 @@ module.exports = {
       throw Boom.notFound();
     }
 
-    // Confirm whether the request came from a valid domain.
-    const appValidationUrl = request.payload && request.payload.app_validation_url ? request.payload.app_validation_url : '';
-    if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
+    // Assign the primary address as the initial value for `email`
+    //
+    // This is necessary for new account registrations, which won't have the
+    // emailId parameter sent along with their confirmation link since the new
+    // account only has a single primary email address and no secondaries.
+    let { email } = user;
+
+    // If we are verifying a secondary email on an existing account, we need
+    // to look up the emailId being confirmed in order to validate the hash.
+    if (request.payload.emailId) {
+      const emailRecord = user.emails.id(request.payload.emailId);
+      if (emailRecord) {
+        email = emailRecord.email;
+      }
+    }
+
+    // Verify hash
+    if (user.validHash(request.payload.hash, 'verify_email', request.payload.time, email) === true) {
+      // Verify user email
+      if (user.email === email) {
+        user.email_verified = true;
+        user.expires = new Date(0, 0, 1, 0, 0, 0);
+        user.emails[0].validated = true;
+        user.emails.set(0, user.emails[0]);
+        user.lastModified = new Date();
+      } else {
+        for (let i = 0, len = user.emails.length; i < len; i += 1) {
+          if (user.emails[i].email === email) {
+            user.emails[i].validated = true;
+            user.emails.set(i, user.emails[i]);
+          }
+        }
+        user.lastModified = new Date();
+      }
+    } else {
       logger.warn(
-        `[UserController->validateEmail] app_validation_url ${appValidationUrl} is not in allowedDomains list`,
+        `[UserController->validateEmail] Invalid hash ${request.payload.hash} provided`,
         {
           request,
-          security: true,
           fail: true,
         },
       );
-      throw Boom.badRequest('Invalid app_validation_url');
+      throw Boom.badRequest('Invalid hash');
     }
 
-    // Send validation email.
-    const emailIndex = record.emailIndex(request.params.email);
-    const email = record.emails[emailIndex];
-    await EmailService.sendValidationEmail(
-      record,
-      email.email,
-      email._id.toString(),
-      appValidationUrl,
-    );
+    await user.save().then(() => {
+      logger.info(
+        `[UserController->validateEmail] Saved user ${user.id} successfully`,
+        {
+          request,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+        },
+      );
+    });
 
-    // Send a 204 (empty body)
+    // TODO: if someone needs to re-verify an existing primary email address
+    //       we end up sending them a "welcome to HID" email due to this simple
+    //       conditional. We might want to consider a more complex conditional
+    //       to avoid that edge case.
+    //
+    // @see HID-2200
+    if (user.email === email) {
+      await EmailService.sendPostRegister(user);
+    }
+
     return reply.response().code(204);
   },
 

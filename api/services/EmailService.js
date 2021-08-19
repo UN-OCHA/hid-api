@@ -190,16 +190,20 @@ module.exports = {
     return send(mailOptions, 'claim', context);
   },
 
-  sendValidationEmail(user, email, emailId, appValidationUrl) {
+  sendValidationEmail(user, email, emailId) {
+    // Prepare data for the email.
     const mailOptions = {
       to: email,
       locale: user.locale,
     };
+    const baseUrl = `${process.env.APP_URL}/verify`;
     const hash = user.generateHash('verify_email', email);
-    let resetUrl = addUrlArgument(appValidationUrl, 'id', user._id.toString());
+    let resetUrl = addUrlArgument(baseUrl, 'id', user._id.toString());
     resetUrl = addUrlArgument(resetUrl, 'emailId', emailId);
     resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
     resetUrl = addHash(resetUrl, hash.hash);
+
+    // Send email.
     const context = {
       user,
       reset_url: resetUrl,
