@@ -104,8 +104,14 @@ module.exports = {
       query: request.query,
       registerLink,
       passwordLink,
-      alert: false,
+      alert: cookie && cookie.alert,
     };
+
+    // Remove alert from cookie now that it's been queued to display.
+    if (cookie) {
+      cookie.alert = false;
+      request.yar.set(cookie);
+    }
 
     // Display login page.
     return reply.view('login', loginArgs);
@@ -297,6 +303,7 @@ module.exports = {
         emailId: request.query.emailId,
       };
 
+      // Validate the email address.
       await UserController.validateEmailAddress(request, reply);
 
       // If user is logged in, send them to their profile.
@@ -310,15 +317,14 @@ module.exports = {
         return reply.redirect('/profile/edit');
       }
 
-      return reply.view('login', {
-        alert: {
-          type: 'status',
-          message: 'Thank you for confirming your account. You can now log in',
-        },
-        query: request.query,
-        registerLink,
-        passwordLink,
-      });
+      // Now, redirect to homepage with cookied alert, to avoid resubmissions
+      // if the user refreshes their browser.
+      cookie.alert = {
+        type: 'status',
+        message: 'Thank you for confirming your account. You can now log in',
+      };
+      request.yar.set('session', cookie);
+      return reply.redirect('/');
     } catch (err) {
       return reply.view('login', {
         alert: {
