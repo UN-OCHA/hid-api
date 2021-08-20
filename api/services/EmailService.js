@@ -132,7 +132,7 @@ module.exports = {
 
     // Build the password reset link.
     const hash = user.generateHashPassword();
-    const baseUrl = `${process.env.APP_URL}/new_password`;
+    const baseUrl = `${process.env.APP_URL}/new-password`;
 
     let resetLink = addUrlArgument(baseUrl, 'id', user._id.toString());
     resetLink = addUrlArgument(resetLink, 'time', hash.timestamp);

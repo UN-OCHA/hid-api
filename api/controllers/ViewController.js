@@ -336,14 +336,14 @@ module.exports = {
   },
 
   password(request, reply) {
-    const requestUrl = _buildRequestUrl(request, 'new_password');
+    const requestUrl = _buildRequestUrl(request, 'new-password');
     return reply.view('password', {
       requestUrl,
     });
   },
 
   async passwordPost(request, reply) {
-    const requestUrl = _buildRequestUrl(request, 'new_password');
+    const requestUrl = _buildRequestUrl(request, 'new-password');
     try {
       await UserController.resetPasswordEmail(request, reply);
       return reply.view('password', {
@@ -431,7 +431,7 @@ module.exports = {
     if (user.totp) {
       return reply.view('totp', {
         query: request.query,
-        destination: '/new_password',
+        destination: '/new-password',
         alert: {
           type: 'warning',
           title: 'Enter your two-factor authentication code.',
@@ -486,7 +486,7 @@ module.exports = {
         };
         return reply.view('totp', {
           query: request.payload,
-          destination: '/new_password',
+          destination: '/new-password',
           alert,
         });
       }

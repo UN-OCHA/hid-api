@@ -96,10 +96,26 @@ module.exports = [
       auth: false,
     },
   },
+  {
+    method: 'GET',
+    path: '/new-password',
+    handler: ViewController.newPassword,
+    options: {
+      auth: false,
+    },
+  },
 
   {
     method: 'POST',
     path: '/new_password',
+    handler: ViewController.newPasswordPost,
+    options: {
+      auth: false,
+    },
+  },
+  {
+    method: 'POST',
+    path: '/new-password',
     handler: ViewController.newPasswordPost,
     options: {
       auth: false,
