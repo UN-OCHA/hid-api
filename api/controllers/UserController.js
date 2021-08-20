@@ -1129,7 +1129,7 @@ module.exports = {
     const user = await User.findOne({ 'emails.email': request.params.email });
     if (!user) {
       logger.warn(
-        `[UserController->validateEmail] Could not find user with email ${request.params.email}`,
+        `[UserController->sendValidationEmail] Could not find user with email ${request.params.email}`,
         {
           request,
           fail: true,
@@ -1205,7 +1205,7 @@ module.exports = {
 
     const user = await User.findOne({ _id: request.payload.id }).catch((err) => {
       logger.error(
-        `[UserController->validateEmail] ${err.message}`,
+        `[UserController->validateEmailAddress] ${err.message}`,
         {
           request,
           security: true,
@@ -1219,7 +1219,7 @@ module.exports = {
 
     if (!user) {
       logger.warn(
-        `[UserController->validateEmail] Could not find user ${request.payload.id}`,
+        `[UserController->validateEmailAddress] Could not find user ${request.payload.id}`,
         {
           request,
           fail: true,
@@ -1264,7 +1264,7 @@ module.exports = {
       }
     } else {
       logger.warn(
-        `[UserController->validateEmail] Invalid hash ${request.payload.hash} provided`,
+        `[UserController->validateEmailaddress] Invalid hash ${request.payload.hash} provided`,
         {
           request,
           fail: true,
@@ -1275,7 +1275,7 @@ module.exports = {
 
     await user.save().then(() => {
       logger.info(
-        `[UserController->validateEmail] Saved user ${user.id} successfully`,
+        `[UserController->validateEmailAddress] Saved user ${user.id} successfully`,
         {
           request,
           user: {
