@@ -399,7 +399,7 @@ UserSchema.methods = {
 
   generateHashPassword() {
     const now = Date.now();
-    const value = `${now}:${this._id.toString()}:${this.password}`;
+    const value = `${now}:${this.id}:${this.password}`;
     const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
     return {
       timestamp: now,
@@ -409,7 +409,7 @@ UserSchema.methods = {
 
   generateHashEmail(email) {
     const now = Date.now();
-    const value = `${now}:${this._id.toString()}:${email}`;
+    const value = `${now}:${this.id}:${email}`;
     const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
     return {
       timestamp: now,
@@ -433,7 +433,7 @@ UserSchema.methods = {
     }
 
     // Create and compare hash
-    const value = `${time}:${this._id.toString()}:${this.password}`;
+    const value = `${time}:${this.id}:${this.password}`;
     const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
 
     return hash === hashLink;
@@ -448,7 +448,7 @@ UserSchema.methods = {
     }
 
     // Create and compare hash
-    const value = `${time}:${this._id.toString()}:${email}`;
+    const value = `${time}:${this.id}:${email}`;
     const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
     return hash === hashLink;
   },
