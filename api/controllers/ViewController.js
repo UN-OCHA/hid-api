@@ -413,7 +413,7 @@ module.exports = {
 
     // Before continuing, check that password link is valid. No sense in making
     // the user do anthing if the link expired.
-    if (user.validHash(request.query.hash, 'reset_password', request.query.time) === false) {
+    if (user.validHashPassword(request.query.hash, request.query.time) === false) {
       return reply.view('error', {
         alert: {
           type: 'error',

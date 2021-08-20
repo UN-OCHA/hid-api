@@ -84,7 +84,7 @@ module.exports = {
       to: user.email,
       locale: user.locale || 'en',
     };
-    const hash = user.generateHash('verify_email', user.email);
+    const hash = user.generateHashEmail(user.email);
     let resetUrl = addUrlArgument(appVerifyUrl, 'id', user._id.toString());
     resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
     resetUrl = addHash(resetUrl, hash.hash);
@@ -100,7 +100,7 @@ module.exports = {
       to: user.email,
       locale: user.locale || 'en',
     };
-    const hash = user.generateHash('reset_password');
+    const hash = user.generateHashPassword();
     let resetUrl = addUrlArgument(appVerifyUrl, 'id', user._id.toString());
     resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
     resetUrl = addHash(resetUrl, hash.hash);
@@ -129,7 +129,7 @@ module.exports = {
       to: targetEmail,
       locale: user.locale,
     };
-    const hash = user.generateHash('reset_password');
+    const hash = user.generateHashPassword();
     let resetUrl = addUrlArgument(appResetUrl, 'id', user._id.toString());
     resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
     resetUrl = addHash(resetUrl, hash.hash);
@@ -179,7 +179,7 @@ module.exports = {
       to: user.email,
       locale: user.locale,
     };
-    const hash = user.generateHash('reset_password');
+    const hash = user.generateHashPassword();
     let resetUrl = addUrlArgument(appResetUrl, 'id', user._id.toString());
     resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
     resetUrl = addHash(resetUrl, hash.hash);
@@ -197,7 +197,7 @@ module.exports = {
       locale: user.locale,
     };
     const baseUrl = `${process.env.APP_URL}/verify`;
-    const hash = user.generateHash('verify_email', email);
+    const hash = user.generateHashEmail(email);
     let resetUrl = addUrlArgument(baseUrl, 'id', user._id.toString());
     resetUrl = addUrlArgument(resetUrl, 'emailId', emailId);
     resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);

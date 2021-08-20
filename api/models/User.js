@@ -397,57 +397,64 @@ UserSchema.methods = {
     return Bcrypt.compareSync(password, this.password);
   },
 
-  generateHash(type, email) {
-    if (type === 'reset_password') {
-      const now = Date.now();
-      const value = `${now}:${this._id.toString()}:${this.password}`;
-      const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
-      return {
-        timestamp: now,
-        hash,
-      };
-    }
-    if (type === 'verify_email') {
-      const now = Date.now();
-      const value = `${now}:${this._id.toString()}:${email}`;
-      const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
-      return {
-        timestamp: now,
-        hash,
-      };
-    }
+  generateHashPassword() {
+    const now = Date.now();
+    const value = `${now}:${this._id.toString()}:${this.password}`;
+    const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+    return {
+      timestamp: now,
+      hash,
+    };
+  },
+
+  generateHashEmail(email) {
+    const now = Date.now();
+    const value = `${now}:${this._id.toString()}:${email}`;
+    const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+    return {
+      timestamp: now,
+      hash,
+    };
+  },
+
+  generateHash() {
     const buffer = crypto.randomBytes(256);
     const now = Date.now();
     const hash = buffer.toString('hex').slice(0, 15);
     return Buffer.from(`${now}/${hash}`).toString('base64');
   },
 
-  // Validate the hash of a confirmation link
-  validHash(hashLink, type, time, email) {
-    if (type === 'reset_password') {
-      // Confirm that 24 hours haven't passed.
-      const now = Date.now();
-      if (now - time > 24 * 3600 * 1000) {
-        return false;
-      }
-
-      // Create and compare hash
-      const value = `${time}:${this._id.toString()}:${this.password}`;
-      const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
-      return hash === hashLink;
+  // Validate the hash of a password reset link
+  validHashPassword(hashLink, time) {
+    // Confirm that 24 hours haven't passed.
+    const now = Date.now();
+    if (now - time > 24 * 3600 * 1000) {
+      return false;
     }
-    if (type === 'verify_email') {
-      // Confirm that 24 hours haven't passed.
-      const now = Date.now();
-      if (now - time > 24 * 3600 * 1000) {
-        return false;
-      }
 
-      // Create and compare hash
-      const value = `${time}:${this._id.toString()}:${email}`;
-      const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
-      return hash === hashLink;
+    // Create and compare hash
+    const value = `${time}:${this._id.toString()}:${this.password}`;
+    const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+
+    return hash === hashLink;
+  },
+
+  // Validate hash of an email confirmation link.
+  validHashEmail(hashLink, time, email) {
+    // Confirm that 24 hours haven't passed.
+    const now = Date.now();
+    if (now - time > 24 * 3600 * 1000) {
+      return false;
     }
+
+    // Create and compare hash
+    const value = `${time}:${this._id.toString()}:${email}`;
+    const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+    return hash === hashLink;
+  },
+
+  // Validate a generic hash.
+  validHash(hashLink) {
     const key = Buffer.from(hashLink, 'base64').toString('ascii');
     const parts = key.split('/');
     const timestamp = parts[0];

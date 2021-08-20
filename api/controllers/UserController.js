@@ -1245,7 +1245,7 @@ module.exports = {
     }
 
     // Verify hash
-    if (user.validHash(request.payload.hash, 'verify_email', request.payload.time, email) === true) {
+    if (user.validHashEmail(request.payload.hash, request.payload.time, email) === true) {
       // Verify user email
       if (user.email === email) {
         user.email_verified = true;
@@ -1483,7 +1483,7 @@ module.exports = {
     }
 
     // Verify that the hash was correct.
-    if (user.validHash(request.payload.hash, 'reset_password', request.payload.time) === false) {
+    if (user.validHashPassword(request.payload.hash, request.payload.time) === false) {
       logger.warn(
         '[UserController->resetPassword] Reset password link is expired or invalid',
         {
