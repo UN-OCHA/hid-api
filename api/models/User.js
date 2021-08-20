@@ -470,7 +470,7 @@ UserSchema.methods = {
 
   emailIndex(email) {
     let index = -1;
-    for (let i = 0, len = this.emails.length; i < len; i += 1) {
+    for (let i = 0, len = this.emails.length; i < len; i++) {
       if (this.emails[i].email === email) {
         index = i;
       }
