@@ -123,20 +123,29 @@ module.exports = {
     return send(mailOptions, 'post_register', context);
   },
 
-  sendResetPassword(user, appResetUrl, emailToTarget) {
+  sendResetPassword(user, emailToTarget) {
     const targetEmail = emailToTarget || user.email;
     const mailOptions = {
       to: targetEmail,
       locale: user.locale,
     };
+
+    // Build the password reset link.
     const hash = user.generateHashPassword();
-    let resetUrl = addUrlArgument(appResetUrl, 'id', user._id.toString());
-    resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
-    resetUrl = addHash(resetUrl, hash.hash);
+    const baseUrl = `${process.env.APP_URL}/new_password`;
+
+    let resetLink = addUrlArgument(baseUrl, 'id', user._id.toString());
+    resetLink = addUrlArgument(resetLink, 'time', hash.timestamp);
+    resetLink = addHash(resetLink, hash.hash);
+
+    // Email will allow user to restart process. Prep the URL.
+    const passwordUrl = `${process.env.APP_URL}/password`;
+
+    // Gather info for the email message.
     const context = {
       name: user.name,
-      reset_url: resetUrl,
-      appResetUrl,
+      resetLink,
+      passwordUrl,
     };
     return send(mailOptions, 'reset_password', context);
   },

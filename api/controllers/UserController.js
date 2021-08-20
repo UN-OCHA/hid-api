@@ -1316,11 +1316,6 @@ module.exports = {
    *           email:
    *             type: string
    *             required: true
-   *           reset_url:
-   *             type: string
-   *             required: true
-   *             description: >-
-   *               Should correspond to the endpoint you are interacting with.
    * responses:
    *   '204':
    *     description: >-
@@ -1334,22 +1329,8 @@ module.exports = {
    */
   async resetPasswordEmail(request, reply) {
     // Look for required params and fail if either are missing.
-    if (!request.payload || !request.payload.email || !request.payload.reset_url) {
+    if (!request.payload || !request.payload.email) {
       throw Boom.badRequest('Missing email and/or reset_url parameters in request body.');
-    }
-
-    // Validate app URL.
-    const resetUrl = request.payload.reset_url || '';
-    if (!HelperService.isAuthorizedUrl(resetUrl)) {
-      logger.warn(
-        `[UserController->resetPasswordEmail] reset_url ${resetUrl} is not in allowedDomains list`,
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('reset_url is invalid');
     }
 
     // Lookup user based on the email address. We scan the `emails` array so
@@ -1374,7 +1355,7 @@ module.exports = {
     }
 
     // If we made it this far, we can send the password reset email.
-    await EmailService.sendResetPassword(record, resetUrl, request.payload.email);
+    await EmailService.sendResetPassword(record, request.payload.email);
 
     // Send HTTP 204 (empty success response)
     return reply.response().code(204);
