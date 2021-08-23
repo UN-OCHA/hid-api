@@ -1335,10 +1335,10 @@ module.exports = {
 
     // Lookup user based on the email address. We scan the `emails` array so
     // that secondary addresses can also receive password resets.
-    const record = await User.findOne({ 'emails.email': request.payload.email.toLowerCase() });
+    const user = await User.findOne({ 'emails.email': request.payload.email.toLowerCase() });
 
     // No user found.
-    if (!record) {
+    if (!user) {
       logger.warn(
         `[UserController->resetPasswordEmail] No user found with email: ${request.payload.email}`,
         {
@@ -1355,7 +1355,7 @@ module.exports = {
     }
 
     // If we made it this far, we can send the password reset email.
-    await EmailService.sendResetPassword(record, request.payload.email);
+    await EmailService.sendResetPassword(user, request.payload.email);
 
     // Send HTTP 204 (empty success response)
     return reply.response().code(204);
