@@ -388,6 +388,7 @@ module.exports = {
       hash: request.query.hash,
       id: request.query.id,
       time: request.query.time,
+      emailId: request.query.emailId,
       totp: false,
     });
 
@@ -419,7 +420,7 @@ module.exports = {
 
     // Before continuing, check that password link is valid. No sense in making
     // the user do anthing if the link expired.
-    if (user.validHashPassword(request.query.hash, request.query.time) === false) {
+    if (user.validHashPassword(request.query.hash, request.query.time, request.query.emailId) === false) {
       return reply.view('error', {
         alert: {
           type: 'error',
@@ -454,6 +455,7 @@ module.exports = {
     request.yar.set('session', {
       hash: request.query.hash,
       id: request.query.id,
+      emailId: request.emailId,
       time: request.query.time,
       totp: true,
     });
@@ -463,6 +465,7 @@ module.exports = {
       query: request.query,
       hash: request.query.hash,
       id: request.query.id,
+      emailId: request.query.emailId,
       time: request.query.time,
     });
   },
@@ -470,7 +473,7 @@ module.exports = {
   async newPasswordPost(request, reply) {
     const cookie = request.yar.get('session');
 
-    if (cookie && cookie.hash && cookie.id && cookie.time && !cookie.totp) {
+    if (cookie && cookie.hash && cookie.id && cookie.emailId && cookie.time && !cookie.totp) {
       try {
         const user = await User.findOne({ _id: cookie.id });
         const token = request.payload['x-hid-totp'];
@@ -483,6 +486,7 @@ module.exports = {
           query: request.payload,
           hash: cookie.hash,
           id: cookie.id,
+          emailId: cookie.emailId,
           time: cookie.time,
         });
       } catch (err) {
@@ -528,7 +532,15 @@ module.exports = {
           title: 'Password update',
         });
       } catch (err) {
-        // No need to log the error; UserController.resetPassword logged it.
+        logger.warn(
+          `[ViewController->newPasswordPost] ${err.message}`,
+          {
+            request,
+            security: true,
+            fail: true,
+            stack_trace: err.stack,
+          },
+        );
 
         if (params) {
           return reply.view('login', {

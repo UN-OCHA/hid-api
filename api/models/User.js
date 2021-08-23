@@ -397,10 +397,11 @@ UserSchema.methods = {
     return Bcrypt.compareSync(password, this.password);
   },
 
-  generateHashPassword() {
+  generateHashPassword(emailId) {
     const now = Date.now();
-    const value = `${now}:${this.id}:${this.password}`;
+    const value = `${now}:${this.id}:${this.password}:${emailId}`;
     const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+
     return {
       timestamp: now,
       hash,
@@ -411,6 +412,7 @@ UserSchema.methods = {
     const now = Date.now();
     const value = `${now}:${this.id}:${email}`;
     const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+
     return {
       timestamp: now,
       hash,
@@ -425,18 +427,24 @@ UserSchema.methods = {
   },
 
   // Validate the hash of a password reset link
-  validHashPassword(hashLink, time) {
+  validHashPassword(hashLink, time, emailId) {
     // Confirm that 24 hours haven't passed.
     const now = Date.now();
     if (now - time > 24 * 3600 * 1000) {
       return false;
     }
 
-    // Create and compare hash
-    const value = `${time}:${this.id}:${this.password}`;
+    // See @HID-2219
+    const valueLegacy = `${time}:${this.id}:${this.password}`;
+    const hashLegacy = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(valueLegacy).digest('hex');
+
+    // Create email-enabled hash
+    const value = `${time}:${this.id}:${this.password}:${emailId}`;
     const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
 
-    return hash === hashLink;
+    // Temporarily compare either legacy or new hash. Only one has to match.
+    // @see HID-2219
+    return hash === hashLink || hashLegacy === hashLink;
   },
 
   // Validate hash of an email confirmation link.

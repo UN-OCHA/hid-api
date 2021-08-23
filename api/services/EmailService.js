@@ -130,13 +130,19 @@ module.exports = {
       locale: user.locale,
     };
 
-    // Build the password reset link.
-    const hash = user.generateHashPassword();
+    // Determine our internal email ID for the email receiving the reset.
+    const emailIndex = user.emailIndex(targetEmail);
+    const emailId = user.emails[emailIndex]._id.toString();
+
+    // Prepare the password reset link args
+    const hash = user.generateHashPassword(emailId);
     const baseUrl = `${process.env.APP_URL}/new-password`;
 
+    // Build the reset link.
     let resetLink = addUrlArgument(baseUrl, 'id', user._id.toString());
     resetLink = addUrlArgument(resetLink, 'time', hash.timestamp);
-    resetLink = addHash(resetLink, hash.hash);
+    resetLink = addUrlArgument(resetLink, 'emailId', emailId);
+    resetLink = addUrlArgument(resetLink, 'hash', hash.hash);
 
     // Email will allow user to restart process. Prep the URL.
     const passwordUrl = `${process.env.APP_URL}/password`;
@@ -147,6 +153,8 @@ module.exports = {
       resetLink,
       passwordUrl,
     };
+
+    // Send email.
     return send(mailOptions, 'reset_password', context);
   },
 

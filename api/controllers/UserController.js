@@ -1394,6 +1394,9 @@ module.exports = {
    *           password:
    *             type: string
    *             required: true
+   *           emailId:
+   *             type: string
+   *             required: false
    * responses:
    *   '204':
    *     description: Password reset successfully.
@@ -1463,8 +1466,25 @@ module.exports = {
       user = await AuthPolicy.isTOTPValid(user, token);
     }
 
+    // If an emailId parameter was present, we will use that value. However, if
+    // nothing was sent, we need to determine the ID of the user's primary email
+    // address of the as a default value.
+    //
+    // This default will be removed after a safe window has passed, and emailId
+    // will then be a required parameter.
+    //
+    // @see HID-2219
+    let emailIndex;
+    let emailId;
+    if (request.payload.emailId !== '') {
+      emailId = request.payload.emailId;
+    } else {
+      emailIndex = user.emailIndex(user.email);
+      emailId = user.emails[emailIndex]._id.toString();
+    }
+
     // Verify that the hash was correct.
-    if (user.validHashPassword(request.payload.hash, request.payload.time) === false) {
+    if (user.validHashPassword(request.payload.hash, request.payload.time, emailId) === false) {
       logger.warn(
         '[UserController->resetPassword] Reset password link is expired or invalid',
         {
