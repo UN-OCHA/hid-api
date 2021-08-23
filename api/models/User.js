@@ -2,6 +2,7 @@
 * @module User
 * @description User
 */
+
 const mongoose = require('mongoose');
 const Bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -476,10 +477,32 @@ UserSchema.methods = {
     return true;
   },
 
+  /**
+   * Returns the array index of the email you want, using the email address.
+   *
+   * @param {string} An email address
+   * @returns {number} The index of the emails array, or -1 when not found.
+   */
   emailIndex(email) {
     let index = -1;
     for (let i = 0, len = this.emails.length; i < len; i++) {
       if (this.emails[i].email === email) {
+        index = i;
+      }
+    }
+    return index;
+  },
+
+  /**
+   * Returns the array index of the email you want, using the email's ID.
+   *
+   * @param {string} The ObjectId of the email
+   * @returns {number} The index of the emails array, or -1 when not found.
+   */
+  emailIndexFromId(emailId) {
+    let index = -1;
+    for (let i = 0, len = this.emails.length; i < len; i++) {
+      if (this.emails[i]._id.toString() === emailId) {
         index = i;
       }
     }
