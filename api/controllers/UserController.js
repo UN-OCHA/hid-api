@@ -932,7 +932,7 @@ module.exports = {
     user.emails.push(data);
     user.lastModified = new Date();
 
-    const savedUser = await user.save();
+    await user.save();
     logger.info(
       `[UserController->addEmail] Successfully saved user ${user.id}`,
       {
@@ -942,15 +942,11 @@ module.exports = {
         },
       },
     );
-    const savedEmailIndex = savedUser.emailIndex(emailToAdd);
-    const savedEmail = savedUser.emails[savedEmailIndex];
+    const savedEmailIndex = user.emailIndex(emailToAdd);
+    const savedEmailId = user.emails[savedEmailIndex]._id.toString();
 
     // Send confirmation email
-    await EmailService.sendValidationEmail(
-      user,
-      emailToAdd,
-      savedEmail._id.toString(),
-    );
+    await EmailService.sendValidationEmail(user, emailToAdd, savedEmailId);
 
     // If the email sent without error, notify the other emails on this account.
     const promises = [];
