@@ -899,8 +899,8 @@ module.exports = {
     }
 
     // Does the target user exist?
-    const record = await User.findOne({ _id: userId });
-    if (!record) {
+    const user = await User.findOne({ _id: userId });
+    if (!user) {
       logger.warn(
         `[UserController->addEmail] User ${userId} not found`,
         {
@@ -914,7 +914,7 @@ module.exports = {
     // Make sure the email us unique to the target user's profile. Checking just
     // the target user first allows us to display better user feedback when the
     // request comes internally from HID Auth interface.
-    if (record.emailIndex(email) !== -1) {
+    if (user.emailIndex(email) !== -1) {
       logger.warn(
         `[UserController->addEmail] Email ${email} already belongs to ${userId}.`,
         {
@@ -922,7 +922,7 @@ module.exports = {
           fail: true,
           user: {
             id: userId,
-            email: record.email,
+            email: user.email,
           },
         },
       );
@@ -939,7 +939,7 @@ module.exports = {
           fail: true,
           user: {
             id: userId,
-            email: record.email,
+            email: user.email,
           },
         },
       );
@@ -951,25 +951,25 @@ module.exports = {
       type: 'Work',
       validated: false,
     };
-    record.emails.push(data);
-    record.lastModified = new Date();
+    user.emails.push(data);
+    user.lastModified = new Date();
 
-    const savedRecord = await record.save();
+    const savedUser = await user.save();
     logger.info(
-      `[UserController->addEmail] Successfully saved user ${record.id}`,
+      `[UserController->addEmail] Successfully saved user ${user.id}`,
       {
         request,
         user: {
-          id: record.id,
+          id: user.id,
         },
       },
     );
-    const savedEmailIndex = savedRecord.emailIndex(email);
-    const savedEmail = savedRecord.emails[savedEmailIndex];
+    const savedEmailIndex = savedUser.emailIndex(email);
+    const savedEmail = savedUser.emails[savedEmailIndex];
 
     // Send confirmation email
     await EmailService.sendValidationEmail(
-      record,
+      user,
       email,
       savedEmail._id.toString(),
       appValidationUrl,
@@ -977,18 +977,18 @@ module.exports = {
 
     // If the email sent without error, notify the other emails on this account.
     const promises = [];
-    for (let i = 0; i < record.emails.length; i++) {
+    for (let i = 0; i < user.emails.length; i++) {
       // TODO: probably shouldn't send notices to unconfirmed email addresses.
       //
       // @see HID-2150
-      promises.push(EmailService.sendEmailAlert(record, record.emails[i].email, email));
+      promises.push(EmailService.sendEmailAlert(user, user.emails[i].email, email));
     }
 
     // Send notifications to secondary addresses.
     await Promise.all(promises);
 
     // Return user object.
-    return record;
+    return user;
   },
 
   /*
