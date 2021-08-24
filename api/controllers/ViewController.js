@@ -455,7 +455,7 @@ module.exports = {
     request.yar.set('session', {
       hash: request.query.hash,
       id: request.query.id,
-      emailId: request.emailId,
+      emailId: request.query.emailId || '',
       time: request.query.time,
       totp: true,
     });
@@ -465,7 +465,7 @@ module.exports = {
       query: request.query,
       hash: request.query.hash,
       id: request.query.id,
-      emailId: request.query.emailId,
+      emailId: request.query.emailId || '',
       time: request.query.time,
     });
   },
