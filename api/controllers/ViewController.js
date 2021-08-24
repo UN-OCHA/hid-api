@@ -868,7 +868,6 @@ module.exports = {
         user,
         confirmEmail.email,
         confirmEmail._id.toString(),
-        _buildRequestUrl(request, 'verify'),
       ).then(() => {
         cookie.alert.message += '<p>The confirmation email will arrive in your inbox shortly.</p>';
       }).catch(() => {
@@ -883,7 +882,6 @@ module.exports = {
       await UserController.addEmail({}, {
         userId: cookie.userId,
         email: request.payload.email_new,
-        appValidationUrl: _buildRequestUrl(request, 'verify'),
       }).then(() => {
         cookie.alert.message += `<p>A confirmation email has been sent to ${request.payload.email_new}.</p>`;
       }).catch((err) => {

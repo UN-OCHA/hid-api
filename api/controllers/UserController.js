@@ -833,11 +833,6 @@ module.exports = {
    *           email:
    *             type: string
    *             required: true
-   *           app_validation_url:
-   *             type: string
-   *             required: true
-   *             description: >-
-   *               Should correspond to the endpoint you are interacting with.
    * responses:
    *   '200':
    *     description: The updated user object
@@ -857,23 +852,19 @@ module.exports = {
   async addEmail(request, internalArgs) {
     let userId = '';
     let email = '';
-    let appValidationUrl = '';
 
-    // eslint-disable-next-line max-len
-    if (internalArgs && internalArgs.userId && internalArgs.email && internalArgs.appValidationUrl) {
+    if (internalArgs && internalArgs.userId && internalArgs.email) {
       userId = internalArgs.userId;
       email = internalArgs.email;
-      appValidationUrl = internalArgs.appValidationUrl;
     } else {
       userId = request.params.id;
       email = request.payload.email;
-      appValidationUrl = request.payload.app_validation_url;
     }
 
     // Is the payload complete enough to take action?
-    if (!appValidationUrl || !email) {
+    if (!email) {
       logger.warn(
-        '[UserController->addEmail] Either email or app_validation_url was not provided',
+        '[UserController->addEmail] Email was not provided',
         {
           request,
           fail: true,
@@ -883,19 +874,6 @@ module.exports = {
         },
       );
       throw Boom.badRequest('Required parameters not present in payload');
-    }
-
-    // Is the verification link pointing to a domain in our allow-list?
-    if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
-      logger.warn(
-        `[UserController->addEmail] app_validation_url ${appValidationUrl} is not in allowedDomains list`,
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Invalid app_validation_url');
     }
 
     // Does the target user exist?
@@ -972,7 +950,6 @@ module.exports = {
       user,
       email,
       savedEmail._id.toString(),
-      appValidationUrl,
     );
 
     // If the email sent without error, notify the other emails on this account.
