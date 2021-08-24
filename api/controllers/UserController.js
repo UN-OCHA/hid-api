@@ -851,18 +851,18 @@ module.exports = {
    */
   async addEmail(request, internalArgs) {
     let userId = '';
-    let email = '';
+    let emailToAdd = '';
 
     if (internalArgs && internalArgs.userId && internalArgs.email) {
       userId = internalArgs.userId;
-      email = internalArgs.email;
+      emailToAdd = internalArgs.email;
     } else {
       userId = request.params.id;
-      email = request.payload.email;
+      emailToAdd = request.payload.email;
     }
 
     // Is the payload complete enough to take action?
-    if (!email) {
+    if (!emailToAdd) {
       logger.warn(
         '[UserController->addEmail] Email was not provided',
         {
@@ -892,9 +892,9 @@ module.exports = {
     // Make sure the email us unique to the target user's profile. Checking just
     // the target user first allows us to display better user feedback when the
     // request comes internally from HID Auth interface.
-    if (user.emailIndex(email) !== -1) {
+    if (user.emailIndex(emailToAdd) !== -1) {
       logger.warn(
-        `[UserController->addEmail] Email ${email} already belongs to ${userId}.`,
+        `[UserController->addEmail] Email ${emailToAdd} already belongs to ${userId}.`,
         {
           request,
           fail: true,
@@ -908,10 +908,10 @@ module.exports = {
     }
 
     // Make sure email added is unique to the entire HID system.
-    const erecord = await User.findOne({ 'emails.email': email });
+    const erecord = await User.findOne({ 'emails.email': emailToAdd });
     if (erecord) {
       logger.warn(
-        `[UserController->addEmail] Email ${email} is not unique`,
+        `[UserController->addEmail] Email ${emailToAdd} is not unique`,
         {
           request,
           fail: true,
@@ -925,7 +925,7 @@ module.exports = {
     }
 
     const data = {
-      email,
+      email: emailToAdd,
       type: 'Work',
       validated: false,
     };
@@ -942,13 +942,13 @@ module.exports = {
         },
       },
     );
-    const savedEmailIndex = savedUser.emailIndex(email);
+    const savedEmailIndex = savedUser.emailIndex(emailToAdd);
     const savedEmail = savedUser.emails[savedEmailIndex];
 
     // Send confirmation email
     await EmailService.sendValidationEmail(
       user,
-      email,
+      emailToAdd,
       savedEmail._id.toString(),
     );
 
@@ -958,7 +958,7 @@ module.exports = {
       // TODO: probably shouldn't send notices to unconfirmed email addresses.
       //
       // @see HID-2150
-      promises.push(EmailService.sendEmailAlert(user, user.emails[i].email, email));
+      promises.push(EmailService.sendEmailAlert(user, user.emails[i].email, emailToAdd));
     }
 
     // Send notifications to secondary addresses.

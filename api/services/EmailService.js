@@ -207,16 +207,16 @@ module.exports = {
     return send(mailOptions, 'claim', context);
   },
 
-  sendValidationEmail(user, email, emailId) {
+  sendValidationEmail(user, emailToValidate, emailId) {
     // Prepare data for the email.
     const mailOptions = {
-      to: email,
+      to: emailToValidate,
       locale: user.locale,
     };
 
     // Assemble values for confirmation link.
     const baseUrl = `${process.env.APP_URL}/verify`;
-    const hash = user.generateHashEmail(email);
+    const hash = user.generateHashEmail(emailToValidate);
 
     // Build confirmation link.
     let resetUrl = addUrlArgument(baseUrl, 'id', user._id.toString());
