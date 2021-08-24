@@ -948,13 +948,14 @@ module.exports = {
     // Send confirmation email
     await EmailService.sendValidationEmail(user, emailToAdd, savedEmailId);
 
-    // If the email sent without error, notify the other emails on this account.
+    // If the email sent without error, notify the other confirmed emails on
+    // this account.
     const promises = [];
     for (let i = 0; i < user.emails.length; i++) {
-      // TODO: probably shouldn't send notices to unconfirmed email addresses.
-      //
-      // @see HID-2150
-      promises.push(EmailService.sendEmailAlert(user, user.emails[i].email, emailToAdd));
+      const thisEmail = user.emails[i];
+      if (thisEmail.validated) {
+        promises.push(EmailService.sendEmailAlert(user, thisEmail.email, emailToAdd));
+      }
     }
 
     // Send notifications to secondary addresses.
