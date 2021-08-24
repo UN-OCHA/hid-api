@@ -300,7 +300,7 @@ module.exports = {
         hash: request.query.hash,
         id: request.query.id,
         time: request.query.time,
-        emailId: request.query.emailId,
+        emailId: request.query.emailId || '',
       };
 
       // Validate the email address.
