@@ -242,18 +242,6 @@ module.exports = {
     return send(mailOptions, not.type, not);
   },
 
-  sendAuthToProfile(user, createdBy) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      user,
-      createdBy,
-    };
-    return send(mailOptions, 'auth_to_profile', context);
-  },
-
   sendEmailAlert(user, emailSend, emailAdded) {
     const mailOptions = {
       to: emailSend,
