@@ -1468,7 +1468,7 @@ module.exports = {
 
     // If an emailId parameter was present, we will use that value. However, if
     // nothing was sent, we need to determine the ID of the user's primary email
-    // address of the as a default value.
+    // address as a default value.
     //
     // This default will be removed after a safe window has passed, and emailId
     // will then be a required parameter.
