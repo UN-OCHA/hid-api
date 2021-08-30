@@ -833,11 +833,6 @@ module.exports = {
    *           email:
    *             type: string
    *             required: true
-   *           app_validation_url:
-   *             type: string
-   *             required: true
-   *             description: >-
-   *               Should correspond to the endpoint you are interacting with.
    * responses:
    *   '200':
    *     description: The updated user object
@@ -856,24 +851,20 @@ module.exports = {
    */
   async addEmail(request, internalArgs) {
     let userId = '';
-    let email = '';
-    let appValidationUrl = '';
+    let emailToAdd = '';
 
-    // eslint-disable-next-line max-len
-    if (internalArgs && internalArgs.userId && internalArgs.email && internalArgs.appValidationUrl) {
+    if (internalArgs && internalArgs.userId && internalArgs.email) {
       userId = internalArgs.userId;
-      email = internalArgs.email;
-      appValidationUrl = internalArgs.appValidationUrl;
+      emailToAdd = internalArgs.email;
     } else {
       userId = request.params.id;
-      email = request.payload.email;
-      appValidationUrl = request.payload.app_validation_url;
+      emailToAdd = request.payload.email;
     }
 
     // Is the payload complete enough to take action?
-    if (!appValidationUrl || !email) {
+    if (!emailToAdd) {
       logger.warn(
-        '[UserController->addEmail] Either email or app_validation_url was not provided',
+        '[UserController->addEmail] Email was not provided',
         {
           request,
           fail: true,
@@ -885,22 +876,9 @@ module.exports = {
       throw Boom.badRequest('Required parameters not present in payload');
     }
 
-    // Is the verification link pointing to a domain in our allow-list?
-    if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
-      logger.warn(
-        `[UserController->addEmail] app_validation_url ${appValidationUrl} is not in allowedDomains list`,
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Invalid app_validation_url');
-    }
-
     // Does the target user exist?
-    const record = await User.findOne({ _id: userId });
-    if (!record) {
+    const user = await User.findOne({ _id: userId });
+    if (!user) {
       logger.warn(
         `[UserController->addEmail] User ${userId} not found`,
         {
@@ -914,15 +892,15 @@ module.exports = {
     // Make sure the email us unique to the target user's profile. Checking just
     // the target user first allows us to display better user feedback when the
     // request comes internally from HID Auth interface.
-    if (record.emailIndex(email) !== -1) {
+    if (user.emailIndex(emailToAdd) !== -1) {
       logger.warn(
-        `[UserController->addEmail] Email ${email} already belongs to ${userId}.`,
+        `[UserController->addEmail] Email ${emailToAdd} already belongs to ${userId}.`,
         {
           request,
           fail: true,
           user: {
             id: userId,
-            email: record.email,
+            email: user.email,
           },
         },
       );
@@ -930,16 +908,16 @@ module.exports = {
     }
 
     // Make sure email added is unique to the entire HID system.
-    const erecord = await User.findOne({ 'emails.email': email });
+    const erecord = await User.findOne({ 'emails.email': emailToAdd });
     if (erecord) {
       logger.warn(
-        `[UserController->addEmail] Email ${email} is not unique`,
+        `[UserController->addEmail] Email ${emailToAdd} is not unique`,
         {
           request,
           fail: true,
           user: {
             id: userId,
-            email: record.email,
+            email: user.email,
           },
         },
       );
@@ -947,48 +925,44 @@ module.exports = {
     }
 
     const data = {
-      email,
+      email: emailToAdd,
       type: 'Work',
       validated: false,
     };
-    record.emails.push(data);
-    record.lastModified = new Date();
+    user.emails.push(data);
+    user.lastModified = new Date();
 
-    const savedRecord = await record.save();
+    await user.save();
     logger.info(
-      `[UserController->addEmail] Successfully saved user ${record.id}`,
+      `[UserController->addEmail] Successfully saved user ${user.id}`,
       {
         request,
         user: {
-          id: record.id,
+          id: user.id,
         },
       },
     );
-    const savedEmailIndex = savedRecord.emailIndex(email);
-    const savedEmail = savedRecord.emails[savedEmailIndex];
+    const savedEmailIndex = user.emailIndex(emailToAdd);
+    const savedEmailId = user.emails[savedEmailIndex]._id.toString();
 
     // Send confirmation email
-    await EmailService.sendValidationEmail(
-      record,
-      email,
-      savedEmail._id.toString(),
-      appValidationUrl,
-    );
+    await EmailService.sendValidationEmail(user, emailToAdd, savedEmailId);
 
-    // If the email sent without error, notify the other emails on this account.
+    // If the email sent without error, notify the other confirmed emails on
+    // this account.
     const promises = [];
-    for (let i = 0; i < record.emails.length; i++) {
-      // TODO: probably shouldn't send notices to unconfirmed email addresses.
-      //
-      // @see HID-2150
-      promises.push(EmailService.sendEmailAlert(record, record.emails[i].email, email));
+    for (let i = 0; i < user.emails.length; i++) {
+      const thisEmail = user.emails[i];
+      if (thisEmail.validated) {
+        promises.push(EmailService.sendEmailAlert(user, thisEmail.email, emailToAdd));
+      }
     }
 
     // Send notifications to secondary addresses.
     await Promise.all(promises);
 
     // Return user object.
-    return record;
+    return user;
   },
 
   /*
