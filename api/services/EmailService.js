@@ -33,10 +33,6 @@ function addUrlArgument(url, name, value) {
   return out;
 }
 
-function addHash(url, hash) {
-  return addUrlArgument(url, 'hash', hash);
-}
-
 function send(options, tpl, context) {
   let template = tpl;
   if (options.locale && options.locale === 'fr') {
@@ -87,7 +83,7 @@ module.exports = {
     const hash = user.generateHashEmail(user.email);
     let resetUrl = addUrlArgument(appVerifyUrl, 'id', user._id.toString());
     resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
-    resetUrl = addHash(resetUrl, hash.hash);
+    resetUrl = addUrlArgument(resetUrl, 'hash', hash.hash);
     const context = {
       name: user.name,
       reset_url: resetUrl,
