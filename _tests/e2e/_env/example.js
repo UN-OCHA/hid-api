@@ -6,6 +6,7 @@ module.exports = {
   testUserNameGiven: 'Test',
   testUserNameFamily: 'E2E User',
   testUserEmail: 'user@example.com',
+  testUserEmailRecovery: 'recovery@example.com',
   testUserPassword: '123456789aA!',
 
   testAdminUserId: '',

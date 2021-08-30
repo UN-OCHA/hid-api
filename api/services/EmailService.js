@@ -84,7 +84,7 @@ module.exports = {
       to: user.email,
       locale: user.locale || 'en',
     };
-    const hash = user.generateHash('verify_email', user.email);
+    const hash = user.generateHashEmail(user.email);
     let resetUrl = addUrlArgument(appVerifyUrl, 'id', user._id.toString());
     resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
     resetUrl = addHash(resetUrl, hash.hash);
@@ -100,7 +100,7 @@ module.exports = {
       to: user.email,
       locale: user.locale || 'en',
     };
-    const hash = user.generateHash('reset_password');
+    const hash = user.generateHashPassword();
     let resetUrl = addUrlArgument(appVerifyUrl, 'id', user._id.toString());
     resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
     resetUrl = addHash(resetUrl, hash.hash);
@@ -123,21 +123,38 @@ module.exports = {
     return send(mailOptions, 'post_register', context);
   },
 
-  sendResetPassword(user, appResetUrl, emailToTarget) {
+  sendResetPassword(user, emailToTarget) {
     const targetEmail = emailToTarget || user.email;
     const mailOptions = {
       to: targetEmail,
       locale: user.locale,
     };
-    const hash = user.generateHash('reset_password');
-    let resetUrl = addUrlArgument(appResetUrl, 'id', user._id.toString());
-    resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
-    resetUrl = addHash(resetUrl, hash.hash);
+
+    // Determine our internal email ID for the email receiving the reset.
+    const emailIndex = user.emailIndex(targetEmail);
+    const emailId = user.emails[emailIndex]._id.toString();
+
+    // Prepare the password reset link args
+    const hash = user.generateHashPassword(emailId);
+    const baseUrl = `${process.env.APP_URL}/new-password`;
+
+    // Build the reset link.
+    let resetLink = addUrlArgument(baseUrl, 'id', user._id.toString());
+    resetLink = addUrlArgument(resetLink, 'time', hash.timestamp);
+    resetLink = addUrlArgument(resetLink, 'emailId', emailId);
+    resetLink = addUrlArgument(resetLink, 'hash', hash.hash);
+
+    // Email will allow user to restart process. Prep the URL.
+    const passwordUrl = `${process.env.APP_URL}/password`;
+
+    // Gather info for the email message.
     const context = {
       name: user.name,
-      reset_url: resetUrl,
-      appResetUrl,
+      resetLink,
+      passwordUrl,
     };
+
+    // Send email.
     return send(mailOptions, 'reset_password', context);
   },
 
@@ -179,7 +196,7 @@ module.exports = {
       to: user.email,
       locale: user.locale,
     };
-    const hash = user.generateHash('reset_password');
+    const hash = user.generateHashPassword();
     let resetUrl = addUrlArgument(appResetUrl, 'id', user._id.toString());
     resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
     resetUrl = addHash(resetUrl, hash.hash);
@@ -197,7 +214,7 @@ module.exports = {
       locale: user.locale,
     };
     const baseUrl = `${process.env.APP_URL}/verify`;
-    const hash = user.generateHash('verify_email', email);
+    const hash = user.generateHashEmail(email);
     let resetUrl = addUrlArgument(baseUrl, 'id', user._id.toString());
     resetUrl = addUrlArgument(resetUrl, 'emailId', emailId);
     resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);

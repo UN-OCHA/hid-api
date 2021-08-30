@@ -32,7 +32,7 @@ describe('PasswordReset [no-ci]', () => {
     expect(emailFieldInvalid).toBeGreaterThan(0);
   });
 
-  it('shows positive feedback after submitting valid email address', async () => {
+  it('shows positive feedback after submitting primary email address', async () => {
     const input = await page.$('#email');
     await input.click({ clickCount: 3 });
     await page.type('#email', env.testUserEmail);
@@ -41,7 +41,7 @@ describe('PasswordReset [no-ci]', () => {
     expect(await page.content()).toContain('The request to change your password has been received.');
   });
 
-  it('allows user to initiate password reset via email', async () => {
+  it('allows user to initiate password reset via primary email', async () => {
     const message = await utils.openMailhogMessage(page, 1);
 
     // Mailhog has iframes and the link has target="_blank" and all of that makes
@@ -97,6 +97,46 @@ describe('PasswordReset [no-ci]', () => {
     await page.goto(pwResetUrl);
     // Do we see the password reset error?
     expect(await page.content()).toContain('Your password reset link is either invalid or expired.');
+  });
+
+  it('shows positive feedback after submitting recovery email address', async () => {
+    await page.goto(`${env.baseUrl}/password`);
+    const input = await page.$('#email');
+    await input.click({ clickCount: 3 });
+    await page.type('#email', env.testUserEmailRecovery);
+    await page.click('.t-btn--reset');
+    await page.waitForTimeout(1000);
+    expect(await page.content()).toContain('The request to change your password has been received.');
+  });
+
+  it('allows user to initiate password reset via recovery email', async () => {
+    const message = await utils.openMailhogMessage(page, 1);
+
+    // Mailhog has iframes and the link has target="_blank" and all of that makes
+    // it a real PITA to truly click the link and follow it. Let's instead grab
+    // the URL and go directly to it:
+    const pwResetUrl = await message.$eval('p:nth-child(3) a', el => el.innerText);
+    await page.goto(pwResetUrl);
+    // Do we see the password reset form?
+    expect(await page.content()).toContain('Enter your new password');
+  });
+
+  // This test assumes you are on the URL we extracted from Mailhog.
+  it('allows user to reset using an approved password', async () => {
+    const password = await page.$('#password');
+    const confirm = await page.$('#confirm_password');
+
+    // Fill in the form properly. We use the password in the env config, but
+    // reverse the string to make multuple runs a bit easier since the config
+    // can be tested, then reverted back to original in a second run.
+    await password.click({ clickCount: 3 });
+    await password.type(env.testUserPassword);
+    await confirm.click({ clickCount: 3 });
+    await confirm.type(env.testUserPassword);
+
+    await page.click('.t-btn--reset-pw');
+    await page.waitForTimeout(2000);
+    expect(await page.content()).toContain('Thank you for updating your password.');
   });
 
   it('successfully cleaned up Mailhog', async () => {

@@ -1129,7 +1129,7 @@ module.exports = {
     const user = await User.findOne({ 'emails.email': request.params.email });
     if (!user) {
       logger.warn(
-        `[UserController->validateEmail] Could not find user with email ${request.params.email}`,
+        `[UserController->sendValidationEmail] Could not find user with email ${request.params.email}`,
         {
           request,
           fail: true,
@@ -1205,7 +1205,7 @@ module.exports = {
 
     const user = await User.findOne({ _id: request.payload.id }).catch((err) => {
       logger.error(
-        `[UserController->validateEmail] ${err.message}`,
+        `[UserController->validateEmailAddress] ${err.message}`,
         {
           request,
           security: true,
@@ -1219,7 +1219,7 @@ module.exports = {
 
     if (!user) {
       logger.warn(
-        `[UserController->validateEmail] Could not find user ${request.payload.id}`,
+        `[UserController->validateEmailAddress] Could not find user ${request.payload.id}`,
         {
           request,
           fail: true,
@@ -1245,7 +1245,7 @@ module.exports = {
     }
 
     // Verify hash
-    if (user.validHash(request.payload.hash, 'verify_email', request.payload.time, email) === true) {
+    if (user.validHashEmail(request.payload.hash, request.payload.time, email) === true) {
       // Verify user email
       if (user.email === email) {
         user.email_verified = true;
@@ -1264,7 +1264,7 @@ module.exports = {
       }
     } else {
       logger.warn(
-        `[UserController->validateEmail] Invalid hash ${request.payload.hash} provided`,
+        `[UserController->validateEmailaddress] Invalid hash ${request.payload.hash} provided`,
         {
           request,
           fail: true,
@@ -1275,7 +1275,7 @@ module.exports = {
 
     await user.save().then(() => {
       logger.info(
-        `[UserController->validateEmail] Saved user ${user.id} successfully`,
+        `[UserController->validateEmailAddress] Saved user ${user.id} successfully`,
         {
           request,
           user: {
@@ -1316,11 +1316,6 @@ module.exports = {
    *           email:
    *             type: string
    *             required: true
-   *           reset_url:
-   *             type: string
-   *             required: true
-   *             description: >-
-   *               Should correspond to the endpoint you are interacting with.
    * responses:
    *   '204':
    *     description: >-
@@ -1334,30 +1329,16 @@ module.exports = {
    */
   async resetPasswordEmail(request, reply) {
     // Look for required params and fail if either are missing.
-    if (!request.payload || !request.payload.email || !request.payload.reset_url) {
+    if (!request.payload || !request.payload.email) {
       throw Boom.badRequest('Missing email and/or reset_url parameters in request body.');
-    }
-
-    // Validate app URL.
-    const resetUrl = request.payload.reset_url || '';
-    if (!HelperService.isAuthorizedUrl(resetUrl)) {
-      logger.warn(
-        `[UserController->resetPasswordEmail] reset_url ${resetUrl} is not in allowedDomains list`,
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('reset_url is invalid');
     }
 
     // Lookup user based on the email address. We scan the `emails` array so
     // that secondary addresses can also receive password resets.
-    const record = await User.findOne({ 'emails.email': request.payload.email.toLowerCase() });
+    const user = await User.findOne({ 'emails.email': request.payload.email.toLowerCase() });
 
     // No user found.
-    if (!record) {
+    if (!user) {
       logger.warn(
         `[UserController->resetPasswordEmail] No user found with email: ${request.payload.email}`,
         {
@@ -1373,32 +1354,8 @@ module.exports = {
       return reply.response().code(204);
     }
 
-    // Determine whether email is primary. We allow unvalidated primary emails
-    // to accept password resets.
-    const emailIsPrimary = record.email === request.payload.email.toLowerCase();
-
-    // Verify that the email has already been validated
-    // eslint-disable-next-line max-len
-    const secondaryEmailIsValidated = record.emails.some(e => e.email === request.payload.email.toLowerCase() && e.validated === true);
-
-    // IF the email is primary OR it's a __validated__ secondary email
-    // THEN send password reset.
-    if (emailIsPrimary || secondaryEmailIsValidated) {
-      await EmailService.sendResetPassword(record, resetUrl, request.payload.email);
-    } else {
-      logger.warn(
-        `[UserController->resetPasswordEmail] Could not reset password because the secondary email ${request.payload.email} has not been validated.`,
-        {
-          request,
-          security: true,
-          fail: true,
-          user: {
-            id: record.id,
-            email: record.email,
-          },
-        },
-      );
-    }
+    // If we made it this far, we can send the password reset email.
+    await EmailService.sendResetPassword(user, request.payload.email);
 
     // Send HTTP 204 (empty success response)
     return reply.response().code(204);
@@ -1437,6 +1394,9 @@ module.exports = {
    *           password:
    *             type: string
    *             required: true
+   *           emailId:
+   *             type: string
+   *             required: false
    * responses:
    *   '204':
    *     description: Password reset successfully.
@@ -1506,8 +1466,25 @@ module.exports = {
       user = await AuthPolicy.isTOTPValid(user, token);
     }
 
+    // If an emailId parameter was present, we will use that value. However, if
+    // nothing was sent, we need to determine the ID of the user's primary email
+    // address as a default value.
+    //
+    // This default will be removed after a safe window has passed, and emailId
+    // will then be a required parameter.
+    //
+    // @see HID-2219
+    let emailIndex;
+    let emailId;
+    if (request.payload.emailId !== '') {
+      emailId = request.payload.emailId;
+    } else {
+      emailIndex = user.emailIndex(user.email);
+      emailId = user.emails[emailIndex]._id.toString();
+    }
+
     // Verify that the hash was correct.
-    if (user.validHash(request.payload.hash, 'reset_password', request.payload.time) === false) {
+    if (user.validHashPassword(request.payload.hash, request.payload.time, emailId) === false) {
       logger.warn(
         '[UserController->resetPassword] Reset password link is expired or invalid',
         {
@@ -1551,7 +1528,26 @@ module.exports = {
 
     // Success! We are resetting the password
     user.password = User.hashPassword(request.payload.password);
-    user.verifyEmail(user.email);
+
+    // Determine which email received the password reset from the ID, or use the
+    // primary as the default. Not using UserController.validateEmailAddress()
+    // because it has a different hash link structure than the link that the
+    // user clicked to arrive here. Our validation thus far is sufficient to
+    // prove ownership of the address.
+    //
+    // To be simplified after a safe window has passed following the deploy.
+    //
+    // @see HID-2219
+    let emailToVerify;
+    if (request.payload.emailId !== '') {
+      const emailIndexFromId = user.emailIndexFromId(request.payload.emailId);
+      emailToVerify = user.emails[emailIndexFromId].email;
+    } else {
+      emailToVerify = user.email;
+    }
+
+    // Mark the email address which received the password reset as verified.
+    user.verifyEmail(emailToVerify);
 
     // Modify the user metadata now that password was reset.
     user.expires = new Date(0, 0, 1, 0, 0, 0);

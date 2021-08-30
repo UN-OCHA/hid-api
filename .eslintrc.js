@@ -13,6 +13,17 @@ module.exports = {
     sourceType: 'module',
   },
   rules: {
+    "max-len": ["error",
+      {
+        "code": 110,
+        "tabWidth": 2,
+        "ignoreUrls": true,
+        "ignoreComments": false,
+        "ignoreRegExpLiterals": true,
+        "ignoreStrings": true,
+        "ignoreTemplateLiterals": true
+      }
+    ],
     "no-plusplus": "off",
     "no-underscore-dangle": "off",
     "prefer-destructuring": "off",

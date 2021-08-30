@@ -104,8 +104,14 @@ module.exports = {
       query: request.query,
       registerLink,
       passwordLink,
-      alert: false,
+      alert: cookie && cookie.alert,
     };
+
+    // Remove alert from cookie now that it's been queued to display.
+    if (cookie) {
+      cookie.alert = false;
+      request.yar.set(cookie);
+    }
 
     // Display login page.
     return reply.view('login', loginArgs);
@@ -294,9 +300,10 @@ module.exports = {
         hash: request.query.hash,
         id: request.query.id,
         time: request.query.time,
-        emailId: request.query.emailId,
+        emailId: request.query.emailId || '',
       };
 
+      // Validate the email address.
       await UserController.validateEmailAddress(request, reply);
 
       // If user is logged in, send them to their profile.
@@ -310,15 +317,14 @@ module.exports = {
         return reply.redirect('/profile/edit');
       }
 
-      return reply.view('login', {
-        alert: {
-          type: 'status',
-          message: 'Thank you for confirming your account. You can now log in',
-        },
-        query: request.query,
-        registerLink,
-        passwordLink,
-      });
+      // Now, redirect to homepage with cookied alert, to avoid resubmissions
+      // if the user refreshes their browser.
+      cookie.alert = {
+        type: 'status',
+        message: 'Thank you for confirming your account. You can now log in',
+      };
+      request.yar.set('session', cookie);
+      return reply.redirect('/');
     } catch (err) {
       return reply.view('login', {
         alert: {
@@ -336,14 +342,14 @@ module.exports = {
   },
 
   password(request, reply) {
-    const requestUrl = _buildRequestUrl(request, 'new_password');
+    const requestUrl = _buildRequestUrl(request, 'new-password');
     return reply.view('password', {
       requestUrl,
     });
   },
 
   async passwordPost(request, reply) {
-    const requestUrl = _buildRequestUrl(request, 'new_password');
+    const requestUrl = _buildRequestUrl(request, 'new-password');
     try {
       await UserController.resetPasswordEmail(request, reply);
       return reply.view('password', {
@@ -382,6 +388,7 @@ module.exports = {
       hash: request.query.hash,
       id: request.query.id,
       time: request.query.time,
+      emailId: request.query.emailId,
       totp: false,
     });
 
@@ -413,7 +420,7 @@ module.exports = {
 
     // Before continuing, check that password link is valid. No sense in making
     // the user do anthing if the link expired.
-    if (user.validHash(request.query.hash, 'reset_password', request.query.time) === false) {
+    if (user.validHashPassword(request.query.hash, request.query.time, request.query.emailId) === false) {
       return reply.view('error', {
         alert: {
           type: 'error',
@@ -431,7 +438,7 @@ module.exports = {
     if (user.totp) {
       return reply.view('totp', {
         query: request.query,
-        destination: '/new_password',
+        destination: '/new-password',
         alert: {
           type: 'warning',
           title: 'Enter your two-factor authentication code.',
@@ -448,6 +455,7 @@ module.exports = {
     request.yar.set('session', {
       hash: request.query.hash,
       id: request.query.id,
+      emailId: request.query.emailId || '',
       time: request.query.time,
       totp: true,
     });
@@ -457,6 +465,7 @@ module.exports = {
       query: request.query,
       hash: request.query.hash,
       id: request.query.id,
+      emailId: request.query.emailId || '',
       time: request.query.time,
     });
   },
@@ -464,7 +473,7 @@ module.exports = {
   async newPasswordPost(request, reply) {
     const cookie = request.yar.get('session');
 
-    if (cookie && cookie.hash && cookie.id && cookie.time && !cookie.totp) {
+    if (cookie && cookie.hash && cookie.id && cookie.emailId && cookie.time && !cookie.totp) {
       try {
         const user = await User.findOne({ _id: cookie.id });
         const token = request.payload['x-hid-totp'];
@@ -477,6 +486,7 @@ module.exports = {
           query: request.payload,
           hash: cookie.hash,
           id: cookie.id,
+          emailId: cookie.emailId,
           time: cookie.time,
         });
       } catch (err) {
@@ -486,7 +496,7 @@ module.exports = {
         };
         return reply.view('totp', {
           query: request.payload,
-          destination: '/new_password',
+          destination: '/new-password',
           alert,
         });
       }
@@ -522,7 +532,15 @@ module.exports = {
           title: 'Password update',
         });
       } catch (err) {
-        // No need to log the error; UserController.resetPassword logged it.
+        logger.warn(
+          `[ViewController->newPasswordPost] ${err.message}`,
+          {
+            request,
+            security: true,
+            fail: true,
+            stack_trace: err.stack,
+          },
+        );
 
         if (params) {
           return reply.view('login', {
