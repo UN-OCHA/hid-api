@@ -1,9 +1,0 @@
-<p>Bonjour <%= user.name %>,</p>
-
-<p>Nous voudrions vous rappeler que, dans deux jours, nous vous retirerons de <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a>,
-  conformément à la date de départ que vous avez spécifiée, à savoir <%= params.listUser.checkoutDate %>.</p>
-
-<p>Si vous souhaitez rejoindre la liste à nouveau, accédez simplement à <a href="<%= params.list.getAppUrl() %>"><%= params.list.name %></a> et enregistrez-vous
-  (vous pouvez le faire en cliquant sur l'icône en forme de flèche en haut).</p>
-
-<% include ../../includes/footer_fr %>
