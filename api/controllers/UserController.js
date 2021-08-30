@@ -150,12 +150,6 @@ module.exports = {
       }
       delete request.payload.notify;
 
-      let registrationType = '';
-      if (request.payload.registration_type) {
-        registrationType = request.payload.registration_type;
-        delete request.payload.registration_type;
-      }
-
       HelperService.removeForbiddenAttributes(User, request, []);
 
       // HID-1582: creating a short lived user for testing
