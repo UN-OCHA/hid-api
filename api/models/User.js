@@ -371,10 +371,6 @@ UserSchema.methods = {
     }
   },
 
-  getAppUrl() {
-    return `${process.env.APP_URL}/users/${this._id}`;
-  },
-
   sanitizeClients() {
     if (this.authorizedClients && this.authorizedClients.length) {
       const sanitized = [];
