@@ -202,14 +202,6 @@ module.exports = {
     return send(mailOptions, 'email_validation', context);
   },
 
-  sendNotification(not) {
-    const mailOptions = {
-      to: not.user.email,
-      locale: not.user.locale,
-    };
-    return send(mailOptions, not.type, not);
-  },
-
   sendEmailAlert(user, emailSend, emailAdded) {
     const mailOptions = {
       to: emailSend,
