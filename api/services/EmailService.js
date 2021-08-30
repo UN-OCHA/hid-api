@@ -191,22 +191,6 @@ module.exports = {
     return send(mailOptions, 'forced_password_reset_alert7', context);
   },
 
-  sendClaim(user, appResetUrl) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const hash = user.generateHashPassword();
-    let resetUrl = addUrlArgument(appResetUrl, 'id', user._id.toString());
-    resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
-    resetUrl = addHash(resetUrl, hash.hash);
-    const context = {
-      name: user.name,
-      reset_url: resetUrl,
-    };
-    return send(mailOptions, 'claim', context);
-  },
-
   sendValidationEmail(user, emailToValidate, emailId) {
     // Prepare data for the email.
     const mailOptions = {

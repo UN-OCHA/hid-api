@@ -93,7 +93,6 @@ module.exports = {
   },
 
   canUpdate,
-  canClaim: canUpdate,
 
   async canFind(request) {
     if (request.auth.credentials.is_admin) {
