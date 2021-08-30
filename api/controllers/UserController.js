@@ -512,6 +512,8 @@ module.exports = {
       );
       throw Boom.notFound();
     }
+
+    // Notify user that their account was deleted.
     await EmailService.sendAdminDelete(user, request.auth.credentials);
 
     // Delete this user.
