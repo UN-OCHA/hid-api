@@ -166,7 +166,9 @@ module.exports = {
         delete request.payload.tester;
       }
 
+      // Create user account.
       const user = await User.create(request.payload);
+
       if (!user) {
         logger.warn(
           '[UserController->create] Create user failed',
@@ -194,9 +196,6 @@ module.exports = {
       if (user.email && notify === true) {
         if (!request.auth.credentials) {
           await EmailService.sendRegister(user, appVerifyUrl);
-        } else if (registrationType === 'kiosk') {
-          // Kiosk registration
-          await EmailService.sendRegisterKiosk(user, appVerifyUrl);
         }
       }
       return user;

@@ -95,22 +95,6 @@ module.exports = {
     return send(mailOptions, 'register', context);
   },
 
-  sendRegisterKiosk(user, appVerifyUrl) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale || 'en',
-    };
-    const hash = user.generateHashPassword();
-    let resetUrl = addUrlArgument(appVerifyUrl, 'id', user._id.toString());
-    resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
-    resetUrl = addHash(resetUrl, hash.hash);
-    const context = {
-      user,
-      reset_url: resetUrl,
-    };
-    return send(mailOptions, 'register_kiosk', context);
-  },
-
   sendPostRegister(user) {
     const mailOptions = {
       to: user.email,
