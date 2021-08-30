@@ -1,11 +1,18 @@
+/**
+ * @module EmailService
+ * @description Service to send emails
+ */
 const Nodemailer = require('nodemailer');
 const Email = require('email-templates');
+const config = require('../../config/env');
 
+const { logger } = config;
 const TransporterSettings = {
   host: process.env.SMTP_HOST || 'localhost',
   port: process.env.SMTP_PORT || 25,
   secure: process.env.SMTP_TLS === 'true' || false,
 };
+
 // Only append `auth` property if we have both values to pass.
 if (process.env.SMTP_USER && process.env.SMTP_PASS) {
   TransporterSettings.auth = {
@@ -15,14 +22,7 @@ if (process.env.SMTP_USER && process.env.SMTP_PASS) {
 }
 
 const Transporter = Nodemailer.createTransport(TransporterSettings);
-const config = require('../../config/env');
 
-const { logger } = config;
-
-/**
- * @module EmailService
- * @description Service to send emails
- */
 function addUrlArgument(url, name, value) {
   let out = url;
   if (url.indexOf('?') !== -1) {
