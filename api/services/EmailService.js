@@ -98,7 +98,6 @@ module.exports = {
     };
     const context = {
       given_name: user.given_name,
-      profile_url: `${process.env.APP_URL}/users/${user._id}`,
     };
     return send(mailOptions, 'post_register', context);
   },
