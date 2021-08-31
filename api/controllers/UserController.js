@@ -1551,7 +1551,7 @@ module.exports = {
     // Update user in DB.
     await user.save().then(() => {
       logger.info(
-        `[UserController->resetPassword] Password updated successfully for user ${user.id}`,
+       '[UserController->resetPassword] Password updated successfully',
         {
           request,
           security: true,
