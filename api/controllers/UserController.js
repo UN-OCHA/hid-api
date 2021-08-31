@@ -150,12 +150,6 @@ module.exports = {
       }
       delete request.payload.notify;
 
-      let registrationType = '';
-      if (request.payload.registration_type) {
-        registrationType = request.payload.registration_type;
-        delete request.payload.registration_type;
-      }
-
       HelperService.removeForbiddenAttributes(User, request, []);
 
       // HID-1582: creating a short lived user for testing
@@ -166,7 +160,9 @@ module.exports = {
         delete request.payload.tester;
       }
 
+      // Create user account.
       const user = await User.create(request.payload);
+
       if (!user) {
         logger.warn(
           '[UserController->create] Create user failed',
@@ -194,9 +190,6 @@ module.exports = {
       if (user.email && notify === true) {
         if (!request.auth.credentials) {
           await EmailService.sendRegister(user, appVerifyUrl);
-        } else if (registrationType === 'kiosk') {
-          // Kiosk registration
-          await EmailService.sendRegisterKiosk(user, appVerifyUrl);
         }
       }
       return user;
@@ -512,6 +505,8 @@ module.exports = {
       );
       throw Boom.notFound();
     }
+
+    // Notify user that their account was deleted.
     await EmailService.sendAdminDelete(user, request.auth.credentials);
 
     // Delete this user.
