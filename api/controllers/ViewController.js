@@ -543,9 +543,14 @@ module.exports = {
         );
 
         // Look at the nature of the error and show user feedback.
-        let userFacingMessage = 'There was an error resetting your password. Please try again.';
+        let userFacingMessage = '<p>There was an error resetting your password. Please try again.</p>';
+        let userFacingError = 'PW-RESET-INVALID';
+
+        // If fields didn't match, it's safe to disclose plus our user feedback
+        // is clear enough that we probably don't need to show an error code.
         if (err.message === 'The password and password-confirmation fields did not match.') {
-          userFacingMessage = err.message;
+          userFacingMessage = `<p>${err.message}</p>`;
+          userFacingError = undefined;
         }
 
         if (params) {
@@ -553,7 +558,7 @@ module.exports = {
             alert: {
               type: 'error',
               message: userFacingMessage,
-              error_type: 'PW-RESET-INVALID',
+              error_type: userFacingError,
             },
             query: request.payload,
             registerLink,
@@ -566,7 +571,7 @@ module.exports = {
           alert: {
             type: 'error',
             message: userFacingMessage,
-            error_type: 'PW-RESET-INVALID',
+            error_type: userFacingError,
           },
           query: request.payload,
           requestUrl,
