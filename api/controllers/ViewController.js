@@ -529,7 +529,7 @@ module.exports = {
           },
           query: request.payload,
           isSuccess: true,
-          title: 'Password update',
+          title: 'Password reset',
         });
       } catch (err) {
         logger.warn(
@@ -542,11 +542,18 @@ module.exports = {
           },
         );
 
+        // Look at the nature of the error and show user feedback.
+        let userFacingMessage = 'There was an error resetting your password. Please try again.';
+        if (err.message === 'The password and password-confirmation fields did not match.') {
+          userFacingMessage = err.message;
+        }
+
         if (params) {
           return reply.view('login', {
             alert: {
               type: 'error',
-              message: 'There was an error resetting your password. Please try again.',
+              message: userFacingMessage,
+              error_type: 'PW-RESET-INVALID',
             },
             query: request.payload,
             registerLink,
@@ -558,7 +565,8 @@ module.exports = {
         return reply.view('password', {
           alert: {
             type: 'error',
-            message: 'There was an error resetting your password. Please try again.',
+            message: userFacingMessage,
+            error_type: 'PW-RESET-INVALID',
           },
           query: request.payload,
           requestUrl,
@@ -570,10 +578,11 @@ module.exports = {
       alert: {
         type: 'error',
         message: 'There was an error resetting your password.',
+        error_type: 'PW-RESET-GENERAL',
       },
       query: request.payload,
       isSuccess: false,
-      title: 'Password update',
+      title: 'Password reset',
     });
   },
 
