@@ -523,13 +523,12 @@ module.exports = {
         }
 
         return reply.view('message', {
+          title: 'Password reset',
           alert: {
             type: 'status',
             message: 'Thank you for updating your password.',
           },
           query: request.payload,
-          isSuccess: true,
-          title: 'Password reset',
         });
       } catch (err) {
         logger.warn(
@@ -580,14 +579,13 @@ module.exports = {
     }
 
     return reply.view('message', {
+      title: 'Password reset',
       alert: {
         type: 'error',
         message: 'There was an error resetting your password.',
         error_type: 'PW-RESET-GENERAL',
       },
       query: request.payload,
-      isSuccess: false,
-      title: 'Password reset',
     });
   },
 
@@ -1517,9 +1515,8 @@ module.exports = {
 
         // Display confirmation of deletion.
         return reply.view('message', {
+          title: 'Account deleted',
           alert,
-          isSuccess: false,
-          title: 'Account Deleted',
         });
       }
 

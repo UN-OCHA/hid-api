@@ -671,7 +671,6 @@ module.exports = {
             ${linktoPartnerSite || ''}
           `,
         },
-        isSuccess: false,
       });
     }
   },
