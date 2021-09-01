@@ -1363,6 +1363,9 @@ module.exports = {
    *           password:
    *             type: string
    *             required: true
+   *           confirm_password:
+   *             type: string
+   *             required: true
    *           emailId:
    *             type: string
    *             required: false
@@ -1388,6 +1391,7 @@ module.exports = {
       !request.payload
       || !request.payload.hash
       || !request.payload.password
+      || !request.payload.confirm_password
       || !request.payload.id
       || !request.payload.time
     ) {
@@ -1482,17 +1486,35 @@ module.exports = {
     // reset attempt should be rejected, since the passwords are the same.
     if (user.validPassword(request.payload.password)) {
       logger.warn(
-        `[UserController->resetPassword] Could not reset password for user ${request.payload.id}. The new password can not be the same as the old one`,
+        '[UserController->resetPassword] Could not reset password. The new password can not be the same as the old one.',
         {
           request,
           security: true,
           fail: true,
           user: {
             id: request.payload.id,
+            email: user.email,
           },
         },
       );
       throw Boom.badRequest(cannotResetPasswordMessage);
+    }
+
+    // Ensure that people submitting forms filled the two fields in identically.
+    if (request.payload.password !== request.payload.confirm_password) {
+      logger.warn(
+        '[UserController->resetPassword] Could not reset password. The two password values did not match.',
+        {
+          request,
+          security: true,
+          fail: true,
+          user: {
+            id: request.payload.id,
+            email: user.email,
+          },
+        },
+      );
+      throw Boom.badRequest('The password and password-confirmation fields did not match.');
     }
 
     // Success! We are resetting the password
@@ -1529,7 +1551,7 @@ module.exports = {
     // Update user in DB.
     await user.save().then(() => {
       logger.info(
-        `[UserController->resetPassword] Password updated successfully for user ${user.id}`,
+        '[UserController->resetPassword] Password updated successfully',
         {
           request,
           security: true,

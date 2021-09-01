@@ -529,7 +529,7 @@ module.exports = {
           },
           query: request.payload,
           isSuccess: true,
-          title: 'Password update',
+          title: 'Password reset',
         });
       } catch (err) {
         logger.warn(
@@ -542,11 +542,23 @@ module.exports = {
           },
         );
 
+        // Look at the nature of the error and show user feedback.
+        let userFacingMessage = '<p>There was an error resetting your password. Please try again.</p>';
+        let userFacingError = 'PW-RESET-INVALID';
+
+        // If fields didn't match, it's safe to disclose plus our user feedback
+        // is clear enough that we probably don't need to show an error code.
+        if (err.message === 'The password and password-confirmation fields did not match.') {
+          userFacingMessage = `<p>${err.message}</p>`;
+          userFacingError = undefined;
+        }
+
         if (params) {
           return reply.view('login', {
             alert: {
               type: 'error',
-              message: 'There was an error resetting your password. Please try again.',
+              message: userFacingMessage,
+              error_type: userFacingError,
             },
             query: request.payload,
             registerLink,
@@ -558,7 +570,8 @@ module.exports = {
         return reply.view('password', {
           alert: {
             type: 'error',
-            message: 'There was an error resetting your password. Please try again.',
+            message: userFacingMessage,
+            error_type: userFacingError,
           },
           query: request.payload,
           requestUrl,
@@ -570,10 +583,11 @@ module.exports = {
       alert: {
         type: 'error',
         message: 'There was an error resetting your password.',
+        error_type: 'PW-RESET-GENERAL',
       },
       query: request.payload,
       isSuccess: false,
-      title: 'Password update',
+      title: 'Password reset',
     });
   },
 
