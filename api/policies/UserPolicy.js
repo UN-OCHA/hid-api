@@ -74,6 +74,7 @@ module.exports = {
     logger.warn(
       `[UserPolicy->canUpdate] User ${request.auth.credentials.id} can not update user ${request.params.id}`,
       {
+        request,
         security: true,
         fail: true,
       },
