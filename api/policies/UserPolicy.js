@@ -56,40 +56,29 @@ module.exports = {
   },
 
   async canUpdate(request) {
-    if (
-      !request.auth.credentials.is_admin
-      && !request.auth.credentials.isManager
-      && request.auth.credentials.id !== request.params.id
-    ) {
-      logger.warn(
-        `[UserPolicy->canUpdate] User ${request.auth.credentials.id} can not update user ${request.params.id}`,
-        {
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.forbidden('You need to be an admin or a manager or the current user');
-    } else {
-      if (request.auth.credentials.isManager
-        && request.auth.credentials.id !== request.params.id) {
-        // If the user is a manager, make sure he is not trying to edit
-        // an admin account.
-        const user = await User.findById(request.params.id);
-        if (!user) {
-          logger.warn(
-            `[UserPolicy->canUpdate] User ${request.params.id} not found`,
-          );
-          throw Boom.notFound();
-        }
-        if (user.is_admin) {
-          logger.warn(
-            `[UserPolicy->canUpdate] User ${request.params.id} is an admin and can not be edited by another user`,
-          );
-          throw Boom.forbidden('You are not authorized to edit an admin account');
-        }
+    // If the acting user is an admin
+    //   OR any user is targeting themselves
+    // THEN are allowed to update the target user.
+    if (request.auth.credentials.is_admin || request.auth.credentials.id === request.params.id) {
+      const user = await User.findById(request.params.id);
+      if (!user) {
+        logger.warn(
+          `[UserPolicy->canUpdate] User ${request.params.id} not found`,
+        );
+        throw Boom.notFound();
       }
       return true;
     }
+
+    // Non-admins cannot update anyone but themselves.
+    logger.warn(
+      `[UserPolicy->canUpdate] User ${request.auth.credentials.id} can not update user ${request.params.id}`,
+      {
+        security: true,
+        fail: true,
+      },
+    );
+    throw Boom.forbidden();
   },
 
   async canFind(request) {
