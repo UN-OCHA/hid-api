@@ -113,6 +113,13 @@ module.exports = {
       request.yar.set(cookie);
     }
 
+    logger.info(
+      '[ViewController->login] Displaying login page.',
+      {
+        request,
+      },
+    );
+
     // Display login page.
     return reply.view('login', loginArgs);
   },
@@ -594,9 +601,41 @@ module.exports = {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      logger.info(
+        '[ViewController->user] User tried to view dashboard without session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
-    const user = await User.findOne({ _id: cookie.userId });
+
+    const user = await User.findById(cookie.userId).catch((err) => {
+      logger.warn(
+        '[ViewController->user] Could not find user ID in DB.',
+        {
+          request,
+          fail: true,
+          user: {
+            id: cookie.userId,
+          },
+          stack_trace: err.stack,
+        },
+      );
+    });
+
+    logger.info(
+      '[ViewController->user] Showing user dashboard.',
+      {
+        request,
+        user: {
+          id: user.id,
+          email: user.email,
+          admin: user.is_admin,
+        },
+      },
+    );
+
     return reply.view('user', {
       user,
     });
