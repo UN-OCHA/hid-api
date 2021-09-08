@@ -125,7 +125,13 @@ module.exports = {
   },
 
   async logout(request, reply) {
+    // Temporarily store user session for logging purposes.
+    const cookie = request.yar.get('session');
+
+    // Destroy user session.
     request.yar.reset();
+
+    // Determine whether to redirect the user elsewhere besides HID homepage.
     if (request.query.redirect) {
       // Validate redirect URL
       const url = request.query.redirect;
@@ -144,13 +150,23 @@ module.exports = {
       try {
         const count = await Client.countDocuments({ redirectUri: regex });
         if (count > 0) {
+          logger.info(
+            `[ViewController->logout] Logging user out and redirecting to destination: ${url}`,
+            {
+              request,
+              user: {
+                id: cookie.userId,
+              },
+            },
+          );
+
           return reply.redirect(request.query.redirect);
         }
         logger.warn(`Redirecting to ${request.query.redirect} is not allowed`, { security: true, fail: true, request });
         return reply.redirect('/');
       } catch (err) {
         logger.error(
-          'Error logging user out',
+          '[ViewController->logout] Error logging user out.',
           {
             request,
             security: true,
@@ -162,9 +178,19 @@ module.exports = {
         );
         return reply.redirect('/');
       }
-    } else {
-      return reply.redirect('/');
     }
+
+    logger.info(
+      '[ViewController->logout] Logging user out.',
+      {
+        request,
+        user: {
+          id: cookie.userId,
+        },
+      },
+    );
+
+    return reply.redirect('/');
   },
 
   register(request, reply) {
