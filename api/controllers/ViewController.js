@@ -87,6 +87,13 @@ module.exports = {
 
     // User is logged in, but TOTP challenge is not answered yet.
     if (cookie && cookie.userId && cookie.totp === false) {
+      logger.info(
+        '[ViewController->login] Displaying TOTP prompt.',
+        {
+          request,
+        },
+      );
+
       // Show TOTP form
       return reply.view('totp', {
         title: 'Enter your Authentication code',
