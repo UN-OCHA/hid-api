@@ -39,23 +39,32 @@ module.exports = {
     // Load user cookie. Redirect to homepage when no cookie found.
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      logger.info(
+        '[AdminController->adminOauthClients] User did not have a valid session. Redirecting to login.',
+        {
+          request,
+          fail: true,
+          security: true,
+        },
+      );
+
       return reply.redirect('/');
     }
 
     // Load current user from DB. We do this now in order to log user metadata,
     // and also so that the error page can still display the logged-in state of
     // the non-admin users.
-    const user = await User.findOne({ _id: cookie.userId });
+    const user = await User.findById(cookie.userId);
 
     // Check user authentication and admin permissions.
     try {
       AuthPolicy.isLoggedInAsAdmin(user);
     } catch (err) {
       logger.warn(
-        '[AdminController->adminOauthClients] Non-admin attempted to access admin area',
+        '[AdminController->adminOauthClients] Non-admin attempted to access admin area.',
         {
-          security: true,
           fail: true,
+          security: true,
           user: {
             id: cookie.userId,
             email: user.email,
