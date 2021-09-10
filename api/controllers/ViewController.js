@@ -77,8 +77,22 @@ module.exports = {
         }
         redirect += `&scope=${request.query.scope}`;
 
+        logger.info(
+          '[ViewController->login] User has a session. Redirecting to OAuth screen.',
+          {
+            request,
+          },
+        );
+
         return reply.redirect(redirect);
       }
+
+      logger.info(
+        '[ViewController->login] User has a session. Redirecting to dashboard.',
+        {
+          request,
+        },
+      );
 
       // It seems like the user navigated to HID themselves and is just logging
       // in by their own choice. Show user dashboard.
