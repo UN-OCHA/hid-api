@@ -73,6 +73,7 @@ module.exports = {
         security: true,
         user: {
           id: user.id,
+          email: user.email,
         },
       },
     );
