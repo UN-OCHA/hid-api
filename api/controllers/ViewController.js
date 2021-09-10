@@ -635,7 +635,7 @@ module.exports = {
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
       logger.info(
-        '[ViewController->user] User tried to view dashboard without session. Redirecting to login.',
+        '[ViewController->user] User had no session. Redirecting to login.',
         {
           request,
         },
@@ -679,6 +679,12 @@ module.exports = {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      logger.info(
+        '[ViewController->profile] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -706,6 +712,12 @@ module.exports = {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      logger.info(
+        '[ViewController->profileEdit] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -734,6 +746,12 @@ module.exports = {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      logger.info(
+        '[ViewController->profileEditSubmit] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -829,6 +847,12 @@ module.exports = {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      logger.info(
+        '[ViewController->profileEmailsSubmit] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -992,6 +1016,12 @@ module.exports = {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      logger.info(
+        '[ViewController->settings] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -1020,6 +1050,12 @@ module.exports = {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      logger.info(
+        '[ViewController->settingsOauthSubmit] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -1091,6 +1127,12 @@ module.exports = {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      logger.info(
+        '[ViewController->settingsPassword] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -1132,6 +1174,12 @@ module.exports = {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      logger.info(
+        '[ViewController->settingsPasswordSubmit] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -1243,6 +1291,12 @@ module.exports = {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      logger.info(
+        '[ViewController->settingsSecurity] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -1306,6 +1360,12 @@ module.exports = {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      logger.info(
+        '[ViewController->settingsSecuritySubmit] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -1452,6 +1512,12 @@ module.exports = {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
     if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      logger.info(
+        '[ViewController->settingsDelete] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -1490,6 +1556,12 @@ module.exports = {
       // If the user is not authenticated, redirect to the login page
       const cookie = request.yar.get('session');
       if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+        logger.info(
+          '[ViewController->settingsDeleteSubmit] User had no session. Redirecting to login.',
+          {
+            request,
+          },
+        );
         return reply.redirect('/');
       }
 
