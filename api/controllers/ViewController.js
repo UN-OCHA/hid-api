@@ -72,10 +72,10 @@ module.exports = {
         redirect += `?client_id=${request.query.client_id}`;
         redirect += `&redirect_uri=${request.query.redirect_uri}`;
         redirect += `&response_type=${request.query.response_type}`;
+        redirect += `&scope=${request.query.scope}`;
         if (request.query.state) {
           redirect += `&state=${request.query.state}`;
         }
-        redirect += `&scope=${request.query.scope}`;
 
         logger.info(
           '[ViewController->login] User has a session. Redirecting to OAuth screen.',
@@ -130,7 +130,7 @@ module.exports = {
 
     // Remove alert from cookie now that it's been queued to display.
     if (cookie) {
-      cookie.alert = false;
+      delete cookie.alert;
       request.yar.set(cookie);
     }
 
