@@ -3,6 +3,7 @@
  * @description Controller for pages that visitors see.
  */
 const Boom = require('@hapi/boom');
+const Hoek = require('@hapi/hoek');
 const Recaptcha = require('recaptcha2');
 const Client = require('../models/Client');
 const User = require('../models/User');
@@ -147,7 +148,7 @@ module.exports = {
 
   async logout(request, reply) {
     // Temporarily store user session for logging purposes.
-    const cookie = request.yar.get('session');
+    const oldCookie = Hoek.clone(request.yar.get('session'));
 
     // Destroy user session.
     request.yar.reset();
@@ -176,7 +177,7 @@ module.exports = {
             {
               request,
               user: {
-                id: cookie.userId,
+                id: oldCookie && oldCookie.userId,
               },
             },
           );
@@ -206,7 +207,7 @@ module.exports = {
       {
         request,
         user: {
-          id: cookie.userId,
+          id: oldCookie && oldCookie.userId,
         },
       },
     );
