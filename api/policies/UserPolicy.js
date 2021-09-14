@@ -70,13 +70,17 @@ module.exports = {
       return true;
     }
 
-    // Non-admins cannot update anyone but themselves.
+    // Log that this user had insufficient permissions.
     logger.warn(
       `[UserPolicy->canUpdate] User ${request.auth.credentials.id} can not update user ${request.params.id}`,
       {
         request,
         security: true,
         fail: true,
+        user: {
+          id: request.auth.credentials.id,
+          email: request.auth.credentials.email,
+        },
       },
     );
     throw Boom.forbidden();
@@ -87,6 +91,19 @@ module.exports = {
       return true;
     }
 
+    // Log that this user had insufficient permissions.
+    logger.warn(
+      `[UserPolicy->canFind] User lacks permission to search users.`,
+      {
+        request,
+        security: true,
+        fail: true,
+        user: {
+          id: request.auth.credentials.id,
+          email: request.auth.credentials.email,
+        },
+      },
+    );
     throw Boom.unauthorized();
   },
 };
