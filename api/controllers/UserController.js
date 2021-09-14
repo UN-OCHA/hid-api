@@ -237,7 +237,7 @@ module.exports = {
    *             $ref: '#/components/schemas/User'
    *   '400':
    *     description: Bad request.
-   *   '401':
+   *   '403':
    *     description: Requesting user lacks permission to query users.
    */
   async find(request, reply) {
@@ -319,6 +319,8 @@ module.exports = {
    *   '400':
    *     description: Bad request.
    *   '401':
+   *     description: Unauthorized.
+   *   '403':
    *     description: Requesting user lacks permission to view requested user.
    *   '404':
    *     description: Requested user not found.

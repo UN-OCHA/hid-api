@@ -104,6 +104,6 @@ module.exports = {
         },
       },
     );
-    throw Boom.unauthorized();
+    throw Boom.forbidden();
   },
 };
