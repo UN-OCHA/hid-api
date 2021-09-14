@@ -240,77 +240,7 @@ module.exports = {
    *   '401':
    *     description: Requesting user lacks permission to query users.
    */
-
-  /*
-   * @api [get] /user/{id}
-   * tags:
-   *  - user
-   * summary: Returns a User by ID.
-   * parameters:
-   *   - name: id
-   *     description: A 24-character alphanumeric User ID
-   *     in: path
-   *     required: true
-   *     default: ''
-   * responses:
-   *   '200':
-   *     description: The requested user
-   *     content:
-   *       application/json:
-   *         schema:
-   *           $ref: '#/components/schemas/User'
-   *   '400':
-   *     description: Bad request.
-   *   '401':
-   *     description: Requesting user lacks permission to view requested user.
-   *   '404':
-   *     description: Requested user not found.
-   */
   async find(request, reply) {
-    if (request.params.id) {
-      const criteria = { _id: request.params.id };
-
-      // Do not show user if it is hidden
-      if (
-        !request.auth.credentials.is_admin
-        && request.auth.credentials._id
-        && request.auth.credentials._id.toString() !== request.params.id
-      ) {
-        criteria.hidden = false;
-      }
-      const user = await User.findOne(criteria);
-
-      // If we found a user, return it
-      if (user) {
-        user.sanitize(request.auth.credentials);
-
-        logger.info(
-          '[UserController->find] Displaying one user by ID',
-          {
-            user: {
-              id: user.id,
-              email: user.email,
-            },
-          },
-        );
-
-        return user;
-      }
-
-      // Finally: if we didn't find a user, send a 404.
-      logger.warn(
-        `[UserController->find] Could not find user ${request.params.id}`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.notFound();
-    }
-
-    //
-    // No ID was sent so we are returning a list of users.
-    //
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
 
@@ -366,6 +296,62 @@ module.exports = {
       results[i].sanitize(request.auth.credentials);
     }
     return reply.response(results).header('X-Total-Count', number);
+  },
+
+  /*
+   * @api [get] /user/{id}
+   * tags:
+   *  - user
+   * summary: Returns a User by ID.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric User ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   * responses:
+   *   '200':
+   *     description: The requested user
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Requesting user lacks permission to view requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
+  async findOne(request, reply) {
+    const user = await User.findById(request.params.id);
+
+    // If we found a user, sanitize and return it
+    if (user) {
+      logger.info(
+        '[UserController->find] Displaying one user by ID',
+        {
+          request,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+        },
+      );
+
+      user.sanitize(request.auth.credentials);
+      return user;
+    }
+
+    // Finally: if we didn't find a user, send a 404.
+    logger.warn(
+      `[UserController->find] Could not find user ${request.params.id}`,
+      {
+        request,
+        fail: true,
+      },
+    );
+    throw Boom.notFound();
   },
 
   /*

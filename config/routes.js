@@ -373,8 +373,19 @@ module.exports = [
 
   {
     method: 'GET',
-    path: '/api/v3/user/{id?}',
+    path: '/api/v3/user',
     handler: UserController.find,
+    options: {
+      pre: [
+        UserPolicy.canFind,
+      ],
+    },
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v3/user/{id}',
+    handler: UserController.findOne,
     options: {
       pre: [
         UserPolicy.canUpdate,
