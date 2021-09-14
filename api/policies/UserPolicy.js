@@ -93,7 +93,7 @@ module.exports = {
 
     // Log that this user had insufficient permissions.
     logger.warn(
-      `[UserPolicy->canFind] User lacks permission to search users.`,
+      '[UserPolicy->canFind] User lacks permission to search users.',
       {
         request,
         security: true,

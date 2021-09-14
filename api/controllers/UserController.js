@@ -323,7 +323,7 @@ module.exports = {
    *   '404':
    *     description: Requested user not found.
    */
-  async findOne(request, reply) {
+  async findOne(request) {
     const user = await User.findById(request.params.id);
 
     // If we found a user, sanitize and return it
