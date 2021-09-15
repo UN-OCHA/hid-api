@@ -60,13 +60,6 @@ module.exports = {
     //   OR any user is targeting themselves
     // THEN are allowed to update the target user.
     if (request.auth.credentials.is_admin || request.auth.credentials.id === request.params.id) {
-      const user = await User.findById(request.params.id);
-      if (!user) {
-        logger.warn(
-          `[UserPolicy->canUpdate] User ${request.params.id} not found`,
-        );
-        throw Boom.notFound();
-      }
       return true;
     }
 
