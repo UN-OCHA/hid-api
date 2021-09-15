@@ -347,7 +347,7 @@ module.exports = {
 
     // Finally: if we didn't find a user, send a 404.
     logger.warn(
-      `[UserController->find] Could not find user ${request.params.id}`,
+      `[UserController->findOne] Could not find user ${request.params.id}`,
       {
         request,
         fail: true,
