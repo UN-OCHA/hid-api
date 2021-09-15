@@ -974,7 +974,7 @@ module.exports = {
    * want more info about the user, use the dedicated API method:
    *
    * @see /api/v3/user/{id}
-   * @see UserController.find()
+   * @see UserController.findOne()
    */
   showAccount(request) {
     // Full user object from DB.
