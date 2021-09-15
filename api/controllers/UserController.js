@@ -331,7 +331,7 @@ module.exports = {
     // If we found a user, sanitize and return it
     if (user) {
       logger.info(
-        '[UserController->find] Displaying one user by ID',
+        '[UserController->findOne] Displaying one user by ID',
         {
           request,
           user: {
