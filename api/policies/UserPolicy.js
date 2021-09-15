@@ -80,13 +80,16 @@ module.exports = {
   },
 
   async canFind(request) {
-    if (request.auth.credentials.is_admin) {
+    // If the acting user is an admin
+    //   OR any user is targeting themselves
+    // THEN are allowed to view the target user.
+    if (request.auth.credentials.is_admin || request.auth.credentials.id === request.params.id) {
       return true;
     }
 
     // Log that this user had insufficient permissions.
     logger.warn(
-      '[UserPolicy->canFind] User lacks permission to search users.',
+      `[UserPolicy->canFind] User ${request.auth.credentials.id} can not view other users`,
       {
         request,
         security: true,

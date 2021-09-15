@@ -388,7 +388,7 @@ module.exports = [
     handler: UserController.findOne,
     options: {
       pre: [
-        UserPolicy.canUpdate,
+        UserPolicy.canFind,
       ],
       validate: {
         params: Joi.object({
