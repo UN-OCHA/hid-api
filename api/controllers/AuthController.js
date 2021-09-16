@@ -957,11 +957,8 @@ module.exports = {
         'iss',
         'sub',
         'name',
-        'family_name',
-        'given_name',
         'email',
         'email_verified',
-        'user_id',
       ],
     };
     return out;
@@ -984,13 +981,10 @@ module.exports = {
     const output = {
       id: user.id,
       sub: user.id,
+      name: user.name,
       email: user.email,
       email_verified: user.email_verified.toString(),
-      name: user.name,
-      family_name: user.family_name,
-      given_name: user.given_name,
       iss: process.env.ROOT_URL || 'https://auth.humanitarian.id',
-      user_id: user.user_id,
     };
 
     // Log the request
