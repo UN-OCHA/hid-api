@@ -175,3 +175,5 @@ Sometimes it might be convenient to attach a special class to an element in orde
 /* a top-level page class for the user dashboard */
 .t-page--dashboard {}
 ```
+
+There is a file `_tests/e2e/_utils.js` which has some common macros that you might find helpful while writing tests. Feel free to add more. Some of them, such as `clearMailhog` might be disruptive to other tests, so be careful about how they are used. If in doubt, use the `--runInBand` flag to ensure that they run in series instead of in parallel.

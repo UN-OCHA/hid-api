@@ -67,8 +67,11 @@ module.exports = {
             '/oauth/authorize',
             '/register',
             '/verify',
-            '/verify2',
             '/password',
+            '/new-password',
+
+            // TODO: remove post-deploy
+            // @see HID-2219
             '/new_password',
           ];
           if (paths.indexOf(request.path) === -1) {

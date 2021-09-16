@@ -150,12 +150,6 @@ module.exports = {
       }
       delete request.payload.notify;
 
-      let registrationType = '';
-      if (request.payload.registration_type) {
-        registrationType = request.payload.registration_type;
-        delete request.payload.registration_type;
-      }
-
       HelperService.removeForbiddenAttributes(User, request, []);
 
       // HID-1582: creating a short lived user for testing
@@ -166,7 +160,9 @@ module.exports = {
         delete request.payload.tester;
       }
 
+      // Create user account.
       const user = await User.create(request.payload);
+
       if (!user) {
         logger.warn(
           '[UserController->create] Create user failed',
@@ -194,9 +190,6 @@ module.exports = {
       if (user.email && notify === true) {
         if (!request.auth.credentials) {
           await EmailService.sendRegister(user, appVerifyUrl);
-        } else if (registrationType === 'kiosk') {
-          // Kiosk registration
-          await EmailService.sendRegisterKiosk(user, appVerifyUrl);
         }
       }
       return user;
@@ -244,80 +237,10 @@ module.exports = {
    *             $ref: '#/components/schemas/User'
    *   '400':
    *     description: Bad request.
-   *   '401':
+   *   '403':
    *     description: Requesting user lacks permission to query users.
    */
-
-  /*
-   * @api [get] /user/{id}
-   * tags:
-   *  - user
-   * summary: Returns a User by ID.
-   * parameters:
-   *   - name: id
-   *     description: A 24-character alphanumeric User ID
-   *     in: path
-   *     required: true
-   *     default: ''
-   * responses:
-   *   '200':
-   *     description: The requested user
-   *     content:
-   *       application/json:
-   *         schema:
-   *           $ref: '#/components/schemas/User'
-   *   '400':
-   *     description: Bad request.
-   *   '401':
-   *     description: Requesting user lacks permission to view requested user.
-   *   '404':
-   *     description: Requested user not found.
-   */
   async find(request, reply) {
-    if (request.params.id) {
-      const criteria = { _id: request.params.id };
-
-      // Do not show user if it is hidden
-      if (
-        !request.auth.credentials.is_admin
-        && request.auth.credentials._id
-        && request.auth.credentials._id.toString() !== request.params.id
-      ) {
-        criteria.hidden = false;
-      }
-      const user = await User.findOne(criteria);
-
-      // If we found a user, return it
-      if (user) {
-        user.sanitize(request.auth.credentials);
-
-        logger.info(
-          '[UserController->find] Displaying one user by ID',
-          {
-            user: {
-              id: user.id,
-              email: user.email,
-            },
-          },
-        );
-
-        return user;
-      }
-
-      // Finally: if we didn't find a user, send a 404.
-      logger.warn(
-        `[UserController->find] Could not find user ${request.params.id}`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.notFound();
-    }
-
-    //
-    // No ID was sent so we are returning a list of users.
-    //
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
 
@@ -373,6 +296,64 @@ module.exports = {
       results[i].sanitize(request.auth.credentials);
     }
     return reply.response(results).header('X-Total-Count', number);
+  },
+
+  /*
+   * @api [get] /user/{id}
+   * tags:
+   *  - user
+   * summary: Returns a User by ID.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric User ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   * responses:
+   *   '200':
+   *     description: The requested user
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Unauthorized.
+   *   '403':
+   *     description: Requesting user lacks permission to view requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
+  async findOne(request) {
+    const user = await User.findById(request.params.id);
+
+    // If we found a user, sanitize and return it
+    if (user) {
+      logger.info(
+        '[UserController->findOne] Displaying one user by ID',
+        {
+          request,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+        },
+      );
+
+      user.sanitize(request.auth.credentials);
+      return user;
+    }
+
+    // Finally: if we didn't find a user, send a 404.
+    logger.warn(
+      `[UserController->findOne] Could not find user ${request.params.id}`,
+      {
+        request,
+        fail: true,
+      },
+    );
+    throw Boom.notFound();
   },
 
   /*
@@ -512,6 +493,8 @@ module.exports = {
       );
       throw Boom.notFound();
     }
+
+    // Notify user that their account was deleted.
     await EmailService.sendAdminDelete(user, request.auth.credentials);
 
     // Delete this user.
@@ -833,11 +816,6 @@ module.exports = {
    *           email:
    *             type: string
    *             required: true
-   *           app_validation_url:
-   *             type: string
-   *             required: true
-   *             description: >-
-   *               Should correspond to the endpoint you are interacting with.
    * responses:
    *   '200':
    *     description: The updated user object
@@ -856,24 +834,20 @@ module.exports = {
    */
   async addEmail(request, internalArgs) {
     let userId = '';
-    let email = '';
-    let appValidationUrl = '';
+    let emailToAdd = '';
 
-    // eslint-disable-next-line max-len
-    if (internalArgs && internalArgs.userId && internalArgs.email && internalArgs.appValidationUrl) {
+    if (internalArgs && internalArgs.userId && internalArgs.email) {
       userId = internalArgs.userId;
-      email = internalArgs.email;
-      appValidationUrl = internalArgs.appValidationUrl;
+      emailToAdd = internalArgs.email;
     } else {
       userId = request.params.id;
-      email = request.payload.email;
-      appValidationUrl = request.payload.app_validation_url;
+      emailToAdd = request.payload.email;
     }
 
     // Is the payload complete enough to take action?
-    if (!appValidationUrl || !email) {
+    if (!emailToAdd) {
       logger.warn(
-        '[UserController->addEmail] Either email or app_validation_url was not provided',
+        '[UserController->addEmail] Email was not provided',
         {
           request,
           fail: true,
@@ -885,22 +859,9 @@ module.exports = {
       throw Boom.badRequest('Required parameters not present in payload');
     }
 
-    // Is the verification link pointing to a domain in our allow-list?
-    if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
-      logger.warn(
-        `[UserController->addEmail] app_validation_url ${appValidationUrl} is not in allowedDomains list`,
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Invalid app_validation_url');
-    }
-
     // Does the target user exist?
-    const record = await User.findOne({ _id: userId });
-    if (!record) {
+    const user = await User.findOne({ _id: userId });
+    if (!user) {
       logger.warn(
         `[UserController->addEmail] User ${userId} not found`,
         {
@@ -914,15 +875,15 @@ module.exports = {
     // Make sure the email us unique to the target user's profile. Checking just
     // the target user first allows us to display better user feedback when the
     // request comes internally from HID Auth interface.
-    if (record.emailIndex(email) !== -1) {
+    if (user.emailIndex(emailToAdd) !== -1) {
       logger.warn(
-        `[UserController->addEmail] Email ${email} already belongs to ${userId}.`,
+        `[UserController->addEmail] Email ${emailToAdd} already belongs to ${userId}.`,
         {
           request,
           fail: true,
           user: {
             id: userId,
-            email: record.email,
+            email: user.email,
           },
         },
       );
@@ -930,16 +891,16 @@ module.exports = {
     }
 
     // Make sure email added is unique to the entire HID system.
-    const erecord = await User.findOne({ 'emails.email': email });
+    const erecord = await User.findOne({ 'emails.email': emailToAdd });
     if (erecord) {
       logger.warn(
-        `[UserController->addEmail] Email ${email} is not unique`,
+        `[UserController->addEmail] Email ${emailToAdd} is not unique`,
         {
           request,
           fail: true,
           user: {
             id: userId,
-            email: record.email,
+            email: user.email,
           },
         },
       );
@@ -947,48 +908,44 @@ module.exports = {
     }
 
     const data = {
-      email,
+      email: emailToAdd,
       type: 'Work',
       validated: false,
     };
-    record.emails.push(data);
-    record.lastModified = new Date();
+    user.emails.push(data);
+    user.lastModified = new Date();
 
-    const savedRecord = await record.save();
+    await user.save();
     logger.info(
-      `[UserController->addEmail] Successfully saved user ${record.id}`,
+      `[UserController->addEmail] Successfully saved user ${user.id}`,
       {
         request,
         user: {
-          id: record.id,
+          id: user.id,
         },
       },
     );
-    const savedEmailIndex = savedRecord.emailIndex(email);
-    const savedEmail = savedRecord.emails[savedEmailIndex];
+    const savedEmailIndex = user.emailIndex(emailToAdd);
+    const savedEmailId = user.emails[savedEmailIndex]._id.toString();
 
     // Send confirmation email
-    await EmailService.sendValidationEmail(
-      record,
-      email,
-      savedEmail._id.toString(),
-      appValidationUrl,
-    );
+    await EmailService.sendValidationEmail(user, emailToAdd, savedEmailId);
 
-    // If the email sent without error, notify the other emails on this account.
+    // If the email sent without error, notify the other confirmed emails on
+    // this account.
     const promises = [];
-    for (let i = 0; i < record.emails.length; i++) {
-      // TODO: probably shouldn't send notices to unconfirmed email addresses.
-      //
-      // @see HID-2150
-      promises.push(EmailService.sendEmailAlert(record, record.emails[i].email, email));
+    for (let i = 0; i < user.emails.length; i++) {
+      const thisEmail = user.emails[i];
+      if (thisEmail.validated) {
+        promises.push(EmailService.sendEmailAlert(user, thisEmail.email, emailToAdd));
+      }
     }
 
     // Send notifications to secondary addresses.
     await Promise.all(promises);
 
     // Return user object.
-    return record;
+    return user;
   },
 
   /*
@@ -1103,159 +1060,123 @@ module.exports = {
     return record;
   },
 
-  /*
-   * @TODO: This function does two different tasks based on the input received,
-   *        but our docs tool cannot branch response codes based on input. We
-   *        will split the function into two separate methods which will both
-   *        simplify the code and make accurate docs possible.
-   *
-   * @see HID-2064
-   *
-   * @api [put] /user/emails/{email}
+  /**
+   * @api [post] /user/emails/{email}
    * tags:
    *   - user
    * summary: >-
-   *   Sends confirmation email, or confirms ownership of an email address.
+   *   Have HID send a confirmation email in order to validate an email address.
    * parameters:
    *   - name: email
-   *     description: The email address to confirm.
+   *     description: The email address that will receive the confirmation link.
    *     in: path
    *     required: true
    *     default: ''
+   * responses:
+   *   '204':
+   *     description: Request to send an email confirmation was received.
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Unauthorized.
+   * security: []
+   */
+  async sendValidationEmail(request, reply) {
+    // Confirm whether a user exists with the requested email.
+    const user = await User.findOne({ 'emails.email': request.params.email });
+    if (!user) {
+      logger.warn(
+        `[UserController->sendValidationEmail] Could not find user with email ${request.params.email}`,
+        {
+          request,
+          fail: true,
+        },
+      );
+
+      // Disclosing with anything other than 204 allows an attacker to determine
+      // the existence of email addresses within the system. We continue logging
+      // the email-not-found error, but publicly respond with 204.
+      return reply.response().code(204);
+    }
+
+    // Send validation email.
+    const emailIndex = user.emailIndex(request.params.email);
+    const email = user.emails[emailIndex];
+    await EmailService.sendValidationEmail(
+      user,
+      email.email,
+      email._id.toString(),
+    );
+
+    // Report that the request was received. We don't want to reveal the outcome
+    // of the request, only that we understood it.
+    return reply.response().code(204);
+  },
+
+  /**
+   * @api [post] /user/emails/validate
+   * tags:
+   *   - user
+   * summary: >-
+   *   Confirms ownership of an email address.
    * requestBody:
    *   description: >-
-   *     Send a payload with `request.params.email` populated, plus a payload
-   *     containing `app_validation_url` in order to have HID send an email to
-   *     validate an address.
-   *   required: false
+   *     A payload containing `id`, `time`, `hash`, and an optional `emailId`
+   *     property make up the confirmation criteria. This normally happens when
+   *     the user clicks a confirmation link in an email message, but the API
+   *     can also validate email addresses if necessary.
+   *   required: true
    *   content:
    *     application/json:
    *       schema:
    *         type: object
    *         properties:
-   *           app_validation_url:
+   *           id:
    *             type: string
    *             required: true
+   *           time:
+   *             type: string
+   *             required: true
+   *           hash:
+   *             type: string
+   *             required: true
+   *           emailId:
+   *             type: string
+   *             required: false
    * responses:
    *   '204':
-   *     description: Email sent successfully.
+   *     description: Email was validated.
    *   '400':
    *     description: Bad request.
    *   '401':
    *     description: Unauthorized.
    *   '404':
-   *     description: Requested email address not found.
+   *     description: Requested user account not found.
    * security: []
    */
-  async validateEmail(request, reply) {
-    if (request.payload && request.payload.hash) {
-      const record = await User.findOne({ _id: request.payload.id }).catch((err) => {
-        logger.error(
-          `[UserController->validateEmail] ${err.message}`,
-          {
-            request,
-            security: true,
-            fail: true,
-            stack_trace: err.stack,
-          },
-        );
-
-        throw Boom.internal('There is a problem querying to the database. Please try again.');
-      });
-
-      if (!record) {
-        logger.warn(
-          `[UserController->validateEmail] Could not find user ${request.payload.id}`,
-          {
-            request,
-            fail: true,
-          },
-        );
-        throw Boom.notFound();
-      }
-
-      // Assign the primary address as the initial value for `email`
-      //
-      // This is necessary for new account registrations, which won't have the
-      // emailId parameter sent along with their confirmation link since the new
-      // account only has a single primary email address and no secondaries.
-      let { email } = record;
-
-      // If we are verifying a secondary email on an existing account, we need
-      // to look up the emailId being confirmed in order to validate the hash.
-      if (request.payload.emailId) {
-        const emailRecord = record.emails.id(request.payload.emailId);
-        if (emailRecord) {
-          ({ email } = emailRecord);
-        }
-      }
-
-      // Verify hash
-      if (record.validHash(request.payload.hash, 'verify_email', request.payload.time, email) === true) {
-        // Verify user email
-        if (record.email === email) {
-          record.email_verified = true;
-          record.expires = new Date(0, 0, 1, 0, 0, 0);
-          record.emails[0].validated = true;
-          record.emails.set(0, record.emails[0]);
-          record.lastModified = new Date();
-        } else {
-          for (let i = 0, len = record.emails.length; i < len; i += 1) {
-            if (record.emails[i].email === email) {
-              record.emails[i].validated = true;
-              record.emails.set(i, record.emails[i]);
-            }
-          }
-          record.lastModified = new Date();
-        }
-      } else {
-        logger.warn(
-          `[UserController->validateEmail] Invalid hash ${request.payload.hash} provided`,
-          {
-            request,
-            fail: true,
-          },
-        );
-        throw Boom.badRequest('Invalid hash');
-      }
-
-      await record.save().then(() => {
-        logger.info(
-          `[UserController->validateEmail] Saved user ${record.id} successfully`,
-          {
-            request,
-            user: {
-              id: record.id,
-              email: record.email,
-            },
-          },
-        );
-      });
-
-      // TODO: if someone needs to re-verify an existing primary email address
-      //       we end up sending them a "welcome to HID" email due to this simple
-      //       conditional. We might want to consider a more complex conditional
-      //       to avoid that edge case.
-      //
-      // @see HID-2200
-      if (record.email === email) {
-        await EmailService.sendPostRegister(record);
-      }
-
-      return record;
+  async validateEmailAddress(request, reply) {
+    // If we don't have the required payload params, throw an error.
+    if (!request.payload || !request.payload.id || !request.payload.hash || !request.payload.time) {
+      throw Boom.badRequest();
     }
 
-    // When hash wasn't present, send a validation email to the requested address.
-    //
-    // @TODO: split this into its own function.
-    //
-    // @see HID-2064
+    const user = await User.findOne({ _id: request.payload.id }).catch((err) => {
+      logger.error(
+        `[UserController->validateEmailAddress] ${err.message}`,
+        {
+          request,
+          security: true,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
 
-    // Confirm whether a user exists with the requested email.
-    const record = await User.findOne({ 'emails.email': request.params.email });
-    if (!record) {
+      throw Boom.internal('There is a problem querying to the database. Please try again.');
+    });
+
+    if (!user) {
       logger.warn(
-        `[UserController->validateEmail] Could not find user with email ${request.params.email}`,
+        `[UserController->validateEmailAddress] Could not find user ${request.payload.id}`,
         {
           request,
           fail: true,
@@ -1264,56 +1185,85 @@ module.exports = {
       throw Boom.notFound();
     }
 
-    // Confirm whether the request came from a valid domain.
-    const appValidationUrl = request.payload && request.payload.app_validation_url ? request.payload.app_validation_url : '';
-    if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
+    // Assign the primary address as the initial value for `email`
+    //
+    // This is necessary for new account registrations, which won't have the
+    // emailId parameter sent along with their confirmation link since the new
+    // account only has a single primary email address and no secondaries.
+    let { email } = user;
+
+    // If we are verifying a secondary email on an existing account, we need
+    // to look up the emailId being confirmed in order to validate the hash.
+    if (request.payload.emailId) {
+      const emailRecord = user.emails.id(request.payload.emailId);
+      if (emailRecord) {
+        email = emailRecord.email;
+      }
+    }
+
+    // Verify hash
+    if (user.validHashEmail(request.payload.hash, request.payload.time, email) === true) {
+      // Verify user email
+      if (user.email === email) {
+        user.email_verified = true;
+        user.expires = new Date(0, 0, 1, 0, 0, 0);
+        user.emails[0].validated = true;
+        user.emails.set(0, user.emails[0]);
+        user.lastModified = new Date();
+      } else {
+        for (let i = 0, len = user.emails.length; i < len; i += 1) {
+          if (user.emails[i].email === email) {
+            user.emails[i].validated = true;
+            user.emails.set(i, user.emails[i]);
+          }
+        }
+        user.lastModified = new Date();
+      }
+    } else {
       logger.warn(
-        `[UserController->validateEmail] app_validation_url ${appValidationUrl} is not in allowedDomains list`,
+        `[UserController->validateEmailaddress] Invalid hash ${request.payload.hash} provided`,
         {
           request,
-          security: true,
           fail: true,
         },
       );
-      throw Boom.badRequest('Invalid app_validation_url');
+      throw Boom.badRequest('Invalid hash');
     }
 
-    // Send validation email.
-    const emailIndex = record.emailIndex(request.params.email);
-    const email = record.emails[emailIndex];
-    await EmailService.sendValidationEmail(
-      record,
-      email.email,
-      email._id.toString(),
-      appValidationUrl,
-    );
+    await user.save().then(() => {
+      logger.info(
+        `[UserController->validateEmailAddress] Saved user ${user.id} successfully`,
+        {
+          request,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+        },
+      );
+    });
 
-    // Send a 204 (empty body)
+    // TODO: if someone needs to re-verify an existing primary email address
+    //       we end up sending them a "welcome to HID" email due to this simple
+    //       conditional. We might want to consider a more complex conditional
+    //       to avoid that edge case.
+    //
+    // @see HID-2200
+    if (user.email === email) {
+      await EmailService.sendPostRegister(user);
+    }
+
     return reply.response().code(204);
   },
 
-  /*
-   * @TODO: This function also needs to be split into two methods because it
-   *        serves two purposes.
-   *
-   * @see HID-2067
-   *
-   * @api [put] /user/password
+  /**
+   * @api [post] /user/password-email
    * tags:
    *   - user
-   * summary: Resets a user password or sends a password reset email.
-   * parameters:
-   *   - name: X-HID-TOTP
-   *     in: header
-   *     description: The TOTP token. Required if the user has 2FA enabled.
-   *     required: false
-   *     type: string
+   * summary: Sends a password reset email.
    * requestBody:
    *   description: >-
-   *     Send a payload with `email` and `app_reset_url` to have this method
-   *     send an email with a password recovery email. Send `id`,`time`,`hash`,
-   *     `password` in the payload to have it reset the password. For password
-   *     complexity requirements see `PUT /user/{id}/password`
+   *     Send an email with a password recovery email.
    *   required: true
    *   content:
    *     application/json:
@@ -1323,11 +1273,72 @@ module.exports = {
    *           email:
    *             type: string
    *             required: true
-   *           app_reset_url:
-   *             type: string
-   *             required: true
-   *             description: >-
-   *               Should correspond to the endpoint you are interacting with.
+   * responses:
+   *   '204':
+   *     description: >-
+   *       The request to send a password reset email was received and processed
+   *       successfully. NOTE: due to security requirements regarding disclosure
+   *       of email addresses in our system, the response does NOT guarantee the
+   *       email exists, and thus does NOT guarantee that an email was sent.
+   *   '400':
+   *     description: Bad request. See response body for details.
+   * security: []
+   */
+  async resetPasswordEmail(request, reply) {
+    // Look for required params and fail if either are missing.
+    if (!request.payload || !request.payload.email) {
+      throw Boom.badRequest('Missing email and/or reset_url parameters in request body.');
+    }
+
+    // Lookup user based on the email address. We scan the `emails` array so
+    // that secondary addresses can also receive password resets.
+    const user = await User.findOne({ 'emails.email': request.payload.email.toLowerCase() });
+
+    // No user found.
+    if (!user) {
+      logger.warn(
+        `[UserController->resetPasswordEmail] No user found with email: ${request.payload.email}`,
+        {
+          request,
+          fail: true,
+        },
+      );
+
+      // Send HTTP 204 (empty success response)
+      //
+      // We send this because disclosing the existence (or lack thereof) of an
+      // email address is considered a security hole, per OICT policy.
+      return reply.response().code(204);
+    }
+
+    // If we made it this far, we can send the password reset email.
+    await EmailService.sendResetPassword(user, request.payload.email);
+
+    // Send HTTP 204 (empty success response)
+    return reply.response().code(204);
+  },
+
+  /**
+   * @api [post] /user/password
+   * tags:
+   *   - user
+   * summary: Resets a user password.
+   * parameters:
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: Required if the user has 2FA enabled.
+   *     required: false
+   *     type: string
+   * requestBody:
+   *   description: >-
+   *     Use a password reset link.For password complexity requirements see
+   *     `POST /user/{id}/password`
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
    *           id:
    *             type: string
    *             required: true
@@ -1340,191 +1351,207 @@ module.exports = {
    *           password:
    *             type: string
    *             required: true
+   *           confirm_password:
+   *             type: string
+   *             required: true
+   *           emailId:
+   *             type: string
+   *             required: false
    * responses:
-   *   '200':
+   *   '204':
    *     description: Password reset successfully.
    *   '400':
    *     description: Bad request. See response body for details.
    * security: []
    */
-  async resetPasswordEndpoint(request, reply) {
-    if (request.payload && request.payload.email) {
-      // Validate app URL.
-      const appResetUrl = request.payload.app_reset_url || '';
-      if (!HelperService.isAuthorizedUrl(appResetUrl)) {
-        logger.warn(
-          `[UserController->resetPasswordEndpoint] app_reset_url ${appResetUrl} is not in allowedDomains list`,
-          {
-            request,
-            security: true,
-            fail: true,
-          },
-        );
-        throw Boom.badRequest('app_reset_url is invalid');
-      }
-
-      // Lookup user based on the email address. We scan the `emails` array so
-      // that secondary addresses can also receive password resets.
-      const record = await User.findOne({ 'emails.email': request.payload.email.toLowerCase() });
-
-      // No user found.
-      if (!record) {
-        logger.warn(
-          `[UserController->resetPasswordEndpoint] No user found with email: ${request.payload.email}`,
-          {
-            request,
-            fail: true,
-          },
-        );
-
-        // Send HTTP 204 (empty success response)
-        //
-        // We send this because disclosing the existence (or lack thereof) of an
-        // email address is considered a security hole, per OICT policy.
-        return reply.response().code(204);
-      }
-
-      // Determine whether email is primary. We allow unvalidated primary emails
-      // to accept password resets.
-      const emailIsPrimary = record.email === request.payload.email.toLowerCase();
-
-      // Verify that the email has already been validated
-      // eslint-disable-next-line max-len
-      const secondaryEmailIsValidated = record.emails.some(e => e.email === request.payload.email.toLowerCase() && e.validated === true);
-
-      // IF the email is primary OR it's a __validated__ secondary email
-      // THEN send password reset.
-      if (emailIsPrimary || secondaryEmailIsValidated) {
-        await EmailService.sendResetPassword(record, appResetUrl, request.payload.email);
-      } else {
-        logger.warn(
-          `[UserController->resetPasswordEndpoint] Could not reset password because the secondary email ${request.payload.email} has not been validated.`,
-          {
-            request,
-            security: true,
-            fail: true,
-            user: {
-              id: record.id,
-              email: record.email,
-            },
-          },
-        );
-      }
-
-      // Send HTTP 204 (empty success response)
-      return reply.response().code(204);
-    }
-
-    // If `request.payload.email` was empty, we seem to be evaluating the reset
-    // link contained within an email. This is not an API call, instead a normal
-    // page load from a browser.
+  async resetPassword(request, reply) {
     const cookie = request.yar.get('session');
+
+    // There are several reasons we might want to return some responses from the
+    // API, but we want to ensure the messages are identical so that an error
+    // with a sensitive nature can't be inferred from the public response.
+    const resetLinkInvalidMessage = 'Reset password link is expired or invalid';
+    const cannotResetPasswordMessage = 'Could not reset password';
+
+    // Basic requirements for resetting password. If any of these params are
+    // missing then we cannot proceed.
     if (
       !request.payload
       || !request.payload.hash
       || !request.payload.password
+      || !request.payload.confirm_password
       || !request.payload.id
       || !request.payload.time
     ) {
       logger.warn(
-        '[UserController->resetPasswordEndpoint] Wrong or missing arguments',
+        '[UserController->resetPassword] Wrong or missing arguments',
         {
           request,
           security: true,
+          fail: true,
         },
       );
       throw Boom.badRequest('Wrong or missing arguments');
     }
 
-    // Verify whether password requirements were met.
-    if (!User.isStrongPassword(request.payload.password)) {
-      logger.warn(
-        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough',
+    // Look up user by ID.
+    let user = await User.findOne({ _id: request.payload.id }).catch((err) => {
+      logger.error(
+        `[UserController->resetPassword] ${err.message}`,
         {
           request,
-          security: true,
           fail: true,
+          stack_trace: err.stack,
         },
       );
-      throw Boom.badRequest('New password is not strong enough');
-    }
+      throw Boom.badRequest(resetLinkInvalidMessage);
+    });
 
-    // Lookup user by ID.
-    let record = await User.findOne({ _id: request.payload.id });
-    if (!record) {
+    // If we can't find the User we return a generic error, but log the detailed
+    // reason internally so we can debug or provide support.
+    if (!user) {
       logger.warn(
-        `[UserController->resetPasswordEndpoint] Could not reset password. User ${request.payload.id} not found`,
+        `[UserController->resetPassword] Could not reset password. User ${request.payload.id} not found`,
         {
           request,
           security: true,
           fail: true,
         },
       );
-      throw Boom.badRequest('Reset password link is expired or invalid');
+      throw Boom.badRequest(resetLinkInvalidMessage);
     }
 
     // Check that whether a TOTP token is needed, and that it is valid.
-    if (record.totp && !cookie) {
+    if (user.totp && !cookie) {
       const token = request.headers['x-hid-totp'];
-      record = await AuthPolicy.isTOTPValid(record, token);
+      user = await AuthPolicy.isTOTPValid(user, token);
     }
 
-    // Check that the reset hash was correct when the user landed on the page.
-    if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
-      // Check the new password against the old one.
-      if (record.validPassword(request.payload.password)) {
-        logger.warn(
-          `[UserController->resetPasswordEndpoint] Could not reset password for user ${request.payload.id}. The new password can not be the same as the old one`,
-          {
-            request,
-            security: true,
-            fail: true,
-            user: {
-              id: request.payload.id,
-            },
-          },
-        );
-        throw Boom.badRequest('Could not reset password');
-      } else {
-        record.password = User.hashPassword(request.payload.password);
-        record.verifyEmail(record.email);
-      }
+    // If an emailId parameter was present, we will use that value. However, if
+    // nothing was sent, we need to determine the ID of the user's primary email
+    // address as a default value.
+    //
+    // This default will be removed after a safe window has passed, and emailId
+    // will then be a required parameter.
+    //
+    // @see HID-2219
+    let emailIndex;
+    let emailId;
+    if (request.payload.emailId !== '') {
+      emailId = request.payload.emailId;
     } else {
+      emailIndex = user.emailIndex(user.email);
+      emailId = user.emails[emailIndex]._id.toString();
+    }
+
+    // Verify that the hash was correct.
+    if (user.validHashPassword(request.payload.hash, request.payload.time, emailId) === false) {
       logger.warn(
-        '[UserController->resetPasswordEndpoint] Reset password link is expired or invalid',
+        '[UserController->resetPassword] Reset password link is expired or invalid',
         {
           request,
           security: true,
           fail: true,
         },
       );
-      throw Boom.badRequest('Reset password link is expired or invalid');
+      throw Boom.badRequest(resetLinkInvalidMessage);
     }
 
+    // Verify that password is strong enough.
+    if (!User.isStrongPassword(request.payload.password)) {
+      logger.warn(
+        '[UserController->resetPassword] Could not reset password. New password is not strong enough',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest(cannotResetPasswordMessage);
+    }
+
+    // Compare new password to the old one. If our comparison is TRUE, then the
+    // reset attempt should be rejected, since the passwords are the same.
+    if (user.validPassword(request.payload.password)) {
+      logger.warn(
+        '[UserController->resetPassword] Could not reset password. The new password can not be the same as the old one.',
+        {
+          request,
+          security: true,
+          fail: true,
+          user: {
+            id: request.payload.id,
+            email: user.email,
+          },
+        },
+      );
+      throw Boom.badRequest(cannotResetPasswordMessage);
+    }
+
+    // Ensure that people submitting forms filled the two fields in identically.
+    if (request.payload.password !== request.payload.confirm_password) {
+      logger.warn(
+        '[UserController->resetPassword] Could not reset password. The two password values did not match.',
+        {
+          request,
+          security: true,
+          fail: true,
+          user: {
+            id: request.payload.id,
+            email: user.email,
+          },
+        },
+      );
+      throw Boom.badRequest('The password and password-confirmation fields did not match.');
+    }
+
+    // Success! We are resetting the password
+    user.password = User.hashPassword(request.payload.password);
+
+    // Determine which email received the password reset from the ID, or use the
+    // primary as the default. Not using UserController.validateEmailAddress()
+    // because it has a different hash link structure than the link that the
+    // user clicked to arrive here. Our validation thus far is sufficient to
+    // prove ownership of the address.
+    //
+    // To be simplified after a safe window has passed following the deploy.
+    //
+    // @see HID-2219
+    let emailToVerify;
+    if (request.payload.emailId !== '') {
+      const emailIndexFromId = user.emailIndexFromId(request.payload.emailId);
+      emailToVerify = user.emails[emailIndexFromId].email;
+    } else {
+      emailToVerify = user.email;
+    }
+
+    // Mark the email address which received the password reset as verified.
+    user.verifyEmail(emailToVerify);
+
     // Modify the user metadata now that password was reset.
-    record.expires = new Date(0, 0, 1, 0, 0, 0);
-    record.lastPasswordReset = new Date();
-    record.passwordResetAlert30days = false;
-    record.passwordResetAlert7days = false;
-    record.passwordResetAlert = false;
-    record.lastModified = new Date();
+    user.expires = new Date(0, 0, 1, 0, 0, 0);
+    user.lastPasswordReset = new Date();
+    user.passwordResetAlert30days = false;
+    user.passwordResetAlert7days = false;
+    user.passwordResetAlert = false;
+    user.lastModified = new Date();
 
     // Update user in DB.
-    await record.save().then(() => {
+    await user.save().then(() => {
       logger.info(
-        `[UserController->resetPasswordEndpoint] Password updated successfully for user ${record.id}`,
+        '[UserController->resetPassword] Password updated successfully',
         {
           request,
           security: true,
           user: {
-            id: record.id,
-            email: record.email,
+            id: user.id,
+            email: user.email,
           },
         },
       );
     });
 
-    return 'Password reset successfully';
+    return reply.response().code(204);
   },
 
   async notify(request) {

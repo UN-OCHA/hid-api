@@ -51,6 +51,7 @@
     color 0.6s ease-out;
   text-align: center;
   color: var(--cd-white);
+  cursor: pointer;
   border: 2px solid transparent;
   border-radius: 3px;
   background-color: var(--cd-primary-color);

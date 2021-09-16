@@ -104,8 +104,14 @@ module.exports = {
       query: request.query,
       registerLink,
       passwordLink,
-      alert: false,
+      alert: cookie && cookie.alert,
     };
+
+    // Remove alert from cookie now that it's been queued to display.
+    if (cookie) {
+      cookie.alert = false;
+      request.yar.set(cookie);
+    }
 
     // Display login page.
     return reply.view('login', loginArgs);
@@ -155,7 +161,7 @@ module.exports = {
   },
 
   register(request, reply) {
-    const requestUrl = _buildRequestUrl(request, 'verify2');
+    const requestUrl = _buildRequestUrl(request, 'verify');
     return reply.view('register', {
       title: 'Register a Humanitarian ID account',
       formEmail: '',
@@ -174,24 +180,33 @@ module.exports = {
     });
     const registerLink = _getRegisterLink(request.payload);
     const passwordLink = _getPasswordLink(request.payload);
-    let requestUrl = _buildRequestUrl(request, 'verify2');
+    let requestUrl = _buildRequestUrl(request, 'verify');
 
+    // Validate the visitor's response to reCAPTCHA challenge.
     try {
       await recaptcha.validate(request.payload['g-recaptcha-response']);
     } catch (err) {
+      const errorType = 'RECAPTCHA';
+
       logger.warn(
         '[ViewController->registerPost] Failure during reCAPTCHA validation.',
         {
           request,
           security: true,
           fail: true,
+          stack_trace: err.stack,
+          error_type: errorType,
         },
       );
 
       return reply.view('register', {
         alert: {
           type: 'error',
-          message: 'There was an internal server error while processing your registration. Please try again, and if the problem persists notify info@humanitarian.id',
+          message: `
+            <p>Our system detected your registration attempt as spam. We apologize for the inconvenience.</p>
+            <p>Please try registering again. If the problem persists notify info@humanitarian.id and include the following information:</p>
+          `,
+          error_type: errorType,
         },
         formEmail: request.payload.email,
         formGivenName: request.payload.given_name,
@@ -203,6 +218,8 @@ module.exports = {
         recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY,
       });
     }
+
+    // reCAPTCHA validation was successful. Proceed.
     try {
       // Attempt to create a new HID account.
       await UserController.create(request);
@@ -283,10 +300,11 @@ module.exports = {
         hash: request.query.hash,
         id: request.query.id,
         time: request.query.time,
-        emailId: request.query.emailId,
+        emailId: request.query.emailId || '',
       };
 
-      await UserController.validateEmail(request);
+      // Validate the email address.
+      await UserController.validateEmailAddress(request, reply);
 
       // If user is logged in, send them to their profile.
       if (cookie && cookie.userId) {
@@ -299,15 +317,14 @@ module.exports = {
         return reply.redirect('/profile/edit');
       }
 
-      return reply.view('login', {
-        alert: {
-          type: 'status',
-          message: 'Thank you for confirming your account. You can now log in',
-        },
-        query: request.query,
-        registerLink,
-        passwordLink,
-      });
+      // Now, redirect to homepage with cookied alert, to avoid resubmissions
+      // if the user refreshes their browser.
+      cookie.alert = {
+        type: 'status',
+        message: 'Thank you for confirming your account. You can now log in',
+      };
+      request.yar.set('session', cookie);
+      return reply.redirect('/');
     } catch (err) {
       return reply.view('login', {
         alert: {
@@ -325,35 +342,42 @@ module.exports = {
   },
 
   password(request, reply) {
-    const requestUrl = _buildRequestUrl(request, 'new_password');
+    const requestUrl = _buildRequestUrl(request, 'new-password');
     return reply.view('password', {
       requestUrl,
     });
   },
 
   async passwordPost(request, reply) {
-    const registerLink = _getRegisterLink(request.payload);
-    const passwordLink = _getPasswordLink(request.payload);
+    const requestUrl = _buildRequestUrl(request, 'new-password');
     try {
-      await UserController.resetPasswordEndpoint(request, reply);
-      return reply.view('login', {
+      await UserController.resetPasswordEmail(request, reply);
+      return reply.view('password', {
         alert: {
           type: 'status',
-          message: `The request to change your password has been received. If ${request.payload.email} corresponds to one in our system you will receive a link to reset your password. You may need to check your spam folder if the email does not arrive.`,
+          message: `The request to change your password has been received. If ${request.payload.email} exists in our system you will receive a link to reset your password. You may need to check your spam folder if the email does not arrive.`,
         },
         query: request.query,
-        registerLink,
-        passwordLink,
+        requestUrl,
       });
     } catch (err) {
-      return reply.view('login', {
+      logger.warn(
+        `[Viewcontroller->passwordPost] ${err.message}`,
+        {
+          request,
+          security: true,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+
+      return reply.view('password', {
         alert: {
           type: 'error',
-          message: 'There was an error resetting your password.',
+          message: 'There was an error generating the email to reset your password. Please try again.',
         },
         query: request.query,
-        registerLink,
-        passwordLink,
+        requestUrl,
       });
     }
   },
@@ -361,31 +385,87 @@ module.exports = {
   async newPassword(request, reply) {
     request.yar.reset();
     request.yar.set('session', {
-      hash: request.query.hash, id: request.query.id, time: request.query.time, totp: false,
+      hash: request.query.hash,
+      id: request.query.id,
+      time: request.query.time,
+      emailId: request.query.emailId,
+      totp: false,
     });
 
-    const user = await User.findOne({ _id: request.query.id });
+    // Look up User by ID.
+    const user = await User.findOne({ _id: request.query.id }).catch((err) => {
+      logger.error(
+        `[ViewController->newPassword] ${err.message}`,
+        {
+          request,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+    });
 
+    // Show error if we couldn't find a User.
     if (!user) {
-      return reply.view('error');
-    }
-
-    if (user.totp) {
-      return reply.view('totp', {
-        query: request.query,
-        destination: '/new_password',
-        alert: false,
+      return reply.view('error', {
+        alert: {
+          type: 'error',
+          title: 'Your password reset link is either invalid or expired.',
+          message: `
+            <p>Please <a href="/password">generate a new link</a> and try again. If you see this error multiple times, contact <a href="mailto:info@humanitarian.id">info@humanitarian.id</a> and include the following information:</p>
+          `,
+          error_type: 'PW-RESET-USER',
+        },
       });
     }
 
+    // Before continuing, check that password link is valid. No sense in making
+    // the user do anthing if the link expired.
+    if (user.validHashPassword(request.query.hash, request.query.time, request.query.emailId) === false) {
+      return reply.view('error', {
+        alert: {
+          type: 'error',
+          title: 'Your password reset link is either invalid or expired.',
+          message: `
+            <p>Please <a href="/password">generate a new link</a> and try again. If you see this error multiple times, contact <a href="mailto:info@humanitarian.id">info@humanitarian.id</a> and include the following information:</p>
+          `,
+          error_type: 'PW-RESET-LINK',
+        },
+      });
+    }
+
+    // If the user has 2FA enabled, we need them to enter a TOTP before allowing
+    // them to continue.
+    if (user.totp) {
+      return reply.view('totp', {
+        query: request.query,
+        destination: '/new-password',
+        alert: {
+          type: 'warning',
+          title: 'Enter your two-factor authentication code.',
+          message: `
+            <p><a href="https://about.humanitarian.id/faqs.html#What-two-factor-authentication" target="_blank" rel="noopener noreferrer">Read about 2FA in our FAQs</a></p>
+          `,
+        },
+      });
+    }
+
+    // Assuming the user either passed 2FA challenge, or they don't have it
+    // enabled, we cookie their reset data and pass them to the actual password
+    // reset form.
     request.yar.set('session', {
-      hash: request.query.hash, id: request.query.id, time: request.query.time, totp: true,
+      hash: request.query.hash,
+      id: request.query.id,
+      emailId: request.query.emailId || '',
+      time: request.query.time,
+      totp: true,
     });
 
+    // Display the password reset form.
     return reply.view('new_password', {
       query: request.query,
       hash: request.query.hash,
       id: request.query.id,
+      emailId: request.query.emailId || '',
       time: request.query.time,
     });
   },
@@ -393,17 +473,20 @@ module.exports = {
   async newPasswordPost(request, reply) {
     const cookie = request.yar.get('session');
 
-    if (cookie && cookie.hash && cookie.id && cookie.time && !cookie.totp) {
+    if (cookie && cookie.hash && cookie.id && cookie.emailId && cookie.time && !cookie.totp) {
       try {
         const user = await User.findOne({ _id: cookie.id });
         const token = request.payload['x-hid-totp'];
+
         await AuthPolicy.isTOTPValid(user, token);
         cookie.totp = true;
         request.yar.set('session', cookie);
+
         return reply.view('new_password', {
           query: request.payload,
           hash: cookie.hash,
           id: cookie.id,
+          emailId: cookie.emailId,
           time: cookie.time,
         });
       } catch (err) {
@@ -413,7 +496,7 @@ module.exports = {
         };
         return reply.view('totp', {
           query: request.payload,
-          destination: '/new_password',
+          destination: '/new-password',
           alert,
         });
       }
@@ -423,8 +506,10 @@ module.exports = {
       const params = HelperService.getOauthParams(request.payload);
       const registerLink = _getRegisterLink(request.payload);
       const passwordLink = _getPasswordLink(request.payload);
+
       try {
-        await UserController.resetPasswordEndpoint(request);
+        await UserController.resetPassword(request, reply);
+
         if (params) {
           return reply.view('login', {
             alert: {
@@ -436,21 +521,43 @@ module.exports = {
             passwordLink,
           });
         }
+
         return reply.view('message', {
+          title: 'Password reset',
           alert: {
             type: 'status',
             message: 'Thank you for updating your password.',
           },
           query: request.payload,
-          isSuccess: true,
-          title: 'Password update',
         });
       } catch (err) {
+        logger.warn(
+          `[ViewController->newPasswordPost] ${err.message}`,
+          {
+            request,
+            security: true,
+            fail: true,
+            stack_trace: err.stack,
+          },
+        );
+
+        // Look at the nature of the error and show user feedback.
+        let userFacingMessage = '<p>There was an error resetting your password. Please try again.</p>';
+        let userFacingError = 'PW-RESET-INVALID';
+
+        // If fields didn't match, it's safe to disclose plus our user feedback
+        // is clear enough that we probably don't need to show an error code.
+        if (err.message === 'The password and password-confirmation fields did not match.') {
+          userFacingMessage = `<p>${err.message}</p>`;
+          userFacingError = undefined;
+        }
+
         if (params) {
           return reply.view('login', {
             alert: {
               type: 'error',
-              message: 'There was an error resetting your password. Please try again.',
+              message: userFacingMessage,
+              error_type: userFacingError,
             },
             query: request.payload,
             registerLink,
@@ -462,7 +569,8 @@ module.exports = {
         return reply.view('password', {
           alert: {
             type: 'error',
-            message: 'There was an error resetting your password. Please try again.',
+            message: userFacingMessage,
+            error_type: userFacingError,
           },
           query: request.payload,
           requestUrl,
@@ -471,10 +579,13 @@ module.exports = {
     }
 
     return reply.view('message', {
-      alert: { type: 'error', message: 'There was an error resetting your password.' },
+      title: 'Password reset',
+      alert: {
+        type: 'error',
+        message: 'There was an error resetting your password.',
+        error_type: 'PW-RESET-GENERAL',
+      },
       query: request.payload,
-      isSuccess: false,
-      title: 'Password update',
     });
   },
 
@@ -769,7 +880,6 @@ module.exports = {
         user,
         confirmEmail.email,
         confirmEmail._id.toString(),
-        _buildRequestUrl(request, 'verify2'),
       ).then(() => {
         cookie.alert.message += '<p>The confirmation email will arrive in your inbox shortly.</p>';
       }).catch(() => {
@@ -784,7 +894,6 @@ module.exports = {
       await UserController.addEmail({}, {
         userId: cookie.userId,
         email: request.payload.email_new,
-        appValidationUrl: _buildRequestUrl(request, 'verify2'),
       }).then(() => {
         cookie.alert.message += `<p>A confirmation email has been sent to ${request.payload.email_new}.</p>`;
       }).catch((err) => {
@@ -1406,9 +1515,8 @@ module.exports = {
 
         // Display confirmation of deletion.
         return reply.view('message', {
+          title: 'Account deleted',
           alert,
-          isSuccess: false,
-          title: 'Account Deleted',
         });
       }
 

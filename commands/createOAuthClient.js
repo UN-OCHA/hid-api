@@ -17,15 +17,18 @@ mongoose.connect(store.uri, store.options);
 const Client = require('../api/models/Client');
 
 // Generate a random secret each time we run the command
-const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+const idChars = 'abcdefghijklmnopqrstuvwxyz';
+const secretChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+let suffix = '';
 let secret = '';
 for (let i = 0; i < 36; i++) {
-  secret += chars.charAt(Math.floor(Math.random() * chars.length));
+  suffix += idChars.charAt(Math.floor(Math.random() * idChars.length));
+  secret += secretChars.charAt(Math.floor(Math.random() * secretChars.length));
 }
 
 async function run() {
   const clientInfo = {
-    id: 'change-me',
+    id: `change-me-${suffix.substring(0, 6)}`,
     name: 'CHANGE ME',
     secret,
     url: 'https://example.com/',

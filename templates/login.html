@@ -4,12 +4,10 @@
 
 <main role="main" id="main-content" class="cd-container page--login">
   <div class="cd-layout-content">
+    <% include alert.html %>
     <div class="cd-grid cd-grid--2-col">
       <div class="cd-grid__col">
         <h1 class="cd-page-title page-header__heading">Log in</h1>
-
-        <% include alert.html %>
-
         <form method="post" action="/login" class="[ flow ] t-form-login">
           <div class="form-field">
             <label for="email" translate>Email</label>

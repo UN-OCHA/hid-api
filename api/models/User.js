@@ -2,6 +2,7 @@
 * @module User
 * @description User
 */
+
 const mongoose = require('mongoose');
 const Bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -370,10 +371,6 @@ UserSchema.methods = {
     }
   },
 
-  getAppUrl() {
-    return `${process.env.APP_URL}/users/${this._id}`;
-  },
-
   sanitizeClients() {
     if (this.authorizedClients && this.authorizedClients.length) {
       const sanitized = [];
@@ -397,51 +394,72 @@ UserSchema.methods = {
     return Bcrypt.compareSync(password, this.password);
   },
 
-  generateHash(type, email) {
-    if (type === 'reset_password') {
-      const now = Date.now();
-      const value = `${now}:${this._id.toString()}:${this.password}`;
-      const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
-      return {
-        timestamp: now,
-        hash,
-      };
-    }
-    if (type === 'verify_email') {
-      const now = Date.now();
-      const value = `${now}:${this._id.toString()}:${email}`;
-      const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
-      return {
-        timestamp: now,
-        hash,
-      };
-    }
+  generateHashPassword(emailId) {
+    const now = Date.now();
+    const value = `${now}:${this.id}:${this.password}:${emailId}`;
+    const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+
+    return {
+      timestamp: now,
+      hash,
+    };
+  },
+
+  generateHashEmail(email) {
+    const now = Date.now();
+    const value = `${now}:${this.id}:${email}`;
+    const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+
+    return {
+      timestamp: now,
+      hash,
+    };
+  },
+
+  generateHash() {
     const buffer = crypto.randomBytes(256);
     const now = Date.now();
     const hash = buffer.toString('hex').slice(0, 15);
     return Buffer.from(`${now}/${hash}`).toString('base64');
   },
 
-  // Validate the hash of a confirmation link
-  validHash(hashLink, type, time, email) {
-    if (type === 'reset_password') {
-      const now = Date.now();
-      if (now - time > 24 * 3600 * 1000) {
-        return false;
-      }
-      const value = `${time}:${this._id.toString()}:${this.password}`;
-      const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
-      return hash === hashLink;
+  // Validate the hash of a password reset link
+  validHashPassword(hashLink, time, emailId) {
+    // Confirm that 24 hours haven't passed.
+    const now = Date.now();
+    if (now - time > 24 * 3600 * 1000) {
+      return false;
     }
-    if (type === 'verify_email') {
-      const now = Date.now();
-      if (now - time > 24 * 3600 * 1000) {
-        return false;
-      }
-      const value = `${time}:${this._id.toString()}:${email}`;
-      const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
-      return hash === hashLink;
+
+    // See @HID-2219
+    const valueLegacy = `${time}:${this.id}:${this.password}`;
+    const hashLegacy = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(valueLegacy).digest('hex');
+
+    // Create email-enabled hash
+    const value = `${time}:${this.id}:${this.password}:${emailId}`;
+    const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+
+    // Temporarily compare either legacy or new hash. Only one has to match.
+    // @see HID-2219
+    return hash === hashLink || hashLegacy === hashLink;
+  },
+
+  // Validate hash of an email confirmation link.
+  validHashEmail(hashLink, time, email) {
+    // Confirm that 24 hours haven't passed.
+    const now = Date.now();
+    if (now - time > 24 * 3600 * 1000) {
+      return false;
     }
+
+    // Create and compare hash
+    const value = `${time}:${this.id}:${email}`;
+    const hash = crypto.createHmac('sha256', process.env.COOKIE_PASSWORD).update(value).digest('hex');
+    return hash === hashLink;
+  },
+
+  // Validate a generic hash.
+  validHash(hashLink) {
     const key = Buffer.from(hashLink, 'base64').toString('ascii');
     const parts = key.split('/');
     const timestamp = parts[0];
@@ -455,10 +473,32 @@ UserSchema.methods = {
     return true;
   },
 
+  /**
+   * Returns the array index of the email you want, using the email address.
+   *
+   * @param {string} An email address
+   * @returns {number} The index of the emails array, or -1 when not found.
+   */
   emailIndex(email) {
     let index = -1;
-    for (let i = 0, len = this.emails.length; i < len; i += 1) {
+    for (let i = 0, len = this.emails.length; i < len; i++) {
       if (this.emails[i].email === email) {
+        index = i;
+      }
+    }
+    return index;
+  },
+
+  /**
+   * Returns the array index of the email you want, using the email's ID.
+   *
+   * @param {string} The ObjectId of the email
+   * @returns {number} The index of the emails array, or -1 when not found.
+   */
+  emailIndexFromId(emailId) {
+    let index = -1;
+    for (let i = 0, len = this.emails.length; i < len; i++) {
+      if (this.emails[i]._id.toString() === emailId) {
         index = i;
       }
     }

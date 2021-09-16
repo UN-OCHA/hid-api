@@ -1,3 +1,8 @@
+/**
+* @module HelperService
+* @description General Helper Service
+*/
+
 const crypto = require('crypto');
 const _ = require('lodash');
 const { allowedDomains } = require('../../config/env');
@@ -9,11 +14,6 @@ const queryOptions = [
   'sort',
   'fields',
 ];
-
-/**
-* @module HelperService
-* @description General Helper Service
-*/
 
 function getSchemaAttributes(modelName, variableName, attributeName) {
   const output = [];
@@ -136,7 +136,6 @@ module.exports = {
   },
 
   saveTOTPDevice(request, auser) {
-    // this.app.log.debug('Saving device as trusted');
     const user = auser;
     const random = user.generateHash();
     const tindex = user.trustedDeviceIndex(request.headers['user-agent']);

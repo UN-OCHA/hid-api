@@ -1,6 +1,6 @@
 {
   "name": "hid-api",
-  "version": "4.0.0-rc1",
+  "version": "4.0.0",
   "description": "Humanitarian ID API+Auth",
   "homepage": "https://about.humanitarian.id",
   "repository": "https://github.com/UN-OCHA/hid_api.git",
@@ -32,7 +32,7 @@
     "accept-language": "^3.0.15",
     "async": "^2.1.2",
     "authenticator": "^1.1.2",
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "bcryptjs": "^2.3.0",
     "blankie": "^5.0.0",
     "ejs": "^2.5.2",

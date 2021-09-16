@@ -427,7 +427,7 @@ module.exports = {
 
       let alertMessage = 'We could not log you in. The username or password you have entered are incorrect. Kindly try again.';
       if (err.message === 'password is expired') {
-        alertMessage = 'We could not log you in because your password is expired. Following UN regulations, as a security measure passwords must be udpated every six months. Kindly reset your password by clicking on the "Forgot/Reset password" link below.';
+        alertMessage = 'We could not log you in because your password is expired. Following UN regulations, as a security measure passwords must be updated every six months. Kindly reset your password by clicking on the "Forgot/Reset password" link below.';
       }
 
       // Display login form to user.
@@ -671,7 +671,6 @@ module.exports = {
             ${linktoPartnerSite || ''}
           `,
         },
-        isSuccess: false,
       });
     }
   },
@@ -972,7 +971,7 @@ module.exports = {
    * want more info about the user, use the dedicated API method:
    *
    * @see /api/v3/user/{id}
-   * @see UserController.find()
+   * @see UserController.findOne()
    */
   showAccount(request) {
     // Full user object from DB.

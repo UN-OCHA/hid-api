@@ -55,15 +55,6 @@ module.exports = [
   {
     method: 'GET',
     path: '/verify',
-    handler: ViewController.newPassword,
-    options: {
-      auth: false,
-    },
-  },
-
-  {
-    method: 'GET',
-    path: '/verify2',
     handler: ViewController.verify,
     options: {
       auth: false,
@@ -105,10 +96,26 @@ module.exports = [
       auth: false,
     },
   },
+  {
+    method: 'GET',
+    path: '/new-password',
+    handler: ViewController.newPassword,
+    options: {
+      auth: false,
+    },
+  },
 
   {
     method: 'POST',
     path: '/new_password',
+    handler: ViewController.newPasswordPost,
+    options: {
+      auth: false,
+    },
+  },
+  {
+    method: 'POST',
+    path: '/new-password',
     handler: ViewController.newPasswordPost,
     options: {
       auth: false,
@@ -327,7 +334,12 @@ module.exports = [
   {
     method: ['GET', 'POST'],
     path: '/account.json',
-    handler: AuthController.showAccount,
+    options: {
+      pre: [
+        AuthPolicy.isUser,
+      ],
+      handler: AuthController.showAccount,
+    },
   },
 
   {
@@ -361,8 +373,19 @@ module.exports = [
 
   {
     method: 'GET',
-    path: '/api/v3/user/{id?}',
+    path: '/api/v3/user',
     handler: UserController.find,
+    options: {
+      pre: [
+        UserPolicy.canFind,
+      ],
+    },
+  },
+
+  {
+    method: 'GET',
+    path: '/api/v3/user/{id}',
+    handler: UserController.findOne,
     options: {
       pre: [
         UserPolicy.canFind,
@@ -408,9 +431,17 @@ module.exports = [
   },
 
   {
-    method: 'PUT',
+    method: 'POST',
+    path: '/api/v3/user/password-email',
+    handler: UserController.resetPasswordEmail,
+    options: {
+      auth: false,
+    },
+  },
+  {
+    method: 'POST',
     path: '/api/v3/user/password',
-    handler: UserController.resetPasswordEndpoint,
+    handler: UserController.resetPassword,
     options: {
       auth: false,
     },
@@ -466,9 +497,17 @@ module.exports = [
   },
 
   {
-    method: 'PUT',
-    path: '/api/v3/user/emails/{email?}',
-    handler: UserController.validateEmail,
+    method: 'POST',
+    path: '/api/v3/user/emails/{email}',
+    handler: UserController.sendValidationEmail,
+    options: {
+      auth: false,
+    },
+  },
+  {
+    method: 'POST',
+    path: '/api/v3/user/emails/validate',
+    handler: UserController.validateEmailAddress,
     options: {
       auth: false,
     },
