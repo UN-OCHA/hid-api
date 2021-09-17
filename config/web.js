@@ -90,13 +90,15 @@ module.exports = {
     {
       plugin: yar,
       options: {
-        // Adopt our server-side cache defined in top-level `options`
         cache: {
+          // Adopt our server-side cache defined in top-level `options`.
           cache: 'session',
-          expiresIn: 4 * 60 * 60 * 1000, // 4-hour sessions
+
+          // 1-week sessions
+          expiresIn: 7 * 24 * 60 * 60 * 1000,
         },
 
-        // Force use of backend storage
+        // Force use of backend storage.
         maxCookieSize: 0,
 
         // Configure how cookies behave in browsers.
