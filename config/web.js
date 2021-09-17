@@ -5,6 +5,7 @@ const inert = require('@hapi/inert');
 const ejs = require('ejs');
 const vision = require('@hapi/vision');
 const yar = require('@hapi/yar');
+const CatboxRedis = require('@hapi/catbox-redis');
 const crumb = require('@hapi/crumb');
 const Scooter = require('@hapi/scooter');
 const Blankie = require('blankie');
@@ -15,7 +16,6 @@ const hapiAuthHid = require('../plugins/hapi-auth-hid');
 const Client = require('../api/models/Client');
 const OauthToken = require('../api/models/OauthToken');
 const JwtService = require('../api/services/JwtService');
-const CatboxRedis = require('@hapi/catbox-redis');
 
 module.exports = {
   /**
@@ -68,7 +68,7 @@ module.exports = {
         provider: {
           constructor: CatboxRedis,
           options: {
-            partition : 'session',
+            partition: 'session',
             host: process.env.REDIS_HOST || 'redis',
             port: process.env.REDIS_PORT || 6379,
             db: process.env.REDIS_DB || '0',
