@@ -269,7 +269,13 @@ module.exports = {
     // Grab cookie
     const cookie = request.yar.get('session');
 
-    // It looks like TOTP is needed for this user.
+    // If the user has a User ID set, and passed the optional 2FA challenge,
+    // they can be redirected immediately.
+    if (cookie && cookie.userId && cookie.totp === true) {
+      return loginRedirect(request, reply);
+    }
+
+    // The User ID is set, but it looks like 2FA is required.
     if (cookie && cookie.userId && cookie.totp === false) {
       try {
         // Prevent form spamming by counting submissions and locking accounts
@@ -362,11 +368,6 @@ module.exports = {
           alert,
         });
       }
-    }
-
-    // If the user has submitted the TOTP prompt, redirect.
-    if (cookie && cookie.userId && cookie.totp === true) {
-      return loginRedirect(request, reply);
     }
 
     try {
