@@ -1005,26 +1005,6 @@ module.exports = {
       },
     );
 
-    // Special cases for legacy compat.
-    //
-    // @TODO: in testing this, it seems that the `currentClient` param is not
-    //        present when this function runs. Investigate whether we need these
-    //        special cases at all.
-    //
-    //        @see https://humanitarian.atlassian.net/browse/HID-2192
-    if (request.params.currentClient && (request.params.currentClient.id === 'iasc-prod' || request.params.currentClient.id === 'iasc-dev')) {
-      output.sub = user.email;
-    }
-    if (request.params.currentClient && request.params.currentClient.id === 'kaya-prod') {
-      output.name = user.name.replace(' ', '');
-    }
-    if (request.params.currentClient
-      && (request.params.currentClient.id === 'rc-shelter-database'
-        || request.params.currentClient.id === 'rc-shelter-db-2-prod'
-        || request.params.currentClient.id === 'deep-prod')) {
-      output.active = !user.deleted;
-    }
-
     // Send response
     return output;
   },
