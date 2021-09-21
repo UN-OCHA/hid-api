@@ -16,7 +16,6 @@ const store = app.config.env.database.store;
 mongoose.connect(store.uri, store.options);
 
 async function run() {
-
   // Attempt to create new OAuth client and log the result.
   await Iron.unseal(args.cookie, process.env.COOKIE_PASSWORD, Iron.defaults).then((data) => {
     console.log('🍪', data);
