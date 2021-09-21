@@ -38,7 +38,7 @@ module.exports = {
   async adminOauthClients(request, reply) {
     // Load user cookie. Redirect to homepage when no cookie found.
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
       logger.info(
         '[AdminController->adminOauthClients] User did not have a valid session. Redirecting to login.',
         {
@@ -123,7 +123,7 @@ module.exports = {
   async adminOauthClientEdit(request, reply) {
     // Load user cookie. Redirect to homepage when no cookie found.
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
       return reply.redirect('/');
     }
 
@@ -217,7 +217,7 @@ module.exports = {
   async adminOauthClientEditSubmit(request, reply) {
     // Load user cookie. Redirect to homepage when no cookie found.
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
       return reply.redirect('/');
     }
 
