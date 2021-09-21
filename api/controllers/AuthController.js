@@ -1000,7 +1000,7 @@ module.exports = {
           admin: user.is_admin,
         },
         oauth: {
-          client_id: client.id,
+          client_id: client && client.id,
         },
       },
     );
