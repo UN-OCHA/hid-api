@@ -3,6 +3,7 @@
  * @description Controller for Authentication, both into HID and OAuth sites.
  */
 const Boom = require('@hapi/boom');
+const Hoek = require('@hapi/hoek');
 const Client = require('../models/Client');
 const Flood = require('../models/Flood');
 const JwtToken = require('../models/JwtToken');
@@ -975,7 +976,8 @@ module.exports = {
    */
   showAccount(request) {
     // Full user object from DB.
-    const user = JSON.parse(JSON.stringify(request.auth.credentials));
+    const user = Hoek.clone(request.auth.credentials);
+    const client = Hoek.clone(request.auth.artifacts);
 
     // This will be what we send back as a response.
     const output = {
@@ -989,16 +991,16 @@ module.exports = {
 
     // Log the request
     logger.info(
-      `[AuthController->showAccount] calling /account.json for ${request.auth.credentials.email}`,
+      `[AuthController->showAccount] calling /account.json for ${user.email}`,
       {
         request,
         user: {
-          id: request.auth.credentials.id,
-          email: request.auth.credentials.email,
-          admin: request.auth.credentials.is_admin,
+          id: user.id,
+          email: user.email,
+          admin: user.is_admin,
         },
         oauth: {
-          client_id: request.params.currentClient && request.params.currentClient.id,
+          client_id: client.id,
         },
       },
     );
