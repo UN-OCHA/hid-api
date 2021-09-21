@@ -648,7 +648,7 @@ module.exports = {
   async user(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
       logger.info(
         '[ViewController->user] User had no session. Redirecting to login.',
         {
@@ -693,7 +693,7 @@ module.exports = {
   async profile(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
       logger.info(
         '[ViewController->profile] User had no session. Redirecting to login.',
         {
@@ -726,7 +726,7 @@ module.exports = {
   async profileEdit(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
       logger.info(
         '[ViewController->profileEdit] User had no session. Redirecting to login.',
         {
@@ -760,7 +760,7 @@ module.exports = {
   async profileEditSubmit(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
       logger.info(
         '[ViewController->profileEditSubmit] User had no session. Redirecting to login.',
         {
@@ -861,7 +861,7 @@ module.exports = {
   async profileEmailsSubmit(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
       logger.info(
         '[ViewController->profileEmailsSubmit] User had no session. Redirecting to login.',
         {
@@ -1030,7 +1030,7 @@ module.exports = {
   async settings(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
       logger.info(
         '[ViewController->settings] User had no session. Redirecting to login.',
         {
@@ -1064,7 +1064,7 @@ module.exports = {
   async settingsOauthSubmit(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
       logger.info(
         '[ViewController->settingsOauthSubmit] User had no session. Redirecting to login.',
         {
@@ -1141,7 +1141,7 @@ module.exports = {
   async settingsPassword(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
       logger.info(
         '[ViewController->settingsPassword] User had no session. Redirecting to login.',
         {
@@ -1188,7 +1188,7 @@ module.exports = {
   async settingsPasswordSubmit(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
       logger.info(
         '[ViewController->settingsPasswordSubmit] User had no session. Redirecting to login.',
         {
@@ -1306,7 +1306,7 @@ module.exports = {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
 
-    if (!cookie || !cookie.userId) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
       logger.info(
         '[ViewController->settingsSecurity] User had no session. Redirecting to login.',
         {
@@ -1375,7 +1375,7 @@ module.exports = {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
 
-    if (!cookie || !cookie.userId) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
       logger.info(
         '[ViewController->settingsSecuritySubmit] User had no session. Redirecting to login.',
         {
@@ -1527,7 +1527,7 @@ module.exports = {
   async settingsDelete(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
       logger.info(
         '[ViewController->settingsDelete] User had no session. Redirecting to login.',
         {
@@ -1571,7 +1571,7 @@ module.exports = {
     try {
       // If the user is not authenticated, redirect to the login page
       const cookie = request.yar.get('session');
-      if (!cookie || !cookie.userId) {
+      if (!cookie || !cookie.userId || !cookie.totp) {
         logger.info(
           '[ViewController->settingsDeleteSubmit] User had no session. Redirecting to login.',
           {
