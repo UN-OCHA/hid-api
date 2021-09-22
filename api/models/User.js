@@ -4,11 +4,12 @@
 * @description User
 */
 
+const Hoek = require('@hapi/hoek');
 const mongoose = require('mongoose');
+const validate = require('mongoose-validator');
 const Bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const isHTML = require('is-html');
-const validate = require('mongoose-validator');
 
 const { Schema } = mongoose;
 const populateClients = [
@@ -138,6 +139,12 @@ const UserSchema = new Schema({
   },
   password: {
     type: String,
+  },
+  // When a password gets updated, we store up to 5 old password hashes to meet
+  // UN-OICT requirements. The user may not re-use a password until four others
+  // have been set.
+  oldPasswords: {
+    type: Array,
   },
   // Last time the user reset his password
   lastPasswordReset: {
@@ -387,11 +394,60 @@ UserSchema.methods = {
     }
   },
 
-  validPassword(password) {
+  /**
+   * Compares a string to current password hash.
+   *
+   * @return {boolean}
+   */
+  validPassword(passwordToCompare) {
+    // If no password is set, we do not want to return a false positive, so we
+    // preemptively return false.
     if (!this.password) {
       return false;
     }
-    return Bcrypt.compareSync(password, this.password);
+
+    // Compare to current password.
+    return Bcrypt.compareSync(passwordToCompare, this.password);
+  },
+
+  /**
+   * Compares a string to historical/current password hashes.
+   *
+   * @return {boolean}
+   */
+  isHistoricalPassword(passwordToCompare) {
+    // If no password is set, we do not want to return a false positive, so we
+    // preemptively return false.
+    if (!this.password) {
+      return false;
+    }
+
+    // Compare to historical password hashes.
+    //
+    // `map` compares each stored hash to the new password.
+    // `some` returns TRUE if it finds any TRUE value in the array.
+    const oldPasswords = Hoek.clone(this.oldPasswords);
+    const hasHistoricalMatches = oldPasswords
+      .map(old => Bcrypt.compareSync(passwordToCompare, old))
+      .some(isTrue => isTrue);
+
+    // If historical matches are found return true, or compare to the current
+    // password hash.
+    return hasHistoricalMatches || Bcrypt.compareSync(passwordToCompare, this.password);
+  },
+
+  /**
+   * Copies the current password hash to the oldPasswords array.
+   */
+  storePasswordInHistory() {
+    // Store the current password hash in the oldPasswords array.
+    const oldPasswords = this.oldPasswords || [];
+    oldPasswords.push(this.password);
+
+    // Do not keep more than five old hashes.
+    while (oldPasswords.length > 5) {
+      oldPasswords.shift();
+    }
   },
 
   generateHashPassword(emailId) {
@@ -629,15 +685,23 @@ UserSchema.methods = {
   toJSON() {
     const user = this.toObject();
     delete user.password;
+
+    if (user.oldPasswords) {
+      delete user.oldPasswords;
+    }
+
     if (user.totpConf) {
       delete user.totpConf;
     }
+
     if (user.totpTrusted) {
       for (let i = 0; i < user.totpTrusted.length; i += 1) {
         delete user.totpTrusted[i].secret;
       }
     }
+
     user.sub = user._id.toString();
+
     return user;
   },
 };

@@ -573,7 +573,7 @@ module.exports = {
     }
 
     // Look up user in DB.
-    const user = await User.findOne({ _id: userId });
+    const user = await User.findById(userId);
 
     // Was the user parameter supplied?
     if (!user) {
@@ -600,7 +600,7 @@ module.exports = {
       throw Boom.badRequest('Request is missing parameters (old_password or new_password)');
     }
 
-    // Business logic: is the new password strong enough?
+    // Is the new password strong enough?
     if (!User.isStrongPassword(newPassword)) {
       logger.warn(
         `[UserController->updatePassword] Could not update user password for user ${userId}. New password is not strong enough.`,
@@ -613,33 +613,8 @@ module.exports = {
       throw Boom.badRequest('New password does not meet requirements');
     }
 
-    // Was the current password entered correctly?
-    if (user.validPassword(oldPassword)) {
-      // Business logic: is the new password different than the old one?
-      if (oldPassword === newPassword) {
-        logger.warn(
-          `[UserController->updatePassword] Could not update user password for user ${userId}. New password is the same as old password.`,
-          {
-            request,
-            security: true,
-            fail: true,
-          },
-        );
-        throw Boom.badRequest('New password must be different than previous password');
-      }
-
-      // Proceed with password update.
-      user.password = User.hashPassword(newPassword);
-      user.lastModified = new Date();
-      await user.save();
-      logger.info(
-        `[UserController->updatePassword] Successfully updated password for user ${userId}`,
-        {
-          request,
-          security: true,
-        },
-      );
-    } else {
+    // Does the old password match our hash?
+    if (!user.validPassword(oldPassword)) {
       logger.warn(
         `[UserController->updatePassword] Could not update password for user ${userId}. Old password is wrong.`,
         {
@@ -650,6 +625,44 @@ module.exports = {
       );
       throw Boom.badRequest('The old password is wrong');
     }
+
+    // Does the new password match any historical hashes?
+    if (user.isHistoricalPassword(newPassword)) {
+      // Business logic: is the new password different than the old one?
+      logger.warn(
+        `[UserController->updatePassword] Could not update user password for user ${userId}. New password is the same as old password.`,
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('New password must be different than previous passwords');
+    }
+
+    // Update PW history, store new password hash, save user.
+    user.storePasswordInHistory();
+    user.password = User.hashPassword(newPassword);
+    user.lastModified = new Date();
+    await user.save().catch((err) => {
+      logger.error(
+        `[UserController->updatePassword] ${err.message}`,
+        {
+          request,
+          security: true,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+    });
+
+    logger.info(
+      `[UserController->updatePassword] Successfully updated password for user ${userId}`,
+      {
+        request,
+        security: true,
+      },
+    );
 
     return reply.response().code(204);
   },
