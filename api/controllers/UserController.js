@@ -1485,9 +1485,9 @@ module.exports = {
 
     // Compare new password to the old one. If our comparison is TRUE, then the
     // reset attempt should be rejected, since the passwords are the same.
-    if (user.validPassword(request.payload.password)) {
+    if (user.isHistoricalPassword(request.payload.password)) {
       logger.warn(
-        '[UserController->resetPassword] Could not reset password. The new password can not be the same as the old one.',
+        '[UserController->resetPassword] Could not reset password. New password must be different than previous passwords.',
         {
           request,
           security: true,
