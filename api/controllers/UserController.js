@@ -1518,7 +1518,8 @@ module.exports = {
       throw Boom.badRequest('The password and password-confirmation fields did not match.');
     }
 
-    // Success! We are resetting the password
+    // Success! We will reset both the password and other PW-related metadata.
+    user.storePasswordInHistory();
     user.password = User.hashPassword(request.payload.password);
 
     // Determine which email received the password reset from the ID, or use the
