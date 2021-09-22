@@ -1,3 +1,4 @@
+/* eslint prefer-arrow-callback: "off", func-names: "off" */
 /**
 * @module User
 * @description User
@@ -281,7 +282,6 @@ const UserSchema = new Schema({
 // Index name with collation en_US
 UserSchema.index({ name: 1 }, { collation: { locale: 'en_US' } });
 
-/* eslint prefer-arrow-callback: "off", func-names: "off" */
 UserSchema.virtual('sub').get(function () {
   return this._id;
 });
