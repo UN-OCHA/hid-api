@@ -1566,6 +1566,9 @@ module.exports = {
     return reply.response().code(204);
   },
 
+  // HID Contacts notification-related method.
+  //
+  // TODO: remove
   async notify(request) {
     const record = await User.findOne({ _id: request.params.id });
     if (!record) {
