@@ -1493,7 +1493,7 @@ module.exports = {
           security: true,
           fail: true,
           user: {
-            id: request.payload.id,
+            id: user.id,
             email: user.email,
           },
         },
@@ -1510,7 +1510,7 @@ module.exports = {
           security: true,
           fail: true,
           user: {
-            id: request.payload.id,
+            id: user.id,
             email: user.email,
           },
         },
