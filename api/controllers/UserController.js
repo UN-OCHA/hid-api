@@ -1408,7 +1408,7 @@ module.exports = {
     }
 
     // Look up user by ID.
-    let user = await User.findOne({ _id: request.payload.id }).catch((err) => {
+    let user = await User.findById(request.payload.id).catch((err) => {
       logger.error(
         `[UserController->resetPassword] ${err.message}`,
         {
