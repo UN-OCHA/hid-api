@@ -1521,28 +1521,6 @@ module.exports = {
     // Success! We will reset both the password and other PW-related metadata.
     user.storePasswordInHistory();
     user.password = User.hashPassword(request.payload.password);
-
-    // Determine which email received the password reset from the ID, or use the
-    // primary as the default. Not using UserController.validateEmailAddress()
-    // because it has a different hash link structure than the link that the
-    // user clicked to arrive here. Our validation thus far is sufficient to
-    // prove ownership of the address.
-    //
-    // To be simplified after a safe window has passed following the deploy.
-    //
-    // @see HID-2219
-    let emailToVerify;
-    if (request.payload.emailId !== '') {
-      const emailIndexFromId = user.emailIndexFromId(request.payload.emailId);
-      emailToVerify = user.emails[emailIndexFromId].email;
-    } else {
-      emailToVerify = user.email;
-    }
-
-    // Mark the email address which received the password reset as verified.
-    user.verifyEmail(emailToVerify);
-
-    // Modify the user metadata now that password was reset.
     user.expires = new Date(0, 0, 1, 0, 0, 0);
     user.lastPasswordReset = new Date();
     user.passwordResetAlert30days = false;
@@ -1564,6 +1542,26 @@ module.exports = {
         },
       );
     });
+
+    // Determine which email received the password reset from the ID, or use the
+    // primary as the default. Not using UserController.validateEmailAddress()
+    // because it has a different hash link structure than the link that the
+    // user clicked to arrive here. Our validation thus far is sufficient to
+    // prove ownership of the address.
+    //
+    // To be simplified after a safe window has passed following the deploy.
+    //
+    // @see HID-2219
+    let emailToVerify;
+    if (request.payload.emailId !== '') {
+      const emailIndexFromId = user.emailIndexFromId(request.payload.emailId);
+      emailToVerify = user.emails[emailIndexFromId].email;
+    } else {
+      emailToVerify = user.email;
+    }
+
+    // Mark the email address which received the password reset as verified.
+    user.verifyEmail(emailToVerify);
 
     return reply.response().code(204);
   },
