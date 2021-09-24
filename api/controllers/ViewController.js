@@ -3,6 +3,7 @@
  * @description Controller for pages that visitors see.
  */
 const Boom = require('@hapi/boom');
+const Hoek = require('@hapi/hoek');
 const Recaptcha = require('recaptcha2');
 const Client = require('../models/Client');
 const User = require('../models/User');
@@ -72,13 +73,27 @@ module.exports = {
         redirect += `?client_id=${request.query.client_id}`;
         redirect += `&redirect_uri=${request.query.redirect_uri}`;
         redirect += `&response_type=${request.query.response_type}`;
+        redirect += `&scope=${request.query.scope}`;
         if (request.query.state) {
           redirect += `&state=${request.query.state}`;
         }
-        redirect += `&scope=${request.query.scope}`;
+
+        logger.info(
+          '[ViewController->login] User has a session. Redirecting to OAuth screen.',
+          {
+            request,
+          },
+        );
 
         return reply.redirect(redirect);
       }
+
+      logger.info(
+        '[ViewController->login] User has a session. Redirecting to dashboard.',
+        {
+          request,
+        },
+      );
 
       // It seems like the user navigated to HID themselves and is just logging
       // in by their own choice. Show user dashboard.
@@ -87,6 +102,13 @@ module.exports = {
 
     // User is logged in, but TOTP challenge is not answered yet.
     if (cookie && cookie.userId && cookie.totp === false) {
+      logger.info(
+        '[ViewController->login] Displaying TOTP prompt.',
+        {
+          request,
+        },
+      );
+
       // Show TOTP form
       return reply.view('totp', {
         title: 'Enter your Authentication code',
@@ -109,16 +131,29 @@ module.exports = {
 
     // Remove alert from cookie now that it's been queued to display.
     if (cookie) {
-      cookie.alert = false;
+      delete cookie.alert;
       request.yar.set(cookie);
     }
+
+    logger.info(
+      '[ViewController->login] Displaying login page.',
+      {
+        request,
+      },
+    );
 
     // Display login page.
     return reply.view('login', loginArgs);
   },
 
   async logout(request, reply) {
+    // Temporarily store user session for logging purposes.
+    const oldCookie = Hoek.clone(request.yar.get('session'));
+
+    // Destroy user session.
     request.yar.reset();
+
+    // Determine whether to redirect the user elsewhere besides HID homepage.
     if (request.query.redirect) {
       // Validate redirect URL
       const url = request.query.redirect;
@@ -137,13 +172,23 @@ module.exports = {
       try {
         const count = await Client.countDocuments({ redirectUri: regex });
         if (count > 0) {
+          logger.info(
+            `[ViewController->logout] Logging user out and redirecting to destination: ${url}`,
+            {
+              request,
+              user: {
+                id: oldCookie && oldCookie.userId,
+              },
+            },
+          );
+
           return reply.redirect(request.query.redirect);
         }
         logger.warn(`Redirecting to ${request.query.redirect} is not allowed`, { security: true, fail: true, request });
         return reply.redirect('/');
       } catch (err) {
         logger.error(
-          'Error logging user out',
+          '[ViewController->logout] Error logging user out.',
           {
             request,
             security: true,
@@ -155,9 +200,19 @@ module.exports = {
         );
         return reply.redirect('/');
       }
-    } else {
-      return reply.redirect('/');
     }
+
+    logger.info(
+      '[ViewController->logout] Logging user out.',
+      {
+        request,
+        user: {
+          id: oldCookie && oldCookie.userId,
+        },
+      },
+    );
+
+    return reply.redirect('/');
   },
 
   register(request, reply) {
@@ -593,10 +648,42 @@ module.exports = {
   async user(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
+      logger.info(
+        '[ViewController->user] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
-    const user = await User.findOne({ _id: cookie.userId });
+
+    const user = await User.findById(cookie.userId).catch((err) => {
+      logger.warn(
+        '[ViewController->user] Could not find user ID in DB.',
+        {
+          request,
+          fail: true,
+          user: {
+            id: cookie.userId,
+          },
+          stack_trace: err.stack,
+        },
+      );
+    });
+
+    logger.info(
+      '[ViewController->user] Showing user dashboard.',
+      {
+        request,
+        user: {
+          id: user.id,
+          email: user.email,
+          admin: user.is_admin,
+        },
+      },
+    );
+
     return reply.view('user', {
       user,
     });
@@ -606,7 +693,13 @@ module.exports = {
   async profile(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
+      logger.info(
+        '[ViewController->profile] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -633,7 +726,13 @@ module.exports = {
   async profileEdit(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
+      logger.info(
+        '[ViewController->profileEdit] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -661,7 +760,13 @@ module.exports = {
   async profileEditSubmit(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
+      logger.info(
+        '[ViewController->profileEditSubmit] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -756,7 +861,13 @@ module.exports = {
   async profileEmailsSubmit(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
+      logger.info(
+        '[ViewController->profileEmailsSubmit] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -919,7 +1030,13 @@ module.exports = {
   async settings(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
+      logger.info(
+        '[ViewController->settings] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -947,7 +1064,13 @@ module.exports = {
   async settingsOauthSubmit(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
+      logger.info(
+        '[ViewController->settingsOauthSubmit] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -1018,7 +1141,13 @@ module.exports = {
   async settingsPassword(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
+      logger.info(
+        '[ViewController->settingsPassword] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -1059,7 +1188,13 @@ module.exports = {
   async settingsPasswordSubmit(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
+      logger.info(
+        '[ViewController->settingsPasswordSubmit] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -1170,7 +1305,14 @@ module.exports = {
   async settingsSecurity(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+
+    if (!cookie || !cookie.userId || !cookie.totp) {
+      logger.info(
+        '[ViewController->settingsSecurity] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -1182,7 +1324,6 @@ module.exports = {
     if (cookie.alert) {
       alert = cookie.alert;
       delete cookie.alert;
-      request.yar.set('session', cookie);
     }
 
     // Check if we need TOTP Prompt.
@@ -1190,7 +1331,6 @@ module.exports = {
     if (cookie.totpPrompt) {
       totpPrompt = true;
       delete cookie.totpPrompt;
-      request.yar.set('session', cookie);
     }
 
     // Check which step of 2FA process we're on
@@ -1198,7 +1338,6 @@ module.exports = {
     if (cookie.step) {
       step = cookie.step;
       delete cookie.step;
-      request.yar.set('session', cookie);
     }
 
     // See if we have formData to send
@@ -1206,8 +1345,10 @@ module.exports = {
     if (cookie.formData) {
       formData = cookie.formData;
       delete cookie.formData;
-      request.yar.set('session', cookie);
     }
+
+    // Finalize cookie data
+    request.yar.set('session', cookie);
 
     // Status is a user-facing label
     const status = user.totp ? 'enabled' : 'disabled';
@@ -1233,7 +1374,14 @@ module.exports = {
   async settingsSecuritySubmit(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+
+    if (!cookie || !cookie.userId || !cookie.totp) {
+      logger.info(
+        '[ViewController->settingsSecuritySubmit] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -1379,7 +1527,13 @@ module.exports = {
   async settingsDelete(request, reply) {
     // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+    if (!cookie || !cookie.userId || !cookie.totp) {
+      logger.info(
+        '[ViewController->settingsDelete] User had no session. Redirecting to login.',
+        {
+          request,
+        },
+      );
       return reply.redirect('/');
     }
 
@@ -1417,7 +1571,13 @@ module.exports = {
     try {
       // If the user is not authenticated, redirect to the login page
       const cookie = request.yar.get('session');
-      if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp)) {
+      if (!cookie || !cookie.userId || !cookie.totp) {
+        logger.info(
+          '[ViewController->settingsDeleteSubmit] User had no session. Redirecting to login.',
+          {
+            request,
+          },
+        );
         return reply.redirect('/');
       }
 

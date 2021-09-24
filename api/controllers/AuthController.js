@@ -471,6 +471,7 @@ module.exports = {
     try {
       const oauth = request.server.plugins['hapi-oauth2orize'];
       const prompt = request.query.prompt ? request.query.prompt : '';
+      const redirectUrl = `${request.query.redirect_uri}?state=${request.query.state}&scope=${request.query.scope}&nonce=${request.query.nonce}`;
 
       // Check response_type
       if (!request.query.response_type) {
@@ -486,13 +487,7 @@ module.exports = {
           },
         );
 
-        return reply.redirect(
-          `${request.query.redirect_uri
-          }?error=invalid_request&state=${request.query.state
-          }&scope=${request.query.scope
-          }&nonce=${request.query.nonce
-          }`,
-        );
+        return reply.redirect(`${redirectUrl}&error=invalid_request`);
       }
 
       // If the user is not authenticated, redirect to the login page and preserve
@@ -501,14 +496,9 @@ module.exports = {
       if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp) || prompt === 'login') {
         // If user is not logged in and prompt is set to none, throw an error message.
         if (prompt === 'none') {
-          return reply.redirect(
-            `${request.query.redirect_uri
-            }?error=login_required&state=${request.query.state
-            }&scope=${request.query.scope
-            }&nonce=${request.query.nonce
-            }`,
-          );
+          return reply.redirect(`${redirectUrl}&error=login_required`);
         }
+
         logger.info(
           '[AuthController->authorizeDialogOauth2] Get request to /oauth/authorize without session. Redirecting to the login page.',
           {
@@ -638,13 +628,7 @@ module.exports = {
 
       // If prompt === none, redirect immediately.
       if (prompt === 'none') {
-        return reply.redirect(
-          `${request.query.redirect_uri
-          }?error=interaction_required&state=${request.query.state
-          }&scope=${request.query.scope
-          }&nonce=${request.query.nonce
-          }`,
-        );
+        return reply.redirect(`${redirectUrl}&error=interaction_required`);
       }
 
       // The user has not confirmed authorization, so display the authorization
