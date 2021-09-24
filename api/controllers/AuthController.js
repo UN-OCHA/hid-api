@@ -266,10 +266,16 @@ module.exports = {
    * another website.
    */
   async login(request, reply) {
-    // Grab cookie
+    // Get user session.
     const cookie = request.yar.get('session');
 
-    // It looks like TOTP is needed for this user.
+    // If the user has a User ID set, and passed the optional 2FA challenge,
+    // they can be redirected immediately.
+    if (cookie && cookie.userId && cookie.totp === true) {
+      return loginRedirect(request, reply);
+    }
+
+    // The User ID is set, but it looks like 2FA is required.
     if (cookie && cookie.userId && cookie.totp === false) {
       try {
         // Prevent form spamming by counting submissions and locking accounts
@@ -320,8 +326,10 @@ module.exports = {
           throw err;
         }
 
-        // If we got here, the user passed TOTP.
+        // If we got here, the user passed TOTP. We need to destroy the session
+        // they used to authenticate, and begin a new session with a fresh ID.
         cookie.totp = true;
+        request.yar.reset();
         request.yar.set('session', cookie);
 
         // If save device was checked, avoid TOTP prompts for 30 days.
@@ -364,19 +372,20 @@ module.exports = {
       }
     }
 
-    // If the user has submitted the TOTP prompt, redirect.
-    if (cookie && cookie.userId && cookie.totp === true) {
-      return loginRedirect(request, reply);
-    }
-
+    // Arriving here means the user does NOT have 2FA enabled. We will set their
+    // TOTP flag to true when defining the session.
     try {
       const result = await loginHelper(request);
       if (!result.totp) {
         // Store user login time.
         result.auth_time = new Date();
         await result.save();
+
+        // The user is now logged in. We destroy their old session and create a
+        // fresh session ID for their logged-in activity.
+        request.yar.reset();
         request.yar.set('session', {
-          userId: result._id,
+          userId: result.id,
           totp: true,
         });
         return loginRedirect(request, reply);
@@ -391,7 +400,7 @@ module.exports = {
 
         // Set cookie.
         request.yar.set('session', {
-          userId: result._id,
+          userId: result.id,
           totp: true,
         });
 
@@ -401,7 +410,7 @@ module.exports = {
 
       // Set cookie
       request.yar.set('session', {
-        userId: result._id,
+        userId: result.id,
         totp: false,
       });
 
