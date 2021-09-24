@@ -3,6 +3,7 @@
  * @description Controller for Authentication, both into HID and OAuth sites.
  */
 const Boom = require('@hapi/boom');
+const Hoek = require('@hapi/hoek');
 const Client = require('../models/Client');
 const Flood = require('../models/Flood');
 const JwtToken = require('../models/JwtToken');
@@ -968,7 +969,8 @@ module.exports = {
    */
   showAccount(request) {
     // Full user object from DB.
-    const user = JSON.parse(JSON.stringify(request.auth.credentials));
+    const user = Hoek.clone(request.auth.credentials);
+    const client = Hoek.clone(request.auth.artifacts);
 
     // This will be what we send back as a response.
     const output = {
@@ -982,39 +984,19 @@ module.exports = {
 
     // Log the request
     logger.info(
-      `[AuthController->showAccount] calling /account.json for ${request.auth.credentials.email}`,
+      `[AuthController->showAccount] calling /account.json for ${user.email}`,
       {
         request,
         user: {
-          id: request.auth.credentials.id,
-          email: request.auth.credentials.email,
-          admin: request.auth.credentials.is_admin,
+          id: user.id,
+          email: user.email,
+          admin: user.is_admin,
         },
         oauth: {
-          client_id: request.params.currentClient && request.params.currentClient.id,
+          client_id: client && client.id,
         },
       },
     );
-
-    // Special cases for legacy compat.
-    //
-    // @TODO: in testing this, it seems that the `currentClient` param is not
-    //        present when this function runs. Investigate whether we need these
-    //        special cases at all.
-    //
-    //        @see https://humanitarian.atlassian.net/browse/HID-2192
-    if (request.params.currentClient && (request.params.currentClient.id === 'iasc-prod' || request.params.currentClient.id === 'iasc-dev')) {
-      output.sub = user.email;
-    }
-    if (request.params.currentClient && request.params.currentClient.id === 'kaya-prod') {
-      output.name = user.name.replace(' ', '');
-    }
-    if (request.params.currentClient
-      && (request.params.currentClient.id === 'rc-shelter-database'
-        || request.params.currentClient.id === 'rc-shelter-db-2-prod'
-        || request.params.currentClient.id === 'deep-prod')) {
-      output.active = !user.deleted;
-    }
 
     // Send response
     return output;
