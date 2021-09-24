@@ -573,7 +573,7 @@ module.exports = {
     }
 
     // Look up user in DB.
-    const user = await User.findOne({ _id: userId });
+    const user = await User.findById(userId);
 
     // Was the user parameter supplied?
     if (!user) {
@@ -600,7 +600,7 @@ module.exports = {
       throw Boom.badRequest('Request is missing parameters (old_password or new_password)');
     }
 
-    // Business logic: is the new password strong enough?
+    // Is the new password strong enough?
     if (!User.isStrongPassword(newPassword)) {
       logger.warn(
         `[UserController->updatePassword] Could not update user password for user ${userId}. New password is not strong enough.`,
@@ -613,33 +613,8 @@ module.exports = {
       throw Boom.badRequest('New password does not meet requirements');
     }
 
-    // Was the current password entered correctly?
-    if (user.validPassword(oldPassword)) {
-      // Business logic: is the new password different than the old one?
-      if (oldPassword === newPassword) {
-        logger.warn(
-          `[UserController->updatePassword] Could not update user password for user ${userId}. New password is the same as old password.`,
-          {
-            request,
-            security: true,
-            fail: true,
-          },
-        );
-        throw Boom.badRequest('New password must be different than previous password');
-      }
-
-      // Proceed with password update.
-      user.password = User.hashPassword(newPassword);
-      user.lastModified = new Date();
-      await user.save();
-      logger.info(
-        `[UserController->updatePassword] Successfully updated password for user ${userId}`,
-        {
-          request,
-          security: true,
-        },
-      );
-    } else {
+    // Does the old password match our hash?
+    if (!user.validPassword(oldPassword)) {
       logger.warn(
         `[UserController->updatePassword] Could not update password for user ${userId}. Old password is wrong.`,
         {
@@ -650,6 +625,44 @@ module.exports = {
       );
       throw Boom.badRequest('The old password is wrong');
     }
+
+    // Does the new password match any historical hashes?
+    if (user.isHistoricalPassword(newPassword)) {
+      // Business logic: is the new password different than the old one?
+      logger.warn(
+        `[UserController->updatePassword] Could not update user password for user ${userId}. New password is the same as old password.`,
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('New password must be different than previous passwords');
+    }
+
+    // Update PW history, store new password hash, save user.
+    user.storePasswordInHistory();
+    user.password = User.hashPassword(newPassword);
+    user.lastModified = new Date();
+    await user.save().catch((err) => {
+      logger.error(
+        `[UserController->updatePassword] ${err.message}`,
+        {
+          request,
+          security: true,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+    });
+
+    logger.info(
+      `[UserController->updatePassword] Successfully updated password for user ${userId}`,
+      {
+        request,
+        security: true,
+      },
+    );
 
     return reply.response().code(204);
   },
@@ -1395,7 +1408,7 @@ module.exports = {
     }
 
     // Look up user by ID.
-    let user = await User.findOne({ _id: request.payload.id }).catch((err) => {
+    let user = await User.findById(request.payload.id).catch((err) => {
       logger.error(
         `[UserController->resetPassword] ${err.message}`,
         {
@@ -1472,15 +1485,15 @@ module.exports = {
 
     // Compare new password to the old one. If our comparison is TRUE, then the
     // reset attempt should be rejected, since the passwords are the same.
-    if (user.validPassword(request.payload.password)) {
+    if (user.isHistoricalPassword(request.payload.password)) {
       logger.warn(
-        '[UserController->resetPassword] Could not reset password. The new password can not be the same as the old one.',
+        '[UserController->resetPassword] Could not reset password. New password must be different than previous passwords.',
         {
           request,
           security: true,
           fail: true,
           user: {
-            id: request.payload.id,
+            id: user.id,
             email: user.email,
           },
         },
@@ -1497,7 +1510,7 @@ module.exports = {
           security: true,
           fail: true,
           user: {
-            id: request.payload.id,
+            id: user.id,
             email: user.email,
           },
         },
@@ -1505,30 +1518,9 @@ module.exports = {
       throw Boom.badRequest('The password and password-confirmation fields did not match.');
     }
 
-    // Success! We are resetting the password
+    // Success! We will reset both the password and other PW-related metadata.
+    user.storePasswordInHistory();
     user.password = User.hashPassword(request.payload.password);
-
-    // Determine which email received the password reset from the ID, or use the
-    // primary as the default. Not using UserController.validateEmailAddress()
-    // because it has a different hash link structure than the link that the
-    // user clicked to arrive here. Our validation thus far is sufficient to
-    // prove ownership of the address.
-    //
-    // To be simplified after a safe window has passed following the deploy.
-    //
-    // @see HID-2219
-    let emailToVerify;
-    if (request.payload.emailId !== '') {
-      const emailIndexFromId = user.emailIndexFromId(request.payload.emailId);
-      emailToVerify = user.emails[emailIndexFromId].email;
-    } else {
-      emailToVerify = user.email;
-    }
-
-    // Mark the email address which received the password reset as verified.
-    user.verifyEmail(emailToVerify);
-
-    // Modify the user metadata now that password was reset.
     user.expires = new Date(0, 0, 1, 0, 0, 0);
     user.lastPasswordReset = new Date();
     user.passwordResetAlert30days = false;
@@ -1551,9 +1543,32 @@ module.exports = {
       );
     });
 
+    // Determine which email received the password reset from the ID, or use the
+    // primary as the default. Not using UserController.validateEmailAddress()
+    // because it has a different hash link structure than the link that the
+    // user clicked to arrive here. Our validation thus far is sufficient to
+    // prove ownership of the address.
+    //
+    // To be simplified after a safe window has passed following the deploy.
+    //
+    // @see HID-2219
+    let emailToVerify;
+    if (request.payload.emailId !== '') {
+      const emailIndexFromId = user.emailIndexFromId(request.payload.emailId);
+      emailToVerify = user.emails[emailIndexFromId].email;
+    } else {
+      emailToVerify = user.email;
+    }
+
+    // Mark the email address which received the password reset as verified.
+    user.verifyEmail(emailToVerify);
+
     return reply.response().code(204);
   },
 
+  // HID Contacts notification-related method.
+  //
+  // TODO: remove
   async notify(request) {
     const record = await User.findOne({ _id: request.params.id });
     if (!record) {
