@@ -9,9 +9,19 @@
    *
    * The password strength is ultimately enforced in the HID API, but we can
    * double check here and prompt the user to submit a strong password beforehand.
+   *
+   * This represents 2021 OICT guidance on strong passwords in order to avoid
+   * the requirement that we expire weak passwords after 6 months.
+   *
+   * - At least 12 characters total
+   * - At least one number
+   * - At least one lowercase letter
+   * - At least one uppercase letter
+   * - At least one special character: !@#$%^&*()+=\`{}[]:";'< >?,./
    */
   function checkPassword(password) {
-    var passwordStrength = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()+=\\`{}]).+$/;
+    // eslint-disable-next-line no-useless-escape
+    var passwordStrength = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()+=\\`{}[\]:";'< >?,.\/]).+$/;
     return password.length >= 12 && passwordStrength.test(password);
   }
 
