@@ -38,6 +38,7 @@
     "axios": "^0.21.2",
     "bcryptjs": "^2.3.0",
     "blankie": "^5.0.0",
+    "cracklib": "^1.1.0",
     "ejs": "^2.5.2",
     "email-templates": "^8.0.3",
     "hapi-rate-limit": "^4.0.2",
