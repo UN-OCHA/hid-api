@@ -438,7 +438,11 @@ module.exports = {
   },
 
   async newPassword(request, reply) {
+    // Destroy any existing user session
     request.yar.reset();
+
+    // Store the contents of the reset link from the email message. For users
+    // with 2FA, we'll load another form and want to pass this info along.
     request.yar.set('session', {
       hash: request.query.hash,
       id: request.query.id,
@@ -528,12 +532,17 @@ module.exports = {
   async newPasswordPost(request, reply) {
     const cookie = request.yar.get('session');
 
+    // Non-2FA users
     if (cookie && cookie.hash && cookie.id && cookie.emailId && cookie.time && !cookie.totp) {
       try {
         const user = await User.findOne({ _id: cookie.id });
         const token = request.payload['x-hid-totp'];
 
+        // See if TOTP code is valid.
         await AuthPolicy.isTOTPValid(user, token);
+
+        // It is valid and they're allowed to use the password reset form. The
+        // boolean here means the next submission will
         cookie.totp = true;
         request.yar.set('session', cookie);
 
@@ -570,6 +579,8 @@ module.exports = {
         // Now attempt the password reset.
         await UserController.resetPassword(request, reply);
 
+        // If we found OAuth params, their login form will be configured to
+        // continue logging them into a Partner site.
         if (params) {
           return reply.view('login', {
             alert: {
@@ -612,6 +623,8 @@ module.exports = {
           userFacingError = undefined;
         }
 
+        // If we found OAuth params, their login form will be configured to
+        // continue logging them into a Partner site.
         if (params) {
           return reply.view('login', {
             alert: {
