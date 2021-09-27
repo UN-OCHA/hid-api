@@ -567,7 +567,7 @@ module.exports = {
     }
 
     if (cookie && cookie.hash && cookie.totp) {
-      const params = HelperService.getOauthParams(request.payload);
+      const oAuthParams = HelperService.getOauthParams(request.payload);
       const registerLink = _getRegisterLink(request.payload);
       const passwordLink = _getPasswordLink(request.payload);
 
@@ -581,7 +581,7 @@ module.exports = {
 
         // If we found OAuth params, their login form will be configured to
         // continue logging them into a Partner site.
-        if (params) {
+        if (oAuthParams) {
           return reply.view('login', {
             alert: {
               type: 'status',
@@ -625,7 +625,7 @@ module.exports = {
 
         // If we found OAuth params, their login form will be configured to
         // continue logging them into a Partner site.
-        if (params) {
+        if (oAuthParams) {
           return reply.view('login', {
             alert: {
               type: 'error',
