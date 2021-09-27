@@ -452,7 +452,7 @@ module.exports = {
     });
 
     // Look up User by ID.
-    const user = await User.findOne({ _id: request.query.id }).catch((err) => {
+    const user = await User.findById(request.query.id).catch((err) => {
       logger.error(
         `[ViewController->newPassword] ${err.message}`,
         {
@@ -535,7 +535,7 @@ module.exports = {
     // Non-2FA users
     if (cookie && cookie.hash && cookie.id && cookie.emailId && cookie.time && !cookie.totp) {
       try {
-        const user = await User.findOne({ _id: cookie.id });
+        const user = await User.findById(cookie.id);
         const token = request.payload['x-hid-totp'];
 
         // See if TOTP code is valid.
