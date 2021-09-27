@@ -563,6 +563,11 @@ module.exports = {
       const passwordLink = _getPasswordLink(request.payload);
 
       try {
+        // Whatever happens, we first want to cleanup the session storage before
+        // trying to reset the password.
+        request.yar.reset('session');
+
+        // Now attempt the password reset.
         await UserController.resetPassword(request, reply);
 
         if (params) {
