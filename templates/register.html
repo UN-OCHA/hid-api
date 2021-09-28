@@ -9,7 +9,7 @@
 
       <% include alert.html %>
 
-      <form name="register" action="/register" method="POST" onsubmit="return checkForm(this)" class="[ flow ]">
+      <form id="passwordForm" name="register" action="/register" method="POST" class="[ flow ]">
         <div class="form-field">
           <label for="email" translate>Email</label>
           <input type="email" name="email" id="email" value="<%= formEmail %>" placeholder="you@example.com" required>
@@ -31,7 +31,7 @@
             autocomplete="off"
             required
             minlength="12"
-            pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()+=\\`{}]).+$"
+            pattern="<% include includes/password-regex.html %>"
             title="See password requirements below.">
         </div>
         <div class="form-field">
@@ -43,17 +43,11 @@
             autocomplete="off"
             required
             minlength="12"
-            pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()+=\\`{}]).+$"
+            pattern="<% include includes/password-regex.html %>"
             title="See password requirements below.">
         </div>
         <div class="form-field">
-          <p>Passwords must be at least 12 characters long and:</p>
-          <ul>
-            <li>Contain <strong>one number</strong></li>
-            <li>Contain <strong>one uppercase character</strong></li>
-            <li>Contain <strong>one lowercase character</strong></li>
-            <li>Contain <strong>one special character</strong> <code>!@#$%^&*()+=\`{}</code></li>
-          </ul>
+          <% include includes/password-requirements.html %>
         </div>
         <div class="g-recaptcha" data-sitekey="<%= recaptcha_site_key %>"></div>
         <input type="hidden" name="crumb" value="<%= crumb %>" />

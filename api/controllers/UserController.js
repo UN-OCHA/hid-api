@@ -529,10 +529,14 @@ module.exports = {
    *     type: string
    * requestBody:
    *   description: >-
-   *     The `new_password` must be different than `old_password` and meet ALL
-   *     of the following requirements: at least 12 characters, one lowercase
-   *     letter, one uppercase letter, one number, one special character
-   *     ``!@#$%^&*()+=\`{}``
+   *     The `new_password` must be different than `old_password` and your
+   *     previous five HID passwords. It must also meet ALL of the following
+   *     requirements: at least 12 characters, one lowercase letter, one
+   *     uppercase letter, one number, one special character
+   *     ``!@#$%^&*()+=\`{}[]:"";'< >?,./``. Additionally, we recommend you not
+   *     reuse passwords across other websites/systems, and avoid personal info
+   *     such as names of family members, pets, friends, co-workers, birthdays,
+   *     addresses, phone numbers etc.
    *   required: true
    *   content:
    *     application/json:
