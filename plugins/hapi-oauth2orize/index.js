@@ -209,7 +209,7 @@ module.exports = {
   version: '1.0.0',
   register(server, options) {
     // Need session support for transaction in authorization code grant
-    server.dependency('yar');
+    server.dependency('@hapi/yar');
 
     internals.settings = Hoek.applyToDefaults(internals.defaults, options);
 
