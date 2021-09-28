@@ -9,7 +9,7 @@
 
       <% include alert.html %>
 
-      <form name="register" action="/register" method="POST" onsubmit="return checkForm(this)" class="[ flow ]">
+      <form id="passwordForm" name="register" action="/register" method="POST" class="[ flow ]">
         <div class="form-field">
           <label for="email" translate>Email</label>
           <input type="email" name="email" id="email" value="<%= formEmail %>" placeholder="you@example.com" required>

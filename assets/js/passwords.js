@@ -2,7 +2,7 @@
   /**
    * Find the form in the DOM.
    */
-  var newPasswordForm = document.querySelector('#resetPassword');
+  var passwordForm = document.querySelector('#passwordForm');
 
   /**
    * Password strength
@@ -31,7 +31,7 @@
    * When we detect a problem, we fire event.preventDefault(), which stops the
    * form from submitting. Otherwise it will submit and proceed normally.
    */
-  newPasswordForm.addEventListener('submit', function checkForm(ev) {
+  passwordForm.addEventListener('submit', function checkForm(ev) {
     // Store form so we can work with it below.
     var form = ev.target;
 
