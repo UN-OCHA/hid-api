@@ -350,7 +350,7 @@ UserSchema.statics = {
    */
   isStrongPassword(password) {
     // eslint-disable-next-line no-useless-escape
-    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()+=\\`{}[\]:";'< >?,.\/]).+$/;
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()+=\\`{}[\]:";'< >?,.\/-]).+$/;
     return password.length >= 12 && regex.test(password);
   },
 

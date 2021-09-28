@@ -21,7 +21,7 @@
    */
   function checkPassword(password) {
     // eslint-disable-next-line no-useless-escape
-    var passwordStrength = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()+=\\`{}[\]:";'< >?,.\/]).+$/;
+    var passwordStrength = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()+=\\`{}[\]:";'< >?,.\/-]).+$/;
     return password.length >= 12 && passwordStrength.test(password);
   }
 
