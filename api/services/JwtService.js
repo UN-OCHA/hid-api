@@ -1,11 +1,14 @@
-const jwt = require('jsonwebtoken');
-const fs = require('fs');
-const rsa2jwk = require('rsa-pem-to-jwk');
-
 /**
  * @module JwtService
  * @description JSON Web Token Service
  */
+const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const rsa2jwk = require('rsa-pem-to-jwk');
+const config = require('../../config/env');
+
+const { logger } = config;
+
 module.exports = {
 
   // Generates a token from supplied payload
@@ -24,20 +27,27 @@ module.exports = {
     let success = false;
 
     try {
-      const cert = fs.readFileSync('keys/sign.rsa.pub');
-      success = jwt.verify(token, cert);
-
-      // If we loaded the key but sig was not verified, throw an error.
-      if (!success) {
-        throw new Error({});
-      }
-    } catch (err) {
-      // During v3 transition period, we try again with the old key if our new
-      // key is either missing.
+      // First try with the new signing key. For now, if this fails we'll fall
+      // back to the older key.
       //
       // @see https://humanitarian.atlassian.net/browse/HID-2027
-      const legacy = fs.readFileSync('keys/hid.rsa.pub');
-      success = jwt.verify(token, legacy);
+      const cert = fs.readFileSync('keys/sign.rsa.pub');
+      success = jwt.verify(token, cert);
+    } catch (err) {
+      logger.warn(
+        '[JwtService->verify] New signing key could not verify JWT.',
+        {
+          security: true,
+          fail: true,
+        },
+      );
+
+      // During transition period, we try again with the old key if the new
+      // signing key was either missing, or unable to verify the JWT.
+      //
+      // @see https://humanitarian.atlassian.net/browse/HID-2027
+      const legacyCert = fs.readFileSync('keys/hid.rsa.pub');
+      success = jwt.verify(token, legacyCert);
     }
 
     return success;
@@ -49,18 +59,14 @@ module.exports = {
     try {
       const cert = fs.readFileSync('keys/sign.rsa.pub');
       success = rsa2jwk(cert, { use: 'sig', kid: `hid-v3-${process.env.NODE_ENV}` }, 'public');
-
-      // If we loaded the key but sig was not verified, throw an error.
-      if (!success) {
-        throw new Error({});
-      }
     } catch (err) {
-      // During v3 transition period, we try again with the old key if our new key
-      // cannot verify the JWT.
-      //
-      // @see https://humanitarian.atlassian.net/browse/HID-2027
-      const legacy = fs.readFileSync('keys/hid.rsa.pub');
-      success = rsa2jwk(legacy, { use: 'sig', kid: 'hid-dev' }, 'public');
+      logger.error(
+        `[JwtService->public2jwk] ${err.message}`,
+        {
+          security: true,
+          fail: true,
+        },
+      );
     }
 
     return success;
