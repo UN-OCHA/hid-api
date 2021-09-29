@@ -438,17 +438,21 @@ module.exports = {
   },
 
   async newPassword(request, reply) {
+    // Destroy any existing user session
     request.yar.reset();
+
+    // Store the contents of the reset link from the email message. For users
+    // with 2FA, we'll load another form and want to pass this info along.
     request.yar.set('session', {
       hash: request.query.hash,
       id: request.query.id,
       time: request.query.time,
-      emailId: request.query.emailId,
+      emailId: request.query.emailId || '',
       totp: false,
     });
 
     // Look up User by ID.
-    const user = await User.findOne({ _id: request.query.id }).catch((err) => {
+    const user = await User.findById(request.query.id).catch((err) => {
       logger.error(
         `[ViewController->newPassword] ${err.message}`,
         {
@@ -528,12 +532,17 @@ module.exports = {
   async newPasswordPost(request, reply) {
     const cookie = request.yar.get('session');
 
+    // Non-2FA users
     if (cookie && cookie.hash && cookie.id && cookie.emailId && cookie.time && !cookie.totp) {
       try {
-        const user = await User.findOne({ _id: cookie.id });
+        const user = await User.findById(cookie.id);
         const token = request.payload['x-hid-totp'];
 
+        // See if TOTP code is valid.
         await AuthPolicy.isTOTPValid(user, token);
+
+        // It is valid and they're allowed to use the password reset form. The
+        // boolean here means the next submission will
         cookie.totp = true;
         request.yar.set('session', cookie);
 
@@ -558,14 +567,21 @@ module.exports = {
     }
 
     if (cookie && cookie.hash && cookie.totp) {
-      const params = HelperService.getOauthParams(request.payload);
+      const oAuthParams = HelperService.getOauthParams(request.payload);
       const registerLink = _getRegisterLink(request.payload);
       const passwordLink = _getPasswordLink(request.payload);
 
       try {
+        // Whatever happens, we first want to cleanup the session storage before
+        // trying to reset the password.
+        request.yar.reset('session');
+
+        // Now attempt the password reset.
         await UserController.resetPassword(request, reply);
 
-        if (params) {
+        // If we found OAuth params, their login form will be configured to
+        // continue logging them into a Partner site.
+        if (oAuthParams) {
           return reply.view('login', {
             alert: {
               type: 'status',
@@ -607,7 +623,9 @@ module.exports = {
           userFacingError = undefined;
         }
 
-        if (params) {
+        // If we found OAuth params, their login form will be configured to
+        // continue logging them into a Partner site.
+        if (oAuthParams) {
           return reply.view('login', {
             alert: {
               type: 'error',
