@@ -1,0 +1,70 @@
+<% include header %>
+<link rel="stylesheet" href="/assets/css/cd-grid.css">
+<link rel="stylesheet" href="/assets/css/cd-card.css">
+<link rel="stylesheet" href="/assets/css/cd-tag.css">
+<link rel="stylesheet" href="/assets/css/profile-show.css">
+
+<div class="api-page">
+  <main role="main" id="main-content" class="cd-container t-page--profile-show">
+    <div class="cd-layout-content">
+      <h1 class="cd-page-title page-header__heading"><%= user.name %></h1>
+      <% include alert.html %>
+      <div class="profile profile--show [ flow ]">
+        <div class="cd-grid cd-grid--2-col">
+
+          <div class="cd-card">
+            <div class="cd-card__container">
+              <div class="cd-card__description [ flow ]">
+                <h2>Basic profile info</h2>
+                <p><strong>Given Name:</strong> <span class="name--given"><%= user.given_name %></span></p>
+                <p><strong>Family name:</strong> <span class="name--family"><%= user.family_name %></span></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="cd-card">
+            <div class="cd-card__container">
+              <div class="cd-card__description [ flow ]">
+                <h2>Email addresses</h2>
+                <div class="profile__emails [ flow ]">
+                  <%
+                    user.emails.forEach(function(email) {
+                      if (email.email === user.email) {
+                  %>
+                    <div class="profile__email email">
+                      <div class="email__address">
+                        <label><%= user.email %></label>
+                        <div class="email__status">
+                          <span class="cd-tag cd-tag--rounded">Primary</span>
+                        </div>
+                      </div>
+                    </div>
+                  <% } else { %>
+                    <div class="profile__email email">
+                      <div class="email__address">
+                        <label><%= email.email %></label>
+                        <div class="email__status">
+                          <span class="cd-tag cd-tag--rounded">
+                            <%= email.validated === true ? 'confirmed' : 'not confirmed' %>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  <%
+                      }
+                    });
+                  %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-actions">
+        <a href="/profile/edit" class="cd-button cd-button--bold cd-button--uppercase t-btn-profile-edit">Edit Profile</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<% include footer %>

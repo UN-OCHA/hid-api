@@ -1,6 +1,6 @@
 module.exports = {
   env: {
-    browser: true,
+    browser: false,
     es6: true,
   },
   extends: 'airbnb-base',
@@ -13,6 +13,22 @@ module.exports = {
     sourceType: 'module',
   },
   rules: {
-    "no-underscore-dangle": 0
+    "max-len": ["error",
+      {
+        "code": 110,
+        "tabWidth": 2,
+        "ignoreUrls": true,
+        "ignoreComments": false,
+        "ignoreRegExpLiterals": true,
+        "ignoreStrings": true,
+        "ignoreTemplateLiterals": true
+      }
+    ],
+    "no-plusplus": "off",
+    "no-underscore-dangle": "off",
+    "prefer-destructuring": "off",
+    "import/no-unresolved": [2, {
+      ignore: ['newrelic'],
+    }],
   },
 };

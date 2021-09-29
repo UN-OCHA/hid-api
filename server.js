@@ -1,7 +1,5 @@
 /**
  * @module server
- *
- * Start up the Trails Application.Test
  */
 
 const newrelic = require('newrelic');
@@ -12,11 +10,11 @@ const Boom = require('@hapi/boom');
 const hapi = require('@hapi/hapi');
 const ejs = require('ejs');
 const app = require('./');
-const config = require('./config/env')[process.env.NODE_ENV];
+const config = require('./config/env');
 
 const { logger } = config;
+const { store } = config.database;
 
-const store = app.config.env[process.env.NODE_ENV].database.stores[process.env.NODE_ENV];
 mongoose.connect(store.uri, store.options);
 
 const webConfig = app.config.web;
@@ -109,7 +107,9 @@ const init = async () => {
   server.ext('onPreResponse', preResponse);
 
   await server.start();
-  // console.log(`Server running at: ${server.info.uri}`);
+  logger.info(
+    `HID server started. Listening on: ${server.info.uri}`,
+  );
 };
 
 process.on('unhandledRejection', (err, p) => {

@@ -1,249 +1,99 @@
-const Boom = require('@hapi/boom');
-const qs = require('qs');
-const ejs = require('ejs');
-const axios = require('axios');
-const moment = require('moment');
-const acceptLanguage = require('accept-language');
-const sharp = require('sharp');
-const validator = require('validator');
-
-const hidAccount = '5b2128e754a0d6046d6c69f2';
-const List = require('../models/List');
-const User = require('../models/User');
-// const OutlookService = require('../services/OutlookService');
-const EmailService = require('../services/EmailService');
-const HelperService = require('../services/HelperService');
-const NotificationService = require('../services/NotificationService');
-const GSSSyncService = require('../services/GSSSyncService');
-const AuthPolicy = require('../policies/AuthPolicy');
-const ListUserController = require('./ListUserController');
-const config = require('../../config/env')[process.env.NODE_ENV];
-
-const { logger } = config;
-
 /**
  * @module UserController
  * @description CRUD controller for users.
  */
+const Boom = require('@hapi/boom');
+const validator = require('validator');
+const User = require('../models/User');
+const EmailService = require('../services/EmailService');
+const HelperService = require('../services/HelperService');
+const AuthPolicy = require('../policies/AuthPolicy');
+const config = require('../../config/env');
 
-/**
- * Exports users in PDF, using the PDF snap service.
- */
-async function _pdfExport(users, number, lists, req, format) {
-  const filters = [];
-  if (Object.prototype.hasOwnProperty.call(req.query, 'name') && req.query.name.length) {
-    filters.push(req.query.name);
-  }
-  if (Object.prototype.hasOwnProperty.call(req.query, 'verified') && req.query.verified) {
-    filters.push('Verified User');
-  }
-  if (Object.prototype.hasOwnProperty.call(req.query, 'is_admin') && req.query.is_admin) {
-    filters.push('Administrator');
-  }
-  lists.forEach((list, index) => {
-    if (index > 0) {
-      filters.push(list.name);
-    }
-  });
+const { logger } = config;
 
-  const data = {
-    lists,
-    number,
-    users,
-    dateGenerated: moment().format('LL'),
-    filters,
-  };
-  let template = 'templates/pdf/printList.html';
-  if (format === 'meeting-compact') {
-    template = 'templates/pdf/printMeetingCompact.html';
-  } else if (format === 'meeting-comfortable') {
-    template = 'templates/pdf/printMeetingComfortable.html';
-  }
-  const str = await ejs.renderFile(template, data, {});
-
-  // Send the HTML to the wkhtmltopdf service to generate a PDF, and
-  // return the output.
-  const postData = qs.stringify({ html: str });
-  const hostname = process.env.WKHTMLTOPDF_HOST;
-  const port = process.env.WKHTMLTOPDF_PORT || 80;
-  const params = {
-    service: 'hid_api',
-    pdfLandscape: true,
-    pdfBackground: true,
-    pdfMarginUnit: 'mm',
-    pdfMarginTop: 10,
-    pdfMarginBottom: 10,
-    pdfMarginRight: 10,
-    pdfMarginLeft: 10,
-    scale: 1,
-  };
-  const clientRes = await axios({
-    method: 'post',
-    url: `http://${hostname}:${port}/snap`,
-    params,
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Content-Length': postData.length,
-      'X-Forwarded-For': req.headers['x-forwarded-for'] || req.connection.remoteAddress,
-      'User-Agent': req.headers['user-agent'],
-    },
-    data: postData,
-    responseType: 'arraybuffer',
-  });
-  if (clientRes && clientRes.status === 200) {
-    // clientRes.setEncoding('binary');
-
-    const pdfSize = parseInt(clientRes.headers['content-length'], 10);
-
-    return [clientRes.data, pdfSize];
-  }
-  logger.error(
-    '[UserController->_pdfExport] An error occurred while generating a PDF',
-    { response: clientRes },
-  );
-  throw new Error(`An error occurred while generating PDF for list ${data.lists[0].name}`);
-}
-
-/**
- * Exports users to txt.
- */
-function _txtExport(users) {
-  let out = '';
-  for (let i = 0; i < users.length; i += 1) {
-    out += `${users[i].name} <${users[i].email}>;`;
-  }
-  return out;
-}
-
-/**
- * Get the list of bundles a user is checked into.
- */
-function getBundles(user) {
-  let bundles = '';
-  user.bundles.forEach((bundle) => {
-    if (!bundle.deleted) {
-      bundles += `${bundle.name};`;
-    }
-  });
-  return bundles;
-}
-
-/**
- * Get the list of functional roles a user is checked into.
- */
-function getRoles(user) {
-  let roles = '';
-  user.functional_roles.forEach((role) => {
-    if (!role.deleted) {
-      roles += `${role.name};`;
-    }
-  });
-  return roles;
-}
-
-/**
- * Helper function to export users to csv
- */
-function _csvExport(users, full = false) {
-  let out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes\n';
-  let org = '';
-  let bundles = '';
-  let roles = '';
-  let country = '';
-  let region = '';
-  let jobTitle = '';
-  let phoneNumber = '';
-  let skype = '';
-  let status = '';
-  let orphan = '';
-  let ghost = '';
-  let verified = '';
-  let manager = '';
-  let admin = '';
-  if (full) {
-    out = 'Given Name,Family Name,Job Title,Organization,Groups,Roles,Country,Admin Area,Phone,Skype,Email,Notes,Created At,Updated At,Orphan,Ghost,Verified,Manager,Admin\n';
-  }
-  for (let i = 0; i < users.length; i += 1) {
-    org = '';
-    bundles = '';
-    country = '';
-    region = '';
-    skype = '';
-    roles = '';
-    jobTitle = users[i].job_title || ' ';
-    phoneNumber = users[i].phone_number || ' ';
-    status = users[i].status || ' ';
-    if (users[i].organization && users[i].organization.list) {
-      org = users[i].organization.name;
-    }
-    if (users[i].bundles && users[i].bundles.length) {
-      bundles = getBundles(users[i]);
-    }
-    if (users[i].functional_roles && users[i].functional_roles.length) {
-      roles = getRoles(users[i]);
-    }
-    if (users[i].location && users[i].location.country) {
-      country = users[i].location.country.name;
-    }
-    if (users[i].location && users[i].location.region) {
-      region = users[i].location.region.name;
-    }
-    if (users[i].voips.length) {
-      for (let j = 0; j < users[i].voips.length; j += 1) {
-        if (users[i].voips[j].type === 'Skype') {
-          skype = users[i].voips[j].username;
-        }
-      }
-    }
-    orphan = users[i].is_orphan ? '1' : '0';
-    ghost = users[i].is_ghost ? '1' : '0';
-    verified = users[i].verified ? '1' : '0';
-    manager = users[i].isManager ? '1' : '0';
-    admin = users[i].is_admin ? '1' : '0';
-    out = `${out
-    }"${users[i].given_name}",`
-      + `"${users[i].family_name}",`
-      + `"${jobTitle}",`
-      + `"${org}",`
-      + `"${bundles}",`
-      + `"${roles}",`
-      + `"${country}",`
-      + `"${region}",`
-      + `"${phoneNumber}",`
-      + `"${skype}",`
-      + `"${users[i].email}",`
-      + `"${status}`;
-    if (full) {
-      out = `${out}",`
-        + `"${users[i].createdAt}",`
-        + `"${users[i].updatedAt}",`
-        + `"${orphan}",`
-        + `"${ghost}",`
-        + `"${verified}",`
-        + `"${manager}",`
-        + `"${admin}"\n`;
-    } else {
-      out += '"\n';
-    }
-  }
-  return out;
-}
 
 module.exports = {
-
+  /*
+   * @api [post] /user
+   * tags:
+   *   - user
+   * summary: Create a new user
+   * requestBody:
+   *   description: Required parameters to create a user.
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
+   *           email:
+   *             type: string
+   *             required: true
+   *           family_name:
+   *             type: string
+   *             required: true
+   *           given_name:
+   *             type: string
+   *             required: true
+   *           app_verify_url:
+   *             type: string
+   *             required: true
+   *             description: >-
+   *               Should correspond to the endpoint you are interacting with.
+   *           password:
+   *             type: string
+   *             required: false
+   *             description: >-
+   *               See `/user/{id}/password` for password requirements.
+   *           confirm_password:
+   *             type: string
+   *             required: false
+   *             description: >-
+   *               See `/user/{id}/password` for password requirements. This
+   *               field is REQUIRED if `password` is sent in the payload.
+   * responses:
+   *   '200':
+   *     description: User was successfully created
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request. Missing required parameters.
+   *   '403':
+   *     description: Forbidden. Your account is not allowed to create users.
+   * security: []
+   */
   async create(request) {
     if (!request.payload.app_verify_url) {
       logger.warn(
         '[UserController->create] Missing app_verify_url',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
       );
       throw Boom.badRequest('Missing app_verify_url');
     }
 
     const appVerifyUrl = request.payload.app_verify_url;
     if (!HelperService.isAuthorizedUrl(appVerifyUrl)) {
+      if (request.payload && request.payload.password) {
+        delete request.payload.password;
+      }
+      if (request.payload && request.payload.confirm_password) {
+        delete request.payload.confirm_password;
+      }
+
       logger.warn(
-        `[UserController->create] app_verify_url ${appVerifyUrl} is not in authorizedDomains allowlist`,
-        { security: true, fail: true, request },
+        `[UserController->create] app_verify_url ${appVerifyUrl} is not in allowedDomains list`,
+        {
+          request,
+          security: true,
+          fail: true,
+        },
       );
       throw Boom.badRequest('Invalid app_verify_url');
     }
@@ -261,17 +111,36 @@ module.exports = {
       }
 
       if (request.payload.password && request.payload.confirm_password) {
-        if (!User.isStrongPassword(request.payload.password)) {
+        if (request.payload.password !== request.payload.confirm_password) {
           logger.warn(
-            '[UserController->create] Provided password is not strong enough',
+            '[UserController->create] Passwords did not match during registration.',
+            {
+              request,
+              security: true,
+              fail: true,
+            },
+          );
+          throw Boom.badRequest('The passwords do not match');
+        }
+
+        if (User.isStrongPassword(request.payload.password)) {
+          request.payload.password = User.hashPassword(request.payload.password);
+        } else {
+          logger.warn(
+            '[UserController->create] Provided password is not strong enough.',
+            {
+              request,
+              security: true,
+              fail: true,
+            },
           );
           throw Boom.badRequest('The password is not strong enough');
         }
-        request.payload.password = User.hashPassword(request.payload.password);
       } else {
         // Set a random password
         request.payload.password = User.hashPassword(User.generateRandomPassword());
       }
+
       delete request.payload.app_verify_url;
 
       let notify = true;
@@ -281,26 +150,7 @@ module.exports = {
       }
       delete request.payload.notify;
 
-      let registrationType = '';
-      if (request.payload.registration_type) {
-        registrationType = request.payload.registration_type;
-        delete request.payload.registration_type;
-      }
-
-      const childAttributes = User.listAttributes();
-      HelperService.removeForbiddenAttributes(User, request, childAttributes);
-
-      if (request.auth.credentials && registrationType === '') {
-        // Creating an orphan user
-        request.payload.createdBy = request.auth.credentials._id;
-        // If an orphan is being created, do not expire
-        request.payload.expires = new Date(0, 0, 1, 0, 0, 0);
-        if (request.payload.email) {
-          request.payload.is_orphan = true;
-        } else {
-          request.payload.is_ghost = true;
-        }
-      }
+      HelperService.removeForbiddenAttributes(User, request, []);
 
       // HID-1582: creating a short lived user for testing
       if (request.payload.tester) {
@@ -310,36 +160,36 @@ module.exports = {
         delete request.payload.tester;
       }
 
-      // Not showing request payload to avoid showing user passwords in logs.
+      // Create user account.
       const user = await User.create(request.payload);
+
       if (!user) {
-        // Not showing request payload to avoid showing user passwords in logs.
         logger.warn(
           '[UserController->create] Create user failed',
+          {
+            request,
+            security: true,
+            fail: true,
+          },
         );
         throw Boom.badRequest();
       }
       logger.info(
-        `[UserController->create] User ${user._id.toString()} created successfully`,
+        `[UserController->create] User created successfully with ID ${user._id.toString()}`,
+        {
+          request,
+          security: true,
+          user: {
+            id: user._id.toString(),
+            email: user.email,
+            admin: user.is_admin,
+          },
+        },
       );
 
       if (user.email && notify === true) {
         if (!request.auth.credentials) {
           await EmailService.sendRegister(user, appVerifyUrl);
-          logger.info(
-            `[UserController->create] Sent registration email to ${user.email}`,
-          );
-        } else if (registrationType === 'kiosk') {
-          // An admin is creating an orphan user or Kiosk registration
-          await EmailService.sendRegisterKiosk(user, appVerifyUrl);
-          logger.info(
-            `[UserController->create] Sent registration kiosk email to ${user.email}`,
-          );
-        } else {
-          await EmailService.sendRegisterOrphan(user, request.auth.credentials, appVerifyUrl);
-          logger.info(
-            `[UserController->create] Sent registration orphan email to ${user.email}`,
-          );
         }
       }
       return user;
@@ -347,57 +197,56 @@ module.exports = {
     if (!request.auth.credentials) {
       logger.warn(
         `[UserController->create] The email address ${request.payload.email} is already registered`,
+        {
+          request,
+          fail: true,
+          user: {
+            email: request.payload.email,
+          },
+        },
       );
       throw Boom.badRequest('This email address is already registered. If you can not remember your password, please reset it');
     } else {
       logger.warn(
-        `[UserController->create] The user already exists. id: ${record._id.toString()}`,
+        `[UserController->create] The user already exists with ID ${record._id.toString()}`,
+        {
+          request,
+          fail: true,
+          user: {
+            id: record._id.toString(),
+          },
+        },
       );
       throw Boom.badRequest(`This user already exists. user_id=${record._id.toString()}`);
     }
   },
 
+  /*
+   * @api [get] /user
+   * tags:
+   *  - user
+   * summary: Returns a list of Users
+   * responses:
+   *   '200':
+   *     description: An array of zero or more users.
+   *     content:
+   *       application/json:
+   *         schema:
+   *           type: array
+   *           items:
+   *             $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request.
+   *   '403':
+   *     description: Requesting user lacks permission to query users.
+   */
   async find(request, reply) {
-    const reqLanguage = acceptLanguage.get(request.headers['accept-language']);
-
-    if (request.params.id) {
-      const criteria = { _id: request.params.id };
-      if (!request.auth.credentials.verified) {
-        criteria.is_orphan = false;
-        criteria.is_ghost = false;
-      }
-      // Do not show user if it is hidden
-      if (!request.auth.credentials.is_admin
-        && request.auth.credentials._id.toString() !== request.params.id) {
-        criteria.hidden = false;
-      }
-      const user = await User.findOne(criteria);
-      if (!user) {
-        logger.warn(
-          `[UserController->find] Could not find user ${request.params.id}`,
-        );
-        throw Boom.notFound();
-      } else {
-        user.sanitize(request.auth.credentials);
-        user.translateListNames(reqLanguage);
-        return user;
-      }
-    }
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
-    const childAttributes = User.listAttributes();
 
     // Hide hidden profile to non-admins
     if (request.auth.credentials && !request.auth.credentials.is_admin) {
       criteria.hidden = false;
-    }
-
-    // Do not allow exports for hidden users
-    if (request.params.extension && request.auth.credentials.hidden) {
-      logger.warn(
-        `[UserController->find] Hidden user ${request.auth.credentials.id} tried to export users`,
-      );
-      throw Boom.unauthorized();
     }
 
     if (criteria.q) {
@@ -413,7 +262,10 @@ module.exports = {
       if (criteria.name.length < 3) {
         logger.warn(
           '[UserController->find] Name of a user must have at least 3 characters in find method',
-          { name: criteria.name },
+          {
+            request,
+            fail: true,
+          },
         );
         throw Boom.badRequest('Name must have at least 3 characters');
       }
@@ -421,45 +273,6 @@ module.exports = {
       criteria.name = new RegExp(criteria.name, 'i');
     }
 
-    if (criteria.country) {
-      criteria['location.country.id'] = criteria.country;
-      delete criteria.country;
-    }
-
-    if (!request.auth.credentials.verified) {
-      criteria.is_orphan = false;
-      criteria.is_ghost = false;
-    }
-    const listIds = [];
-    let lists = [];
-    for (let i = 0; i < childAttributes.length; i += 1) {
-      if (criteria[`${childAttributes[i]}.list`]) {
-        listIds.push(criteria[`${childAttributes[i]}.list`]);
-        delete criteria[`${childAttributes[i]}.list`];
-      }
-    }
-    if (listIds.length) {
-      lists = await List.find({ _id: { $in: listIds } });
-      lists.forEach((list) => {
-        if (list.isVisibleTo(request.auth.credentials)) {
-          criteria[`${list.type}s`] = { $elemMatch: { list: list._id, deleted: false } };
-          if (!list.isOwner(request.auth.credentials)) {
-            criteria[`${list.type}s`].$elemMatch.pending = false;
-          }
-        } else {
-          logger.warn(
-            `[UserController->find] User ${request.auth.credentials.id} is not authorized to view list ${list._id.toString()}`,
-          );
-          throw Boom.unauthorized('You are not authorized to view this list');
-        }
-      });
-    }
-
-    let pdfFormat = '';
-    if (criteria.format) {
-      pdfFormat = criteria.format;
-      delete criteria.format;
-    }
     const query = HelperService.find(User, criteria, options);
     if (criteria.name) {
       query.collation({ locale: 'en_US' });
@@ -468,288 +281,491 @@ module.exports = {
     if (!options.limit && request.params.extension) {
       query.limit(100000);
     }
-    if (request.params.extension) {
-      query.select('name given_name family_name email job_title phone_number status organization bundles location voips connections phonesVisibility emailsVisibility locationsVisibility createdAt updatedAt is_orphan is_ghost verified isManager is_admin functional_roles');
-      query.lean();
-    }
     const [results, number] = await Promise.all([query, User.countDocuments(criteria)]);
     if (!results) {
       logger.warn(
         '[UserController->find] Could not find users',
-        { criteria },
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.notFound();
     }
-    if (request.params.extension) {
-      // Sanitize users and translate list names from a plain object
-      for (let i = 0, len = results.length; i < len; i += 1) {
-        User.sanitizeExportedUser(results[i], request.auth.credentials);
-        if (results[i].organization) {
-          User.translateCheckin(results[i].organization, reqLanguage);
-        }
-      }
-      if (request.params.extension === 'csv') {
-        let csvExport = '';
-        if (request.auth.credentials.is_admin) {
-          csvExport = _csvExport(results, true);
-        } else {
-          csvExport = _csvExport(results, false);
-        }
-        return reply.response(csvExport)
-          .type('text/csv')
-          .header('Content-Disposition', `attachment; filename="Humanitarian ID Contacts ${moment().format('YYYYMMDD')}.csv"`);
-      }
-      if (request.params.extension === 'txt') {
-        return reply.response(_txtExport(results))
-          .type('text/plain');
-      }
-      if (request.params.extension === 'pdf') {
-        const [buffer, bytes] = await _pdfExport(results, number, lists, request, pdfFormat);
-        return reply.response(buffer)
-          .type('application/pdf')
-          .bytes(bytes)
-          .header('Content-Disposition', `attachment; filename="Humanitarian ID Contacts ${moment().format('YYYYMMDD')}.pdf"`);
-      }
-    }
     for (let i = 0, len = results.length; i < len; i += 1) {
       results[i].sanitize(request.auth.credentials);
-      results[i].translateListNames(reqLanguage);
     }
     return reply.response(results).header('X-Total-Count', number);
   },
 
+  /*
+   * @api [get] /user/{id}
+   * tags:
+   *  - user
+   * summary: Returns a User by ID.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric User ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   * responses:
+   *   '200':
+   *     description: The requested user
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Unauthorized.
+   *   '403':
+   *     description: Requesting user lacks permission to view requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
+  async findOne(request) {
+    const user = await User.findById(request.params.id);
+
+    // If we found a user, sanitize and return it
+    if (user) {
+      logger.info(
+        '[UserController->findOne] Displaying one user by ID',
+        {
+          request,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+        },
+      );
+
+      user.sanitize(request.auth.credentials);
+      return user;
+    }
+
+    // Finally: if we didn't find a user, send a 404.
+    logger.warn(
+      `[UserController->findOne] Could not find user ${request.params.id}`,
+      {
+        request,
+        fail: true,
+      },
+    );
+    throw Boom.notFound();
+  },
+
+  /*
+   * @api [put] /user/{id}
+   * tags:
+   *   - user
+   * summary: Update the user
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric User ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   * requestBody:
+   *   description: The user object
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         $ref: '#/components/schemas/User'
+   * responses:
+   *   '200':
+   *     description: The updated user object
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Unauthorized.
+   *   '403':
+   *     description: Requesting user lacks permission to update requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
   async update(request) {
-    const childAttributes = User.listAttributes();
+    const childAttributes = [];
     HelperService.removeForbiddenAttributes(User, request, childAttributes);
     if (request.payload.password) {
       delete request.payload.password;
     }
 
-    // Check old password
+    // Load the user based on ID from the HTTP request
     let user = await User.findOne({ _id: request.params.id });
     if (!user) {
       logger.warn(
-        `[UserController->update] Could not find user ${request.params.id}`,
+        '[UserController->update] Could not find user',
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.notFound();
     }
-    // If verifying user, set verified_by and verificationExpiryEmail
-    if (request.payload.verified && !user.verified) {
-      request.payload.verified_by = request.auth.credentials._id;
-      request.payload.verifiedOn = new Date();
-      request.payload.verificationExpiryEmail = false;
-    }
-    if (request.payload.old_password && request.payload.new_password) {
-      logger.info(
-        `[UserController->update] Updating user password for user ${user.id}`,
-        { security: true },
-      );
 
-      // Check to see if new password matches current (old) password.
-      if (request.payload.old_password === request.payload.new_password) {
-        logger.warn(
-          `[UserController->update] Could not update user password for user ${user.id}. New password is the same as old password`,
-          { request, security: true, fail: true },
-        );
-        throw Boom.badRequest('New password must be different than previous password');
-      }
-
-      // Check old password before continuing. It must be correct to proceed.
-      if (user.validPassword(request.payload.old_password)) {
-        if (!User.isStrongPassword(request.payload.new_password)) {
-          logger.warn(
-            `[UserController->update] Could not update user password for user ${user.id}. New password is not strong enough`,
-            { request, security: true, fail: true },
-          );
-          throw Boom.badRequest('Password is not strong enough');
-        }
-        request.payload.password = User.hashPassword(request.payload.new_password);
-        request.payload.lastPasswordReset = new Date();
-        request.payload.passwordResetAlert30days = false;
-        request.payload.passwordResetAlert7days = false;
-        request.payload.passwordResetAlert = false;
-        logger.info(
-          `[UserController->update] Request payload updated to change password for user ${user.id}`,
-          { security: true },
-        );
-      } else {
-        logger.warn(
-          `[UserController->update] Could not update user password for user ${user.id}. Old password is wrong`,
-          { request, security: true, fail: true },
-        );
-        throw Boom.badRequest('The current password you entered is incorrect');
-      }
-    }
+    // Don't keep old values for updatedAt from payload
     if (request.payload.updatedAt) {
       delete request.payload.updatedAt;
     }
+
     // Update lastModified manually
     request.payload.lastModified = new Date();
-    if (user.authOnly === false && request.payload.authOnly === true) {
-      // User is becoming invisible. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, {
-          $inc: {
-            countVerified: -1,
-            countUnverified: -1,
-          },
-        });
-        logger.info(
-          `[UserController->update] User ${user._id.toString()} is becoming invisible. Updated list counts`,
-        );
-      }
-    }
-    if (user.authOnly === true && request.payload.authOnly === false) {
-      // User is becoming visible. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, {
-          $inc: {
-            countVerified: 1,
-            countUnverified: 1,
-          },
-        });
-        logger.info(
-          `[UserController->update] User ${user._id.toString()} is becoming visible. Updated list counts`,
-        );
-      }
-    }
-    if (user.hidden === false && request.payload.hidden === true) {
-      // User is being flagged. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, {
-          $inc: {
-            countManager: -1,
-            countVerified: -1,
-            countUnverified: -1,
-          },
-        });
-        logger.info(
-          `[UserController->update] User ${user._id.toString()} is being flagged. Updated list counts`,
-        );
-      }
-    }
-    if (user.hidden === true && request.payload.hidden === false) {
-      // User is being unflagged. Update lists count.
-      const listIds = user.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, {
-          $inc: {
-            countManager: 1,
-            countVerified: 1,
-            countUnverified: 1,
-          },
-        });
-        logger.info(
-          `[UserController->update] User ${user._id.toString()} is being unflagged. Updated list counts`,
-        );
-      }
-    }
-    user = await User
-      .findOneAndUpdate(
-        { _id: request.params.id },
-        request.payload,
-        { runValidators: true, new: true },
-      );
-    logger.info(
-      `[UserController->update] Successfully saved user ${user._id.toString()}`,
+
+    user = await User.findOneAndUpdate(
+      { _id: request.params.id },
+      request.payload,
+      { runValidators: true, new: true },
     );
+
+    logger.info(
+      '[UserController->update] Successfully saved user',
+      {
+        request,
+        user: {
+          id: user._id.toString(),
+        },
+      },
+    );
+
     user = await user.defaultPopulate();
-    const promises = [];
-    const pendingLogs = [];
-    if (request.auth.credentials._id.toString() !== user._id.toString()) {
-      // User is being edited by someone else
-      // If it's an auth account, surface it
-      if (user.authOnly) {
-        user.authOnly = false;
-        // User is becoming visible. Update lists count.
-        const listIds = user.getListIds(true);
-        if (listIds.length) {
-          promises.push(List.updateMany({ _id: { $in: listIds } }, {
-            $inc: {
-              countVerified: 1,
-              countUnverified: 1,
-            },
-          }));
-          pendingLogs.push({
-            type: 'info',
-            message: `[UserController->update] User ${user._id.toString()} is becoming visible. Updated list counts`,
-          });
-        }
-        promises.push(user.save());
-        pendingLogs.push({
-          type: 'info',
-          message: `[UserController->update] User ${user._id.toString()} saved successfully`,
-        });
-        if (!user.hidden) {
-          promises.push(EmailService.sendAuthToProfile(user, request.auth.credentials));
-          pendingLogs.push({
-            type: 'info',
-            message: `[UserController->update] Sent auth_to_profile email to user ${user.email}`,
-          });
-        }
-      } else if (!user.hidden) {
-        const notification = { type: 'admin_edit', user, createdBy: request.auth.credentials };
-        promises.push(NotificationService.send(notification));
-        pendingLogs.push({
-          type: 'info',
-          message: `[UserController->update] Sent admin_edit notification to user ${user.id}`,
-        });
-      }
-    }
-    promises.push(GSSSyncService.synchronizeUser(user));
-    pendingLogs.push({
-      type: 'info',
-      message: `[UserController->update] Synchronized user ${user.id} with google spreadsheet`,
-    });
-    // promises.push(OutlookService.synchronizeUser(user));
-    await Promise.all(promises);
-    for (let i = 0; i < pendingLogs.length; i += 1) {
-      logger.log(pendingLogs[i]);
-    }
     return user;
   },
 
+  /*
+   * @api [delete] /user/{id}
+   * tags:
+   *   - user
+   * summary: Delete the user.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric User ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: The TOTP token. Required if the user has 2FA enabled.
+   *     required: false
+   *     type: string
+   * responses:
+   *   '204':
+   *     description: User deleted successfully.
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Unauthorized.
+   *   '403':
+   *     description: Requesting user lacks permission to delete requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
   async destroy(request, reply) {
+    // Don't allow admins to delete their account.
     if (!request.auth.credentials.is_admin
       && request.auth.credentials._id.toString() !== request.params.id) {
       logger.warn(
         `[UserController->destroy] User ${request.auth.credentials._id.toString()} is not allowed to delete user ${request.params.id}`,
+        {
+          request,
+          fail: true,
+        },
       );
-      return reply(Boom.forbidden('You are not allowed to delete this account'));
+      throw Boom.forbidden('You are not allowed to delete this account');
     }
 
+    // Find user in DB.
     const user = await User.findOne({ _id: request.params.id });
+
     if (!user) {
       logger.warn(
         `[UserController->destroy] Could not find user ${request.params.id}`,
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.notFound();
     }
+
+    // Notify user that their account was deleted.
     await EmailService.sendAdminDelete(user, request.auth.credentials);
+
+    // Delete this user.
     await user.remove();
+
     logger.info(
       `[UserController->destroy] Removed user ${request.params.id}`,
+      {
+        request,
+        security: true,
+      },
     );
+
     return reply.response().code(204);
   },
 
-  async setPrimaryEmail(request) {
-    const { email } = request.payload;
+  /*
+   * @api [post] /user/{id}/password
+   * tags:
+   *   - user
+   * summary: Updates the password of a user.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric User ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: The TOTP token. Required if the user has 2FA enabled.
+   *     required: false
+   *     type: string
+   * requestBody:
+   *   description: >-
+   *     The `new_password` must be different than `old_password` and your
+   *     previous five HID passwords. It must also meet ALL of the following
+   *     requirements: at least 12 characters, one lowercase letter, one
+   *     uppercase letter, one number, one special character
+   *     ``!@#$%^&*()+=\`{}[]:"";'< >?,./``. Additionally, we recommend you not
+   *     reuse passwords across other websites/systems, and avoid personal info
+   *     such as names of family members, pets, friends, co-workers, birthdays,
+   *     addresses, phone numbers etc.
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
+   *           old_password:
+   *             type: string
+   *             required: true
+   *           new_password:
+   *             type: string
+   *             required: true
+   * responses:
+   *   '204':
+   *     description: Password updated successfully.
+   *   '400':
+   *     description: Bad request. Reason will be in response body.
+   *   '401':
+   *     description: Unauthorized.
+   *   '403':
+   *     description: Requesting user lacks permission to update requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
+  async updatePassword(request, reply, internalArgs) {
+    let userId;
+    let oldPassword;
+    let newPassword;
 
-    if (!request.payload.email) {
+    if (internalArgs) {
+      userId = internalArgs.userId;
+      oldPassword = internalArgs.old_password;
+      newPassword = internalArgs.new_password;
+    } else {
+      userId = request.params.id;
+      oldPassword = request.payload.old_password;
+      newPassword = request.payload.new_password;
+    }
+
+    // Look up user in DB.
+    const user = await User.findById(userId);
+
+    // Was the user parameter supplied?
+    if (!user) {
+      logger.warn(
+        `[UserController->updatePassword] User ${userId} not found`,
+        {
+          request,
+          fail: true,
+        },
+      );
+      throw Boom.notFound();
+    }
+
+    // Are both password parameters present?
+    if (!oldPassword || !newPassword) {
+      logger.warn(
+        `[UserController->updatePassword] Could not update user password for user ${userId}. Request is missing parameters (old_password or new_password)`,
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('Request is missing parameters (old_password or new_password)');
+    }
+
+    // Is the new password strong enough?
+    if (!User.isStrongPassword(newPassword)) {
+      logger.warn(
+        `[UserController->updatePassword] Could not update user password for user ${userId}. New password is not strong enough.`,
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('New password does not meet requirements');
+    }
+
+    // Does the old password match our hash?
+    if (!user.validPassword(oldPassword)) {
+      logger.warn(
+        `[UserController->updatePassword] Could not update password for user ${userId}. Old password is wrong.`,
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('The old password is wrong');
+    }
+
+    // Does the new password match any historical hashes?
+    if (user.isHistoricalPassword(newPassword)) {
+      // Business logic: is the new password different than the old one?
+      logger.warn(
+        `[UserController->updatePassword] Could not update user password for user ${userId}. New password is the same as old password.`,
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('New password must be different than previous passwords');
+    }
+
+    // Update PW history, store new password hash, save user.
+    user.storePasswordInHistory();
+    user.password = User.hashPassword(newPassword);
+    user.lastModified = new Date();
+    await user.save().catch((err) => {
+      logger.error(
+        `[UserController->updatePassword] ${err.message}`,
+        {
+          request,
+          security: true,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+    });
+
+    logger.info(
+      `[UserController->updatePassword] Successfully updated password for user ${userId}`,
+      {
+        request,
+        security: true,
+      },
+    );
+
+    return reply.response().code(204);
+  },
+
+  /*
+   * @api [put] /user/{id}/email
+   * tags:
+   *   - user
+   * summary: Sets the primary email of a user.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric User ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: The TOTP token. Required if the user has 2FA enabled.
+   *     required: false
+   *     type: string
+   * requestBody:
+   *   description: Email address to be marked primary.
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
+   *           email:
+   *             type: string
+   *             required: true
+   * responses:
+   *   '200':
+   *     description: The updated user object
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Unauthorized.
+   *   '403':
+   *     description: Requesting user lacks permission to update requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
+  async setPrimaryEmail(request, internalArgs) {
+    let email = '';
+    let userId = '';
+
+    //
+    // Determine source of arguments.
+    //
+    // If internalArgs is sent to this function then we prefer those values.
+    // We are executing on behalf of the user from within ViewController.
+    //
+    // Otherwise, use the normal URL param + payload to determine arg values.
+    //
+    if (internalArgs && internalArgs.userId && internalArgs.email) {
+      userId = internalArgs.userId;
+      email = internalArgs.email;
+    } else {
+      userId = request.params.id;
+      email = request.payload.email;
+    }
+
+    if (!email) {
       logger.warn(
         '[UserController->setPrimaryEmail] No email in payload',
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.badRequest();
     }
 
-    const record = await User.findOne({ _id: request.params.id });
+    const record = await User.findOne({ _id: userId }).catch((err) => {
+      logger.error(
+        `[UserController->setPrimaryEmail] ${err.message}`,
+        {
+          request,
+          security: true,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+
+      throw Boom.internal('There was a problem querying the database. Please try again.');
+    });
+
     if (!record) {
       logger.warn(
-        `[UserController->setPrimaryEmail] Could not find user ${request.params.id}`,
+        `[UserController->setPrimaryEmail] Could not find user ${userId}`,
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.notFound();
     }
@@ -757,13 +773,21 @@ module.exports = {
     const index = record.emailIndex(email);
     if (index === -1) {
       logger.warn(
-        `[UserController->setPrimaryEmail] Email ${email} does not exist for user ${request.params.id}`,
+        `[UserController->setPrimaryEmail] Email ${email} does not exist for user ${userId}`,
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.badRequest('Email does not exist');
     }
     if (!record.emails[index].validated) {
       logger.warn(
-        `[UserController->setPrimaryEmail] Email ${record.emails[index]} has not been validated for user ${request.params.id}`,
+        `[UserController->setPrimaryEmail] Email ${record.emails[index]} has not been validated for user ${userId}`,
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.badRequest('Email has not been validated. You need to validate it first.');
     }
@@ -774,458 +798,229 @@ module.exports = {
     record.lastModified = new Date();
     await record.save();
     logger.info(
-      `[UserController->setPrimaryEmail] Saved user ${request.params.id} successfully`,
+      `[UserController->setPrimaryEmail] Saved user ${userId} successfully`,
+      {
+        request,
+        user: {
+          id: userId,
+          email,
+        },
+      },
     );
-    await GSSSyncService.synchronizeUser(record);
-    logger.info(
-      `[UserController->setPrimaryEmail] Synchronized user ${request.params.id} with google spreadsheets successfully`,
-    );
-    // const promises = [];
-    // promises.push(GSSSyncService.synchronizeUser(record));
-    // promises.push(OutlookService.synchronizeUser(record));
-    // await Promise.all(promises);
+
     return record;
   },
 
-  async validateEmail(request) {
-    // TODO: make sure current user can do this
+  /*
+   * @api [post] /user/{id}/emails
+   * tags:
+   *   - user
+   * summary: Add a new email to the user's profile.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric User ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   * requestBody:
+   *   description: Email address and validation URL.
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
+   *           email:
+   *             type: string
+   *             required: true
+   * responses:
+   *   '200':
+   *     description: The updated user object
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request. Reason will be in response body.
+   *   '401':
+   *     description: Unauthorized.
+   *   '403':
+   *     description: Requesting user lacks permission to update requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
+  async addEmail(request, internalArgs) {
+    let userId = '';
+    let emailToAdd = '';
 
-    if (request.payload.hash) {
-      const record = await User.findOne({ _id: request.payload.id });
-      if (!record) {
-        logger.warn(
-          `[UserController->validateEmail] Could not find user ${request.payload.id}`,
-        );
-        throw Boom.notFound();
-      }
-      let domain = null;
-      let { email } = record;
-      if (request.payload.emailId) {
-        const emailRecord = record.emails.id(request.payload.emailId);
-        if (emailRecord) {
-          ({ email } = emailRecord);
-        }
-      }
-      // Verify hash
-      if (record.validHash(request.payload.hash, 'verify_email', request.payload.time, email) === true) {
-        // Verify user email
-        if (record.email === email) {
-          record.email_verified = true;
-          record.expires = new Date(0, 0, 1, 0, 0, 0);
-          record.emails[0].validated = true;
-          record.emails.set(0, record.emails[0]);
-          record.lastModified = new Date();
-          domain = await record.isVerifiableEmail(email);
-        } else {
-          for (let i = 0, len = record.emails.length; i < len; i += 1) {
-            if (record.emails[i].email === email) {
-              record.emails[i].validated = true;
-              record.emails.set(i, record.emails[i]);
-            }
-          }
-          record.lastModified = new Date();
-          domain = await record.isVerifiableEmail(email);
-        }
-      } else {
-        logger.warn(
-          `[UserController->validateEmail] Invalid hash ${request.payload.hash} provided`,
-        );
-        throw Boom.badRequest('Invalid hash');
-      }
-      if (domain) {
-        record.verified = true;
-        record.verified_by = hidAccount;
-        record.verifiedOn = new Date();
-        record.verificationExpiryEmail = false;
-        // If the domain is associated to a list, check user in this list automatically
-        if (domain.list) {
-          if (!record.organizations) {
-            record.organizations = [];
-          }
-
-          let isCheckedIn = false;
-          // Make sure user is not already checked in this list
-          for (let i = 0, len = record.organizations.length; i < len; i += 1) {
-            if (record.organizations[i].list.equals(domain.list._id)
-              && record.organizations[i].deleted === false) {
-              isCheckedIn = true;
-            }
-          }
-
-          if (!isCheckedIn) {
-            await ListUserController.checkinHelper(domain.list, record, true, 'organizations', record);
-          }
-        }
-      }
-      const promises = [];
-      const pendingLogs = [];
-      promises.push(record.save());
-      pendingLogs.push({
-        type: 'info',
-        message: `[UserController->validateEmail] Saved user ${record.id} successfully`,
-      });
-      if (record.email === email) {
-        promises.push(EmailService.sendPostRegister(record));
-        pendingLogs.push({
-          type: 'info',
-          message: `[UserController->validateEmail] Sent post_register email to ${record.email} successfully`,
-        });
-      }
-      await Promise.all(promises);
-      for (let i = 0; i < pendingLogs.length; i += 1) {
-        logger.log(pendingLogs[i]);
-      }
-      return record;
+    if (internalArgs && internalArgs.userId && internalArgs.email) {
+      userId = internalArgs.userId;
+      emailToAdd = internalArgs.email;
+    } else {
+      userId = request.params.id;
+      emailToAdd = request.payload.email;
     }
-    const record = await User.findOne({ 'emails.email': request.params.email });
-    if (!record) {
+
+    // Is the payload complete enough to take action?
+    if (!emailToAdd) {
       logger.warn(
-        `[UserController->validateEmail] Could not find user with email ${request.params.email}`,
+        '[UserController->addEmail] Email was not provided',
+        {
+          request,
+          fail: true,
+          user: {
+            id: userId,
+          },
+        },
       );
-      throw Boom.notFound();
+      throw Boom.badRequest('Required parameters not present in payload');
     }
-    // Send validation email again
-    const appValidationUrl = request.payload.app_validation_url;
-    if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
-      logger.warn(
-        `[UserController->validateEmail] app_validation_url ${appValidationUrl} is not in authorizedDomains allowlist`,
-        { request, security: true, fail: true },
-      );
-      throw Boom.badRequest('Invalid app_validation_url');
-    }
-    const emailIndex = record.emailIndex(request.params.email);
-    const email = record.emails[emailIndex];
-    await EmailService.sendValidationEmail(
-      record,
-      email.email,
-      email._id.toString(),
-      appValidationUrl,
-    );
-    return 'Validation email sent successfully';
-  },
 
-  async updatePassword(request, reply) {
-    const user = await User.findOne({ _id: request.params.id });
-
-    // Was the user parameter supplied?
+    // Does the target user exist?
+    const user = await User.findOne({ _id: userId });
     if (!user) {
       logger.warn(
-        `[UserController->updatePassword] User ${request.params.id} not found`,
-      );
-      throw Boom.notFound();
-    }
-
-    // Are both password parameters present?
-    if (!request.payload.old_password || !request.payload.new_password) {
-      logger.warn(
-        `[UserController->updatePassword] Could not update user password for user ${user.id}. Request is missing parameters (old or new password)`,
-        { request, security: true, fail: true },
-      );
-      throw Boom.badRequest('Request is missing parameters (old or new password)');
-    }
-
-    // Business logic: is the new password strong enough?
-    if (!User.isStrongPassword(request.payload.new_password)) {
-      logger.warn(
-        `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is not strong enough`,
-        { request, security: true, fail: true },
-      );
-      throw Boom.badRequest('New password is not strong enough');
-    }
-
-    // Was the current password entered correctly?
-    if (user.validPassword(request.payload.old_password)) {
-      // Business logic: is the new password different than the old one?
-      if (request.payload.old_password === request.payload.new_password) {
-        logger.warn(
-          `[UserController->updatePassword] Could not update user password for user ${user.id}. New password is the same as old password`,
-          { request, security: true, fail: true },
-        );
-        throw Boom.badRequest('New password must be different than previous password');
-      }
-
-      // Proceed with password update.
-      user.password = User.hashPassword(request.payload.new_password);
-      user.lastModified = new Date();
-      await user.save();
-      logger.info(
-        `[UserController->updatePassword] Successfully updated password for user ${user._id.toString()}`,
-        { request, security: true },
-      );
-    } else {
-      logger.warn(
-        `[UserController->updatePassword] Could not update password for user ${user._id.toString()}. Old password is wrong`,
-        { request, security: true, fail: true },
-      );
-      throw Boom.badRequest('The old password is wrong');
-    }
-    return reply.response().code(204);
-  },
-
-  async resetPasswordEndpoint(request) {
-    if (request.payload.email) {
-      const appResetUrl = request.payload.app_reset_url;
-
-      if (!HelperService.isAuthorizedUrl(appResetUrl)) {
-        logger.warn(
-          `[UserController->resetPasswordEndpoint] app_reset_url ${appResetUrl} is not in authorizedDomains allowlist`,
-          { request, security: true, fail: true },
-        );
-        throw Boom.badRequest('app_reset_url is invalid');
-      }
-      const record = await User.findOne({ email: request.payload.email.toLowerCase() });
-      if (!record) {
-        logger.warn(
-          `[UserController->resetPasswordEndpoint] User ${request.params.id} not found`,
-        );
-        return '';
-      }
-      await EmailService.sendResetPassword(record, appResetUrl);
-      logger.info(
-        `[UserController->resetPasswordEndpoint] Successfully sent reset password email to ${record.email}`,
-        { request, security: true },
-      );
-      return '';
-    }
-    const cookie = request.yar.get('session');
-    if (!request.payload.hash || !request.payload.password
-      || !request.payload.id || !request.payload.time) {
-      logger.warn(
-        '[UserController->resetPasswordEndpoint] Wrong or missing arguments',
-        { request, security: true },
-      );
-      throw Boom.badRequest('Wrong arguments');
-    }
-
-    if (!User.isStrongPassword(request.payload.password)) {
-      logger.warn(
-        '[UserController->resetPasswordEndpoint] Could not reset password. New password is not strong enough.',
-        { request, security: true, fail: true },
-      );
-      throw Boom.badRequest('New password is not strong enough');
-    }
-
-    let record = await User.findOne({ _id: request.payload.id });
-    if (!record) {
-      logger.warn(
-        `[UserController->resetPasswordEndpoint] Could not reset password. User ${request.payload.id} not found`,
-        { request, security: true, fail: true },
-      );
-      throw Boom.badRequest('Reset password link is expired or invalid');
-    }
-    if (record.totp && !cookie) {
-      // Check that there is a TOTP token and that it is valid
-      const token = request.headers['x-hid-totp'];
-      record = await AuthPolicy.isTOTPValid(record, token);
-    }
-    let domain = null;
-    if (record.validHash(request.payload.hash, 'reset_password', request.payload.time) === true) {
-      // Check the new password against the old one.
-      if (record.validPassword(request.payload.password)) {
-        logger.warn(
-          `[UserController->resetPasswordEndpoint] Could not reset password for user ${request.payload.id}. The new password can not be the same as the old one`,
-          { request, security: true, fail: true },
-        );
-        throw Boom.badRequest('Could not reset password');
-      } else {
-        record.password = User.hashPassword(request.payload.password);
-        record.verifyEmail(record.email);
-        domain = await record.isVerifiableEmail(record.email);
-      }
-    } else {
-      logger.warn(
-        '[UserController->resetPasswordEndpoint] Reset password link is expired or invalid',
-        { request, security: true, fail: true },
-      );
-      throw Boom.badRequest('Reset password link is expired or invalid');
-    }
-    if (domain) {
-      // Reset verifiedOn date as user was able to
-      // reset his password via an email from a trusted domain
-      record.verified = true;
-      record.verified_by = hidAccount;
-      record.verifiedOn = new Date();
-      record.verificationExpiryEmail = false;
-    }
-    record.expires = new Date(0, 0, 1, 0, 0, 0);
-    if (record.is_orphan === true || record.is_ghost === true) {
-      // User is not an orphan anymore. Update lists count.
-      const listIds = record.getListIds(true);
-      if (listIds.length) {
-        await List.updateMany({ _id: { $in: listIds } }, { $inc: { countUnverified: 1 } });
-        logger.info(
-          `[UserController->resetPasswordEndpoint] User ${record._id.toString()} is not an orphan anymore. Updated list counts`,
-        );
-      }
-    }
-    record.is_orphan = false;
-    record.is_ghost = false;
-    record.lastPasswordReset = new Date();
-    record.passwordResetAlert30days = false;
-    record.passwordResetAlert7days = false;
-    record.passwordResetAlert = false;
-    record.lastModified = new Date();
-    await record.save();
-    logger.info(
-      `[UserController->resetPasswordEndpoint] Password updated successfully for user ${record._id.toString()}`,
-      { request, security: true },
-    );
-    return 'Password reset successfully';
-  },
-
-  async claimEmail(request, reply) {
-    const appResetUrl = request.payload.app_reset_url;
-    const userId = request.params.id;
-
-    if (!HelperService.isAuthorizedUrl(appResetUrl)) {
-      logger.warn(
-        `[UserController->claimEmail] app_reset_url ${appResetUrl} is not in authorizedDomains allowlist`,
-        { security: true, fail: true, request },
-      );
-      throw Boom.badRequest('app_reset_url is invalid');
-    }
-
-    const record = await User.findOne({ _id: userId });
-    if (!record) {
-      logger.warn(
-        `[UserController->claimEmail] User ${userId} not found`,
-      );
-      throw Boom.notFound();
-    }
-    await EmailService.sendClaim(record, appResetUrl);
-    return reply.response('Claim email sent successfully').code(202);
-  },
-
-  async updatePicture(request) {
-    const userId = request.params.id;
-
-    const data = request.payload;
-    if (data.file) {
-      const image = sharp(data.file);
-      const record = await User.findOne({ _id: userId });
-      if (!record) {
-        logger.warn(
-          `[UserController->updatePicture] User ${request.params.id} not found`,
-        );
-        throw Boom.notFound();
-      }
-      const metadata = await image.metadata();
-      if (metadata.format !== 'jpeg' && metadata.format !== 'png') {
-        logger.warn(
-          `[UserController->updatePicture] ${metadata.format} is not a valid image format`,
-        );
-        throw Boom.badRequest('Invalid image format. Only jpeg and png are accepted');
-      }
-      let path = `${__dirname}/../../assets/pictures/${userId}.`;
-      let ext = '';
-      ext = metadata.format;
-      path += ext;
-      await image.resize(200, 200).toFile(path);
-      record.picture = `${process.env.ROOT_URL}/assets/pictures/${userId}.${metadata.format}`;
-      record.lastModified = new Date();
-      await record.save();
-      logger.info(
-        `[UserController->updatePicture] Successfully updated picture for user ${record._id.toString()}`,
-      );
-      return record;
-    }
-    throw Boom.badRequest('No file found');
-  },
-
-  async addEmail(request) {
-    const appValidationUrl = request.payload.app_validation_url;
-    const userId = request.params.id;
-
-    if (!appValidationUrl || !request.payload.email) {
-      logger.warn(
-        '[UserController->addEmail] No email or app_validation_url provided',
-      );
-      throw Boom.badRequest();
-    }
-
-    if (!HelperService.isAuthorizedUrl(appValidationUrl)) {
-      logger.warn(
-        `[UserController->addEmail] app_validation_url ${appValidationUrl} is not in authorizedDomains allowlist`,
-        { security: true, fail: true, request },
-      );
-      throw Boom.badRequest('Invalid app_validation_url');
-    }
-
-    // Make sure email added is unique
-    const erecord = await User.findOne({ 'emails.email': request.payload.email });
-    if (erecord) {
-      logger.warn(
-        `[UserController->addEmail] Email ${request.payload.email} is not unique`,
-      );
-      throw Boom.badRequest('Email is not unique');
-    }
-    const record = await User.findOne({ _id: userId });
-    if (!record) {
-      logger.warn(
         `[UserController->addEmail] User ${userId} not found`,
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.notFound();
     }
-    const { email } = request.payload;
-    if (record.emailIndex(email) !== -1) {
+
+    // Make sure the email us unique to the target user's profile. Checking just
+    // the target user first allows us to display better user feedback when the
+    // request comes internally from HID Auth interface.
+    if (user.emailIndex(emailToAdd) !== -1) {
       logger.warn(
-        `[UserController->addEmail] Email ${email} already exists`,
+        `[UserController->addEmail] Email ${emailToAdd} already belongs to ${userId}.`,
+        {
+          request,
+          fail: true,
+          user: {
+            id: userId,
+            email: user.email,
+          },
+        },
       );
       throw Boom.badRequest('Email already exists');
     }
-    if (record.emails.length === 0 && record.is_ghost) {
-      // Turn ghost into orphan and set main email address
-      record.is_ghost = false;
-      record.is_orphan = true;
-      record.email = request.payload.email;
-    }
-    const data = { email: request.payload.email, type: request.payload.type, validated: false };
-    record.emails.push(data);
-    record.lastModified = new Date();
-    const savedRecord = await record.save();
-    logger.warn(
-      `[UserController->addEmail] Successfully saved user ${record.id}`,
-    );
-    const savedEmailIndex = savedRecord.emailIndex(email);
-    const savedEmail = savedRecord.emails[savedEmailIndex];
-    // Send confirmation email
-    const promises = [];
-    const pendingLogs = [];
-    promises.push(
-      EmailService.sendValidationEmail(
-        record,
-        email,
-        savedEmail._id.toString(),
-        appValidationUrl,
-      ),
-    );
-    pendingLogs.push({
-      type: 'info',
-      message: `[UserController->addEmail] Successfully sent validation email to ${email}`,
-    });
-    for (let i = 0; i < record.emails.length; i += 1) {
-      promises.push(
-        EmailService.sendEmailAlert(record, record.emails[i].email, request.payload.email),
+
+    // Make sure email added is unique to the entire HID system.
+    const erecord = await User.findOne({ 'emails.email': emailToAdd });
+    if (erecord) {
+      logger.warn(
+        `[UserController->addEmail] Email ${emailToAdd} is not unique`,
+        {
+          request,
+          fail: true,
+          user: {
+            id: userId,
+            email: user.email,
+          },
+        },
       );
-      pendingLogs.push({
-        type: 'info',
-        message: `[UserController->addEmail] Successfully sent email alert to ${record.emails[i].email}`,
-      });
+      throw Boom.badRequest('Email is not unique');
     }
-    // promises.push(OutlookService.synchronizeUser(record));
+
+    const data = {
+      email: emailToAdd,
+      type: 'Work',
+      validated: false,
+    };
+    user.emails.push(data);
+    user.lastModified = new Date();
+
+    await user.save();
+    logger.info(
+      `[UserController->addEmail] Successfully saved user ${user.id}`,
+      {
+        request,
+        user: {
+          id: user.id,
+        },
+      },
+    );
+    const savedEmailIndex = user.emailIndex(emailToAdd);
+    const savedEmailId = user.emails[savedEmailIndex]._id.toString();
+
+    // Send confirmation email
+    await EmailService.sendValidationEmail(user, emailToAdd, savedEmailId);
+
+    // If the email sent without error, notify the other confirmed emails on
+    // this account.
+    const promises = [];
+    for (let i = 0; i < user.emails.length; i++) {
+      const thisEmail = user.emails[i];
+      if (thisEmail.validated) {
+        promises.push(EmailService.sendEmailAlert(user, thisEmail.email, emailToAdd));
+      }
+    }
+
+    // Send notifications to secondary addresses.
     await Promise.all(promises);
-    for (let i = 0; i < pendingLogs.length; i += 1) {
-      logger.log(pendingLogs[i]);
-    }
-    return record;
+
+    // Return user object.
+    return user;
   },
 
-  async dropEmail(request) {
-    const userId = request.params.id;
+  /*
+   * @api [delete] /user/{id}/emails/{email}
+   * tags:
+   *   - user
+   * summary: Remove an email address from the user's profile.
+   * parameters:
+   *   - name: id
+   *     description: A 24-character alphanumeric User ID
+   *     in: path
+   *     required: true
+   *     default: ''
+   *   - name: email
+   *     description: An email address from the user's profile.
+   *     in: path
+   *     required: true
+   *     default: ''
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: The TOTP token. Required if the user has 2FA enabled.
+   *     required: false
+   *     type: string
+   * responses:
+   *   '200':
+   *     description: The updated user object
+   *     content:
+   *       application/json:
+   *         schema:
+   *           $ref: '#/components/schemas/User'
+   *   '400':
+   *     description: Bad request. Reason will be in response body.
+   *   '401':
+   *     description: Unauthorized.
+   *   '403':
+   *     description: Requesting user lacks permission to update requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
+  async dropEmail(request, internalArgs) {
+    let userId;
+    let email;
 
-    if (!request.params.email) {
+    if (internalArgs && internalArgs.userId && internalArgs.email) {
+      userId = internalArgs.userId;
+      email = internalArgs.email;
+    } else {
+      userId = request.params.id;
+      email = request.params.email;
+    }
+
+    if (!email) {
       logger.warn(
         '[UserController->dropEmail] No email provided',
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.badRequest();
     }
@@ -1234,337 +1029,697 @@ module.exports = {
     if (!record) {
       logger.warn(
         `[UserController->dropEmail] User ${userId} not found`,
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.notFound();
     }
-    const { email } = request.params;
+
     if (email === record.email) {
       logger.warn(
         `[UserController->dropEmail] Primary email for user ${userId} can not be removed`,
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.badRequest('You can not remove the primary email');
     }
+
     const index = record.emailIndex(email);
     if (index === -1) {
       logger.warn(
         `[UserController->dropEmail] Email ${email} does not exist`,
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.badRequest('Email does not exist');
     }
     record.emails.splice(index, 1);
     record.lastModified = new Date();
-    const stillVerified = await record.canBeVerifiedAutomatically();
-    if (!stillVerified) {
-      record.verified = false;
-    }
+
     await record.save();
     logger.info(
-      `[UserController->dropEmail] User ${record.id} saved successfully`,
+      `[UserController->dropEmail] User ${userId} saved successfully`,
+      {
+        request,
+        user: {
+          id: userId,
+          email: record.email,
+        },
+      },
     );
-    // await OutlookService.synchronizeUser(record);
+
     return record;
   },
 
-  async addPhone(request) {
-    const userId = request.params.id;
-
-    const record = await User.findOne({ _id: userId });
-    if (!record) {
-      logger.warn(
-        `[UserController->addPhone] User ${userId} not found`,
-      );
-      throw Boom.notFound();
-    }
-    const data = { number: request.payload.number, type: request.payload.type };
-    record.phone_numbers.push(data);
-    record.lastModified = new Date();
-    await record.save();
-    logger.info(
-      `[UserController->addPhone] User ${userId} saved successfully`,
-    );
-    // await Promise.all([
-    //  record.save(),
-    //  OutlookService.synchronizeUser(record),
-    // ]);
-    return record;
-  },
-
-  async dropPhone(request) {
-    const userId = request.params.id;
-    const phoneId = request.params.pid;
-
-    const record = await User.findOne({ _id: userId });
-    if (!record) {
-      logger.warn(
-        `[UserController->dropPhone] User ${userId} not found`,
-      );
-      throw Boom.notFound();
-    }
-    let index = -1;
-    for (let i = 0, len = record.phone_numbers.length; i < len; i += 1) {
-      if (record.phone_numbers[i]._id.toString() === phoneId) {
-        index = i;
-      }
-    }
-    if (index === -1) {
-      logger.warn(
-        `[UserController->dropPhone] Phone number ${phoneId} not found for user ${userId}`,
-      );
-      throw Boom.notFound();
-    }
-    // Do not allow deletion of primary phone number
-    if (record.phone_numbers[index].number === record.phone_number) {
-      record.phone_number = '';
-      record.phone_number_type = '';
-    }
-    record.phone_numbers.splice(index, 1);
-    record.lastModified = new Date();
-    await record.save();
-    logger.info(
-      `[UserController->dropPhone] User ${record.id} saved successfully`,
-    );
-    // await Promise.all([
-    //  record.save(),
-    //  OutlookService.synchronizeUser(record),
-    // ]);
-    return record;
-  },
-
-  async setPrimaryPhone(request) {
-    const { phone } = request.payload;
-
-    if (!request.payload.phone) {
-      logger.warn(
-        '[UserController->setPrimaryPhone] No phone in request payload',
-      );
-      throw Boom.badRequest();
-    }
-    const record = await User.findOne({ _id: request.params.id });
-    if (!record) {
-      logger.warn(
-        `[UserController->setPrimaryPhone] User ${request.params.id} not found`,
-      );
-      throw Boom.notFound();
-    }
-    // Make sure phone is part of phone_numbers
-    let index = -1;
-    for (let i = 0, len = record.phone_numbers.length; i < len; i += 1) {
-      if (record.phone_numbers[i].number === phone) {
-        index = i;
-      }
-    }
-    if (index === -1) {
-      logger.warn(
-        `[UserController->setPrimaryPhone] Phone number ${phone} not found for user ${request.params.id}`,
-      );
-      throw Boom.badRequest('Phone does not exist');
-    }
-    record.phone_number = record.phone_numbers[index].number;
-    record.phone_number_type = record.phone_numbers[index].type;
-    record.lastModified = new Date();
-    await Promise.all([
-      record.save(),
-      GSSSyncService.synchronizeUser(record),
-      // OutlookService.synchronizeUser(record),
-    ]);
-    logger.info(
-      `[UserController->setPrimaryPhone] User ${request.params.id} saved successfully`,
-    );
-    logger.info(
-      `[UserController->setPrimaryPhone] Successfully synchronized google spreadsheets for user ${request.params.id}`,
-    );
-    return record;
-  },
-
-  async setPrimaryOrganization(request) {
-    if (!request.payload) {
-      logger.warn(
-        '[UserController->setPrimaryOrganization] Missing request payload',
-      );
-      throw Boom.badRequest('Missing listUser id');
-    }
-    if (!request.payload._id) {
-      logger.warn(
-        '[UserController->setPrimaryOrganization] Missing listUser id',
-      );
-      throw Boom.badRequest('Missing listUser id');
-    }
-
-    const user = await User.findOne({ _id: request.params.id });
+  /**
+   * @api [post] /user/emails/{email}
+   * tags:
+   *   - user
+   * summary: >-
+   *   Have HID send a confirmation email in order to validate an email address.
+   * parameters:
+   *   - name: email
+   *     description: The email address that will receive the confirmation link.
+   *     in: path
+   *     required: true
+   *     default: ''
+   * responses:
+   *   '204':
+   *     description: Request to send an email confirmation was received.
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Unauthorized.
+   * security: []
+   */
+  async sendValidationEmail(request, reply) {
+    // Confirm whether a user exists with the requested email.
+    const user = await User.findOne({ 'emails.email': request.params.email });
     if (!user) {
       logger.warn(
-        `[UserController->setPrimaryOrganization] User ${request.params.id} not found`,
+        `[UserController->sendValidationEmail] Could not find user with email ${request.params.email}`,
+        {
+          request,
+          fail: true,
+        },
+      );
+
+      // Disclosing with anything other than 204 allows an attacker to determine
+      // the existence of email addresses within the system. We continue logging
+      // the email-not-found error, but publicly respond with 204.
+      return reply.response().code(204);
+    }
+
+    // Send validation email.
+    const emailIndex = user.emailIndex(request.params.email);
+    const email = user.emails[emailIndex];
+    await EmailService.sendValidationEmail(
+      user,
+      email.email,
+      email._id.toString(),
+    );
+
+    // Report that the request was received. We don't want to reveal the outcome
+    // of the request, only that we understood it.
+    return reply.response().code(204);
+  },
+
+  /**
+   * @api [post] /user/emails/validate
+   * tags:
+   *   - user
+   * summary: >-
+   *   Confirms ownership of an email address.
+   * requestBody:
+   *   description: >-
+   *     A payload containing `id`, `time`, `hash`, and an optional `emailId`
+   *     property make up the confirmation criteria. This normally happens when
+   *     the user clicks a confirmation link in an email message, but the API
+   *     can also validate email addresses if necessary.
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
+   *           id:
+   *             type: string
+   *             required: true
+   *           time:
+   *             type: string
+   *             required: true
+   *           hash:
+   *             type: string
+   *             required: true
+   *           emailId:
+   *             type: string
+   *             required: false
+   * responses:
+   *   '204':
+   *     description: Email was validated.
+   *   '400':
+   *     description: Bad request.
+   *   '401':
+   *     description: Unauthorized.
+   *   '404':
+   *     description: Requested user account not found.
+   * security: []
+   */
+  async validateEmailAddress(request, reply) {
+    // If we don't have the required payload params, throw an error.
+    if (!request.payload || !request.payload.id || !request.payload.hash || !request.payload.time) {
+      throw Boom.badRequest();
+    }
+
+    const user = await User.findOne({ _id: request.payload.id }).catch((err) => {
+      logger.error(
+        `[UserController->validateEmailAddress] ${err.message}`,
+        {
+          request,
+          security: true,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+
+      throw Boom.internal('There is a problem querying to the database. Please try again.');
+    });
+
+    if (!user) {
+      logger.warn(
+        `[UserController->validateEmailAddress] Could not find user ${request.payload.id}`,
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.notFound();
     }
-    const checkin = user.organizations.id(request.payload._id);
-    if (!checkin) {
-      logger.warn(
-        `[UserController->setPrimaryOrganization] Organization ${request.payload._id.toString()} should be part of user organizations`,
-      );
-      throw Boom.badRequest('Organization should be part of user organizations');
+
+    // Assign the primary address as the initial value for `email`
+    //
+    // This is necessary for new account registrations, which won't have the
+    // emailId parameter sent along with their confirmation link since the new
+    // account only has a single primary email address and no secondaries.
+    let { email } = user;
+
+    // If we are verifying a secondary email on an existing account, we need
+    // to look up the emailId being confirmed in order to validate the hash.
+    if (request.payload.emailId) {
+      const emailRecord = user.emails.id(request.payload.emailId);
+      if (emailRecord) {
+        email = emailRecord.email;
+      }
     }
-    if (user.organization) {
-      user.organization.set(checkin);
+
+    // Verify hash
+    if (user.validHashEmail(request.payload.hash, request.payload.time, email) === true) {
+      // Verify user email
+      if (user.email === email) {
+        user.email_verified = true;
+        user.expires = new Date(0, 0, 1, 0, 0, 0);
+        user.emails[0].validated = true;
+        user.emails.set(0, user.emails[0]);
+        user.lastModified = new Date();
+      } else {
+        for (let i = 0, len = user.emails.length; i < len; i += 1) {
+          if (user.emails[i].email === email) {
+            user.emails[i].validated = true;
+            user.emails.set(i, user.emails[i]);
+          }
+        }
+        user.lastModified = new Date();
+      }
     } else {
-      user.organization = checkin;
+      logger.warn(
+        `[UserController->validateEmailaddress] Invalid hash ${request.payload.hash} provided`,
+        {
+          request,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('Invalid hash');
     }
+
+    await user.save().then(() => {
+      logger.info(
+        `[UserController->validateEmailAddress] Saved user ${user.id} successfully`,
+        {
+          request,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+        },
+      );
+    });
+
+    // TODO: if someone needs to re-verify an existing primary email address
+    //       we end up sending them a "welcome to HID" email due to this simple
+    //       conditional. We might want to consider a more complex conditional
+    //       to avoid that edge case.
+    //
+    // @see HID-2200
+    if (user.email === email) {
+      await EmailService.sendPostRegister(user);
+    }
+
+    return reply.response().code(204);
+  },
+
+  /**
+   * @api [post] /user/password-email
+   * tags:
+   *   - user
+   * summary: Sends a password reset email.
+   * requestBody:
+   *   description: >-
+   *     Send an email with a password recovery email.
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
+   *           email:
+   *             type: string
+   *             required: true
+   * responses:
+   *   '204':
+   *     description: >-
+   *       The request to send a password reset email was received and processed
+   *       successfully. NOTE: due to security requirements regarding disclosure
+   *       of email addresses in our system, the response does NOT guarantee the
+   *       email exists, and thus does NOT guarantee that an email was sent.
+   *   '400':
+   *     description: Bad request. See response body for details.
+   * security: []
+   */
+  async resetPasswordEmail(request, reply) {
+    // Look for required params and fail if either are missing.
+    if (!request.payload || !request.payload.email) {
+      throw Boom.badRequest('Missing email and/or reset_url parameters in request body.');
+    }
+
+    // Lookup user based on the email address. We scan the `emails` array so
+    // that secondary addresses can also receive password resets.
+    const user = await User.findOne({ 'emails.email': request.payload.email.toLowerCase() });
+
+    // No user found.
+    if (!user) {
+      logger.warn(
+        `[UserController->resetPasswordEmail] No user found with email: ${request.payload.email}`,
+        {
+          request,
+          fail: true,
+        },
+      );
+
+      // Send HTTP 204 (empty success response)
+      //
+      // We send this because disclosing the existence (or lack thereof) of an
+      // email address is considered a security hole, per OICT policy.
+      return reply.response().code(204);
+    }
+
+    // If we made it this far, we can send the password reset email.
+    await EmailService.sendResetPassword(user, request.payload.email);
+
+    // Send HTTP 204 (empty success response)
+    return reply.response().code(204);
+  },
+
+  /**
+   * @api [post] /user/password
+   * tags:
+   *   - user
+   * summary: Resets a user password.
+   * parameters:
+   *   - name: X-HID-TOTP
+   *     in: header
+   *     description: Required if the user has 2FA enabled.
+   *     required: false
+   *     type: string
+   * requestBody:
+   *   description: >-
+   *     Use a password reset link.For password complexity requirements see
+   *     `POST /user/{id}/password`
+   *   required: true
+   *   content:
+   *     application/json:
+   *       schema:
+   *         type: object
+   *         properties:
+   *           id:
+   *             type: string
+   *             required: true
+   *           time:
+   *             type: string
+   *             required: true
+   *           hash:
+   *             type: string
+   *             required: true
+   *           password:
+   *             type: string
+   *             required: true
+   *           confirm_password:
+   *             type: string
+   *             required: true
+   *           emailId:
+   *             type: string
+   *             required: false
+   * responses:
+   *   '204':
+   *     description: Password reset successfully.
+   *   '400':
+   *     description: Bad request. See response body for details.
+   * security: []
+   */
+  async resetPassword(request, reply) {
+    const cookie = request.yar.get('session');
+
+    // There are several reasons we might want to return some responses from the
+    // API, but we want to ensure the messages are identical so that an error
+    // with a sensitive nature can't be inferred from the public response.
+    const resetLinkInvalidMessage = 'Reset password link is expired or invalid';
+    const cannotResetPasswordMessage = 'Could not reset password';
+
+    // Basic requirements for resetting password. If any of these params are
+    // missing then we cannot proceed.
+    if (
+      !request.payload
+      || !request.payload.hash
+      || !request.payload.password
+      || !request.payload.confirm_password
+      || !request.payload.id
+      || !request.payload.time
+    ) {
+      logger.warn(
+        '[UserController->resetPassword] Wrong or missing arguments',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('Wrong or missing arguments');
+    }
+
+    // Look up user by ID.
+    let user = await User.findById(request.payload.id).catch((err) => {
+      logger.error(
+        `[UserController->resetPassword] ${err.message}`,
+        {
+          request,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+      throw Boom.badRequest(resetLinkInvalidMessage);
+    });
+
+    // If we can't find the User we return a generic error, but log the detailed
+    // reason internally so we can debug or provide support.
+    if (!user) {
+      logger.warn(
+        `[UserController->resetPassword] Could not reset password. User ${request.payload.id} not found`,
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest(resetLinkInvalidMessage);
+    }
+
+    // Check that whether a TOTP token is needed, and that it is valid.
+    if (user.totp && !cookie) {
+      const token = request.headers['x-hid-totp'];
+      user = await AuthPolicy.isTOTPValid(user, token);
+    }
+
+    // If an emailId parameter was present, we will use that value. However, if
+    // nothing was sent, we need to determine the ID of the user's primary email
+    // address as a default value.
+    //
+    // This default will be removed after a safe window has passed, and emailId
+    // will then be a required parameter.
+    //
+    // @see HID-2219
+    let emailIndex;
+    let emailId;
+    if (request.payload.emailId !== '') {
+      emailId = request.payload.emailId;
+    } else {
+      emailIndex = user.emailIndex(user.email);
+      emailId = user.emails[emailIndex]._id.toString();
+    }
+
+    // Verify that the hash was correct.
+    if (user.validHashPassword(request.payload.hash, request.payload.time, emailId) === false) {
+      logger.warn(
+        '[UserController->resetPassword] Reset password link is expired or invalid',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest(resetLinkInvalidMessage);
+    }
+
+    // Verify that password is strong enough.
+    if (!User.isStrongPassword(request.payload.password)) {
+      logger.warn(
+        '[UserController->resetPassword] Could not reset password. New password is not strong enough',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest(cannotResetPasswordMessage);
+    }
+
+    // Compare new password to the old one. If our comparison is TRUE, then the
+    // reset attempt should be rejected, since the passwords are the same.
+    if (user.isHistoricalPassword(request.payload.password)) {
+      logger.warn(
+        '[UserController->resetPassword] Could not reset password. New password must be different than previous passwords.',
+        {
+          request,
+          security: true,
+          fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+        },
+      );
+      throw Boom.badRequest(cannotResetPasswordMessage);
+    }
+
+    // Ensure that people submitting forms filled the two fields in identically.
+    if (request.payload.password !== request.payload.confirm_password) {
+      logger.warn(
+        '[UserController->resetPassword] Could not reset password. The two password values did not match.',
+        {
+          request,
+          security: true,
+          fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+        },
+      );
+      throw Boom.badRequest('The password and password-confirmation fields did not match.');
+    }
+
+    // Success! We will reset both the password and other PW-related metadata.
+    user.storePasswordInHistory();
+    user.password = User.hashPassword(request.payload.password);
+    user.expires = new Date(0, 0, 1, 0, 0, 0);
+    user.lastPasswordReset = new Date();
+    user.passwordResetAlert30days = false;
+    user.passwordResetAlert7days = false;
+    user.passwordResetAlert = false;
     user.lastModified = new Date();
-    await Promise.all([
-      user.save(),
-      GSSSyncService.synchronizeUser(user),
-      // OutlookService.synchronizeUser(user),
-    ]);
-    logger.info(
-      `[UserController->setPrimaryPhone] User ${request.params.id} saved successfully`,
-    );
-    logger.info(
-      `[UserController->setPrimaryPhone] Successfully synchronized google spreadsheets for user ${request.params.id}`,
-    );
-    return user;
+
+    // Update user in DB.
+    await user.save().then(() => {
+      logger.info(
+        '[UserController->resetPassword] Password updated successfully',
+        {
+          request,
+          security: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+        },
+      );
+    });
+
+    // Determine which email received the password reset from the ID, or use the
+    // primary as the default. Not using UserController.validateEmailAddress()
+    // because it has a different hash link structure than the link that the
+    // user clicked to arrive here. Our validation thus far is sufficient to
+    // prove ownership of the address.
+    //
+    // To be simplified after a safe window has passed following the deploy.
+    //
+    // @see HID-2219
+    let emailToVerify;
+    if (request.payload.emailId !== '') {
+      const emailIndexFromId = user.emailIndexFromId(request.payload.emailId);
+      emailToVerify = user.emails[emailIndexFromId].email;
+    } else {
+      emailToVerify = user.email;
+    }
+
+    // Mark the email address which received the password reset as verified.
+    user.verifyEmail(emailToVerify);
+
+    return reply.response().code(204);
   },
 
-  showAccount(request) {
-    logger.info(
-      `[UserController->showAccount] calling /account.json for ${request.auth.credentials.email}`,
-      { request },
-    );
-    const user = JSON.parse(JSON.stringify(request.auth.credentials));
-    if (request.params.currentClient && (request.params.currentClient.id === 'iasc-prod' || request.params.currentClient.id === 'iasc-dev')) {
-      user.sub = user.email;
-    }
-    if (request.params.currentClient && request.params.currentClient.id === 'dart-prod') {
-      delete user._id;
-    }
-    if (request.params.currentClient && request.params.currentClient.id === 'kaya-prod') {
-      user.name = user.name.replace(' ', '');
-    }
-    if (request.params.currentClient
-      && (request.params.currentClient.id === 'rc-shelter-database'
-        || request.params.currentClient.id === 'rc-shelter-db-2-prod'
-        || request.params.currentClient.id === 'deep-prod')) {
-      user.active = !user.deleted;
-    }
-    return user;
-  },
-
+  // HID Contacts notification-related method.
+  //
+  // TODO: remove
   async notify(request) {
     const record = await User.findOne({ _id: request.params.id });
     if (!record) {
       logger.warn(
         `[UserController->notify] User ${request.params.id} not found`,
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.notFound();
     }
-
-    const notPayload = {
-      type: 'contact_needs_update',
-      createdBy: request.auth.credentials,
-      user: record,
-    };
-    await NotificationService.send(notPayload);
-    logger.info(
-      `[UserController->notify] Successfully sent contact_needs_update notification to ${record.email}`,
-    );
 
     return record;
   },
 
-  async addConnection(request) {
-    const user = await User.findOne({ _id: request.params.id });
-    if (!user) {
-      logger.warn(
-        `[UserController->addConnection] User ${request.params.id} not found`,
-      );
-      throw Boom.notFound();
-    }
+  /*
+   * @api [delete] /user/{id}/clients/{client}
+   * tags:
+   *   - user
+   * summary: Revokes one OAuth Client from a user's profile.
+   * parameters:
+   *   - name: id
+   *     in: path
+   *     description: The user ID
+   *     required: true
+   *     type: string
+   *   - name: client
+   *     in: path
+   *     description: The OAuth Client ID
+   *     required: true
+   *     type: string
+   * responses:
+   *   '200':
+   *     description: OAuth Client revoked successfully. Returns user object.
+   *   '400':
+   *     description: Bad request. See response body for details.
+   *   '401':
+   *     description: Requesting user lacks permission to view requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
+  async revokeOauthClient(request, internalArgs) {
+    let userId;
+    let clientId;
 
-    if (!user.connections) {
-      user.connections = [];
-    }
-    if (user.connectionsIndex(request.auth.credentials._id) !== -1) {
-      logger.warn(
-        `[UserController->addConnection] User ${request.params.id} is already a connection of ${request.auth.credentials._id.toString()}`,
-      );
-      throw Boom.badRequest('User is already a connection');
-    }
-
-    user.connections.push({ pending: true, user: request.auth.credentials._id });
-    user.lastModified = new Date();
-
-    const notification = {
-      type: 'connection_request',
-      createdBy: request.auth.credentials,
-      user,
-    };
-    await Promise.all([
-      user.save(),
-      NotificationService.send(notification),
-    ]);
-    logger.info(
-      `[UserController->addConnection] User ${request.params.id} successfully saved`,
-    );
-    logger.info(
-      `[UserController->addConnection] Successfully sent connection_request notification to ${user.email}`,
-    );
-    return user;
-  },
-
-  async updateConnection(request) {
-    const user = await User.findOne({ _id: request.params.id });
-    if (!user) {
-      logger.warn(
-        `[UserController->updateConnection] User ${request.params.id} not found`,
-      );
-      throw Boom.notFound();
-    }
-    const connection = user.connections.id(request.params.cid);
-    connection.pending = false;
-    user.lastModified = new Date();
-    await user.save();
-    logger.info(
-      `[UserController->updateConnection] User ${request.params.id} saved successfully`,
-    );
-    const cuser = await User.findOne({ _id: connection.user });
-    // Create connection with current user
-    const cindex = cuser.connectionsIndex(user._id);
-    if (cindex === -1) {
-      cuser.connections.push({ pending: false, user: user._id });
+    if (internalArgs && internalArgs.userId && internalArgs.clientId) {
+      userId = internalArgs.userId;
+      clientId = internalArgs.clientId;
     } else {
-      cuser.connections[cindex].pending = false;
+      userId = request.params.id;
+      clientId = request.params.client;
     }
-    cuser.lastModified = new Date();
-    await cuser.save();
-    logger.info(
-      `[UserController->updateConnection] User ${cuser.id} saved successfully`,
-    );
-    // Send notification
-    const notification = {
-      type: 'connection_approved',
-      createdBy: user,
-      user: cuser,
-    };
-    await NotificationService.send(notification);
-    logger.info(
-      `[UserController->updateConnection] Successfully sent notification of type connection_approved to ${cuser.email}`,
-    );
-    return user;
-  },
 
-  async deleteConnection(request) {
-    const user = await User.findOne({ _id: request.params.id });
+    // Validate presence of userId param.
+    if (!userId) {
+      logger.warn(
+        '[UserController->revokeOauthClient] No userId provided',
+        {
+          request,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('No userId provided.');
+    }
+
+    // Validate presence of clientId param.
+    if (!clientId) {
+      logger.warn(
+        '[UserController->revokeOauthClient] No clientId provided',
+        {
+          request,
+          fail: true,
+          user: {
+            id: userId,
+          },
+        },
+      );
+      throw Boom.badRequest('No clientId provided.');
+    }
+
+    // Look up user from DB.
+    const user = await User.findOne({ _id: userId });
+
+    // Validate that user was found in DB.
     if (!user) {
       logger.warn(
-        `[UserController->deleteConnection] User ${request.params.id} not found`,
+        `[UserController->revokeOauthClient] No user found with id ${userId}`,
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.notFound();
     }
-    user.connections.id(request.params.cid).remove();
-    user.lastModified = new Date();
-    await user.save();
-    logger.info(
-      `[UserController->deleteConnection] User ${request.params.id} saved successfully`,
-    );
-    return user;
+
+    // Make sure this OAuth Client exists on the user profile.
+    if (!user.authorizedClients.some(client => client._id.toString() === clientId)) {
+      logger.warn(
+        '[UserController->revokeOauthClient] Requested clientId not found on user profile.',
+        {
+          request,
+          fail: true,
+          user: {
+            id: userId,
+            email: user.email,
+          },
+          oauth: {
+            id: clientId,
+          },
+        },
+      );
+      throw Boom.badRequest('Client ID not found on user profile.');
+    }
+
+    // Validation passed, user exists, client exists on user, so let's remove it.
+    try {
+      // eslint-disable-next-line max-len
+      const remainingClients = user.authorizedClients.filter(client => client._id.toString() !== clientId);
+      user.authorizedClients = remainingClients;
+      await user.save();
+
+      logger.info(
+        '[UserController->revokeOauthClient] Successfully revoked OAuth Client from user.',
+        {
+          security: true,
+          user: {
+            id: userId,
+            email: user.email,
+          },
+          oauth: {
+            id: clientId,
+          },
+        },
+      );
+
+      return user;
+    } catch (err) {
+      logger.error(
+        `[UserController->revokeOauthClient] ${err.message}`,
+        {
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+
+      throw Boom.internal('Internal server error.');
+    }
   },
 };

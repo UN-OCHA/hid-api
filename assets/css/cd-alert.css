@@ -1,0 +1,92 @@
+/* https://github.com/UN-OCHA/common_design/blob/main/components/cd-alert/cd-alert.css */
+
+.cd-alert {
+  --cd-flow-space: 0.5rem;
+
+  margin: 1rem 0 2rem;
+  padding: 1rem;
+  color: var(--cd-grey--dark);
+  border: 1px solid var(--cd-blue--bright);
+  border-radius: 0.25rem;
+  background-color: var(--cd-white);
+  box-shadow: -8px 0 0 var(--cd-blue--bright);
+}
+
+.cd-alert > div {
+  display: flex;
+  align-items: flex-start;
+}
+
+.cd-alert__title {
+  font-weight: 700;
+}
+
+.cd-alert svg {
+  flex: 0 0 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: var(--cd-blue--bright);
+}
+
+[dir="ltr"] .cd-alert svg {
+  margin-right: 1rem;
+}
+
+[dir="rtl"] .cd-alert svg {
+  margin-left: 1rem;
+}
+
+.cd-alert a,
+.cd-alert a:hover,
+.cd-alert a:focus {
+  color: inherit;
+}
+
+.cd-alert--error {
+  border: 1px solid var(--cd-red);
+  background: var(--cd-red--light);
+  box-shadow: -8px 0 0 var(--cd-red);
+}
+
+.cd-alert--error svg {
+  fill: var(--cd-red);
+}
+
+.cd-alert--warning {
+  border: 1px solid var(--cd-orange);
+  background: var(--cd-orange--light);
+  box-shadow: -8px 0 0 var(--cd-orange);
+}
+
+.cd-alert--warning svg {
+  fill: var(--cd-orange);
+}
+
+.cd-alert--status {
+  border: 1px solid var(--cd-green);
+  background: var(--cd-green--light);
+  box-shadow: -8px 0 0 var(--cd-green);
+}
+
+.cd-alert--status svg {
+  fill: var(--cd-green);
+}
+
+.cd-alert__message ul {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+.cd-alert__message p + ul,
+.cd-alert__message p {
+  margin: 0.5rem 0 0;
+}
+
+.cd-alert__message > ul {
+  margin-top: 0;
+}
+
+.cd-alert__message p:first-child {
+  margin-top: 0;
+}

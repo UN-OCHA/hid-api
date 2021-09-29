@@ -3,41 +3,53 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <base href="/">
     <title>Humanitarian ID</title>
     <meta name="description" content="Authentication page for Humanitarian ID">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="assets/css/main.css">
-    <!--[if lt IE 9]>
-        <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-        <script>window.html5 || document.write('<script src="js/vendor/html5shiv.js"><\/script>')</script>
-    <![endif]-->
+    <link rel="shortcut icon" href="/assets/img/favicon.ico" type="image/vnd.microsoft.icon">
+    <link rel="stylesheet" href="/assets/css/_normalize.css">
+    <link rel="stylesheet" href="/assets/css/_cube.css">
+    <link rel="stylesheet" href="/assets/css/cd-alert.css">
+    <link rel="stylesheet" href="/assets/css/cd-button.css">
+    <link rel="stylesheet" href="/assets/css/cd.css">
+    <link rel="stylesheet" href="/assets/css/page.css">
     <script>
       (function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
       function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
       e=o.createElement(i);r=o.getElementsByTagName(i)[0];
-      e.src='//www.google-analytics.com/analytics.js';
+      e.src='https://www.google-analytics.com/analytics.js';
       r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
       ga('create','UA-60189654-2','auto');
       ga('send','pageview');
     </script>
+    <script>
+      (function iife() {
+        // Remove no-js class from HTML
+        document.documentElement.classList.remove('no-js');
+
+        // Feature detection for CSS Grid
+        if (window.CSS && window.CSS.supports && window.CSS.supports('display','grid')) {
+          document.documentElement.classList.remove('no-cssgrid');
+          document.documentElement.classList.add('cssgrid');
+        }
+      })();
+    </script>
+    <script async defer src="/assets/js/cd-core.js"></script>
+    <script async defer nomodule src="/assets/js/css-vars-ponyfill.js"></script>
   </head>
   <body>
-    <a id="skip-to-content" href="#main" class="skip-link element-invisible element-focusable">Skip to main content</a>
-
-    <div class="cd-wrapper"><!-- intentionally unclosed! -->
+    <a href="#main-content" class="visually-hidden focusable skip-link">
+      Skip to main content
+    </a>
+    <div class="cd-layout-container"><!-- intentionally unclosed! -->
       <header class="cd-header" role="banner">
         <div class="cd-global-header">
           <div class="cd-container cd-global-header__inner">
-            <div class="cd-ocha dropdown" uib-dropdown keyboard-nav="true">
-              <button type="button" class="cd-ocha-btn cd-global-header__dropdown-btn" id="cd-ocha-dropdown-toggle" aria-expanded="false" aria-label="OCHA Services" data-toggle="dropdown" uib-dropdown-toggle>
-                <span class="cd-ocha-btn__logo" aria-hidden="true"></span>
-                <span class="cd-ocha-btn__label" translate>OCHA Services</span>
-                <svg class="icon icon--arrow-down">
-                  <use xlink:href="#arrow-down"></use>
-                </svg>
-              </button>
-              <div class="cd-global-header__dropdown cd-ocha-dropdown cd-dropdown" role="menu" id="cd-ocha-dropdown" aria-labelledby="cd-ocha-dropdown-toggle" uib-dropdown-menu>
+
+            <section id="cd-ocha-services" class="cd-ocha">
+              <h2 id="cd-ocha-services-title" translate>OCHA Services</h2>
+
+              <div class="cd-global-header__dropdown cd-ocha-dropdown cd-dropdown" id="cd-ocha-dropdown" aria-labelledby="cd-ocha-services-title" data-cd-toggable="OCHA Services" data-cd-icon="arrow-down" data-cd-logo="ocha-logo" data-cd-component="cd-ocha" data-cd-replace="cd-ocha-services-title">
                 <div class="cd-ocha-dropdown__inner">
                   <div class="cd-ocha-dropdown__section">
                     <p class="cd-ocha-dropdown__heading" translate>Related Platforms</p>
@@ -53,7 +65,7 @@
                     <ul class="cd-ocha-dropdown__list">
                       <li class="cd-ocha-dropdown__link"><a href="https://fts.unocha.org/">Financial Tracking Service</a></li>
                       <li class="cd-ocha-dropdown__link"><a href="https://data.humdata.org/">Humanitarian Data Exchange</a></li>
-                      <li class="cd-ocha-dropdown__link"><a href="https://humanitarian.id/">Humanitarian ID</a></li>
+                      <li class="cd-ocha-dropdown__link"><a href="https://auth.humanitarian.id/">Humanitarian ID</a></li>
                       <li class="cd-ocha-dropdown__link"><a href="https://humanitarianresponse.info/">Humanitarian Response</a></li>
                     </ul>
                   </div>
@@ -67,85 +79,63 @@
                     </ul>
                   </div>
                   <div class="cd-ocha-dropdown__section">
-                    <a class="cd-ocha-dropdown__see-all" href="https://www.unocha.org/ocha-digital-services" target="_blank" rel="noopener">See all</a>
+                    <a class="cd-button cd-button--light cd-button--bold cd-button--uppercase cd-ocha-dropdown__see-all" href="https://www.unocha.org/ocha-digital-services" target="_blank" rel="noopener">See all</a>
                   </div>
                 </div>
               </div>
-            </div>
-            <div class="cd-global-header__language-switcher">
-              <div class="cd-language-switcher" uib-dropdown keyboard-nav="true">
-                <span class="cd-user-menu__item cd-user-menu__item--small cd-global-header__dropdown-btn t-lang-btn" id="cd-language-toggle">en</span>
-              </div>
-            </div>
-            <div class="cd-global-header__user-menu">
-              <div uib-dropdown keyboard-nav="true">
-                <h2 class="element-invisible" translate>User menu</h2>
+            </section>
 
-                <!-- anonymous user-login link -->
-                <div ng-if="!isAuthenticated" class="content">
-                  <ul class="menu cd-global-header__dropdown-btn cd-user-menu__item" role="menu">
-                    <li class="cd-user-menu__icon-login">
-                      <a href="/" class="login-link" translate>Login</a>
+            <div class="cd-global-header__actions">
+              <div class="cd-global-header__user-menu">
+                <h2 class="element-invisible">User menu</h2>
+                <ul class="menu">
+                  <% if (locals.user) { %>
+                    <li class="cd-user-menu__icon-login cd-user-menu--profile">
+                      <ul class="menu cd-global-header__dropdown cd-user-menu__dropdown cd-dropdown" id="cd-user-dropdown" aria-label="<%= locals.user.name %>" data-cd-toggable="<%= locals.user.name %>" data-cd-hidden="true" data-cd-icon="arrow-down">
+                        <li class="menu-item">
+                          <a href="/profile" class="user-profile">Profile</a>
+                        </li>
+                        <li class="menu-item">
+                          <a href="/settings" class="user-settings">Settings</a>
+                        </li>
+                        <% if (locals.user.is_admin) { %>
+                        <li class="menu-item">
+                          <a href="/admin" class="user-admin">Admin</a>
+                        </li>
+                        <% } %>
+                        <li class="menu-item">
+                          <a href="/logout" class="user-logout">Log out</a>
+                        </li>
+                      </ul>
                     </li>
-                  </ul>
+                  <% } else { %>
+                    <!-- anonymous user-login link -->
+                    <li class="cd-user-menu__icon-login">
+                      <a href="/" class="login-link">Login</a>
+                    </li>
+                  <% } %>
+                </ul>
+              </div>
+
+              <div class="cd-global-header__language-switcher">
+                <div class="cd-language-switcher" uib-dropdown keyboard-nav="true">
+                  <span class="cd-user-menu__item cd-user-menu__item--small cd-global-header__dropdown-btn t-lang-btn" id="cd-language-toggle">en</span>
                 </div>
               </div>
+
             </div>
+
           </div>
+
         </div>
+
         <div class="cd-site-header">
           <div class="cd-container cd-site-header__inner">
             <h1>
-              <a href="/" class="cd-site-logo t-logo-link" style="background: url('/assets/img/logos/hid-logo.svg') center no-repeat; width: 256px;">
+              <a href="/" class="cd-site-logo t-logo-link">
                 <span class="element-invisible">Humanitarian ID</span>
               </a>
             </h1>
           </div>
         </div>
       </header>
-
-<script>
-(function iife() {
-  // Remove no-js class from HTML
-  document.documentElement.classList.remove('no-js');
-
-  // Feature detection for CSS Grid
-  if (window.CSS && window.CSS.supports && window.CSS.supports('display','grid')) {
-    document.documentElement.classList.remove('no-cssgrid');
-    document.documentElement.classList.add('cssgrid');
-  }
-
-  // Define OCHA Services elements
-  var ochaButton = document.querySelector('#cd-ocha-dropdown-toggle');
-  var ochaDropdown = document.querySelector('.cd-ocha');
-
-  // Listen for interaction with OCHA Services menu
-  ochaButton.addEventListener('click', function toggleDropdown() {
-    if (ochaButton.getAttribute('aria-expanded') === 'true') {
-      ochaButton.setAttribute('aria-expanded', 'false');
-      ochaDropdown.classList.remove('open');
-      ga('send', 'event', 'Auth', 'OCHA Services', 'Close');
-    } else {
-      ochaButton.setAttribute('aria-expanded', 'true');
-      ochaDropdown.classList.add('open');
-      ga('send', 'event', 'Auth', 'OCHA Services', 'Open');
-    }
-  });
-
-  // Define Login element
-  var loginLink = document.querySelector('.login-link');
-
-  // Listen for interaction with Login link
-  loginLink.addEventListener('click', function reportLoginClick(ev) {
-    // Prevent full-page refresh
-    ev.preventDefault();
-
-    // Focus on email input
-    var emailInput = document.querySelector('#email');
-    emailInput.focus();
-
-    // Log interaction in GA
-    ga('send', 'event', 'Auth', 'Login', 'Click');
-  });
-}());
-</script>

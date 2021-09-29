@@ -1,16 +1,28 @@
-const Nodemailer = require('nodemailer');
-const Email = require('email-templates');
-
-const TransporterUrl = `smtp://${process.env.SMTP_USER}:${process.env.SMTP_PASS}@${process.env.SMTP_HOST}:${process.env.SMTP_PORT}`;
-const Transporter = Nodemailer.createTransport(TransporterUrl);
-const config = require('../../config/env')[process.env.NODE_ENV];
-
-const { logger } = config;
-
 /**
  * @module EmailService
  * @description Service to send emails
  */
+const Nodemailer = require('nodemailer');
+const Email = require('email-templates');
+const config = require('../../config/env');
+
+const { logger } = config;
+const TransporterSettings = {
+  host: process.env.SMTP_HOST || 'localhost',
+  port: process.env.SMTP_PORT || 25,
+  secure: process.env.SMTP_TLS === 'true' || false,
+};
+
+// Only append `auth` property if we have both values to pass.
+if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+  TransporterSettings.auth = {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  };
+}
+
+const Transporter = Nodemailer.createTransport(TransporterSettings);
+
 function addUrlArgument(url, name, value) {
   let out = url;
   if (url.indexOf('?') !== -1) {
@@ -19,10 +31,6 @@ function addUrlArgument(url, name, value) {
     out += `?${name}=${value}`;
   }
   return out;
-}
-
-function addHash(url, hash) {
-  return addUrlArgument(url, 'hash', hash);
 }
 
 function send(options, tpl, context) {
@@ -47,10 +55,22 @@ function send(options, tpl, context) {
     message: options,
     locals: context,
   };
-  logger.info(
-    `[EmailService->send] About to send ${tpl} email to ${options.to}`,
-  );
-  return email.send(args);
+
+  return email.send(args)
+    .then(() => {
+      logger.info(
+        `[EmailService->send] Sent ${tpl} email to ${options.to}`,
+      );
+    })
+    .catch((err) => {
+      logger.warn(
+        `[EmailService->send] Failed to send ${tpl} email to ${options.to}`,
+        {
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+    });
 }
 
 module.exports = {
@@ -60,48 +80,15 @@ module.exports = {
       to: user.email,
       locale: user.locale || 'en',
     };
-    const hash = user.generateHash('verify_email', user.email);
+    const hash = user.generateHashEmail(user.email);
     let resetUrl = addUrlArgument(appVerifyUrl, 'id', user._id.toString());
     resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
-    resetUrl = addHash(resetUrl, hash.hash);
+    resetUrl = addUrlArgument(resetUrl, 'hash', hash.hash);
     const context = {
       name: user.name,
       reset_url: resetUrl,
     };
     return send(mailOptions, 'register', context);
-  },
-
-  sendRegisterOrphan(user, admin, appVerifyUrl) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale || 'en',
-    };
-    const hash = user.generateHash('reset_password');
-    let resetUrl = addUrlArgument(appVerifyUrl, 'id', user._id.toString());
-    resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
-    resetUrl = addHash(resetUrl, hash.hash);
-    const context = {
-      user,
-      admin,
-      reset_url: resetUrl,
-    };
-    return send(mailOptions, 'register_orphan', context);
-  },
-
-  sendRegisterKiosk(user, appVerifyUrl) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale || 'en',
-    };
-    const hash = user.generateHash('reset_password');
-    let resetUrl = addUrlArgument(appVerifyUrl, 'id', user._id.toString());
-    resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
-    resetUrl = addHash(resetUrl, hash.hash);
-    const context = {
-      user,
-      reset_url: resetUrl,
-    };
-    return send(mailOptions, 'register_kiosk', context);
   },
 
   sendPostRegister(user) {
@@ -111,50 +98,43 @@ module.exports = {
     };
     const context = {
       given_name: user.given_name,
-      profile_url: `${process.env.APP_URL}/users/${user._id}`,
     };
     return send(mailOptions, 'post_register', context);
   },
 
-  sendResetPassword(user, appResetUrl) {
+  sendResetPassword(user, emailToTarget) {
+    const targetEmail = emailToTarget || user.email;
     const mailOptions = {
-      to: user.email,
+      to: targetEmail,
       locale: user.locale,
     };
-    const hash = user.generateHash('reset_password');
-    let resetUrl = addUrlArgument(appResetUrl, 'id', user._id.toString());
-    resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
-    resetUrl = addHash(resetUrl, hash.hash);
+
+    // Determine our internal email ID for the email receiving the reset.
+    const emailIndex = user.emailIndex(targetEmail);
+    const emailId = user.emails[emailIndex]._id.toString();
+
+    // Prepare the password reset link args
+    const hash = user.generateHashPassword(emailId);
+    const baseUrl = `${process.env.APP_URL}/new-password`;
+
+    // Build the reset link.
+    let resetLink = addUrlArgument(baseUrl, 'id', user._id.toString());
+    resetLink = addUrlArgument(resetLink, 'time', hash.timestamp);
+    resetLink = addUrlArgument(resetLink, 'emailId', emailId);
+    resetLink = addUrlArgument(resetLink, 'hash', hash.hash);
+
+    // Email will allow user to restart process. Prep the URL.
+    const passwordUrl = `${process.env.APP_URL}/password`;
+
+    // Gather info for the email message.
     const context = {
       name: user.name,
-      reset_url: resetUrl,
-      appResetUrl,
+      resetLink,
+      passwordUrl,
     };
+
+    // Send email.
     return send(mailOptions, 'reset_password', context);
-  },
-
-  sendDecommissionForAuthUsers(user) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      name: user.name,
-    };
-    logger.info(`[EmailService->sendDecommissionForAuthUsers]`, context);
-    return send(mailOptions, 'decommission_auth', context);
-  },
-
-  sendDecommissionForProfileUsers(user) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      name: user.name,
-    };
-    logger.info(`[EmailService->sendDecommissionForProfileUsers]`, context);
-    return send(mailOptions, 'decommission_profile', context);
   },
 
   sendForcedPasswordReset(user) {
@@ -190,69 +170,31 @@ module.exports = {
     return send(mailOptions, 'forced_password_reset_alert7', context);
   },
 
-  sendClaim(user, appResetUrl) {
+  sendValidationEmail(user, emailToValidate, emailId) {
+    // Prepare data for the email.
     const mailOptions = {
-      to: user.email,
+      to: emailToValidate,
       locale: user.locale,
     };
-    const hash = user.generateHash('reset_password');
-    let resetUrl = addUrlArgument(appResetUrl, 'id', user._id.toString());
-    resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
-    resetUrl = addHash(resetUrl, hash.hash);
-    const context = {
-      name: user.name,
-      reset_url: resetUrl,
-    };
-    return send(mailOptions, 'claim', context);
-  },
 
-  sendValidationEmail(user, email, emailId, appValidationUrl) {
-    const mailOptions = {
-      to: email,
-      locale: user.locale,
-    };
-    const hash = user.generateHash('verify_email', email);
-    let resetUrl = addUrlArgument(appValidationUrl, 'id', user._id.toString());
+    // Assemble values for confirmation link.
+    const baseUrl = `${process.env.APP_URL}/verify`;
+    const hash = user.generateHashEmail(emailToValidate);
+
+    // Build confirmation link.
+    let resetUrl = addUrlArgument(baseUrl, 'id', user._id.toString());
     resetUrl = addUrlArgument(resetUrl, 'emailId', emailId);
     resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
-    resetUrl = addHash(resetUrl, hash.hash);
+    resetUrl = addUrlArgument(resetUrl, 'hash', hash.hash);
+
+    // Assemble email values.
     const context = {
       user,
       reset_url: resetUrl,
     };
+
+    // Send email
     return send(mailOptions, 'email_validation', context);
-  },
-
-  sendNotification(not) {
-    const mailOptions = {
-      to: not.user.email,
-      locale: not.user.locale,
-    };
-    return send(mailOptions, not.type, not);
-  },
-
-  sendReminderUpdate(user) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      user,
-      userUrl: `${process.env.APP_URL}/user/${user._id}`,
-    };
-    return send(mailOptions, 'reminder_update', context);
-  },
-
-  sendAuthToProfile(user, createdBy) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      user,
-      createdBy,
-    };
-    return send(mailOptions, 'auth_to_profile', context);
   },
 
   sendEmailAlert(user, emailSend, emailAdded) {
@@ -276,17 +218,6 @@ module.exports = {
       user,
     };
     return send(mailOptions, 'special_password_reset', context);
-  },
-
-  sendVerificationExpiryEmail(user) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      user,
-    };
-    return send(mailOptions, 'verification_expiry', context);
   },
 
   sendAdminDelete(user, admin) {

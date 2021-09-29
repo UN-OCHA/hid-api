@@ -4,21 +4,21 @@ services:
   db:
     image: unocha/mongo:4.0.5
     volumes:
-      - ./db:/srv/db
+      - ./db:/srv/db:rw
   dev:
-    image: unocha/nodejs:10.14.2
+    image: unocha/nodejs:14
     volumes:
-      - .:/srv/www
+      - .:/srv/www:rw
     ports:
       - 0.0.0.0:3000:3000
     environment:
       NODE_ENV: local
-      ROOT_URL: http://localhost:3000
+      ROOT_URL: http://api.hid.vm:3000
       SMTP_HOST: mailhog
       SMTP_PORT: 1025
-      SMTP_USER: 
-      SMTP_PASS:
-      APP_URL: https://app.hid.vm
+      SMTP_USER: ''
+      SMTP_PASS: ''
+      APP_URL: http://app.hid.vm
       COOKIE_PASSWORD: 6*a!_5;1:|7~+%5**WdS:^;X%PN||~:_:_R
       WKHTMLTOPDF_HOST: pdf.contactsid.vm
       WKHTMLTOPDF_PORT: 3000

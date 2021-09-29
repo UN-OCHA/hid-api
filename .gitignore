@@ -5,3 +5,6 @@ docker-compose.yml
 keys
 db
 newrelic_agent.log
+docs/hid.yml
+_tests/e2e/_env/local.js
+logs

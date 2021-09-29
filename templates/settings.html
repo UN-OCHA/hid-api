@@ -1,0 +1,78 @@
+<% include header %>
+<link rel="stylesheet" href="/assets/css/tabs.css">
+<link rel="stylesheet" href="/assets/css/settings.css">
+<link rel="stylesheet" href="/assets/css/client.css">
+
+<main role="main" id="main-content" class="cd-container">
+  <div class="cd-layout-content">
+    <h1 class="cd-page-title page-header__heading">Settings for <%= user.name %></h1>
+    <% include alert.html %>
+    <div class="tabbed">
+      <nav>
+        <li>
+          <a href="/settings" aria-selected="true">Authorized Apps</a>
+        </li>
+        <li>
+          <a href="/settings/password">Password</a>
+        </li>
+        <li>
+          <a href="/settings/security">Security</a>
+        </li>
+        <li>
+          <a href="/settings/delete">Delete Account</a>
+        </li>
+      </nav>
+
+      <section id="section-apps">
+        <h2>Authorized Apps</h2>
+        <form action="/settings/oauth-clients" method="POST" class="form--settings-oauth-clients">
+          <% if (user.authorizedClients.length === 0) { %>
+            <p><em>You haven't authorized any websites yet. After you log in with HID on one of our <a href="https://about.humanitarian.id/partners-using-our-authentication-service.html" target="_blank" rel="noopener">Partner Sites</a> you will see it listed here.</em></p>
+          <% } else { %>
+            <p>You have granted <strong><%= user.authorizedClients.length %> website<%= user.authorizedClients.length === 1 ? '' : 's' %></strong> access to your profile.</p>
+            <ul class="oauth-clients-list [ flow ]">
+            <%
+              const sorted = user.authorizedClients.sort((a, b) => a.name.localeCompare(b.name));
+              sorted.forEach(function(client) {
+            %>
+              <li class="oauth-clients-list__client client">
+                <span class="client__revoke">
+                  <button
+                    type="submit"
+                    name="oauth_client_revoke"
+                    value="<%= client._id.toString() %>"
+                    class="cd-button cd-button--danger"
+                    aria-label="Revoke <%= client.name %>"
+                    data-client-name="<%= client.name %>"
+                  >Revoke</button>
+                </span>
+                <span class="client__info">
+                  <span class="client__name"><%= client.name %></span>
+                  <span class="client__meta">
+                    <% if (!!client.environment && client.environment.toLowerCase().indexOf('prod') === -1) { %>
+                      <span class="client__environment"><strong><%= client.environment %></strong> environment. </span>
+                    <% } %>
+                    <% if (!!client.organization) { %>
+                      <span class="client__organization">Managed by <strong><%= client.organization %></strong></span>
+                    <% } %>
+                    <% if (!!client.organization && !!client.urlDisplay) { %> — <% } %>
+                    <% if (!!client.urlDisplay && !!client.urlHref) { %>
+                      <a href="<%= client.urlHref %>" class="client__url"><%= client.urlDisplay %></a>
+                    <% } %>
+                  </span>
+                </span>
+              </li>
+            <% }); %>
+          </ul>
+          <% } %>
+        </form>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script src="/assets/js/tabs.js"></script>
+<script src="/assets/js/confirmation.js"></script>
+<script src="/assets/js/settings.js"></script>
+
+<% include footer %>

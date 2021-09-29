@@ -1,5 +1,11 @@
+/**
+* @module HelperService
+* @description General Helper Service
+*/
+
 const crypto = require('crypto');
 const _ = require('lodash');
+const { allowedDomains } = require('../../config/env');
 
 const queryOptions = [
   'populate',
@@ -8,40 +14,6 @@ const queryOptions = [
   'sort',
   'fields',
 ];
-const authorizedDomains = [
-  // Production
-  'https://humanitarian.id',
-  'https://api.humanitarian.id',
-  'https://auth.humanitarian.id',
-
-  // Dev
-  'https://app.dev.humanitarian.id',
-  'https://api.dev.humanitarian.id',
-  'https://auth.dev.humanitarian.id',
-  'https://dev.humanitarian-id.ahconu.org',
-  'https://dev.api-humanitarian-id.ahconu.org',
-  'https://dev.auth-humanitarian-id.ahconu.org',
-
-  // Staging
-  'https://app.staging.humanitarian.id',
-  'https://api.staging.humanitarian.id',
-  'https://auth.staging.humanitarian.id',
-  'https://stage.humanitarian-id.ahconu.org',
-  'https://stage.api-humanitarian-id.ahconu.org',
-  'https://stage.auth-humanitarian-id.ahconu.org',
-
-  // Local
-  'https://app.hid.vm',
-  'https://api.hid.vm',
-  'http://app.hid.vm',
-  'http://api.hid.vm',
-  'http://v3.hid.vm',
-];
-
-/**
-* @module HelperService
-* @description General Helper Service
-*/
 
 function getSchemaAttributes(modelName, variableName, attributeName) {
   const output = [];
@@ -155,8 +127,8 @@ module.exports = {
 
   isAuthorizedUrl(url) {
     let out = false;
-    for (let i = 0; i < authorizedDomains.length; i += 1) {
-      if (url.indexOf(authorizedDomains[i]) === 0) {
+    for (let i = 0; i < allowedDomains.length; i++) {
+      if (url.indexOf(allowedDomains[i]) === 0) {
         out = true;
       }
     }
@@ -164,7 +136,6 @@ module.exports = {
   },
 
   saveTOTPDevice(request, auser) {
-    // this.app.log.debug('Saving device as trusted');
     const user = auser;
     const random = user.generateHash();
     const tindex = user.trustedDeviceIndex(request.headers['user-agent']);

@@ -1,52 +1,30 @@
-const Boom = require('@hapi/boom');
-const User = require('../models/User');
-const config = require('../../config/env')[process.env.NODE_ENV];
-
-const { logger } = config;
-
 /**
 * @module UserPolicy
 * @description User Policy
 */
-async function canUpdate(request) {
-  if (!request.auth.credentials.is_admin
-    && !request.auth.credentials.isManager
-    && request.auth.credentials.id !== request.params.id) {
-    logger.warn(
-      `[UserPolicy->canUpdate] User ${request.auth.credentials.id} can not update user ${request.params.id}`,
-    );
-    throw Boom.forbidden('You need to be an admin or a manager or the current user');
-  } else {
-    if (request.auth.credentials.isManager
-      && request.auth.credentials.id !== request.params.id) {
-      // If the user is a manager, make sure he is not trying to edit
-      // an admin account.
-      const user = await User.findById(request.params.id);
-      if (!user) {
-        logger.warn(
-          `[UserPolicy->canUpdate] User ${request.params.id} not found`,
-        );
-        throw Boom.notFound();
-      }
-      if (user.is_admin) {
-        logger.warn(
-          `[UserPolicy->canUpdate] User ${request.params.id} is an admin and can not be edited by another user`,
-        );
-        throw Boom.forbidden('You are not authorized to edit an admin account');
-      }
-    }
-    return true;
-  }
-}
+const Boom = require('@hapi/boom');
+const User = require('../models/User');
+const config = require('../../config/env');
+
+const { logger } = config;
 
 module.exports = {
-
   canCreate(request) {
     if (!request.auth.credentials) {
-      if (!request.payload.email) {
+      if (!request.payload) {
+        logger.warn(
+          '[UserPolicy->canCreate] No request payload provided for user creation',
+          { request: request.payload, fail: true },
+        );
+        throw Boom.badRequest('Missing request payload');
+      } else if (!request.payload.email) {
+        // Strip out sensitive fields before logging
+        delete request.payload.password;
+        delete request.payload.confirm_password;
+
         logger.warn(
           '[UserPolicy->canCreate] No email address provided for user creation',
-          { request: request.payload },
+          { request: request.payload, fail: true },
         );
         throw Boom.badRequest('You need to register with an email address');
       }
@@ -58,8 +36,6 @@ module.exports = {
     }
     return true;
   },
-
-  canUpdate,
 
   async canDestroy(request) {
     if (request.auth.credentials.is_admin
@@ -79,5 +55,51 @@ module.exports = {
     throw Boom.unauthorized('You are not allowed to do this operation');
   },
 
-  canClaim: canUpdate,
+  async canUpdate(request) {
+    // If the acting user is an admin
+    //   OR any user is targeting themselves
+    // THEN are allowed to update the target user.
+    if (request.auth.credentials.is_admin || request.auth.credentials.id === request.params.id) {
+      return true;
+    }
+
+    // Log that this user had insufficient permissions.
+    logger.warn(
+      `[UserPolicy->canUpdate] User ${request.auth.credentials.id} can not update user ${request.params.id}`,
+      {
+        request,
+        security: true,
+        fail: true,
+        user: {
+          id: request.auth.credentials.id,
+          email: request.auth.credentials.email,
+        },
+      },
+    );
+    throw Boom.forbidden();
+  },
+
+  async canFind(request) {
+    // If the acting user is an admin
+    //   OR any user is targeting themselves
+    // THEN are allowed to view the target user.
+    if (request.auth.credentials.is_admin || request.auth.credentials.id === request.params.id) {
+      return true;
+    }
+
+    // Log that this user had insufficient permissions.
+    logger.warn(
+      `[UserPolicy->canFind] User ${request.auth.credentials.id} can not view other users`,
+      {
+        request,
+        security: true,
+        fail: true,
+        user: {
+          id: request.auth.credentials.id,
+          email: request.auth.credentials.email,
+        },
+      },
+    );
+    throw Boom.forbidden();
+  },
 };

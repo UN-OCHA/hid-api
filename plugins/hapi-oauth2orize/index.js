@@ -1,3 +1,11 @@
+/**
+ * hapi-oauth2orize
+ *
+ * Plugin to bridge between hapi (our server framework) and oauth2orize, which
+ * is intended to run as Express middleware.
+ *
+ * It seems to be inspired by https://github.com/oneblink/hapi-oauth2orize
+ */
 const Oauth2orize = require('oauth2orize');
 const Boom = require('@hapi/boom');
 const Hoek = require('@hapi/hoek');
@@ -8,17 +16,23 @@ const internals = {
   defaults: {
     credentialsUserProperty: 'user',
   },
+
   OauthServer: null,
+
   settings: null,
+
   grant(type, phase, fn) {
     internals.OauthServer.grant(type, phase, fn);
   },
+
   exchange(type, exchange) {
     internals.OauthServer.exchange(type, exchange);
   },
+
   errorHandler(options) {
     return internals.OauthServer.errorHandler(options);
   },
+
   async authorize(request, reply, options, validate, immediate) {
     const express = internals.convertToExpress(request, reply);
     const authorizeAsync = util.promisify(
@@ -28,6 +42,7 @@ const internals = {
     await authorizeAsync(express.req, express.res);
     return [express.req, express.res];
   },
+
   async decision(request, reply, aoptions, parse) {
     const express = internals.convertToExpress(request, reply);
 
@@ -44,17 +59,21 @@ const internals = {
     const response = await middlewareAsync(express.req, express.res);
     return response;
   },
+
   serializeClient(fn) {
     internals.OauthServer.serializeClient(fn);
   },
+
   deserializeClient(fn) {
     internals.OauthServer.deserializeClient(fn);
   },
+
   token(request, reply, options) {
     const express = internals.convertToExpress(request, reply);
     const tokenAsync = util.promisify(internals.OauthServer.token(options));
     return tokenAsync(express.req, express.res);
   },
+
   transformBoomError(aboomE, authE) {
     const boomE = aboomE;
     if (!boomE.isBoom) {
@@ -82,6 +101,7 @@ const internals = {
 
     return boomE;
   },
+
   oauthToBoom(oauthError) {
     // These little bits of code are stolen from oauth2orize
     // to translate raw Token/AuthorizationErrors to OAuth2 style errors
@@ -101,6 +121,7 @@ const internals = {
 
     return newResponse;
   },
+
   convertToExpress(request, reply) {
     request.yar.lazy(true);
 
@@ -188,7 +209,7 @@ module.exports = {
   version: '1.0.0',
   register(server, options) {
     // Need session support for transaction in authorization code grant
-    server.dependency('yar');
+    server.dependency('@hapi/yar');
 
     internals.settings = Hoek.applyToDefaults(internals.defaults, options);
 

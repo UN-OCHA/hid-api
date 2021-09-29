@@ -1,67 +1,62 @@
 <% include header %>
 
-<script src='https://www.google.com/recaptcha/api.js'></script>
-<script type="text/javascript">
-  function checkPassword(str)
-  {
-    var re = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
-    return re.test(str);
-  }
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
-  function checkForm(form)
-  {
-    if(form.password.value != "" && form.password.value == form.confirm_password.value) {
-      if(!checkPassword(form.password.value)) {
-        alert("The password you have entered is not valid ! Make sure it has at least 8 characters with one number, one lowercase and one uppercase character.");
-        form.password.focus();
-        return false;
-      }
-    } else {
-      alert("Please check that you've entered and confirmed your password !");
-      form.password.focus();
-      return false;
-    }
-    return true;
-  }
-</script>
+<div class="api-page">
+  <main role="main" id="main-content" class="cd-container">
+    <div class="cd-layout-content [ flow ]">
+      <h1 class="cd-page-title page-header__heading">Register a Humanitarian ID account</h1>
 
-<div class="container api-page">
-  <div class="row">
-    <div class="col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
-      <div class="page-header">
-        <h1 class="page-header__heading">Register in Humanitarian ID</h1>
-        <p class="form-field">Sign up for a Humanitarian ID account. Doing so will give you access to Humanitarian ID as well as a growing number of <a href="https://about.humanitarian.id/partners-using-our-authentication-service" target="_blank">related humanitarian community sites</a>.</p>
-      </div>
-      <form name="register" action="/register" method="POST" onsubmit="return checkForm(this)">
+      <% include alert.html %>
+
+      <form id="passwordForm" name="register" action="/register" method="POST" class="[ flow ]">
         <div class="form-field">
           <label for="email" translate>Email</label>
-          <input type="email" name="email" id="email" placeholder="Your email address" required>
+          <input type="email" name="email" id="email" value="<%= formEmail %>" placeholder="you@example.com" required>
         </div>
         <div class="form-field">
           <label for="given_name">First Name</label>
-          <input type="text" name="given_name" id="given_name" placeholder="Your first name" required>
+          <input type="text" name="given_name" id="given_name" value="<%= formGivenName %>" placeholder="Your first name" required>
         </div>
         <div class="form-field">
           <label for="family_name">Last Name</label>
-          <input type="text" name="family_name" id="family_name" placeholder="Your last name" required>
+          <input type="text" name="family_name" id="family_name" value="<%= formFamilyName %>" placeholder="Your last name" required>
         </div>
         <div class="form-field">
-          <p class="help-block">Passwords must be at least <strong>8 characters</strong> long, contain at least
-          <strong>one number</strong>, one <strong>uppercase character</strong> and one
-          <strong>lowercase character</strong>.</p>
           <label for="password">Password</label>
-          <input type="password" name="password" id="password" placeholder="" required>
+          <input
+            type="password"
+            name="password"
+            id="password"
+            autocomplete="off"
+            required
+            minlength="12"
+            pattern="<% include includes/password-regex.html %>"
+            title="See password requirements below.">
         </div>
         <div class="form-field">
-          <label for="confirm_password">Password (confirm)</label>
-          <input type="password" name="confirm_password" id="confirm_password" placeholder="" required>
+          <label for="confirm_password">Confirm password</label>
+          <input
+            type="password"
+            name="confirm_password"
+            id="confirm_password"
+            autocomplete="off"
+            required
+            minlength="12"
+            pattern="<% include includes/password-regex.html %>"
+            title="See password requirements below.">
+        </div>
+        <div class="form-field">
+          <% include includes/password-requirements.html %>
         </div>
         <div class="g-recaptcha" data-sitekey="<%= recaptcha_site_key %>"></div>
         <input type="hidden" name="crumb" value="<%= crumb %>" />
         <input type="hidden" name="app_verify_url" value="<%= requestUrl %>" />
-        <button type="submit" class="btn-primary">Register</button>
+        <button type="submit" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase">Register</button>
       </form>
     </div>
-  </div>
+  </main>
 </div>
+
+<script src="/assets/js/passwords.js"></script>
 <% include footer %>

@@ -1,0 +1,8 @@
+/**
+ * User settings: OAuth clients list
+ */
+.oauth-clients-list {
+  margin: 0;
+  padding: 0;
+  --flow-space: 2rem;
+}
