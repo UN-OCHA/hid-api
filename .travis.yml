@@ -5,6 +5,11 @@ node_js:
 services:
   - mongodb
 
+before_install:
+  - apt-get update
+  - apt-get install -y python3 python3-pip build-essential cracklib-runtime python3-dev
+  - npm install
+
 script:
   - npm run lint
 
