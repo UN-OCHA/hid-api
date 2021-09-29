@@ -48,7 +48,7 @@ module.exports = {
 
     try {
       const cert = fs.readFileSync('keys/sign.rsa.pub');
-      success = rsa2jwk(cert, { use: 'sig', kid: 'hid-v3' }, 'public');
+      success = rsa2jwk(cert, { use: 'sig', kid: `hid-v3-${process.env.NODE_ENV}` }, 'public');
 
       // If we loaded the key but sig was not verified, throw an error.
       if (!success) {
@@ -60,7 +60,7 @@ module.exports = {
       //
       // @see https://humanitarian.atlassian.net/browse/HID-2027
       const legacy = fs.readFileSync('keys/hid.rsa.pub');
-      success = rsa2jwk(legacy, { use: 'sig', kid: 'hid-v3' }, 'public');
+      success = rsa2jwk(legacy, { use: 'sig', kid: 'hid-dev' }, 'public');
     }
 
     return success;
