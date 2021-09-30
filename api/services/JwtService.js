@@ -54,11 +54,25 @@ module.exports = {
   },
 
   public2jwk() {
-    let success = false;
+    // Hold all keys in this array and return it at the end.
+    const jsonWebKeys = [];
 
     try {
+      // Legacy key
+      const legacyCert = fs.readFileSync('keys/hid.rsa.pub');
+      jsonWebKeys.push(rsa2jwk(legacyCert, {
+        use: 'sig',
+        kid: 'hid-dev',
+        alg: 'RS256',
+      }, 'public'));
+
+      // 2021 key
       const cert = fs.readFileSync('keys/sign.rsa.pub');
-      success = rsa2jwk(cert, { use: 'sig', kid: `hid-v3-${process.env.NODE_ENV}` }, 'public');
+      jsonWebKeys.push(rsa2jwk(cert, {
+        use: 'sig',
+        kid: `hid-2021-${process.env.NODE_ENV}`,
+        alg: 'RS256',
+      }, 'public'));
     } catch (err) {
       logger.error(
         `[JwtService->public2jwk] ${err.message}`,
@@ -69,7 +83,7 @@ module.exports = {
       );
     }
 
-    return success;
+    return jsonWebKeys;
   },
 
   generateIdToken(client, user, scope, nonce) {

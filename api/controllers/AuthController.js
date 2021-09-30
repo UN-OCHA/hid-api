@@ -1003,14 +1003,14 @@ module.exports = {
   },
 
   jwks() {
-    const key = JwtService.public2jwk();
-    key.alg = 'RS256';
-    const out = {
-      keys: [
-        key,
-      ],
+    const jwks = JwtService.public2jwk();
+
+    // Wrap the array in the required JSON structure.
+    const output = {
+      keys: jwks,
     };
-    return out;
+
+    return output;
   },
 
   /*
