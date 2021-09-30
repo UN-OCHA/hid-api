@@ -5,6 +5,11 @@ node_js:
 services:
   - mongodb
 
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y cracklib-runtime python3-dev libcrack2-dev
+  - npm install
+
 script:
   - npm run lint
 
