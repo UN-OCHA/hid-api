@@ -1002,15 +1002,37 @@ module.exports = {
     return output;
   },
 
-  jwks() {
-    const jwks = JwtService.public2jwk();
+  jwks(request) {
+    try {
+      const jwks = JwtService.public2jwk();
 
-    // Wrap the array in the required JSON structure.
-    const output = {
-      keys: jwks,
-    };
+      // Wrap the array in the required JSON structure.
+      const output = {
+        keys: jwks,
+      };
 
-    return output;
+      logger.info(
+        '[AuthController->jwks] Displaying JWKs',
+        {
+          request,
+          security: true,
+        },
+      );
+
+      return output;
+    } catch (err) {
+      logger.error(
+        `[AuthController->jwks] ${err.message}`,
+        {
+          request,
+          security: true,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+
+      return Boom.badImplementation();
+    }
   },
 
   /*
