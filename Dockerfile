@@ -1,7 +1,7 @@
 FROM public.ecr.aws/unocha/nodejs:14-alpine
 WORKDIR /srv/www
 
-COPY . .
+COPY . . 
 
 RUN cp run_node /etc/services.d/node/run && \
     apk add cracklib && \
