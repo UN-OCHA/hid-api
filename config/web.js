@@ -124,10 +124,6 @@ module.exports = {
             '/verify',
             '/password',
             '/new-password',
-
-            // TODO: remove post-deploy
-            // @see HID-2219
-            '/new_password',
           ];
           if (paths.indexOf(request.path) === -1) {
             return true;
