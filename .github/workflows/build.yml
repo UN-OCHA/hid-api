@@ -50,3 +50,5 @@ jobs:
         with:
           push: true
           tags: public.ecr.aws/unocha/hid-api:${{ steps.tag_info.outputs.IMAGE_TAG }}
+          secrets: |
+            "github_token=${{ secrets.ECR_GITHUB_TOKEN }}"
