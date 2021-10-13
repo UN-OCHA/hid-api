@@ -1534,21 +1534,6 @@ module.exports = {
     user.passwordResetAlert = false;
     user.lastModified = new Date();
 
-    // Update user in DB.
-    await user.save().then(() => {
-      logger.info(
-        '[UserController->resetPassword] Password updated successfully',
-        {
-          request,
-          security: true,
-          user: {
-            id: user.id,
-            email: user.email,
-          },
-        },
-      );
-    });
-
     // Determine which email received the password reset from the ID, or use the
     // primary as the default. Not using UserController.validateEmailAddress()
     // because it has a different hash link structure than the link that the
@@ -1568,6 +1553,21 @@ module.exports = {
 
     // Mark the email address which received the password reset as verified.
     user.verifyEmail(emailToVerify);
+
+    // Update user in DB.
+    await user.save().then(() => {
+      logger.info(
+        '[UserController->resetPassword] Password updated successfully',
+        {
+          request,
+          security: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+        },
+      );
+    });
 
     return reply.response().code(204);
   },
