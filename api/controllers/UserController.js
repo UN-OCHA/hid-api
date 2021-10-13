@@ -1307,14 +1307,16 @@ module.exports = {
       throw Boom.badRequest('Missing email and/or reset_url parameters in request body.');
     }
 
+    const emailToTarget = request.payload.email.toLowerCase();
+
     // Lookup user based on the email address. We scan the `emails` array so
     // that secondary addresses can also receive password resets.
-    const user = await User.findOne({ 'emails.email': request.payload.email.toLowerCase() });
+    const user = await User.findOne({ 'emails.email': emailToTarget });
 
     // No user found.
     if (!user) {
       logger.warn(
-        `[UserController->resetPasswordEmail] No user found with email: ${request.payload.email}`,
+        `[UserController->resetPasswordEmail] No user found with email: ${emailToTarget}`,
         {
           request,
           fail: true,
@@ -1329,7 +1331,7 @@ module.exports = {
     }
 
     // If we made it this far, we can send the password reset email.
-    await EmailService.sendResetPassword(user, request.payload.email);
+    await EmailService.sendResetPassword(user, emailToTarget);
 
     // Send HTTP 204 (empty success response)
     return reply.response().code(204);
