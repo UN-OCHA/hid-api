@@ -1,6 +1,7 @@
 <% include header %>
 <link rel="stylesheet" href="/assets/css/cd-grid.css">
 <link rel="stylesheet" href="/assets/css/login.css">
+<link rel="stylesheet" href="/assets/css/password-toggle.css">
 
 <main role="main" id="main-content" class="cd-container page--login">
   <div class="cd-layout-content">
@@ -16,6 +17,9 @@
           <div class="form-field">
             <label for="password"><span translate>Password</span></label>
             <input type="password" name="password" id="password" placeholder="Your password" required class="t-login-password">
+            <button type="button" class="password__viz-toggle viz-toggle viz-toggle--see">
+              <span class="visually-hidden">Toggle password visibility</span>
+            </button>
           </div>
           <input type="hidden" name="redirect" value="<%= query.redirect %>" />
           <input type="hidden" name="client_id" value="<%= query.client_id %>" />
@@ -44,4 +48,5 @@
   </div>
 </main>
 
+<script src="/assets/js/password-toggle.js"></script>
 <% include footer %>
