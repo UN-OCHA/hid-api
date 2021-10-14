@@ -160,7 +160,11 @@ a:focus {
  * Forms
  */
 
-.form-field {}
+.form-field {
+  /* some widgets position themselves relative to each form item */
+  position: relative;
+  max-width: 52ch;
+}
 
 .form-field > * {
   display: block;
@@ -197,7 +201,6 @@ textarea {
   color: #4a5568;
   color: rgba(74, 85, 104, var(--text-opacity));
   line-height: 1.25;
-  max-width: 50ch;
 }
 
 input:focus {

@@ -1,4 +1,5 @@
 <% include header %>
+<link rel="stylesheet" href="/assets/css/password-toggle.css">
 
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
@@ -33,6 +34,9 @@
             minlength="12"
             pattern="<% include includes/password-regex.html %>"
             title="See password requirements below.">
+          <button type="button" class="password__viz-toggle viz-toggle viz-toggle--see">
+            <span class="visually-hidden">Toggle password visibility</span>
+          </button>
         </div>
         <div class="form-field">
           <label for="confirm_password">Confirm password</label>
@@ -45,6 +49,9 @@
             minlength="12"
             pattern="<% include includes/password-regex.html %>"
             title="See password requirements below.">
+          <button type="button" class="password__viz-toggle viz-toggle viz-toggle--see">
+            <span class="visually-hidden">Toggle password visibility</span>
+          </button>
         </div>
         <div class="form-field">
           <% include includes/password-requirements.html %>
@@ -59,4 +66,5 @@
 </div>
 
 <script src="/assets/js/passwords.js"></script>
+<script src="/assets/js/password-toggle.js"></script>
 <% include footer %>
