@@ -520,7 +520,7 @@ module.exports = {
     });
 
     // Display the password reset form.
-    return reply.view('new_password', {
+    return reply.view('new-password', {
       query: request.query,
       hash: request.query.hash,
       id: request.query.id,
@@ -546,7 +546,7 @@ module.exports = {
         cookie.totp = true;
         request.yar.set('session', cookie);
 
-        return reply.view('new_password', {
+        return reply.view('new-password', {
           query: request.payload,
           hash: cookie.hash,
           id: cookie.id,
@@ -638,7 +638,7 @@ module.exports = {
           });
         }
 
-        const requestUrl = _buildRequestUrl(request, 'new_password');
+        const requestUrl = _buildRequestUrl(request, 'new-password');
         return reply.view('password', {
           alert: {
             type: 'error',

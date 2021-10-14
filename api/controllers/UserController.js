@@ -1307,14 +1307,16 @@ module.exports = {
       throw Boom.badRequest('Missing email and/or reset_url parameters in request body.');
     }
 
+    const emailToTarget = request.payload.email.toLowerCase();
+
     // Lookup user based on the email address. We scan the `emails` array so
     // that secondary addresses can also receive password resets.
-    const user = await User.findOne({ 'emails.email': request.payload.email.toLowerCase() });
+    const user = await User.findOne({ 'emails.email': emailToTarget });
 
     // No user found.
     if (!user) {
       logger.warn(
-        `[UserController->resetPasswordEmail] No user found with email: ${request.payload.email}`,
+        `[UserController->resetPasswordEmail] No user found with email: ${emailToTarget}`,
         {
           request,
           fail: true,
@@ -1329,7 +1331,7 @@ module.exports = {
     }
 
     // If we made it this far, we can send the password reset email.
-    await EmailService.sendResetPassword(user, request.payload.email);
+    await EmailService.sendResetPassword(user, emailToTarget);
 
     // Send HTTP 204 (empty success response)
     return reply.response().code(204);
@@ -1532,21 +1534,6 @@ module.exports = {
     user.passwordResetAlert = false;
     user.lastModified = new Date();
 
-    // Update user in DB.
-    await user.save().then(() => {
-      logger.info(
-        '[UserController->resetPassword] Password updated successfully',
-        {
-          request,
-          security: true,
-          user: {
-            id: user.id,
-            email: user.email,
-          },
-        },
-      );
-    });
-
     // Determine which email received the password reset from the ID, or use the
     // primary as the default. Not using UserController.validateEmailAddress()
     // because it has a different hash link structure than the link that the
@@ -1566,6 +1553,21 @@ module.exports = {
 
     // Mark the email address which received the password reset as verified.
     user.verifyEmail(emailToVerify);
+
+    // Update user in DB.
+    await user.save().then(() => {
+      logger.info(
+        '[UserController->resetPassword] Password updated successfully',
+        {
+          request,
+          security: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+        },
+      );
+    });
 
     return reply.response().code(204);
   },
