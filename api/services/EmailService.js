@@ -137,39 +137,6 @@ module.exports = {
     return send(mailOptions, 'reset_password', context);
   },
 
-  sendForcedPasswordReset(user) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      user,
-    };
-    return send(mailOptions, 'forced_password_reset', context);
-  },
-
-  sendForcedPasswordResetAlert(user) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      user,
-    };
-    return send(mailOptions, 'forced_password_reset_alert', context);
-  },
-
-  sendForcedPasswordResetAlert7(user) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      user,
-    };
-    return send(mailOptions, 'forced_password_reset_alert7', context);
-  },
-
   sendValidationEmail(user, emailToValidate, emailId) {
     // Prepare data for the email.
     const mailOptions = {
