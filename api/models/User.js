@@ -738,15 +738,6 @@ UserSchema.methods = {
     return index;
   },
 
-  isPasswordExpired() {
-    const lastPasswordReset = this.lastPasswordReset.valueOf();
-    const current = new Date().valueOf();
-    if (current - lastPasswordReset > 6 * 30 * 24 * 3600 * 1000) {
-      return true;
-    }
-    return false;
-  },
-
   toJSON() {
     const user = this.toObject();
     delete user.password;

@@ -96,21 +96,6 @@ async function loginHelper(request) {
     );
     throw Boom.unauthorized('Please verify your email address');
   }
-  if (user.isPasswordExpired()) {
-    logger.warn(
-      '[AuthController->loginHelper] Unsuccessful login attempt due to expired password',
-      {
-        request,
-        security: true,
-        fail: true,
-        user: {
-          id: user.id,
-          email,
-        },
-      },
-    );
-    throw Boom.unauthorized('password is expired');
-  }
 
   if (!user.validPassword(password)) {
     logger.warn(
@@ -435,10 +420,7 @@ module.exports = {
         passwordLink += `?${params}`;
       }
 
-      let alertMessage = 'We could not log you in. The username or password you have entered are incorrect. Kindly try again.';
-      if (err.message === 'password is expired') {
-        alertMessage = 'We could not log you in because your password is expired. Following UN regulations, as a security measure passwords must be updated every six months. Kindly reset your password by clicking on the "Forgot/Reset password" link below.';
-      }
+      const alertMessage = 'We could not log you in. The username or password you have entered are incorrect. Kindly try again.';
 
       // Display login form to user.
       return reply.view('login', {
