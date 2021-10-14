@@ -648,6 +648,8 @@ module.exports = {
     user.storePasswordInHistory();
     user.password = User.hashPassword(newPassword);
     user.lastModified = new Date();
+    user.lastPasswordReset = new Date();
+
     await user.save().catch((err) => {
       logger.error(
         `[UserController->updatePassword] ${err.message}`,
