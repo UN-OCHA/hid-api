@@ -1527,9 +1527,6 @@ module.exports = {
     user.password = User.hashPassword(request.payload.password);
     user.expires = new Date(0, 0, 1, 0, 0, 0);
     user.lastPasswordReset = new Date();
-    user.passwordResetAlert30days = false;
-    user.passwordResetAlert7days = false;
-    user.passwordResetAlert = false;
     user.lastModified = new Date();
 
     // Update user in DB.

@@ -180,27 +180,6 @@ const UserSchema = new Schema({
     default: Date.now,
   },
 
-  // Whether the user received a 30-day password reset alert.
-  passwordResetAlert30days: {
-    type: Boolean,
-    default: false,
-    readonly: true,
-  },
-
-  // Whether the user received a 7-day password reset alert.
-  passwordResetAlert7days: {
-    type: Boolean,
-    default: false,
-    readonly: true,
-  },
-
-  // Whether the user received an alert that their password has expired.
-  passwordResetAlert: {
-    type: Boolean,
-    default: false,
-    readonly: true,
-  },
-
   // HID Contacts "bio" field
   //
   // TODO: remove
