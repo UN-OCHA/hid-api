@@ -648,6 +648,8 @@ module.exports = {
     user.storePasswordInHistory();
     user.password = User.hashPassword(newPassword);
     user.lastModified = new Date();
+    user.lastPasswordReset = new Date();
+
     await user.save().catch((err) => {
       logger.error(
         `[UserController->updatePassword] ${err.message}`,
@@ -1529,9 +1531,6 @@ module.exports = {
     user.password = User.hashPassword(request.payload.password);
     user.expires = new Date(0, 0, 1, 0, 0, 0);
     user.lastPasswordReset = new Date();
-    user.passwordResetAlert30days = false;
-    user.passwordResetAlert7days = false;
-    user.passwordResetAlert = false;
     user.lastModified = new Date();
 
     // Determine which email received the password reset from the ID, or use the
