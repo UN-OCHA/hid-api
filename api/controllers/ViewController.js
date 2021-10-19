@@ -338,7 +338,12 @@ module.exports = {
   },
 
   async verify(request, reply) {
+    // The user might be logged in. Read their browser session.
     const cookie = request.yar.get('session');
+
+    // If they aren't logged in, we'll still be showing them an alert and we
+    // need a blank object so we can store the alert between page loads.
+    const newSession = {};
 
     // Template variables.
     const registerLink = _getRegisterLink(request.query);
@@ -374,14 +379,26 @@ module.exports = {
 
       // Now, redirect to homepage with cookied alert, to avoid resubmissions
       // if the user refreshes their browser.
-      cookie.alert = {
+      newSession.alert = {
         type: 'status',
         message: 'Thank you for confirming your account. You can now log in',
       };
-      request.yar.set('session', cookie);
+      request.yar.set('session', newSession);
+
       return reply.redirect('/');
     } catch (err) {
-      return reply.view('login', {
+      // Log our error.
+      logger.error(
+        `[ViewController->verify] ${err.message}`,
+        {
+          request,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+
+      // Display nicely-formatted error to user.
+      return reply.view('error', {
         alert: {
           type: 'error',
           message: `
