@@ -1,3 +1,37 @@
+# Contributing Guidelines
+
+Conventions to follow during regular development.
+
+## Commit messages
+
+As of `v4.0.0` we are using [standard-version](https://github.com/conventional-changelog/standard-version#standard-version) to generate a `CHANGELOG.md` for each release. This automation is only possible if our commits follow the [Conventional Commits 1.0.0 specification](https://www.conventionalcommits.org/en/v1.0.0/).
+
+Here are a few brief examples:
+
+```sh
+#
+# All examples assume you're on version 4.0.0 when creating the example commit.
+#
+
+# a normal bugfix
+# Outcome: new patch version (4.0.1)
+git cm -m "fix: remove typo from password reset error message"
+
+# a new feature that relates to "auth"
+# Outcome: new minor version (4.1.0)
+git cm -m "feat(auth): allow new scope 'photo' when fetching account.json"
+
+# a bugfix that creates a breaking change
+# Outcome: new major version (5.0.0)
+git cm -m "fix!: remove legacy special-cases from account.json
+
+Refs: HID-XXXX
+BREAKING CHANGE: we had some special cases which reformatted fundamental 
+properties based on the client requesting the user's data. Our logs show this 
+is no longer in use so we're dropping the special cases to enforce consistency"
+
+```
+
 # Installation / Setup
 
 The best way to set up HID is by using the HID stack repo and following instructions there.
