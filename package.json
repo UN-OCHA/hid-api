@@ -68,7 +68,7 @@
     "acorn": "^5.7.4",
     "diff": ">=3.5.0",
     "dot-prop": ">=4.2.1",
-    "eslint": "^5.16.0",
+    "eslint": "^7.32.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-config-standard": "^12.0.0",
     "eslint-plugin-import": "^2.16.0",
