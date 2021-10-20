@@ -5,6 +5,7 @@ const inert = require('@hapi/inert');
 const ejs = require('ejs');
 const vision = require('@hapi/vision');
 const yar = require('@hapi/yar');
+const CatboxRedis = require('@hapi/catbox-redis');
 const crumb = require('@hapi/crumb');
 const Scooter = require('@hapi/scooter');
 const Blankie = require('blankie');
@@ -34,6 +35,51 @@ module.exports = {
     path: 'templates',
   },
 
+  // Server options.
+  options: {
+    info: {
+      // We always want access to request.info.remoteAddress in hapi@19+
+      //
+      // @see https://github.com/hapijs/hapi/issues/4017
+      remote: true,
+    },
+
+    routes: {
+      cors: {
+        additionalExposedHeaders: ['X-Total-Count', 'set-cookie'],
+        additionalHeaders: ['Accept-Language', 'X-HID-TOTP'],
+        credentials: true, // Allow the x-hid-totp-trust cookie to be sent
+      },
+      payload: {
+        maxBytes: 5242880,
+      },
+      security: {
+        xframe: true,
+      },
+    },
+
+    cache: [
+      // HID cannot be highly available unless server-side cookie storage is
+      // driven by a shared backend between API containers. We are using
+      // Redis because it's already in OCHA infra, and the MongoDB provider
+      // is unmaintained.
+      {
+        name: 'session',
+        provider: {
+          constructor: CatboxRedis,
+          options: {
+            partition: 'session',
+            host: process.env.REDIS_HOST || 'redis',
+            port: process.env.REDIS_PORT || 6379,
+            db: process.env.REDIS_DB || '0',
+          },
+        },
+      },
+    ],
+  },
+
+  // Plugins.
+  // They provide vital behaviors: template rendering, CSP, cookie config, etc
   plugins: [
     {
       plugin: inert,
@@ -45,8 +91,17 @@ module.exports = {
       plugin: yar,
       options: {
         cache: {
-          expiresIn: 4 * 60 * 60 * 1000, // 4-hour sessions
+          // Adopt our server-side cache defined in top-level `options`.
+          cache: 'session',
+
+          // 1-week sessions
+          expiresIn: 7 * 24 * 60 * 60 * 1000,
         },
+
+        // Force use of backend storage.
+        maxCookieSize: 0,
+
+        // Configure how cookies behave in browsers.
         cookieOptions: {
           password: process.env.COOKIE_PASSWORD,
           isSecure: process.env.NODE_ENV === 'production',
@@ -69,10 +124,6 @@ module.exports = {
             '/verify',
             '/password',
             '/new-password',
-
-            // TODO: remove post-deploy
-            // @see HID-2219
-            '/new_password',
           ];
           if (paths.indexOf(request.path) === -1) {
             return true;
@@ -259,27 +310,5 @@ module.exports = {
         return done(err);
       }
     });
-  },
-
-  options: {
-    info: {
-      // We always want access to request.info.remoteAddress in hapi@19+
-      //
-      // @see https://github.com/hapijs/hapi/issues/4017
-      remote: true,
-    },
-    routes: {
-      cors: {
-        additionalExposedHeaders: ['X-Total-Count', 'set-cookie'],
-        additionalHeaders: ['Accept-Language', 'X-HID-TOTP'],
-        credentials: true, // Allow the x-hid-totp-trust cookie to be sent
-      },
-      payload: {
-        maxBytes: 5242880,
-      },
-      security: {
-        xframe: true,
-      },
-    },
   },
 };

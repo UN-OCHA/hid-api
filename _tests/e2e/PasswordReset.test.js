@@ -86,7 +86,7 @@ describe('PasswordReset [no-ci]', () => {
   });
 
   it('immediately shows an error when password reset link is invalid', async () => {
-    // In this case we want the SAME link as the firs time, to verify that it
+    // In this case we want the SAME link as the first time, to verify that it
     // can't be reused.
     const message = await utils.openMailhogMessage(page);
 

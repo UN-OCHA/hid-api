@@ -3,6 +3,7 @@
  * @description Controller for Authentication, both into HID and OAuth sites.
  */
 const Boom = require('@hapi/boom');
+const Hoek = require('@hapi/hoek');
 const Client = require('../models/Client');
 const Flood = require('../models/Flood');
 const JwtToken = require('../models/JwtToken');
@@ -94,21 +95,6 @@ async function loginHelper(request) {
       },
     );
     throw Boom.unauthorized('Please verify your email address');
-  }
-  if (user.isPasswordExpired()) {
-    logger.warn(
-      '[AuthController->loginHelper] Unsuccessful login attempt due to expired password',
-      {
-        request,
-        security: true,
-        fail: true,
-        user: {
-          id: user.id,
-          email,
-        },
-      },
-    );
-    throw Boom.unauthorized('password is expired');
   }
 
   if (!user.validPassword(password)) {
@@ -266,10 +252,16 @@ module.exports = {
    * another website.
    */
   async login(request, reply) {
-    // Grab cookie
+    // Get user session.
     const cookie = request.yar.get('session');
 
-    // It looks like TOTP is needed for this user.
+    // If the user has a User ID set, and passed the optional 2FA challenge,
+    // they can be redirected immediately.
+    if (cookie && cookie.userId && cookie.totp === true) {
+      return loginRedirect(request, reply);
+    }
+
+    // The User ID is set, but it looks like 2FA is required.
     if (cookie && cookie.userId && cookie.totp === false) {
       try {
         // Prevent form spamming by counting submissions and locking accounts
@@ -320,8 +312,10 @@ module.exports = {
           throw err;
         }
 
-        // If we got here, the user passed TOTP.
+        // If we got here, the user passed TOTP. We need to destroy the session
+        // they used to authenticate, and begin a new session with a fresh ID.
         cookie.totp = true;
+        request.yar.reset();
         request.yar.set('session', cookie);
 
         // If save device was checked, avoid TOTP prompts for 30 days.
@@ -364,19 +358,20 @@ module.exports = {
       }
     }
 
-    // If the user has submitted the TOTP prompt, redirect.
-    if (cookie && cookie.userId && cookie.totp === true) {
-      return loginRedirect(request, reply);
-    }
-
+    // Arriving here means the user does NOT have 2FA enabled. We will set their
+    // TOTP flag to true when defining the session.
     try {
       const result = await loginHelper(request);
       if (!result.totp) {
         // Store user login time.
         result.auth_time = new Date();
         await result.save();
+
+        // The user is now logged in. We destroy their old session and create a
+        // fresh session ID for their logged-in activity.
+        request.yar.reset();
         request.yar.set('session', {
-          userId: result._id,
+          userId: result.id,
           totp: true,
         });
         return loginRedirect(request, reply);
@@ -391,7 +386,7 @@ module.exports = {
 
         // Set cookie.
         request.yar.set('session', {
-          userId: result._id,
+          userId: result.id,
           totp: true,
         });
 
@@ -401,7 +396,7 @@ module.exports = {
 
       // Set cookie
       request.yar.set('session', {
-        userId: result._id,
+        userId: result.id,
         totp: false,
       });
 
@@ -425,10 +420,7 @@ module.exports = {
         passwordLink += `?${params}`;
       }
 
-      let alertMessage = 'We could not log you in. The username or password you have entered are incorrect. Kindly try again.';
-      if (err.message === 'password is expired') {
-        alertMessage = 'We could not log you in because your password is expired. Following UN regulations, as a security measure passwords must be updated every six months. Kindly reset your password by clicking on the "Forgot/Reset password" link below.';
-      }
+      const alertMessage = 'We could not log you in. The username or password you have entered are incorrect. Kindly try again.';
 
       // Display login form to user.
       return reply.view('login', {
@@ -471,6 +463,7 @@ module.exports = {
     try {
       const oauth = request.server.plugins['hapi-oauth2orize'];
       const prompt = request.query.prompt ? request.query.prompt : '';
+      const redirectUrl = `${request.query.redirect_uri}?state=${request.query.state}&scope=${request.query.scope}&nonce=${request.query.nonce}`;
 
       // Check response_type
       if (!request.query.response_type) {
@@ -486,13 +479,7 @@ module.exports = {
           },
         );
 
-        return reply.redirect(
-          `${request.query.redirect_uri
-          }?error=invalid_request&state=${request.query.state
-          }&scope=${request.query.scope
-          }&nonce=${request.query.nonce
-          }`,
-        );
+        return reply.redirect(`${redirectUrl}&error=invalid_request`);
       }
 
       // If the user is not authenticated, redirect to the login page and preserve
@@ -501,14 +488,9 @@ module.exports = {
       if (!cookie || (cookie && !cookie.userId) || (cookie && !cookie.totp) || prompt === 'login') {
         // If user is not logged in and prompt is set to none, throw an error message.
         if (prompt === 'none') {
-          return reply.redirect(
-            `${request.query.redirect_uri
-            }?error=login_required&state=${request.query.state
-            }&scope=${request.query.scope
-            }&nonce=${request.query.nonce
-            }`,
-          );
+          return reply.redirect(`${redirectUrl}&error=login_required`);
         }
+
         logger.info(
           '[AuthController->authorizeDialogOauth2] Get request to /oauth/authorize without session. Redirecting to the login page.',
           {
@@ -638,13 +620,7 @@ module.exports = {
 
       // If prompt === none, redirect immediately.
       if (prompt === 'none') {
-        return reply.redirect(
-          `${request.query.redirect_uri
-          }?error=interaction_required&state=${request.query.state
-          }&scope=${request.query.scope
-          }&nonce=${request.query.nonce
-          }`,
-        );
+        return reply.redirect(`${redirectUrl}&error=interaction_required`);
       }
 
       // The user has not confirmed authorization, so display the authorization
@@ -975,7 +951,8 @@ module.exports = {
    */
   showAccount(request) {
     // Full user object from DB.
-    const user = JSON.parse(JSON.stringify(request.auth.credentials));
+    const user = Hoek.clone(request.auth.credentials);
+    const client = Hoek.clone(request.auth.artifacts);
 
     // This will be what we send back as a response.
     const output = {
@@ -989,39 +966,19 @@ module.exports = {
 
     // Log the request
     logger.info(
-      `[AuthController->showAccount] calling /account.json for ${request.auth.credentials.email}`,
+      `[AuthController->showAccount] calling /account.json for ${user.email}`,
       {
         request,
         user: {
-          id: request.auth.credentials.id,
-          email: request.auth.credentials.email,
-          admin: request.auth.credentials.is_admin,
+          id: user.id,
+          email: user.email,
+          admin: user.is_admin,
         },
         oauth: {
-          client_id: request.params.currentClient && request.params.currentClient.id,
+          client_id: client && client.id,
         },
       },
     );
-
-    // Special cases for legacy compat.
-    //
-    // @TODO: in testing this, it seems that the `currentClient` param is not
-    //        present when this function runs. Investigate whether we need these
-    //        special cases at all.
-    //
-    //        @see https://humanitarian.atlassian.net/browse/HID-2192
-    if (request.params.currentClient && (request.params.currentClient.id === 'iasc-prod' || request.params.currentClient.id === 'iasc-dev')) {
-      output.sub = user.email;
-    }
-    if (request.params.currentClient && request.params.currentClient.id === 'kaya-prod') {
-      output.name = user.name.replace(' ', '');
-    }
-    if (request.params.currentClient
-      && (request.params.currentClient.id === 'rc-shelter-database'
-        || request.params.currentClient.id === 'rc-shelter-db-2-prod'
-        || request.params.currentClient.id === 'deep-prod')) {
-      output.active = !user.deleted;
-    }
 
     // Send response
     return output;

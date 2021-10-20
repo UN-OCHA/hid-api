@@ -153,17 +153,6 @@ module.exports = {
     throw Boom.forbidden('You need to be an admin');
   },
 
-  isAdminOrGlobalManager(request) {
-    if (!request.auth.credentials.is_admin && !request.auth.credentials.isManager) {
-      logger.warn(
-        `[AuthPolicy->isAdminOrGlobalManager] User ${request.auth.credentials.id} is neither an admin nor a global manager`,
-        { security: true, fail: true, request },
-      );
-      throw Boom.forbidden('You need to be an admin or a global manager');
-    }
-    return true;
-  },
-
   /**
    * When a user is logged into HID Auth, check their permissions for admin.
    *

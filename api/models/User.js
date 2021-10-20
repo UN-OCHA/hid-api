@@ -1,13 +1,15 @@
+/* eslint prefer-arrow-callback: "off", func-names: "off" */
 /**
 * @module User
 * @description User
 */
 
+const Hoek = require('@hapi/hoek');
 const mongoose = require('mongoose');
+const validate = require('mongoose-validator');
 const Bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const isHTML = require('is-html');
-const validate = require('mongoose-validator');
 
 const { Schema } = mongoose;
 const populateClients = [
@@ -55,15 +57,22 @@ const trustedDeviceSchema = new Schema({
 
 const UserSchema = new Schema({
   // Legacy user_id data, to be added during migration
+  //
+  // TODO: remove
   user_id: {
     type: String,
     readonly: true,
   },
+
   // Legacy ID data, added during the migration
+  //
+  // TODO: remove
   legacyId: {
     type: String,
     readonly: true,
   },
+
+  // Given/first name.
   given_name: {
     type: String,
     trim: true,
@@ -73,6 +82,10 @@ const UserSchema = new Schema({
     },
     required: [true, 'Given name is required'],
   },
+
+  // Middle name
+  //
+  // TODO: remove.
   middle_name: {
     type: String,
     trim: true,
@@ -81,6 +94,8 @@ const UserSchema = new Schema({
       message: 'HTML code is not allowed in middle_name',
     },
   },
+
+  // Family/last name.
   family_name: {
     type: String,
     trim: true,
@@ -90,6 +105,8 @@ const UserSchema = new Schema({
     },
     required: [true, 'Family name is required'],
   },
+
+  // Full name.
   name: {
     type: String,
     validate: {
@@ -97,6 +114,8 @@ const UserSchema = new Schema({
       message: 'HTML code is not allowed in name',
     },
   },
+
+  // Primary email address.
   email: {
     type: String,
     lowercase: true,
@@ -109,56 +128,61 @@ const UserSchema = new Schema({
       message: 'email should be a valid email',
     }),
   },
+
+  // Whether the user has proven ownership of the email address by activating a
+  // confirmation link sent to the address.
   email_verified: {
     type: Boolean,
     default: false,
     readonly: true,
   },
+
   // Last time the user was reminded to verify his account
   remindedVerify: {
     type: Date,
     readonly: true,
   },
+
   // How many times the user was reminded to verify his account
   timesRemindedVerify: {
     type: Number,
     default: 0,
     readonly: true,
   },
+
   // Last time the user was reminded to update his account details
   remindedUpdate: {
     type: Date,
     readonly: true,
   },
-  // TODO: mark this as readonly after HID-1499 is fixed
+
+  // Recovery emails.
   emails: {
     type: [emailSchema],
-    // readonly: true
   },
+
+  // Hash of the current user password.
   password: {
     type: String,
   },
-  // Last time the user reset his password
+
+  // When a password gets updated, we store up to 5 old password hashes to meet
+  // UN-OICT requirements. The user may not re-use a password until four others
+  // have been set.
+  oldPasswords: {
+    type: Array,
+  },
+
+  // Last time the user reset their password
   lastPasswordReset: {
     type: Date,
     readonly: true,
     default: Date.now,
   },
-  passwordResetAlert30days: {
-    type: Boolean,
-    default: false,
-    readonly: true,
-  },
-  passwordResetAlert7days: {
-    type: Boolean,
-    default: false,
-    readonly: true,
-  },
-  passwordResetAlert: {
-    type: Boolean,
-    default: false,
-    readonly: true,
-  },
+
+  // HID Contacts "bio" field
+  //
+  // TODO: remove
   notes: {
     type: String,
     validate: {
@@ -166,7 +190,10 @@ const UserSchema = new Schema({
       message: 'HTML code is not allowed in notes',
     },
   },
-  // TODO: validate timezone
+
+  // HID Contacts timezone field
+  //
+  // TODO: remove
   zoneinfo: {
     type: String,
     validate: {
@@ -174,11 +201,19 @@ const UserSchema = new Schema({
       message: 'HTML code is not allowed in zoneinfo',
     },
   },
+
+  // HID Contacts language preference
+  //
+  // TODO: remove
   locale: {
     type: String,
     enum: ['en', 'fr', 'es', 'ar'],
     default: 'en',
   },
+
+  // HID Contacts "Job Title" field
+  //
+  // TODO: remove
   job_title: {
     type: String,
     validate: {
@@ -186,6 +221,10 @@ const UserSchema = new Schema({
       message: 'HTML code is not allowed in job_title',
     },
   },
+
+  // HID Contacts secondary "Job Title" fields
+  //
+  // TODO: remove
   job_titles: {
     type: Array,
     validate: {
@@ -203,66 +242,97 @@ const UserSchema = new Schema({
       message: 'HTML in job titles is not allowed',
     },
   },
-  // Only an admin can set this
+
+  // Flag to indicate whether a user is an HID admin.
   is_admin: {
     type: Boolean,
     default: false,
     adminOnly: true,
   },
+
+  // HID Contacts legacy Manager role
+  //
+  // TODO: remove
   isManager: {
     type: Boolean,
     default: false,
     adminOnly: true,
   },
+
   expires: {
     type: Date,
     default: () => Date.now() + 7 * 24 * 60 * 60 * 1000,
     readonly: true,
   },
+
+  // HID Contacts metadata
+  //
+  // TODO: remove
   lastLogin: {
     type: Date,
     readonly: true,
   },
+
   createdBy: {
     type: Schema.ObjectId,
     ref: 'User',
     readonly: true,
   },
+
   authorizedClients: [{
     type: Schema.ObjectId,
     ref: 'Client',
   }],
+
+  // HID Contacts: internal flag indicating user was deleted.
+  //
+  // TODO: remove
   deleted: {
     type: Boolean,
     default: false,
   },
+
+  // HID Contacts: internal flag to hide a user.
+  //
+  // TODO: remove
   hidden: {
     type: Boolean,
     default: false,
     adminOnly: true,
   },
+
   // Whether the user uses TOTP for security
   totp: {
     type: Boolean,
     default: false,
   },
+
+  // TOTP config that for some reason lives outside totpConf...
   totpMethod: {
     type: String,
     enum: ['app'],
   },
+
+  // TOTP config
   totpConf: {
     type: Schema.Types.Mixed,
     readonly: true,
   },
+
+  // 2FA users can mark a browser as trusted for 30 days
   totpTrusted: {
     type: [trustedDeviceSchema],
     readonly: true,
   },
+
+  // Timestamp noting when user was last modified.
   lastModified: {
     type: Date,
     default: Date.now,
     readonly: true,
   },
+
+  // Time of last login to HID itself. No relation to OAuth logins.
   auth_time: {
     type: Date,
     readonly: true,
@@ -281,7 +351,6 @@ const UserSchema = new Schema({
 // Index name with collation en_US
 UserSchema.index({ name: 1 }, { collation: { locale: 'en_US' } });
 
-/* eslint prefer-arrow-callback: "off", func-names: "off" */
 UserSchema.virtual('sub').get(function () {
   return this._id;
 });
@@ -336,18 +405,21 @@ UserSchema.statics = {
     }
   },
 
-  // Password Requirements
-  //
-  // As of 2020 we follow the most strict guidelines in order to avoid the OICT
-  // requirement that we expire weak passwords after 6 months.
-  //
-  // - At least 12 characters total
-  // - At least one number
-  // - At least one lowercase letter
-  // - At least one uppercase letter
-  // - At least one special character: !@#$%^&*()+=\`{}
+  /**
+   * Password strength
+   *
+   * This represents 2021 OICT guidance on strong passwords in order to avoid
+   * the requirement that we expire weak passwords after 6 months.
+   *
+   * - At least 12 characters total
+   * - At least one number
+   * - At least one lowercase letter
+   * - At least one uppercase letter
+   * - At least one special character: !@#$%^&*()+=\`{}[]:";'< >?,./
+   */
   isStrongPassword(password) {
-    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()+=\\`{}]).+$/;
+    // eslint-disable-next-line no-useless-escape
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()+=\\`{}[\]:";'< >?,.\/-]).+$/;
     return password.length >= 12 && regex.test(password);
   },
 
@@ -387,11 +459,60 @@ UserSchema.methods = {
     }
   },
 
-  validPassword(password) {
+  /**
+   * Compares a string to current password hash.
+   *
+   * @return {boolean}
+   */
+  validPassword(passwordToCompare) {
+    // If no password is set, we do not want to return a false positive, so we
+    // preemptively return false.
     if (!this.password) {
       return false;
     }
-    return Bcrypt.compareSync(password, this.password);
+
+    // Compare to current password.
+    return Bcrypt.compareSync(passwordToCompare, this.password);
+  },
+
+  /**
+   * Compares a string to historical/current password hashes.
+   *
+   * @return {boolean}
+   */
+  isHistoricalPassword(passwordToCompare) {
+    // If no password is set, we do not want to return a false positive, so we
+    // preemptively return false.
+    if (!this.password) {
+      return false;
+    }
+
+    // Compare to historical password hashes.
+    //
+    // `map` compares each stored hash to the new password.
+    // `some` returns TRUE if it finds any TRUE value in the array.
+    const oldPasswords = Hoek.clone(this.oldPasswords);
+    const hasHistoricalMatches = oldPasswords
+      .map(old => Bcrypt.compareSync(passwordToCompare, old))
+      .some(isTrue => isTrue);
+
+    // If historical matches are found return true, or compare to the current
+    // password hash.
+    return hasHistoricalMatches || Bcrypt.compareSync(passwordToCompare, this.password);
+  },
+
+  /**
+   * Copies the current password hash to the oldPasswords array.
+   */
+  storePasswordInHistory() {
+    // Store the current password hash in the oldPasswords array.
+    const oldPasswords = this.oldPasswords || [];
+    oldPasswords.push(this.password);
+
+    // Do not keep more than five old hashes.
+    while (oldPasswords.length > 5) {
+      oldPasswords.shift();
+    }
   },
 
   generateHashPassword(emailId) {
@@ -482,7 +603,7 @@ UserSchema.methods = {
   emailIndex(email) {
     let index = -1;
     for (let i = 0, len = this.emails.length; i < len; i++) {
-      if (this.emails[i].email === email) {
+      if (this.emails[i].email === email.toLowerCase()) {
         index = i;
       }
     }
@@ -617,27 +738,26 @@ UserSchema.methods = {
     return index;
   },
 
-  isPasswordExpired() {
-    const lastPasswordReset = this.lastPasswordReset.valueOf();
-    const current = new Date().valueOf();
-    if (current - lastPasswordReset > 6 * 30 * 24 * 3600 * 1000) {
-      return true;
-    }
-    return false;
-  },
-
   toJSON() {
     const user = this.toObject();
     delete user.password;
+
+    if (user.oldPasswords) {
+      delete user.oldPasswords;
+    }
+
     if (user.totpConf) {
       delete user.totpConf;
     }
+
     if (user.totpTrusted) {
       for (let i = 0; i < user.totpTrusted.length; i += 1) {
         delete user.totpTrusted[i].secret;
       }
     }
+
     user.sub = user._id.toString();
+
     return user;
   },
 };
