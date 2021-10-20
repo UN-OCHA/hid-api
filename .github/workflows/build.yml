@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - dev
-      - main
-      - master
       - OPS-*
       - HID-*
   release:
