@@ -28,7 +28,7 @@ module.exports = {
     const whichMessage = typeof which === 'number' ? which : 1;
 
     // Mailhog is here when you set up via hid-stack
-    await page.goto('http://localhost:8025');
+    await page.goto(env.mailhogUrl);
     // We always want the first message in Mailhog.
     await page.click(`.messages > *:nth-child(${whichMessage})`);
     // Target this message's iframe in Mailhog.
@@ -41,7 +41,7 @@ module.exports = {
   //
   async clearMailhog(page, expect) {
     // Mailhog is here when you set up via hid-stack
-    await page.goto('http://localhost:8025');
+    await page.goto(env.mailhogUrl);
 
     // Delete all Mailhog messages.
     await page.click('a[ng-click="deleteAll()"]');
