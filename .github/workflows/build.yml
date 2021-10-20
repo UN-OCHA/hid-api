@@ -4,9 +4,7 @@ on:
   push:
     branches:
       - dev
-      - main
-      - master
-      - ops-7908
+      - OPS-*
       - HID-*
   release:
     types: [published]
