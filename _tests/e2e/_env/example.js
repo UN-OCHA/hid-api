@@ -1,5 +1,6 @@
 module.exports = {
   baseUrl: 'http://hid.test',
+  mailhogUrl: 'http://localhost:8025',
 
   // Users/data
   testUserId: '',

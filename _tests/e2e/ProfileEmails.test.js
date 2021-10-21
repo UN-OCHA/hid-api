@@ -51,7 +51,7 @@ describe('ProfileEmails', () => {
     expect(await page.content()).toContain(`A confirmation email has been sent to ${randomEmail}`);
   });
 
-  it('allows user to confirm email address via confirmation link', async () => {
+  it('allows user to confirm email address via confirmation link [no-ci]', async () => {
     const message = await utils.openMailhogMessage(page, 3);
 
     // Grab the email confirmation URL and visit it.
@@ -63,7 +63,7 @@ describe('ProfileEmails', () => {
     expect(await page.content()).toContain('Thank you for confirming your email address.');
   });
 
-  it('successfully cleaned up Mailhog', async () => {
+  it('successfully cleaned up Mailhog [no-ci]', async () => {
     await utils.clearMailhog(page, expect);
   });
 });
