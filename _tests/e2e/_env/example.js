@@ -8,6 +8,7 @@ module.exports = {
   testUserNameFamily: 'E2E User',
   testUserEmail: 'user@example.com',
   testUserEmailRecovery: 'recovery@example.com',
+  testUserEmailRecoveryUnconfirmed: 'unconfirmed@example.com',
   testUserPassword: '123456789aA!',
 
   // HID Admin

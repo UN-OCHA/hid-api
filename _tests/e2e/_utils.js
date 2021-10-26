@@ -5,7 +5,7 @@ import env from './_env';
  */
 module.exports = {
   //
-  // Login to HID Auth.
+  // Log in to HID Auth.
   //
   async login(page) {
     await page.goto(env.baseUrl);
@@ -20,6 +20,16 @@ module.exports = {
 
     await page.click('.t-btn--login');
     await page.waitForSelector('.t-page--dashboard');
+  },
+
+  //
+  // Log out of HID Auth.
+  //
+  async logout(page) {
+    await Promise.all([
+      page.waitForNavigation(),
+      page.goto(`${env.baseUrl}/logout`),
+    ]);
   },
 
   //

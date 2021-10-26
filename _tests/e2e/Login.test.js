@@ -48,7 +48,7 @@ describe('Login', () => {
   });
 
   it('rejects logins from unconfirmed recovery email addresses', async () => {
-    await page.type('#email', 'unconfirmed@example.com');
+    await page.type('#email', env.testUserEmailRecoveryUnconfirmed);
     const password = await page.$('#password');
     await password.click({ clickCount: 3 });
     await password.type(env.testUserPassword);
@@ -61,7 +61,23 @@ describe('Login', () => {
     expect(await page.content()).toContain('We could not log you in.');
   });
 
+  it('accepts logins from confirmed recovery email addresses', async () => {
+    await page.type('#email', env.testUserEmailRecovery);
+    const password = await page.$('#password');
+    await password.click({ clickCount: 3 });
+    await password.type(env.testUserPassword);
+    await Promise.all([
+      page.waitForNavigation(),
+      page.click('.t-btn--login'),
+    ]);
+
+    expect(await page.url()).toContain('/user');
+    expect(await page.content()).toContain(env.testUserNameGiven);
+    expect(await page.content()).toContain(env.testUserNameFamily);
+  });
+
   it('allows user to log in when credentials are valid', async () => {
+    await utils.logout(page);
     await utils.login(page);
 
     expect(await page.url()).toContain('/user');
