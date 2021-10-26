@@ -51,12 +51,15 @@ async function loginHelper(request) {
   const offset = 5 * 60 * 1000;
   const d5minutes = new Date(now - offset);
 
-  const [number, user] = await Promise.all([
+  // Query DB for flood count and User profile which owns email address.
+  const [floodCount, user] = await Promise.all([
     Flood.countDocuments({ type: 'login', email, createdAt: { $gte: d5minutes.toISOString() } }),
     User.findOne({ 'emails.email': email }),
   ]);
 
-  if (number >= 5) {
+  // If the flood count is too high, disable further attempts until the timer
+  // gets reset.
+  if (floodCount >= 5) {
     logger.warn(
       '[AuthController->loginHelper] Account locked for 5 minutes',
       {
