@@ -45,8 +45,8 @@ async function loginHelper(request) {
     return cuser;
   }
 
-  // If there has been 5 failed login attempts in the last 5 minutes, return
-  // unauthorized.
+  // Set up flood count: if there has been 5 failed login attempts in the last
+  // five minutes, prevent authorization.
   const now = Date.now();
   const offset = 5 * 60 * 1000;
   const d5minutes = new Date(now - offset);
@@ -73,6 +73,8 @@ async function loginHelper(request) {
     );
     throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
   }
+
+  // Was the user found?
   if (!user) {
     logger.warn(
       '[AuthController->loginHelper] Unsuccessful login attempt due to invalid email address',
@@ -105,6 +107,7 @@ async function loginHelper(request) {
     throw Boom.unauthorized('Please verify your email address');
   }
 
+  // Check that the password is valid.
   if (!user.validPassword(password)) {
     logger.warn(
       '[AuthController->loginHelper] Unsuccessful login attempt due to invalid password',
@@ -118,6 +121,7 @@ async function loginHelper(request) {
         },
       },
     );
+
     // Create a flood entry
     await Flood.create({ type: 'login', email, user });
     throw Boom.unauthorized('invalid email or password');
