@@ -2,7 +2,7 @@ module.exports = {
   baseUrl: 'http://hid.test',
   mailhogUrl: 'http://localhost:8025',
 
-  // Users/data
+  // Standard HID user.
   testUserId: '',
   testUserNameGiven: 'Test',
   testUserNameFamily: 'E2E User',
@@ -10,6 +10,7 @@ module.exports = {
   testUserEmailRecovery: 'recovery@example.com',
   testUserPassword: '123456789aA!',
 
+  // HID Admin
   testAdminUserId: '',
   testAdminUserNameGiven: 'Admin',
   testAdminUserNameFamily: 'E2E User',
