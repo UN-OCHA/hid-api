@@ -37,7 +37,6 @@ describe('Login', () => {
 
   it('allows user to log in when credentials are valid', async () => {
     await utils.login(page);
-    await page.waitForSelector('.t-page--dashboard');
 
     expect(await page.url()).toContain('/user');
     expect(await page.content()).toContain(env.testUserNameGiven);

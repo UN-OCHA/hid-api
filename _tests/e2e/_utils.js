@@ -19,6 +19,7 @@ module.exports = {
     await password.type(env.testUserPassword);
 
     await page.click('.t-btn--login');
+    await page.waitForSelector('.t-page--dashboard');
   },
 
   //
