@@ -53,7 +53,7 @@ async function loginHelper(request) {
 
   const [number, user] = await Promise.all([
     Flood.countDocuments({ type: 'login', email, createdAt: { $gte: d5minutes.toISOString() } }),
-    User.findOne({ email }),
+    User.findOne({ 'emails.email': email }),
   ]);
 
   if (number >= 5) {
@@ -81,7 +81,12 @@ async function loginHelper(request) {
     );
     throw Boom.unauthorized('invalid email or password');
   }
-  if (!user.email_verified) {
+
+  // Is the email being used for login confirmed? User MUST demonstrate
+  // ownership the address before it can be used for logging in.
+  const loginEmail = user.emails[user.emailIndex(email)];
+  const loginEmailConfirmed = loginEmail !== null ? loginEmail.validated : false;
+  if (!loginEmailConfirmed || !user.email_verified) {
     logger.warn(
       '[AuthController->loginHelper] Unsuccessful login attempt due to unverified email',
       {
