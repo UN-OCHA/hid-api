@@ -1,16 +1,21 @@
-/* eslint-disable */
-// forEach method on Nodelist
-// https://developer.mozilla.org/en-US/docs/Web/API/NodeList/forEach#Polyfill
+/**!
+ * https://github.com/UN-OCHA/common_design/blob/bfc12aadbc80267bd6093abba4389945382d11c6/js/cd-polyfill.js
+ */
+/* eslint func-names: "off" */
+
+// Method forEach on Nodelist
+// See https://developer.mozilla.org/en-US/docs/Web/API/NodeList/forEach#Polyfill
 if (window.NodeList && !NodeList.prototype.forEach) {
   NodeList.prototype.forEach = Array.prototype.forEach;
 }
 
 // IE11 Polyfill for .closest
-// https://github.com/jonathantneal/closest
+// See https://github.com/jonathantneal/closest
 const ElementPrototype = window.Element.prototype;
 
 if (typeof ElementPrototype.matches !== 'function') {
   ElementPrototype.matches = ElementPrototype.msMatchesSelector || ElementPrototype.mozMatchesSelector || ElementPrototype.webkitMatchesSelector || function matches(selector) {
+    'use strict';
     let element = this;
     const elements = (element.document || element.ownerDocument).querySelectorAll(selector);
     let index = 0;
@@ -25,6 +30,7 @@ if (typeof ElementPrototype.matches !== 'function') {
 
 if (typeof ElementPrototype.closest !== 'function') {
   ElementPrototype.closest = function closest(selector) {
+    'use strict';
     let element = this;
 
     while (element && element.nodeType === 1) {
@@ -39,10 +45,10 @@ if (typeof ElementPrototype.closest !== 'function') {
   };
 }
 
+/**!
+ * https://github.com/UN-OCHA/common_design/blob/bfc12aadbc80267bd6093abba4389945382d11c6/js/cd-dropdown.js
+ */
 (function iife() {
-  // Initialize toggable dropdown.
-  initializeToggables();
-
   /**
    * Toggle the visibility of a toggable element.
    */
@@ -396,7 +402,7 @@ if (typeof ElementPrototype.closest !== 'function') {
    * markup reflects the current behavior of the element.
    */
   function updateToggable(element) {
-    if (window.getComputedStyle(element, null).getPropertyValue('--dropdown') === 'false') {
+    if (window.getComputedStyle(element, null).getPropertyValue('--dropdown').trim() === 'false') {
       unsetToggable(element);
     }
     else {
@@ -425,4 +431,38 @@ if (typeof ElementPrototype.closest !== 'function') {
     // Initial setup.
     handleResize();
   }
+
+
+  /**
+   * Update Drupal toggable nested menus.
+   */
+  function updateDrupalTogglableMenus(selector) {
+    var elements;
+    var i;
+    var l;
+
+    // If selector wasn't supplied, set the default.
+    selector = typeof selector !== 'undefined' ? selector : '.cd-nav .menu a + .menu';
+
+    // Nested drupal menus are always toggable.
+    elements = document.querySelectorAll(selector);
+    for (i = 0, l = elements.length; i < l; i++) {
+      setToggable(elements[i]);
+    }
+  }
+
+  /**
+   * Initialization
+   *
+   * Everything below this comment is inside the Drupal "attach" function which
+   * automatically runs during initialization. We manually include the code here
+   * so that it runs after all functions are defined.
+   */
+  document.documentElement.classList.remove('no-js');
+
+  // Initialize toggable dropdown.
+  initializeToggables();
+
+  // Update nested Drupal menus in the header.
+  updateDrupalTogglableMenus();
 }());
