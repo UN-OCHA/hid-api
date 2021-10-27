@@ -18,8 +18,6 @@ module.exports = {
   },
   rules: {
     'no-alert': 'off',
-    'no-param-reassign': 'off',
-    'no-plus-plus': 'off',
     'no-underscore-dangle': 'off',
     'no-var': 'off',
     'prefer-arrow-callback': 'off',
