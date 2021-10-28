@@ -589,12 +589,11 @@ module.exports = {
       const passwordLink = _getPasswordLink(request.payload);
 
       try {
-        // Whatever happens, we first want to cleanup the session storage before
-        // trying to reset the password.
-        request.yar.reset('session');
-
         // Now attempt the password reset.
         await UserController.resetPassword(request, reply);
+
+        // If reset was successful, we want to cleanup the session storage.
+        request.yar.reset('session');
 
         // If we found OAuth params, their login form will be configured to
         // continue logging them into a Partner site.
