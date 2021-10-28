@@ -549,7 +549,7 @@ module.exports = {
   async newPasswordPost(request, reply) {
     const cookie = request.yar.get('session');
 
-    // Non-2FA users
+    // If 2FA challenge has not yet been passed.
     if (cookie && cookie.hash && cookie.id && cookie.emailId && cookie.time && !cookie.totp) {
       try {
         const user = await User.findById(cookie.id);
@@ -583,7 +583,7 @@ module.exports = {
       }
     }
 
-    // Was 2FA entered correctly?
+    // Was 2FA entered correctly, or not necessary?
     if (cookie && cookie.hash && cookie.totp) {
       const oAuthParams = HelperService.getOauthParams(request.payload);
       const registerLink = _getRegisterLink(request.payload);
