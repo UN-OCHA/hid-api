@@ -629,9 +629,14 @@ module.exports = {
           },
         );
 
-        // Look at the nature of the error and show user feedback.
         let userFacingMessage = '<p>There was an error resetting your password. Please try again.</p>';
-        let userFacingError = 'PW-RESET-INVALID';
+        let userFacingError = 'PW-RESET-GENERAL';
+
+        // Look at the nature of the error and show user feedback.
+        if (err.message === 'Could not reset password') {
+          userFacingMessage = '<p>The password did not meet our guidelines. Please try again.</p>';
+          userFacingError = 'PW-RESET-INVALID';
+        }
 
         // If fields didn't match, it's safe to disclose plus our user feedback
         // is clear enough that we probably don't need to show an error code.
