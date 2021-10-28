@@ -519,7 +519,7 @@ module.exports = {
           type: 'warning',
           title: 'Enter your two-factor authentication code.',
           message: `
-            <p><a href="https://about.humanitarian.id/faqs.html#What-two-factor-authentication" target="_blank" rel="noopener noreferrer">Read about 2FA in our FAQs</a></p>
+            <p><a href="https://about.humanitarian.id/faqs#2fa" target="_blank" rel="noopener noreferrer">Read about 2FA in our FAQs</a></p>
           `,
         },
       });
@@ -583,6 +583,7 @@ module.exports = {
       }
     }
 
+    // Was 2FA entered correctly?
     if (cookie && cookie.hash && cookie.totp) {
       const oAuthParams = HelperService.getOauthParams(request.payload);
       const registerLink = _getRegisterLink(request.payload);
