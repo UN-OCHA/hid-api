@@ -54,10 +54,9 @@
                   <div class="cd-ocha-dropdown__section">
                     <p class="cd-ocha-dropdown__heading" translate>Related Platforms</p>
                     <ul class="cd-ocha-dropdown__list">
+                      <li class="cd-ocha-dropdown__link"><a href="https://about.humanitarian.id/faqs">HID FAQs</a></li>
                       <li class="cd-ocha-dropdown__link"><a href="https://gms.unocha.org">Grant Management System</a></li>
-                      <li class="cd-ocha-dropdown__link"><a href="https://humanitarianresponse.info">Humanitarian Response</a></li>
                       <li class="cd-ocha-dropdown__link"><a href="https://hum-insight.info">Humanitarian Insight</a></li>
-                      <li class="cd-ocha-dropdown__link"><a href="https://reliefweb.int">ReliefWeb</a></li>
                     </ul>
                   </div>
                   <div class="cd-ocha-dropdown__section">
@@ -122,20 +121,44 @@
                   <span class="cd-user-menu__item cd-user-menu__item--small cd-global-header__dropdown-btn t-lang-btn" id="cd-language-toggle">en</span>
                 </div>
               </div>
-
             </div>
-
           </div>
-
         </div>
 
         <div class="cd-site-header">
           <div class="cd-container cd-site-header__inner">
-            <h1>
-              <a href="/" class="cd-site-logo t-logo-link">
-                <span class="element-invisible">Humanitarian ID</span>
-              </a>
-            </h1>
+            <div class="region region-header-logo">
+              <h1>
+                <a href="/" class="cd-site-logo t-logo-link">
+                  <span class="element-invisible">Humanitarian ID</span>
+                </a>
+              </h1>
+            </div>
+
+            <div class="cd-site-header__actions">
+              <div class="cd-site-header__nav-holder">
+                <nav role="navigation" id="block-mainnavigation" aria-labelledby="block-mainnavigation-menu" data-cd-toggable="Menu" data-cd-component="cd-nav" data-cd-icon="arrow-down" class="block block-menu navigation menu--main cd-nav cd-site-header__nav">
+                  <h2 id="block-mainnavigation-menu">Main navigation</h2>
+                  <ul class="menu">
+                    <li class="menu-item menu-item--expanded">
+                      <a id="cd-main-menu-item-1-0"><span>Support</span></a>
+                      <ul data-cd-toggable="Support" data-cd-icon="arrow-down" data-cd-component="cd-main-menu" data-cd-replace="cd-main-menu-item-1-0" id="cd-main-menu-1-1" class="menu cd-main-menu__dropdown">
+                        <li class="menu-item">
+                          <a href="https://about.humanitarian.id/developers" id="cd-main-menu-item-1-1"><span>Developer Documentation</span></a>
+                        </li>
+                        <li class="menu-item">
+                          <a href="https://about.humanitarian.id/faqs" id="cd-main-menu-item-1-2"><span><abbr title="Frequently Asked Questions">FAQs</abbr></span></a>
+                        </li>
+                      </ul>
+                    </li>
+                    <li class="menu-item">
+                      <a href="https://about.humanitarian.id/partners-using-our-authentication-service.html" id="cd-main-menu-item-2-0"><span>Partners</span></a>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </div>
+
           </div>
         </div>
       </header>
