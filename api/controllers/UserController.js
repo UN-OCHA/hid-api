@@ -1389,7 +1389,7 @@ module.exports = {
     const cookie = request.yar.get('session');
 
     // There are several reasons we might want to return some responses from the
-    // API, but we want to ensure the messages are identical so that an error
+    // API, but we want to ensure the messages are identical so that an errors
     // with a sensitive nature can't be inferred from the public response.
     const resetLinkInvalidMessage = 'Reset password link is expired or invalid';
     const cannotResetPasswordMessage = 'Could not reset password';
