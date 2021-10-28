@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.0.1](https://github.com/UN-OCHA/hid_api/compare/v5.0.0...v5.0.1) (2021-10-28)
+
+
+### Bug Fixes
+
+* **security:** only destroy session after password reset succeeds ([0d30eea](https://github.com/UN-OCHA/hid_api/commit/0d30eea40ccb7ea199cdfffea58b0582c6313d7e))
+
+## [4.0.0](https://github.com/UN-OCHA/hid_api/compare/v4.0.0-rc1...v4.0.0) (2021-09-16)
+
 ## [5.0.0](https://github.com/UN-OCHA/hid_api/compare/v4.0.0-rc1...v5.0.0) (2021-10-20)
 
 
