@@ -544,7 +544,7 @@ module.exports = {
   async newPasswordPost(request, reply) {
     const cookie = request.yar.get('session');
 
-    // If 2FA challenge has not yet been passed.
+    // Show 2FA prompt if necessary.
     if (cookie && cookie.hash && cookie.id && cookie.emailId && cookie.time && !cookie.totp) {
       try {
         const user = await User.findById(cookie.id);
@@ -553,8 +553,8 @@ module.exports = {
         // See if TOTP code is valid.
         await AuthPolicy.isTOTPValid(user, token);
 
-        // It is valid and they're allowed to use the password reset form. The
-        // boolean here means the next submission will
+        // It is valid and they're allowed to use the password reset form.
+        // Set TOTP to true and reload this page to offer the password form.
         cookie.totp = true;
         request.yar.set('session', cookie);
 
@@ -578,9 +578,8 @@ module.exports = {
       }
     }
 
-    // Was 2FA entered correctly, or not necessary?
+    // All users arrive here after passing 2FA (or if it is not enabled)
     if (cookie && cookie.hash && cookie.totp) {
-      const oAuthParams = HelperService.getOauthParams(request.payload);
       const registerLink = _getRegisterLink(request.payload);
       const passwordLink = _getPasswordLink(request.payload);
 
@@ -588,30 +587,19 @@ module.exports = {
         // Now attempt the password reset.
         await UserController.resetPassword(request, reply);
 
-        // If reset was successful, we want to cleanup the session storage.
+        // If reset was successful, we want to cleanup the session storage and
+        // give them a fresh session ID.
         request.yar.reset('session');
 
-        // If we found OAuth params, their login form will be configured to
-        // continue logging them into a Partner site.
-        if (oAuthParams) {
-          return reply.view('login', {
-            alert: {
-              type: 'status',
-              message: 'Your password was successfully reset. You can now login.',
-            },
-            query: request.payload,
-            registerLink,
-            passwordLink,
-          });
-        }
-
-        return reply.view('message', {
-          title: 'Password reset',
+        // Show the login form with the success message.
+        return reply.view('login', {
           alert: {
             type: 'status',
-            message: 'Thank you for updating your password.',
+            message: 'Your password was successfully reset. You can now login.',
           },
           query: request.payload,
+          registerLink,
+          passwordLink,
         });
       } catch (err) {
         logger.warn(
@@ -640,39 +628,27 @@ module.exports = {
           userFacingError = undefined;
         }
 
-        // If we found OAuth params, their login form will be configured to
-        // continue logging them into a Partner site.
-        if (oAuthParams) {
-          return reply.view('login', {
-            alert: {
-              type: 'error',
-              message: userFacingMessage,
-              error_type: userFacingError,
-            },
-            query: request.payload,
-            registerLink,
-            passwordLink,
-          });
-        }
-
         const requestUrl = _buildRequestUrl(request, 'new-password');
-        return reply.view('password', {
+        return reply.view('new-password', {
           alert: {
             type: 'error',
             message: userFacingMessage,
             error_type: userFacingError,
           },
-          query: request.payload,
+          hash: cookie.hash,
+          id: cookie.id,
+          emailId: cookie.emailId,
+          time: cookie.time,
           requestUrl,
         });
       }
     }
 
-    return reply.view('message', {
-      title: 'Password reset',
+    return reply.view('error', {
       alert: {
         type: 'error',
-        message: 'There was an error resetting your password.',
+        title: 'Error during password reset',
+        message: '<p>There was an internal error resetting your password. Please try again by visiting <a href="/password">https://auth.humanitarian.id/password</a></p>',
         error_type: 'PW-RESET-GENERAL',
       },
       query: request.payload,
