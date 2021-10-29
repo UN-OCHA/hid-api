@@ -458,15 +458,17 @@ module.exports = {
     // Destroy any existing user session
     request.yar.reset();
 
-    // Store the contents of the reset link from the email message. For users
-    // with 2FA, we'll load another form and want to pass this info along.
-    request.yar.set('session', {
+    // Store the contents of the reset link from the email message. We set the
+    // `totp` flag to false and will flip it later in this function if the user
+    // doesn't need to pass the challenge.
+    const session = {
       hash: request.query.hash,
       id: request.query.id,
       time: request.query.time,
       emailId: request.query.emailId || '',
       totp: false,
-    });
+    };
+    request.yar.set('session', session);
 
     // Look up User by ID.
     const user = await User.findById(request.query.id).catch((err) => {
@@ -510,8 +512,7 @@ module.exports = {
       });
     }
 
-    // If the user has 2FA enabled, we need them to enter a TOTP before allowing
-    // them to continue.
+    // User has 2FA enabled. They need to enter a TOTP before they continue.
     if (user.totp) {
       return reply.view('totp', {
         query: request.query,
@@ -526,16 +527,9 @@ module.exports = {
       });
     }
 
-    // Assuming the user either passed 2FA challenge, or they don't have it
-    // enabled, we cookie their reset data and pass them to the actual password
-    // reset form.
-    request.yar.set('session', {
-      hash: request.query.hash,
-      id: request.query.id,
-      emailId: request.query.emailId || '',
-      time: request.query.time,
-      totp: true,
-    });
+    // If user didn't have 2FA enabled, set `totp` to true.
+    session.totp = true;
+    request.yar.set('session', session);
 
     // Display the password reset form.
     return reply.view('new-password', {
