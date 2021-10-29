@@ -259,7 +259,7 @@ module.exports = {
           type: 'error',
           message: `
             <p>Our system detected your registration attempt as spam. We apologize for the inconvenience.</p>
-            <p>Please try registering again. If the problem persists notify info@humanitarian.id and include the following information:</p>
+            <p>For more information on why this problem may be occurring, <a href="https://about.humanitarian.id/faqs">please see our FAQs</a></p>
           `,
           error_type: errorType,
         },
@@ -502,7 +502,8 @@ module.exports = {
           type: 'error',
           title: 'Your password reset link is either invalid or expired.',
           message: `
-            <p>Please <a href="/password">generate a new link</a> and try again. If you see this error multiple times, contact <a href="mailto:info@humanitarian.id">info@humanitarian.id</a> and include the following information:</p>
+            <p>Password reset links are one-time links and remain valid for 24 hours or until used once.</p>
+            <p>Go to <a href="/password">https://auth.humanitarian.id/password</a> and request a new password reset.</p>
           `,
           error_type: 'PW-RESET-LINK',
         },
