@@ -176,17 +176,6 @@ module.exports = {
     return send(mailOptions, 'email_alert', context);
   },
 
-  sendSpecialPasswordReset(user) {
-    const mailOptions = {
-      to: user.email,
-      locale: user.locale,
-    };
-    const context = {
-      user,
-    };
-    return send(mailOptions, 'special_password_reset', context);
-  },
-
   sendAdminDelete(user, admin) {
     const mailOptions = {
       to: user.email,
