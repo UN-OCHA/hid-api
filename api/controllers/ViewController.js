@@ -458,15 +458,17 @@ module.exports = {
     // Destroy any existing user session
     request.yar.reset();
 
-    // Store the contents of the reset link from the email message. For users
-    // with 2FA, we'll load another form and want to pass this info along.
-    request.yar.set('session', {
+    // Store the contents of the reset link from the email message. We set the
+    // `totp` flag to false and will flip it later in this function if the user
+    // doesn't need to pass the challenge.
+    const session = {
       hash: request.query.hash,
       id: request.query.id,
       time: request.query.time,
       emailId: request.query.emailId || '',
       totp: false,
-    });
+    };
+    request.yar.set('session', session);
 
     // Look up User by ID.
     const user = await User.findById(request.query.id).catch((err) => {
@@ -510,8 +512,7 @@ module.exports = {
       });
     }
 
-    // If the user has 2FA enabled, we need them to enter a TOTP before allowing
-    // them to continue.
+    // User has 2FA enabled. They need to enter a TOTP before they continue.
     if (user.totp) {
       return reply.view('totp', {
         query: request.query,
@@ -520,22 +521,15 @@ module.exports = {
           type: 'warning',
           title: 'Enter your two-factor authentication code.',
           message: `
-            <p><a href="https://about.humanitarian.id/faqs.html#What-two-factor-authentication" target="_blank" rel="noopener noreferrer">Read about 2FA in our FAQs</a></p>
+            <p><a href="https://about.humanitarian.id/faqs#2fa" target="_blank" rel="noopener noreferrer">Read about 2FA in our FAQs</a></p>
           `,
         },
       });
     }
 
-    // Assuming the user either passed 2FA challenge, or they don't have it
-    // enabled, we cookie their reset data and pass them to the actual password
-    // reset form.
-    request.yar.set('session', {
-      hash: request.query.hash,
-      id: request.query.id,
-      emailId: request.query.emailId || '',
-      time: request.query.time,
-      totp: true,
-    });
+    // If user didn't have 2FA enabled, set `totp` to true.
+    session.totp = true;
+    request.yar.set('session', session);
 
     // Display the password reset form.
     return reply.view('new-password', {
@@ -550,7 +544,7 @@ module.exports = {
   async newPasswordPost(request, reply) {
     const cookie = request.yar.get('session');
 
-    // Non-2FA users
+    // Show 2FA prompt if necessary.
     if (cookie && cookie.hash && cookie.id && cookie.emailId && cookie.time && !cookie.totp) {
       try {
         const user = await User.findById(cookie.id);
@@ -559,8 +553,8 @@ module.exports = {
         // See if TOTP code is valid.
         await AuthPolicy.isTOTPValid(user, token);
 
-        // It is valid and they're allowed to use the password reset form. The
-        // boolean here means the next submission will
+        // It is valid and they're allowed to use the password reset form.
+        // Set TOTP to true and reload this page to offer the password form.
         cookie.totp = true;
         request.yar.set('session', cookie);
 
@@ -584,40 +578,28 @@ module.exports = {
       }
     }
 
+    // All users arrive here after passing 2FA (or if it is not enabled)
     if (cookie && cookie.hash && cookie.totp) {
-      const oAuthParams = HelperService.getOauthParams(request.payload);
       const registerLink = _getRegisterLink(request.payload);
       const passwordLink = _getPasswordLink(request.payload);
 
       try {
-        // Whatever happens, we first want to cleanup the session storage before
-        // trying to reset the password.
-        request.yar.reset('session');
-
         // Now attempt the password reset.
         await UserController.resetPassword(request, reply);
 
-        // If we found OAuth params, their login form will be configured to
-        // continue logging them into a Partner site.
-        if (oAuthParams) {
-          return reply.view('login', {
-            alert: {
-              type: 'status',
-              message: 'Your password was successfully reset. You can now login.',
-            },
-            query: request.payload,
-            registerLink,
-            passwordLink,
-          });
-        }
+        // If reset was successful, we want to cleanup the session storage and
+        // give them a fresh session ID.
+        request.yar.reset('session');
 
-        return reply.view('message', {
-          title: 'Password reset',
+        // Show the login form with the success message.
+        return reply.view('login', {
           alert: {
             type: 'status',
-            message: 'Thank you for updating your password.',
+            message: 'Your password was successfully reset. You can now login.',
           },
           query: request.payload,
+          registerLink,
+          passwordLink,
         });
       } catch (err) {
         logger.warn(
@@ -630,9 +612,14 @@ module.exports = {
           },
         );
 
-        // Look at the nature of the error and show user feedback.
         let userFacingMessage = '<p>There was an error resetting your password. Please try again.</p>';
-        let userFacingError = 'PW-RESET-INVALID';
+        let userFacingError = 'PW-RESET-GENERAL';
+
+        // Look at the nature of the error and show user feedback.
+        if (err.message === 'Could not reset password') {
+          userFacingMessage = '<p>The password did not meet our guidelines. Please try again.</p>';
+          userFacingError = 'PW-RESET-INVALID';
+        }
 
         // If fields didn't match, it's safe to disclose plus our user feedback
         // is clear enough that we probably don't need to show an error code.
@@ -641,39 +628,27 @@ module.exports = {
           userFacingError = undefined;
         }
 
-        // If we found OAuth params, their login form will be configured to
-        // continue logging them into a Partner site.
-        if (oAuthParams) {
-          return reply.view('login', {
-            alert: {
-              type: 'error',
-              message: userFacingMessage,
-              error_type: userFacingError,
-            },
-            query: request.payload,
-            registerLink,
-            passwordLink,
-          });
-        }
-
         const requestUrl = _buildRequestUrl(request, 'new-password');
-        return reply.view('password', {
+        return reply.view('new-password', {
           alert: {
             type: 'error',
             message: userFacingMessage,
             error_type: userFacingError,
           },
-          query: request.payload,
+          hash: cookie.hash,
+          id: cookie.id,
+          emailId: cookie.emailId,
+          time: cookie.time,
           requestUrl,
         });
       }
     }
 
-    return reply.view('message', {
-      title: 'Password reset',
+    return reply.view('error', {
       alert: {
         type: 'error',
-        message: 'There was an error resetting your password.',
+        title: 'Error during password reset',
+        message: '<p>There was an internal error resetting your password. Please try again by visiting <a href="/password">https://auth.humanitarian.id/password</a></p>',
         error_type: 'PW-RESET-GENERAL',
       },
       query: request.payload,

@@ -45,18 +45,21 @@ async function loginHelper(request) {
     return cuser;
   }
 
-  // If there has been 5 failed login attempts in the last 5 minutes, return
-  // unauthorized.
+  // Set up flood count: if there has been 5 failed login attempts in the last
+  // five minutes, prevent authorization.
   const now = Date.now();
   const offset = 5 * 60 * 1000;
   const d5minutes = new Date(now - offset);
 
-  const [number, user] = await Promise.all([
+  // Query DB for flood count and User profile which owns email address.
+  const [floodCount, user] = await Promise.all([
     Flood.countDocuments({ type: 'login', email, createdAt: { $gte: d5minutes.toISOString() } }),
-    User.findOne({ email }),
+    User.findOne({ 'emails.email': email }),
   ]);
 
-  if (number >= 5) {
+  // If the flood count is too high, disable further attempts until the timer
+  // gets reset.
+  if (floodCount >= 5) {
     logger.warn(
       '[AuthController->loginHelper] Account locked for 5 minutes',
       {
@@ -70,6 +73,8 @@ async function loginHelper(request) {
     );
     throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
   }
+
+  // Was the user found?
   if (!user) {
     logger.warn(
       '[AuthController->loginHelper] Unsuccessful login attempt due to invalid email address',
@@ -81,7 +86,12 @@ async function loginHelper(request) {
     );
     throw Boom.unauthorized('invalid email or password');
   }
-  if (!user.email_verified) {
+
+  // Is the email being used for login confirmed? User MUST demonstrate
+  // ownership the address before it can be used for logging in.
+  const loginEmail = user.emails[user.emailIndex(email)];
+  const loginEmailConfirmed = loginEmail !== null ? loginEmail.validated : false;
+  if (!loginEmailConfirmed || !user.email_verified) {
     logger.warn(
       '[AuthController->loginHelper] Unsuccessful login attempt due to unverified email',
       {
@@ -97,6 +107,7 @@ async function loginHelper(request) {
     throw Boom.unauthorized('Please verify your email address');
   }
 
+  // Check that the password is valid.
   if (!user.validPassword(password)) {
     logger.warn(
       '[AuthController->loginHelper] Unsuccessful login attempt due to invalid password',
@@ -110,6 +121,7 @@ async function loginHelper(request) {
         },
       },
     );
+
     // Create a flood entry
     await Flood.create({ type: 'login', email, user });
     throw Boom.unauthorized('invalid email or password');
