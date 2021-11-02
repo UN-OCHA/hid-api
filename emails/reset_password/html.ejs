@@ -1,7 +1,9 @@
 <p>Dear <%= name %>,</p>
+
 <p>We received a request to reset your password on Humanitarian ID. To make the change, simply follow the link below and provide your new password.</p>
 <p><a href="<%= resetLink %>"><%= resetLink %></a></p>
 <p>Please note that this is a one-time use link and it will remain valid for 24 hours. In case the link has expired, you can reset your password again, by clicking here: <a href="<%= passwordUrl %>">Reset your password</a>.</p>
 <p>If you do not want to reset your password, please ignore this message and your password will not be changed.</p>
 
+<p>Kind regards,</p>
 <% include ../includes/footer_en %>
