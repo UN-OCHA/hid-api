@@ -67,22 +67,20 @@ describe('PasswordReset [no-ci]', () => {
     expect(confirmInvalid).toBeGreaterThan(0);
   });
 
-  // This test assumes you are on the URL we extracted from Mailhog.
   it('allows user to reset using an approved password', async () => {
     const password = await page.$('#password');
     const confirm = await page.$('#confirm_password');
+    const validPassword = `${Math.floor(Math.random() * 10000000000)}aA!`;
 
-    // Fill in the form properly. We use the password in the env config, but
-    // reverse the string to make multuple runs a bit easier since the config
-    // can be tested, then reverted back to original in a second run.
+    // Fill in the form properly.
     await password.click({ clickCount: 3 });
-    await password.type(env.testUserPassword.split('').reverse().join(''));
+    await password.type(validPassword);
     await confirm.click({ clickCount: 3 });
-    await confirm.type(env.testUserPassword.split('').reverse().join(''));
+    await confirm.type(validPassword);
 
     await page.click('.t-btn--reset-pw');
     await page.waitForTimeout(2000);
-    expect(await page.content()).toContain('Thank you for updating your password.');
+    expect(await page.content()).toContain('Your password was successfully reset. You can now login.');
   });
 
   it('immediately shows an error when password reset link is invalid', async () => {
@@ -125,18 +123,17 @@ describe('PasswordReset [no-ci]', () => {
   it('allows user to reset using an approved password', async () => {
     const password = await page.$('#password');
     const confirm = await page.$('#confirm_password');
+    const validPassword = `${Math.floor(Math.random() * 10000000000)}aA!`;
 
-    // Fill in the form properly. We use the password in the env config, but
-    // reverse the string to make multuple runs a bit easier since the config
-    // can be tested, then reverted back to original in a second run.
+    // Fill in the form properly.
     await password.click({ clickCount: 3 });
-    await password.type(env.testUserPassword);
+    await password.type(validPassword);
     await confirm.click({ clickCount: 3 });
-    await confirm.type(env.testUserPassword);
+    await confirm.type(validPassword);
 
     await page.click('.t-btn--reset-pw');
     await page.waitForTimeout(2000);
-    expect(await page.content()).toContain('Thank you for updating your password.');
+    expect(await page.content()).toContain('Your password was successfully reset. You can now login.');
   });
 
   it('successfully cleaned up Mailhog', async () => {
