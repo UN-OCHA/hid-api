@@ -11,7 +11,6 @@ describe('ProfileEmails', () => {
 
   it('shows user dashboard after logging in', async () => {
     await utils.login(page);
-    await page.waitForSelector('.t-page--dashboard');
 
     expect(await page.url()).toContain('/user');
     expect(await page.content()).toContain(env.testUserNameGiven);
