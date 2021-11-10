@@ -607,7 +607,21 @@ module.exports = {
     // Is the new password strong enough?
     if (!User.isStrongPassword(newPassword)) {
       logger.warn(
-        `[UserController->updatePassword] Could not update user password for user ${userId}. New password is not strong enough.`,
+        `[UserController->updatePassword] Could not update user password for user ${userId}. Password does not meet our explicit requirements.`,
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('New password does not meet requirements');
+    }
+
+    // Run the potential password through our dictionary to weed out simple
+    // substitutions and the like.
+    if (!User.isStrongDictionary(newPassword)) {
+      logger.warn(
+        `[UserController->updatePassword] Could not update user password for user ${userId}. Password failed the dictionary test.`,
         {
           request,
           security: true,
@@ -1496,6 +1510,24 @@ module.exports = {
     if (user.isHistoricalPassword(request.payload.password)) {
       logger.warn(
         '[UserController->resetPassword] Could not reset password. New password must be different than previous passwords.',
+        {
+          request,
+          security: true,
+          fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+        },
+      );
+      throw Boom.badRequest(cannotResetPasswordMessage);
+    }
+
+    // Run the potential password through our dictionary to weed out simple
+    // substitutions and the like.
+    if (!User.isStrongDictionary(request.payload.password)) {
+      logger.warn(
+        '[UserController->resetPassword] Could not reset password. Password failed the dictionary test.',
         {
           request,
           security: true,

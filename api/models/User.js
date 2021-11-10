@@ -10,6 +10,7 @@ const validate = require('mongoose-validator');
 const Bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const isHTML = require('is-html');
+const cracklib = require('cracklib');
 
 const { Schema } = mongoose;
 const populateClients = [
@@ -421,6 +422,28 @@ UserSchema.statics = {
     // eslint-disable-next-line no-useless-escape
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()+=\\`{}[\]:";'< >?,.\/-]).+$/;
     return password.length >= 12 && regex.test(password);
+  },
+
+  /**
+   * Password dictionary test
+   *
+   * Check a password against a standard dictionary that does some substitutions
+   * involving numbers, compares against common patterns, and other well-known
+   * sources of "inspiration" for weak passwords.
+   *
+   * @return {boolean}
+   */
+  isStrongDictionary(password) {
+    // We use fascistCheckUser() and pass the email address in, so that any
+    // password incorporating that address gets rejected as well.
+    //
+    // The library returns an object with a `message` property. If that property
+    // is set to `null` then the password passed. If it contains a string then
+    // the password failed the dictionary test.
+    //
+    // We're not going to share why, so compare to `null` and get a boolean.
+    // If it returns `true` the password passed the dictionary test.
+    return cracklib.fascistCheckUser(password, this.email).message === null;
   },
 
   hashPassword(password) {
