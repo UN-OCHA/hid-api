@@ -4,8 +4,8 @@ WORKDIR /srv/www
 COPY . .
 
 RUN cp run_node /etc/services.d/node/run && \
-    apk add cracklib && \
-    apk add --virtual .build-deps python3 python3-dev build-base cracklib-dev && \
+    apk add cracklib cracklib-dev && \
+    apk add --virtual .build-deps python3 python3-dev build-base && \
     npm install && \
     npm run docs && \
     apk del .build-deps && \
