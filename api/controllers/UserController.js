@@ -598,6 +598,10 @@ module.exports = {
           request,
           security: true,
           fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
         },
       );
       throw Boom.badRequest('Request is missing parameters (old_password or new_password)');
@@ -611,6 +615,10 @@ module.exports = {
           request,
           security: true,
           fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
         },
       );
       throw Boom.badRequest('New password does not meet requirements');
@@ -625,6 +633,10 @@ module.exports = {
           request,
           security: true,
           fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
         },
       );
       throw Boom.badRequest('New password does not meet requirements');
@@ -638,6 +650,10 @@ module.exports = {
           request,
           security: true,
           fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
         },
       );
       throw Boom.badRequest('The old password is wrong');
@@ -652,6 +668,10 @@ module.exports = {
           request,
           security: true,
           fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
         },
       );
       throw Boom.badRequest('New password must be different than previous passwords');
@@ -1486,6 +1506,10 @@ module.exports = {
           request,
           security: true,
           fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
         },
       );
       throw Boom.badRequest(resetLinkInvalidMessage);
@@ -1499,6 +1523,10 @@ module.exports = {
           request,
           security: true,
           fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
         },
       );
       throw Boom.badRequest(cannotResetPasswordMessage);
@@ -1587,7 +1615,7 @@ module.exports = {
     // Update user in DB.
     await user.save().then(() => {
       logger.info(
-        '[UserController->resetPassword] Password updated successfully',
+        '[UserController->resetPassword] Password updated successfully.',
         {
           request,
           security: true,
