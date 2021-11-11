@@ -11,7 +11,9 @@ const Bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const isHTML = require('is-html');
 const cracklib = require('cracklib');
+const config = require('../../config/env');
 
+const { logger } = config;
 const { Schema } = mongoose;
 const populateClients = [
   { path: 'authorizedClients', select: '_id id name organization environment redirectUri redirectUrls' },
@@ -424,28 +426,6 @@ UserSchema.statics = {
     return password.length >= 12 && regex.test(password);
   },
 
-  /**
-   * Password dictionary test
-   *
-   * Check a password against a standard dictionary that does some substitutions
-   * involving numbers, compares against common patterns, and other well-known
-   * sources of "inspiration" for weak passwords.
-   *
-   * @return {boolean}
-   */
-  isStrongDictionary(password) {
-    // We use fascistCheckUser() and pass the email address in, so that any
-    // password incorporating that address gets rejected as well.
-    //
-    // The library returns an object with a `message` property. If that property
-    // is set to `null` then the password passed. If it contains a string then
-    // the password failed the dictionary test.
-    //
-    // We're not going to share why, so compare to `null` and get a boolean.
-    // If it returns `true` the password passed the dictionary test.
-    return cracklib.fascistCheckUser(password, this.email).message === null;
-  },
-
   hashPassword(password) {
     return Bcrypt.hashSync(password, 11);
   },
@@ -496,6 +476,41 @@ UserSchema.methods = {
 
     // Compare to current password.
     return Bcrypt.compareSync(passwordToCompare, this.password);
+  },
+
+  /**
+   * Password dictionary test
+   *
+   * Check a password against a standard dictionary that does some substitutions
+   * involving numbers, compares against common patterns, and other well-known
+   * sources of "inspiration" for weak passwords.
+   *
+   * @return {boolean}
+   */
+  isStrongDictionary(password) {
+    // We use fascistCheckUser() and pass the email address in, so that any
+    // password incorporating that address gets rejected as well.
+    //
+    // The library returns an object with a `message` property. If that property
+    // is set to `null` then the password passed. If it contains a string then
+    // the password failed the dictionary test.
+    const result = cracklib.fascistCheckUser(password, this.email).message;
+
+    // If the result is NOT `null` then it failed and we'll log the message
+    // separate from the main operation taking place that invoked this function.
+    if (result !== null) {
+      logger.warn(
+        `[User->isStrongDictionary] Password failed dictionary test: ${result}`,
+        {
+          security: true,
+          fail: true,
+        },
+      );
+    }
+
+    // `null` means the password passed the dictionary test, so compare it and
+    // return the boolean.
+    return result === null;
   },
 
   /**

@@ -12,7 +12,6 @@ const config = require('../../config/env');
 
 const { logger } = config;
 
-
 module.exports = {
   /*
    * @api [post] /user
@@ -619,7 +618,7 @@ module.exports = {
 
     // Run the potential password through our dictionary to weed out simple
     // substitutions and the like.
-    if (!User.isStrongDictionary(newPassword)) {
+    if (!user.isStrongDictionary(newPassword)) {
       logger.warn(
         `[UserController->updatePassword] Could not update user password for user ${userId}. Password failed the dictionary test.`,
         {
@@ -1505,11 +1504,11 @@ module.exports = {
       throw Boom.badRequest(cannotResetPasswordMessage);
     }
 
-    // Compare new password to the old one. If our comparison is TRUE, then the
-    // reset attempt should be rejected, since the passwords are the same.
-    if (user.isHistoricalPassword(request.payload.password)) {
+    // Run the potential password through our dictionary to weed out simple
+    // substitutions and the like.
+    if (!user.isStrongDictionary(request.payload.password)) {
       logger.warn(
-        '[UserController->resetPassword] Could not reset password. New password must be different than previous passwords.',
+        '[UserController->resetPassword] Could not reset password. Password failed the dictionary test.',
         {
           request,
           security: true,
@@ -1523,11 +1522,11 @@ module.exports = {
       throw Boom.badRequest(cannotResetPasswordMessage);
     }
 
-    // Run the potential password through our dictionary to weed out simple
-    // substitutions and the like.
-    if (!User.isStrongDictionary(request.payload.password)) {
+    // Compare new password to the old one. If our comparison is TRUE, then the
+    // reset attempt should be rejected, since the passwords are the same.
+    if (user.isHistoricalPassword(request.payload.password)) {
       logger.warn(
-        '[UserController->resetPassword] Could not reset password. Password failed the dictionary test.',
+        '[UserController->resetPassword] Could not reset password. New password must be different than previous passwords.',
         {
           request,
           security: true,
