@@ -498,12 +498,12 @@ UserSchema.methods = {
       this.given_name,
       this.family_name,
     ];
-    this.emails.forEach(email => {
+    this.emails.forEach((email) => {
       comparisons.push(email.email);
-    })
+    });
 
     // Compare the password to all reference strings.
-    const results = comparisons.map(thisComparison => {
+    const results = comparisons.map((thisComparison) => {
       let thisResult;
 
       // Do direct string comparison, which the library doesn't always catch if
