@@ -504,10 +504,21 @@ UserSchema.methods = {
 
     // Compare the password to all reference strings.
     const results = comparisons.map(thisComparison => {
+      let thisResult;
+
+      // Do direct string comparison, whichthe library doesn't always catch if
+      // enough randomness is tacked onto the end.
+      thisResult = password.toLowerCase().indexOf(thisComparison.toLowerCase()) !== -1 ? 'exact string match found' : false;
+
+      // Bail early if we found a really obvious match.
+      if (thisResult) {
+        return thisResult;
+      }
+
       // The library returns an object with a `message` property. If that property
       // is set to `null` then the password passed. If it contains a string then
       // the password failed the dictionary test.
-      const thisResult = cracklib.fascistCheckUser(password, thisComparison).message;
+      thisResult = cracklib.fascistCheckUser(password, thisComparison).message;
 
       // If the result is NOT `null` then it failed and we'll log the message
       // separate from the main operation taking place that invoked this function.
