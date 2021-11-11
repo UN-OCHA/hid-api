@@ -488,29 +488,46 @@ UserSchema.methods = {
    * @return {boolean}
    */
   isStrongDictionary(password) {
-    // We use fascistCheckUser() and pass the email address in, so that any
-    // password incorporating that address gets rejected as well.
+    // We use fascistCheckUser() and will pass the following into successive
+    // runs of the function:
     //
-    // The library returns an object with a `message` property. If that property
-    // is set to `null` then the password passed. If it contains a string then
-    // the password failed the dictionary test.
-    const result = cracklib.fascistCheckUser(password, this.email).message;
+    // - Given name
+    // - Family name
+    // - Each email on the profile (regardless of confirmation status)
+    const comparisons = [
+      this.given_name,
+      this.family_name,
+    ];
+    this.emails.forEach(email => {
+      comparisons.push(email.email);
+    })
 
-    // If the result is NOT `null` then it failed and we'll log the message
-    // separate from the main operation taking place that invoked this function.
-    if (result !== null) {
-      logger.warn(
-        `[User->isStrongDictionary] Password failed dictionary test: ${result}`,
-        {
-          security: true,
-          fail: true,
-        },
-      );
-    }
+    // Compare the password to all reference strings.
+    const results = comparisons.map(thisComparison => {
+      // The library returns an object with a `message` property. If that property
+      // is set to `null` then the password passed. If it contains a string then
+      // the password failed the dictionary test.
+      const thisResult = cracklib.fascistCheckUser(password, thisComparison).message;
 
-    // `null` means the password passed the dictionary test, so compare it and
-    // return the boolean.
-    return result === null;
+      // If the result is NOT `null` then it failed and we'll log the message
+      // separate from the main operation taking place that invoked this function.
+      if (thisResult !== null) {
+        logger.warn(
+          `[User->isStrongDictionary] Password failed dictionary test: ${thisResult}`,
+          {
+            security: true,
+            fail: true,
+          },
+        );
+      }
+
+      // Return this particular result.
+      return thisResult;
+    });
+
+    // Finally, test if EVERY result is `null`
+    // If there's one failure, then our overall result is a failure.
+    return results.every(val => val === null);
   },
 
   /**
