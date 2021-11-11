@@ -506,7 +506,7 @@ UserSchema.methods = {
     const results = comparisons.map(thisComparison => {
       let thisResult;
 
-      // Do direct string comparison, whichthe library doesn't always catch if
+      // Do direct string comparison, which the library doesn't always catch if
       // enough randomness is tacked onto the end.
       thisResult = password.toLowerCase().indexOf(thisComparison.toLowerCase()) !== -1 ? 'exact string match found' : false;
 
