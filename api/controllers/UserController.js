@@ -12,7 +12,6 @@ const config = require('../../config/env');
 
 const { logger } = config;
 
-
 module.exports = {
   /*
    * @api [post] /user
@@ -599,6 +598,10 @@ module.exports = {
           request,
           security: true,
           fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
         },
       );
       throw Boom.badRequest('Request is missing parameters (old_password or new_password)');
@@ -607,11 +610,33 @@ module.exports = {
     // Is the new password strong enough?
     if (!User.isStrongPassword(newPassword)) {
       logger.warn(
-        `[UserController->updatePassword] Could not update user password for user ${userId}. New password is not strong enough.`,
+        `[UserController->updatePassword] Could not update user password for user ${userId}. Password does not meet our explicit requirements.`,
         {
           request,
           security: true,
           fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+        },
+      );
+      throw Boom.badRequest('New password does not meet requirements');
+    }
+
+    // Run the potential password through our dictionary to weed out simple
+    // substitutions and the like.
+    if (!user.isStrongDictionary(newPassword)) {
+      logger.warn(
+        `[UserController->updatePassword] Could not update user password for user ${userId}. Password failed the dictionary test.`,
+        {
+          request,
+          security: true,
+          fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
         },
       );
       throw Boom.badRequest('New password does not meet requirements');
@@ -625,6 +650,10 @@ module.exports = {
           request,
           security: true,
           fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
         },
       );
       throw Boom.badRequest('The old password is wrong');
@@ -639,6 +668,10 @@ module.exports = {
           request,
           security: true,
           fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
         },
       );
       throw Boom.badRequest('New password must be different than previous passwords');
@@ -1473,6 +1506,10 @@ module.exports = {
           request,
           security: true,
           fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
         },
       );
       throw Boom.badRequest(resetLinkInvalidMessage);
@@ -1486,6 +1523,28 @@ module.exports = {
           request,
           security: true,
           fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+        },
+      );
+      throw Boom.badRequest(cannotResetPasswordMessage);
+    }
+
+    // Run the potential password through our dictionary to weed out simple
+    // substitutions and the like.
+    if (!user.isStrongDictionary(request.payload.password)) {
+      logger.warn(
+        '[UserController->resetPassword] Could not reset password. Password failed the dictionary test.',
+        {
+          request,
+          security: true,
+          fail: true,
+          user: {
+            id: user.id,
+            email: user.email,
+          },
         },
       );
       throw Boom.badRequest(cannotResetPasswordMessage);
@@ -1556,7 +1615,7 @@ module.exports = {
     // Update user in DB.
     await user.save().then(() => {
       logger.info(
-        '[UserController->resetPassword] Password updated successfully',
+        '[UserController->resetPassword] Password updated successfully.',
         {
           request,
           security: true,
