@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.1.0](https://github.com/UN-OCHA/hid-api/compare/v5.0.0...v5.1.0) (2021-11-18)
+
+
+### Features
+
+* **auth:** confirmed recovery email addresses can be used to login ([dcb51c9](https://github.com/UN-OCHA/hid-api/commit/dcb51c96a4d5bf11207a6f5b89e088669670fa32))
+* **security:** passwords must now pass a dictionary test in addition to all existing requirements ([5b8fdae](https://github.com/UN-OCHA/hid-api/commit/5b8fdae6d46cf7ef81236b5c956e0744d8e00d16))
+
+
+### Bug Fixes
+
+* **email:** clarify email notification when adding recovery address to profile ([ee502b2](https://github.com/UN-OCHA/hid-api/commit/ee502b268221ecbb2f57bb1b43672519dfd57b1d))
+* **email:** fix footer inclusion in FR alert email ([13d25f8](https://github.com/UN-OCHA/hid-api/commit/13d25f83027e72cf65573e8fde12c659a23d9560))
+* **email:** make EN template closure more consistent ([aa1bb41](https://github.com/UN-OCHA/hid-api/commit/aa1bb417f18d818b2394f8adb151802cae60a8a6))
+* **email:** remove CTA for email support from email_alert ([c0dfaa0](https://github.com/UN-OCHA/hid-api/commit/c0dfaa0eda0c5b5d188b02383f8dcfc68fcae10b))
+* **email:** remove CTA for email support from reset_password ([6bdd0ea](https://github.com/UN-OCHA/hid-api/commit/6bdd0ea61879ca9e817e3d53c9deac8420197c0a))
+* **email:** remove email wording related to HID Contacts ([af8905e](https://github.com/UN-OCHA/hid-api/commit/af8905e2a4b035ba37ee15b796c5e68a6da5a687))
+* **email:** remove legacy command and email template special_password_reset ([5433630](https://github.com/UN-OCHA/hid-api/commit/54336306af48b08d119f47a7b414b1b1102dca2f))
+* **email:** remove legacy email template verification_expiry ([d3787ca](https://github.com/UN-OCHA/hid-api/commit/d3787ca2b072239d0ac58985d4a442b84c8f90f0))
+* **email:** update EN/FR email footers to remove email and add FAQs ([a7e7da8](https://github.com/UN-OCHA/hid-api/commit/a7e7da8a84653d89f1027a9fa57c6787ae72ab21))
+* **email:** update wording in FR templates and make introduction and closure more consistent ([de0d806](https://github.com/UN-OCHA/hid-api/commit/de0d80671ad197ea159e64c41308ca6a3c7ff065))
+* log password update/reset errors with consistent metadata ([70f8769](https://github.com/UN-OCHA/hid-api/commit/70f8769a327a1d71cb0f2af69e2e96fbae599e9d))
+* point users to FAQs for common errors ([7824e8e](https://github.com/UN-OCHA/hid-api/commit/7824e8e2af4080ec8436edc8531c7e1ec713c8d5))
+* provide more specific error when password did not meet guidelines ([6a0ede6](https://github.com/UN-OCHA/hid-api/commit/6a0ede640195b082dba6b74f4d31d584ed5554c8))
+* **security:** do explicit case-insensitive string matching before passing to cracklib ([f4141da](https://github.com/UN-OCHA/hid-api/commit/f4141da985aab8c3c597854c90774fcd4bc8da63))
+* **security:** isStrongDictionary auto-compares email, and logs feedback when present ([9689e8b](https://github.com/UN-OCHA/hid-api/commit/9689e8b4136acd25158069c3127d94d4b4d7384c))
+* **security:** isStrongDictionary compares password to family, given, and each email address ([3b83d60](https://github.com/UN-OCHA/hid-api/commit/3b83d60180b784a2a6f2c0f0b8fd26b3f45bc811))
+* **security:** only destroy session after password reset succeeds ([0d30eea](https://github.com/UN-OCHA/hid-api/commit/0d30eea40ccb7ea199cdfffea58b0582c6313d7e))
+* **security:** only destroy session after password reset succeeds ([f1db7c9](https://github.com/UN-OCHA/hid-api/commit/f1db7c9151b7235c2fe095de7d2e89b703c0c952))
+* **theme:** update CD and implement Header nav ([02e984e](https://github.com/UN-OCHA/hid-api/commit/02e984e63b9479f9f2d8f23927853fe2e0617aad))
+* upgrade qrcode and underlying dependencies ([50a4bb8](https://github.com/UN-OCHA/hid-api/commit/50a4bb807b05b78b1114746a11ec4f8d3e6c0ed3))
+* when password requirements are not met during password reset, show form again ([80803bf](https://github.com/UN-OCHA/hid-api/commit/80803bf427bc6d1d0a1d520b3ff99dd558d15f0c))
+
+## [4.0.0](https://github.com/UN-OCHA/hid-api/compare/v4.0.0-rc1...v4.0.0) (2021-09-16)
+
 ### [5.0.1](https://github.com/UN-OCHA/hid_api/compare/v5.0.0...v5.0.1) (2021-10-28)
 
 
