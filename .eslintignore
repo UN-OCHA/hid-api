@@ -1,2 +1,5 @@
 docs/*
 db
+tmp
+keys
+assets/js/cd-core.js

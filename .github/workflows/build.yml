@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - dev
-      - main
-      - master
       - OPS-*
       - HID-*
   release:
@@ -53,3 +51,21 @@ jobs:
           tags: public.ecr.aws/unocha/hid-api:${{ steps.tag_info.outputs.IMAGE_TAG }}
           secrets: |
             "github_token=${{ secrets.ECR_GITHUB_TOKEN }}"
+
+      - name: Notify on success only
+        uses: docker://unocha/actions:flowdock-notify-main
+        if: success()
+        env:
+          FLOWDOCK_TOKEN: ${{ secrets.FLOWDOCK_TOKEN }}
+          FLOWDOCK_ICON: 'package'
+          FLOWDOCK_MESSAGE: 'Built a new `HID` image from ${{ github.ref }} and pushed to [ECR](https://gallery.ecr.aws/unocha/hid-api).'
+          FLOWDOCK_TAGS: 'build,docker,${{ github.actor }}'
+
+      - name: Notify on error only
+        uses: docker://unocha/actions:flowdock-notify-main
+        if: failure()
+        env:
+          FLOWDOCK_TOKEN: ${{ secrets.FLOWDOCK_TOKEN }}
+          FLOWDOCK_ICON: 'boom'
+          FLOWDOCK_MESSAGE: 'Failed to build a new `HID` image from ${{ github.ref }}.'
+          FLOWDOCK_TAGS: 'build,docker,${{ github.actor }}'

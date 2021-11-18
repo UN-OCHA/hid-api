@@ -14,7 +14,7 @@ module.exports = {
     SharedArrayBuffer: 'readonly',
   },
   parserOptions: {
-    ecmaVersion: 5,
+    ecmaVersion: 2015,
   },
   rules: {
     'no-alert': 'off',

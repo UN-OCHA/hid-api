@@ -10,7 +10,10 @@ const validate = require('mongoose-validator');
 const Bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const isHTML = require('is-html');
+const cracklib = require('cracklib');
+const config = require('../../config/env');
 
+const { logger } = config;
 const { Schema } = mongoose;
 const populateClients = [
   { path: 'authorizedClients', select: '_id id name organization environment redirectUri redirectUrls' },
@@ -473,6 +476,69 @@ UserSchema.methods = {
 
     // Compare to current password.
     return Bcrypt.compareSync(passwordToCompare, this.password);
+  },
+
+  /**
+   * Password dictionary test
+   *
+   * Check a password against a standard dictionary that does some substitutions
+   * involving numbers, compares against common patterns, and other well-known
+   * sources of "inspiration" for weak passwords.
+   *
+   * @return {boolean}
+   */
+  isStrongDictionary(password) {
+    // We use fascistCheckUser() and will pass the following into successive
+    // runs of the function:
+    //
+    // - Given name
+    // - Family name
+    // - Each email on the profile (regardless of confirmation status)
+    const comparisons = [
+      this.given_name,
+      this.family_name,
+    ];
+    this.emails.forEach((email) => {
+      comparisons.push(email.email);
+    });
+
+    // Compare the password to all reference strings.
+    const results = comparisons.map((thisComparison) => {
+      let thisResult;
+
+      // Do direct string comparison, which the library doesn't always catch if
+      // enough randomness is tacked onto the end.
+      thisResult = password.toLowerCase().indexOf(thisComparison.toLowerCase()) !== -1 ? 'exact string match found' : false;
+
+      // Bail early if we found a really obvious match.
+      if (thisResult) {
+        return thisResult;
+      }
+
+      // The library returns an object with a `message` property. If that property
+      // is set to `null` then the password passed. If it contains a string then
+      // the password failed the dictionary test.
+      thisResult = cracklib.fascistCheckUser(password, thisComparison).message;
+
+      // If the result is NOT `null` then it failed and we'll log the message
+      // separate from the main operation taking place that invoked this function.
+      if (thisResult !== null) {
+        logger.warn(
+          `[User->isStrongDictionary] Password failed dictionary test: ${thisResult}`,
+          {
+            security: true,
+            fail: true,
+          },
+        );
+      }
+
+      // Return this particular result.
+      return thisResult;
+    });
+
+    // Finally, test if EVERY result is `null`
+    // If there's one failure, then our overall result is a failure.
+    return results.every(val => val === null);
   },
 
   /**
