@@ -9,77 +9,77 @@ const config = require('../../config/env');
 
 const { logger } = config;
 
-module.exports = {
-  /**
-   * Enforces a _mandatory_ 2FA code requirement. If the user doesn't have 2FA
-   * enabled, then this function will unconditionally return false. User can
-   * supply either TOTPs or backup codes.
-   */
-  async isTOTPValid(user, token) {
-    if (!user.totpConf || !user.totpConf.secret) {
-      logger.warn(
-        `[AuthPolicy->isTOTPValid] TOTP was not configured for user ${user.id}`,
-        { security: true },
-      );
-      throw Boom.unauthorized('TOTP was not configured for this user', 'totp');
+/**
+ * Enforces a _mandatory_ 2FA code requirement. If the user doesn't have 2FA
+ * enabled, then this function will unconditionally return false. User can
+ * supply either TOTPs or backup codes.
+ */
+async function isTOTPValid(user, token) {
+  if (!user.totpConf || !user.totpConf.secret) {
+    logger.warn(
+      `[AuthPolicy->isTOTPValid] TOTP was not configured for user ${user.id}`,
+      { security: true },
+    );
+    throw Boom.unauthorized('TOTP was not configured for this user', 'totp');
+  }
+
+  if (!token) {
+    logger.warn(
+      '[AuthPolicy->isTOTPValid] No TOTP token',
+      { security: true },
+    );
+    throw Boom.unauthorized('No TOTP token', 'totp');
+  }
+
+  if (token.length === 6) {
+    const success = authenticator.verifyToken(user.totpConf.secret, token);
+
+    if (success) {
+      return user;
     }
-
-    if (!token) {
-      logger.warn(
-        '[AuthPolicy->isTOTPValid] No TOTP token',
-        { security: true },
-      );
-      throw Boom.unauthorized('No TOTP token', 'totp');
-    }
-
-    if (token.length === 6) {
-      const success = authenticator.verifyToken(user.totpConf.secret, token);
-
-      if (success) {
-        return user;
-      }
-      logger.warn(
-        `[AuthPolicy->isTOTPValid] Invalid TOTP token ${token}`,
-        {
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.unauthorized('Invalid TOTP token !', 'totp');
-    }
-
-    // Using backup code
-    const index = user.backupCodeIndex(token);
-    if (index === -1) {
-      logger.warn(
-        `[AuthPolicy->isTOTPValid] Invalid backup code ${token}`,
-        {
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.unauthorized('Invalid backup code !', 'totp');
-    }
-
-    // Remove backup code so it can't be reused.
-    user.totpConf.backupCodes.splice(index, 1);
-    user.markModified('totpConf.backupCodes');
-    await user.save();
-
-    logger.info(
-      `[AuthPolicy->isTOTPValid] Successfully removed a backup code for user ${user.id}`,
+    logger.warn(
+      `[AuthPolicy->isTOTPValid] Invalid TOTP token ${token}`,
       {
         security: true,
-        user: {
-          id: user.id,
-          email: user.email,
-        },
+        fail: true,
       },
     );
+    throw Boom.unauthorized('Invalid TOTP token !', 'totp');
+  }
 
-    return user;
-  },
+  // Using backup code
+  const index = user.backupCodeIndex(token);
+  if (index === -1) {
+    logger.warn(
+      `[AuthPolicy->isTOTPValid] Invalid backup code ${token}`,
+      {
+        security: true,
+        fail: true,
+      },
+    );
+    throw Boom.unauthorized('Invalid backup code !', 'totp');
+  }
 
+  // Remove backup code so it can't be reused.
+  user.totpConf.backupCodes.splice(index, 1);
+  user.markModified('totpConf.backupCodes');
+  await user.save();
+
+  logger.info(
+    `[AuthPolicy->isTOTPValid] Successfully removed a backup code for user ${user.id}`,
+    {
+      security: true,
+      user: {
+        id: user.id,
+        email: user.email,
+      },
+    },
+  );
+
+  return user;
+}
+
+module.exports = {
   /**
    * Enforces an _optional_ TOTP requirement. If the user has 2FA enabled, they
    * must answer this challenge. Users without 2FA enabled will pass through.
@@ -102,7 +102,7 @@ module.exports = {
     }
 
     // Validate the TOTP code.
-    await this.isTOTPValid(user, totp);
+    await isTOTPValid(user, totp);
 
     // If no error was thrown, return true.
     return true;
@@ -111,7 +111,7 @@ module.exports = {
   async isTOTPValidPolicy(request) {
     const user = request.auth.credentials;
     const token = request.headers['x-hid-totp'];
-    await this.isTOTPValid(user, token);
+    await isTOTPValid(user, token);
     return true;
   },
 
