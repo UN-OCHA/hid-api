@@ -181,9 +181,11 @@ module.exports = {
       to: user.email,
       locale: user.locale,
     };
+    const registerLink = `${process.env.APP_URL}/register`;
     const context = {
       user,
       admin,
+      registerLink,
     };
     return send(mailOptions, 'admin_delete', context);
   },
