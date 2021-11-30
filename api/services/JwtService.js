@@ -32,10 +32,9 @@ module.exports = {
 
   generateIdToken(client, user, scope, nonce) {
     const now = Math.floor(Date.now() / 1000);
-    let sub = user._id;
-    if (client.id === 'iasc-prod' || client.id === 'iasc-dev') {
-      sub = user.email;
-    }
+    const sub = user.id;
+    const loggedScopes = [];
+
     const idToken = {
       iss: process.env.ROOT_URL,
       sub,
