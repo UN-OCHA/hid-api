@@ -74,6 +74,7 @@ internals.tokenToUser = async (token) => {
       );
       throw Boom.unauthorized('Invalid Token!');
     }
+
     if (tok.isExpired()) {
       logger.warn(
         'Token is expired',
@@ -84,6 +85,7 @@ internals.tokenToUser = async (token) => {
       );
       throw Boom.unauthorized('Expired token');
     }
+
     logger.info(
       'Successful authentication through OAuth token',
       {
