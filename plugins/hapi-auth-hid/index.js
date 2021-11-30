@@ -44,6 +44,8 @@ internals.tokenToUser = async (token) => {
           security: true,
           user: {
             id: jtoken.id,
+            email: user.email,
+            admin: user.is_admin,
           },
         },
       );

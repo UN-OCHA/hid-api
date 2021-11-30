@@ -1,13 +1,13 @@
-const mongoose = require('mongoose');
-const crypto = require('crypto');
-
-const { Schema } = mongoose;
-
 /**
  * @module OauthToken
  * @description Oauth Token
  */
+const mongoose = require('mongoose');
+const crypto = require('crypto');
+const config = require('../../config/env');
 
+const { logger } = config;
+const { Schema } = mongoose;
 const OauthTokenSchema = new Schema({
   type: {
     type: String,
@@ -64,6 +64,22 @@ OauthTokenSchema.statics = {
       nonce,
       expires: now + 7 * 24 * 3600 * 1000,
     };
+
+    logger.info(
+      `[OauthToken->generate] generating ${type} OAuth token`,
+      {
+        oauth: {
+          type,
+          client_id: client._id,
+        },
+        user: {
+          id: user._id,
+          email: user.email,
+          admin: user.is_admin,
+        },
+      },
+    );
+
     return ftoken;
   },
 };
