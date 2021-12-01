@@ -769,7 +769,7 @@ UserSchema.methods = {
   },
 
   async defaultPopulate() {
-    return await this.populate(populateClients);
+    return this.populate(populateClients);
   },
 
   trustedDeviceIndex(ua) {

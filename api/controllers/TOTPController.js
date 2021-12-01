@@ -403,6 +403,7 @@ module.exports = {
     const user = request.auth.credentials;
     const deviceId = request.params.id;
     const device = user.totpTrusted.id(deviceId);
+
     if (device) {
       user.totpTrusted.id(deviceId).remove();
       await user.save();
