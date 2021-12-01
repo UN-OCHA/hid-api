@@ -497,7 +497,7 @@ module.exports = {
     await EmailService.sendAdminDelete(user, request.auth.credentials);
 
     // Delete this user.
-    await user.remove();
+    await user.deleteOne();
 
     logger.info(
       `[UserController->destroy] Removed user ${request.params.id}`,
