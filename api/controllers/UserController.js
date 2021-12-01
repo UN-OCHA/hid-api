@@ -497,7 +497,16 @@ module.exports = {
     await EmailService.sendAdminDelete(user, request.auth.credentials);
 
     // Delete this user.
-    await user.deleteOne();
+    await user.deleteOne().catch((err) => {
+      logger.error(
+        `[UserController->destroy] ${err.message}`,
+        {
+          request,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+    });
 
     logger.info(
       `[UserController->destroy] Removed user ${request.params.id}`,
