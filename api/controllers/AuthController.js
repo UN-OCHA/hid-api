@@ -282,7 +282,7 @@ module.exports = {
         const offset = 5 * 60 * 1000;
         const d5minutes = new Date(now - offset);
         const [floodCount, user] = await Promise.all([
-          Flood.count({
+          Flood.countDocuments({
             type: 'totp',
             email: cookie.userId,
             createdAt: {
