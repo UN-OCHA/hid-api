@@ -1658,25 +1658,6 @@ module.exports = {
     return reply.response().code(204);
   },
 
-  // HID Contacts notification-related method.
-  //
-  // TODO: remove
-  async notify(request) {
-    const record = await User.findOne({ _id: request.params.id });
-    if (!record) {
-      logger.warn(
-        `[UserController->notify] User ${request.params.id} not found`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.notFound();
-    }
-
-    return record;
-  },
-
   /*
    * @api [delete] /user/{id}/clients/{client}
    * tags:
