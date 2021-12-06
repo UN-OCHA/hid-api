@@ -1021,7 +1021,7 @@ module.exports = {
       }
     }
 
-    // Send notifications to secondary addresses.
+    // Send email alerts to confirmed secondary addresses.
     await Promise.all(promises);
 
     // Return user object.
