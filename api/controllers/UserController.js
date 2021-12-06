@@ -494,22 +494,10 @@ module.exports = {
    *     description: Requested user not found.
    */
   async destroy(request, reply) {
-    // Don't allow admins to delete their account.
-    if (!request.auth.credentials.is_admin
-      && request.auth.credentials._id.toString() !== request.params.id) {
-      logger.warn(
-        `[UserController->destroy] User ${request.auth.credentials._id.toString()} is not allowed to delete user ${request.params.id}`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.forbidden('You are not allowed to delete this account');
-    }
-
     // Find user in DB.
-    const user = await User.findOne({ _id: request.params.id });
+    const user = await User.findById(request.params.id);
 
+    // User not found.
     if (!user) {
       logger.warn(
         `[UserController->destroy] Could not find user ${request.params.id}`,
@@ -521,12 +509,25 @@ module.exports = {
       throw Boom.notFound();
     }
 
+    // User is admin and cannot be deleted.
+    if (user.is_admin) {
+      logger.warn(
+        `[UserController->destroy] User ${request.params.id} is an admin and cannot be deleted.`,
+        {
+          request,
+          fail: true,
+        },
+      );
+      throw Boom.forbidden();
+    }
+
     // Notify user that their account was deleted.
     await EmailService.sendAdminDelete(user, request.auth.credentials);
 
     // Delete this user.
     await user.remove();
 
+    // Log the event and return success code.
     logger.info(
       `[UserController->destroy] Removed user ${request.params.id}`,
       {
@@ -534,7 +535,6 @@ module.exports = {
         security: true,
       },
     );
-
     return reply.response().code(204);
   },
 

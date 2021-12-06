@@ -398,6 +398,7 @@ module.exports = [
     path: '/api/v3/user/{id}',
     options: {
       pre: [
+        UserPolicy.canDestroy,
         AuthPolicy.isTOTPEnabledAndValid,
       ],
       handler: UserController.destroy,
