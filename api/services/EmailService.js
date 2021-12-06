@@ -75,13 +75,14 @@ function send(options, tpl, context) {
 
 module.exports = {
 
-  sendRegister(user, appVerifyUrl) {
+  sendRegister(user) {
     const mailOptions = {
       to: user.email,
       locale: user.locale || 'en',
     };
     const hash = user.generateHashEmail(user.email);
-    let resetUrl = addUrlArgument(appVerifyUrl, 'id', user._id.toString());
+    const baseUrl = `${process.env.APP_URL}/verify`;
+    let resetUrl = addUrlArgument(baseUrl, 'id', user._id.toString());
     resetUrl = addUrlArgument(resetUrl, 'time', hash.timestamp);
     resetUrl = addUrlArgument(resetUrl, 'hash', hash.hash);
     const context = {

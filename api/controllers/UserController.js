@@ -35,11 +35,6 @@ module.exports = {
    *           given_name:
    *             type: string
    *             required: true
-   *           app_verify_url:
-   *             type: string
-   *             required: true
-   *             description: >-
-   *               Should correspond to the endpoint you are interacting with.
    *           password:
    *             type: string
    *             required: false
@@ -89,38 +84,6 @@ module.exports = {
       throw Boom.badRequest('Missing field: email');
     }
 
-    if (!request.payload.app_verify_url) {
-      logger.warn(
-        '[UserController->create] Missing app_verify_url',
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Missing field: app_verify_url');
-    }
-
-    const appVerifyUrl = request.payload.app_verify_url;
-    if (!HelperService.isAuthorizedUrl(appVerifyUrl)) {
-      if (request.payload && request.payload.password) {
-        delete request.payload.password;
-      }
-      if (request.payload && request.payload.confirm_password) {
-        delete request.payload.confirm_password;
-      }
-
-      logger.warn(
-        `[UserController->create] app_verify_url ${appVerifyUrl} is not in allowedDomains list`,
-        {
-          request,
-          security: true,
-          fail: true,
-        },
-      );
-      throw Boom.badRequest('Invalid app_verify_url');
-    }
-
     let record = null;
     if (request.payload.email) {
       record = await User.findOne({ 'emails.email': request.payload.email });
@@ -168,8 +131,6 @@ module.exports = {
         request.payload.password = User.hashPassword(User.generateRandomPassword());
       }
 
-      delete request.payload.app_verify_url;
-
       let notify = true;
       if (typeof request.payload.notify !== 'undefined') {
         const { notify: notif } = request.payload.notify;
@@ -216,7 +177,7 @@ module.exports = {
 
       if (user.email && notify === true) {
         if (!request.auth.credentials) {
-          await EmailService.sendRegister(user, appVerifyUrl);
+          await EmailService.sendRegister(user);
         }
       }
       return user;
