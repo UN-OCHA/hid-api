@@ -130,7 +130,11 @@ module.exports = {
       // Create user
       if (request.payload.email) {
         request.payload.emails = [];
-        request.payload.emails.push({ type: 'Work', email: request.payload.email, validated: false });
+        request.payload.emails.push({
+          type: 'Work',
+          email: request.payload.email,
+          validated: false,
+        });
       }
 
       if (request.payload.password && request.payload.confirm_password) {
