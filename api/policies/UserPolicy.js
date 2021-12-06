@@ -9,34 +9,6 @@ const config = require('../../config/env');
 const { logger } = config;
 
 module.exports = {
-  canCreate(request) {
-    if (!request.auth.credentials) {
-      if (!request.payload) {
-        logger.warn(
-          '[UserPolicy->canCreate] No request payload provided for user creation',
-          { request: request.payload, fail: true },
-        );
-        throw Boom.badRequest('Missing request payload');
-      } else if (!request.payload.email) {
-        // Strip out sensitive fields before logging
-        delete request.payload.password;
-        delete request.payload.confirm_password;
-
-        logger.warn(
-          '[UserPolicy->canCreate] No email address provided for user creation',
-          { request: request.payload, fail: true },
-        );
-        throw Boom.badRequest('You need to register with an email address');
-      }
-    } else if (!request.auth.credentials.is_admin && !request.auth.credentials.isManager) {
-      logger.warn(
-        `[UserPolicy->canCreate] User ${request.auth.credentials.id} tried to create another user even though he is not an admin or manager`,
-      );
-      throw Boom.forbidden('Only administrators and managers can create users');
-    }
-    return true;
-  },
-
   async canDestroy(request) {
     if (request.auth.credentials.is_admin
       || request.auth.credentials.id === request.params.id) {

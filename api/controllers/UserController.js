@@ -59,12 +59,36 @@ module.exports = {
    *         schema:
    *           $ref: '#/components/schemas/User'
    *   '400':
-   *     description: Bad request. Missing required parameters.
+   *     description: Bad request. See response for details.
    *   '403':
    *     description: Forbidden. Your account is not allowed to create users.
    * security: []
    */
   async create(request) {
+    if (!request.payload) {
+      logger.warn(
+        '[UserController->create] No request payload provided for user creation',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('Missing request payload');
+    }
+
+    if (!request.payload.email) {
+      logger.warn(
+        '[UserController->create] No email address provided for user creation',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('Missing field: email');
+    }
+
     if (!request.payload.app_verify_url) {
       logger.warn(
         '[UserController->create] Missing app_verify_url',
@@ -74,7 +98,7 @@ module.exports = {
           fail: true,
         },
       );
-      throw Boom.badRequest('Missing app_verify_url');
+      throw Boom.badRequest('Missing field: app_verify_url');
     }
 
     const appVerifyUrl = request.payload.app_verify_url;

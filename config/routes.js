@@ -347,12 +347,7 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v3/user',
-    options: {
-      pre: [
-        UserPolicy.canCreate,
-      ],
-      handler: UserController.create,
-    },
+    handler: UserController.create,
   },
 
   {
