@@ -1,6 +1,6 @@
 /**
- * @module migratePasswordExpiry
- * @description Removes all properties related to password expiry.
+ * @module migrateCreatedBy
+ * @description Removes the createdBy property from all users.
  */
 const mongoose = require('mongoose');
 const config = require('../config/env');
@@ -15,16 +15,14 @@ mongoose.connect(store.uri, store.options);
 const User = require('../api/models/User');
 
 async function run() {
-  // Drop fields related to password expiry notifications from all users.
+  // Drop the `createdBy` field from all users.
   await User.collection.updateMany({}, {
     $unset: {
-      passwordResetAlert30days: 1,
-      passwordResetAlert7days: 1,
-      passwordResetAlert: 1,
+      createdBy: 1,
     },
   }).catch((err) => {
     logger.warn(
-      `[commands->migratePasswordExpiry] ${err.message}`,
+      `[commands->migrateCreatedBy] ${err.message}`,
       {
         migration: true,
         fail: true,
@@ -35,7 +33,7 @@ async function run() {
 
   // Log it
   logger.info(
-    '[commands->migratePasswordExpiry] Removed passwordResetAlert30days, passwordResetAlert7days, passwordResetAlert fields from all users',
+    '[commands->migrateCreatedBy] Removed createdBy field from all users',
     {
       migration: true,
     },
@@ -49,7 +47,7 @@ async function run() {
   await run();
 }()).catch((err) => {
   logger.error(
-    `[commands->migratePasswordExpiry] ${err.message}`,
+    `[commands->migrateCreatedBy] ${err.message}`,
     {
       migration: true,
       fail: true,
