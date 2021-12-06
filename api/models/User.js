@@ -276,12 +276,6 @@ const UserSchema = new Schema({
     readonly: true,
   },
 
-  createdBy: {
-    type: Schema.ObjectId,
-    ref: 'User',
-    readonly: true,
-  },
-
   authorizedClients: [{
     type: Schema.ObjectId,
     ref: 'Client',
