@@ -60,9 +60,10 @@ module.exports = {
    * security: []
    */
   async create(request) {
+    // Does the request contain a payload?
     if (!request.payload) {
       logger.warn(
-        '[UserController->create] No request payload provided for user creation',
+        '[UserController->create] Registration failed. No payload provided.',
         {
           request,
           security: true,
@@ -72,9 +73,10 @@ module.exports = {
       throw Boom.badRequest('Missing request payload');
     }
 
+    // Does the payload contain an email address?
     if (!request.payload.email) {
       logger.warn(
-        '[UserController->create] No email address provided for user creation',
+        '[UserController->create] Registration failed. No email address provided.',
         {
           request,
           security: true,
@@ -84,107 +86,14 @@ module.exports = {
       throw Boom.badRequest('Missing field: email');
     }
 
-    let record = null;
-    if (request.payload.email) {
-      record = await User.findOne({ 'emails.email': request.payload.email });
-    }
+    // Look for the email address in our DB.
+    // We cannot proceed if we find a match.
+    const existingUser = await User.findOne({ 'emails.email': request.payload.email });
 
-    if (!record) {
-      // Create user
-      if (request.payload.email) {
-        request.payload.emails = [];
-        request.payload.emails.push({
-          type: 'Work',
-          email: request.payload.email,
-          validated: false,
-        });
-      }
-
-      if (request.payload.password && request.payload.confirm_password) {
-        if (request.payload.password !== request.payload.confirm_password) {
-          logger.warn(
-            '[UserController->create] Passwords did not match during registration.',
-            {
-              request,
-              security: true,
-              fail: true,
-            },
-          );
-          throw Boom.badRequest('The passwords do not match');
-        }
-
-        if (User.isStrongPassword(request.payload.password)) {
-          request.payload.password = User.hashPassword(request.payload.password);
-        } else {
-          logger.warn(
-            '[UserController->create] Provided password is not strong enough.',
-            {
-              request,
-              security: true,
-              fail: true,
-            },
-          );
-          throw Boom.badRequest('The password is not strong enough');
-        }
-      } else {
-        // Set a random password
-        request.payload.password = User.hashPassword(User.generateRandomPassword());
-      }
-
-      let notify = true;
-      if (typeof request.payload.notify !== 'undefined') {
-        const { notify: notif } = request.payload.notify;
-        notify = notif;
-      }
-      delete request.payload.notify;
-
-      HelperService.removeForbiddenAttributes(User, request, []);
-
-      // HID-1582: creating a short lived user for testing
-      if (request.payload.tester) {
-        const now = Date.now();
-        request.payload.expires = new Date(now + 3600 * 1000);
-        request.payload.email_verified = true;
-        delete request.payload.tester;
-      }
-
-      // Create user account.
-      const user = await User.create(request.payload);
-
-      if (!user) {
-        logger.warn(
-          '[UserController->create] Create user failed',
-          {
-            request,
-            security: true,
-            fail: true,
-          },
-        );
-        throw Boom.badRequest();
-      }
-      logger.info(
-        `[UserController->create] User created successfully with ID ${user._id.toString()}`,
-        {
-          request,
-          security: true,
-          user: {
-            id: user._id.toString(),
-            email: user.email,
-            admin: user.is_admin,
-          },
-        },
-      );
-
-      if (user.email && notify === true) {
-        if (!request.auth.credentials) {
-          await EmailService.sendRegister(user);
-        }
-      }
-      return user;
-    }
-    if (!request.auth.credentials) {
+    // User was found when we searched DB. Return an error.
+    if (existingUser) {
       logger.warn(
-        `[UserController->create] The email address ${request.payload.email} is already registered`,
+        '[UserController->create] Registration failed. The email address is already registered.',
         {
           request,
           fail: true,
@@ -193,20 +102,113 @@ module.exports = {
           },
         },
       );
-      throw Boom.badRequest('This email address is already registered. If you can not remember your password, please reset it');
-    } else {
+      throw Boom.badRequest('This email address is already registered.');
+    }
+
+    // If the email is new to our system, add the email address to the account's
+    // email array for when the user is finally created.
+    if (request.payload.email) {
+      request.payload.emails = [];
+      request.payload.emails.push({
+        type: 'Work',
+        email: request.payload.email,
+        validated: false,
+      });
+    }
+
+    // Does the payload contain a password?
+    if (!request.payload.password) {
       logger.warn(
-        `[UserController->create] The user already exists with ID ${record._id.toString()}`,
+        '[UserController->create] Registration failed. Password field missing.',
         {
           request,
+          security: true,
           fail: true,
-          user: {
-            id: record._id.toString(),
-          },
         },
       );
-      throw Boom.badRequest(`This user already exists. user_id=${record._id.toString()}`);
+      throw Boom.badRequest('Missing field: password');
     }
+
+    // Does the payload contain a confirm_password field?
+    if (!request.payload.confirm_password) {
+      logger.warn(
+        '[UserController->create] Registration failed. Password confirmation field missing.',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('Missing field: confirm_password');
+    }
+
+    // Did the passwords match?
+    if (request.payload.password !== request.payload.confirm_password) {
+      logger.warn(
+        '[UserController->create] Registration failed. Password fields did not match.',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('The password and confirm_password fields do not match');
+    }
+
+    // Is the password strong enough to meet OICT requirements?
+    //
+    // TODO: can we also use `isStrongDictionary` method before user gets created?
+    if (!User.isStrongPassword(request.payload.password)) {
+      logger.warn(
+        '[UserController->create] Registration failed. Password is not strong enough.',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('The password does not meet requirements.');
+    }
+
+    // If all password checks were successful, hash the password and store on
+    // the user object.
+    request.payload.password = User.hashPassword(request.payload.password);
+
+    // Remove sensitive data from the `request.payload` before we create the new
+    // user account.
+    HelperService.removeForbiddenAttributes(User, request, []);
+
+    // Create user account from the processed payload.
+    const newUser = await User.create(request.payload).catch((err) => {
+      logger.error(
+        `[UserController->create] ${err.message}`,
+        {
+          request,
+          security: true,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+    });
+
+    logger.info(
+      '[UserController->create] User created successfully',
+      {
+        request,
+        security: true,
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          admin: newUser.is_admin,
+        },
+      },
+    );
+
+    // Send email to new account's primary address.
+    await EmailService.sendRegister(newUser);
+
+    // Send new user's account data as response.
+    return newUser;
   },
 
   /*
