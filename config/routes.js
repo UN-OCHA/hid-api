@@ -7,7 +7,7 @@
  *
  * @see https://hapi.dev/tutorials/routing/
  */
-const Joi = require('@hapi/joi');
+const Joi = require('joi');
 
 const AdminController = require('../api/controllers/AdminController');
 const AuthController = require('../api/controllers/AuthController');
