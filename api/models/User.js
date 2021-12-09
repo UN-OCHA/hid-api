@@ -262,6 +262,12 @@ const UserSchema = new Schema({
     adminOnly: true,
   },
 
+  // Timestamp to track the verification of new account registrations.
+  //
+  // Accounts that don't become verified within the default window defined here
+  // will be expunged daily when the following command gets run:
+  //
+  // @see commands/deleteExpiredUsers.js
   expires: {
     type: Date,
     default: () => Date.now() + 7 * 24 * 60 * 60 * 1000,
