@@ -86,6 +86,19 @@ module.exports = {
       throw Boom.badRequest('Missing field: email');
     }
 
+    // Does the payload contain a valid email address?
+    if (!validator.isEmail(request.payload.email)) {
+      logger.warn(
+        '[UserController->create] Registration failed. Invalid email address provided.',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('Invalid field: email');
+    }
+
     // Does the payload contain a given name?
     if (!request.payload.given_name) {
       logger.warn(
