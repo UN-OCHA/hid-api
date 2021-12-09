@@ -86,6 +86,32 @@ module.exports = {
       throw Boom.badRequest('Missing field: email');
     }
 
+    // Does the payload contain a given name?
+    if (!request.payload.given_name) {
+      logger.warn(
+        '[UserController->create] Registration failed. No given name provided.',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('Missing field: given_name');
+    }
+
+    // Does the payload contain a family name?
+    if (!request.payload.family_name) {
+      logger.warn(
+        '[UserController->create] Registration failed. No family name provided.',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('Missing field: family_name');
+    }
+
     // Look for the email address in our DB.
     // We cannot proceed if we find a match.
     const existingUser = await User.findOne({ 'emails.email': request.payload.email });
