@@ -215,12 +215,17 @@ module.exports = {
     // the user object.
     request.payload.password = User.hashPassword(request.payload.password);
 
-    // Remove sensitive data from the `request.payload` before we create the new
-    // user account.
-    HelperService.removeForbiddenAttributes(User, request, []);
+    // Copy our desired values out of the payload into a pristine object.
+    const newUserData = {
+      email: request.payload.email,
+      emails: request.payload.emails,
+      given_name: request.payload.given_name,
+      family_name: request.payload.family_name,
+      password: request.payload.password,
+    };
 
     // Create user account from the processed payload.
-    const newUser = await User.create(request.payload).catch((err) => {
+    const newUser = await User.create(newUserData).catch((err) => {
       logger.error(
         `[UserController->create] ${err.message}`,
         {
