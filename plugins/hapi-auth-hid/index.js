@@ -44,6 +44,8 @@ internals.tokenToUser = async (token) => {
           security: true,
           user: {
             id: jtoken.id,
+            email: user.email,
+            admin: user.is_admin,
           },
         },
       );
@@ -72,6 +74,7 @@ internals.tokenToUser = async (token) => {
       );
       throw Boom.unauthorized('Invalid Token!');
     }
+
     if (tok.isExpired()) {
       logger.warn(
         'Token is expired',
@@ -82,6 +85,7 @@ internals.tokenToUser = async (token) => {
       );
       throw Boom.unauthorized('Expired token');
     }
+
     logger.info(
       'Successful authentication through OAuth token',
       {
