@@ -156,9 +156,11 @@ module.exports = {
     }
 
     // Is the password strong enough to meet OICT requirements?
-    //
-    // TODO: can we also use `isStrongDictionary` method before user gets created?
-    if (!User.isStrongPassword(request.payload.password)) {
+    // Does the password pass the dictionary test?
+    if (
+      !User.isStrongPassword(request.payload.password)
+      || !User.isStrongDictionary(request.payload.password, request.payload)
+    ) {
       logger.warn(
         '[UserController->create] Registration failed. Password is not strong enough.',
         {
@@ -617,7 +619,7 @@ module.exports = {
 
     // Run the potential password through our dictionary to weed out simple
     // substitutions and the like.
-    if (!user.isStrongDictionary(newPassword)) {
+    if (!User.isStrongDictionary(newPassword, user)) {
       logger.warn(
         `[UserController->updatePassword] Could not update user password for user ${userId}. Password failed the dictionary test.`,
         {
@@ -1525,7 +1527,7 @@ module.exports = {
 
     // Run the potential password through our dictionary to weed out simple
     // substitutions and the like.
-    if (!user.isStrongDictionary(request.payload.password)) {
+    if (!User.isStrongDictionary(request.payload.password, user)) {
       logger.warn(
         '[UserController->resetPassword] Could not reset password. Password failed the dictionary test.',
         {
