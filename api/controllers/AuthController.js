@@ -644,6 +644,17 @@ module.exports = {
         // csrf: req.csrfToken()
       });
     } catch (err) {
+      // Log the error in case it's something we didn't catch above.
+      logger.error(
+        `[AuthController->authorizeDialogOauth2] ${err.message}`,
+        {
+          request,
+          security: true,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+
       // Display a human-friendly error.
       //
       // We're not doing additional logging in this block because we logged the
