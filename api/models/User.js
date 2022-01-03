@@ -16,7 +16,10 @@ const config = require('../../config/env');
 const { logger } = config;
 const { Schema } = mongoose;
 const populateClients = [
-  { path: 'authorizedClients', select: '_id id name organization environment redirectUri redirectUrls' },
+  {
+    path: 'authorizedClients',
+    select: '_id id name organization environment redirectUri redirectUrls',
+  },
 ];
 
 function isHTMLValidator(v) {
@@ -387,7 +390,7 @@ UserSchema.post('findOne', async function (result, next) {
   }
   try {
     if (typeof result.populate === 'function') {
-      await result.populate(populateClients).execPopulate();
+      await result.populate(populateClients);
     }
     return next();
   } catch (err) {
@@ -771,8 +774,8 @@ UserSchema.methods = {
     return false;
   },
 
-  defaultPopulate() {
-    return this.populate(populateClients).execPopulate();
+  async defaultPopulate() {
+    return this.populate(populateClients);
   },
 
   trustedDeviceIndex(ua) {

@@ -270,7 +270,7 @@ module.exports = {
           const accessToken = OauthToken.generate('access', client, ocode.user, ocode.nonce);
           promises.push(OauthToken.create(refreshToken));
           promises.push(OauthToken.create(accessToken));
-          promises.push(OauthToken.remove({ type: 'code', token: code }));
+          promises.push(OauthToken.deleteOne({ type: 'code', token: code }));
           const tokens = await Promise.all(promises);
           const scope = ['openid'];
           return done(null, tokens[1].token, tokens[0].token, {

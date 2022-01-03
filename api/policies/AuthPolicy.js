@@ -80,6 +80,8 @@ async function isTOTPValid(user, token) {
 }
 
 module.exports = {
+  isTOTPValid,
+
   /**
    * Enforces an _optional_ TOTP requirement. If the user has 2FA enabled, they
    * must answer this challenge. Users without 2FA enabled will pass through.
