@@ -26,38 +26,43 @@
       <section id="section-apps">
         <h2>Authorized Apps</h2>
         <form action="/settings/oauth-clients" method="POST" class="form--settings-oauth-clients">
-          <% if (user.authorizedClients.length === 0) { %>
+          <% if (!user.oauthClients.every(c => c.client !== null)) { %>
+            <%- include('alert.html', { alert: {type: 'error', message: '<p>There was a technical error displaying your authorized websites.</p>' }}) -%>
+          <% } else if (user.oauthClients.length === 0) { %>
             <p><em>You haven't authorized any websites yet. After you log in with HID on one of our <a href="https://about.humanitarian.id/partners-using-our-authentication-service.html" target="_blank" rel="noopener">Partner Sites</a> you will see it listed here.</em></p>
           <% } else { %>
-            <p>You have granted <strong><%= user.authorizedClients.length %> website<%= user.authorizedClients.length === 1 ? '' : 's' %></strong> access to your profile.</p>
+            <p>You have granted <strong><%= user.oauthClients.length %> website<%= user.oauthClients.length === 1 ? '' : 's' %></strong> access to your profile.</p>
             <ul class="oauth-clients-list [ flow ]">
             <%
-              const sorted = user.authorizedClients.sort((a, b) => a.name.localeCompare(b.name));
-              sorted.forEach(function(client) {
+              const sorted = user.oauthClients.sort((a, b) => a.client.name.localeCompare(b.client.name));
+              sorted.forEach(function(thisClient) {
             %>
               <li class="oauth-clients-list__client client">
                 <span class="client__revoke">
                   <button
                     type="submit"
                     name="oauth_client_revoke"
-                    value="<%= client._id.toString() %>"
+                    value="<%= thisClient.client._id.toString() %>"
                     class="cd-button cd-button--danger"
-                    aria-label="Revoke <%= client.name %>"
-                    data-client-name="<%= client.name %>"
+                    aria-label="Revoke <%= thisClient.client.name %>"
+                    data-client-name="<%= thisClient.client.name %>"
                   >Revoke</button>
                 </span>
                 <span class="client__info">
-                  <span class="client__name"><%= client.name %></span>
+                  <span class="client__name"><%= thisClient.client.name %></span>
                   <span class="client__meta">
-                    <% if (!!client.environment && client.environment.toLowerCase().indexOf('prod') === -1) { %>
-                      <span class="client__environment"><strong><%= client.environment %></strong> environment. </span>
+                    <% if (!!thisClient.client.environment && thisClient.client.environment.toLowerCase().indexOf('prod') === -1) { %>
+                      <span class="client__environment"><strong><%= thisClient.client.environment %></strong> environment. </span>
                     <% } %>
-                    <% if (!!client.organization) { %>
-                      <span class="client__organization">Managed by <strong><%= client.organization %></strong></span>
+                    <% if (!!thisClient.client.organization) { %>
+                      <span class="client__organization">Managed by <strong><%= thisClient.client.organization %></strong></span>
                     <% } %>
-                    <% if (!!client.organization && !!client.urlDisplay) { %> — <% } %>
-                    <% if (!!client.urlDisplay && !!client.urlHref) { %>
-                      <a href="<%= client.urlHref %>" class="client__url"><%= client.urlDisplay %></a>
+                    <% if (!!thisClient.client.organization && !!thisClient.client.urlDisplay) { %> — <% } %>
+                    <% if (!!thisClient.client.urlDisplay && !!thisClient.client.urlHref) { %>
+                      <a href="<%= thisClient.client.urlHref %>" class="client__url"><%= thisClient.client.urlDisplay %></a>
+                    <% } %>
+                    <% if (thisClient.lastLogin !== null) { %>
+                      <p class="client__lastlogin">Last login: <%= thisClient.lastLogin.toISOString().slice(0, 10) %></p>
                     <% } %>
                   </span>
                 </span>

@@ -30,6 +30,10 @@
   display: inline;
 }
 
+.client__lastlogin {
+  margin: 0;
+}
+
 /**
  * Buttons (admin or user settings)
  */

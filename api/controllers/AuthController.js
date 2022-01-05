@@ -529,7 +529,7 @@ module.exports = {
       // If the user is authenticated, then check whether the user has confirmed
       // authorization for this client/scope combination.
       const options = {};
-      const user = await User.findOne({ _id: cookie.userId }).populate({ path: 'authorizedClients', select: 'id name' });
+      const user = await User.findById(cookie.userId).populate({ path: 'oauthClients.client', select: 'id name' });
       const clientId = request.query.client_id;
       user.sanitize(user);
       request.auth.credentials = user;
@@ -624,9 +624,18 @@ module.exports = {
 
       // If we made it this far, the OAuth config seems legit. Check user data
       // to see if they already have this client in their approved list.
-      if (user.authorizedClients && user.hasAuthorizedClient(clientId)) {
+      //
+      // If the client is found, we return a redirect to the next step that
+      // includes the requested code and state variables.
+      if (user.hasAuthorizedClient(clientId)) {
         request.payload = { transaction_id: req.oauth2.transactionID };
         const response = await oauth.decision(request, reply);
+
+        // Update lastLogin timestamp for this user.
+        user.setLastLoginToNowForClient(clientId);
+        await user.save();
+
+        // Respond with the redirect back to the user's authorized website.
         return response;
       }
 
@@ -714,14 +723,17 @@ module.exports = {
       }
 
       // Look up user in DB.
-      const user = await User.findOne({ _id: cookie.userId });
+      const user = await User.findById(cookie.userId);
       if (!user) {
         logger.warn(
-          `[AuthController->authorizeOauth2] Unsuccessful OAuth2 authorization attempt. Could not find user with ID ${cookie.userId}`,
+          '[AuthController->authorizeOauth2] Unsuccessful OAuth2 authorization attempt. Could not find user.',
           {
             request,
             security: true,
             fail: true,
+            user: {
+              id: cookie.userId,
+            },
             oauth: {
               client_id: request.query.client_id,
               redirect_uri: request.query.redirect_uri,
@@ -745,13 +757,11 @@ module.exports = {
 
       // If the user clicked 'Allow', save OAuth Client to user profile
       if (!user.hasAuthorizedClient(clientMongoId) && request.payload.bsubmit === 'Allow') {
-        // TODO: we could store an array of objects including the current time
-        //       when adding the client, in order to offer security-related info
-        //       when the user views their OAuth settings.
-        //
-        // @see HID-2156
-        user.authorizedClients.push(clientMongoId);
-        user.markModified('authorizedClients');
+        user.oauthClients.push({
+          client: clientMongoId,
+          lastLogin: Date.now(),
+        });
+        user.markModified('oauthClients');
         await user.save();
 
         logger.info(
@@ -781,7 +791,9 @@ module.exports = {
           stack_trace: err.stack,
         },
       );
-      return err;
+
+      // Instead of JSON return a branded error page.
+      return reply.view('error');
     }
   },
 

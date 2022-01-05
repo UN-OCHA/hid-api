@@ -568,7 +568,7 @@ module.exports = {
       } catch (err) {
         const alert = {
           type: 'error',
-          message: err.output.payload.message,
+          message: err.message,
         };
         return reply.view('totp', {
           query: request.payload,
@@ -1102,7 +1102,7 @@ module.exports = {
       if (objectIdRegex.test(request.payload.oauth_client_revoke)) {
         // Data seems valid. We will attempt to remove from profile.
         // eslint-disable-next-line max-len
-        const clientExists = user.authorizedClients.some(client => client._id.toString() === request.payload.oauth_client_revoke);
+        const clientExists = user.oauthClients.some(client => client.client._id.toString() === request.payload.oauth_client_revoke);
         if (clientExists) {
           // We'll try to revoke the client.
         } else {
@@ -1120,14 +1120,14 @@ module.exports = {
     } else {
       // No validation errors. Perform DB operation and provide user feedback.
       // eslint-disable-next-line max-len
-      const revokedClient = user.authorizedClients.filter(client => client._id.toString() === request.payload.oauth_client_revoke)[0];
+      const revokedClient = user.oauthClients.filter(client => client.client._id.toString() === request.payload.oauth_client_revoke)[0];
       await UserController.revokeOauthClient({}, {
         userId: cookie.userId,
         clientId: request.payload.oauth_client_revoke,
       }).then(() => {
         alert.type = 'status';
         alert.message = `
-          <p>You successfully revoked <strong>${revokedClient.name}</strong> from your profile.</p>
+          <p>You successfully revoked <strong>${revokedClient.client.name}</strong> from your profile.</p>
           <p>If you wish to restore access you can log into that website again using HID.</p>
         `;
       }).catch((err) => {

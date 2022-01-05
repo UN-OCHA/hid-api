@@ -20,12 +20,19 @@ const populateClients = [
     path: 'authorizedClients',
     select: '_id id name organization environment redirectUri redirectUrls',
   },
+  {
+    path: 'oauthClients.client',
+    select: '_id id name organization environment redirectUri redirectUrls',
+  },
 ];
 
 function isHTMLValidator(v) {
   return !isHTML(v);
 }
 
+// Emails schema
+//
+// People can store multiple emails on their profile for login/recovery purposes
 const emailSchema = new Schema({
   type: {
     type: String,
@@ -49,6 +56,10 @@ const emailSchema = new Schema({
   },
 });
 
+// Trusted device schema
+//
+// After passing a 2FA challenge, people can mark their device as secure for a
+// 30-day period.
 const trustedDeviceSchema = new Schema({
   ua: {
     type: String,
@@ -61,6 +72,26 @@ const trustedDeviceSchema = new Schema({
   },
 });
 
+// Authorized OAuth Clients schema
+//
+// HID is an OAuth provider. This defines how we store the OAuth Clients that
+// each user has authorized.
+const oauthClientsSchema = new Schema({
+  _id: Schema.Types.ObjectId,
+  client: {
+    type: Schema.Types.ObjectId,
+    ref: 'Client',
+  },
+  lastLogin: {
+    type: Date,
+    default: null,
+  },
+});
+
+// User schema
+//
+// This is the definition of all the "simple" properties that exist on every
+// user object in the DB.
 const UserSchema = new Schema({
   // Legacy user_id data, to be added during migration
   //
@@ -78,7 +109,7 @@ const UserSchema = new Schema({
     readonly: true,
   },
 
-  // Given/first name.
+  // Given (first) name.
   given_name: {
     type: String,
     trim: true,
@@ -101,7 +132,7 @@ const UserSchema = new Schema({
     },
   },
 
-  // Family/last name.
+  // Family (last) name.
   family_name: {
     type: String,
     trim: true,
@@ -143,13 +174,21 @@ const UserSchema = new Schema({
     readonly: true,
   },
 
-  // Last time the user was reminded to verify his account
+  // HID Contacts "verified user" metadata
+  //
+  // Last time the user was reminded to verify his account.
+  //
+  // TODO: remove
   remindedVerify: {
     type: Date,
     readonly: true,
   },
 
-  // How many times the user was reminded to verify his account
+  // HID Contacts "verified user" metadata
+  //
+  // How many times the user was reminded to verify his account.
+  //
+  // TODO: remove
   timesRemindedVerify: {
     type: Number,
     default: 0,
@@ -286,15 +325,29 @@ const UserSchema = new Schema({
   },
 
   createdBy: {
-    type: Schema.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'User',
     readonly: true,
   },
 
+  // Legacy Authorized Clients data
+  //
+  // @see HID-2156
   authorizedClients: [{
-    type: Schema.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'Client',
   }],
+
+  // HID Authorized Clients
+  //
+  // Websites that this user authorized via HID.
+  oauthClients: [oauthClientsSchema],
+
+  // Migration "high water" mark
+  oauthClientsMigrated: {
+    type: Boolean,
+    default: false,
+  },
 
   // HID Contacts: internal flag indicating user was deleted.
   //
@@ -456,16 +509,16 @@ UserSchema.methods = {
   },
 
   sanitizeClients() {
-    if (this.authorizedClients && this.authorizedClients.length) {
+    if (this.oauthClients && this.oauthClients.length) {
       const sanitized = [];
-      for (let i = 0, len = this.authorizedClients.length; i < len; i += 1) {
-        if (this.authorizedClients[i].secret) {
+      for (let i = 0, len = this.oauthClients.length; i < len; i += 1) {
+        if (typeof this.oauthClients[i].client !== 'undefined' && this.oauthClients[i].client !== null && this.oauthClients[i].client.secret) {
           sanitized.push({
-            id: this.authorizedClients[i].id,
-            name: this.authorizedClients[i].name,
+            id: this.oauthClients[i].client.id,
+            name: this.oauthClients[i].client.name,
           });
         } else {
-          sanitized.push(this.authorizedClients[i]);
+          sanitized.push(this.oauthClients[i].client);
         }
       }
     }
@@ -713,15 +766,26 @@ UserSchema.methods = {
   },
 
   hasAuthorizedClient(clientId) {
-    let out = false;
-    for (let i = 0, len = this.authorizedClients.length; i < len; i += 1) {
-      if (this.authorizedClients[i].id === clientId) {
-        out = true;
+    let result = false;
+    for (let i = 0, len = this.oauthClients.length; i < len; i++) {
+      if (this.oauthClients[i].client.id === clientId) {
+        result = true;
       }
     }
-    return out;
+    return result;
   },
 
+  setLastLoginToNowForClient(clientId) {
+    for (let i = 0, len = this.oauthClients.length; i < len; i++) {
+      if (this.oauthClients[i].client.id === clientId) {
+        this.oauthClients[i].lastLogin = Date.now();
+      }
+    }
+  },
+
+  // HID Contacts subscriptions
+  //
+  // TODO: remove
   subscriptionsIndex(serviceId) {
     const id = serviceId.toString();
     let index = -1;
@@ -737,8 +801,12 @@ UserSchema.methods = {
     return index;
   },
 
-  // Whether we should send a reminder to verify email to user
-  // Reminder emails are sent out 2, 4, 7 and 30 days after registration
+  // HID Contacts "verified user" metadata logic
+  //
+  // Whether we should send a reminder to verify email to user.
+  // Reminder emails are sent out 2, 4, 7 and 30 days after registration.
+  //
+  // TODO: remove
   shouldSendReminderVerify() {
     const created = new Date(this.createdAt);
     const current = Date.now();

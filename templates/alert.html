@@ -1,4 +1,4 @@
-<% if (typeof alert !== 'undefined' && alert.type && alert.message) { %>
+<% if (typeof alert !== 'undefined' && alert !== null && alert.type && alert.message) { %>
   <div class="cd-alert cd-alert--<%= alert.type %>">
 
   <%#
