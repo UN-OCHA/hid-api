@@ -1030,7 +1030,7 @@ module.exports = {
       }
     }
 
-    // Send notifications to secondary addresses.
+    // Send email alerts to confirmed secondary addresses.
     await Promise.all(promises);
 
     // Return user object.
@@ -1665,25 +1665,6 @@ module.exports = {
     });
 
     return reply.response().code(204);
-  },
-
-  // HID Contacts notification-related method.
-  //
-  // TODO: remove
-  async notify(request) {
-    const record = await User.findOne({ _id: request.params.id });
-    if (!record) {
-      logger.warn(
-        `[UserController->notify] User ${request.params.id} not found`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.notFound();
-    }
-
-    return record;
   },
 
   /*
