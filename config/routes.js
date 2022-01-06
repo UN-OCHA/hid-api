@@ -347,12 +347,7 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v3/user',
-    options: {
-      pre: [
-        UserPolicy.canCreate,
-      ],
-      handler: UserController.create,
-    },
+    handler: UserController.create,
   },
 
   {
@@ -403,6 +398,7 @@ module.exports = [
     path: '/api/v3/user/{id}',
     options: {
       pre: [
+        UserPolicy.canUpdate,
         AuthPolicy.isTOTPEnabledAndValid,
       ],
       handler: UserController.destroy,
