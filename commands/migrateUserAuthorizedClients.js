@@ -29,7 +29,9 @@ async function run() {
     // Projection: what will be returned inside each record?
     {},
     // Query: additional options
-    { limit: 1 }
+    {
+      limit: 20000,
+    },
   ).catch((err) => {
     logger.warn(
       `[commands->migrateUserAuthorizedClients] ${err.message}`,
