@@ -649,8 +649,7 @@ module.exports = {
       return reply.view('authorize', {
         user,
         client: req.oauth2.client,
-        transactionID: req.oauth2.transactionID,
-        // csrf: req.csrfToken()
+        transaction_id: req.oauth2.transactionID,
       });
     } catch (err) {
       // Log the error in case it's something we didn't catch above.
