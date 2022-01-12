@@ -530,7 +530,10 @@ module.exports = {
       // If the user is authenticated, then check whether the user has confirmed
       // authorization for this client/scope combination.
       const options = {};
-      const user = await User.findById(cookie.userId).populate({ path: 'oauthClients.client', select: 'id name' });
+      const user = await User.findById(cookie.userId).populate({
+        path: 'oauthClients.client',
+        select: 'id name',
+      });
       const clientId = request.query.client_id;
       user.sanitize(user);
       request.auth.credentials = user;
@@ -645,6 +648,21 @@ module.exports = {
         return reply.redirect(`${redirectUrl}&error=interaction_required`);
       }
 
+      logger.info(
+        '[AuthController->authorizeDialogOauth2] Displaying Authorize prompt',
+        {
+          request,
+          user: {
+            id: user.id,
+            email: user.email,
+            admin: user.is_admin,
+          },
+          oauth: {
+            client_id: clientId,
+          },
+        },
+      );
+
       // The user has not confirmed authorization, so display the authorization
       // dialog to the user and let them decide to approve/deny.
       return reply.view('authorize', {
@@ -747,8 +765,14 @@ module.exports = {
       request.auth.credentials = user;
 
       // Set up OAuth Client to potentially be stored on user profile.
-      const clientMongoId = request.yar.authorize[request.payload.transaction_id].client;
-      const clientId = request.yar.authorize[request.payload.transaction_id].req.clientID;
+      let clientMongoId = undefined;
+      let clientId = undefined;
+      if (typeof request.yar.authorize !== 'undefined') {
+        clientMongoId = request.yar.authorize[request.payload.transaction_id].client;
+        clientId = request.yar.authorize[request.payload.transaction_id].req.clientID;
+      } else {
+        throw Boom.badRequest('Form submission lacked proper transaction data');
+      }
 
       // If user clicked 'Deny', redirect to HID homepage.
       if (!request.payload.bsubmit || request.payload.bsubmit === 'Deny') {
