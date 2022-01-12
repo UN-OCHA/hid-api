@@ -4,6 +4,7 @@
  */
 const Boom = require('@hapi/boom');
 const Hoek = require('@hapi/hoek');
+const mongoose = require('mongoose');
 const Client = require('../models/Client');
 const Flood = require('../models/Flood');
 const JwtToken = require('../models/JwtToken');
@@ -757,6 +758,7 @@ module.exports = {
       // If the user clicked 'Allow', save OAuth Client to user profile
       if (!user.hasAuthorizedClient(clientMongoId) && request.payload.bsubmit === 'Allow') {
         user.oauthClients.push({
+          _id: new mongoose.Types.ObjectId(),
           client: clientMongoId,
           lastLogin: Date.now(),
         });
