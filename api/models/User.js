@@ -77,9 +77,9 @@ const trustedDeviceSchema = new Schema({
 // HID is an OAuth provider. This defines how we store the OAuth Clients that
 // each user has authorized.
 const oauthClientsSchema = new Schema({
-  _id: Schema.Types.ObjectId,
+  _id: Schema.ObjectId,
   client: {
-    type: Schema.Types.ObjectId,
+    type: Schema.ObjectId,
     ref: 'Client',
   },
   lastLogin: {
@@ -325,7 +325,7 @@ const UserSchema = new Schema({
   },
 
   createdBy: {
-    type: Schema.Types.ObjectId,
+    type: Schema.ObjectId,
     ref: 'User',
     readonly: true,
   },
@@ -334,7 +334,7 @@ const UserSchema = new Schema({
   //
   // @see HID-2156
   authorizedClients: [{
-    type: Schema.Types.ObjectId,
+    type: Schema.ObjectId,
     ref: 'Client',
   }],
 
