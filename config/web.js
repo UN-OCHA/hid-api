@@ -207,15 +207,15 @@ module.exports = {
     const OauthExpiresIn = 24 * 3600;
 
     // Register supported OpenID Connect 1.0 grant types.
-
     oauth.grant(oauth2orizeExt.extensions());
-    // id_token grant type.
+
+    // Grant type: 'id_token'
     oauth.grant(oauth2orizeExt.grant.idToken((client, user, req, done) => {
       const out = JwtService.generateIdToken(client, user, req.scope, req.nonce);
       done(null, out);
     }));
 
-    // 'id_token token' grant type.
+    // Grant type: 'id_token token'
     oauth.grant(oauth2orizeExt.grant.idTokenToken(
       async (client, user, done) => {
         try {
@@ -242,6 +242,7 @@ module.exports = {
         return done(err);
       }
     }));
+
     // Authorization code exchange flow
     oauth.grant(oauth.grants.code(async (client, redirectURI, user, res, req, done) => {
       const nonce = req.nonce ? req.nonce : '';
@@ -253,6 +254,7 @@ module.exports = {
         return done(err);
       }
     }));
+
 
     oauth.exchange(oauth.exchanges.code(
       async (client, code, redirectURI, payload, authInfo, done) => {
@@ -268,7 +270,7 @@ module.exports = {
           const accessToken = OauthToken.generate('access', client, ocode.user, ocode.nonce);
           promises.push(OauthToken.create(refreshToken));
           promises.push(OauthToken.create(accessToken));
-          promises.push(OauthToken.remove({ type: 'code', token: code }));
+          promises.push(OauthToken.deleteOne({ type: 'code', token: code }));
           const tokens = await Promise.all(promises);
           const scope = ['openid'];
           return done(null, tokens[1].token, tokens[0].token, {

@@ -315,7 +315,7 @@ module.exports = {
 
     // If a client was found, delete it and log the event.
     if (client) {
-      await client.remove();
+      await client.deleteOne();
 
       logger.info(
         '[ClientController->destroy] Removed client',

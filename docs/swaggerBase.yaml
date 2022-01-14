@@ -1,7 +1,7 @@
 openapi: 3.0.3
 x-api-id: hid-api
 info:
-  version: 5.0.1
+  version: 5.1.1
   title: HID API
   license:
     name: Apache-2.0
@@ -11,7 +11,7 @@ servers:
     description: Staging server. For use by all UNOCHA developers.
   - url: 'https://api.humanitarian.id/api/v3'
     description: Production server. For use by HID Authentication Partners.
-  - url: 'http://hid.test/api/v3'
+  - url: 'http://hid.test:8080/api/v3'
     description: Localhost server. For local dev/debugging.
 
 tags:

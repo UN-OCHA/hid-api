@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.1.1](https://github.com/UN-OCHA/hid-api/compare/v5.1.0...v5.1.1) (2022-01-13)
+
+
+### Bug Fixes
+
+* adjust copy of french emails ([81cf9ce](https://github.com/UN-OCHA/hid-api/commit/81cf9ce442f12745074a0cbbeaed60ddab0b5967))
+* adjust copy of french emails again ([9832d35](https://github.com/UN-OCHA/hid-api/commit/9832d35321d17fa33b42f9d4e7622c96834ff1d4))
+* create users with minimal attributes ([c57d9af](https://github.com/UN-OCHA/hid-api/commit/c57d9afc10eb943794e649644220c65d0879669d))
+* drop mentions of info@hid and provide registration link in admin_delete email ([ad867fa](https://github.com/UN-OCHA/hid-api/commit/ad867fa8db5a4269df0a004ea66c181462c165b1))
+* drop obsolete HID Contacts notify method ([53b26b7](https://github.com/UN-OCHA/hid-api/commit/53b26b7ce2e20caac29d8444b4d7dcdee839863d))
+* drop obsolete property User.createdBy ([18f5a7c](https://github.com/UN-OCHA/hid-api/commit/18f5a7cfd87d14e019e5c8e39ee3113aff8a51f6))
+* implement UserPolicy.canDestroy as policy for UserController.destroy ([842dd35](https://github.com/UN-OCHA/hid-api/commit/842dd355e3904e0f92b7e7fa9f6c32fbb4843e81))
+* log more events and metadata ([e397dd9](https://github.com/UN-OCHA/hid-api/commit/e397dd98029ad8e193ac43d5485097e77b901e98))
+* log something when we issue OAuth/JWT tokens ([8c7f91d](https://github.com/UN-OCHA/hid-api/commit/8c7f91d9786ae0aab59d1cc301a25a2e604b36f0))
+* make User.isStrongDictionary static in order to use it when creating users ([f4f0060](https://github.com/UN-OCHA/hid-api/commit/f4f006094368122c792baa4d768f270062325553))
+* migration to drop User.createdBy field ([2d4d43b](https://github.com/UN-OCHA/hid-api/commit/2d4d43b084c69e7241d1264f1c81013cc15ff484))
+* really really fix AuthPolicy setup ([db19788](https://github.com/UN-OCHA/hid-api/commit/db19788e5fed747f228a32a620d0b244c7866256))
+* remove all Notifications templates ([04aceb2](https://github.com/UN-OCHA/hid-api/commit/04aceb29c0c9ea03b711bb651ae7a424e2848dc8))
+* remove app_verify_url from UserController.create ([714dcf1](https://github.com/UN-OCHA/hid-api/commit/714dcf10927712f628987ea5d994fbe8e528369a))
+* remove HID Contacts code from UserPolicy.canDestroy ([aa308e8](https://github.com/UN-OCHA/hid-api/commit/aa308e860d958d4283a23c4c8c4b13c6b562a108))
+* remove special-casing for IASC tokens ([9ace65b](https://github.com/UN-OCHA/hid-api/commit/9ace65ba78d0fbd66d1b8ec25b1f610430585dda))
+* require family/given names when creating users via API ([662b703](https://github.com/UN-OCHA/hid-api/commit/662b703c49bf34a5326fc774347ca46d38fcd559))
+* restore 2FA to admin actions that require it ([30aace2](https://github.com/UN-OCHA/hid-api/commit/30aace2f65cb051d9288081b739c9205b047d23f))
+* use a dedicated email notification for deleting unverified accounts ([7df4ad6](https://github.com/UN-OCHA/hid-api/commit/7df4ad66079c3d4549743172d36539c80e6c5464))
+* validate email when creating users via API call ([d596e30](https://github.com/UN-OCHA/hid-api/commit/d596e30de344420a8e1d5952bf2ea5ddb8f91792))
+
 ## [5.1.0](https://github.com/UN-OCHA/hid-api/compare/v5.0.0...v5.1.0) (2021-11-18)
 
 

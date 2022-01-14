@@ -35,11 +35,6 @@ module.exports = {
    *           given_name:
    *             type: string
    *             required: true
-   *           app_verify_url:
-   *             type: string
-   *             required: true
-   *             description: >-
-   *               Should correspond to the endpoint you are interacting with.
    *           password:
    *             type: string
    *             required: false
@@ -59,143 +54,85 @@ module.exports = {
    *         schema:
    *           $ref: '#/components/schemas/User'
    *   '400':
-   *     description: Bad request. Missing required parameters.
+   *     description: Bad request. See response for details.
    *   '403':
    *     description: Forbidden. Your account is not allowed to create users.
    * security: []
    */
   async create(request) {
-    if (!request.payload.app_verify_url) {
+    // Does the request contain a payload?
+    if (!request.payload) {
       logger.warn(
-        '[UserController->create] Missing app_verify_url',
+        '[UserController->create] Registration failed. No payload provided.',
         {
           request,
           security: true,
           fail: true,
         },
       );
-      throw Boom.badRequest('Missing app_verify_url');
+      throw Boom.badRequest('Missing request payload');
     }
 
-    const appVerifyUrl = request.payload.app_verify_url;
-    if (!HelperService.isAuthorizedUrl(appVerifyUrl)) {
-      if (request.payload && request.payload.password) {
-        delete request.payload.password;
-      }
-      if (request.payload && request.payload.confirm_password) {
-        delete request.payload.confirm_password;
-      }
-
+    // Does the payload contain an email address?
+    if (!request.payload.email) {
       logger.warn(
-        `[UserController->create] app_verify_url ${appVerifyUrl} is not in allowedDomains list`,
+        '[UserController->create] Registration failed. No email address provided.',
         {
           request,
           security: true,
           fail: true,
         },
       );
-      throw Boom.badRequest('Invalid app_verify_url');
+      throw Boom.badRequest('Missing field: email');
     }
 
-    let record = null;
-    if (request.payload.email) {
-      record = await User.findOne({ 'emails.email': request.payload.email });
-    }
-
-    if (!record) {
-      // Create user
-      if (request.payload.email) {
-        request.payload.emails = [];
-        request.payload.emails.push({ type: 'Work', email: request.payload.email, validated: false });
-      }
-
-      if (request.payload.password && request.payload.confirm_password) {
-        if (request.payload.password !== request.payload.confirm_password) {
-          logger.warn(
-            '[UserController->create] Passwords did not match during registration.',
-            {
-              request,
-              security: true,
-              fail: true,
-            },
-          );
-          throw Boom.badRequest('The passwords do not match');
-        }
-
-        if (User.isStrongPassword(request.payload.password)) {
-          request.payload.password = User.hashPassword(request.payload.password);
-        } else {
-          logger.warn(
-            '[UserController->create] Provided password is not strong enough.',
-            {
-              request,
-              security: true,
-              fail: true,
-            },
-          );
-          throw Boom.badRequest('The password is not strong enough');
-        }
-      } else {
-        // Set a random password
-        request.payload.password = User.hashPassword(User.generateRandomPassword());
-      }
-
-      delete request.payload.app_verify_url;
-
-      let notify = true;
-      if (typeof request.payload.notify !== 'undefined') {
-        const { notify: notif } = request.payload.notify;
-        notify = notif;
-      }
-      delete request.payload.notify;
-
-      HelperService.removeForbiddenAttributes(User, request, []);
-
-      // HID-1582: creating a short lived user for testing
-      if (request.payload.tester) {
-        const now = Date.now();
-        request.payload.expires = new Date(now + 3600 * 1000);
-        request.payload.email_verified = true;
-        delete request.payload.tester;
-      }
-
-      // Create user account.
-      const user = await User.create(request.payload);
-
-      if (!user) {
-        logger.warn(
-          '[UserController->create] Create user failed',
-          {
-            request,
-            security: true,
-            fail: true,
-          },
-        );
-        throw Boom.badRequest();
-      }
-      logger.info(
-        `[UserController->create] User created successfully with ID ${user._id.toString()}`,
+    // Does the payload contain a valid email address?
+    if (!validator.isEmail(request.payload.email)) {
+      logger.warn(
+        '[UserController->create] Registration failed. Invalid email address provided.',
         {
           request,
           security: true,
-          user: {
-            id: user._id.toString(),
-            email: user.email,
-            admin: user.is_admin,
-          },
+          fail: true,
         },
       );
-
-      if (user.email && notify === true) {
-        if (!request.auth.credentials) {
-          await EmailService.sendRegister(user, appVerifyUrl);
-        }
-      }
-      return user;
+      throw Boom.badRequest('Invalid field: email');
     }
-    if (!request.auth.credentials) {
+
+    // Does the payload contain a given name?
+    if (!request.payload.given_name) {
       logger.warn(
-        `[UserController->create] The email address ${request.payload.email} is already registered`,
+        '[UserController->create] Registration failed. No given name provided.',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('Missing field: given_name');
+    }
+
+    // Does the payload contain a family name?
+    if (!request.payload.family_name) {
+      logger.warn(
+        '[UserController->create] Registration failed. No family name provided.',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('Missing field: family_name');
+    }
+
+    // Look for the email address in our DB.
+    // We cannot proceed if we find a match.
+    const existingUser = await User.findOne({ 'emails.email': request.payload.email });
+
+    // User was found when we searched DB. Return an error.
+    if (existingUser) {
+      logger.warn(
+        '[UserController->create] Registration failed. The email address is already registered.',
         {
           request,
           fail: true,
@@ -204,20 +141,120 @@ module.exports = {
           },
         },
       );
-      throw Boom.badRequest('This email address is already registered. If you can not remember your password, please reset it');
-    } else {
+      throw Boom.badRequest('This email address is already registered.');
+    }
+
+    // If the email is new to our system, add the email address to the account's
+    // email array for when the user is finally created.
+    if (request.payload.email) {
+      request.payload.emails = [];
+      request.payload.emails.push({
+        type: 'Work',
+        email: request.payload.email,
+        validated: false,
+      });
+    }
+
+    // Does the payload contain a password?
+    if (!request.payload.password) {
       logger.warn(
-        `[UserController->create] The user already exists with ID ${record._id.toString()}`,
+        '[UserController->create] Registration failed. Password field missing.',
         {
           request,
+          security: true,
           fail: true,
-          user: {
-            id: record._id.toString(),
-          },
         },
       );
-      throw Boom.badRequest(`This user already exists. user_id=${record._id.toString()}`);
+      throw Boom.badRequest('Missing field: password');
     }
+
+    // Does the payload contain a confirm_password field?
+    if (!request.payload.confirm_password) {
+      logger.warn(
+        '[UserController->create] Registration failed. Password confirmation field missing.',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('Missing field: confirm_password');
+    }
+
+    // Did the passwords match?
+    if (request.payload.password !== request.payload.confirm_password) {
+      logger.warn(
+        '[UserController->create] Registration failed. Password fields did not match.',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('The password and confirm_password fields do not match');
+    }
+
+    // Is the password strong enough to meet OICT requirements?
+    // Does the password pass the dictionary test?
+    if (
+      !User.isStrongPassword(request.payload.password)
+      || !User.isStrongDictionary(request.payload.password, request.payload)
+    ) {
+      logger.warn(
+        '[UserController->create] Registration failed. Password is not strong enough.',
+        {
+          request,
+          security: true,
+          fail: true,
+        },
+      );
+      throw Boom.badRequest('The password does not meet requirements.');
+    }
+
+    // If all password checks were successful, hash the password and store on
+    // the user object.
+    request.payload.password = User.hashPassword(request.payload.password);
+
+    // Copy our desired values out of the payload into a pristine object.
+    const newUserData = {
+      email: request.payload.email,
+      emails: request.payload.emails,
+      given_name: request.payload.given_name,
+      family_name: request.payload.family_name,
+      password: request.payload.password,
+    };
+
+    // Create user account from the processed payload.
+    const newUser = await User.create(newUserData).catch((err) => {
+      logger.error(
+        `[UserController->create] ${err.message}`,
+        {
+          request,
+          security: true,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+    });
+
+    logger.info(
+      '[UserController->create] User created successfully',
+      {
+        request,
+        security: true,
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          admin: newUser.is_admin,
+        },
+      },
+    );
+
+    // Send email to new account's primary address.
+    await EmailService.sendRegister(newUser);
+
+    // Send new user's account data as response.
+    return newUser;
   },
 
   /*
@@ -466,22 +503,10 @@ module.exports = {
    *     description: Requested user not found.
    */
   async destroy(request, reply) {
-    // Don't allow admins to delete their account.
-    if (!request.auth.credentials.is_admin
-      && request.auth.credentials._id.toString() !== request.params.id) {
-      logger.warn(
-        `[UserController->destroy] User ${request.auth.credentials._id.toString()} is not allowed to delete user ${request.params.id}`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.forbidden('You are not allowed to delete this account');
-    }
-
     // Find user in DB.
-    const user = await User.findOne({ _id: request.params.id });
+    const user = await User.findById(request.params.id);
 
+    // User not found.
     if (!user) {
       logger.warn(
         `[UserController->destroy] Could not find user ${request.params.id}`,
@@ -493,12 +518,34 @@ module.exports = {
       throw Boom.notFound();
     }
 
+    // User is admin and cannot be deleted.
+    if (user.is_admin) {
+      logger.warn(
+        `[UserController->destroy] User ${request.params.id} is an admin and cannot be deleted.`,
+        {
+          request,
+          fail: true,
+        },
+      );
+      throw Boom.forbidden();
+    }
+
     // Notify user that their account was deleted.
     await EmailService.sendAdminDelete(user, request.auth.credentials);
 
     // Delete this user.
-    await user.remove();
+    await user.deleteOne().catch((err) => {
+      logger.error(
+        `[UserController->destroy] ${err.message}`,
+        {
+          request,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+    });
 
+    // Log the event and return success code.
     logger.info(
       `[UserController->destroy] Removed user ${request.params.id}`,
       {
@@ -506,7 +553,6 @@ module.exports = {
         security: true,
       },
     );
-
     return reply.response().code(204);
   },
 
@@ -626,7 +672,7 @@ module.exports = {
 
     // Run the potential password through our dictionary to weed out simple
     // substitutions and the like.
-    if (!user.isStrongDictionary(newPassword)) {
+    if (!User.isStrongDictionary(newPassword, user)) {
       logger.warn(
         `[UserController->updatePassword] Could not update user password for user ${userId}. Password failed the dictionary test.`,
         {
@@ -993,7 +1039,7 @@ module.exports = {
       }
     }
 
-    // Send notifications to secondary addresses.
+    // Send email alerts to confirmed secondary addresses.
     await Promise.all(promises);
 
     // Return user object.
@@ -1534,7 +1580,7 @@ module.exports = {
 
     // Run the potential password through our dictionary to weed out simple
     // substitutions and the like.
-    if (!user.isStrongDictionary(request.payload.password)) {
+    if (!User.isStrongDictionary(request.payload.password, user)) {
       logger.warn(
         '[UserController->resetPassword] Could not reset password. Password failed the dictionary test.',
         {
@@ -1628,25 +1674,6 @@ module.exports = {
     });
 
     return reply.response().code(204);
-  },
-
-  // HID Contacts notification-related method.
-  //
-  // TODO: remove
-  async notify(request) {
-    const record = await User.findOne({ _id: request.params.id });
-    if (!record) {
-      logger.warn(
-        `[UserController->notify] User ${request.params.id} not found`,
-        {
-          request,
-          fail: true,
-        },
-      );
-      throw Boom.notFound();
-    }
-
-    return record;
   },
 
   /*

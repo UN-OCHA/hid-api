@@ -403,6 +403,7 @@ module.exports = {
     const user = request.auth.credentials;
     const deviceId = request.params.id;
     const device = user.totpTrusted.id(deviceId);
+
     if (device) {
       user.totpTrusted.id(deviceId).remove();
       await user.save();
@@ -411,16 +412,27 @@ module.exports = {
         {
           request,
           security: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            admin: user.is_admin,
+          },
         },
       );
       return reply.response().code(204);
     }
+
     logger.warn(
       `[TOTPController->destroyDevice] Could not find device ${deviceId} for ${request.auth.credentials.id}`,
       {
         request,
         security: true,
         fail: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          admin: user.is_admin,
+        },
       },
     );
     throw Boom.notFound();

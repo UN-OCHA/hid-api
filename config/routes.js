@@ -7,7 +7,7 @@
  *
  * @see https://hapi.dev/tutorials/routing/
  */
-const Joi = require('@hapi/joi');
+const Joi = require('joi');
 
 const AdminController = require('../api/controllers/AdminController');
 const AuthController = require('../api/controllers/AuthController');
@@ -347,12 +347,7 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v3/user',
-    options: {
-      pre: [
-        UserPolicy.canCreate,
-      ],
-      handler: UserController.create,
-    },
+    handler: UserController.create,
   },
 
   {
@@ -403,6 +398,7 @@ module.exports = [
     path: '/api/v3/user/{id}',
     options: {
       pre: [
+        UserPolicy.canUpdate,
         AuthPolicy.isTOTPEnabledAndValid,
       ],
       handler: UserController.destroy,

@@ -1663,7 +1663,16 @@ module.exports = {
         alert.message = `<p>${reasons.join('</p><p>')}</p>`;
       } else {
         // So long, and thanks for all the fish!
-        await user.remove();
+        await user.deleteOne().catch((err) => {
+          logger.error(
+            `[ViewController->settingsDeleteSubmit] ${err.message}`,
+            {
+              request,
+              fail: true,
+              stack_trace: err.stack,
+            },
+          );
+        });
 
         logger.info(
           `[ViewController->settingsDeleteSubmit] Removed user ${cookie.userId}`,

@@ -16,7 +16,10 @@ const config = require('../../config/env');
 const { logger } = config;
 const { Schema } = mongoose;
 const populateClients = [
-  { path: 'authorizedClients', select: '_id id name organization environment redirectUri redirectUrls' },
+  {
+    path: 'authorizedClients',
+    select: '_id id name organization environment redirectUri redirectUrls',
+  },
 ];
 
 function isHTMLValidator(v) {
@@ -262,6 +265,12 @@ const UserSchema = new Schema({
     adminOnly: true,
   },
 
+  // Timestamp to track the verification of new account registrations.
+  //
+  // Accounts that don't become verified within the default window defined here
+  // will be expunged daily when the following command gets run:
+  //
+  // @see commands/deleteExpiredUsers.js
   expires: {
     type: Date,
     default: () => Date.now() + 7 * 24 * 60 * 60 * 1000,
@@ -273,12 +282,6 @@ const UserSchema = new Schema({
   // TODO: remove
   lastLogin: {
     type: Date,
-    readonly: true,
-  },
-
-  createdBy: {
-    type: Schema.ObjectId,
-    ref: 'User',
     readonly: true,
   },
 
@@ -381,7 +384,7 @@ UserSchema.post('findOne', async function (result, next) {
   }
   try {
     if (typeof result.populate === 'function') {
-      await result.populate(populateClients).execPopulate();
+      await result.populate(populateClients);
     }
     return next();
   } catch (err) {
@@ -409,6 +412,69 @@ UserSchema.statics = {
   },
 
   /**
+   * Password dictionary test
+   *
+   * Check a password against a standard dictionary that does some substitutions
+   * involving numbers, compares against common patterns, and other well-known
+   * sources of "inspiration" for weak passwords.
+   *
+   * @return {boolean}
+   */
+  isStrongDictionary(password, thisUser) {
+    // We use fascistCheckUser() and will pass the following into successive
+    // runs of the function:
+    //
+    // - Given name
+    // - Family name
+    // - Each email on the profile (regardless of confirmation status)
+    const comparisons = [
+      thisUser.given_name,
+      thisUser.family_name,
+    ];
+    thisUser.emails.forEach((email) => {
+      comparisons.push(email.email);
+    });
+
+    // Compare the password to all reference strings.
+    const results = comparisons.map((thisComparison) => {
+      let thisResult;
+
+      // Do direct string comparison, which the library doesn't always catch if
+      // enough randomness is tacked onto the end.
+      thisResult = password.toLowerCase().indexOf(thisComparison.toLowerCase()) !== -1 ? 'exact string match found' : false;
+
+      // Bail early if we found a really obvious match.
+      if (thisResult) {
+        return thisResult;
+      }
+
+      // The library returns an object with a `message` property. If that property
+      // is set to `null` then the password passed. If it contains a string then
+      // the password failed the dictionary test.
+      thisResult = cracklib.fascistCheckUser(password, thisComparison).message;
+
+      // If the result is NOT `null` then it failed and we'll log the message
+      // separate from the main operation taking place that invoked this function.
+      if (thisResult !== null) {
+        logger.warn(
+          `[User->isStrongDictionary] Password failed dictionary test: ${thisResult}`,
+          {
+            security: true,
+            fail: true,
+          },
+        );
+      }
+
+      // Return this particular result.
+      return thisResult;
+    });
+
+    // Finally, test if EVERY result is `null`
+    // If there's one failure, then our overall result is a failure.
+    return results.every(val => val === null);
+  },
+
+  /**
    * Password strength
    *
    * This represents 2021 OICT guidance on strong passwords in order to avoid
@@ -418,7 +484,7 @@ UserSchema.statics = {
    * - At least one number
    * - At least one lowercase letter
    * - At least one uppercase letter
-   * - At least one special character: !@#$%^&*()+=\`{}[]:";'< >?,./
+   * - At least one special character: !@#$%^&*()+=\`{}[]:";'< >?,./-
    */
   isStrongPassword(password) {
     // eslint-disable-next-line no-useless-escape
@@ -476,69 +542,6 @@ UserSchema.methods = {
 
     // Compare to current password.
     return Bcrypt.compareSync(passwordToCompare, this.password);
-  },
-
-  /**
-   * Password dictionary test
-   *
-   * Check a password against a standard dictionary that does some substitutions
-   * involving numbers, compares against common patterns, and other well-known
-   * sources of "inspiration" for weak passwords.
-   *
-   * @return {boolean}
-   */
-  isStrongDictionary(password) {
-    // We use fascistCheckUser() and will pass the following into successive
-    // runs of the function:
-    //
-    // - Given name
-    // - Family name
-    // - Each email on the profile (regardless of confirmation status)
-    const comparisons = [
-      this.given_name,
-      this.family_name,
-    ];
-    this.emails.forEach((email) => {
-      comparisons.push(email.email);
-    });
-
-    // Compare the password to all reference strings.
-    const results = comparisons.map((thisComparison) => {
-      let thisResult;
-
-      // Do direct string comparison, which the library doesn't always catch if
-      // enough randomness is tacked onto the end.
-      thisResult = password.toLowerCase().indexOf(thisComparison.toLowerCase()) !== -1 ? 'exact string match found' : false;
-
-      // Bail early if we found a really obvious match.
-      if (thisResult) {
-        return thisResult;
-      }
-
-      // The library returns an object with a `message` property. If that property
-      // is set to `null` then the password passed. If it contains a string then
-      // the password failed the dictionary test.
-      thisResult = cracklib.fascistCheckUser(password, thisComparison).message;
-
-      // If the result is NOT `null` then it failed and we'll log the message
-      // separate from the main operation taking place that invoked this function.
-      if (thisResult !== null) {
-        logger.warn(
-          `[User->isStrongDictionary] Password failed dictionary test: ${thisResult}`,
-          {
-            security: true,
-            fail: true,
-          },
-        );
-      }
-
-      // Return this particular result.
-      return thisResult;
-    });
-
-    // Finally, test if EVERY result is `null`
-    // If there's one failure, then our overall result is a failure.
-    return results.every(val => val === null);
   },
 
   /**
@@ -765,8 +768,8 @@ UserSchema.methods = {
     return false;
   },
 
-  defaultPopulate() {
-    return this.populate(populateClients).execPopulate();
+  async defaultPopulate() {
+    return this.populate(populateClients);
   },
 
   trustedDeviceIndex(ua) {
