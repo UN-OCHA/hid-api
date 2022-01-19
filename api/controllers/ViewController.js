@@ -311,10 +311,10 @@ module.exports = {
 
       // Check the error for a few special cases to provide better user feedback.
       // All of these will render the registration form.
-      if (errorMessage && errorMessage.indexOf('password is not strong') !== -1) {
+      if (errorMessage && errorMessage.indexOf('password does not meet') !== -1) {
         userMessage = 'Your password was not strong enough. Please check the requirements and try again.';
       }
-      if (errorMessage && errorMessage.indexOf('passwords do not match') !== -1) {
+      if (errorMessage && errorMessage.indexOf('fields do not match') !== -1) {
         userMessage = 'Your password fields did not match. Please try again and carefully confirm the password.';
       }
 
