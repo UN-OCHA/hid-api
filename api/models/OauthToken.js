@@ -70,7 +70,7 @@ OauthTokenSchema.statics = {
       {
         oauth: {
           type,
-          client_id: client._id,
+          client_id: client.id,
         },
         user: {
           id: user._id,
