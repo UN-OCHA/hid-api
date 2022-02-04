@@ -2,7 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-### [5.1.1](https://github.com/UN-OCHA/hid-api/compare/v5.1.0...v5.1.1) (2022-01-13)
+## [5.1.2](https://github.com/UN-OCHA/hid-api/compare/v5.1.1...v5.1.2) (2022-02-04)
+
+
+### Bug Fixes
+
+* **logs:** supply correct client_id value when generating OAuth tokens ([289f06a](https://github.com/UN-OCHA/hid-api/commit/289f06a455d509d183e3ce6ee9e9004fd98e503d))
+* **ux:** when displaying user-friendly registration errors, parse for new error strings ([33334b1](https://github.com/UN-OCHA/hid-api/commit/33334b1b7b4cfa786ed4f708eab69781fdbb70ab))
+
+## [5.1.1](https://github.com/UN-OCHA/hid-api/compare/v5.1.0...v5.1.1) (2022-01-13)
 
 
 ### Bug Fixes
@@ -61,9 +69,7 @@ All notable changes to this project will be documented in this file. See [standa
 * upgrade qrcode and underlying dependencies ([50a4bb8](https://github.com/UN-OCHA/hid-api/commit/50a4bb807b05b78b1114746a11ec4f8d3e6c0ed3))
 * when password requirements are not met during password reset, show form again ([80803bf](https://github.com/UN-OCHA/hid-api/commit/80803bf427bc6d1d0a1d520b3ff99dd558d15f0c))
 
-## [4.0.0](https://github.com/UN-OCHA/hid-api/compare/v4.0.0-rc1...v4.0.0) (2021-09-16)
-
-### [5.0.1](https://github.com/UN-OCHA/hid_api/compare/v5.0.0...v5.0.1) (2021-10-28)
+## [5.0.1](https://github.com/UN-OCHA/hid_api/compare/v5.0.0...v5.0.1) (2021-10-28)
 
 
 ### Bug Fixes
