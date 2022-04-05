@@ -1,4 +1,4 @@
-FROM public.ecr.aws/unocha/nodejs:14-alpine
+FROM public.ecr.aws/unocha/nodejs:16-alpine
 WORKDIR /srv/www
 
 COPY . .

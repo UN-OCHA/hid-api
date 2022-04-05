@@ -69,23 +69,23 @@
     "acorn": "^5.7.4",
     "diff": ">=3.5.0",
     "dot-prop": ">=4.2.1",
-    "eslint": "^7.32.0",
-    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint": "^8.12.0",
+    "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-standard": "^12.0.0",
     "eslint-plugin-import": "^2.16.0",
     "eslint-plugin-node": "^8.0.1",
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-standard": "^4.0.0",
-    "jest": "^27.3.1",
-    "jest-puppeteer": "^4.4.0",
+    "jest": "^27.5.1",
+    "jest-puppeteer": "^6.1.0",
     "minimist": "^1.2.6",
     "nodemon": "^2.0.14",
-    "puppeteer": "^8.0.0",
+    "puppeteer": "^13.5.0",
     "standard-version": "^9.3.2",
     "swagger-inline": "^3.0.4"
   },
   "engines": {
-    "node": "14.15.4",
-    "npm": "6.14.10"
+    "node": "^16.14.2",
+    "npm": "^8.5.0"
   }
 }
