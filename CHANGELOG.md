@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.1.3](https://github.com/UN-OCHA/hid-api/compare/v5.1.2...v5.1.3) (2022-04-07)
+
+
+### Bug Fixes
+
+* prevent errors during OAuth dialog confirmations ([c98b59f](https://github.com/UN-OCHA/hid-api/commit/c98b59fdf0ecebb89a233c967b0c900974108c1f))
+
 ## [5.1.2](https://github.com/UN-OCHA/hid-api/compare/v5.1.1...v5.1.2) (2022-02-04)
 
 
