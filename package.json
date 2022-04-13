@@ -33,7 +33,7 @@
     "@hapi/vision": "^5.5.4",
     "@hapi/yar": "github:un-ocha/yar#master",
     "accept-language": "^3.0.15",
-    "async": "^2.1.2",
+    "async": "^3.2.2",
     "authenticator": "^1.1.2",
     "axios": "^0.21.2",
     "bcryptjs": "^2.3.0",
