@@ -72,7 +72,7 @@ module.exports = {
             host: process.env.REDIS_HOST || 'redis',
             port: process.env.REDIS_PORT || 6379,
             db: process.env.REDIS_DB || '0',
-            tls: process.env.REDIS_TLS === 'true' ? {} : null,
+            tls: process.env.REDIS_TLS === 'True' ? {} : null,
           },
         },
       },
