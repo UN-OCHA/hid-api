@@ -100,7 +100,7 @@ HID is reliant on email notifications for several critical aspects of its functi
 
 If you followed the instructions in the [`hid-stack` repo][hid-stack-install], then Mailhog should be available on your host machine at http://localhost:8025
 
-For dev/stage encironments, refer to the [OCHA Developer Handbook regarding use of Mailhog](https://docs.google.com/document/d/1j5QkW_yTA4efqIq40wuRqyvLecbVkOZwwOumZoN4qxI/edit#heading=h.5koxy8t2dww)
+For dev/stage environments, refer to the [OCHA Developer Handbook regarding use of Mailhog](https://docs.google.com/document/d/1j5QkW_yTA4efqIq40wuRqyvLecbVkOZwwOumZoN4qxI/edit#heading=h.5koxy8t2dww)
 
 
 ### Logging
