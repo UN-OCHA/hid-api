@@ -252,3 +252,49 @@ Sometimes it might be convenient to attach a special class to an element in orde
 ```
 
 There is a file `_tests/e2e/_utils.js` which has some common macros that you might find helpful while writing tests. Feel free to add more. Some of them, such as `clearMailhog` might be disruptive to other tests, so be careful about how they are used. If in doubt, use the `--runInBand` flag to ensure that they run in series instead of in parallel.
+
+
+## Creating Releases
+
+| Audience    |
+| :---------- |
+| Maintainers |
+
+We have a regular release schedule for HID to ensure that security updates are shipped in a timely manner. See our [HID Standard Operating Procedure][hid-sop] for the details about our release schedule. The rest of this section provides technical guidance for creating Releases.
+
+  [hid-sop]: https://docs.google.com/document/d/1GHjofGe5VZhJjKJnauNKDmhbP4o-NY2h9cH9N_EyvR0/edit#heading=h.3t9e3dv1ao2z
+
+Create a new branch from `dev` and run the release command to generate the new CHANGELOG and increment the version number in our `package.json` and other related files. There's a dry-run flag to preview what will happen:
+
+```sh
+# Example with the dry-run flag.
+$ npm run release -- --dry-run
+
+> hid-api@3.0.0 release
+> standard-version "--dry-run"
+
+✔ bumping version in package.json from 3.0.0 to 3.0.1
+✔ bumping version in package-lock.json from 3.0.0 to 3.0.1
+✔ outputting changes to CHANGELOG.md
+```
+
+The command to make a release contains no flags:
+
+```sh
+$ npm run release
+```
+
+Review the commit and make any necessary adjustments to the CHANGELOG, using `git commit --amend` to add your changes to the existing commit that `standard-version` just created. Push your branch and open a PR to `dev`, which you can merge without review.
+
+[Create the new Release][new-release] using the GitHub UI with the following properties:
+
+- **Tag:** new tag with format `v0.0.0` — numbers should match [`package.json` in the `dev` branch][dev-package].
+- **Target branch:** `dev`
+- **Title:** `Production YYYY-MM-DD` using the PROD date (check the OPS calendar! it's normally two weeks from the STAGE release but may vary)
+- **Release notes:** Copy the new CHANGELOG bullets. If dependabot made any updates during this cycle, you can include "regular security updates" without being specific.
+
+Once the tagged Release has been created, [create a PR from `dev` to `main`][pr-dev-main] which will include all work within the tagged release. You can merge that without review as well. This step allows hotfixes to be created from `main` should the need arise.
+
+  [new-release]: https://github.com/UN-OCHA/hid-api/releases/new?target=dev
+  [dev-package]: https://github.com/UN-OCHA/hid-api/blob/dev/package.json#L3
+  [pr-dev-main]: https://github.com/UN-OCHA/hid-api/compare/main...dev
