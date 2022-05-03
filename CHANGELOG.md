@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [5.1.4](https://github.com/UN-OCHA/hid-api/compare/v5.1.3...v5.1.4) (2022-05-03)
 
+### Bug Fixes
+
+* **security:** dependabot updates, nodejs update
+
 ### [5.1.3](https://github.com/UN-OCHA/hid-api/compare/v5.1.2...v5.1.3) (2022-04-07)
 
 
