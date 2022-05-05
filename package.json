@@ -15,7 +15,7 @@
     "dev": "node ./node_modules/nodemon/bin/nodemon.js ./server.js -e html,css,js,ejs --ignore './_tests/' --ignore './commands/'",
     "docs": "swagger-inline './api/**/*' --base 'docs/swaggerBase.yaml' > docs/hid.yml",
     "start": "node ./server.js",
-    "lint": "eslint . && ejslint templates/*",
+    "lint": "eslint . && ejslint templates/* emails/*",
     "e2e": "jest _tests/e2e/*.test.js",
     "test": "npm run lint && npm run e2e -- -t '^(?!.*no-ci).*$'",
     "release": "standard-version"
