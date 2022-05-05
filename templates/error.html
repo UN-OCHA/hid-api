@@ -10,7 +10,7 @@
       <% } %>
 
       <% if (typeof alert !== 'undefined') { %>
-        <% include alert.html %>
+        <%- include('includes/alert') %>
       <% } else { %>
         <p>There was an internal server error.</p>
       <% } %>
