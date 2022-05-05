@@ -39,7 +39,7 @@
     "bcryptjs": "^2.3.0",
     "blankie": "^5.0.0",
     "cracklib": "^1.1.0",
-    "ejs": "^2.5.2",
+    "ejs": "^3.1.7",
     "email-templates": "^8.0.8",
     "hapi-rate-limit": "^4.0.2",
     "is-html": "^1.1.0",
