@@ -1,4 +1,4 @@
-<% include header %>
+<%- include('includes/header') %>
 <link rel="stylesheet" href="/assets/css/tabs.css">
 <link rel="stylesheet" href="/assets/css/settings-delete.css">
 
@@ -6,7 +6,7 @@
   <main role="main" id="main-content" class="cd-container">
     <div class="cd-layout-content">
       <h1 class="cd-page-title page-header__heading">Settings for <%= user.name %></h1>
-      <% include alert.html %>
+      <%- include('includes/alert') %>
       <div class="tabbed">
         <nav>
           <li>
@@ -90,4 +90,4 @@
 
 <script src="/assets/js/tabs.js"></script>
 
-<% include footer %>
+<%- include('includes/footer') %>
