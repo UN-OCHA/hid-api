@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.1.5](https://github.com/UN-OCHA/hid-api/compare/v5.1.4...v5.1.5) (2022-06-02)
+
+### Bug Fixes
+
+* **security:** Update EJS and other dependabot updates
+
 ### [5.1.4](https://github.com/UN-OCHA/hid-api/compare/v5.1.3...v5.1.4) (2022-05-03)
 
 ### Bug Fixes
