@@ -1,6 +1,6 @@
 {
   "name": "hid-api",
-  "version": "5.1.5",
+  "version": "5.1.6",
   "description": "Humanitarian ID API+Auth",
   "homepage": "https://about.humanitarian.id",
   "repository": "https://github.com/UN-OCHA/hid-api.git",
@@ -69,7 +69,7 @@
     "acorn": "^5.7.4",
     "diff": ">=3.5.0",
     "dot-prop": ">=4.2.1",
-    "ejs-lint": "^1.2.1",
+    "ejs-lint": "^1.2.2",
     "eslint": "^7.32.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-config-standard": "^12.0.0",
