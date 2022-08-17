@@ -53,19 +53,19 @@ jobs:
             "github_token=${{ secrets.ECR_GITHUB_TOKEN }}"
 
       - name: Notify on success only
-        uses: docker://unocha/actions:flowdock-notify-main
-        if: success()
+        uses: voxmedia/github-action-slack-notify-build@v1
+        with:
+          channel: app-alerts
+          status: STARTED
+          color: good
         env:
-          FLOWDOCK_TOKEN: ${{ secrets.FLOWDOCK_TOKEN }}
-          FLOWDOCK_ICON: 'package'
-          FLOWDOCK_MESSAGE: 'Built a new `HID` image from ${{ github.ref }} and pushed to [ECR](https://gallery.ecr.aws/unocha/hid-api).'
-          FLOWDOCK_TAGS: 'build,docker,${{ github.actor }}'
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
       - name: Notify on error only
-        uses: docker://unocha/actions:flowdock-notify-main
-        if: failure()
+        uses: voxmedia/github-action-slack-notify-build@v1
+        with:
+          channel: app-alerts
+          status: FAILED
+          color: danger
         env:
-          FLOWDOCK_TOKEN: ${{ secrets.FLOWDOCK_TOKEN }}
-          FLOWDOCK_ICON: 'boom'
-          FLOWDOCK_MESSAGE: 'Failed to build a new `HID` image from ${{ github.ref }}.'
-          FLOWDOCK_TAGS: 'build,docker,${{ github.actor }}'
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
