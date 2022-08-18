@@ -1,6 +1,7 @@
 # Humanitarian ID
 
-[![Build Status](https://travis-ci.org/UN-OCHA/hid_api.svg?branch=master)](https://travis-ci.org/UN-OCHA/hid_api)
+[![Build Status](https://travis-ci.org/UN-OCHA/hid-api.svg?branch=main)](https://travis-ci.org/UN-OCHA/hid-api)
+[![Create image](https://github.com/UN-OCHA/hid-api/actions/workflows/build.yml/badge.svg)](https://github.com/UN-OCHA/hid-api/actions/workflows/build.yml)
 
 Humanitarian ID is built with:
 
