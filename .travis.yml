@@ -12,9 +12,3 @@ before_install:
 
 script:
   - npm run lint
-
-notifications:
-  email: ops@humanitarianresponse.info
-  flowdock:
-    secure: "JiUCvAaA9Kx+t7JvcZmdEOCNfjY0QmsI6Mk80tgTTMFpVQobFWWTXq/otuLOg2ZOPISblCQu43c54AN3RBFG9NU7v0tRpD4RfehlnDs1YEQQS82D6M+ACBkVbInUb3sZRwsHwkrO3oy0EAn2e64gHqjTp5eOnSbC/YtJc+Czo2mD935fkdUgF0gBQ3IYliz4z3QInSCA3nyosA9eMZwmI7N/bqSxqDcCqQbmS1hsVDt7lvFrWNeeADO3wjTa/+DWkNjxpKdv6+2vTlv+y1MZCYM1VJMsNnDUuf1M2kB4eVGpb+lKyqz6z/ITmjCf5b+I9n9/3VwVu5xar5gAujOIkAhTJYnpP/bQDJ1yQgaBd7yD6eAkhztVE1dD9vR5Iif1CkOOKCXLT/cVlM8nV1rU9Qzs4qNVV6aw3YUEvX/1B/MsqawekEzQ1UPjVjLjaMEX5l+8jKzOmYO/cfbE70v5vLWk+xHR6iCGTtpDDknniVwdB0IZV/9VFFz/mtfaMOR02a4Ukazqs5A20WJGnpjo5aSJHC7e8ciit5NqEBmlMpX/VtWFJcA+/gAUedWUv3lzMj89KuFt6ndi2DjoUFF807HEoIAtANxBYCgKQyvr8FzyWTGEFp5BZ1aTu/zDmdOBgueGUminJUf++XIaoEQymbFn3ZlueM8g7BHUzsrhh6o="
-    on_success: always
