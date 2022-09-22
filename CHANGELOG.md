@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.1.8](https://github.com/UN-OCHA/hid-api/compare/v5.1.7...v5.1.8) (2022-09-22)
+
+
+### Bug Fixes
+
+* correct paths for alert include within settings pages ([fb5dd80](https://github.com/UN-OCHA/hid-api/commit/fb5dd80ad4d84c8e2c53a6f8905386dd8441448a))
+* update tracking code to use GTM/GA4 ([1be35f2](https://github.com/UN-OCHA/hid-api/commit/1be35f2a8a945b98524b1c64c44f9e8fd3d0b651))
+* Use the shared build action with tagging, notifications and pushing. ([fabb069](https://github.com/UN-OCHA/hid-api/commit/fabb0697a9df84dc08c5af0c28923f61d190c0c4))
+
 ### [5.1.7](https://github.com/UN-OCHA/hid-api/compare/v5.1.6...v5.1.7) (2022-07-28)
 
 
