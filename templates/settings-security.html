@@ -51,7 +51,7 @@
             %>
               <div class="step-2">
                 <%-
-                  include('alert.html', {
+                  include('includes/alert', {
                     alert: {
                       type: 'status',
                       message: '<p>Your two-factor authentication is <strong>Enabled</strong>. However, keep reading for the final step.</p>',
@@ -59,7 +59,7 @@
                   })
                 %>
                 <%-
-                  include('alert.html', {
+                  include('includes/alert', {
                     alert: {
                       type: 'warning',
                       message: `
@@ -92,7 +92,7 @@
               <div class="step-1">
                 <% if (formData && formData.totpConf) { %>
                   <%-
-                    include('alert.html', {
+                    include('includes/alert', {
                       alert: {
                         type: 'info',
                         message: `
@@ -121,7 +121,7 @@
                 <% } else { %>
 
                   <%-
-                    include('alert.html', {
+                    include('includes/alert', {
                       alert: {
                         type: 'warning',
                         message: '<p>There was a problem displaying your two-factor authentication setup data. If this problem persists please email info@humanitarian.id and include this error code: SEC-1-QR.</p>',
