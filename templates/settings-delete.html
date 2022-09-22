@@ -28,7 +28,7 @@
 
           <% if (user.is_admin) { %>
               <%-
-                include('alert.html', {
+                include('includes/alert', {
                   alert: {
                     type: 'warning',
                     title: 'Admins cannot delete their own account',
