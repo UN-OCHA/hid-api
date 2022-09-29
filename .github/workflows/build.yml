@@ -33,5 +33,6 @@ jobs:
         docker_username: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
         docker_password: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
         ecr_github_token: ${{ secrets.ECR_GITHUB_TOKEN }}
+        ecr_jenkins_token: ${{ secrets.JENKINS_ECR_TOKEN }}
         slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
         slack_channel_name: ${{ secrets.SLACK_CHANNEL }}
