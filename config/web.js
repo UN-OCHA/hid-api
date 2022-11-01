@@ -165,6 +165,7 @@ module.exports = {
           "'sha256-pJeCB2XoDM3l7akAolEPn5aJZEI3d+buFdkCCtUOcBs='",
         ],
         fontSrc: [
+          'self',
           'https://fonts.gstatic.com',
         ],
         scriptSrc: [
@@ -175,6 +176,7 @@ module.exports = {
           // Google reCAPTCHA v2: scripts to load UI. See frameSrc.
           'https://www.google.com',
           'https://www.gstatic.com',
+          'www.googletagmanager.com',
           // These hashes are for GA and our inline JS+feature detection.
           "'sha256-zITkoAg4eI1v3VSFI+ATEQKWvoymQcxmFNojptzmlNw='",
           "'sha256-Ch69wX3la/uD7qfUZRHgam3hofEvI6fesgFgtvG9rTM='",
@@ -182,7 +184,10 @@ module.exports = {
         connectSrc: [
           'self',
           'https://www.google-analytics.com',
+          'analytics.google.com',
+          '*.analytics.google.com',
           'https://stats.g.doubleclick.net',
+          'fonts.googleapis.com',
           // API Docs connect to Stage by default
           'https://stage.api-humanitarian-id.ahconu.org',
         ],
@@ -195,6 +200,8 @@ module.exports = {
           // For 2FA setup, we display a dynamically generated image by inlining
           // base64-encoded QR code. 'data:' allows the image to be displayed.
           'data:',
+          'www.google-analytics.com',
+          'www.gstatic.com',
           // API Docs show a validator image
           'https://validator.swagger.io',
         ],
