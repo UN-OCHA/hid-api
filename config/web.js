@@ -177,8 +177,9 @@ module.exports = {
           'https://www.google.com',
           'https://www.gstatic.com',
           'www.googletagmanager.com',
-          // These hashes are for GA and our inline JS+feature detection.
-          "'sha256-zITkoAg4eI1v3VSFI+ATEQKWvoymQcxmFNojptzmlNw='",
+          // GTM inline script.
+          "'sha256-g62AIFyyvfvqRMhNu7QMQ0GMk0Rx+Bbk1KzTy+CzTCI='",
+          // Inline JS+feature detection.
           "'sha256-Ch69wX3la/uD7qfUZRHgam3hofEvI6fesgFgtvG9rTM='",
         ],
         connectSrc: [
