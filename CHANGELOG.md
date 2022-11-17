@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.1.9](https://github.com/UN-OCHA/hid-api/compare/v5.1.8...v5.1.9) (2022-11-17)
+
+
+### Bug Fixes
+
+* add csp settings ([79c8589](https://github.com/UN-OCHA/hid-api/commit/79c8589b25400ab57deb7895eb0463a607dd2d0c))
+* allow new GTM inline script ([161324e](https://github.com/UN-OCHA/hid-api/commit/161324e5642b94bc903b85484f5584903a4621c9)), closes [#383](https://github.com/UN-OCHA/hid-api/issues/383)
+
 ### [5.1.8](https://github.com/UN-OCHA/hid-api/compare/v5.1.7...v5.1.8) (2022-09-22)
 
 
