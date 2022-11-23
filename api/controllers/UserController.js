@@ -755,6 +755,87 @@ module.exports = {
     return reply.response().code(204);
   },
 
+  /**
+   * @api [post] /user/{id}/password-admin
+   * tags:
+   *   - user
+   * summary: Forced password reset by an administrator.
+   * parameters:
+   *   - name: id
+   *     in: path
+   *     description: The user ID
+   *     required: true
+   *     type: string
+   * responses:
+   *   '204':
+   *     description: Password reset successfully.
+   *   '401':
+   *     description: Unauthorized.
+   *   '403':
+   *     description: Requesting user lacks permission to update requested user.
+   *   '404':
+   *     description: Requested user not found.
+   */
+  async adminForceUpdatePassword(request, reply, internalArgs) {
+    let userId;
+
+    if (internalArgs && internalArgs.userId) {
+      userId = internalArgs.userId;
+    } else {
+      userId = request.params.id;
+    }
+
+    // Look up user in DB.
+    const user = await User.findById(userId);
+
+    // Was the user parameter supplied?
+    if (!user) {
+      logger.warn(
+        `[UserController->updatePassword] User ${userId} not found`,
+        {
+          request,
+          fail: true,
+        },
+      );
+      throw Boom.notFound();
+    }
+
+    // Generate a new random password
+    const newPassword = User.generateRandomPassword();
+
+    // Update PW history, store new password hash, save user.
+    user.storePasswordInHistory();
+    user.password = User.hashPassword(newPassword);
+    user.lastModified = new Date();
+    user.lastPasswordReset = new Date();
+
+    await user.save().catch((err) => {
+      logger.error(
+        `[UserController->updatePassword] ${err.message}`,
+        {
+          request,
+          security: true,
+          fail: true,
+          stack_trace: err.stack,
+        },
+      );
+    });
+
+    logger.info(
+      `[UserController->updatePassword] Admin forced a password reset`,
+      {
+        request,
+        security: true,
+        user: {
+          id: user.id,
+          email: user.email,
+        },
+      },
+    );
+
+    return reply.response().code(204);
+  },
+
   /*
    * @api [put] /user/{id}/email
    * tags:
