@@ -822,7 +822,7 @@ module.exports = {
     });
 
     logger.info(
-      `[UserController->updatePassword] Admin forced a password reset`,
+      '[UserController->updatePassword] Admin forced a password reset',
       {
         request,
         security: true,
