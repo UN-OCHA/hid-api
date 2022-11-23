@@ -707,7 +707,6 @@ module.exports = {
 
     // Does the new password match any historical hashes?
     if (user.isHistoricalPassword(newPassword)) {
-      // Business logic: is the new password different than the old one?
       logger.warn(
         `[UserController->updatePassword] Could not update user password for user ${userId}. New password is the same as old password.`,
         {
@@ -746,6 +745,10 @@ module.exports = {
       {
         request,
         security: true,
+        user: {
+          id: user.id,
+          email: user.email,
+        },
       },
     );
 
@@ -1676,7 +1679,7 @@ module.exports = {
     return reply.response().code(204);
   },
 
-  /*
+  /**
    * @api [delete] /user/{id}/clients/{client}
    * tags:
    *   - user
