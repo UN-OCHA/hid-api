@@ -445,6 +445,22 @@ module.exports = [
 
   {
     method: 'POST',
+    path: '/api/v3/user/{id}/password-admin',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: UserController.adminForceUpdatePassword,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+
+  {
+    method: 'POST',
     path: '/api/v3/user/{id}/emails',
     options: {
       pre: [

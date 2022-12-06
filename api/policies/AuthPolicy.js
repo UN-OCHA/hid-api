@@ -110,10 +110,17 @@ module.exports = {
     return true;
   },
 
+  /**
+   * Policy for mandatory TOTP challenges.
+   */
   async isTOTPValidPolicy(request) {
     const user = request.auth.credentials;
     const token = request.headers['x-hid-totp'];
+
+    // Validate the TOTP code.
     await isTOTPValid(user, token);
+
+    // If no error was thrown, return true.
     return true;
   },
 

@@ -499,7 +499,7 @@ UserSchema.statics = {
   // Generate a cryptographically strong random password.
   generateRandomPassword() {
     const buffer = crypto.randomBytes(256);
-    return `${buffer.toString('hex').slice(0, 10)}B`;
+    return `${buffer.toString('hex').slice(0, 24)}B`;
   },
 };
 
