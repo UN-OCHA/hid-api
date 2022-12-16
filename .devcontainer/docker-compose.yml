@@ -1,0 +1,62 @@
+version: '2.2'
+services:
+  # Update this to the name of the service you want to work with in your docker-compose.yml file
+  api:
+    # If you want add a non-root user to your Dockerfile, you can use the "remoteUser"
+    # property in devcontainer.json to cause VS Code its sub-processes (terminals, tasks,
+    # debugging) to execute as the user. Uncomment the next line if you want the entire
+    # container to run as this user instead. Note that, on Linux, you may need to
+    # ensure the UID and GID of the container user you create matches your local user.
+    # See https://aka.ms/vscode-remote/containers/non-root for details.
+    #
+    # Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+    # user: root
+
+    # image: public.ecr.aws/unocha/hid-api:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    volumes:
+      - ../:/srv/www:cached
+      # Uncomment the next line to use Docker from inside the container. See https://aka.ms/vscode-remote/samples/docker-from-docker-compose for details.
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    # Overrides default command so things don't shut down after the process ends.
+    entrypoint: /bin/sh -c "while sleep 1000; do :; done"
+
+    environment:
+      NODE_ENV: local
+      ROOT_URL: http://api.hid.vm:3000
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_USER: ''
+      SMTP_PASS: ''
+      APP_URL: http://app.hid.vm
+      COOKIE_PASSWORD: 6*a!_5;1:|7~+%5**WdS:^;X%PN||~:_:_R
+      WKHTMLTOPDF_HOST: pdf.contactsid.vm
+      WKHTMLTOPDF_PORT: 3000
+
+  db:
+    image: mongo:6-focal
+    volumes:
+      - mongo_db:/data/db
+      - snapshots:/snapshots
+    command: --bind_ip_all
+
+  mailhog:
+    image: public.ecr.aws/unocha/mailhog:stable
+    ports:
+      - 0.0.0.0:8025:8025
+
+  redis:
+    image: public.ecr.aws/unocha/redis:5
+    volumes:
+      - "redis_db:/var/lib/redis"
+      - "redis_log:/var/log/redis"
+
+volumes:
+  mongo_db:
+  redis_db:
+  redis_log:
+  snapshots:
