@@ -44,7 +44,7 @@
     "hapi-rate-limit": "^4.0.2",
     "is-html": "^1.1.0",
     "joi": "^17.5.0",
-    "jsonwebtoken": "^8.1.0",
+    "jsonwebtoken": "^9.0.0",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
     "mongoose": "^6.4.6",
