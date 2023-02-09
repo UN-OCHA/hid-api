@@ -1,7 +1,6 @@
 name: Run tests
 
-on:
-  push
+on: [pull_request]
 
 jobs:
   checks:
@@ -48,7 +47,7 @@ jobs:
                       "type": "section",
                       "text": {
                         "type": "mrkdwn",
-                        "text": "Pull request by @${{ github.triggering_actor }} to merge _${{ github.head_ref }}_ into _${{ github.base_ref }}_ on <${{ github.repositoryUrl }}|${{ github.repository }}> passed tests (<${{ github.event.pull_request.html_url }}|Review>)"
+                        "text": "Pull request by @${{ github.triggering_actor }} to merge _${{ github.head_ref }}_ into _${{ github.base_ref }}_ on <${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}> passed tests (<${{ github.event.pull_request.html_url }}|View>)"
                       }
                     }
                   ]
@@ -75,7 +74,7 @@ jobs:
                       "type": "section",
                       "text": {
                         "type": "mrkdwn",
-                        "text": "Pull request by @${{ github.triggering_actor }} to merge _${{ github.head_ref }}_ into _${{ github.base_ref }}_ on <${{ github.repositoryUrl }}|${{ github.repository }}> failed tests (<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Review>)"
+                        "text": "Pull request by @${{ github.triggering_actor }} to merge _${{ github.head_ref }}_ into _${{ github.base_ref }}_ on <${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}> failed tests (<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View>)"
                       }
                     }
                   ]
