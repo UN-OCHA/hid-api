@@ -24,7 +24,7 @@ module.exports = {
         ignoreTemplateLiterals: true,
       },
     ],
-    'no-plusplus': 2,
+    'no-plusplus': 'off',
     'no-underscore-dangle': 'off',
     'prefer-destructuring': 'off',
     'import/no-unresolved': [2, {
