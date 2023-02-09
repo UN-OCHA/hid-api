@@ -30,3 +30,57 @@ jobs:
       - name: Run tests
         run: |
           npm run lint
+
+      - name: Slack Success Notification
+        id: slack_success
+        if: success()
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          channel-id: '${{ secrets.SLACK_CHANNEL }}'
+          payload: |
+            {
+              "text": "Tests passed for a pull request on ${{ github.repository }}",
+              "attachments": [
+                {
+                  "color": "#2EB886",
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "Pull request by @${{ github.triggering_actor }} to merge _${{ github.head_ref }}_ into _${{ github.base_ref }}_ on <${{ github.repositoryUrl }}|${{ github.repository }}> passed tests (<${{ github.event.pull_request.html_url }}|Review>)"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      - name: Slack Failure Notification
+        id: slack_failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          channel-id: '${{ secrets.SLACK_CHANNEL }}'
+          payload: |
+            {
+              "text": "Tests failed for a pull request on ${{ github.repository }}",
+              "attachments": [
+                {
+                  "color": "#A30200",
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "Pull request by @${{ github.triggering_actor }} to merge _${{ github.head_ref }}_ into _${{ github.base_ref }}_ on <${{ github.repositoryUrl }}|${{ github.repository }}> failed tests (<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Review>)"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
