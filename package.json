@@ -86,8 +86,8 @@
     "swagger-inline": "^3.0.4"
   },
   "engines": {
-    "node": "14.15.4",
-    "npm": "6.14.10"
+    "node": "^18.15.0",
+    "npm": "^9.5.0"
   },
   "//": "To integrate with our release process, we instruct standard-version to skip creation of git tags, which we manage on GitHub.",
   "standard-version": {
