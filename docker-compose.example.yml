@@ -2,11 +2,11 @@ version: '2.1'
 
 services:
   db:
-    image: unocha/mongo:4.0.5
+    image: mongo:6-focal
     volumes:
       - ./db:/srv/db:rw
   dev:
-    image: unocha/nodejs:14
+    image: unocha/nodejs:18-alpine
     volumes:
       - .:/srv/www:rw
     ports:

@@ -110,6 +110,13 @@ const init = async () => {
   logger.info(
     `HID server started. Listening on: ${server.info.uri}`,
   );
+
+  logger.info(
+    `node.js version ${process.version}`,
+    {
+      security: true,
+    },
+  );
 };
 
 process.on('unhandledRejection', (err, p) => {
