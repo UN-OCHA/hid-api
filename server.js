@@ -115,7 +115,7 @@ const init = async () => {
     `node.js version ${process.version}`,
     {
       security: true,
-    }
+    },
   );
 };
 
