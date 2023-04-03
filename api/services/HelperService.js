@@ -74,7 +74,7 @@ module.exports = {
   getCriteriaFromQuery(query) {
     const criteria = _.omit(query, queryOptions);
     const keys = Object.keys(criteria);
-    const regex = new RegExp(/\[(.*?)\]/);
+    const regex = /\[(.*?)\]/;
     for (let i = 0, len = keys.length; i < len; i += 1) {
       if (keys[i].indexOf('[') !== -1) {
         // Get what's inside the brackets
