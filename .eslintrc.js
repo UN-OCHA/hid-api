@@ -27,8 +27,6 @@ module.exports = {
     'no-plusplus': 'off',
     'no-underscore-dangle': 'off',
     'prefer-destructuring': 'off',
-    'import/no-unresolved': [2, {
-      ignore: ['newrelic'],
-    }],
+    'import/no-unresolved': [2, {}],
   },
 };
