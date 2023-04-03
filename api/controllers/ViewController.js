@@ -933,7 +933,7 @@ module.exports = {
     // If an email was chosen to receive a confirmation link.
     if (typeof request.payload.email_confirm !== 'undefined') {
       // eslint-disable-next-line max-len
-      const emailIsConfirmedAlready = user.emails.filter(thisEmail => thisEmail.email === request.payload.email_confirm && thisEmail.validated);
+      const emailIsConfirmedAlready = user.emails.filter((thisEmail) => thisEmail.email === request.payload.email_confirm && thisEmail.validated);
       if (emailIsConfirmedAlready.length > 0) {
         reasons.push(`You attempted to confirm ${request.payload.email_confirm}, but it doesn't need confirmation.`);
       }
@@ -1102,7 +1102,7 @@ module.exports = {
       if (objectIdRegex.test(request.payload.oauth_client_revoke)) {
         // Data seems valid. We will attempt to remove from profile.
         // eslint-disable-next-line max-len
-        const clientExists = user.authorizedClients.some(client => client._id.toString() === request.payload.oauth_client_revoke);
+        const clientExists = user.authorizedClients.some((client) => client._id.toString() === request.payload.oauth_client_revoke);
         if (clientExists) {
           // We'll try to revoke the client.
         } else {
@@ -1120,7 +1120,7 @@ module.exports = {
     } else {
       // No validation errors. Perform DB operation and provide user feedback.
       // eslint-disable-next-line max-len
-      const revokedClient = user.authorizedClients.filter(client => client._id.toString() === request.payload.oauth_client_revoke)[0];
+      const revokedClient = user.authorizedClients.filter((client) => client._id.toString() === request.payload.oauth_client_revoke)[0];
       await UserController.revokeOauthClient({}, {
         userId: cookie.userId,
         clientId: request.payload.oauth_client_revoke,

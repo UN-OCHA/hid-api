@@ -61,7 +61,7 @@ module.exports = {
     await page.waitForTimeout(1000);
 
     // Confirm everything got cleared out.
-    const numMessages = await page.$$eval('.messages > *', el => el.length);
+    const numMessages = await page.$$eval('.messages > *', (el) => el.length);
     expect(numMessages).toBe(0);
   },
 };
