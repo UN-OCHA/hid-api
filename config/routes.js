@@ -244,7 +244,6 @@ module.exports = [
     },
   },
 
-
   {
     method: 'GET',
     path: '/docs/{param*}',

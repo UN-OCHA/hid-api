@@ -46,7 +46,6 @@ module.exports = {
     return page.frames()[1];
   },
 
-
   //
   // Clear Mailhog.
   //

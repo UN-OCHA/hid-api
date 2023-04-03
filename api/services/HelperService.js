@@ -25,7 +25,6 @@ function getSchemaAttributes(modelName, variableName, attributeName) {
   return output;
 }
 
-
 module.exports = {
 
   getOauthParams(args) {

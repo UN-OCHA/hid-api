@@ -263,7 +263,6 @@ module.exports = {
       }
     }));
 
-
     oauth.exchange(oauth.exchanges.code(
       async (client, code, redirectURI, payload, authInfo, done) => {
         try {
