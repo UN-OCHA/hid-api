@@ -1,4 +1,4 @@
-/* eslint no-param-reassign: "off" */
+/* eslint-disable no-param-reassign, no-self-assign */
 const _ = require('lodash');
 const winston = require('winston');
 
