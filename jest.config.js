@@ -12,6 +12,11 @@ const config = {
   collectCoverageFrom: [
     '<rootDir>/api/**/*.js',
   ],
+  testEnvironmentOptions: {
+    browsers: [
+      "chrome",
+    ],
+  },
 };
 
 // E2E requires a special preset
