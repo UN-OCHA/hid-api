@@ -6,7 +6,7 @@
  */
 const mongoose = require('mongoose');
 const args = require('yargs').argv;
-const app = require('../');
+const app = require('..');
 const config = require('../config/env');
 
 const { logger } = config;

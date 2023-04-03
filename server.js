@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 const Boom = require('@hapi/boom');
 const hapi = require('@hapi/hapi');
 const ejs = require('ejs');
-const app = require('./');
+const app = require('.');
 const config = require('./config/env');
 
 const { logger } = config;

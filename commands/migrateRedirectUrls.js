@@ -3,7 +3,7 @@
  * @description Migrates the redirect URLs to an array to allow for multiple redirect URLs
  */
 const mongoose = require('mongoose');
-const app = require('../');
+const app = require('..');
 
 const store = app.config.env.database.store;
 mongoose.connect(store.uri, store.options);

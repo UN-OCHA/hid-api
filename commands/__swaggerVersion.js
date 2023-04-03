@@ -4,8 +4,8 @@
  */
 const fs = require('fs');
 const path = require('path');
-const packageJson = require('../package.json');
-const app = require('../');
+const packageJson = require('./..package.json');
+const app = require('..');
 
 const { logger } = app.config.env;
 

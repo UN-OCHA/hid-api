@@ -3,7 +3,7 @@
  * @description Deletes the expired OAuth tokens from the database.
  */
 const mongoose = require('mongoose');
-const app = require('../');
+const app = require('..');
 
 const store = app.config.env.database.store;
 mongoose.connect(store.uri, store.options);
