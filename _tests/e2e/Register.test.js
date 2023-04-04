@@ -15,7 +15,7 @@ describe('Register [no-ci]', () => {
   });
 
   it('presents a form with email field', async () => {
-    const inputId = await page.$eval('#email', el => el.id);
+    const inputId = await page.$eval('#email', (el) => el.id);
     expect(inputId).toBe('email');
   });
 
@@ -23,12 +23,12 @@ describe('Register [no-ci]', () => {
     let emailFieldInvalid;
 
     await page.click('.t-btn--register');
-    emailFieldInvalid = await page.$$eval('#email:invalid', el => el.length);
+    emailFieldInvalid = await page.$$eval('#email:invalid', (el) => el.length);
     expect(emailFieldInvalid).toBeGreaterThan(0);
 
     await page.type('#email', 'invalid-email-address');
     await page.click('.t-btn--register');
-    emailFieldInvalid = await page.$$eval('#email:invalid', el => el.length);
+    emailFieldInvalid = await page.$$eval('#email:invalid', (el) => el.length);
     expect(emailFieldInvalid).toBeGreaterThan(0);
   });
 
@@ -51,7 +51,7 @@ describe('Register [no-ci]', () => {
     // Mailhog has iframes and the link has target="_blank" and all of that makes
     // it a real PITA to truly click the link and follow it. Let's instead grab
     // the URL and go directly to it:
-    const confirmationUrl = await message.$eval('p:nth-child(3) a', el => el.innerText);
+    const confirmationUrl = await message.$eval('p:nth-child(3) a', (el) => el.innerText);
     await page.goto(confirmationUrl);
     // Do we see the password reset form?
     expect(await page.content()).toContain('Thank you for confirming your account.');

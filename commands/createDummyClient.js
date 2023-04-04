@@ -6,7 +6,7 @@
  */
 const mongoose = require('mongoose');
 const args = require('yargs').argv;
-const app = require('../');
+const app = require('..');
 
 const store = app.config.env.database.store;
 mongoose.connect(store.uri, store.options);

@@ -54,7 +54,7 @@ describe('ProfileEmails', () => {
     const message = await utils.openMailhogMessage(page, 3);
 
     // Grab the email confirmation URL and visit it.
-    const confirmationUrl = await message.$eval('p:nth-child(3) a', el => el.innerText);
+    const confirmationUrl = await message.$eval('p:nth-child(3) a', (el) => el.innerText);
     await page.goto(confirmationUrl.replace('.test', '.test:8080'));
 
     await page.waitForSelector('.t-page--profile-edit');

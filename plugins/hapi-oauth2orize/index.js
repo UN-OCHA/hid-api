@@ -130,8 +130,13 @@ const internals = {
         session: request.yar,
         query: request.query,
         body: request.payload,
-        user: Hoek.reach(request.auth.credentials, internals.settings.credentialsUserProperty || '',
-          { default: request.auth.credentials }),
+        /* eslint-disable comma-dangle */
+        user: Hoek.reach(
+          request.auth.credentials,
+          internals.settings.credentialsUserProperty || '',
+          { default: request.auth.credentials }
+        ),
+        /* eslint-enable comma-dangle */
       },
       res: {
         redirect(auri) {

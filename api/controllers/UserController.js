@@ -1841,7 +1841,7 @@ module.exports = {
     }
 
     // Make sure this OAuth Client exists on the user profile.
-    if (!user.authorizedClients.some(client => client._id.toString() === clientId)) {
+    if (!user.authorizedClients.some((client) => client._id.toString() === clientId)) {
       logger.warn(
         '[UserController->revokeOauthClient] Requested clientId not found on user profile.',
         {
@@ -1862,7 +1862,7 @@ module.exports = {
     // Validation passed, user exists, client exists on user, so let's remove it.
     try {
       // eslint-disable-next-line max-len
-      const remainingClients = user.authorizedClients.filter(client => client._id.toString() !== clientId);
+      const remainingClients = user.authorizedClients.filter((client) => client._id.toString() !== clientId);
       user.authorizedClients = remainingClients;
       await user.save();
 
