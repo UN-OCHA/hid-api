@@ -40,7 +40,7 @@
     "cracklib": "^1.1.0",
     "ejs": "^3.1.7",
     "email-templates": "^8.0.8",
-    "hapi-rate-limit": "^4.0.2",
+    "hapi-rate-limit": "^6.0.0",
     "is-html": "^1.1.0",
     "joi": "^17.5.0",
     "jsonwebtoken": "^9.0.0",
