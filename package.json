@@ -35,7 +35,6 @@
     "accept-language": "^3.0.15",
     "async": "^3.2.2",
     "authenticator": "^1.1.2",
-    "axios": "^0.21.2",
     "bcryptjs": "^2.3.0",
     "blankie": "^5.0.0",
     "cracklib": "^1.1.0",
@@ -66,6 +65,7 @@
   "devDependencies": {
     "@babel/preset-env": "^7.13.12",
     "acorn": "^5.7.4",
+    "axios": "^0.21.2",
     "diff": ">=3.5.0",
     "dot-prop": ">=4.2.1",
     "ejs-lint": "^1.2.2",
