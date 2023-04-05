@@ -31,7 +31,7 @@
     "@hapi/iron": "^6.0.0",
     "@hapi/scooter": "^7.0.0",
     "@hapi/vision": "^7.0.1",
-    "@hapi/yar": "github:un-ocha/yar#v1.0.0-ocha",
+    "@hapi/yar": "github:un-ocha/yar#upstream-2023-04-05",
     "accept-language": "^3.0.15",
     "async": "^3.2.2",
     "authenticator": "^1.1.2",
