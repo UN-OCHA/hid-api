@@ -86,6 +86,7 @@ module.exports = {
       plugin: inert,
     },
     {
+      // Provides template rendering support for Hapi.
       plugin: vision,
     },
     {
