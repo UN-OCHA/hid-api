@@ -82,9 +82,11 @@ module.exports = {
   // They provide vital behaviors: template rendering, CSP, cookie config, etc
   plugins: [
     {
+      // Provides static file/directory handlers.
       plugin: inert,
     },
     {
+      // Provides template rendering support for Hapi.
       plugin: vision,
     },
     {
