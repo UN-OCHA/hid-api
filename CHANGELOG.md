@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.2.3](https://github.com/UN-OCHA/hid-api/compare/v5.2.2...v5.2.3) (2023-04-06)
+
+### Chores
+
+* upgrade to node.js 18
+* upgrade Hapi ecosystem for node.js 18
+* regular security updates
+
+
 ## [5.2.2](https://github.com/UN-OCHA/hid-api/compare/v5.2.1...v5.2.2) (2023-03-09)
 
 ### Bug Fixes
