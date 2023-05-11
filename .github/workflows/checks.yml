@@ -28,7 +28,7 @@ jobs:
 
       - name: Run tests
         run: |
-          npm run lint
+          npm run test
 
       - name: Slack Success Notification
         id: slack_success

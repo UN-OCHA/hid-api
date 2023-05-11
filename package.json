@@ -16,8 +16,8 @@
     "docs": "swagger-inline './api/**/*' --base 'docs/swaggerBase.yaml' > docs/hid.yml",
     "start": "node ./index.js",
     "lint": "eslint . && ejslint templates/* emails/*",
-    "e2e": "jest _tests/e2e/*.test.js",
-    "test": "npm run lint && npm run unit -- -t '^(?!.*no-ci).*$'",
+    "e2e": "jest _tests/e2e/*.test.js -- -t '^(?!.*no-ci).*$'",
+    "test": "npm run lint && npm run unit",
     "unit": "lab -v _tests/unit/*.test.js",
     "release": "standard-version"
   },
