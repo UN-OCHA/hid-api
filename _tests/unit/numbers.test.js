@@ -2,17 +2,17 @@
 
 const Lab = require('@hapi/lab');
 const { expect } = require('@hapi/code');
-const { afterEach, beforeEach, describe, it } = exports.lab = Lab.script();
+const { after, before, describe, it } = exports.lab = Lab.script();
 const { init } = require('../../server');
 
 describe('GET /api/v3/numbers', () => {
   let server;
 
-  beforeEach(async () => {
+  before(async () => {
     server = await init();
   });
 
-  afterEach(async () => {
+  after(async () => {
     await server.stop();
   });
 
@@ -24,14 +24,14 @@ describe('GET /api/v3/numbers', () => {
     expect(res.statusCode).to.equal(403);
   });
 
-  // it('responds with 401 to invalid token', async () => {
-  //   const res = await server.inject({
-  //     method: 'get',
-  //     url: '/api/v3/numbers',
-  //     headers: {
-  //       Authorization: 'xxx',
-  //     }
-  //   });
-  //   expect(res.statusCode).to.equal(401);
-  // });
+  it('responds with 401 to invalid token', async () => {
+    const res = await server.inject({
+      method: 'get',
+      url: '/api/v3/numbers',
+      headers: {
+        Authorization: 'invalid_token',
+      }
+    });
+    expect(res.statusCode).to.equal(401);
+  });
 });
