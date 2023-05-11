@@ -278,6 +278,9 @@ module.exports = [
     },
   },
 
+  /**
+   * HID Login
+   */
   {
     method: 'POST',
     path: '/login',
@@ -287,6 +290,9 @@ module.exports = [
     },
   },
 
+  /**
+   * OAuth
+   */
   {
     method: 'GET',
     path: '/oauth/authorize',
@@ -325,6 +331,9 @@ module.exports = [
     },
   },
 
+  /**
+   * API Key management
+   */
   {
     method: 'POST',
     path: '/api/v3/jsonwebtoken',
@@ -343,6 +352,9 @@ module.exports = [
     handler: AuthController.blacklistJwt,
   },
 
+  /**
+   * User management
+   */
   {
     method: 'POST',
     path: '/api/v3/user',
@@ -525,6 +537,9 @@ module.exports = [
     },
   },
 
+  /**
+   * OAuth Client management
+   */
   {
     method: 'DELETE',
     path: '/api/v3/user/{id}/clients/{client}',
@@ -601,6 +616,9 @@ module.exports = [
     },
   },
 
+  /**
+   * TOTP management
+   */
   {
     method: 'POST',
     path: '/api/v3/totp/config',
