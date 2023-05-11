@@ -13,6 +13,7 @@ const AdminController = require('../api/controllers/AdminController');
 const AuthController = require('../api/controllers/AuthController');
 const AuthPolicy = require('../api/policies/AuthPolicy');
 const ClientController = require('../api/controllers/ClientController');
+const NumbersController = require('../api/controllers/NumbersController');
 const TOTPController = require('../api/controllers/TOTPController');
 const UserController = require('../api/controllers/UserController');
 const UserPolicy = require('../api/policies/UserPolicy');
@@ -685,6 +686,20 @@ module.exports = [
         AuthPolicy.isTOTPValidPolicy,
       ],
       handler: TOTPController.verifyTOTPToken,
+    },
+  },
+
+  /**
+   * Numbers
+   */
+  {
+    method: 'GET',
+    path: '/api/v3/numbers',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: NumbersController.numbers,
     },
   },
 ];
