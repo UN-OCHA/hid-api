@@ -14,9 +14,6 @@ const env = require('./config/env');
 const { logger } = env;
 const { store } = env.database;
 
-// Connect to DB
-mongoose.connect(store.uri, store.options);
-
 const webConfig = app.config.web;
 
 _.defaultsDeep(webConfig.options, {
@@ -112,6 +109,9 @@ exports.init = async () => {
 
 // Define server start
 exports.start = async () => {
+  // Connect to DB
+  mongoose.connect(store.uri, store.options);
+
   await server.start();
 
   logger.info(
