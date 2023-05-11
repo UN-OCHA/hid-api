@@ -1,9 +1,8 @@
-'use strict';
-
 const Lab = require('@hapi/lab');
 const { expect } = require('@hapi/code');
-const { after, before, describe, it } = exports.lab = Lab.script();
 const { init } = require('../../server');
+
+const { after, before, describe, it } = exports.lab = Lab.script();
 
 describe('GET /api/v3/numbers', () => {
   let server;
@@ -19,7 +18,7 @@ describe('GET /api/v3/numbers', () => {
   it('responds with 403 to unauthenticated request', async () => {
     const res = await server.inject({
       method: 'get',
-      url: '/api/v3/numbers'
+      url: '/api/v3/numbers',
     });
     expect(res.statusCode).to.equal(403);
   });
@@ -30,7 +29,7 @@ describe('GET /api/v3/numbers', () => {
       url: '/api/v3/numbers',
       headers: {
         Authorization: 'invalid_token',
-      }
+      },
     });
     expect(res.statusCode).to.equal(401);
   });
