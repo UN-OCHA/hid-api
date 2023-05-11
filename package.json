@@ -17,7 +17,8 @@
     "start": "node ./index.js",
     "lint": "eslint . && ejslint templates/* emails/*",
     "e2e": "jest _tests/e2e/*.test.js",
-    "test": "npm run lint && npm run e2e -- -t '^(?!.*no-ci).*$'",
+    "test": "npm run lint && npm run unit -- -t '^(?!.*no-ci).*$'",
+    "unit": "lab -v _tests/unit/*.test.js",
     "release": "standard-version"
   },
   "dependencies": {
@@ -64,6 +65,8 @@
   },
   "devDependencies": {
     "@babel/preset-env": "^7.13.12",
+    "@hapi/code": "^9.0.3",
+    "@hapi/lab": "^25.1.2",
     "acorn": "^5.7.4",
     "axios": "^0.21.2",
     "diff": ">=3.5.0",
