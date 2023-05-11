@@ -8,12 +8,13 @@ const mongoose = require('mongoose');
 const Boom = require('@hapi/boom');
 const hapi = require('@hapi/hapi');
 const ejs = require('ejs');
-const app = require('.');
-const config = require('./config/env');
+const app = require('./app.js');
+const env = require('./config/env');
 
-const { logger } = config;
-const { store } = config.database;
+const { logger } = env;
+const { store } = env.database;
 
+// Connect to DB
 mongoose.connect(store.uri, store.options);
 
 const webConfig = app.config.web;
@@ -44,18 +45,21 @@ const preResponse = (request, reply) => {
   return reply.continue;
 };
 
+// Define server
 const server = hapi.Server(webConfig.options);
-const init = async () => {
+
+// Define server init
+exports.init = async () => {
   // Plugins
   await server.register(webConfig.plugins);
   webConfig.onPluginsLoaded(server);
-
   server.auth.strategy('hid', 'hapi-auth-hid');
-
   server.auth.default('hid');
 
-  // Routes
+  // Define routes
   server.route(app.config.routes);
+
+  // Define static assets
   if (Array.isArray(app.config.main.paths.www)) {
     app.config.main.paths.www.map((item) => {
       const staticDir = path.relative(app.config.main.paths.root, item.path);
@@ -101,7 +105,15 @@ const init = async () => {
 
   server.ext('onPreResponse', preResponse);
 
+  await server.initialize();
+
+  return server;
+};
+
+// Define server start
+exports.start = async () => {
   await server.start();
+
   logger.info(
     `HID server started. Listening on: ${server.info.uri}`,
   );
@@ -112,11 +124,19 @@ const init = async () => {
       security: true,
     },
   );
-};
 
+  logger.info(
+    'routes',
+    {
+      routes: app.config.routes.length,
+    }
+  );
+
+  return server;
+}
+
+// Unhandled errors
 process.on('unhandledRejection', (err, p) => {
   logger.error('[unhandledRejection] Unhandled rejection error', err, p);
   process.exit(1);
 });
-
-init();
