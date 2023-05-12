@@ -7,9 +7,9 @@
  * However when starting the server we need to run them both. Since they're both
  * async functions, we wrap them in an IIFE to allow "top-level" async/await.
  */
-const { init, start } = require('./server.js');
+const { init, start } = require('./server');
 
 (async function iife() {
   await init();
   await start();
-})();
+}());

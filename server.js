@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 const Boom = require('@hapi/boom');
 const hapi = require('@hapi/hapi');
 const ejs = require('ejs');
-const app = require('./app.js');
+const app = require('./app');
 const env = require('./config/env');
 
 const { logger } = env;
@@ -129,11 +129,11 @@ exports.start = async () => {
     'routes',
     {
       routes: app.config.routes.length,
-    }
+    },
   );
 
   return server;
-}
+};
 
 // Unhandled errors
 process.on('unhandledRejection', (err, p) => {
