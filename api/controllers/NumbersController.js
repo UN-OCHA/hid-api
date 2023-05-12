@@ -47,8 +47,8 @@ module.exports = {
       ]);
 
       return {
-        totalUsers: totalUsers,
-        emailVerified: emailVerified,
+        totalUsers,
+        emailVerified,
       };
     } catch (err) {
       logger.error(
