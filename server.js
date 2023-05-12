@@ -125,13 +125,6 @@ exports.start = async () => {
     },
   );
 
-  logger.info(
-    'routes',
-    {
-      routes: app.config.routes.length,
-    },
-  );
-
   return server;
 };
 
