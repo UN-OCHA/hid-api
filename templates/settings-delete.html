@@ -2,91 +2,89 @@
 <link rel="stylesheet" href="/assets/css/tabs.css">
 <link rel="stylesheet" href="/assets/css/settings-delete.css">
 
-<div class="api-page">
-  <main role="main" id="main-content" class="cd-container">
-    <div class="cd-layout-content">
-      <h1 class="cd-page-title page-header__heading">Settings for <%= user.name %></h1>
-      <%- include('includes/alert') %>
-      <div class="tabbed">
-        <nav>
-          <li>
-            <a href="/settings">Authorized Apps</a>
-          </li>
-          <li>
-            <a href="/settings/password">Password</a>
-          </li>
-          <li>
-            <a href="/settings/security">Security</a>
-          </li>
-          <li>
-            <a href="/settings/delete" aria-selected="true">Delete Account</a>
-          </li>
-        </nav>
+<main role="main" id="main-content" class="cd-container">
+  <div class="cd-layout-content">
+    <h1 class="cd-page-title page-header__heading">Settings for <%= user.name %></h1>
+    <%- include('includes/alert') %>
+    <div class="tabbed">
+      <nav>
+        <li>
+          <a href="/settings">Authorized Apps</a>
+        </li>
+        <li>
+          <a href="/settings/password">Password</a>
+        </li>
+        <li>
+          <a href="/settings/security">Security</a>
+        </li>
+        <li>
+          <a href="/settings/delete" aria-selected="true">Delete Account</a>
+        </li>
+      </nav>
 
-        <section id="section-delete">
-          <h2>Delete your HID account</h2>
+      <section id="section-delete">
+        <h2>Delete your HID account</h2>
 
-          <% if (user.is_admin) { %>
-              <%-
-                include('includes/alert', {
-                  alert: {
-                    type: 'warning',
-                    title: 'Admins cannot delete their own account',
-                    message: '<p>Your account is marked as an Admin, so account deletion is not possible.</p>',
-                  },
-                })
+        <% if (user.is_admin) { %>
+            <%-
+              include('includes/alert', {
+                alert: {
+                  type: 'warning',
+                  title: 'Admins cannot delete their own account',
+                  message: '<p>Your account is marked as an Admin, so account deletion is not possible.</p>',
+                },
+              })
+            %>
+        <% } else { %>
+
+          <form action="/settings/delete" method="POST" class="[ cd-flow ]">
+            <% if (totpPrompt) { %>
+              <div class="form-field [ cd-flow ]">
+                <h3>Two-factor authentication</h3>
+                <label for="x-hid-totp">Authentication code</label>
+                <input
+                  type="text"
+                  name="x-hid-totp"
+                  id="x-hid-totp"
+                  autocomplete="one-time-code"
+                  placeholder="Authentication code"
+                  required>
+                <button name="action" value="totp" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase">
+                  Verify
+                </button>
+              </div>
+            <% } else { %>
+              <div class="form-field">
+                <p>Deleting your account means that you will lose your access to Humanitarian ID.</p>
+              </div>
+              <%#
+               This is a specially-formatted alert where clicking the text
+               focuses on the input, so we intentionally didn't include the
+               standard alert component.
               %>
-          <% } else { %>
-
-            <form action="/settings/delete" method="POST" class="[ flow ]">
-              <% if (totpPrompt) { %>
-                <div class="form-field [ flow ]">
-                  <h3>Two-factor authentication</h3>
-                  <label for="x-hid-totp">Authentication code</label>
-                  <input
-                    type="text"
-                    name="x-hid-totp"
-                    id="x-hid-totp"
-                    autocomplete="one-time-code"
-                    placeholder="Authentication code"
-                    required>
-                  <button name="action" value="totp" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase">
-                    Verify
-                  </button>
-                </div>
-              <% } else { %>
-                <div class="form-field">
-                  <p>Deleting your account means that you will lose your access to Humanitarian ID.</p>
-                </div>
-                <%#
-                 This is a specially-formatted alert where clicking the text
-                 focuses on the input, so we intentionally didn't include the
-                 standard alert component.
-                %>
-                <label for="confirm-primary-email" class="form-field cd-alert cd-alert--error">
-                  <div role="alert">
-                    <div class="cd-alert__container">
-                      <div class="cd-alert__message [ flow ]">
-                        <p>Confirm that you wish to <strong>completely delete your HID account</strong> by typing your primary email address in the field here:</p>
-                        <input type="email" name="primary_email" id="confirm-primary-email" placeholder="<%= user.email %>" required pattern="<%= user.email %>" title="Your primary email: <%= user.email %>">
-                      </div>
+              <label for="confirm-primary-email" class="form-field cd-alert cd-alert--error">
+                <div role="alert">
+                  <div class="cd-alert__container">
+                    <div class="cd-alert__message [ cd-flow ]">
+                      <p>Confirm that you wish to <strong>completely delete your HID account</strong> by typing your primary email address in the field here:</p>
+                      <input type="email" name="primary_email" id="confirm-primary-email" placeholder="<%= user.email %>" required pattern="<%= user.email %>" title="Your primary email: <%= user.email %>">
                     </div>
                   </div>
-                </label>
-                <div class="form-actions">
-                  <button name="action" value="submit" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase cd-button--danger">
-                    Delete Account
-                  </button>
                 </div>
-              <% } %>
-            </form>
+              </label>
+              <div class="form-actions">
+                <button name="action" value="submit" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase cd-button--danger">
+                  Delete Account
+                </button>
+              </div>
+            <% } %>
+          </form>
 
-          <% } /* user.is_admin */ %>
-        </section>
-      </div>
+        <% } /* user.is_admin */ %>
+      </section>
     </div>
-  </main>
-</div>
+  </div>
+</main>
 
 <script src="/assets/js/tabs.js"></script>
 

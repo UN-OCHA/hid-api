@@ -1,0 +1,81 @@
+/**
+ * HID-specific CD overrides
+ */
+
+/**
+ * Sticky footer
+ *
+ * Make sure all containing elements are at least as tall as the window.
+ */
+body,
+.cd-page-layout-container {
+  min-height: 100vh;
+}
+
+
+/**
+ * Forms
+ */
+.form-field {
+  /* some widgets position themselves relative to each form item */
+  position: relative;
+  max-width: 52ch;
+}
+
+.form-field > * {
+  display: block;
+}
+
+.form-field > input[type="checkbox"] {
+  display: inline-block;
+}
+
+label {
+  display: block;
+}
+
+label + input {
+  margin-top: 0;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="url"],
+textarea {
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  border-width: 1px;
+  border-radius: 0.25rem;
+  width: 100%;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  --text-opacity: 1;
+  color: #4a5568;
+  color: rgba(74, 85, 104, var(--text-opacity));
+  line-height: 1.25;
+}
+
+input:focus {
+  outline: 0;
+  box-shadow: 0 0 0 2px black;
+}
+
+input:focus:invalid {
+  color: red;
+  border-bottom-color: currentColor;
+  box-shadow: inset 0px -1px 0px 0px currentColor;
+  outline: 2px solid red;
+  outline-offset: 0;
+}
+
+form code {
+  display: inline-block;
+  background: #eee;
+  border-radius: 3px;
+  padding-left: .25em;
+  padding-right: .25em;
+}

@@ -1,0 +1,410 @@
+/**
+ * Common Design: Inline search variant
+ */
+.cd-search--inline {
+  z-index: var(--cd-z-search);
+}
+
+.cd-search .form-item,
+.cd-search .form-actions,
+.cd-search--inline .form-item,
+.cd-search--inline .form-actions {
+  margin-block: 0;
+}
+
+.cd-search--inline .form-item,
+.cd-search--inline .form-actions {
+  display: flex;
+}
+
+.cd-search--inline__btn {
+  display: flex;
+  align-items: center;
+  height: var(--cd-site-header-height);
+  padding: 0 20px;
+  transition: background 0.3s ease;
+  color: var(--brand-primary);
+  border: 0;
+  background: transparent;
+  font-size: 24px;
+}
+
+.cd-search--inline__btn svg {
+  width: 26px;
+  height: 26px;
+  fill: var(--brand-primary);
+}
+
+.cd-search--inline__btn:hover,
+.cd-search--inline__btn:focus {
+  color: var(--brand-primary--dark);
+  outline: none;
+  background: var(--cd-white);
+}
+
+.cd-search--inline__btn:hover svg,
+.cd-search--inline__btn:focus svg {
+  fill: var(--brand-primary--dark);
+}
+
+.cd-search--inline__btn:focus {
+  color: var(--brand-highlight);
+}
+
+.cd-search--inline__btn:focus svg {
+  fill: var(--brand-primary--dark);
+}
+
+.cd-search--inline__btn[aria-expanded=true] {
+  position: relative;
+  color: var(--brand-highlight);
+}
+
+.cd-search--inline__btn[aria-expanded=true]::before {
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  margin-inline-start: -6px;
+  content: "";
+  border-width: 0 6px 6px;
+  border-style: solid;
+  border-color: transparent transparent var(--brand-grey);
+}
+
+[dir=ltr] .cd-search--inline__btn[aria-expanded=true]::before {
+  left: 50%;
+}
+
+[dir=rtl] .cd-search--inline__btn[aria-expanded=true]::before {
+  right: 50%;
+}
+
+.cd-search--inline__btn[aria-expanded=true] svg {
+  fill: var(--brand-highlight);
+}
+
+.cd-search--inline__btn[aria-expanded=true]:hover,
+.cd-search--inline__btn[aria-expanded=true]:focus {
+  outline: none;
+  background: var(--cd-white);
+}
+
+.cd-search--inline__btn-label {
+  display: none;
+  text-transform: uppercase;
+  font-size: var(--cd-font-size--tiny);
+  font-weight: 700;
+}
+
+.cd-search--inline__form {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: var(--cd-site-header-height);
+  background: var(--brand-grey);
+}
+
+.no-js .cd-search--inline__form {
+  position: relative;
+  display: block;
+}
+
+.cd-search--inline__form form {
+  padding: 8px var(--cd-container-padding);
+}
+
+.cd-search--inline__input[type=search],
+.cd-search--inline__input[type=text] {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  height: calc(var(--cd-site-header-height) - 16px); /* padding */
+  padding-block: 0;
+  padding-inline-start: 25px;
+  padding-inline-end: 45px;
+  color: var(--cd-default-text-color);
+  border: 0;
+  border-radius: 0;
+  background: var(--cd-white);
+  box-shadow: none;
+  font-size: var(--cd-font-size--base);
+  -webkit-appearance: none;
+}
+
+.cd-search--inline__input[type=search]:focus,
+.cd-search--inline__input[type=text]:focus {
+  outline: 0;
+  box-shadow: 0 0 4px rgba(var(--cd-rgb-grey--mid), 0.7);
+}
+
+.cd-search--inline__input::-webkit-input-placeholder {
+  color: var(--cd-grey--dark);
+  font-style: italic;
+}
+
+.cd-search--inline__input::-moz-placeholder {
+  color: var(--cd-grey--dark);
+  font-style: italic;
+}
+
+.cd-search--inline__input:-ms-input-placeholder {
+  color: var(--cd-grey--dark);
+  font-style: italic;
+}
+
+.cd-search--inline__input:-moz-placeholder {
+  color: var(--cd-grey--dark);
+  font-style: italic;
+}
+
+.cd-search--inline__input::-webkit-search-cancel-button {
+  position: relative;
+  right: 10px;
+}
+
+/* Safari fix */
+.cd-search--inline__input::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+.cd-search--inline__submit {
+  position: absolute;
+  top: 8px;
+  display: flex;
+  align-items: center;
+  width: 46px;
+  height: calc(var(--cd-site-header-height) - 16px); /* padding */
+  margin: 0;
+  padding: 0;
+  text-transform: uppercase;
+  color: var(--cd-white);
+  border: 0;
+  background: var(--cd-grey--dark);
+  font-size: var(--cd-font-size--medium);
+  font-weight: 700;
+}
+
+[dir=ltr] .cd-search--inline__submit {
+  right: var(--cd-container-padding);
+}
+
+[dir=rtl] .cd-search--inline__submit {
+  left: var(--cd-container-padding);
+}
+
+.cd-search--inline__submit svg {
+  box-sizing: content-box;
+  width: 26px;
+  height: 26px;
+  margin: 0 auto;
+  fill: var(--cd-white);
+}
+
+.cd-search--inline__submit:focus {
+  background-color: var(--brand-highlight);
+}
+
+/**
+ * @IE11
+ *
+ * No support for CSS custom properties means --dropdown: false; property on
+ * nav container is not recognised so the cd-dropdown.js creates a toggler
+ * button on desktop. This hides it when that happens.
+ */
+@media (min-width: 1024px) and (-ms-high-contrast: none) {
+  .cd-search--inline__btn {
+    display: none;
+  }
+}
+
+/* Submit button treatment for modern browsers. */
+@media (min-width: 1024px) {
+  .cd-search--inline {
+    flex: 0 1 400px;
+    margin-inline-start: 30px;
+    border-right: 1px solid var(--brand-grey);
+    border-left: 1px solid var(--brand-grey);
+  }
+}
+
+@media (min-width: 1024px) {
+  .cd-search--inline__form {
+    --dropdown: false;
+
+    position: relative;
+    background: var(--cd-white);
+  }
+}
+
+/**
+ * @IE11
+ *
+ * No support for CSS custom properties means --dropdown: false; property on
+ * search container is not recognised so the cd-dropdown.js does not run the
+ * updateToggler function which toggles the data-cd-hidden attribute. This
+ * displays the search regardless of that attribute value.
+ */
+@media (min-width: 1024px) and (-ms-high-contrast: none) {
+  .cd-search--inline__form[data-cd-hidden=true] {
+    display: block;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cd-search--inline__form form {
+    padding: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+
+  .cd-search--inline__input[type=search],
+  .cd-search--inline__input[type=text] {
+    box-sizing: content-box;
+    height: var(--cd-site-header-height);
+    padding-block: 0;
+    padding-inline-start: 16px;
+    padding-inline-end: 72px;
+    color: var(--cd-default-text-color);
+    border: 0;
+    border-radius: 0;
+    background: var(--cd-white);
+    box-shadow: none;
+    font-size: var(--cd-font-size--small);
+    -webkit-appearance: none;
+  }
+
+  .cd-search--inline__input[type=search]:focus,
+  .cd-search--inline__input[type=text]:focus {
+    border-bottom: 6px solid var(--brand-highlight);
+    outline: 0;
+    box-shadow: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cd-search--inline__input::-webkit-search-cancel-button {
+    position: relative;
+  }
+
+  [dir=ltr] .cd-search--inline__input::-webkit-search-cancel-button {
+    right: -10px;
+  }
+
+  [dir=rtl] .cd-search--inline__input::-webkit-search-cancel-button {
+    left: -10px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cd-search--inline__input::-webkit-input-placeholder {
+    color: var(--cd-grey--mid);
+    font-style: italic;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cd-search--inline__input::-moz-placeholder {
+    color: var(--cd-grey--mid);
+    font-style: italic;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cd-search--inline__input:-ms-input-placeholder {
+    color: var(--cd-grey--mid);
+    font-style: italic;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cd-search--inline__input:-moz-placeholder {
+    color: var(--cd-grey--mid);
+    font-style: italic;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cd-search--inline__input::-webkit-search-decoration {
+    -webkit-appearance: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cd-search--inline__submit {
+    position: absolute;
+    top: 0;
+    width: unset;
+    height: var(--cd-site-header-height);
+    padding: 0;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    color: var(--cd-black);
+    border: 0;
+    background: var(--cd-white);
+    font-size: var(--cd-font-size--medium);
+    font-weight: 700;
+  }
+
+  [dir=ltr] .cd-search--inline__submit {
+    right: 0;
+  }
+
+  [dir=rtl] .cd-search--inline__submit {
+    left: 0;
+  }
+
+  .cd-search--inline__submit svg {
+    box-sizing: content-box;
+    width: 22px;
+    height: 22px;
+    padding: 0 16px;
+    fill: var(--cd-grey--mid);
+  }
+
+  .cd-search--inline__submit:hover,
+  .cd-search--inline__submit:focus {
+    outline: 0;
+    background-color: var(--brand-grey);
+    box-shadow: none;
+  }
+
+  .cd-search--inline__submit:hover svg,
+  .cd-search--inline__submit:focus svg {
+    fill: var(--brand-highlight);
+  }
+}
+
+@media (min-width: 1024px) {
+  .cd-search--inline__submit {
+    display: flex;
+    align-items: center;
+    border: 0;
+  }
+
+  .cd-search--inline__submit::before {
+    position: absolute;
+    width: 2px;
+    height: 24px;
+    content: "";
+    background: var(--brand-grey);
+  }
+}
+
+/**
+ * @IE11
+ * Removes search cancel x on IE 11 only.
+ */
+@media (min-width: 1024px) and (-ms-high-contrast: none) {
+  input[type=search]::-ms-clear,
+  input[type=search]::-ms-reveal {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  .cd-search--inline__submit svg {
+    padding: 0;
+  }
+}

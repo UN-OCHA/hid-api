@@ -1,0 +1,59 @@
+/**
+ * Common Design: OCHA mandate
+ */
+.cd-mandate {
+  width: 100%;
+  text-align: center;
+}
+
+.cd-mandate__heading {
+  display: block;
+  margin-bottom: 16px;
+  padding: 0 var(--cd-container-padding);
+}
+
+.cd-mandate__logo {
+  display: block;
+  width: 149px;
+  height: 37px;
+  margin-inline: auto;
+  margin-block-end: 1rem;
+}
+
+.cd-mandate__text {
+  display: block;
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 0 var(--cd-container-padding);
+}
+
+@media (min-width: 1024px) {
+  .cd-mandate {
+    display: flex;
+    flex-flow: row wrap;
+    margin: 0;
+    column-gap: var(--cd-container-padding);
+  }
+
+  .cd-mandate__heading {
+    flex: 1 0 100%;
+    padding: 0;
+    text-align: initial;
+  }
+
+  .cd-mandate__logo {
+    flex: 0 0 calc(149px + var(--cd-container-padding));
+    height: auto;
+    margin: 0;
+    padding-inline-end: var(--cd-container-padding);
+    border-inline-end: 1px solid var(--brand-grey);
+  }
+
+  .cd-mandate__text {
+    flex: 1 1 0;
+    margin: 0;
+    padding: 0;
+    padding-inline-end: var(--cd-container-padding-xlarge);
+    text-align: initial;
+  }
+}

@@ -452,6 +452,24 @@ if (typeof ElementPrototype.closest !== 'function') {
   }
 
   /**
+   * Hide and move OCHA Services to the top of the header after the target.
+   */
+  function moveToHeader(id, target) {
+    var section = document.getElementById(id);
+    var sibling = document.getElementById(target);
+    if (section && sibling) {
+      // Ensure the element is hidden before moving it to avoid flickering.
+      toggleVisibility(section, true);
+      sibling.parentNode.insertBefore(section, sibling.nextSibling);
+    }
+  }
+
+  function toggleVisibility(element, hide) {
+    element.setAttribute('cd-data-hidden', hide === true);
+  }
+
+
+  /**
    * Initialization
    *
    * Everything below this comment is inside the Drupal "attach" function which
@@ -459,6 +477,10 @@ if (typeof ElementPrototype.closest !== 'function') {
    * so that it runs after all functions are defined.
    */
   document.documentElement.classList.remove('no-js');
+  document.documentElement.classList.add('js');
+
+  // Move OCHA Services from Footer to Global Header
+  moveToHeader('cd-ocha-services', 'cd-global-header__actions');
 
   // Initialize toggable dropdown.
   initializeToggables();

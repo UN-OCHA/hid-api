@@ -1,0 +1,233 @@
+/**
+ * CD Button
+ *
+ * Defines default button styles plus many variants to suit different use-cases.
+ */
+
+/* Default button */
+.cd-button {
+  width: auto;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition:
+    background-color 0.6s ease-out,
+    color 0.6s ease-out;
+  text-align: center;
+  color: var(--cd-white);
+  border: 2px solid transparent;
+  border-radius: 3px;
+  background-color: var(--brand-primary);
+  box-shadow: none;
+  font-size: 1rem;
+  line-height: 1.15;
+  -webkit-appearance: none;
+}
+
+.cd-button:hover,
+.cd-button:focus {
+  color: var(--cd-white);
+  background-color: var(--brand-primary--light);
+}
+
+.cd-button:focus {
+  border: 2px solid var(--brand-primary--dark);
+  /* We remove the outline because we are adding a border. */
+  /* so the rounded corners look nicer on hover */
+  outline: 0 solid var(--brand-primary--light);
+}
+
+/* For buttons on dark backgrounds */
+.cd-button--light {
+  color: var(--brand-primary--dark);
+  background-color: var(--brand-primary--light);
+}
+
+.cd-button--light:hover,
+.cd-button--light:focus {
+  color: var(--brand-primary--dark);
+  background-color: var(--brand-primary--light);
+}
+
+/* When it's an anchor styled as a button */
+a.cd-button {
+  display: inline-flex;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.cd-button--outline {
+  color: var(--brand-primary);
+  border-color: var(--brand-primary);
+  background-color: var(--cd-white);
+  fill: currentColor;
+}
+
+.cd-button--outline:hover,
+.cd-button--outline:focus {
+  color: var(--cd-white);
+  border-color: var(--brand-primary--dark);
+  background-color: var(--brand-primary);
+}
+
+/* Utility classes */
+.cd-button--small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.cd-button--bold {
+  font-weight: bold;
+}
+
+.cd-button--uppercase {
+  text-transform: uppercase;
+}
+
+.cd-button--wide {
+  padding-right: 3rem;
+  padding-left: 3rem;
+}
+
+.cd-button--wide.cd-button--small {
+  padding-right: 1.5rem;
+  padding-left: 1.5rem;
+}
+
+/* Some buttons have SVG icons */
+.cd-button--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+}
+
+[dir="rtl"] .cd-button--icon {
+  text-align: right;
+}
+
+[dir="rtl"] .cd-icon--arrow-right {
+  transform: scale(-1, 1);
+}
+
+/* For IE11 */
+@media all and (-ms-high-contrast: none) {
+  .cd-button--icon {
+    display: inline-block;
+  }
+}
+
+/* button--icon text needs to be inside span */
+.cd-button--icon .cd-button__text {
+  display: inline-block;
+  flex: 1 1 0%;
+}
+
+.cd-button--icon svg {
+  fill: currentColor;
+  width: 1rem;
+  height: 1rem;
+  transition: fill 0.3s ease-in;
+}
+
+[dir="ltr"] .cd-button--icon svg {
+  /* Icon before */
+  margin-right: 0.25rem;
+}
+
+[dir="rtl"] .cd-button--icon svg {
+  /* Icon before */
+  margin-left: 0.25rem;
+}
+
+.cd-button--icon span + svg {
+  /* Icon after */
+  margin-right: 0;
+  margin-left: 2rem;
+}
+
+[dir="rtl"] .cd-button--icon span + svg {
+  margin-right: 2rem;
+  /* Icon after */
+  margin-left: 0;
+}
+
+.cd-button--icon.cd-button--small svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.cd-button--icon.cd-button--small span + svg {
+  /* Icon after */
+  margin-left: 1rem;
+}
+
+[dir="rtl"] .cd-button--icon.cd-button--small span + svg {
+  margin-right: 1rem;
+  /* Icon after */
+  margin-left: 0;
+}
+
+.cd-button--icon:hover svg,
+.cd-button--icon:focus svg {
+  fill: var(--cd-white);
+}
+
+.cd-button--light:hover svg,
+.cd-button--light:focus svg {
+  fill: currentColor;
+}
+
+.cd-button[disabled] {
+  opacity: 0.6;
+}
+
+.cd-button[disabled],
+.cd-button[disabled]:hover,
+.cd-button[disabled]:focus,
+.cd-button[disabled]:hover *,
+.cd-button[disabled]:focus * {
+  cursor: not-allowed;
+  /* Prevents hover and focus  */
+  pointer-events: none;
+}
+
+/* For IE11 */
+@media all and (-ms-high-contrast: none) {
+  .cd-button[disabled] {
+    position: relative;
+  }
+}
+
+.cd-button--export {
+  color: var(--cd-white);
+  background: var(--cd-grey--mid);
+  fill: var(--cd-white);
+}
+
+.cd-button--export svg,
+.cd-button--export:hover svg,
+.cd-button--export:focus svg {
+  fill: var(--cd-white);
+}
+
+.cd-button--export:hover,
+.cd-button--export:focus {
+  color: var(--cd-white);
+  background: var(--cd-grey--dark);
+  fill: var(--cd-white);
+}
+
+.cd-button--danger {
+  background-color: var(--cd-highlight-red);
+}
+
+.cd-button + .cd-button {
+  margin-inline-start: 0.5rem;
+}
+
+/* Drupal entity delete confirmation Delete button followed by anchor */
+.cd-button + #edit-cancel {
+  margin-inline-start: 0.5rem;
+}

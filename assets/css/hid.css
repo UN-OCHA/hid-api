@@ -1,0 +1,84 @@
+/* Drupal core files */
+@import "vendor/drupal-normalize.css";
+@import "vendor/drupal-hidden.css";
+
+/**
+ * CD core dependencies
+ *
+ * Because of CSS ordering issues inside the CD, we include these before
+ * the CD core files in order to replicate how Drupal orders the files.
+ *
+ * Known issues:
+ *  - The --dropdown var is set to false to create the desktop nav layout,
+ *    but cd-dropdown.css sets it back to true if it comes last.
+ */
+@import "cd-dropdown/cd-dropdown.css";
+
+/**
+ * CD Core
+ *
+ * The format for the comments is -> GROUP: library
+ *
+ * The uppercase 'GROUP' is a Drupalism denoting the order in which the
+ * styles are added to the page. Note that SMACSS uses the word 'module' but
+ * due to historical name clashes, Drupal uses 'component' instead.
+ *
+ * @see https://www.drupal.org/docs/develop/theming-drupal/adding-assets-css-js-to-a-drupal-theme-via-librariesyml#css-properties
+ * @see http://smacss.com/book/categorizing
+ *
+ * The lowercase cd-prefixed 'library' is our convention to separate logical
+ * pieces of the Common Design in this order: resets, header, footer, other.
+ *
+ * @see https://github.com/UN-OCHA/common_design/blob/v8.0.1/common_design.libraries.yml#L116-L121
+ */
+@import "brand.css";
+
+/* BASE: cd-resets */
+@import "cd/cd-resets/cd-resets.css";
+@import "cd/cd-resets/cd-typography.css";
+
+/* BASE: cd-other */
+@import "cd/cd-other/cd-icon.css";
+
+/* LAYOUT: cd-other */
+@import "cd/cd-other/cd-layout--page.css";
+@import "cd/cd-other/cd-layout--content.css";
+
+/* COMPONENT: cd-header */
+@import "cd/cd-header/cd-header.css";
+@import "cd/cd-header/cd-global-header.css";
+@import "cd/cd-header/cd-ocha.css";
+@import "cd/cd-header/cd-language-switcher.css";
+@import "cd/cd-header/cd-user-menu.css";
+@import "cd/cd-header/cd-site-header.css";
+@import "cd/cd-header/cd-logo.css";
+@import "cd/cd-header/cd-nav.css";
+@import "cd/cd-header/cd-search.css";
+@import "cd/cd-header/cd-search--inline.css";
+
+/* COMPONENT: cd-footer */
+@import "cd/cd-footer/cd-footer.css";
+@import "cd/cd-footer/cd-footer-copyright.css";
+@import "cd/cd-footer/cd-footer-menu.css";
+@import "cd/cd-footer/cd-footer-mandate.css";
+@import "cd/cd-footer/cd-footer-social.css";
+@import "cd/cd-footer/cd-footer-soft.css";
+
+/* COMPONENT: cd-other */
+@import "cd/cd-other/cd-skip-link.css";
+
+/* THEME: cd-other */
+@import "cd/cd-other/cd-print.css";
+
+/**
+ * CD Design System components
+ */
+@import "cd-flow/cd-flow.css";
+@import "cd-button/cd-button.css";
+@import "cd-alert/cd-alert.css";
+@import "cd-card/cd-card.css";
+
+/**
+ * HID Overrides
+ */
+@import "cd-overrides.css";

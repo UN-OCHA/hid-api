@@ -4,46 +4,46 @@
 <link rel="stylesheet" href="/assets/css/password-toggle.css">
 
 <main role="main" id="main-content" class="cd-container page--login">
-  <div class="cd-layout-content">
-    <%- include('includes/alert') %>
-    <div class="cd-grid cd-grid--2-col">
-      <div class="cd-grid__col">
-        <h1 class="cd-page-title page-header__heading">Log in</h1>
-        <form method="post" action="/login" class="[ flow ] t-form-login">
-          <div class="form-field">
-            <label for="email" translate>Email</label>
-            <input type="email" name="email" id="email" placeholder="Your email address" value="<%= query.email %>" required class="t-login-email">
-          </div>
-          <div class="form-field">
-            <label for="password"><span translate>Password</span></label>
-            <input type="password" name="password" id="password" placeholder="Your password" required class="t-login-password">
-            <button type="button" class="password__viz-toggle viz-toggle viz-toggle--see">
-              <span class="visually-hidden">Toggle password visibility</span>
-            </button>
-          </div>
-          <input type="hidden" name="redirect" value="<%= query.redirect %>" />
-          <input type="hidden" name="client_id" value="<%= query.client_id %>" />
-          <input type="hidden" name="redirect_uri" value="<%= query.redirect_uri %>" />
-          <input type="hidden" name="response_type" value="<%= query.response_type %>" />
-          <input type="hidden" name="state" value="<%= query.state %>" />
-          <input type="hidden" name="scope" value="<%= query.scope %>" />
-          <input type="hidden" name="nonce" value="<%= query.nonce %>" />
-          <input type="hidden" name="crumb" value="<%= crumb %>" />
+  <%- include('includes/alert') %>
+  <div class="cd-layout">
+    <div class="cd-layout__content">
+      <h1 class="cd-page-title page-header__heading">Log in</h1>
 
-          <div class="form-field">
-            <button type="submit" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase t-btn--login">
-              Login
-            </button>
-          </div>
-        </form>
-        <p><a href="<%= registerLink %>">Register a new Humanitarian ID Account</a></p>
-        <p><a href="<%= passwordLink %>">Forgot/Reset password</a></p>
-      </div>
-      <div class="cd-grid__col">
-        <h1 class="cd-page-title page-header__heading">What is Humanitarian ID?</h1>
-        <p>Humanitarian ID is an authentication service managed by the United Nations Office for the Coordination of Humanitarian Affairs (UNOCHA).</p>
-        <p>Help information is available at <a href="https://about.humanitarian.id/faqs">https://about.humanitarian.id/faqs</a></p>
-      </div>
+      <form method="post" action="/login" class="[ cd-flow ] t-form-login">
+        <div class="form-field">
+          <label for="email" translate>Email</label>
+          <input type="email" name="email" id="email" placeholder="Your email address" value="<%= query.email %>" required class="t-login-email">
+        </div>
+        <div class="form-field">
+          <label for="password"><span translate>Password</span></label>
+          <input type="password" name="password" id="password" placeholder="Your password" required class="t-login-password">
+          <button type="button" class="password__viz-toggle viz-toggle viz-toggle--see">
+            <span class="visually-hidden">Toggle password visibility</span>
+          </button>
+        </div>
+        <input type="hidden" name="redirect" value="<%= query.redirect %>" />
+        <input type="hidden" name="client_id" value="<%= query.client_id %>" />
+        <input type="hidden" name="redirect_uri" value="<%= query.redirect_uri %>" />
+        <input type="hidden" name="response_type" value="<%= query.response_type %>" />
+        <input type="hidden" name="state" value="<%= query.state %>" />
+        <input type="hidden" name="scope" value="<%= query.scope %>" />
+        <input type="hidden" name="nonce" value="<%= query.nonce %>" />
+        <input type="hidden" name="crumb" value="<%= crumb %>" />
+        <div class="form-field">
+          <button type="submit" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase t-btn--login">
+            Login
+          </button>
+        </div>
+      </form>
+
+      <p><a href="<%= registerLink %>">Register a new Humanitarian ID Account</a></p>
+      <p><a href="<%= passwordLink %>">Forgot/Reset password</a></p>
+    </div>
+
+    <div class="cd-layout__sidebar cd-layout__sidebar--first cd-layout__sidebar--wide">
+      <h1 class="cd-page-title page-header__heading">What is Humanitarian ID?</h1>
+      <p>Humanitarian ID is an authentication service managed by the United Nations Office for the Coordination of Humanitarian Affairs (UNOCHA).</p>
+      <p>Help information is available at <a href="https://about.humanitarian.id/faqs">https://about.humanitarian.id/faqs</a></p>
     </div>
   </div>
 </main>

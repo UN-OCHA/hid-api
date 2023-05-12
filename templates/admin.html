@@ -14,7 +14,7 @@
         </li>
       </nav>
 
-      <section id="section-oauth-clients" class="oac-admin [ flow ]">
+      <section id="section-oauth-clients" class="oac-admin [ cd-flow ]">
         <h2>Manage OAuth clients</h2>
 
         <p>There are a total of <strong><%= clients.length %> OAuth clients</strong><span id="client-search-summary"></span>.</p>
@@ -23,7 +23,7 @@
           <button type="reset" id="client-search-clear" class="cd-button cd-button--bold cd-button--uppercase">Clear</button>
         </div>
 
-        <ul class="oac-admin__list [ flow ]">
+        <ul class="oac-admin__list [ cd-flow ]">
           <% clients.forEach(client => { %>
             <% const searchData = `${client.name} ${client.id} ${client.redirectUri || ''} ${client.redirectUrls.join(' ') || ''} ${client.description || ''} ${client.organization || ''} ${client.environment || ''}`; %>
             <li class="oac-admin__client client" data-search="<%= searchData %>">

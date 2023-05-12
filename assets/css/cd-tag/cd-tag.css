@@ -1,0 +1,108 @@
+/**
+ * CD Tag
+ */
+
+:root {
+  --cd-tag--color: #5090cd;
+}
+
+/**
+ * Base component styles for the collection of tags
+ */
+.cd-tags {
+  /* Override container class if you wish to provide specific styling to all tags */
+}
+
+/**
+ * Individual tag
+ *
+ * - margin is set in `rem` to ensure that multiple tag sizes visually line up
+ * - all other units are `em` so that setting `font-size` can scale them easily
+ */
+.cd-tag {
+  display: inline-block;
+  margin: 0.25rem;
+  padding: 0 0.25em;
+  text-align: center;
+  vertical-align: top;
+  text-transform: uppercase;
+  color: var(--cd-white);
+  background-color: var(--cd-tag--color);
+  font-size: 0.625em;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/**
+ * Variants
+ *
+ * You might call each tag a variant, but they do tend to correspond to content
+ * in the DB instead of exportable config that we can store in version control.
+ *
+ * Therefore, the following rules will serve as an example, and would probably
+ * be implemented in the primary active theme of a website. Additionally, some
+ * colors were defined in the example HTML to simulate a sub-theme or other
+ * site-specific theme providing those styles.
+ */
+
+/**
+ * Variant: rounded
+ *
+ * The business owner loves rounded corners.
+ */
+.cd-tag--rounded {
+  border-radius: 3px;
+}
+
+/**
+ * Variant: linked
+ *
+ * Some tags are links.
+ */
+.cd-tag--linked a {
+  text-decoration: underline;
+  color: inherit;
+}
+.cd-tag--linked a:hover,
+.cd-tag--linked a:focus {
+  text-decoration: none;
+  color: inherit;
+}
+
+/**
+ * Variant: large
+ */
+.cd-tag--large {
+  font-size: 1em;
+}
+
+/**
+ * Variant: huge
+ */
+.cd-tag--xl {
+  font-size: 1.5em;
+}
+
+/**
+ * Custom colors
+ */
+.cd-tag--color-1 {
+  --cd-tag--color: #65c296;
+}
+.cd-tag--color-2 {
+  --cd-tag--color: #eca154;
+}
+.cd-tag--color-3 {
+  --cd-tag--color: #e2e868;
+
+  color: var(--cd-black);
+}
+.cd-tag--color-4 {
+  --cd-tag--color: #a4d65e;
+}
+.cd-tag--color-5 {
+  --cd-tag--color: #71dbd4;
+}
+.cd-tag--color-6 {
+  --cd-tag--color: #9063cd;
+}

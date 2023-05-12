@@ -1,0 +1,243 @@
+/**
+ * Typography
+ *
+ * Our defaults balance readability with the desire to show lots of information
+ * on screen, e.g. dashboards, column layouts, and structured content.
+ */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  color: var(--cd-default-text-color);
+  font-family: var(--cd-font--roboto);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+h1:first-child,
+h2:first-child,
+h3:first-child,
+h4:first-child,
+h5:first-child,
+h6:first-child {
+  margin-top: 0;
+}
+
+h1 {
+  color: var(--cd-default-text-color);
+  font-size: var(--cd-font-size--2xbase);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: var(--cd-font-size--2xbase);
+}
+
+h3 {
+  font-size: var(--cd-font-size--large);
+}
+
+h4 {
+  font-size: var(--cd-font-size--medium);
+}
+
+h5 {
+  font-size: var(--cd-font-size--base);
+}
+
+h6 {
+  font-size: var(--cd-font-size--ref);
+}
+
+a {
+  color: var(--brand-primary--dark);
+}
+
+a:hover,
+a:focus {
+  text-decoration: none;
+  color: var(--brand-primary);
+}
+
+ol {
+  list-style: decimal;
+}
+
+ol,
+dl {
+  margin-bottom: 1rem;
+}
+
+em {
+  font-style: italic;
+}
+
+u {
+  text-decoration: none;
+  font-weight: 700;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/**
+ * Spacious typography
+ *
+ * For use on sites that are narrative-oriented, featuring long-form articles
+ * where reading is the main activity, and the UX leans more toward a magazine.
+ */
+.cd-content--spacious h1,
+.cd-content--spacious h2,
+.cd-content--spacious h3,
+.cd-content--spacious h4,
+.cd-content--spacious h5,
+.cd-content--spacious h6 {
+  margin: 2em 0 0.5em 0;
+}
+
+.cd-content--spacious h1:first-child,
+.cd-content--spacious h2:first-child,
+.cd-content--spacious h3:first-child,
+.cd-content--spacious h4:first-child,
+.cd-content--spacious h5:first-child,
+.cd-content--spacious h6:first-child {
+  margin-top: 0;
+}
+
+.cd-content--spacious h1 {
+  margin: 1.5em 0 0.75em 0;
+  font-size: var(--cd-font-size--2xmedium);
+}
+
+.cd-content--spacious h2 {
+  font-size: var(--cd-font-size--2xbase);
+}
+
+.cd-content--spacious h3 {
+  font-size: var(--cd-font-size--large);
+}
+
+.cd-content--spacious h4 {
+  font-size: var(--cd-font-size--medium);
+}
+
+.cd-content--spacious h5 {
+  font-size: var(--cd-font-size--base);
+}
+
+.cd-content--spacious h6 {
+  font-size: var(--cd-font-size--ref);
+}
+
+.cd-content--spacious ol,
+.cd-content--spacious ul {
+  margin: 1.5em 0;
+}
+
+.cd-content--spacious dl dt,
+.cd-content--spacious dl dd,
+.cd-content--spacious ol:not([role=list]) li + li,
+.cd-content--spacious ul:not([role=list], .tabs) li + li {
+  margin-top: calc(var(--cd-font-size--ref) / 2);
+}
+
+.cd-content--spacious p {
+  line-height: 1.75;
+}
+
+.cd-content--spacious strong {
+  font-weight: 900;
+}
+
+/**
+ * Tablet
+ */
+@media (min-width: 768px) {
+  ol,
+  dl {
+    margin-bottom: 1.5rem;
+  }
+}
+
+/**
+ * Desktop
+ */
+@media (min-width: 1024px) {
+  h1 {
+    font-size: var(--cd-font-size--2xmedium);
+  }
+
+  .cd-content--spacious h1 {
+    font-size: var(--cd-font-size--2xlarge);
+  }
+
+  .cd-content--spacious h2 {
+    font-size: var(--cd-font-size--2xmedium);
+  }
+
+  .cd-content--spacious h3 {
+    font-size: var(--cd-font-size--2xbase);
+  }
+
+  .cd-content--spacious h4 {
+    font-size: var(--cd-font-size--large);
+  }
+
+  .cd-content--spacious h5 {
+    font-size: var(--cd-font-size--medium);
+  }
+
+  .cd-content--spacious h6 {
+    font-size: var(--cd-font-size--base);
+  }
+}
+
+/**
+ * Lists in sidebars
+ */
+.cd-layout__sidebar ol,
+.cd-layout__sidebar ul {
+  margin: 1em 0 2rem;
+  padding-inline-start: 1rem;
+}
+
+.cd-layout__sidebar ol li + li,
+.cd-layout__sidebar ul li + li {
+  margin-top: 0.75rem;
+}
+
+/**
+ * Compact: Lists in sidebars
+ */
+.cd-layout__sidebar.cd-content--compact ol,
+.cd-layout__sidebar.cd-content--compact ul {
+  margin: 0.5em 0 1.5rem;
+  padding-inline-start: 1rem;
+}
+
+.cd-layout__sidebar.cd-content--compact ol li + li,
+.cd-layout__sidebar.cd-content--compact ul li + li {
+  margin-top: 0.2rem;
+}
+
+/**
+ * Compact: Headings in sidebars
+ */
+.cd-layout__sidebar.cd-content--compact h2,
+.cd-layout__sidebar.cd-content--compact h3,
+.cd-layout__sidebar.cd-content--compact h4,
+.cd-layout__sidebar.cd-content--compact h5,
+.cd-layout__sidebar.cd-content--compact h6 {
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-bottom: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+}

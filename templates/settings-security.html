@@ -26,7 +26,7 @@
         <h2>Manage Security</h2>
         <p class="security__status">Extra security: <strong class="security__status--<%= status %>"><%= status %></strong></p>
 
-        <form action="/settings/security" method="POST" class="[ flow ]">
+        <form action="/settings/security" method="POST" class="[ cd-flow ]">
           <input type="hidden" name="step" value="<%= step %>">
 
           <% if (status === 'enabled') { %>

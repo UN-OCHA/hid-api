@@ -1,0 +1,116 @@
+/**
+ * Common Design: User Menu
+ */
+
+.cd-user-menu {
+  margin: 0;
+  padding-inline-start: 0;
+  list-style: none;
+}
+
+.cd-user-menu ul {
+  list-style: none;
+}
+
+.cd-user-menu svg {
+  fill: var(--cd-white);
+}
+
+/**
+ * Logo icon before the button/link label.
+ *
+ * @TODO: add proper classes to make it more robust.
+ */
+.cd-user-menu svg + span {
+  margin-inline-start: 10px;
+}
+
+/* Other icons, for example user or help icon. */
+.cd-user-menu .cd-icon:not(.cd-icon--arrow-down) {
+  width: 14px;
+  height: 14px;
+}
+
+.cd-user-menu li {
+  position: relative;
+  float: left;
+}
+
+.cd-user-menu__item,
+.cd-user-menu li a,
+.cd-user-menu li button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: var(--cd-global-header-height);
+  padding-inline: 1rem;
+  transition: background 0.3s ease;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--cd-white);
+  background: transparent;
+  line-height: var(--cd-global-header-height);
+}
+
+.cd-user-menu__item:hover,
+.cd-user-menu li a:hover,
+.cd-user-menu li button:hover,
+.cd-user-menu__item:focus,
+.cd-user-menu li a:focus,
+.cd-user-menu li button:focus {
+  text-decoration: underline;
+}
+
+.cd-user-menu__item .cd-user-menu__btn-label,
+.cd-user-menu li a .cd-user-menu__btn-label,
+.cd-user-menu li button .cd-user-menu__btn-label {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  max-width: 60px;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 768px) {
+  .cd-user-menu__item .cd-user-menu__btn-label,
+  .cd-user-menu li a .cd-user-menu__btn-label,
+  .cd-user-menu li button .cd-user-menu__btn-label {
+    max-width: unset;
+  }
+}
+
+.cd-user-menu__dropdown {
+  min-width: 125px;
+  margin: 0;
+  padding: 0;
+}
+
+[data-cd-menu-level="1"] {
+  padding-inline: 0.5rem;
+  padding-block: 0.5rem;
+}
+
+.cd-user-menu > .menu-item:last-child > ul.menu {
+  right: -1px;
+  left: auto;
+}
+
+/**
+ * No-JS styles.
+ */
+.no-js .cd-user-menu__dropdown {
+  width: unset;
+  margin-inline-start: 12px;
+  padding: 0;
+}
+
+.no-js .cd-user-menu__dropdown li {
+  display: inline-block;
+  padding-inline: 0 12px;
+}
+
+.no-js .cd-user-menu__dropdown a {
+  height: var(--cd-global-header-height);
+  padding: 0;
+  line-height: var(--cd-global-header-height);
+}

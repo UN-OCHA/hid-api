@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="no-js no-cssgrid" lang="en-US" dir="ltr">
+<html class="no-js" lang="en-US" dir="ltr">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -7,12 +7,7 @@
     <meta name="description" content="Authentication page for Humanitarian ID">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="/assets/img/favicon.ico" type="image/vnd.microsoft.icon">
-    <link rel="stylesheet" href="/assets/css/_normalize.css">
-    <link rel="stylesheet" href="/assets/css/_cube.css">
-    <link rel="stylesheet" href="/assets/css/cd-alert.css">
-    <link rel="stylesheet" href="/assets/css/cd-button.css">
-    <link rel="stylesheet" href="/assets/css/cd.css">
-    <link rel="stylesheet" href="/assets/css/page.css">
+    <link rel="stylesheet" href="/assets/css/hid.css">
 
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -43,53 +38,21 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <a href="#main-content" class="visually-hidden focusable skip-link">
       Skip to main content
     </a>
-    <div class="cd-layout-container"><!-- intentionally unclosed! -->
+    <div class="cd-page-layout-container"><!-- intentionally unclosed! -->
       <header class="cd-header" role="banner">
         <div class="cd-global-header">
           <div class="cd-container cd-global-header__inner">
+            <div id="cd-global-header__actions" class="cd-global-header__actions">
 
-            <section id="cd-ocha-services" class="cd-ocha">
-              <h2 id="cd-ocha-services-title" translate>OCHA Services</h2>
-
-              <div class="cd-global-header__dropdown cd-ocha-dropdown cd-dropdown" id="cd-ocha-dropdown" aria-labelledby="cd-ocha-services-title" data-cd-toggable="OCHA Services" data-cd-icon="arrow-down" data-cd-logo="ocha-logo" data-cd-component="cd-ocha" data-cd-replace="cd-ocha-services-title">
-                <div class="cd-ocha-dropdown__inner">
-                  <div class="cd-ocha-dropdown__section">
-                    <p class="cd-ocha-dropdown__heading" translate>Related Platforms</p>
-                    <ul class="cd-ocha-dropdown__list">
-                      <li class="cd-ocha-dropdown__link"><a href="https://about.humanitarian.id/faqs">HID FAQs</a></li>
-                      <li class="cd-ocha-dropdown__link"><a href="https://gms.unocha.org">Grant Management System</a></li>
-                      <li class="cd-ocha-dropdown__link"><a href="https://hum-insight.info">Humanitarian Insight</a></li>
-                    </ul>
-                  </div>
-                  <div class="cd-ocha-dropdown__section">
-                    <p class="cd-ocha-dropdown__heading" translate>Other OCHA Services</p>
-                    <ul class="cd-ocha-dropdown__list">
-                      <li class="cd-ocha-dropdown__link"><a href="https://fts.unocha.org/">Financial Tracking Service</a></li>
-                      <li class="cd-ocha-dropdown__link"><a href="https://data.humdata.org/">Humanitarian Data Exchange</a></li>
-                      <li class="cd-ocha-dropdown__link"><a href="https://auth.humanitarian.id/">Humanitarian ID</a></li>
-                      <li class="cd-ocha-dropdown__link"><a href="https://humanitarianresponse.info/">Humanitarian Response</a></li>
-                    </ul>
-                  </div>
-                  <div class="cd-ocha-dropdown__section">
-                    <p class="cd-ocha-dropdown__heading" aria-hidden="true">&nbsp;</p>
-                    <ul class="cd-ocha-dropdown__list">
-                      <li class="cd-ocha-dropdown__link"><a href="https://interagencystandingcommittee.org">Inter-Agency Standing Committee</a></li>
-                      <li class="cd-ocha-dropdown__link"><a href="https://unocha.org/">OCHA website</a></li>
-                      <li class="cd-ocha-dropdown__link"><a href="https://reliefweb.int/">ReliefWeb</a></li>
-                      <li class="cd-ocha-dropdown__link"><a href="https://vosocc.unocha.org/">Virtual OSOCC</a></li>
-                    </ul>
-                  </div>
-                  <div class="cd-ocha-dropdown__section">
-                    <a class="cd-button cd-button--light cd-button--bold cd-button--uppercase cd-ocha-dropdown__see-all" href="https://www.unocha.org/ocha-digital-services" target="_blank" rel="noopener">See all</a>
-                  </div>
+              <div class="cd-global-header__language-switcher">
+                <div class="cd-language-switcher" uib-dropdown keyboard-nav="true">
+                  <span class="cd-user-menu__item cd-user-menu__item--small cd-global-header__dropdown-btn t-lang-btn" id="cd-language-toggle">English</span>
                 </div>
               </div>
-            </section>
 
-            <div class="cd-global-header__actions">
-              <div class="cd-global-header__user-menu">
-                <h2 class="element-invisible">User menu</h2>
-                <ul class="menu">
+              <nav role="navigation" class="block block-menu navigation menu--account cd-global-header__user-menu">
+                <h2 class="visually-hidden">User menu</h2>
+                <ul class="menu cd-user-menu" data-cd-menu-level="0">
                   <% if (locals.user) { %>
                     <li class="cd-user-menu__icon-login cd-user-menu--profile">
                       <ul class="menu cd-global-header__dropdown cd-user-menu__dropdown cd-dropdown" id="cd-user-dropdown" aria-label="<%= locals.user.name %>" data-cd-toggable="<%= locals.user.name %>" data-cd-hidden="true" data-cd-icon="arrow-down">
@@ -111,18 +74,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                     </li>
                   <% } else { %>
                     <!-- anonymous user-login link -->
-                    <li class="cd-user-menu__icon-login">
-                      <a href="/" class="login-link">Login</a>
+                    <li class="menu-item">
+                      <a href="/" id="cd-user-menu-0-item-1">
+                        <svg class="cd-icon cd-icon--user" aria-hidden="true" focusable="false" width="16" height="16"><use xlink:href="#cd-icon--user"></use></svg>
+                        <span>Log in</span>
+                      </a>
                     </li>
                   <% } %>
                 </ul>
-              </div>
+              </nav>
 
-              <div class="cd-global-header__language-switcher">
-                <div class="cd-language-switcher" uib-dropdown keyboard-nav="true">
-                  <span class="cd-user-menu__item cd-user-menu__item--small cd-global-header__dropdown-btn t-lang-btn" id="cd-language-toggle">en</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -132,7 +93,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             <div class="region region-header-logo">
               <h1>
                 <a href="/" class="cd-site-logo t-logo-link">
-                  <span class="element-invisible">Humanitarian ID</span>
+                  <img src="/assets/img/logos/hid-logo.svg" alt="Humanitarian ID">
                 </a>
               </h1>
             </div>
@@ -140,21 +101,27 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             <div class="cd-site-header__actions">
               <div class="cd-site-header__nav-holder">
                 <nav role="navigation" id="block-mainnavigation" aria-labelledby="block-mainnavigation-menu" data-cd-toggable="Menu" data-cd-component="cd-nav" data-cd-icon="arrow-down" class="block block-menu navigation menu--main cd-nav cd-site-header__nav">
-                  <h2 id="block-mainnavigation-menu">Main navigation</h2>
-                  <ul class="menu">
-                    <li class="menu-item menu-item--expanded">
+                  <h2 class="visually-hidden" id="block-mainnavigation-menu">Main navigation</h2>
+                  <ul class="menu cd-nav__menu--level-1" role="list">
+                    <li class="menu-item cd-nav__menu-item--level-1">
                       <a id="cd-main-menu-item-1-0"><span>Support</span></a>
-                      <ul data-cd-toggable="Support" data-cd-icon="arrow-down" data-cd-component="cd-main-menu" data-cd-replace="cd-main-menu-item-1-0" id="cd-main-menu-1-1" class="menu cd-main-menu__dropdown">
-                        <li class="menu-item">
-                          <a href="https://about.humanitarian.id/developers" id="cd-main-menu-item-1-1"><span>Developer Documentation</span></a>
+                      <ul data-cd-toggable="Support" data-cd-icon="arrow-down" data-cd-component="cd-main-menu" data-cd-replace="cd-main-menu-item-1-0" id="cd-main-menu-1-1" class="menu cd-nav__menu--level-2 cd-nav-level-2__dropdown">
+                        <li class="menu-item cd-nav__menu-item--level-2">
+                          <a href="https://about.humanitarian.id/developers" id="cd-main-menu-item-1-1">
+                            <span>Developer Documentation</span>
+                          </a>
                         </li>
-                        <li class="menu-item">
-                          <a href="https://about.humanitarian.id/faqs" id="cd-main-menu-item-1-2"><span><abbr title="Frequently Asked Questions">FAQs</abbr></span></a>
+                        <li class="menu-item cd-nav__menu-item--level-2">
+                          <a href="https://about.humanitarian.id/faqs" id="cd-main-menu-item-1-2">
+                            <span><abbr title="Frequently Asked Questions">FAQs</abbr></span>
+                          </a>
                         </li>
                       </ul>
                     </li>
-                    <li class="menu-item">
-                      <a href="https://about.humanitarian.id/partners-using-our-authentication-service.html" id="cd-main-menu-item-2-0"><span>Partners</span></a>
+                    <li class="menu-item cd-nav__menu-item--level-1">
+                      <a href="https://about.humanitarian.id/partners-using-our-authentication-service.html" id="cd-main-menu-item-2-0">
+                        <span>Partners</span>
+                      </a>
                     </li>
                   </ul>
                 </nav>

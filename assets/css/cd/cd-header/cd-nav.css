@@ -1,0 +1,441 @@
+/**
+ * Common Design: Main Navigation
+ */
+
+/**
+ * Original file: cd-menu--main
+ */
+.menu-item--expanded [aria-expanded=false] + ul {
+  display: none;
+}
+.menu-item--expanded [aria-expanded=true] + ul {
+  display: block;
+}
+
+ul[data-cd-hidden=true] > ul {
+  z-index: var(--cd-z-dropdown);
+  display: block;
+}
+
+.menu--main button[aria-expanded] .cd-icon--arrow-down {
+  fill: var(--brand-highlight);
+  margin-top: 4px;
+  margin-inline-start: 4px;
+}
+
+@media (min-width: 1024px) {
+  .menu--main button[aria-expanded] .cd-icon--arrow-down {
+    margin-top: -2px;
+  }
+}
+
+/**
+ * Original file: cd-nav
+ */
+.cd-nav {
+  /* may need adjusting depending on site-specific styles. */
+  z-index: var(--cd-z-main-menu);
+}
+
+.cd-nav-level-0__btn {
+  height: var(--cd-site-header-height);
+  padding: 0 20px;
+  transition: background 0.3s ease;
+  text-transform: uppercase;
+  color: var(--cd-default-text-color);
+  border: 0 none var(--brand-grey);
+  background: transparent;
+  font-size: var(--cd-font-size--small);
+}
+
+.cd-nav-level-0__btn:hover,
+.cd-nav-level-0__btn:focus {
+  color: var(--cd-black);
+  outline: none; /* default browser outline is replaced by background colour change. */
+  background: var(--brand-grey);
+}
+
+.cd-nav-level-0__btn-label {
+  font-weight: 700;
+}
+
+.cd-nav-level-0__btn[aria-expanded] .cd-icon--arrow-down {
+  margin-left: 4px;
+  fill: var(--brand-highlight);
+}
+
+.cd-nav-level-0__btn[aria-expanded=true] {
+  position: relative;
+  z-index: 101;
+  color: var(--cd-black);
+}
+
+.cd-nav-level-0__btn[aria-expanded=true]::before {
+  position: absolute;
+  right: -1px;
+  bottom: -6px;
+  left: -1px;
+  width: calc(100% + 1px);
+  height: 6px;
+  content: "";
+  transition: background 0.3s ease;
+  background: var(--brand-highlight);
+}
+
+.cd-nav-level-0__btn[aria-expanded=true]:focus {
+  background: var(--cd-white);
+}
+
+/**
+ * @IE11
+ *
+ * No support for CSS custom properties means --dropdown: false; property on nav
+ * container is not recognised so the cd-dropdown.js creates a toggler button on
+ * desktop. This hides the button when that happens.
+ */
+@media (min-width: 1024px) and (-ms-high-contrast: none) {
+  .cd-nav__btn {
+    display: none;
+  }
+}
+
+.cd-nav__menu--level-1 {
+  display: none;
+  background: var(--cd-white);
+}
+
+@media (min-width: 1024px) {
+  .cd-nav__menu--level-1 {
+    display: flex;
+    background: transparent;
+  }
+}
+
+.cd-nav a,
+.cd-nav button {
+  position: relative;
+  display: flex;
+  padding: 15px 30px;
+  text-decoration: none;
+  color: var(--cd-default-text-color);
+}
+
+.cd-nav button {
+  width: 100%;
+  border: 0 none;
+  background: transparent;
+}
+
+.cd-nav a:hover,
+.cd-nav a:focus,
+.cd-nav button:hover,
+.cd-nav button:focus {
+  color: var(--cd-black);
+  outline: none;
+  background: var(--brand-grey);
+}
+
+/**
+ * First level
+ */
+.cd-nav-level-1__btn,
+.cd-nav-level-1__btn-label {
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+@media (max-width: 1023px) {
+  .cd-nav[data-cd-hidden=false] {
+    position: absolute;
+    top: calc(var(--cd-global-header-height) + var(--cd-site-header-height) + 6px);
+    right: 0;
+    left: 0;
+    height: calc(100vh - (var(--cd-global-header-height) + var(--cd-site-header-height) + 6px));
+    padding: 20px 0 36px;
+    background: var(--cd-white);
+  }
+
+  .cd-nav[data-cd-hidden=false] > ul {
+    display: block;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cd-nav {
+    --dropdown: false;
+
+    position: relative;
+    top: auto;
+    right: auto;
+    left: 0;
+    width: auto;
+    max-width: none;
+    height: var(--cd-site-header-height);
+    padding: 0;
+  }
+}
+
+/**
+ * @IE11
+ * No support for CSS custom props means --dropdown: false; property on nav
+ * container is not recognised so the cd-dropdown.js does not run the
+ * updateToggler function which toggles the data-cd-hidden attribute. This
+ * displays the nav regardless of that attribute value.
+ */
+@media (min-width: 1024px) and (-ms-high-contrast: none) {
+  .cd-nav[data-cd-hidden=true] {
+    display: block;
+  }
+}
+
+.cd-nav__btn::before {
+  background: var(--brand-highlight);
+}
+
+/**
+ * Second level
+ */
+.cd-nav__menu--level-2 {
+  background: var(--cd-white);
+}
+
+@media (min-width: 1024px) {
+  .cd-nav__menu--level-2 {
+    position: absolute;
+    z-index: var(--cd-z-dropdown);
+    top: calc(var(--cd-site-header-height) + 6px); /* border-bottom height */
+    min-width: 200px;
+    max-width: 300px;
+    margin: 0;
+    padding: 20px 0;
+    box-shadow: 0 1px 8px rgba(var(--cd-rgb-blue-grey--dark), 0.8);
+  }
+}
+
+.cd-nav__menu--level-2 .cd-nav__btn {
+  display: flex;
+  color: var(--cd-black);
+  font-weight: 700;
+}
+
+.cd-nav__menu--level-2 .cd-nav__btn:hover {
+  background: var(--brand-grey);
+}
+
+/**
+ * Active trail for mobile menu.
+ */
+@media (max-width: 1023px) {
+  .cd-nav-level-1__btn {
+    position: relative;
+  }
+
+  .cd-nav-level-1__btn::before {
+    position: absolute;
+    top: 0;
+    width: 6px;
+    height: 48px;
+    margin-inline-start: -15px;
+    content: "";
+    background: transparent;
+  }
+
+  .cd-nav-level-1__btn.is-active::before {
+    background: var(--brand-highlight);
+  }
+
+  .menu-item--collapsed .cd-nav-level-1__btn.is-active::before,
+  .menu-item--expanded .cd-nav-level-1__btn.is-active::before {
+    opacity: 0.2;
+    background: var(--brand-highlight);
+  }
+
+  .cd-nav .menu-item--active-trail > a::before,
+  .cd-nav .menu-item--active-trail > button::before {
+    position: absolute;
+    top: 0;
+    width: 6px;
+    height: 48px;
+    margin-inline-start: -15px;
+    content: "";
+    opacity: 0.2;
+    background: var(--brand-highlight);
+  }
+
+  /**
+   * Any child of the active trail.
+   */
+  .cd-nav .menu-item--active-trail a.is-active::before,
+  .cd-nav .menu-item--active-trail button.is-active::before {
+    background: var(--brand-highlight);
+  }
+
+  /**
+   * Second-level links
+   */
+  .cd-nav > ul ul > li.menu-item--active-trail a::before,
+  .cd-nav > ul ul > li.menu-item--active-trail button::before {
+    opacity: 0.6;
+  }
+}
+
+/**
+ * Desktop
+ */
+@media (min-width: 1024px) {
+  .cd-nav > .menu {
+    flex: 1 0 auto;
+  }
+
+  [dir=ltr] .cd-nav > .menu > .menu-item:last-child > ul.menu {
+    right: 0;
+  }
+
+  [dir=rtl] .cd-nav > .menu > .menu-item:last-child > ul.menu {
+    left: 0;
+  }
+
+  .cd-nav > .menu > .menu-item.menu-item--active-trail a::before,
+  .cd-nav > .menu > .menu-item.menu-item--active-trail button::before {
+    opacity: 0.2;
+    background: var(--brand-highlight);
+  }
+
+  .cd-nav > .menu > .menu-item > a,
+  .cd-nav > .menu > .menu-item button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: var(--cd-site-header-height);
+    padding: 0 14px;
+    transition: background 0.3s ease;
+    background: transparent;
+  }
+
+  .cd-nav > .menu > .menu-item > a::before,
+  .cd-nav > .menu > .menu-item button::before {
+    position: absolute;
+    right: -1px;
+    bottom: -6px;
+    left: -1px;
+    width: calc(100% + 2px);
+    height: 6px;
+    content: "";
+    transition: background 0.3s ease;
+    background: transparent;
+  }
+
+  .cd-nav > .menu > .menu-item > a:hover,
+  .cd-nav > .menu > .menu-item button:hover {
+    background: var(--brand-grey);
+  }
+
+  .cd-nav > .menu > .menu-item > a:focus,
+  .cd-nav > .menu > .menu-item button:focus {
+    background: var(--cd-white);
+  }
+
+  .cd-nav > .menu > .menu-item > a.is-active::before,
+  .cd-nav > .menu > .menu-item > a:focus::before,
+  .cd-nav > .menu > .menu-item button.is-active::before,
+  .cd-nav > .menu > .menu-item button:focus::before {
+    background: var(--brand-highlight);
+  }
+
+  .cd-nav > .menu > .menu-item svg {
+    flex: 1 0 auto;
+  }
+
+  .cd-nav > .menu > li > ul a:hover,
+  .cd-nav > .menu > li > ul button:hover {
+    background: var(--brand-grey);
+  }
+
+  .cd-nav > .menu > li > ul a.menu-item--active-trail,
+  .cd-nav > .menu > li > ul button.menu-item--active-trail {
+    border-inline-start: 6px solid var(--brand-highlight);
+  }
+
+  .cd-nav > .menu > li > ul > li.menu-item--active-trail {
+    border-inline-start: 6px solid var(--brand-highlight);
+  }
+}
+
+/**
+ * No-JS
+ */
+.no-js .menu-item--expanded > [aria-expanded=false] + ul {
+  display: block;
+}
+
+.no-js .cd-nav {
+  position: relative;
+  top: auto;
+  right: 0;
+  left: 0;
+  display: block;
+  padding: 0;
+  background: var(--cd-white);
+}
+
+.no-js .cd-nav__menu--level-1 {
+  display: block;
+}
+
+.no-js .cd-nav > .menu > li > .menu {
+  position: relative;
+  top: 0;
+  min-width: unset;
+  max-width: unset;
+  margin: 0;
+  padding: 0;
+  box-shadow: unset;
+}
+
+.no-js .cd-nav > .menu > li.menu-item--expanded button {
+  display: none;
+}
+
+/* Style all menu items the same, regardless of their level. */
+@media (min-width: 1024px) {
+  .no-js .cd-nav .menu-item--expanded li {
+    height: var(--cd-site-header-height);
+  }
+
+  .no-js .cd-nav .menu-item--expanded li a {
+    align-items: center;
+    height: var(--cd-site-header-height);
+    padding: 0 14px;
+  }
+}
+
+/* Adjusts the active styles when javascript is disabled. */
+@media (min-width: 1024px) {
+  /* Hide the active style from a parent item. */
+  .no-js .cd-nav > .menu > .menu-item--expanded a::before,
+  .no-js .cd-nav > .menu > .menu-item--expanded button::before {
+    background: transparent;
+  }
+
+  /* Hide the default active style for second level items. */
+  .no-js .cd-nav > .menu > li > ul > li.menu-item--active-trail {
+    border-left: 6px solid transparent;
+  }
+
+  /* Use the same style as the first level menu items when active. */
+  .no-js .cd-nav > .menu > li > ul > li.menu-item--active-trail a {
+    position: relative;
+  }
+
+  .no-js .cd-nav > .menu > li > ul > li.menu-item--active-trail a::after {
+    position: absolute;
+    right: -1px;
+    bottom: -6px;
+    left: -1px;
+    width: calc(100% + 2px);
+    height: 6px;
+    content: "";
+    transition: background 0.3s ease;
+    background: var(--brand-highlight);
+  }
+}

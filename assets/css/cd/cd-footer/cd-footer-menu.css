@@ -1,0 +1,30 @@
+/**
+ * Common Design: Footer menu
+ *
+ * Site-specific navigation. Most often used for About, Contact, Privacy, etc.
+ */
+.cd-footer-menu {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-transform: uppercase;
+}
+
+.cd-footer-menu__item {
+  display: block;
+  margin-bottom: 12px;
+}
+
+@media (min-width: 768px) {
+  .cd-footer-menu__item {
+    display: inline-block;
+    margin: 0 8px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cd-footer-menu__item {
+    margin: 0;
+    margin-inline-end: 32px;
+  }
+}

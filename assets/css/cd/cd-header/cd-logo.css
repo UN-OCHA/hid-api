@@ -1,0 +1,55 @@
+/**
+ * Common Design: Logo
+ *
+ * Replace images with your site logo.
+ */
+
+/* Wrap the logo in h1 if it's the main heading for the page (e.g. on homepage). */
+.cd-site-header h1 {
+  margin: 0;
+}
+
+.cd-site-logo {
+  display: block;
+  float: left;
+  width: 52px;
+  height: var(--cd-site-header-height);
+  background: url("../../../img/logos/ocha-logo-blue@53x37.png") center no-repeat;
+  background: linear-gradient(transparent, transparent), url("../../../img/logos/ocha-logo-blue.svg") center no-repeat;
+}
+
+/**
+ * Override default focus z-index. If the default applies, the logo might appear
+ * on top of the opened OCHA Services menu. Alternative fix is ticketed:
+ *
+ * @see https://humanitarian.atlassian.net/browse/CD-173
+ */
+.cd-header a.cd-site-logo:focus-visible {
+  z-index: var(--cd-z-default);
+}
+
+/* Larger format logo once space permits */
+@media (min-width: 768px) {
+  .cd-site-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    width: var(--brand-logo-width); /* adjust within sub-theme's brand.css */
+    padding-top: 0;
+    background: none;
+  }
+}
+
+/* Hides logo set in info.yml on mobile, in favour of background image. */
+.cd-site-logo img {
+  display: none;
+}
+
+/* Displays logo set in info.yml on larger viewports. */
+@media (min-width: 768px) {
+  .cd-site-logo img {
+    display: block;
+    width: 100%;
+  }
+}
