@@ -2,15 +2,18 @@
  * User landing page
  */
 .lp {}
+
 .lp__buttons {
   display: flex;
   flex-flow: row wrap;
   margin: 0 -.5rem;
 }
+
 .lp__buttons .cd-button {
   flex: 1 1 100%;
   margin: .5rem;
 }
+
 @media screen and (min-width: 600px) {
   .lp__buttons .cd-button {
     flex-basis: 25%;

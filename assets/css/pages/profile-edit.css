@@ -2,15 +2,18 @@
  * Edit Profile
  */
 .profile {}
+
 .profile--edit {
   display: flex;
   flex-flow: row wrap;
   margin: 0 -1rem;
 }
+
 .profile--edit form {
   flex: 1 0 100%;
   padding: 0 1rem;
 }
+
 /* on wider screens, display the two forms in two columns */
 @media screen and (min-width: 720px) {
   .profile--edit form {
@@ -24,6 +27,7 @@
 }
 
 .profile__emails {}
+
 .profile__email {
   display: flex;
   align-items: center;
@@ -31,15 +35,18 @@
   the second button wraps to a new line and prevents horizontal scroll. */
   flex-wrap: wrap;
 }
+
 @media screen and (min-width: 720px) {
   .profile__email {
     flex-flow: row nowrap;
   }
 }
+
 .profile__email .email__select-primary {
   flex: 0 0 3em;
   text-align: center;
 }
+
 .profile__email .email__address {
   flex: 0 1 20ch;
   font-family: monospace;
@@ -47,20 +54,25 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.cd-tag {
+
+.profile--edit .cd-tag {
   font-size: 0.675em;
 }
+
 .profile__email .email__address--unconfirmed {
   color: #444;
   font-style: italic;
 }
+
 .profile__email .email__address--confirmed {
   font-weight: 700;
   color: black;
 }
+
 .profile__email .email__status {
   padding: 0 1em;
 }
+
 .profile__email .email__delete {
   padding-left: 1em;
 }

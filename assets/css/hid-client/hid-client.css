@@ -1,5 +1,8 @@
 /**
- * Individual OAuth Client in a list
+ * Individual OAuth Client
+ *
+ * Clients can be listed in either User or Admin settings. These styles apply to
+ * both contexts.
  */
 .client {
   display: flex;
