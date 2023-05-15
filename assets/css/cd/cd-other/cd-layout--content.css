@@ -94,7 +94,7 @@
      * Content area should grow to fill available space, but also can shrink to
      * accomodate any columns that are present.
      */
-    .cd-layout__content: {
+    .cd-layout__content {
       flex: 1 1 auto;
     }
 
