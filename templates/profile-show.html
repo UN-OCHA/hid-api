@@ -1,8 +1,9 @@
 <%- include('includes/header') %>
-<link rel="stylesheet" href="/assets/css/profile-show.css">
+<link rel="stylesheet" href="/assets/css/cd-grid/cd-grid.css">
+<link rel="stylesheet" href="/assets/css/pages/profile-show.css">
 
-<main role="main" id="main-content" class="cd-container t-page--profile-show">
-  <div class="cd-layout-content">
+<main role="main" id="main-content" class="cd-layout cd-container t-page--profile-show">
+  <div class="cd-layout__content">
     <h1 class="cd-page-title page-header__heading"><%= user.name %></h1>
     <%- include('includes/alert') %>
     <div class="profile profile--show [ cd-flow ]">

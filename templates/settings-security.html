@@ -2,24 +2,16 @@
 <link rel="stylesheet" href="/assets/css/hid-tabs/hid-tabs.css">
 <link rel="stylesheet" href="/assets/css/pages/settings-security.css">
 
-<main role="main" id="main-content" class="cd-container">
-  <div class="cd-layout-content">
+<main role="main" id="main-content" class="cd-layout cd-container">
+  <div class="cd-layout__content">
     <h1 class="cd-page-title page-header__heading">Settings for <%= user.name %></h1>
     <%- include('includes/alert') %>
     <div class="tabbed">
       <nav>
-        <li>
-          <a href="/settings">Authorized Apps</a>
-        </li>
-        <li>
-          <a href="/settings/password">Password</a>
-        </li>
-        <li>
-          <a href="/settings/security" aria-selected="true">Security</a>
-        </li>
-        <li>
-          <a href="/settings/delete">Delete Account</a>
-        </li>
+        <li><a href="/settings">Authorized Apps</a></li>
+        <li><a href="/settings/password">Password</a></li>
+        <li><a href="/settings/security" aria-selected="true">Security</a></li>
+        <li><a href="/settings/delete">Delete Account</a></li>
       </nav>
 
       <section id="section-security" class="security">
