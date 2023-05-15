@@ -182,8 +182,6 @@ module.exports = {
           // GTM inline script.
           "'sha256-e7CIW/Iehpzy0nB3j0M8Z6Wl1n+HE3rmyT2K0lz8na8='",
           "'sha256-g62AIFyyvfvqRMhNu7QMQ0GMk0Rx+Bbk1KzTy+CzTCI='",
-          // Inline JS+feature detection.
-          "'sha256-Ch69wX3la/uD7qfUZRHgam3hofEvI6fesgFgtvG9rTM='",
         ],
         connectSrc: [
           'self',
