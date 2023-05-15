@@ -12,6 +12,7 @@
   "keywords": [],
   "main": "index.js",
   "scripts": {
+    "css": "postcss assets/css/hid.css -o assets/css/hid.min.css",
     "dev": "node ./node_modules/nodemon/bin/nodemon.js ./server.js -e html,css,js,ejs --ignore './_tests/' --ignore './commands/'",
     "docs": "swagger-inline './api/**/*' --base 'docs/swaggerBase.yaml' > docs/hid.yml",
     "start": "node ./server.js",
@@ -80,6 +81,9 @@
     "jest-puppeteer": "^8.0.6",
     "minimist": "^1.2.6",
     "nodemon": "^2.0.19",
+    "postcss-cli": "^10.1.0",
+    "postcss-csso": "^6.0.1",
+    "postcss-import": "^15.1.0",
     "standard-version": "^9.3.2",
     "swagger-inline": "^3.0.4"
   },

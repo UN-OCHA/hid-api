@@ -2,6 +2,10 @@
 @import "vendor/drupal-normalize.css";
 @import "vendor/drupal-hidden.css";
 
+/*!
+ * Begin CD
+ */
+
 /**
  * CD core dependencies
  *
@@ -78,7 +82,7 @@
 @import "cd-alert/cd-alert.css";
 @import "cd-card/cd-card.css";
 
-/**
+/*!
  * HID Overrides
  */
 @import "cd-overrides.css";
