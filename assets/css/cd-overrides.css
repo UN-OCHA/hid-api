@@ -79,3 +79,10 @@ form code {
   padding-left: .25em;
   padding-right: .25em;
 }
+
+/**
+ * Tags
+ */
+.cd-tag {
+  font-size: 0.675em;
+}
