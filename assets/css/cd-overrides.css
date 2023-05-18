@@ -22,6 +22,29 @@ body,
 }
 
 /**
+ * CD Site Header
+ */
+.cd-site-logo {
+  width: var(--brand-logo-width);
+  background:
+    linear-gradient(transparent,transparent),
+    url(/assets/img/logos/hid-logo.svg) center no-repeat;
+}
+
+/**
+ * CD Main Nav
+ */
+.cd-nav a,
+.cd-nav button {
+  align-items: center;
+}
+
+.menu--main button[aria-expanded] .cd-icon--arrow-down {
+  margin-block-start: 0;
+}
+
+
+/**
  * Forms
  */
 .form-field {
