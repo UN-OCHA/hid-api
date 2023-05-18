@@ -44,21 +44,27 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 <h2 class="visually-hidden">User menu</h2>
                 <ul class="menu cd-user-menu" data-cd-menu-level="0">
                   <% if (locals.user) { %>
-                    <li class="cd-user-menu__icon-login cd-user-menu--profile">
-                      <ul class="menu cd-global-header__dropdown cd-user-menu__dropdown cd-dropdown" id="cd-user-dropdown" aria-label="<%= locals.user.name %>" data-cd-toggable="<%= locals.user.name %>" data-cd-hidden="true" data-cd-icon="arrow-down">
+                    <li class="menu-item menu-item--expanded">
+                      <a href="/" id="cd-user-menu-0-item-1">
+                        <svg class="cd-icon cd-icon--user" aria-hidden="true" focusable="false" width="16" height="16">
+                          <use xlink:href="#cd-icon--user"></use>
+                        </svg>
+                        <span><%= locals.user.name %></span>
+                      </a>
+                      <ul data-cd-toggable="<%= locals.user.name %>" data-cd-icon="arrow-down" data-cd-component="cd-user-menu"  data-cd-replace="cd-user-menu-0-item-1" id="cd-user-menu-0-1" data-cd-logo="user" class="menu cd-global-header__dropdown cd-user-menu__dropdown" data-cd-menu-level="1">
                         <li class="menu-item">
-                          <a href="/profile" class="user-profile">Profile</a>
+                          <a href="/profile" class="user-profile" id="cd-user-menu-0-1-item-1">Profile</a>
                         </li>
                         <li class="menu-item">
-                          <a href="/settings" class="user-settings">Settings</a>
+                          <a href="/settings" class="user-settings" id="cd-user-menu-0-1-item-2">Settings</a>
                         </li>
                         <% if (locals.user.is_admin) { %>
                         <li class="menu-item">
-                          <a href="/admin" class="user-admin">Admin</a>
+                          <a href="/admin" class="user-admin" id="cd-user-menu-0-1-item-4">Admin</a>
                         </li>
                         <% } %>
                         <li class="menu-item">
-                          <a href="/logout" class="user-logout">Log out</a>
+                          <a href="/logout" class="user-logout" id="cd-user-menu-0-1-item-3">Log out</a>
                         </li>
                       </ul>
                     </li>

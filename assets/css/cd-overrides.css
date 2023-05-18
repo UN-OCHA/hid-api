@@ -12,6 +12,14 @@ body,
   min-height: 100vh;
 }
 
+/**
+ * CD Global Header
+ *
+ * For some reason the cursor is set to default on the button.
+ */
+.cd-user-menu__btn {
+  cursor: pointer;
+}
 
 /**
  * Forms
