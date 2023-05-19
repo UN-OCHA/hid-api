@@ -3,10 +3,6 @@
  */
 /* eslint func-names: "off" */
 
-// Remove no-js class from HTML
-document.documentElement.classList.remove('no-js');
-document.documentElement.classList.add('js');
-
 // Method forEach on Nodelist
 // See https://developer.mozilla.org/en-US/docs/Web/API/NodeList/forEach#Polyfill
 if (window.NodeList && !NodeList.prototype.forEach) {
