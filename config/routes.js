@@ -13,6 +13,7 @@ const AdminController = require('../api/controllers/AdminController');
 const AuthController = require('../api/controllers/AuthController');
 const AuthPolicy = require('../api/policies/AuthPolicy');
 const ClientController = require('../api/controllers/ClientController');
+const NumbersController = require('../api/controllers/NumbersController');
 const TOTPController = require('../api/controllers/TOTPController');
 const UserController = require('../api/controllers/UserController');
 const UserPolicy = require('../api/policies/UserPolicy');
@@ -278,6 +279,9 @@ module.exports = [
     },
   },
 
+  /**
+   * HID Login
+   */
   {
     method: 'POST',
     path: '/login',
@@ -287,6 +291,9 @@ module.exports = [
     },
   },
 
+  /**
+   * OAuth
+   */
   {
     method: 'GET',
     path: '/oauth/authorize',
@@ -325,6 +332,9 @@ module.exports = [
     },
   },
 
+  /**
+   * API Key management
+   */
   {
     method: 'POST',
     path: '/api/v3/jsonwebtoken',
@@ -343,6 +353,9 @@ module.exports = [
     handler: AuthController.blacklistJwt,
   },
 
+  /**
+   * User management
+   */
   {
     method: 'POST',
     path: '/api/v3/user',
@@ -525,6 +538,9 @@ module.exports = [
     },
   },
 
+  /**
+   * OAuth Client management
+   */
   {
     method: 'DELETE',
     path: '/api/v3/user/{id}/clients/{client}',
@@ -601,6 +617,9 @@ module.exports = [
     },
   },
 
+  /**
+   * TOTP management
+   */
   {
     method: 'POST',
     path: '/api/v3/totp/config',
@@ -667,6 +686,20 @@ module.exports = [
         AuthPolicy.isTOTPValidPolicy,
       ],
       handler: TOTPController.verifyTOTPToken,
+    },
+  },
+
+  /**
+   * Numbers
+   */
+  {
+    method: 'GET',
+    path: '/api/v3/numbers',
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+      handler: NumbersController.numbers,
     },
   },
 ];
