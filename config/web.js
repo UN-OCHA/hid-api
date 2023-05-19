@@ -60,7 +60,7 @@ const config = {
 
     // To allow unit testing, we don't specify our cache until we know it's in
     // an environment where we want it.
-    cache: [],
+    // cache: [],
   },
 
   // Plugins.
@@ -316,7 +316,7 @@ if (process.env.NODE_ENV !== 'test') {
   // driven by a shared backend between API containers. We are using
   // Redis because it's already in OCHA infra, and the MongoDB provider
   // is unmaintained.
-  config.options.cache.push({
+  config.options.cache = [{
     name: 'session',
     provider: {
       constructor: CatboxRedis,
@@ -327,7 +327,7 @@ if (process.env.NODE_ENV !== 'test') {
         db: process.env.REDIS_DB || '0',
       },
     },
-  });
+  }];
 }
 
 // Export our config after env-specific modifications.
