@@ -26,6 +26,10 @@ jobs:
           sudo apt-get install -y cracklib-runtime python3-dev libcrack2-dev
           npm install
 
+      - name: Set environment var for testing
+        run: |
+          export NODE_ENV = 'test'
+
       - name: Run tests
         run: |
           npm run test

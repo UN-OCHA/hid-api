@@ -17,7 +17,7 @@ const Client = require('../api/models/Client');
 const OauthToken = require('../api/models/OauthToken');
 const JwtService = require('../api/services/JwtService');
 
-module.exports = {
+const config = {
   /**
   * The port to bind the web server to
   */
@@ -58,24 +58,9 @@ module.exports = {
       },
     },
 
-    cache: [
-      // HID cannot be highly available unless server-side cookie storage is
-      // driven by a shared backend between API containers. We are using
-      // Redis because it's already in OCHA infra, and the MongoDB provider
-      // is unmaintained.
-      {
-        name: 'session',
-        provider: {
-          constructor: CatboxRedis,
-          options: {
-            partition: 'session',
-            host: process.env.REDIS_HOST || 'redis',
-            port: process.env.REDIS_PORT || 6379,
-            db: process.env.REDIS_DB || '0',
-          },
-        },
-      },
-    ],
+    // To allow unit testing, we don't specify our cache until we know it's in
+    // an environment where we want it.
+    cache: [],
   },
 
   // Plugins.
@@ -323,3 +308,27 @@ module.exports = {
     });
   },
 };
+
+// If we're running unit tests, avoid the Redis cache. Hapi uses an in-memory
+// cache by default and that works just fine for testing.
+if (process.env.NODE_ENV !== 'test') {
+  // HID cannot be highly available unless server-side cookie storage is
+  // driven by a shared backend between API containers. We are using
+  // Redis because it's already in OCHA infra, and the MongoDB provider
+  // is unmaintained.
+  config.options.cache.push({
+    name: 'session',
+    provider: {
+      constructor: CatboxRedis,
+      options: {
+        partition: 'session',
+        host: process.env.REDIS_HOST || 'redis',
+        port: process.env.REDIS_PORT || 6379,
+        db: process.env.REDIS_DB || '0',
+      },
+    },
+  });
+}
+
+// Export our config after env-specific modifications.
+module.exports = config;
