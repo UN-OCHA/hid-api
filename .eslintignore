@@ -3,3 +3,4 @@ db
 tmp
 keys
 assets/js/cd-core.js
+assets/css/**/*.js
