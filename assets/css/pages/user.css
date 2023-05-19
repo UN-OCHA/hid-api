@@ -6,17 +6,9 @@
 .dash__buttons {
   display: flex;
   flex-flow: row wrap;
-  margin: 0 -.5rem;
+  gap: 1rem;
 }
 
-.dash__buttons .cd-button {
-  flex: 1 1 100%;
-  margin: .5rem;
-}
-
-@media screen and (min-width: 600px) {
-  .dash__buttons .cd-button {
-    flex-basis: 25%;
-    max-width: 180px;
-  }
+.dash__buttons .cd-button + .cd-button {
+  margin: 0;
 }
