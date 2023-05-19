@@ -28,7 +28,7 @@ jobs:
 
       - name: Set environment var for testing
         run: |
-          export NODE_ENV = 'test'
+          export NODE_ENV='test'
 
       - name: Run tests
         run: |
