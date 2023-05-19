@@ -329,4 +329,4 @@ Don't sweat it, the bulk of the file doesn't need to change! With a few simple s
 Compare two existing files for a full example:
 
 - Drupal original: `/assets/css/cd-dropdown/cd-dropdown.js`
-- Modified for HID: `/assets/js/cd-dropdown.js`
+- Modified for HID: `/assets/js/vendor/cd-dropdown.js`

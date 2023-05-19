@@ -2,5 +2,5 @@ docs/*
 db
 tmp
 keys
-assets/js/cd-core.js
+assets/js/vendor/*
 assets/css/**/*.js
