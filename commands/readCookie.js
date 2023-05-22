@@ -2,18 +2,13 @@
  * @module readCookie
  * @description Development tool to read an encrypted cookie.
  *
- * docker-compose exec dev node ./commands/readCookie.js
+ * docker-compose exec api node ./commands/readCookie.js
  */
 const Iron = require('@hapi/iron');
-const mongoose = require('mongoose');
 const args = require('yargs').argv;
-const app = require('..');
-const config = require('../config/env');
+const env = require('../config/env');
 
-const { logger } = config;
-
-const store = app.config.env.database.store;
-mongoose.connect(store.uri, store.options);
+const { logger } = env;
 
 async function run() {
   // Attempt to create new OAuth client and log the result.
