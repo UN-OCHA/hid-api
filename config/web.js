@@ -340,11 +340,11 @@ const config = {
 // If we're running unit tests, avoid the Redis cache. Hapi uses an in-memory
 // cache by default and that works just fine for testing. The plugin being
 // modified is yar.
-// if (process.env.NODE_ENV === 'test') {
-  delete(config.options.cache);
-  delete(config.plugins[2].options.cache.cache);
-  delete(config.plugins[2].options.cache.maxCookieSize);
-// }
+if (process.env.NODE_ENV === 'test') {
+  delete config.options.cache;
+  delete config.plugins[2].options.cache.cache;
+  delete config.plugins[2].options.cache.maxCookieSize;
+}
 
 // Export our config after env-specific modifications.
 module.exports = config;
