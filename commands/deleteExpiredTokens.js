@@ -14,7 +14,25 @@ mongoose.connect(store.uri, store.options);
 
 async function run() {
   const now = new Date();
-  await OauthToken.deleteMany({ expires: { $lt: now } });
+
+  // Attempt to delete stale OAuth tokens.
+  await OauthToken.deleteMany({ expires: { $lt: now } }).then((data) => {
+    logger.info(
+      '[commands->deleteExpiredTokens] Removed stale OAuth tokens from database.',
+      {
+        queryResults: data,
+      },
+    );
+  }).catch((err) => {
+    logger.warn(
+      `[commands->deleteExpiredTokens] ${err.message}`,
+      {
+        fail: true,
+        stack_trace: err.stack,
+      },
+    );
+  });
+
   process.exit();
 }
 
