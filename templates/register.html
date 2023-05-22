@@ -1,68 +1,66 @@
 <%- include('includes/header') %>
-<link rel="stylesheet" href="/assets/css/password-toggle.css">
+<link rel="stylesheet" href="/assets/css/hid-password/hid-password.css">
 
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
-<div class="api-page">
-  <main role="main" id="main-content" class="cd-container">
-    <div class="cd-layout-content [ flow ]">
-      <h1 class="cd-page-title page-header__heading">Register a Humanitarian ID account</h1>
+<main role="main" id="main-content" class=" cd-layout cd-container">
+  <div class="cd-layout__content [ cd-flow ]">
+    <h1 class="cd-page-title page-header__heading">Register a Humanitarian ID account</h1>
 
-      <%- include('includes/alert') %>
+    <%- include('includes/alert') %>
 
-      <form id="passwordForm" name="register" action="/register" method="POST" class="[ flow ]">
-        <div class="form-field">
-          <label for="email" translate>Email</label>
-          <input type="email" name="email" id="email" value="<%= formEmail %>" placeholder="you@example.com" required>
-        </div>
-        <div class="form-field">
-          <label for="given_name">First Name</label>
-          <input type="text" name="given_name" id="given_name" value="<%= formGivenName %>" placeholder="Your first name" required>
-        </div>
-        <div class="form-field">
-          <label for="family_name">Last Name</label>
-          <input type="text" name="family_name" id="family_name" value="<%= formFamilyName %>" placeholder="Your last name" required>
-        </div>
-        <div class="form-field">
-          <label for="password">Password</label>
-          <input
-            type="password"
-            name="password"
-            id="password"
-            autocomplete="off"
-            required
-            minlength="12"
-            pattern="<%- include('includes/password-regex') %>"
-            title="See password requirements below.">
-          <button type="button" class="password__viz-toggle viz-toggle viz-toggle--see">
-            <span class="visually-hidden">Toggle password visibility</span>
-          </button>
-        </div>
-        <div class="form-field">
-          <label for="confirm_password">Confirm password</label>
-          <input
-            type="password"
-            name="confirm_password"
-            id="confirm_password"
-            autocomplete="off"
-            required
-            minlength="12"
-            pattern="<%- include('includes/password-regex') %>"
-            title="See password requirements below.">
-          <button type="button" class="password__viz-toggle viz-toggle viz-toggle--see">
-            <span class="visually-hidden">Toggle password visibility</span>
-          </button>
-        </div>
-        <div class="form-field">
-          <%- include('includes/password-requirements') %>
-        </div>
-        <div class="g-recaptcha" data-sitekey="<%= recaptcha_site_key %>"></div>
-        <input type="hidden" name="crumb" value="<%= crumb %>" />
-        <button type="submit" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase t-btn--register">Register</button>
-      </form>
-    </div>
-  </main>
-</div>
+    <form id="passwordForm" name="register" action="/register" method="POST" class="[ cd-flow ]">
+      <div class="form-field">
+        <label for="email" translate>Email</label>
+        <input type="email" name="email" id="email" value="<%= formEmail %>" placeholder="you@example.com" required>
+      </div>
+      <div class="form-field">
+        <label for="given_name">First Name</label>
+        <input type="text" name="given_name" id="given_name" value="<%= formGivenName %>" placeholder="Your first name" required>
+      </div>
+      <div class="form-field">
+        <label for="family_name">Last Name</label>
+        <input type="text" name="family_name" id="family_name" value="<%= formFamilyName %>" placeholder="Your last name" required>
+      </div>
+      <div class="form-field">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          name="password"
+          id="password"
+          autocomplete="off"
+          required
+          minlength="12"
+          pattern="<%- include('includes/password-regex') %>"
+          title="See password requirements below.">
+        <button type="button" class="password__viz-toggle viz-toggle viz-toggle--see">
+          <span class="visually-hidden">Toggle password visibility</span>
+        </button>
+      </div>
+      <div class="form-field">
+        <label for="confirm_password">Confirm password</label>
+        <input
+          type="password"
+          name="confirm_password"
+          id="confirm_password"
+          autocomplete="off"
+          required
+          minlength="12"
+          pattern="<%- include('includes/password-regex') %>"
+          title="See password requirements below.">
+        <button type="button" class="password__viz-toggle viz-toggle viz-toggle--see">
+          <span class="visually-hidden">Toggle password visibility</span>
+        </button>
+      </div>
+      <div class="form-field">
+        <%- include('includes/password-requirements') %>
+      </div>
+      <div class="g-recaptcha" data-sitekey="<%= recaptcha_site_key %>"></div>
+      <input type="hidden" name="crumb" value="<%= crumb %>" />
+      <button type="submit" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase t-btn--register">Register</button>
+    </form>
+  </div>
+</main>
 
 <script src="/assets/js/passwords.js"></script>
 <script src="/assets/js/password-toggle.js"></script>

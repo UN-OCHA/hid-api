@@ -1,0 +1,111 @@
+/**
+ * Common Design: Language Switcher
+ */
+
+.cd-language-switcher {
+  position: relative;
+}
+
+/* Language Switcher button. */
+.cd-language-switcher__btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  box-sizing: content-box;
+  height: var(--cd-global-header-height);
+  padding: 0;
+  padding-inline: 1rem;
+  line-height: var(--cd-global-header-height);
+}
+
+.cd-language-switcher__btn:focus {
+  outline: var(--cd-outline-size) solid var(--brand-primary--light);
+}
+
+@media (min-width: 768px) {
+  .cd-language-switcher__btn {
+    padding-inline: 1.5rem;
+  }
+}
+
+/* Language Switcher list. */
+.cd-language-switcher__dropdown {
+  position: absolute;
+  z-index: 201;
+  right: 0;
+  left: auto;
+  display: block;
+  min-width: 125px;
+  margin: 0;
+  padding: 12px;
+  list-style: none;
+  color: var(--cd-white);
+  background-color: var(--brand-primary);
+  box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.3);
+}
+
+.cd-language-switcher__dropdown li a {
+  position: relative;
+  display: block;
+  height: var(--cd-global-header-height);
+  text-decoration: none;
+  color: var(--cd-white);
+  line-height: var(--cd-global-header-height);
+  padding-inline: 0.5rem;
+}
+
+.cd-language-switcher__dropdown li a:hover,
+.cd-language-switcher__dropdown li a:focus {
+  text-decoration: underline;
+}
+
+.cd-language-switcher__dropdown li a.is-active {
+  font-weight: 700;
+}
+
+/* JS disabled: Expand Language Switcher list by default. */
+.no-js .cd-language-switcher__dropdown {
+  /* Unset the dropdown styles */
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0 1rem;
+  background: transparent;
+  box-shadow: none;
+}
+
+/**
+ * Adjust breakpoints for when the Language Switcher displays as a dropdown.
+ * This depends on other elements present in the .cd-global-header__actions.
+ *
+ * The sub-theme contains an override component specifically to apply these
+ * rules to a smaller breakpoint should your website need it. Do NOT adjust
+ * here, only in the sub-theme.
+ *
+ * @see common_design_subtheme/components/cd-language-switcher/cd-language-switcher.css
+ */
+@media (min-width: 1024px) {
+  /**
+   * Expand the Language Switcher from dropdown to a list.
+   */
+  .cd-language-switcher__dropdown {
+    /* Unset the dropdown styles */
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0 1rem;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  /**
+   * Expand the Language Switcher from a dropdown to a list.
+   */
+  .cd-language-switcher {
+    --dropdown: false;
+  }
+
+  .cd-language-switcher.cd-dropdown {
+    display: block;
+  }
+}

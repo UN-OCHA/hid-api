@@ -1,0 +1,138 @@
+:root {
+  /* Color palette */
+  /* OCHA blue is one colour ramp darker than brand blue */
+  --cd-ocha-blue: #1f69b3;
+  /* Dark blue is two colour ramps darker than brand blue */
+  --cd-blue--dark: #144372;
+  /* Bright blue is one colour ramp lighter than brand blue */
+  --cd-blue--bright: #82b5e9;
+  /* Brighter blue is two colour ramps higher than brand blue */
+  --cd-blue--brighter: #d4e5f7;
+  --cd-highlight-red: #e56a54;
+  /* This has been selected based on WCAG AAA requirements for contrast. */
+  --cd-contrast-red: #e00000;
+  --cd-white: #fff;
+  --cd-grey--light: #f2f2f2;
+  --cd-grey--mid: #595959;
+  --cd-grey--dark: #4a4a4a;
+  --cd-default-text-color: var(--cd-grey--dark);
+  --cd-black: #000;
+  --cd-blue-grey: #e6ecf1;
+  --cd-blue-grey--dark: #d3dde5;
+  --cd-blue-grey--light: #ebf0f4;
+
+  /**
+   * Colours used with rgba().
+   * https://stackoverflow.com/questions/40010597/how-do-i-apply-opacity-to-a-css-color-variable
+   */
+  --cd-rgb-ocha-blue: 2, 108, 182;
+  --cd-rgb-grey--mid: 89, 89, 89;
+  --cd-rgb-grey--dark: 74, 74, 74;
+  --cd-rgb-highlight-red: 229, 106, 84;
+  --cd-rgb-blue-grey--dark: 211, 221, 229;
+
+  /* Measurements */
+  --cd-max-content-width: 820px;
+  --cd-max-body-width: 1400px;
+  --cd-max-width: 1220px;
+  --cd-global-header-height: 35px;
+  --cd-site-header-height: 60px;
+  --cd-container-padding: 0.75rem; /* 12px */
+  --cd-container-padding-tablet: 1.5rem; /* 24px */
+  --cd-container-padding-xlarge: 2.5rem; /* 40px */
+
+  /**
+   * Breakpoints
+   *
+   * Mostly to document the old Sass vars, these values are used directly in CSS
+   * when needed for a media query, because custom props don't work in MQs.
+   */
+  --cd-bp--sm: 576px;
+  --cd-bp--md: 768px;
+  --cd-bp--lg: 1024px;
+  --cd-bp--xl: 1200px;
+  --cd-bp--xxl: 1400px;
+
+  /* Vertical Rhythm */
+  --cd-flow-space: 1rem;
+  --cd-bumper-space: 1rem;
+
+  /**
+   * Adjust this depending on number of rows in .cd-layout-container.
+   * This ensures the footer is always the last element.
+   */
+  --cd-footer-row-number: 5;
+
+  /* From https://brand.unocha.org/d/xEPytAUjC3sH/visual-identity#/basics/colours */
+  --cd-red: #cd3a1f;
+  --cd-red--light: #f8d8d3;
+  --cd-orange: #db7b18;
+  --cd-orange--light: #fae6d1;
+  --cd-yellow: #d5de26;
+  --cd-yellow--light: #f7f8d3;
+  --cd-green: #7fb92f;
+  --cd-green--light: #e8f5d6;
+
+  /* Fonts sizes in REMs */
+  --cd-font-size--tiny: 0.75rem;      /* 12px */
+  --cd-font-size--small: 0.875rem;    /* 14px */
+  --cd-font-size--ref: 1rem;          /* 16px */
+  --cd-font-size--base: 1.125rem;     /* 18px */
+  --cd-font-size--medium: 1.375rem;   /* 22px */
+  --cd-font-size--large: 1.625rem;    /* 26px */
+  --cd-font-size--2xbase: 1.875rem;   /* 30px */
+  --cd-font-size--2xmedium: 2.375rem; /* 38px */
+  --cd-font-size--2xlarge: 2.875rem;  /* 46px */
+
+  /* Fonts */
+  --cd-font: helvetica, arial, sans-serif;
+
+  /**
+   * Roboto
+   * https://brand.unocha.org/d/xEPytAUjC3sH/visual-identity#/basics/fonts/advanced-users
+   */
+  --cd-font--roboto: "Roboto", helvetica, arial, sans-serif;
+  --cd-font--roboto-condensed: "Roboto Condensed", helvetica, arial, sans-serif;
+  --cd-font--roboto-slab: "Roboto Slab", helvetica, arial, sans-serif;
+
+  /**
+   * Multilingual
+   * https://brand.unocha.org/d/xEPytAUjC3sH/visual-identity#/basics/fonts/multi-language-typefaces-1
+   */
+  --cd-font--noto-sans: "Noto Sans", sans-serif;
+  --cd-font--noto-kufi-arabic: "Noto Kufi Arabic", sans-serif;
+  --cd-font--noto-sans-sc: "Noto Sans SC", sans-serif;
+
+  /**
+   * z-index reference values
+   */
+  --cd-z-default: 1;
+  --cd-z-hidden: -1;
+  --cd-z-sidebar: 110;
+  --cd-z-sidebar-underlay: 100;
+  --cd-z-main-menu: 199;
+  --cd-z-search: 200;
+  --cd-z-dropdown: 201;
+  --cd-z-skip-link: 1000;
+
+  /**
+   * Accessibility-related properties
+   */
+  --cd-outline-size: 3px;
+
+  /**
+   * Site-specific brand defaults
+   *
+   * You can override these defaults in the SUB-THEME. We provide default values
+   * here so that the base theme can be used out of the box, for times when you
+   * don't even set up a sub-theme.
+   *
+   * @see common_design_subtheme/css/brand.css
+   */
+  --brand-primary: #007faa;
+  --brand-primary--light: #64c4e5;
+  --brand-primary--dark: var(--cd-blue--dark);
+  --brand-highlight: var(--cd-highlight-red);
+  --brand-grey: #e6eff2;
+  --brand-logo-width: 256px;
+}
