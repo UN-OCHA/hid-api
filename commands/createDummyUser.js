@@ -6,12 +6,12 @@
  */
 const mongoose = require('mongoose');
 const args = require('yargs').argv;
-const app = require('..');
-
-const store = app.config.env.database.store;
-mongoose.connect(store.uri, store.options);
-
 const User = require('../api/models/User');
+const env = require('../config/env');
+
+// Connect to DB.
+const { store } = env.database;
+mongoose.connect(store.uri, store.options);
 
 async function run() {
   const userInfo = {

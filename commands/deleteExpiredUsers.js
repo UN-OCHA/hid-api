@@ -3,13 +3,15 @@
  * @description Deletes the expired users from the database.
  */
 const mongoose = require('mongoose');
-const app = require('..');
-
-const store = app.config.env.database.store;
-mongoose.connect(store.uri, store.options);
-
 const User = require('../api/models/User');
 const EmailService = require('../api/services/EmailService');
+const env = require('../config/env');
+
+const { logger } = env;
+
+// Connect to DB.
+const store = env.database.store;
+mongoose.connect(store.uri, store.options);
 
 async function run() {
   const now = new Date();
