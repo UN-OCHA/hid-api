@@ -1,0 +1,100 @@
+/**
+ * Common Design: Site Header
+ *
+ * Bottom header bar. Contains Logo, Search and Navigation.
+ */
+.cd-site-header {
+  color: var(--cd-default-text-color);
+  border-bottom: 6px solid var(--brand-grey);
+  background: var(--cd-white);
+}
+
+.cd-site-header__inner {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  gap: 1rem;
+  height: var(--cd-site-header-height);
+}
+
+/* Unset the generic cd-container clearfix. Its presence causes an extra gap
+now that we layout with flex. */
+.cd-site-header__inner.cd-container::after {
+  content: none;
+}
+
+.cd-site-header__inner .region-header-logo {
+  flex: 0 0 52px;
+}
+
+@media (min-width: 768px) {
+  .cd-site-header__inner .region-header-logo {
+    flex: 0 0 var(--brand-logo-width);
+  }
+}
+
+/* stylelint-disable order/properties-order -- group by container then item */
+.cd-site-header__actions {
+  /* Define behavior as CONTAINER containing flex-items */
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-end;
+
+  /* Define behavior as FLEX-ITEM inside a container */
+  flex: 1 1 auto;
+}
+/* stylelint-enable order/properties-order */
+
+@media (min-width: 1024px) {
+  .cd-site-header__nav-holder nav > ul {
+    display: flex;
+    flex: 0 0 auto;
+    flex-flow: row wrap;
+    justify-content: flex-end;
+  }
+}
+
+.cd-site-header__nav-holder nav > ul > li,
+.cd-site-header__nav-holder nav > ul > .cd-nav__item, {
+  flex: 1 0 100%;
+}
+
+@media (min-width: 1024px) {
+  .cd-site-header__nav-holder nav > ul > li,
+  .cd-site-header__nav-holder nav > ul > .cd-nav__item, {
+    flex: 1 1 auto;
+  }
+}
+
+/**
+ * No-JS styles
+ *
+ * In the even JS doesn't execute at all, these styles will apply. In cases
+ * JS fails to load, or times out, these styles will NOT apply, because our
+ * inline script will have taken this classname off the <html> element.
+ */
+.no-js .cd-site-header__inner {
+  display: block;
+  height: unset;
+}
+
+/* Second level menu. */
+.no-js .cd-site-header__nav-holder .cd-nav > .menu {
+  display: block;
+}
+
+.no-js .cd-site-header__nav-holder li li {
+  float: left;
+  max-width: unset;
+}
+
+.no-js .cd-site-header__nav-holder nav > ul > li,
+.no-js .cd-site-header__nav-holder nav > ul > .cd-nav__item, {
+  float: left;
+  max-width: unset;
+}
+
+/* Hide seperator. */
+.no-js .cd-site-header__nav-holder .cd-nav > .menu > .menu-item li:first-child {
+  border-right: 1px solid transparent;
+}

@@ -1,0 +1,94 @@
+{{ attach_library('common_design/cd-flow') }}
+{{ attach_library('common_design/cd-typography') }}
+{{ attach_library('common_design/cd-alert') }}
+
+<div class="cd-alert">
+  <div aria-live="polite">
+    <svg class="cd-icon cd-icon--about" aria-hidden="true" focusable="false" width="16" height="16">
+      <use xlink:href="#cd-icon--about"></use>
+    </svg>
+    <div class="cd-alert__container cd-max-width [ cd-flow ]">
+      <div class="cd-alert__title">
+        This is the default informative alert.
+      </div>
+      <div class="cd-alert__message">
+        <p>I am an alert.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cd-alert">
+  <div aria-live="polite">
+    <div class="cd-alert__container cd-max-width [ cd-flow ]">
+      <div class="cd-alert__message">
+        <p>
+          I am a default alert with a less important message and a link to somewhere with <a href="#">more information</a>.
+        </p>
+        <p>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris commodo mauris ac convallis imperdiet.
+          Maecenas sollicitudin est vel ultrices mattis.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cd-alert cd-alert--error">
+  <div role="alert">
+    <svg class="cd-icon cd-icon--alert" aria-hidden="true" focusable="false" width="16" height="16">
+      <use xlink:href="#cd-icon--alert"></use>
+    </svg>
+    <div class="cd-alert__container cd-max-width [ cd-flow ]">
+      <div class="cd-alert__title">
+        Error. Pay attention to me.
+      </div>
+      <div class="cd-alert__message">
+        <p>
+          I am an alert that indicates an error, with a very important message and a link to somewhere with <a href="#">more information</a>.
+        </p>
+        <ul>
+          <li>There may be many errors.</li>
+          <li>We can list them here.</li>
+          <li>In a nice list.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cd-alert cd-alert--warning">
+  <div role="alert">
+    <svg class="cd-icon cd-icon--alert" aria-hidden="true" focusable="false" width="16" height="16">
+      <use xlink:href="#cd-icon--alert"></use>
+    </svg>
+    <div class="cd-alert__container cd-max-width [ cd-flow ]">
+      <div class="cd-alert__title">
+        Warning. Pay attention to me.
+      </div>
+      <div class="cd-alert__message">
+        <p>
+          I am an alert that conveys a warning.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cd-alert cd-alert--status">
+  <div aria-live="polite">
+    <svg class="cd-icon cd-icon--selected" aria-hidden="true" focusable="false" width="16" height="16">
+      <use xlink:href="#cd-icon--selected"></use>
+    </svg>
+    <div class="cd-alert__container cd-max-width [ cd-flow ]">
+      <div class="cd-alert__title">
+        Status message.
+      </div>
+      <div class="cd-alert__message">
+        <p>
+          I am an alert that confirms a status, like when a page is saved successfully.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

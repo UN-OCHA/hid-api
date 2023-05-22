@@ -1,0 +1,14 @@
+/**
+ * User dashboard
+ */
+.dash {}
+
+.dash__buttons {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 1rem;
+}
+
+.dash__buttons .cd-button + .cd-button {
+  margin: 0;
+}

@@ -1,0 +1,53 @@
+/**
+ * Common Design: Social links in Footer
+ */
+
+:root {
+  --cd-footer-social-icon-size: 26px;
+}
+
+.cd-footer-social__list {
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 20px;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cd-footer-social__item {
+  flex: 0 0 var(--cd-footer-social-icon-size);
+}
+
+a.cd-footer-social__link {
+  display: inline-block;
+  border: 0 none;
+  line-height: 0; /* cosmetic improvement to focus style */
+}
+
+a.cd-footer-social__link svg {
+  width: var(--cd-footer-social-icon-size);
+  height: var(--cd-footer-social-icon-size);
+  fill: var(--cd-white);
+}
+
+a.cd-footer-social__link svg.hover-style {
+  display: none;
+}
+
+a.cd-footer-social__link:hover svg,
+a.cd-footer-social__link:focus svg {
+  display: none;
+}
+
+a.cd-footer-social__link:hover .hover-style,
+a.cd-footer-social__link:focus .hover-style {
+  display: inline-block;
+}
+
+@media (min-width: 1024px) {
+  .cd-footer-social__list {
+    justify-content: flex-end;
+  }
+}

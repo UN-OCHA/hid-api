@@ -1,0 +1,144 @@
+/**
+ * CD Card
+ *
+ * Is capable of several variants:
+ *  - Optional image
+ *  - Image can be rectangular or rounded
+ *  - Optional footer
+ */
+
+/**
+ * Card container
+ */
+.cd-card {
+  display: flex;
+  flex-flow: column nowrap;
+  border: 2px solid var(--brand-grey);
+  background-color: var(--cd-white);
+}
+
+/**
+ * Card image
+ */
+.cd-card__image img {
+  width: 100%;
+  height: 13rem;
+}
+
+@supports (object-fit: cover) {
+  .cd-card__image img {
+    object-fit: cover;
+    object-position: 50% 50%;
+  }
+}
+
+.cd-card__image--rounded {
+  min-width: 7rem;
+  max-width: 13rem;
+  min-height: 7rem;
+  max-height: 13rem;
+  margin-top: 1rem;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.cd-card__image + .cd-card__container {
+  padding: 1rem 2rem;
+}
+
+/**
+ * Card contents
+ */
+.cd-card__container {
+  flex-grow: 1;
+  padding: 2rem 2rem 1rem;
+}
+
+.cd-card__title,
+.cd-card__title a {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.cd-card__description p:last-child {
+  margin-bottom: 0;
+}
+
+/**
+ * Card footer
+ */
+.cd-card__footer {
+  flex-shrink: 0;
+  padding: 0 2rem 2rem;
+}
+
+.cd-card__link {
+  padding: 1rem 0 0;
+  border-top: 1px solid var(--brand-grey);
+}
+
+/**
+ * Variant: Clickable
+ *
+ * This card's entire surface is clickable.
+ *
+ * The hyperlink within the title of each card uses an invisible pseudo-element
+ * that stretches over the top of each card so that the entire surface is
+ * clickable/tappable. It ensures fewer redundant elements, and by using the
+ * hyperlinked Card Title instead of a generic "read more" link, we gain a11y
+ * and UX benefits associated with descriptive inner-text, e.g. screen readers,
+ * or when the mouse pointer is used to hover or drag the card.
+ *
+ * Therefore we will unset the properties of the title link and make it look
+ * like plain text. We even do this for hover/focus because the card itself will
+ * sport those styles.
+ */
+.cd-card--clickable {
+  position: relative;
+}
+
+.cd-card--clickable .cd-card__title a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.cd-card--clickable .cd-card__title a:hover {
+  color: inherit;
+}
+
+.cd-card--clickable .cd-card__title a:focus {
+  color: inherit;
+  outline: none;
+}
+
+/* Create and style the clickable pseudo-element. */
+.cd-card--clickable .cd-card__title a::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  content: "";
+}
+
+/* Provide hover/focus styles on clickable pseudo-element. */
+.cd-card--clickable .cd-card__title a:hover::after {
+  outline: 3px solid var(--brand-grey);
+}
+
+.cd-card--clickable .cd-card__title a:focus::after,
+.cd-card--clickable .cd-card__title a:active::after {
+  outline: 3px solid black;
+}
+
+/*
+Restore interactivity to any elements inside the card who come AFTER the
+title link in HTML source using relative positioning. This can be a more generic
+rule but our stock card only has one link so we keep the rule specific.
+
+@see https://inclusive-components.design/cards/#theauthorlink
+*/
+.cd-card--clickable .cd-card__link {
+  position: relative;
+}

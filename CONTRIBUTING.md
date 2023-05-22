@@ -298,3 +298,35 @@ Once the tagged Release has been created, [create a PR from `dev` to `main`][pr-
   [new-release]: https://github.com/UN-OCHA/hid-api/releases/new?target=dev
   [dev-package]: https://github.com/UN-OCHA/hid-api/blob/dev/package.json#L3
   [pr-dev-main]: https://github.com/UN-OCHA/hid-api/compare/main...dev
+
+
+## CD Upgrades
+
+Since HID doesn't use Drupal, a few manual tasks are required to update certain files during CD upgrades.
+
+
+### CSS needs to be aggregated manually in a build-step
+
+The CD CSS is now split into various components that allow for custom builds yielding smaller overall filesizes when implemented on different websites.
+
+To aggregate the files we use on HID, there is a new npm command to concatenate and minify the contents of `assets/css/hid.css`:
+
+```sh
+npm run css
+```
+
+Save the updated `hid.min.css` file to version control.
+
+
+### JS files need to be modified and initialized differently
+
+Don't sweat it, the bulk of the file doesn't need to change! With a few simple steps you can use the original Drupal JS files:
+
+  1. Remove the outer closure `(function (Drupal) {` and `})(Drupal);` from the top and bottom of the file respectively.
+  2. Modify the Behavior to be a global constant instead of a property inside the `Drupal.behaviors` object: `const cdDropdown = {`
+  3. Create a new IIFE at the bottom of the file with the modified behavior's `attach` so that it runs when the file is parsed: `(function iife() {cdDropdown.attach();}());`
+
+Compare two existing files for a full example:
+
+- Drupal original: `/assets/css/cd-dropdown/cd-dropdown.js`
+- Modified for HID: `/assets/js/vendor/cd-dropdown.js`

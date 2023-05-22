@@ -1,0 +1,122 @@
+/**
+ * Common Design: Global Header
+ *
+ * The top-most bar which contains OCHA Services, Languages, User menu.
+ */
+.cd-global-header {
+  position: relative;
+  height: var(--cd-global-header-height);
+  color: var(--cd-white);
+  background: var(--brand-primary);
+}
+
+.cd-global-header__inner {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cd-global-header__inner .cd-ocha {
+  order: -1;
+}
+
+.cd-global-header__inner.cd-container::after {
+  /* Remove the clearfix applied by `cd-container` on this element. */
+  content: unset;
+}
+
+.cd-global-header__actions {
+  position: relative;
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 0;
+
+  /* Visually align button contents with main nav */
+  margin-inline-end: -2px;
+}
+
+/*
+ * If there are multiple Global Header actions, separate them with pipe-looking
+ * visuals. To control the width of the pipes, set horizontal gap accordingly.
+ */
+.js .cd-global-header__actions {
+  gap: 0 1.5px;
+  background:
+    linear-gradient(
+      to bottom,
+      var(--brand-primary),
+      var(--brand-primary) 33.33%,
+      var(--cd-white) 33.33%,
+      var(--cd-white) 66.66%,
+      var(--brand-primary) 66.66%
+    );
+}
+.js .cd-global-header__actions > * {
+  background: var(--brand-primary);
+}
+
+/* Reset buttons */
+.cd-global-header button {
+  border: 0;
+}
+
+/**
+ * Drupal selectors
+ *
+ * TODO: this came from _cd-user-menu.scss but they all have global header
+ * prefixes so they're moved here now.
+ */
+.cd-global-header .block h2 {
+  color: var(--cd-white);
+}
+
+/* Last block in Global Header should have its dropdown right-aligned on LTR */
+[dir="ltr"] .cd-global-header .cd-global-header__user-menu:last-child .cd-global-header__dropdown {
+  right: 0;
+  left: initial;
+}
+
+/* Last block in Global Header should have its dropdown left-aligned on RTL */
+[dir="rtl"] .cd-global-header .cd-global-header__user-menu:last-child .cd-global-header__dropdown {
+  right: initial;
+  left: 0;
+}
+
+/**
+ * Global Header-specific CD dropdown styles.
+ */
+.cd-global-header__dropdown {
+  position: absolute;
+  z-index: var(--cd-z-dropdown);
+  left: 0;
+  color: var(--cd-white);
+  background: var(--brand-primary);
+}
+
+.no-js .cd-global-header__dropdown {
+  position: relative;
+}
+
+.js .cd-global-header__dropdown {
+  box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.3);
+}
+
+button[aria-expanded] .cd-icon--arrow-down {
+  fill: var(--cd-white);
+  width: 9px;
+  height: 9px;
+  margin-inline-start: 4px;
+}
+
+/* active state should flip the icon vertically */
+button[aria-expanded="true"] .cd-icon--arrow-down {
+  transform: rotate(180deg);
+}
+
+/**
+ * No-JS styles
+ */
+.no-js .cd-global-header {
+  height: auto;
+}
