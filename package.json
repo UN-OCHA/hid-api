@@ -19,7 +19,7 @@
     "lint": "eslint . && ejslint templates/* emails/*",
     "e2e": "jest _tests/e2e/*.test.js -- -t '^(?!.*no-ci).*$'",
     "test": "npm run lint && npm run unit",
-    "unit": "lab -v _tests/unit/*.test.js",
+    "unit": "lab -l -t 0 -v _tests/unit/*.test.js",
     "release": "standard-version"
   },
   "dependencies": {
