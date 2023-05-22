@@ -1,8 +1,8 @@
 /**
  * @module createDummyUser
- * @description Create a test user.
+ * @description Create a test user. For local development.
  *
- * docker-compose exec dev node ./commands/createDummyUser.js
+ * docker-compose exec api node ./commands/createDummyUser.js
  */
 const mongoose = require('mongoose');
 const args = require('yargs').argv;

@@ -1,6 +1,7 @@
 /**
  * @module migrateRedirectUrls
- * @description Migrates the redirect URLs to an array to allow for multiple redirect URLs
+ * @description Migrates the redirect URLs to an array to allow for multiple
+ * redirect URLs
  */
 const mongoose = require('mongoose');
 const Client = require('../api/models/Client');

@@ -1,8 +1,8 @@
 /**
  * @module createDummyClient
- * @description Create dummy client.
+ * @description Create dummy client. For local development.
  *
- * docker-compose exec dev node ./commands/createDummyClient.js
+ * docker-compose exec api node ./commands/createDummyClient.js
  */
 const mongoose = require('mongoose');
 const args = require('yargs').argv;
