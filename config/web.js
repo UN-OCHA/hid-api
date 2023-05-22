@@ -58,9 +58,24 @@ const config = {
       },
     },
 
-    // To allow unit testing, we don't specify our cache until we know it's in
-    // an environment where we want it.
-    // cache: [],
+    // HID cannot be highly available unless server-side cookie storage is
+    // driven by a shared backend between API containers. We are using
+    // Redis because it's already in OCHA infra, and the MongoDB provider
+    // is unmaintained.
+    //
+    // This cache gets disabled during testing. See modifications section below.
+    cache: [{
+      name: 'session',
+      provider: {
+        constructor: CatboxRedis,
+        options: {
+          partition: 'session',
+          host: process.env.REDIS_HOST || 'redis',
+          port: process.env.REDIS_PORT || 6379,
+          db: process.env.REDIS_DB || '0',
+        },
+      },
+    }],
   },
 
   // Plugins.
@@ -75,6 +90,12 @@ const config = {
       plugin: vision,
     },
     {
+      // yar - cookie management
+      //
+      // Like the cache itself, yar has to modify its behavior in certain
+      // environments. The defaults are for production using Redis.
+      //
+      // See modifications section below.
       plugin: yar,
       options: {
         cache: {
@@ -309,26 +330,20 @@ const config = {
   },
 };
 
+/**
+ * Environment-specific modifications
+ *
+ * Some config should vary by environment, so we make those adjustments here.
+ */
+
 // If we're running unit tests, avoid the Redis cache. Hapi uses an in-memory
-// cache by default and that works just fine for testing.
-if (process.env.NODE_ENV !== 'test') {
-  // HID cannot be highly available unless server-side cookie storage is
-  // driven by a shared backend between API containers. We are using
-  // Redis because it's already in OCHA infra, and the MongoDB provider
-  // is unmaintained.
-  config.options.cache = [{
-    name: 'session',
-    provider: {
-      constructor: CatboxRedis,
-      options: {
-        partition: 'session',
-        host: process.env.REDIS_HOST || 'redis',
-        port: process.env.REDIS_PORT || 6379,
-        db: process.env.REDIS_DB || '0',
-      },
-    },
-  }];
-}
+// cache by default and that works just fine for testing. The plugin being
+// modified is yar.
+// if (process.env.NODE_ENV === 'test') {
+  delete(config.options.cache);
+  delete(config.plugins[2].options.cache.cache);
+  delete(config.plugins[2].options.cache.maxCookieSize);
+// }
 
 // Export our config after env-specific modifications.
 module.exports = config;
