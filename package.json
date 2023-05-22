@@ -20,6 +20,7 @@
     "e2e": "jest _tests/e2e/*.test.js -- -t '^(?!.*no-ci).*$'",
     "test": "npm run lint && npm run unit",
     "unit": "lab -l -t 0 -v _tests/unit/*.test.js",
+    "unit-report": "lab -l -t 0 -v _tests/unit/*.test.js -r html -o __coverage.html",
     "release": "standard-version"
   },
   "dependencies": {

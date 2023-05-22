@@ -7,3 +7,4 @@ db
 docs/hid.yml
 _tests/e2e/_env/local.js
 logs
+__coverage.html
