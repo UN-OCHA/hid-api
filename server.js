@@ -50,8 +50,8 @@ exports.init = async () => {
   // Plugins
   await server.register(webConfig.plugins);
   webConfig.onPluginsLoaded(server);
-  server.auth.strategy('hid', 'hapi-auth-hid');
-  server.auth.default('hid');
+  server.auth.strategy('api', 'hapi-auth-api');
+  server.auth.default('api');
 
   // Define routes
   server.route(app.config.routes);
