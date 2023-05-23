@@ -8,7 +8,6 @@
  * @see https://hapi.dev/tutorials/routing/
  */
 const Joi = require('joi');
-
 const AdminController = require('../api/controllers/AdminController');
 const AuthController = require('../api/controllers/AuthController');
 const AuthPolicy = require('../api/policies/AuthPolicy');
@@ -24,12 +23,24 @@ const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 module.exports = [
 
   /**
-   * Render the login view
+   * Public-facing pages
+   *
+   * None of these routes require a session. Account setup/recovery actions are
+   * all included here: registration, verify, password reset, API docs, etc.
    */
   {
     method: 'GET',
     path: '/',
     handler: ViewController.login,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'POST',
+    path: '/login',
+    handler: AuthController.login,
     options: {
       auth: false,
     },
@@ -107,6 +118,24 @@ module.exports = [
     },
   },
 
+  {
+    method: 'GET',
+    path: '/docs/{param*}',
+    handler: {
+      directory: {
+        path: 'docs',
+      },
+    },
+    options: {
+      auth: false,
+    },
+  },
+
+  /**
+   * Logged-in pages.
+   *
+   * You have to be logged in with a verified account to access these pages.
+   */
   {
     method: 'GET',
     path: '/user',
@@ -245,19 +274,6 @@ module.exports = [
     },
   },
 
-  {
-    method: 'GET',
-    path: '/docs/{param*}',
-    handler: {
-      directory: {
-        path: 'docs',
-      },
-    },
-    options: {
-      auth: false,
-    },
-  },
-
   /**
    * Default authentication path.
    */
@@ -274,18 +290,6 @@ module.exports = [
     method: 'GET',
     path: '/oauth/jwks',
     handler: AuthController.jwks,
-    options: {
-      auth: false,
-    },
-  },
-
-  /**
-   * HID Login
-   */
-  {
-    method: 'POST',
-    path: '/login',
-    handler: AuthController.login,
     options: {
       auth: false,
     },
@@ -333,7 +337,7 @@ module.exports = [
   },
 
   /**
-   * API Key management
+   * API: JWT management
    */
   {
     method: 'POST',
@@ -354,7 +358,7 @@ module.exports = [
   },
 
   /**
-   * User management
+   * API: User management
    */
   {
     method: 'POST',
@@ -430,6 +434,7 @@ module.exports = [
       auth: false,
     },
   },
+
   {
     method: 'POST',
     path: '/api/v3/user/password',
@@ -538,9 +543,6 @@ module.exports = [
     },
   },
 
-  /**
-   * OAuth Client management
-   */
   {
     method: 'DELETE',
     path: '/api/v3/user/{id}/clients/{client}',
@@ -558,6 +560,9 @@ module.exports = [
     },
   },
 
+  /**
+   * API: OAuth Client management
+   */
   {
     method: 'POST',
     path: '/api/v3/client',
@@ -618,7 +623,7 @@ module.exports = [
   },
 
   /**
-   * TOTP management
+   * API: 2FA management
    */
   {
     method: 'POST',
@@ -690,7 +695,7 @@ module.exports = [
   },
 
   /**
-   * Numbers
+   * API: Numbers
    */
   {
     method: 'GET',
