@@ -13,6 +13,7 @@ const hapiRateLimit = require('hapi-rate-limit');
 const oauth2orizeExt = require('oauth2orize-openid');
 const hapiOauth2Orize = require('../plugins/hapi-oauth2orize');
 const hapiAuthApi = require('../plugins/hapi-auth-api');
+const hapiAuthSession = require('../plugins/hapi-auth-session');
 const Client = require('../api/models/Client');
 const OauthToken = require('../api/models/OauthToken');
 const JwtService = require('../api/services/JwtService');
@@ -153,6 +154,9 @@ const config = {
     },
     {
       plugin: hapiAuthApi,
+    },
+    {
+      plugin: hapiAuthSession,
     },
     {
       plugin: Scooter,

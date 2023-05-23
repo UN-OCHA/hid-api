@@ -50,7 +50,14 @@ exports.init = async () => {
   // Plugins
   await server.register(webConfig.plugins);
   webConfig.onPluginsLoaded(server);
+
+  // Cookie-based auth for the website.
+  server.auth.strategy('session', 'hapi-auth-session');
+
+  // Token-based auth for API calls.
   server.auth.strategy('api', 'hapi-auth-api');
+
+  // Default authentication is for API calls using Bearer/OAuth token.
   server.auth.default('api');
 
   // Define routes

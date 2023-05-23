@@ -141,7 +141,10 @@ module.exports = [
     path: '/user',
     handler: ViewController.user,
     options: {
-      auth: false,
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
 
@@ -150,7 +153,10 @@ module.exports = [
     path: '/profile',
     handler: ViewController.profile,
     options: {
-      auth: false,
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
 
@@ -159,7 +165,10 @@ module.exports = [
     path: '/profile/edit',
     handler: ViewController.profileEdit,
     options: {
-      auth: false,
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
 
@@ -168,7 +177,10 @@ module.exports = [
     path: '/profile/edit',
     handler: ViewController.profileEditSubmit,
     options: {
-      auth: false,
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
 
@@ -177,7 +189,10 @@ module.exports = [
     path: '/profile/edit/emails',
     handler: ViewController.profileEmailsSubmit,
     options: {
-      auth: false,
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
 
@@ -186,7 +201,10 @@ module.exports = [
     path: '/settings',
     handler: ViewController.settings,
     options: {
-      auth: false,
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
   {
@@ -194,7 +212,10 @@ module.exports = [
     path: '/settings/oauth-clients',
     handler: ViewController.settingsOauthSubmit,
     options: {
-      auth: false,
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
 
@@ -203,7 +224,10 @@ module.exports = [
     path: '/settings/password',
     handler: ViewController.settingsPassword,
     options: {
-      auth: false,
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
   {
@@ -211,7 +235,10 @@ module.exports = [
     path: '/settings/password',
     handler: ViewController.settingsPasswordSubmit,
     options: {
-      auth: false,
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
 
@@ -220,7 +247,10 @@ module.exports = [
     path: '/settings/security',
     handler: ViewController.settingsSecurity,
     options: {
-      auth: false,
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
   {
@@ -228,7 +258,10 @@ module.exports = [
     path: '/settings/security',
     handler: ViewController.settingsSecuritySubmit,
     options: {
-      auth: false,
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
 
@@ -237,7 +270,10 @@ module.exports = [
     path: '/settings/delete',
     handler: ViewController.settingsDelete,
     options: {
-      auth: false,
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
   {
@@ -245,7 +281,10 @@ module.exports = [
     path: '/settings/delete',
     handler: ViewController.settingsDeleteSubmit,
     options: {
-      auth: false,
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
 
@@ -254,7 +293,10 @@ module.exports = [
     path: '/admin',
     handler: AdminController.adminOauthClients,
     options: {
-      auth: false,
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
   {
@@ -262,7 +304,10 @@ module.exports = [
     path: '/admin/client/{id}',
     handler: AdminController.adminOauthClientEdit,
     options: {
-      auth: false,
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
   {
@@ -270,7 +315,10 @@ module.exports = [
     path: '/admin/client',
     handler: AdminController.adminOauthClientEditSubmit,
     options: {
-      auth: false,
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
 
