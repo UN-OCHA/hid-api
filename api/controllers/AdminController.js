@@ -185,10 +185,34 @@ module.exports = {
    * Admin: OAuth Client form submission handler
    */
   async adminOauthClientEditSubmit(request, reply) {
-    // Load user cookie. Redirect to homepage when no cookie found.
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId || !cookie.totp) {
-      return reply.redirect('/');
+    const user = await User.findById(cookie.userId);
+
+    // Check user authentication and admin permissions.
+    try {
+      AuthPolicy.isLoggedInAsAdmin(user);
+    } catch (err) {
+      logger.warn(
+        '[AdminController->adminOauthClients] Non-admin attempted to access admin area',
+        {
+          security: true,
+          fail: true,
+          user: {
+            id: cookie.userId,
+            email: user.email,
+          },
+        },
+      );
+
+      // Display permission error to user.
+      return reply.view('message', {
+        user,
+        title: 'Access forbidden',
+        alert: {
+          type: 'error',
+          message: err.message,
+        },
+      }).code(403);
     }
 
     // Set up our validation.
