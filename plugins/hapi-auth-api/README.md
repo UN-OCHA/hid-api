@@ -5,7 +5,7 @@ This is a custom authentication schema for Hapi that enforces JWT token authenti
 ```mermaid
 flowchart TD
   Incoming[Incoming request] --> Formatted{Space-separated\nBearer/OAuth token?}
-  Formatted -->|Yes| Validate{Validate token &\ncheck blocklist}
+  Formatted -->|Yes| Validate{Validate token,\ncheck blocklist,\nfind user in DB}
   Formatted -->|No| Payload{Request payload\ncontains token?}
   Payload -->|Yes| Validate
   Payload -->|No| Unauthorized(HTTP 401 Unauthorized)
