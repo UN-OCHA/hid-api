@@ -4,7 +4,7 @@ This is a custom authentication schema for Hapi that leverages our existing impl
 
 ```mermaid
 flowchart TD
-  A[Incoming request] --> B{Does session contain a valid user?}
-  B -->|Yes| C(Pass user object to the route handler,\nwhere it's guaranteed to exist.)
-  B -->|No| D(Redirect to root with warning message)
+  Incoming[Incoming request] --> HasUser{Does the session\ncontain a valid user?}
+  HasUser -->|Yes| Authenticated(Pass user object to the route handler,\nwhere it's guaranteed to exist.)
+  HasUser -->|No| Unauthorized(Redirect to root with warning message)
 ```
