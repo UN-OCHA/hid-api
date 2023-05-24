@@ -13,12 +13,15 @@ internals.implementation = () => ({
     let cookie = request.yar.get('session');
     let user = await User.findById(cookie.userId);
 
-    // We found a user.
+    // We found a user. Pass credentials along and finish.
     if (user) {
       return h.authenticated({ credentials: user });
     }
 
-    // No user found. Log and redirect.
+    /**
+     * If we got this far, the user is not considered authenticated. From here
+     * on, the code handles redirecting with a warning message in the UI.
+     */
     logger.warn(
       '[hapi-auth-session] No session was found',
       {
