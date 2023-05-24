@@ -1259,7 +1259,6 @@ module.exports = {
     const reasons = [];
     let action = false;
 
-
     // Check which action we're taking
     if (request.payload && typeof request.payload.action !== 'undefined') {
       action = request.payload.action;

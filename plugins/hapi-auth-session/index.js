@@ -2,7 +2,6 @@
  * @module hapi-auth-session
  * @description Cookie auth strategy for HID Auth website.
  */
-const Boom = require('@hapi/boom');
 const User = require('../../api/models/User');
 const { logger } = require('../../config/env');
 
@@ -11,7 +10,7 @@ const internals = {};
 internals.implementation = () => ({
   async authenticate(request, h) {
     let cookie = request.yar.get('session');
-    let user = await User.findById(cookie.userId);
+    const user = await User.findById(cookie.userId);
 
     // We found a user. Pass credentials along and finish.
     if (user) {
