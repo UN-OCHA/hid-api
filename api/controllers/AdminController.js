@@ -3,13 +3,10 @@
  * @description Controller for pages that only admins see.
  */
 const crypto = require('crypto');
-
 const User = require('../models/User');
 const ClientController = require('./ClientController');
 const AuthPolicy = require('../policies/AuthPolicy');
-const config = require('../../config/env');
-
-const { logger } = config;
+const { logger } = require('../../config/env');
 
 /**
  * Copied from route.js
@@ -31,29 +28,11 @@ function formHashContents(mongoId) {
 }
 
 module.exports = {
-
   /**
    * Admin: OAuth Client list
    */
   async adminOauthClients(request, reply) {
-    // Load user cookie. Redirect to homepage when no cookie found.
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId || !cookie.totp) {
-      logger.info(
-        '[AdminController->adminOauthClients] User did not have a valid session. Redirecting to login.',
-        {
-          request,
-          fail: true,
-          security: true,
-        },
-      );
-
-      return reply.redirect('/');
-    }
-
-    // Load current user from DB. We do this now in order to log user metadata,
-    // and also so that the error page can still display the logged-in state of
-    // the non-admin users.
     const user = await User.findById(cookie.userId);
 
     // Check user authentication and admin permissions.
@@ -120,16 +99,8 @@ module.exports = {
    * Admin: OAuth Client edit form
    */
   async adminOauthClientEdit(request, reply) {
-    // Load user cookie. Redirect to homepage when no cookie found.
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId || !cookie.totp) {
-      return reply.redirect('/');
-    }
-
-    // Load current user from DB. We do this now in order to log user metadata,
-    // and also so that the error page can still display the logged-in state of
-    // the non-admin users.
-    const user = await User.findOne({ _id: cookie.userId });
+    const user = await User.findById(cookie.userId);
 
     // Check user authentication and admin permissions.
     try {

@@ -657,31 +657,8 @@ module.exports = {
 
   // Display a default user page when user is logged in without OAuth
   async user(request, reply) {
-    // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId || !cookie.totp) {
-      logger.info(
-        '[ViewController->user] User had no session. Redirecting to login.',
-        {
-          request,
-        },
-      );
-      return reply.redirect('/');
-    }
-
-    const user = await User.findById(cookie.userId).catch((err) => {
-      logger.warn(
-        '[ViewController->user] Could not find user ID in DB.',
-        {
-          request,
-          fail: true,
-          user: {
-            id: cookie.userId,
-          },
-          stack_trace: err.stack,
-        },
-      );
-    });
+    const user = await User.findById(cookie.userId);
 
     logger.info(
       '[ViewController->user] Showing user dashboard.',
@@ -702,20 +679,8 @@ module.exports = {
 
   // View the user profile.
   async profile(request, reply) {
-    // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId || !cookie.totp) {
-      logger.info(
-        '[ViewController->profile] User had no session. Redirecting to login.',
-        {
-          request,
-        },
-      );
-      return reply.redirect('/');
-    }
-
-    // Look up user in DB.
-    const user = await User.findOne({ _id: cookie.userId });
+    const user = await User.findById(cookie.userId);
 
     // If the cookie has an alert to display, load it into the page and erase it
     // from the cookie.
@@ -735,20 +700,8 @@ module.exports = {
 
   // Edit the user profile.
   async profileEdit(request, reply) {
-    // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId || !cookie.totp) {
-      logger.info(
-        '[ViewController->profileEdit] User had no session. Redirecting to login.',
-        {
-          request,
-        },
-      );
-      return reply.redirect('/');
-    }
-
-    // Load user from DB
-    const user = await User.findOne({ _id: cookie.userId });
+    const user = await User.findById(cookie.userId);
 
     // If the cookie has an alert to display, load it into the page and erase it
     // from the cookie.
@@ -769,20 +722,8 @@ module.exports = {
    * Form submission handler for basic profile management.
    */
   async profileEditSubmit(request, reply) {
-    // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId || !cookie.totp) {
-      logger.info(
-        '[ViewController->profileEditSubmit] User had no session. Redirecting to login.',
-        {
-          request,
-        },
-      );
-      return reply.redirect('/');
-    }
-
-    // Load user from DB for some validation operations.
-    const user = await User.findOne({ _id: cookie.userId });
+    const user = await User.findById(cookie.userId);
 
     // We might need to send feedback. Create an alert/errors variables.
     let alert = {};
@@ -870,20 +811,8 @@ module.exports = {
    * Form submission handler for email management.
    */
   async profileEmailsSubmit(request, reply) {
-    // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId || !cookie.totp) {
-      logger.info(
-        '[ViewController->profileEmailsSubmit] User had no session. Redirecting to login.',
-        {
-          request,
-        },
-      );
-      return reply.redirect('/');
-    }
-
-    // Load user from DB for some validation operations.
-    const user = await User.findOne({ _id: cookie.userId });
+    const user = await User.findById(cookie.userId);
 
     // We might need to send feedback. Create an alert/errors variables.
     let alert = {};
@@ -1039,17 +968,8 @@ module.exports = {
 
   // Display the user settings page when user is logged in.
   async settings(request, reply) {
-    // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId || !cookie.totp) {
-      logger.info(
-        '[ViewController->settings] User had no session. Redirecting to login.',
-        {
-          request,
-        },
-      );
-      return reply.redirect('/');
-    }
+    const user = await User.findById(cookie.userId);
 
     // Check for user feedback and display
     let alert;
@@ -1058,9 +978,6 @@ module.exports = {
       delete cookie.alert;
       request.yar.set('session', cookie);
     }
-
-    // Load user from DB.
-    const user = await User.findById(cookie.userId);
 
     // Render settings page.
     return reply.view('settings', {
@@ -1073,19 +990,7 @@ module.exports = {
    * Handle form submissions related to OAuth Client management.
    */
   async settingsOauthSubmit(request, reply) {
-    // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId || !cookie.totp) {
-      logger.info(
-        '[ViewController->settingsOauthSubmit] User had no session. Redirecting to login.',
-        {
-          request,
-        },
-      );
-      return reply.redirect('/');
-    }
-
-    // Load current user from DB.
     const user = await User.findById(cookie.userId);
 
     // Set up user feedback.
@@ -1150,20 +1055,8 @@ module.exports = {
    * It shows the three form elements (current, new, confirm).
    */
   async settingsPassword(request, reply) {
-    // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId || !cookie.totp) {
-      logger.info(
-        '[ViewController->settingsPassword] User had no session. Redirecting to login.',
-        {
-          request,
-        },
-      );
-      return reply.redirect('/');
-    }
-
-    // Load current user from DB.
-    const user = await User.findOne({ _id: cookie.userId });
+    const user = await User.findById(cookie.userId);
 
     // Check for user feedback to display.
     let alert;
@@ -1197,24 +1090,12 @@ module.exports = {
    * in order to securely store the original password submissions temporarily.
    */
   async settingsPasswordSubmit(request, reply) {
-    // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId || !cookie.totp) {
-      logger.info(
-        '[ViewController->settingsPasswordSubmit] User had no session. Redirecting to login.',
-        {
-          request,
-        },
-      );
-      return reply.redirect('/');
-    }
+    const user = await User.findById(cookie.userId);
 
     // Set up user feedback
     const alert = {};
     const reasons = [];
-
-    // Load current user from DB.
-    const user = await User.findOne({ _id: cookie.userId });
 
     // Enforce TOTP if necessary.
     const token = request.payload && request.payload['x-hid-totp'];
@@ -1314,21 +1195,8 @@ module.exports = {
    * User settings: render form to manage 2FA
    */
   async settingsSecurity(request, reply) {
-    // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-
-    if (!cookie || !cookie.userId || !cookie.totp) {
-      logger.info(
-        '[ViewController->settingsSecurity] User had no session. Redirecting to login.',
-        {
-          request,
-        },
-      );
-      return reply.redirect('/');
-    }
-
-    // Load current user from DB.
-    const user = await User.findOne({ _id: cookie.userId });
+    const user = await User.findById(cookie.userId);
 
     // Check for user feedback to display.
     let alert;
@@ -1383,26 +1251,14 @@ module.exports = {
    * User settings: handle submissions to manage 2FA
    */
   async settingsSecuritySubmit(request, reply) {
-    // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-
-    if (!cookie || !cookie.userId || !cookie.totp) {
-      logger.info(
-        '[ViewController->settingsSecuritySubmit] User had no session. Redirecting to login.',
-        {
-          request,
-        },
-      );
-      return reply.redirect('/');
-    }
+    const user = await User.findById(cookie.userId);
 
     // Set up all our variables for state management
     const alert = {};
     const reasons = [];
     let action = false;
 
-    // Load current user from DB.
-    const user = await User.findOne({ _id: cookie.userId });
 
     // Check which action we're taking
     if (request.payload && typeof request.payload.action !== 'undefined') {
@@ -1536,20 +1392,8 @@ module.exports = {
    * User settings: render form to delete account
    */
   async settingsDelete(request, reply) {
-    // If the user is not authenticated, redirect to the login page
     const cookie = request.yar.get('session');
-    if (!cookie || !cookie.userId || !cookie.totp) {
-      logger.info(
-        '[ViewController->settingsDelete] User had no session. Redirecting to login.',
-        {
-          request,
-        },
-      );
-      return reply.redirect('/');
-    }
-
-    // Load current user from DB.
-    const user = await User.findOne({ _id: cookie.userId });
+    const user = await User.findById(cookie.userId);
 
     // Check for user feedback to display.
     let alert;
@@ -1580,20 +1424,8 @@ module.exports = {
    */
   async settingsDeleteSubmit(request, reply) {
     try {
-      // If the user is not authenticated, redirect to the login page
       const cookie = request.yar.get('session');
-      if (!cookie || !cookie.userId || !cookie.totp) {
-        logger.info(
-          '[ViewController->settingsDeleteSubmit] User had no session. Redirecting to login.',
-          {
-            request,
-          },
-        );
-        return reply.redirect('/');
-      }
-
-      // Load current user from DB.
-      const user = await User.findOne({ _id: cookie.userId });
+      const user = await User.findById(cookie.userId);
 
       // Set up user feedback
       const alert = {};
