@@ -13,7 +13,7 @@ internals.implementation = () => ({
     const user = await User.findById(cookie.userId);
 
     // We found a user. Pass credentials along and finish.
-    if (user) {
+    if (user && cookie.totp) {
       return h.authenticated({ credentials: user });
     }
 
