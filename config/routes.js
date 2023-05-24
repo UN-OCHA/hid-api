@@ -755,4 +755,16 @@ module.exports = [
       handler: NumbersController.numbers,
     },
   },
+
+  /**
+   * Branded 404
+   */
+  {
+    method: ['GET', 'POST'],
+    path: '/{any*}',
+    handler: ViewController.http404Page,
+    options: {
+      auth: false,
+    },
+  }
 ];

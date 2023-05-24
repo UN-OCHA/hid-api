@@ -1552,4 +1552,25 @@ module.exports = {
     // If we somehow fall through, redirect to homepage.
     return reply.redirect('/');
   },
+
+  /**
+   * Utilities: HTTP 404 Page
+   */
+  async http404Page(request, reply) {
+    const accept = request.raw.req.headers.accept;
+
+    // Check header if there’s a request accepting HTML.
+    if (accept && accept.match(/html/)) {
+      return reply.view('message', {
+        title: 'Not Found',
+        alert: {
+          type: 'warning',
+          message: '<p>The URL you requested doesn\'t exist.</p>',
+        },
+      }).code(404);
+    }
+
+    // Fallback to API behavior.
+    return Boom.notFound();
+  },
 };
