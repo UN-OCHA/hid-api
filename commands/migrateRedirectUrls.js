@@ -1,14 +1,15 @@
 /**
  * @module migrateRedirectUrls
- * @description Migrates the redirect URLs to an array to allow for multiple redirect URLs
+ * @description Migrates the redirect URLs to an array to allow for multiple
+ * redirect URLs
  */
 const mongoose = require('mongoose');
-const app = require('..');
-
-const store = app.config.env.database.store;
-mongoose.connect(store.uri, store.options);
-
 const Client = require('../api/models/Client');
+const env = require('../config/env');
+
+// Connect to DB.
+const store = env.database.store;
+mongoose.connect(store.uri, store.options);
 
 async function run() {
   const cursor = Client.find({ }).cursor({ noCursorTimeout: true });

@@ -29,4 +29,13 @@ module.exports = {
     'prefer-destructuring': 'off',
     'import/no-unresolved': [2, {}],
   },
+  overrides: [
+    {
+      files: ['_tests/unit/*.js'],
+      rules: {
+        'object-curly-newline': 0,
+        'no-multi-assign': 0,
+      },
+    },
+  ],
 };

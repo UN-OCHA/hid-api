@@ -13,12 +13,14 @@
   "main": "index.js",
   "scripts": {
     "css": "postcss assets/css/hid.css -o assets/css/hid.min.css",
-    "dev": "node ./node_modules/nodemon/bin/nodemon.js ./server.js -e html,css,js,ejs --ignore './_tests/' --ignore './commands/'",
+    "dev": "node ./node_modules/nodemon/bin/nodemon.js ./index.js -e html,css,js,ejs --ignore './_tests/' --ignore './commands/'",
     "docs": "swagger-inline './api/**/*' --base 'docs/swaggerBase.yaml' > docs/hid.yml",
-    "start": "node ./server.js",
+    "start": "node ./index.js",
     "lint": "eslint . && ejslint templates/* emails/*",
-    "e2e": "jest _tests/e2e/*.test.js",
-    "test": "npm run lint && npm run e2e -- -t '^(?!.*no-ci).*$'",
+    "e2e": "jest _tests/e2e/*.test.js -- -t '^(?!.*no-ci).*$'",
+    "test": "npm run lint && npm run unit",
+    "unit": "lab -l -t 0 -v _tests/unit/*.test.js",
+    "unit-report": "lab -l -t 0 -v _tests/unit/*.test.js -r html -o __coverage.html",
     "release": "standard-version"
   },
   "dependencies": {
@@ -65,6 +67,8 @@
   },
   "devDependencies": {
     "@babel/preset-env": "^7.13.12",
+    "@hapi/code": "^9.0.3",
+    "@hapi/lab": "^25.1.2",
     "acorn": "^5.7.4",
     "axios": "^0.21.2",
     "diff": ">=3.5.0",
