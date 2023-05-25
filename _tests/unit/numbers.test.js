@@ -1,17 +1,22 @@
 const Lab = require('@hapi/lab');
 const { expect } = require('@hapi/code');
-const { init } = require('../../server');
+const { setup, init } = require('../../server');
 
-const { after, before, describe, it } = exports.lab = Lab.script();
+const { afterEach, before, beforeEach, describe, it } = exports.lab = Lab.script();
 
 describe('GET /api/v3/numbers', () => {
   let server;
 
+  // Only the first alphabetical test needs to run setup.
   before(async () => {
+    server = await setup();
+  });
+
+  beforeEach(async () => {
     server = await init();
   });
 
-  after(async () => {
+  afterEach(async () => {
     await server.stop();
   });
 

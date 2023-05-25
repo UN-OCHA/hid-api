@@ -45,9 +45,9 @@ const preResponse = (request, reply) => {
 // Define server
 const server = hapi.Server(webConfig.options);
 
-// Define server init
-exports.init = async () => {
-  // Plugins
+// Server setup
+exports.setup = async () => {
+  // Server plugins
   await server.register(webConfig.plugins);
   webConfig.onPluginsLoaded(server);
 
@@ -109,8 +109,12 @@ exports.init = async () => {
 
   server.ext('onPreResponse', preResponse);
 
-  await server.initialize();
+  return server;
+};
 
+// Define server init
+exports.init = async () => {
+  await server.initialize();
   return server;
 };
 
