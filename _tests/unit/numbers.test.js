@@ -8,9 +8,9 @@ describe('GET /api/v3/numbers', () => {
   let server;
 
   // Only the first alphabetical test needs to run setup.
-  before(async () => {
-    server = await setup();
-  });
+  // before(async () => {
+  //   server = await setup();
+  // });
 
   beforeEach(async () => {
     server = await init();
