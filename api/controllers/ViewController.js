@@ -1555,12 +1555,15 @@ module.exports = {
 
   /**
    * Utilities: HTTP 404 Page
+   *
+   * Sends JSON by default.
+   * Sends HTML if `text/html` content-type is anywhere in the Accept header.
    */
   async http404Page(request, reply) {
     const accept = request.raw.req.headers.accept;
 
     // Check header if there’s a request accepting HTML.
-    if (accept && accept.match(/html/)) {
+    if (accept && accept.match(/text\/html/)) {
       return reply.view('message', {
         title: 'Not Found',
         alert: {
@@ -1570,7 +1573,7 @@ module.exports = {
       }).code(404);
     }
 
-    // Fallback to API behavior.
+    // Fallback to JSON response.
     return Boom.notFound();
   },
 };
