@@ -112,7 +112,7 @@ const config = {
 
         // Configure how cookies behave in browsers.
         cookieOptions: {
-          password: process.env.COOKIE_PASSWORD,
+          password: process.env.COOKIE_PASSWORD || 'testtesttesttesttesttesttesttest',
           isSecure: process.env.NODE_ENV === 'production',
           isHttpOnly: true,
         },
