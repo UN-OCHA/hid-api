@@ -9,11 +9,15 @@ const internals = {};
 
 internals.implementation = () => ({
   async authenticate(request, h) {
-    let cookie = request.yar.get('session');
-    const user = await User.findById(cookie.userId);
+    const cookie = request.yar.get('session');
+    let user;
+
+    if (cookie && cookie.userId) {
+      user = await User.findById(cookie.userId);
+    }
 
     // We found a user. Pass credentials along and finish.
-    if (user) {
+    if (user && cookie.totp) {
       return h.authenticated({ credentials: user });
     }
 
@@ -31,13 +35,13 @@ internals.implementation = () => ({
     );
 
     // Set an alert for after the redirect.
-    cookie = {
+    const newCookie = {
       alert: {
         type: 'warning',
         message: '<p>Log in to access your account.</p>',
       },
     };
-    request.yar.set('session', cookie);
+    request.yar.set('session', newCookie);
 
     // If you redirect here without takeover() it will create errors. The link
     // below leads to @hapi/cookie which offers a configurable redirect option.
