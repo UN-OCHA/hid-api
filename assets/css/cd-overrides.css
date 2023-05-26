@@ -31,6 +31,12 @@ body,
     url(/assets/img/logos/hid-logo.svg) center no-repeat;
 }
 
+@media (min-width: 768px) {
+  .cd-site-logo {
+    background: none;
+  }
+}
+
 /**
  * CD Main Nav
  */
