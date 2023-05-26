@@ -2,6 +2,7 @@
  * Server Configuration
  */
 const inert = require('@hapi/inert');
+const crypto = require('crypto');
 const ejs = require('ejs');
 const vision = require('@hapi/vision');
 const yar = require('@hapi/yar');
@@ -112,7 +113,7 @@ const config = {
 
         // Configure how cookies behave in browsers.
         cookieOptions: {
-          password: process.env.COOKIE_PASSWORD || 'testtesttesttesttesttesttesttest',
+          password: process.env.COOKIE_PASSWORD || crypto.randomBytes(16).toString('hex'),
           isSecure: process.env.NODE_ENV === 'production',
           isHttpOnly: true,
         },
