@@ -12,12 +12,15 @@ internals.implementation = () => ({
     const cookie = request.yar.get('session');
     let user;
 
-    if (cookie && cookie.userId) {
+    // Check that all necessary cookie data exists.
+    //
+    // @see AuthController->loginHelper
+    if (cookie && cookie.userId && cookie.totp) {
       user = await User.findById(cookie.userId);
     }
 
-    // We found a user. Pass credentials along and finish.
-    if (user && cookie.totp) {
+    // Find a user, pass along credentials, and finish.
+    if (user) {
       return h.authenticated({ credentials: user });
     }
 
