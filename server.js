@@ -45,13 +45,20 @@ const preResponse = (request, reply) => {
 // Define server
 const server = hapi.Server(webConfig.options);
 
-// Define server init
-exports.init = async () => {
-  // Plugins
+// Server setup
+exports.setup = async () => {
+  // Server plugins
   await server.register(webConfig.plugins);
   webConfig.onPluginsLoaded(server);
-  server.auth.strategy('hid', 'hapi-auth-hid');
-  server.auth.default('hid');
+
+  // Cookie-based auth for the website.
+  server.auth.strategy('session', 'hapi-auth-session');
+
+  // Token-based auth for API calls.
+  server.auth.strategy('api', 'hapi-auth-api');
+
+  // Default authentication is for API calls using Bearer/OAuth token.
+  server.auth.default('api');
 
   // Define routes
   server.route(app.config.routes);
@@ -102,8 +109,12 @@ exports.init = async () => {
 
   server.ext('onPreResponse', preResponse);
 
-  await server.initialize();
+  return server;
+};
 
+// Define server init
+exports.init = async () => {
+  await server.initialize();
   return server;
 };
 

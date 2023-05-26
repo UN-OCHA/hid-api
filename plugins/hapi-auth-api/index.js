@@ -1,25 +1,16 @@
+/**
+ * @module hapi-auth-api
+ * @description Bearer token auth strategy for HID API.
+ */
 const Boom = require('@hapi/boom');
 const acceptLanguage = require('accept-language');
+const JwtService = require('../../api/services/JwtService');
 const JwtToken = require('../../api/models/JwtToken');
 const OauthToken = require('../../api/models/OauthToken');
 const User = require('../../api/models/User');
-const JwtService = require('../../api/services/JwtService');
-const config = require('../../config/env');
-
-const { logger } = config;
+const { logger } = require('../../config/env');
 
 const internals = {};
-
-module.exports = {
-  name: 'hapi-auth-hid',
-  version: '1.0.0',
-  requirements: {
-    hapi: '>=17.7.0',
-  },
-  register: (server) => {
-    server.auth.scheme('hapi-auth-hid', internals.implementation);
-  },
-};
 
 internals.tokenToUser = async (token) => {
   try {
@@ -199,3 +190,14 @@ internals.implementation = () => ({
     payload: true,
   },
 });
+
+module.exports = {
+  name: 'hapi-auth-api',
+  version: '1.0.0',
+  requirements: {
+    hapi: '>=17.7.0',
+  },
+  register: (server) => {
+    server.auth.scheme('hapi-auth-api', internals.implementation);
+  },
+};

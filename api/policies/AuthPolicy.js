@@ -1,13 +1,11 @@
 /**
-* @module AuthPolicy
-* @description a collection of functions to enforce authentication and user
-* permissions for HID.
-*/
+ * @module AuthPolicy
+ * @description a collection of functions to enforce authentication and user
+ * permissions for HID.
+ */
 const Boom = require('@hapi/boom');
 const authenticator = require('authenticator');
-const config = require('../../config/env');
-
-const { logger } = config;
+const { logger } = require('../../config/env');
 
 /**
  * Enforces a _mandatory_ 2FA code requirement. If the user doesn't have 2FA

@@ -35,6 +35,11 @@ module.exports = {
       rules: {
         'object-curly-newline': 0,
         'no-multi-assign': 0,
+        'no-unused-vars': [
+          'error', {
+            varsIgnorePattern: 'setup|before',
+          },
+        ],
       },
     },
   ],

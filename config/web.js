@@ -2,6 +2,7 @@
  * Server Configuration
  */
 const inert = require('@hapi/inert');
+const crypto = require('crypto');
 const ejs = require('ejs');
 const vision = require('@hapi/vision');
 const yar = require('@hapi/yar');
@@ -12,7 +13,8 @@ const Blankie = require('blankie');
 const hapiRateLimit = require('hapi-rate-limit');
 const oauth2orizeExt = require('oauth2orize-openid');
 const hapiOauth2Orize = require('../plugins/hapi-oauth2orize');
-const hapiAuthHid = require('../plugins/hapi-auth-hid');
+const hapiAuthApi = require('../plugins/hapi-auth-api');
+const hapiAuthSession = require('../plugins/hapi-auth-session');
 const Client = require('../api/models/Client');
 const OauthToken = require('../api/models/OauthToken');
 const JwtService = require('../api/services/JwtService');
@@ -111,7 +113,7 @@ const config = {
 
         // Configure how cookies behave in browsers.
         cookieOptions: {
-          password: process.env.COOKIE_PASSWORD,
+          password: process.env.COOKIE_PASSWORD || crypto.randomBytes(16).toString('hex'),
           isSecure: process.env.NODE_ENV === 'production',
           isHttpOnly: true,
         },
@@ -152,7 +154,10 @@ const config = {
       },
     },
     {
-      plugin: hapiAuthHid,
+      plugin: hapiAuthApi,
+    },
+    {
+      plugin: hapiAuthSession,
     },
     {
       plugin: Scooter,
