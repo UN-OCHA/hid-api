@@ -284,7 +284,7 @@ The command to make a release contains no flags:
 $ npm run release
 ```
 
-Review the commit and make any necessary adjustments to the CHANGELOG, using `git commit --amend` to add your changes to the existing commit that `standard-version` just created. Push your branch and open a PR to `dev`, which you can merge without review.
+Review the commit and make any necessary adjustments to the CHANGELOG, using `git commit --amend` to add your changes to the existing commit that `standard-version` just created. Make sure that the version number in `docs/swaggerBase.yml` matches your new version in `package.json`. Push your branch and open a PR to `dev`, which you can merge without review.
 
 [Create the new Release][new-release] using the GitHub UI with the following properties:
 
