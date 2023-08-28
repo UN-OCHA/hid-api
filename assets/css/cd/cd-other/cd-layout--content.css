@@ -1,0 +1,136 @@
+/**
+ * Common Design: Content Layouts
+ */
+
+/**
+ * Universal layout
+ *
+ * This layout is designed for browsers that support CSS 2.1 and basic media
+ * queries as defined in https://www.w3.org/TR/mediaqueries-3/ which itself is
+ * totally optional to render content legibly.
+ *
+ * Any advanced enhancements will be defined later in this file, but the rules
+ * in this section suffice to create a minimal layout that any browser handles.
+ */
+.cd-container {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1220px; /* --cd-max-width */
+  margin: 0 auto;
+  padding: 0 0.75rem; /* --cd-container-padding */
+}
+
+@media (min-width: 768px) {
+  .cd-container {
+    padding: 0 1.5rem; /* --cd-container-padding-tablet */
+  }
+}
+
+@media (min-width: 1200px) {
+  .cd-container {
+    padding: 0 2.5rem; /* --cd-container-padding-xlarge */
+  }
+}
+
+/**
+ * Since the universal layout is linear, add some space in between each section.
+ */
+.cd-layout__sidebar {
+  margin: 2rem 0;
+}
+
+/**
+ * Modern layout
+ *
+ * The remainder of this CSS file uses modern CSS to provide a flexible, RTL
+ * layout using flex-box, logical properties, and CSS Vars. The @supports block
+ * explicitly requires all three for the layout to apply. Any browser which
+ * doesn't meet these requirements will still utilize the basic layout provided
+ * unconditionally in the section above.
+ */
+@supports (display: flex) and (padding-inline: 1rem) and (color: var(--supports-test)) {
+  /**
+   * <main> content container
+   */
+  .cd-container[role=main] {
+    padding-block-start: 2rem;
+    padding-block-end: 2rem;
+  }
+
+  /**
+   * Content area should grow to fill available space, but also can shrink to
+   * accomodate any columns that are present.
+   */
+  .cd-layout__content {
+    flex: 1 1 auto;
+  }
+
+  /**
+   * Prevent sidebar from displaying when region is empty.
+   */
+  .cd-layout__sidebar:empty {
+    display: none;
+  }
+
+  /**
+   * Adopt column layout once space allows.
+   */
+  @media (min-width: 1024px) {
+    .cd-container[role=main] {
+      padding-block-start: 3rem;
+      padding-block-end: 4rem;
+    }
+
+    /**
+     * Use flex-box once window can accomodate columns.
+     */
+    .cd-layout {
+      display: flex;
+      flex-flow: row nowrap;
+      gap: 2rem;
+    }
+
+    /**
+     * Content area should grow to fill available space, but also can shrink to
+     * accomodate any columns that are present.
+     */
+    .cd-layout__content {
+      flex: 1 1 auto;
+    }
+
+    /**
+     * Sidebar(s) should be fixed width. See modifier class if the wider sidebar
+     * is desired on a particular website.
+     */
+    .cd-layout__sidebar {
+      flex: 0 0 285px;
+      margin: 0;
+      padding: var(--cd-container-padding);
+      background-color: var(--brand-grey);
+    }
+
+    /**
+     * Define the wide sidebar. This class isn't present in the default template
+     * and must be placed by overriding within a sub-theme.
+     */
+    .cd-layout__sidebar--wide {
+      flex-basis: 400px;
+    }
+
+    /**
+     * First sidebar might not be first in source order. Explicitly place it at
+     * the beginning of the flex container.
+     */
+    .cd-layout__sidebar--first {
+      order: -1;
+    }
+
+    /**
+     * Second sidebar might not be last in source order. Explicitly place it at
+     * the end of the flex container.
+     */
+    .cd-layout__sidebar--second {
+      order: 999;
+    }
+  }
+}

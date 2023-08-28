@@ -1,20 +1,21 @@
 /**
  * @module createOAuthClient
- * @description Create OAuth client.
+ * @description Create OAuth client. For use by Jenkins, it creates an OAuth
+ * Client with randomized data so they can be securely and randomly generated
+ * on our production website.
  *
- * docker-compose exec dev node ./commands/createOAuthClient.js
+ * docker-compose exec api node ./commands/createOAuthClient.js
  */
 const mongoose = require('mongoose');
 const args = require('yargs').argv;
-const app = require('../');
-const config = require('../config/env');
-
-const { logger } = config;
-
-const store = app.config.env.database.store;
-mongoose.connect(store.uri, store.options);
-
 const Client = require('../api/models/Client');
+const env = require('../config/env');
+
+const { logger } = env;
+
+// Connect to DB.
+const store = env.database.store;
+mongoose.connect(store.uri, store.options);
 
 // Generate a random secret each time we run the command
 const idChars = 'abcdefghijklmnopqrstuvwxyz';

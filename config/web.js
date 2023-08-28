@@ -2,6 +2,7 @@
  * Server Configuration
  */
 const inert = require('@hapi/inert');
+const crypto = require('crypto');
 const ejs = require('ejs');
 const vision = require('@hapi/vision');
 const yar = require('@hapi/yar');
@@ -12,12 +13,13 @@ const Blankie = require('blankie');
 const hapiRateLimit = require('hapi-rate-limit');
 const oauth2orizeExt = require('oauth2orize-openid');
 const hapiOauth2Orize = require('../plugins/hapi-oauth2orize');
-const hapiAuthHid = require('../plugins/hapi-auth-hid');
+const hapiAuthApi = require('../plugins/hapi-auth-api');
+const hapiAuthSession = require('../plugins/hapi-auth-session');
 const Client = require('../api/models/Client');
 const OauthToken = require('../api/models/OauthToken');
 const JwtService = require('../api/services/JwtService');
 
-module.exports = {
+const config = {
   /**
   * The port to bind the web server to
   */
@@ -58,36 +60,44 @@ module.exports = {
       },
     },
 
-    cache: [
-      // HID cannot be highly available unless server-side cookie storage is
-      // driven by a shared backend between API containers. We are using
-      // Redis because it's already in OCHA infra, and the MongoDB provider
-      // is unmaintained.
-      {
-        name: 'session',
-        provider: {
-          constructor: CatboxRedis,
-          options: {
-            partition: 'session',
-            host: process.env.REDIS_HOST || 'redis',
-            port: process.env.REDIS_PORT || 6379,
-            db: process.env.REDIS_DB || '0',
-          },
+    // HID cannot be highly available unless server-side cookie storage is
+    // driven by a shared backend between API containers. We are using
+    // Redis because it's already in OCHA infra, and the MongoDB provider
+    // is unmaintained.
+    //
+    // This cache gets disabled during testing. See modifications section below.
+    cache: [{
+      name: 'session',
+      provider: {
+        constructor: CatboxRedis,
+        options: {
+          partition: 'session',
+          host: process.env.REDIS_HOST || 'redis',
+          port: process.env.REDIS_PORT || 6379,
+          db: process.env.REDIS_DB || '0',
         },
       },
-    ],
+    }],
   },
 
   // Plugins.
   // They provide vital behaviors: template rendering, CSP, cookie config, etc
   plugins: [
     {
+      // Provides static file/directory handlers.
       plugin: inert,
     },
     {
+      // Provides template rendering support for Hapi.
       plugin: vision,
     },
     {
+      // yar - cookie management
+      //
+      // Like the cache itself, yar has to modify its behavior in certain
+      // environments. The defaults are for production using Redis.
+      //
+      // See modifications section below.
       plugin: yar,
       options: {
         cache: {
@@ -103,7 +113,7 @@ module.exports = {
 
         // Configure how cookies behave in browsers.
         cookieOptions: {
-          password: process.env.COOKIE_PASSWORD,
+          password: process.env.COOKIE_PASSWORD || crypto.randomBytes(16).toString('hex'),
           isSecure: process.env.NODE_ENV === 'production',
           isHttpOnly: true,
         },
@@ -144,7 +154,10 @@ module.exports = {
       },
     },
     {
-      plugin: hapiAuthHid,
+      plugin: hapiAuthApi,
+    },
+    {
+      plugin: hapiAuthSession,
     },
     {
       plugin: Scooter,
@@ -165,6 +178,7 @@ module.exports = {
           "'sha256-pJeCB2XoDM3l7akAolEPn5aJZEI3d+buFdkCCtUOcBs='",
         ],
         fontSrc: [
+          'self',
           'https://fonts.gstatic.com',
         ],
         scriptSrc: [
@@ -175,14 +189,20 @@ module.exports = {
           // Google reCAPTCHA v2: scripts to load UI. See frameSrc.
           'https://www.google.com',
           'https://www.gstatic.com',
-          // These hashes are for GA and our inline JS+feature detection.
-          "'sha256-zITkoAg4eI1v3VSFI+ATEQKWvoymQcxmFNojptzmlNw='",
-          "'sha256-Ch69wX3la/uD7qfUZRHgam3hofEvI6fesgFgtvG9rTM='",
+          'https://www.googletagmanager.com',
+          // GTM inline script.
+          "'sha256-e7CIW/Iehpzy0nB3j0M8Z6Wl1n+HE3rmyT2K0lz8na8='",
+          "'sha256-g62AIFyyvfvqRMhNu7QMQ0GMk0Rx+Bbk1KzTy+CzTCI='",
+          // Inline JS mustard-cut
+          "'sha256-/rGLbsC3KREsVOihkt0j7wGku9aMLV2tcrug1R+VUY0='",
         ],
         connectSrc: [
           'self',
           'https://www.google-analytics.com',
+          'https://analytics.google.com',
+          '*.analytics.google.com',
           'https://stats.g.doubleclick.net',
+          'https://fonts.googleapis.com',
           // API Docs connect to Stage by default
           'https://stage.api-humanitarian-id.ahconu.org',
         ],
@@ -195,6 +215,8 @@ module.exports = {
           // For 2FA setup, we display a dynamically generated image by inlining
           // base64-encoded QR code. 'data:' allows the image to be displayed.
           'data:',
+          'www.google-analytics.com',
+          'www.gstatic.com',
           // API Docs show a validator image
           'https://validator.swagger.io',
         ],
@@ -255,7 +277,6 @@ module.exports = {
       }
     }));
 
-
     oauth.exchange(oauth.exchanges.code(
       async (client, code, redirectURI, payload, authInfo, done) => {
         try {
@@ -314,3 +335,21 @@ module.exports = {
     });
   },
 };
+
+/**
+ * Environment-specific modifications
+ *
+ * Some config should vary by environment, so we make those adjustments here.
+ */
+
+// If we're running unit tests, avoid the Redis cache. Hapi uses an in-memory
+// cache by default and that works just fine for testing. The plugin being
+// modified is yar.
+if (process.env.NODE_ENV === 'test') {
+  delete config.options.cache;
+  delete config.plugins[2].options.cache.cache;
+  delete config.plugins[2].options.cache.maxCookieSize;
+}
+
+// Export our config after env-specific modifications.
+module.exports = config;

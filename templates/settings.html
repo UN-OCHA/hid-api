@@ -1,10 +1,10 @@
 <%- include('includes/header') %>
-<link rel="stylesheet" href="/assets/css/tabs.css">
-<link rel="stylesheet" href="/assets/css/settings.css">
-<link rel="stylesheet" href="/assets/css/client.css">
+<link rel="stylesheet" href="/assets/css/hid-tabs/hid-tabs.css">
+<link rel="stylesheet" href="/assets/css/hid-client/hid-client.css">
+<link rel="stylesheet" href="/assets/css/pages/settings.css">
 
-<main role="main" id="main-content" class="cd-container">
-  <div class="cd-layout-content">
+<main role="main" id="main-content" class="cd-layout cd-container">
+  <div class="cd-layout__content">
     <h1 class="cd-page-title page-header__heading">Settings for <%= user.name %></h1>
     <%- include('includes/alert') %>
     <div class="tabbed">
@@ -30,7 +30,7 @@
             <p><em>You haven't authorized any websites yet. After you log in with HID on one of our <a href="https://about.humanitarian.id/partners-using-our-authentication-service.html" target="_blank" rel="noopener">Partner Sites</a> you will see it listed here.</em></p>
           <% } else { %>
             <p>You have granted <strong><%= user.authorizedClients.length %> website<%= user.authorizedClients.length === 1 ? '' : 's' %></strong> access to your profile.</p>
-            <ul class="oauth-clients-list [ flow ]">
+            <ul class="oauth-clients-list [ cd-flow ]">
             <%
               const sorted = user.authorizedClients.sort((a, b) => a.name.localeCompare(b.name));
               sorted.forEach(function(client) {

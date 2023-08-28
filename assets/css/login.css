@@ -1,9 +1,0 @@
-/**
- * Login page
- */
-.page--login {}
-
-.page--login .cd-grid > * {
-  display: block;
-  background: transparent;
-}

@@ -1,0 +1,49 @@
+/**
+ * Common Design: Copyright section
+ */
+.cd-footer-copyright {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  max-width: 390px;
+  margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .cd-footer-copyright {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin: 0;
+    margin-top: 34px; /* Align with provide-by main text. */
+    text-align: end;
+  }
+}
+
+.cd-footer-copyright__link {
+  line-height: 0; /* ensures flex centers it correctly */
+}
+
+.cd-footer-copyright svg {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  margin: 0 auto;
+  fill: var(--cd-white);
+}
+
+/* To override `.cd-footer a` we must use tag in selector */
+a.cd-footer-copyright__link:hover {
+  transition: opacity 0.1666s ease-in-out;
+  opacity: 0.8;
+}
+
+/* To override `.cd-footer a` we must use tag in selector */
+a.cd-footer-copyright__link:focus-visible {
+  outline-offset: 5px;
+}
+
+/* To override `.cd-footer a` we must use tag in selector */
+.cd-footer-copyright__text a:focus {
+  outline-offset: 1px;
+}

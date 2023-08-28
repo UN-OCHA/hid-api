@@ -1,4 +1,4 @@
-/* eslint-disable import/no-unresolved */
+/* eslint-disable import/no-unresolved, import/no-import-module-exports, import/extensions */
 
 //
 // Import any possible environment.

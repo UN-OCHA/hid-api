@@ -1,3 +1,4 @@
+/* eslint-disable import/no-import-module-exports */
 import env from './_env';
 
 /**
@@ -46,7 +47,6 @@ module.exports = {
     return page.frames()[1];
   },
 
-
   //
   // Clear Mailhog.
   //
@@ -61,7 +61,7 @@ module.exports = {
     await page.waitForTimeout(1000);
 
     // Confirm everything got cleared out.
-    const numMessages = await page.$$eval('.messages > *', el => el.length);
+    const numMessages = await page.$$eval('.messages > *', (el) => el.length);
     expect(numMessages).toBe(0);
   },
 };

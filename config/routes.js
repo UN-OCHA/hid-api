@@ -8,11 +8,11 @@
  * @see https://hapi.dev/tutorials/routing/
  */
 const Joi = require('joi');
-
 const AdminController = require('../api/controllers/AdminController');
 const AuthController = require('../api/controllers/AuthController');
 const AuthPolicy = require('../api/policies/AuthPolicy');
 const ClientController = require('../api/controllers/ClientController');
+const NumbersController = require('../api/controllers/NumbersController');
 const TOTPController = require('../api/controllers/TOTPController');
 const UserController = require('../api/controllers/UserController');
 const UserPolicy = require('../api/policies/UserPolicy');
@@ -23,12 +23,24 @@ const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 module.exports = [
 
   /**
-   * Render the login view
+   * Public-facing pages
+   *
+   * None of these routes require a session. Account setup/recovery actions are
+   * all included here: registration, verify, password reset, API docs, etc.
    */
   {
     method: 'GET',
     path: '/',
     handler: ViewController.login,
+    options: {
+      auth: false,
+    },
+  },
+
+  {
+    method: 'POST',
+    path: '/login',
+    handler: AuthController.login,
     options: {
       auth: false,
     },
@@ -108,145 +120,6 @@ module.exports = [
 
   {
     method: 'GET',
-    path: '/user',
-    handler: ViewController.user,
-    options: {
-      auth: false,
-    },
-  },
-
-  {
-    method: 'GET',
-    path: '/profile',
-    handler: ViewController.profile,
-    options: {
-      auth: false,
-    },
-  },
-
-  {
-    method: 'GET',
-    path: '/profile/edit',
-    handler: ViewController.profileEdit,
-    options: {
-      auth: false,
-    },
-  },
-
-  {
-    method: 'POST',
-    path: '/profile/edit',
-    handler: ViewController.profileEditSubmit,
-    options: {
-      auth: false,
-    },
-  },
-
-  {
-    method: 'POST',
-    path: '/profile/edit/emails',
-    handler: ViewController.profileEmailsSubmit,
-    options: {
-      auth: false,
-    },
-  },
-
-  {
-    method: 'GET',
-    path: '/settings',
-    handler: ViewController.settings,
-    options: {
-      auth: false,
-    },
-  },
-  {
-    method: 'POST',
-    path: '/settings/oauth-clients',
-    handler: ViewController.settingsOauthSubmit,
-    options: {
-      auth: false,
-    },
-  },
-
-  {
-    method: 'GET',
-    path: '/settings/password',
-    handler: ViewController.settingsPassword,
-    options: {
-      auth: false,
-    },
-  },
-  {
-    method: 'POST',
-    path: '/settings/password',
-    handler: ViewController.settingsPasswordSubmit,
-    options: {
-      auth: false,
-    },
-  },
-
-  {
-    method: 'GET',
-    path: '/settings/security',
-    handler: ViewController.settingsSecurity,
-    options: {
-      auth: false,
-    },
-  },
-  {
-    method: 'POST',
-    path: '/settings/security',
-    handler: ViewController.settingsSecuritySubmit,
-    options: {
-      auth: false,
-    },
-  },
-
-  {
-    method: 'GET',
-    path: '/settings/delete',
-    handler: ViewController.settingsDelete,
-    options: {
-      auth: false,
-    },
-  },
-  {
-    method: 'POST',
-    path: '/settings/delete',
-    handler: ViewController.settingsDeleteSubmit,
-    options: {
-      auth: false,
-    },
-  },
-
-  {
-    method: 'GET',
-    path: '/admin',
-    handler: AdminController.adminOauthClients,
-    options: {
-      auth: false,
-    },
-  },
-  {
-    method: 'GET',
-    path: '/admin/client/{id}',
-    handler: AdminController.adminOauthClientEdit,
-    options: {
-      auth: false,
-    },
-  },
-  {
-    method: 'POST',
-    path: '/admin/client',
-    handler: AdminController.adminOauthClientEditSubmit,
-    options: {
-      auth: false,
-    },
-  },
-
-
-  {
-    method: 'GET',
     path: '/docs/{param*}',
     handler: {
       directory: {
@@ -255,6 +128,197 @@ module.exports = [
     },
     options: {
       auth: false,
+    },
+  },
+
+  /**
+   * Logged-in pages.
+   *
+   * You have to be logged in with a verified account to access these pages.
+   */
+  {
+    method: 'GET',
+    path: '/user',
+    handler: ViewController.user,
+    options: {
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
+    },
+  },
+
+  {
+    method: 'GET',
+    path: '/profile',
+    handler: ViewController.profile,
+    options: {
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
+    },
+  },
+
+  {
+    method: 'GET',
+    path: '/profile/edit',
+    handler: ViewController.profileEdit,
+    options: {
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
+    },
+  },
+
+  {
+    method: 'POST',
+    path: '/profile/edit',
+    handler: ViewController.profileEditSubmit,
+    options: {
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
+    },
+  },
+
+  {
+    method: 'POST',
+    path: '/profile/edit/emails',
+    handler: ViewController.profileEmailsSubmit,
+    options: {
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
+    },
+  },
+
+  {
+    method: 'GET',
+    path: '/settings',
+    handler: ViewController.settings,
+    options: {
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
+    },
+  },
+  {
+    method: 'POST',
+    path: '/settings/oauth-clients',
+    handler: ViewController.settingsOauthSubmit,
+    options: {
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
+    },
+  },
+
+  {
+    method: 'GET',
+    path: '/settings/password',
+    handler: ViewController.settingsPassword,
+    options: {
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
+    },
+  },
+  {
+    method: 'POST',
+    path: '/settings/password',
+    handler: ViewController.settingsPasswordSubmit,
+    options: {
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
+    },
+  },
+
+  {
+    method: 'GET',
+    path: '/settings/security',
+    handler: ViewController.settingsSecurity,
+    options: {
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
+    },
+  },
+  {
+    method: 'POST',
+    path: '/settings/security',
+    handler: ViewController.settingsSecuritySubmit,
+    options: {
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
+    },
+  },
+
+  {
+    method: 'GET',
+    path: '/settings/delete',
+    handler: ViewController.settingsDelete,
+    options: {
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
+    },
+  },
+  {
+    method: 'POST',
+    path: '/settings/delete',
+    handler: ViewController.settingsDeleteSubmit,
+    options: {
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
+    },
+  },
+
+  {
+    method: 'GET',
+    path: '/admin',
+    handler: AdminController.adminOauthClients,
+    options: {
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
+    },
+  },
+  {
+    method: 'GET',
+    path: '/admin/client/{id}',
+    handler: AdminController.adminOauthClientEdit,
+    options: {
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
+    },
+  },
+  {
+    method: 'POST',
+    path: '/admin/client',
+    handler: AdminController.adminOauthClientEditSubmit,
+    options: {
+      auth: {
+        mode: 'required',
+        strategy: 'session',
+      },
     },
   },
 
@@ -279,15 +343,9 @@ module.exports = [
     },
   },
 
-  {
-    method: 'POST',
-    path: '/login',
-    handler: AuthController.login,
-    options: {
-      auth: false,
-    },
-  },
-
+  /**
+   * OAuth
+   */
   {
     method: 'GET',
     path: '/oauth/authorize',
@@ -318,14 +376,17 @@ module.exports = [
   {
     method: ['GET', 'POST'],
     path: '/account.json',
+    handler: AuthController.showAccount,
     options: {
       pre: [
         AuthPolicy.isUser,
       ],
-      handler: AuthController.showAccount,
     },
   },
 
+  /**
+   * API: JWT management
+   */
   {
     method: 'POST',
     path: '/api/v3/jsonwebtoken',
@@ -344,6 +405,9 @@ module.exports = [
     handler: AuthController.blacklistJwt,
   },
 
+  /**
+   * API: User management
+   */
   {
     method: 'POST',
     path: '/api/v3/user',
@@ -380,11 +444,11 @@ module.exports = [
   {
     method: 'PUT',
     path: '/api/v3/user/{id}',
+    handler: UserController.update,
     options: {
       pre: [
         UserPolicy.canUpdate,
       ],
-      handler: UserController.update,
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
@@ -396,12 +460,12 @@ module.exports = [
   {
     method: 'DELETE',
     path: '/api/v3/user/{id}',
+    handler: UserController.destroy,
     options: {
       pre: [
         UserPolicy.canUpdate,
         AuthPolicy.isTOTPEnabledAndValid,
       ],
-      handler: UserController.destroy,
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
@@ -418,6 +482,7 @@ module.exports = [
       auth: false,
     },
   },
+
   {
     method: 'POST',
     path: '/api/v3/user/password',
@@ -430,11 +495,27 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v3/user/{id}/password',
+    handler: UserController.updatePassword,
     options: {
       pre: [
         AuthPolicy.isTOTPEnabledAndValid,
       ],
-      handler: UserController.updatePassword,
+      validate: {
+        params: Joi.object({
+          id: Joi.string().regex(objectIdRegex),
+        }),
+      },
+    },
+  },
+
+  {
+    method: 'POST',
+    path: '/api/v3/user/{id}/password-admin',
+    handler: UserController.adminForceUpdatePassword,
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
@@ -446,11 +527,11 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v3/user/{id}/emails',
+    handler: UserController.addEmail,
     options: {
       pre: [
         UserPolicy.canUpdate,
       ],
-      handler: UserController.addEmail,
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
@@ -462,12 +543,12 @@ module.exports = [
   {
     method: 'PUT',
     path: '/api/v3/user/{id}/email',
+    handler: UserController.setPrimaryEmail,
     options: {
       pre: [
         UserPolicy.canUpdate,
         AuthPolicy.isTOTPEnabledAndValid,
       ],
-      handler: UserController.setPrimaryEmail,
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
@@ -496,11 +577,11 @@ module.exports = [
   {
     method: 'DELETE',
     path: '/api/v3/user/{id}/emails/{email}',
+    handler: UserController.dropEmail,
     options: {
       pre: [
         UserPolicy.canUpdate,
       ],
-      handler: UserController.dropEmail,
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
@@ -513,11 +594,11 @@ module.exports = [
   {
     method: 'DELETE',
     path: '/api/v3/user/{id}/clients/{client}',
+    handler: UserController.revokeOauthClient,
     options: {
       pre: [
         UserPolicy.canUpdate,
       ],
-      handler: UserController.revokeOauthClient,
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
@@ -527,25 +608,28 @@ module.exports = [
     },
   },
 
+  /**
+   * API: OAuth Client management
+   */
   {
     method: 'POST',
     path: '/api/v3/client',
+    handler: ClientController.create,
     options: {
       pre: [
         AuthPolicy.isAdmin,
       ],
-      handler: ClientController.create,
     },
   },
 
   {
     method: 'GET',
     path: '/api/v3/client/{id?}',
+    handler: ClientController.find,
     options: {
       pre: [
         AuthPolicy.isAdmin,
       ],
-      handler: ClientController.find,
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
@@ -557,11 +641,11 @@ module.exports = [
   {
     method: 'PUT',
     path: '/api/v3/client/{id}',
+    handler: ClientController.update,
     options: {
       pre: [
         AuthPolicy.isAdmin,
       ],
-      handler: ClientController.update,
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
@@ -573,11 +657,11 @@ module.exports = [
   {
     method: 'DELETE',
     path: '/api/v3/client/{id}',
+    handler: ClientController.destroy,
     options: {
       pre: [
         AuthPolicy.isAdmin,
       ],
-      handler: ClientController.destroy,
       validate: {
         params: Joi.object({
           id: Joi.string().regex(objectIdRegex),
@@ -586,6 +670,9 @@ module.exports = [
     },
   },
 
+  /**
+   * API: 2FA management
+   */
   {
     method: 'POST',
     path: '/api/v3/totp/config',
@@ -601,11 +688,11 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v3/totp/device',
+    handler: TOTPController.saveDevice,
     options: {
       pre: [
         AuthPolicy.isTOTPValidPolicy,
       ],
-      handler: TOTPController.saveDevice,
     },
   },
 
@@ -625,33 +712,59 @@ module.exports = [
   {
     method: 'POST',
     path: '/api/v3/totp',
+    handler: TOTPController.enable,
     options: {
       pre: [
         AuthPolicy.isTOTPValidPolicy,
       ],
-      handler: TOTPController.enable,
     },
   },
 
   {
     method: 'DELETE',
     path: '/api/v3/totp',
+    handler: TOTPController.disable,
     options: {
       pre: [
         AuthPolicy.isTOTPEnabledAndValid,
       ],
-      handler: TOTPController.disable,
     },
   },
 
   {
     method: 'GET',
     path: '/api/v3/totp',
+    handler: TOTPController.verifyTOTPToken,
     options: {
       pre: [
         AuthPolicy.isTOTPValidPolicy,
       ],
-      handler: TOTPController.verifyTOTPToken,
+    },
+  },
+
+  /**
+   * API: Numbers
+   */
+  {
+    method: 'GET',
+    path: '/api/v3/numbers',
+    handler: NumbersController.numbers,
+    options: {
+      pre: [
+        AuthPolicy.isAdmin,
+      ],
+    },
+  },
+
+  /**
+   * Branded 404
+   */
+  {
+    method: ['GET', 'POST'],
+    path: '/{any*}',
+    handler: ViewController.http404Page,
+    options: {
+      auth: false,
     },
   },
 ];

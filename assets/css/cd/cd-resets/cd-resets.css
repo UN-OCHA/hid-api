@@ -1,0 +1,50 @@
+/**
+ * Common Design: Resets
+ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+input {
+  font-size: 16px;
+}
+
+body {
+  color: var(--cd-grey--dark);
+  font-family: var(--cd-font--roboto);
+  font-size: 1rem;
+  -ms-text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+@media (min-width: 1024px) {
+  body {
+    font-size: var(--cd-font-size--base);
+  }
+}
+
+body.no-scroll {
+  position: fixed;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+/**
+ * Custom-styled lists
+ *
+ * When the attribute ARIA role "list" is applied to a <ul> tag, we can assume
+ * the intention is to have complete styling control over this list and remove
+ * all of the default typographic treatment: spacing / bullets
+ */
+[role=list] {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

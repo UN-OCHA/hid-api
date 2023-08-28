@@ -1,0 +1,40 @@
+/**
+ * Common Design: Skip to main content
+ *
+ * Style the `.skip-link` element. The a11y aspects are provided by standard
+ * classes from D10: `.visually-hidden` and `.focusable`
+ */
+
+.skip-link {
+  position: absolute;
+  z-index: var(--cd-z-skip-link);
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.skip-link,
+.skip-link:link,
+.skip-link:visited {
+  display: inline-block;
+  padding: 1px 10px 2px;
+  text-decoration: none;
+  color: var(--cd-white);
+  border-radius: 0 0 10px 10px;
+  background: var(--cd-black);
+  font-family: sans-serif;
+  font-size: var(--cd-font-size--small);
+  font-weight: 500;
+  line-height: 1.7;
+}
+
+/**
+ * Our styles are only visible when the element has focus, so the default
+ * outline is not necessary. We are forcibly overriding it.
+ */
+.skip-link.visually-hidden.focusable:hover,
+.skip-link.visually-hidden.focusable:active,
+.skip-link.visually-hidden.focusable:focus {
+  position: absolute !important;
+  outline: 0;
+}

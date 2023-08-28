@@ -1,0 +1,130 @@
+/**
+ * Common Design: Footer
+ */
+
+/* stylelint-disable order/properties-order -- two logical groups of styles */
+.cd-footer {
+  /**
+   * Reset styles
+   */
+  box-sizing: border-box;
+  font-family: var(--cd-font);
+  font-size: var(--cd-font-size--tiny);
+  font-weight: 300;
+
+  /**
+   * Position footer at the bottom of viewport. This might need adjusting based
+   * on page layout.
+   */
+  grid-row: var(--cd-footer-row-number)/var(--cd-footer-row-number);
+  padding: 3rem 0 0;
+  text-align: center;
+  color: var(--cd-white);
+  background: var(--brand-primary);
+  line-height: 1.5;
+}
+/* stylelint-enable order/properties-order */
+
+/* Reset button styles. */
+.cd-footer button {
+  border-radius: 0;
+  box-shadow: none;
+  font-size: var(--cd-font-size--tiny);
+  font-weight: 300;
+  -webkit-appearance: none;
+}
+
+.cd-footer button[data-cd-toggler] {
+  background-color: transparent;
+}
+
+.cd-footer a {
+  text-decoration: none;
+  color: var(--cd-white);
+}
+
+.cd-footer a.cd-button {
+  color: initial;
+}
+
+.cd-footer a:hover,
+.cd-footer a:focus-visible {
+  text-decoration: underline;
+  color: var(--cd-white);
+}
+
+.cd-footer a.cd-button:hover,
+.cd-footer a.cd-button:focus-visible {
+  color: initial;
+}
+
+.cd-footer a:focus-visible {
+  outline: var(--cd-outline-size) solid var(--brand-primary--light);
+  outline-offset: 8px;
+}
+
+.cd-footer__section {
+  width: 100%;
+  margin: 0 auto;
+  padding-bottom: 3rem;
+}
+
+/**
+ * When we know a section contains no content, we can set an empty variant
+ * to collapse it to zero-height which helps especially on mobile, without
+ * disrupting the layout on larger viewport widths.
+ */
+.cd-footer__section--empty {
+  padding-bottom: 0;
+}
+
+/**
+ * Common Footer: Layout
+ *
+ * The entire layout for the Common Footer is defined here.
+ */
+@media (min-width: 768px) {
+  .cd-footer__inner {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .cd-footer__section--menu {
+    flex: 1 0 100%;
+  }
+
+  .cd-footer__section--social {
+    flex: 1 0 100%;
+  }
+
+  .cd-footer__section--mandate {
+    flex: 1 0 100%;
+  }
+
+  .cd-footer__section--copyright {
+    flex: 1 0 100%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cd-footer__section--menu {
+    flex: 1 0 70%;
+    text-align: start;
+  }
+
+  .cd-footer__section--social {
+    flex: 0 1 30%;
+    text-align: end;
+  }
+
+  .cd-footer__section--mandate {
+    flex: 1 0 50%;
+    max-width: 780px;
+    margin: 0;
+  }
+
+  .cd-footer__section--copyright {
+    flex: 0 1 350px;
+    margin: 0;
+  }
+}

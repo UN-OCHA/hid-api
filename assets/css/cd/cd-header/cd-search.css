@@ -1,0 +1,281 @@
+/**
+ * Common Design: Search
+ */
+.cd-search {
+  z-index: var(--cd-z-search);
+}
+
+/**
+ * Search form layout.
+ *
+ * The text input takes up all space aside from what the button needs, while the
+ * button always remains at its intrinsic size.
+ */
+.cd-search__form .form--inline {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: stretch;
+  gap: 0;
+}
+
+.cd-search__form .form-type-textfield {
+  flex: 1 1 auto;
+}
+
+.cd-search__form .form-actions {
+  flex: none;
+}
+
+/**
+ * @TODO: this is a manual @extend of the .visually-hidden class and should be
+ * be dealt with somehow by our template override. During the migration away
+ * from Sass there was no easy way to re-apply an @extend, and the template
+ * lives in the ocha_search module, so the styles are manually duplicated here.
+ */
+.cd-search label[for="cd-search"] {
+  position: absolute !important;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+  width: 1px;
+  height: 1px;
+  word-wrap: normal;
+}
+
+.cd-search__btn {
+  display: flex;
+  align-items: center;
+  height: var(--cd-site-header-height);
+  padding: 0 20px;
+  transition: background 0.3s ease;
+  color: var(--brand-primary);
+  border: 0;
+  background: transparent;
+  font-size: 24px;
+}
+
+.cd-search__btn svg {
+  width: 26px;
+  height: 26px;
+  fill: var(--brand-primary);
+}
+
+.cd-search__btn:hover,
+.cd-search__btn:focus {
+  color: var(--brand-primary--dark);
+  outline: none;
+  background: var(--cd-white);
+}
+
+.cd-search__btn:hover svg,
+.cd-search__btn:focus svg {
+  fill: var(--brand-primary--dark);
+}
+
+.cd-search__btn:focus {
+  color: var(--brand-highlight);
+}
+
+.cd-search__btn:focus svg {
+  fill: var(--brand-highlight);
+}
+
+.cd-search__btn[aria-expanded=true] {
+  position: relative;
+  color: var(--brand-highlight);
+}
+
+/**
+ * When form is visible, display an upwards-pointing chevron ^ to visually tie
+ * the form to the Search button.
+ */
+.cd-search__btn[aria-expanded=true]::before {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 0;
+  content: "";
+  transform: translateX(-6px);
+  border-width: 0 6px 6px;
+  border-style: solid;
+  border-color: transparent transparent var(--brand-grey);
+}
+
+.cd-search__btn[aria-expanded=true] svg {
+  fill: var(--brand-highlight);
+}
+
+.cd-search__btn[aria-expanded=true]:hover,
+.cd-search__btn[aria-expanded=true]:focus {
+  outline: none;
+  background: var(--cd-white);
+}
+
+/* If a person uses keyboard nav to re-focus the search button, then we should
+show the outline, overriding the default focus styles for pointer events. */
+.cd-search__btn[aria-expanded=true]:focus-visible {
+  position: relative;
+  z-index: calc(var(--cd-z-dropdown) + 1);
+  outline: var(--cd-outline-size) solid var(--brand-primary--light);
+  outline-offset: calc(0px - var(--cd-outline-size));
+}
+
+.cd-search__btn-label {
+  text-transform: uppercase;
+  font-size: var(--cd-font-size--tiny);
+  font-weight: 700;
+}
+
+@media (max-width: 1023px) {
+  .cd-search__btn-label {
+    position: absolute !important;
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+    width: 1px;
+    height: 1px;
+    word-wrap: normal;
+  }
+}
+
+.cd-search__form {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: var(--cd-site-header-height);
+  background: var(--brand-grey);
+}
+
+.no-js .cd-search__form {
+  position: relative;
+  display: block;
+}
+
+.cd-search__form form {
+  padding: 8px var(--cd-container-padding);
+}
+
+.cd-search__input[type=search],
+.cd-search__input[type=text] {
+  width: 100%;
+  max-width: 100%;
+  height: calc(var(--cd-site-header-height) - 16px); /* padding */
+  padding: 0;
+  padding-inline-start: 25px;
+  padding-inline-end: 45px;
+  color: var(--cd-default-text-color);
+  border: 0;
+  border-radius: 0;
+  background: var(--cd-white);
+  box-shadow: none;
+  font-size: var(--cd-font-size--base);
+  -webkit-appearance: none;
+}
+
+.cd-search__input[type=search]:focus,
+.cd-search__input[type=text]:focus {
+  outline: 0;
+  box-shadow: 0 0 4px rgba(var(--cd-rgb-grey--mid), 0.7);
+}
+
+.cd-search__input::-webkit-input-placeholder {
+  color: var(--cd-grey--dark);
+  font-style: italic;
+}
+
+.cd-search__input::-moz-placeholder {
+  color: var(--cd-grey--dark);
+  font-style: italic;
+}
+
+.cd-search__input:-ms-input-placeholder {
+  color: var(--cd-grey--dark);
+  font-style: italic;
+}
+
+.cd-search__input:-moz-placeholder {
+  color: var(--cd-grey--dark);
+  font-style: italic;
+}
+
+.cd-search__input::-webkit-search-cancel-button {
+  position: relative;
+  right: 10px;
+}
+
+/* Safari fix */
+.cd-search__input::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+.cd-search__submit {
+  display: flex;
+  align-items: center;
+  width: 46px;
+  height: calc(var(--cd-site-header-height) - 16px); /* padding */
+  margin: 0;
+  padding: 0;
+  text-transform: uppercase;
+  color: var(--cd-white);
+  border: 0;
+  background: var(--cd-grey--dark);
+  font-size: var(--cd-font-size--base);
+  font-weight: 700;
+}
+
+.cd-search__submit svg {
+  box-sizing: content-box;
+  width: 26px;
+  height: 26px;
+  margin: 0 auto;
+  fill: var(--cd-white);
+}
+
+.cd-search__submit:focus {
+  background-color: var(--brand-highlight);
+}
+
+@media (min-width: 768px) {
+  .cd-search__form form {
+    position: relative;
+    max-width: var(--cd-max-width);
+    margin: 0 auto;
+    padding: 8px var(--cd-container-padding-tablet);
+  }
+
+  .cd-search__input {
+    padding-inline-start: 30px;
+    padding-inline-end: 44px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cd-search__btn svg {
+    width: 22px;
+    height: 22px;
+    padding-inline-end: 4px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .cd-search__form form {
+    padding: 8px var(--cd-container-padding-xlarge);
+  }
+}
+
+/**
+ * Drupal selectors
+ *
+ * Originally inside _cd-search-drupal.scss
+ */
+.cd-search .form-item,
+.cd-search .form-actions,
+.cd-search--inline .form-item,
+.cd-search--inline .form-actions {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.cd-search--inline .form-item,
+.cd-search--inline .form-actions {
+  display: flex;
+}

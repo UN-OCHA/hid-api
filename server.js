@@ -2,20 +2,17 @@
  * @module server
  */
 
-const newrelic = require('newrelic');
 const path = require('path');
 const _ = require('lodash');
 const mongoose = require('mongoose');
 const Boom = require('@hapi/boom');
 const hapi = require('@hapi/hapi');
 const ejs = require('ejs');
-const app = require('./');
-const config = require('./config/env');
+const app = require('./app');
+const env = require('./config/env');
 
-const { logger } = config;
-const { store } = config.database;
-
-mongoose.connect(store.uri, store.options);
+const { logger } = env;
+const { store } = env.database;
 
 const webConfig = app.config.web;
 
@@ -41,26 +38,32 @@ const preResponse = (request, reply) => {
   }
   if (response.output.statusCode === 500) {
     logger.error('Unexpected error', { request, error: response.toString() });
-    if (process.env.NODE_ENV !== 'local') {
-      // Send the error to newrelic
-      newrelic.noticeError(response.toString());
-    }
   }
   return reply.continue;
 };
 
+// Define server
 const server = hapi.Server(webConfig.options);
-const init = async () => {
-  // Plugins
+
+// Server setup
+exports.setup = async () => {
+  // Server plugins
   await server.register(webConfig.plugins);
   webConfig.onPluginsLoaded(server);
 
-  server.auth.strategy('hid', 'hapi-auth-hid');
+  // Cookie-based auth for the website.
+  server.auth.strategy('session', 'hapi-auth-session');
 
-  server.auth.default('hid');
+  // Token-based auth for API calls.
+  server.auth.strategy('api', 'hapi-auth-api');
 
-  // Routes
+  // Default authentication is for API calls using Bearer/OAuth token.
+  server.auth.default('api');
+
+  // Define routes
   server.route(app.config.routes);
+
+  // Define static assets
   if (Array.isArray(app.config.main.paths.www)) {
     app.config.main.paths.www.map((item) => {
       const staticDir = path.relative(app.config.main.paths.root, item.path);
@@ -106,18 +109,38 @@ const init = async () => {
 
   server.ext('onPreResponse', preResponse);
 
+  return server;
+};
+
+// Define server init
+exports.init = async () => {
+  await server.initialize();
+  return server;
+};
+
+// Define server start
+exports.start = async () => {
+  // Connect to DB
+  mongoose.connect(store.uri, store.options);
+
   await server.start();
+
   logger.info(
     `HID server started. Listening on: ${server.info.uri}`,
   );
+
+  logger.info(
+    `node.js version ${process.version}`,
+    {
+      security: true,
+    },
+  );
+
+  return server;
 };
 
+// Unhandled errors
 process.on('unhandledRejection', (err, p) => {
-  if (process.env.NODE_ENV !== 'local') {
-    newrelic.noticeError(err);
-  }
   logger.error('[unhandledRejection] Unhandled rejection error', err, p);
   process.exit(1);
 });
-
-init();

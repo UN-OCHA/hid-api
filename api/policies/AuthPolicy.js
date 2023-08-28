@@ -1,13 +1,11 @@
 /**
-* @module AuthPolicy
-* @description a collection of functions to enforce authentication and user
-* permissions for HID.
-*/
+ * @module AuthPolicy
+ * @description a collection of functions to enforce authentication and user
+ * permissions for HID.
+ */
 const Boom = require('@hapi/boom');
 const authenticator = require('authenticator');
-const config = require('../../config/env');
-
-const { logger } = config;
+const { logger } = require('../../config/env');
 
 /**
  * Enforces a _mandatory_ 2FA code requirement. If the user doesn't have 2FA
@@ -110,10 +108,17 @@ module.exports = {
     return true;
   },
 
+  /**
+   * Policy for mandatory TOTP challenges.
+   */
   async isTOTPValidPolicy(request) {
     const user = request.auth.credentials;
     const token = request.headers['x-hid-totp'];
+
+    // Validate the TOTP code.
     await isTOTPValid(user, token);
+
+    // If no error was thrown, return true.
     return true;
   },
 

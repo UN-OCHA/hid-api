@@ -1,0 +1,47 @@
+/**
+ * Common Design: Header
+ */
+
+.cd-header {
+  /**
+   * Reset styles
+   */
+  box-sizing: border-box;
+  font-family: var(--cd-font);
+  font-size: var(--cd-font-size--tiny);
+  font-weight: 300;
+}
+
+/* Reset button styles. */
+.cd-header button {
+  border-radius: 0;
+  box-shadow: none;
+  font-size: var(--cd-font-size--tiny);
+  font-weight: 300;
+  -webkit-appearance: none;
+}
+
+.cd-header button[data-cd-toggler] {
+  background-color: transparent;
+}
+
+/**
+ * CD Header focus styles
+ *
+ * The focus styles should be consistent across the entire header. Using the
+ * focus-visible selector means that direct clicks won't cause the outline to
+ * be visible, but non-pointer nav such as keyboard will still show it.
+ */
+.cd-header a:hover,
+.cd-header a:focus-visible {
+  text-decoration: underline;
+  color: var(--cd-white);
+}
+
+.cd-header button:focus-visible,
+.cd-header a:focus-visible {
+  position: relative;
+  z-index: calc(var(--cd-z-dropdown) + 1);
+  outline: var(--cd-outline-size) solid var(--brand-primary--light);
+  outline-offset: calc(0px - var(--cd-outline-size));
+}

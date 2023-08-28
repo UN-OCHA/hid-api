@@ -471,7 +471,7 @@ UserSchema.statics = {
 
     // Finally, test if EVERY result is `null`
     // If there's one failure, then our overall result is a failure.
-    return results.every(val => val === null);
+    return results.every((val) => val === null);
   },
 
   /**
@@ -499,7 +499,7 @@ UserSchema.statics = {
   // Generate a cryptographically strong random password.
   generateRandomPassword() {
     const buffer = crypto.randomBytes(256);
-    return `${buffer.toString('hex').slice(0, 10)}B`;
+    return `${buffer.toString('hex').slice(0, 24)}B`;
   },
 };
 
@@ -562,8 +562,8 @@ UserSchema.methods = {
     // `some` returns TRUE if it finds any TRUE value in the array.
     const oldPasswords = Hoek.clone(this.oldPasswords);
     const hasHistoricalMatches = oldPasswords
-      .map(old => Bcrypt.compareSync(passwordToCompare, old))
-      .some(isTrue => isTrue);
+      .map((old) => Bcrypt.compareSync(passwordToCompare, old))
+      .some((isTrue) => isTrue);
 
     // If historical matches are found return true, or compare to the current
     // password hash.

@@ -1,0 +1,67 @@
+/**
+ * Common Design: Soft Footer
+ *
+ * Optional space for a CTA, newsletter sign-up, etc
+ */
+.cd-soft-footer {
+  position: relative; /* for pseudo-element */
+  padding: 24px 0;
+  text-align: center;
+  color: var(--cd-white);
+}
+
+.cd-soft-footer h2 {
+  color: var(--cd-white);
+}
+
+.cd-soft-footer a {
+  color: var(--cd-white);
+}
+
+.cd-soft-footer a:hover,
+.cd-soft-footer a:focus {
+  color: var(--cd-white);
+}
+
+.cd-soft-footer a:focus {
+  outline: 3px solid var(--brand-primary--dark);
+}
+
+/**
+ * Background for soft footer.
+ *
+ * The soft footer should be a slightly lighter version of --brand-primary,
+ * but not as bright as --brand-primary--light. This one-off variant of the
+ * --brand-primary color is kept consistent by setting lower opacity on the
+ * pseudo-element, blending it with the white background of <body>.
+ */
+.cd-soft-footer::before {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  content: "";
+  opacity: 0.9;
+  background: var(--brand-primary);
+}
+
+@media (min-width: 768px) {
+  /* Remove clearfix so that flexbox justify-content works correctly */
+  .cd-soft-footer .cd-container::after {
+    content: none;
+  }
+
+  .cd-soft-footer__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cd-soft-footer {
+    padding: 2rem 0;
+  }
+}

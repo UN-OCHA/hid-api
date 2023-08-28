@@ -1,0 +1,89 @@
+name: Run tests
+
+on: [pull_request]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Cache node modules
+        uses: actions/cache@v2
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '^18.15.0'
+
+      - name: Get deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cracklib-runtime python3-dev libcrack2-dev
+          npm install
+
+      - name: Set env vars
+        run: |
+          export NODE_ENV='test'
+
+      - name: Run tests
+        run: |
+          npm run test
+
+      - name: Slack Success Notification
+        id: slack_success
+        if: success()
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          channel-id: '${{ vars.SLACK_CHANNEL }}'
+          payload: |
+            {
+              "text": "Tests passed for a pull request on ${{ github.repository }}",
+              "attachments": [
+                {
+                  "color": "#2EB886",
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "PR by @${{ github.triggering_actor }} to merge _${{ github.head_ref }}_ into _${{ github.base_ref }}_ on <${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}> passed tests (<${{ github.event.pull_request.html_url }}|View>)"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      - name: Slack Failure Notification
+        id: slack_failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          channel-id: '${{ vars.SLACK_CHANNEL }}'
+          payload: |
+            {
+              "text": "Tests failed for a pull request on ${{ github.repository }}",
+              "attachments": [
+                {
+                  "color": "#A30200",
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "PR by @${{ github.triggering_actor }} to merge _${{ github.head_ref }}_ into _${{ github.base_ref }}_ on <${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}> failed tests (<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View>)"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

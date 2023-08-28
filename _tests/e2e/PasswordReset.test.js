@@ -15,7 +15,7 @@ describe('PasswordReset [no-ci]', () => {
   });
 
   it('presents a form with email field', async () => {
-    const inputId = await page.$eval('#email', el => el.id);
+    const inputId = await page.$eval('#email', (el) => el.id);
     expect(inputId).toBe('email');
   });
 
@@ -23,12 +23,12 @@ describe('PasswordReset [no-ci]', () => {
     let emailFieldInvalid;
 
     await page.click('.t-btn--reset');
-    emailFieldInvalid = await page.$$eval('#email:invalid', el => el.length);
+    emailFieldInvalid = await page.$$eval('#email:invalid', (el) => el.length);
     expect(emailFieldInvalid).toBeGreaterThan(0);
 
     await page.type('#email', 'invalid-email-address');
     await page.click('.t-btn--reset');
-    emailFieldInvalid = await page.$$eval('#email:invalid', el => el.length);
+    emailFieldInvalid = await page.$$eval('#email:invalid', (el) => el.length);
     expect(emailFieldInvalid).toBeGreaterThan(0);
   });
 
@@ -47,7 +47,7 @@ describe('PasswordReset [no-ci]', () => {
     // Mailhog has iframes and the link has target="_blank" and all of that makes
     // it a real PITA to truly click the link and follow it. Let's instead grab
     // the URL and go directly to it:
-    const pwResetUrl = await message.$eval('p:nth-child(3) a', el => el.innerText);
+    const pwResetUrl = await message.$eval('p:nth-child(3) a', (el) => el.innerText);
     await page.goto(pwResetUrl);
     // Do we see the password reset form?
     expect(await page.content()).toContain('Enter your new password');
@@ -61,9 +61,9 @@ describe('PasswordReset [no-ci]', () => {
     await confirm.type('not the same');
 
     await page.click('.t-btn--reset-pw');
-    const passwordInvalid = await page.$$eval('#password:invalid', el => el.length);
+    const passwordInvalid = await page.$$eval('#password:invalid', (el) => el.length);
     expect(passwordInvalid).toBeGreaterThan(0);
-    const confirmInvalid = await page.$$eval('#confirm_password:invalid', el => el.length);
+    const confirmInvalid = await page.$$eval('#confirm_password:invalid', (el) => el.length);
     expect(confirmInvalid).toBeGreaterThan(0);
   });
 
@@ -91,7 +91,7 @@ describe('PasswordReset [no-ci]', () => {
     // Mailhog has iframes and the link has target="_blank" and all of that makes
     // it a real PITA to truly click the link and follow it. Let's instead grab
     // the URL and go directly to it:
-    const pwResetUrl = await message.$eval('p:nth-child(3) a', el => el.innerText);
+    const pwResetUrl = await message.$eval('p:nth-child(3) a', (el) => el.innerText);
     await page.goto(pwResetUrl);
     // Do we see the password reset error?
     expect(await page.content()).toContain('Your password reset link is either invalid or expired.');
@@ -113,7 +113,7 @@ describe('PasswordReset [no-ci]', () => {
     // Mailhog has iframes and the link has target="_blank" and all of that makes
     // it a real PITA to truly click the link and follow it. Let's instead grab
     // the URL and go directly to it:
-    const pwResetUrl = await message.$eval('p:nth-child(3) a', el => el.innerText);
+    const pwResetUrl = await message.$eval('p:nth-child(3) a', (el) => el.innerText);
     await page.goto(pwResetUrl);
     // Do we see the password reset form?
     expect(await page.content()).toContain('Enter your new password');
