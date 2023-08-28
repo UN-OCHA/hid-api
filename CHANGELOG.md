@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.3.1](https://github.com/UN-OCHA/hid-api/compare/v5.3.0...v5.3.1) (2023-08-28)
+
+
+### Bug Fixes
+
+* Sigh. ([3bd603f](https://github.com/UN-OCHA/hid-api/commit/3bd603f216ae5282ac4756ef473d5f090e4a00fa))
+* Use slack channel from vars, so dependabot can see it. ([46cfef0](https://github.com/UN-OCHA/hid-api/commit/46cfef0490a600ca2046862fc11e8dfaa69af070))
+
 ## [5.3.0](https://github.com/UN-OCHA/hid-api/compare/v5.2.4...v5.3.0) (2023-06-01)
 
 
