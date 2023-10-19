@@ -121,6 +121,7 @@ exports.init = async () => {
 // Define server start
 exports.start = async () => {
   // Connect to DB
+  mongoose.set('strictQuery', false);
   mongoose.connect(store.uri, store.options);
 
   await server.start();
