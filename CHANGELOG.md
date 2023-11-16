@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.3.4](https://github.com/UN-OCHA/hid-api/compare/v5.3.3...v5.3.4) (2023-11-16)
+
+### Bug Fixes
+
+* **security:** update node.js deps ([503d82e](https://github.com/UN-OCHA/hid-api/commit/503d82e0408ba61c771b4db4352137edc37ccc96))
+
 
 ## [5.3.3](https://github.com/UN-OCHA/hid-api/compare/v5.3.2...v5.3.3) (2023-10-19)
 
