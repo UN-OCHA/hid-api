@@ -55,3 +55,12 @@ Configuration files are stored in `/config`.
 * routes.js: configure routes
 * session.js: configure sessions when authenticating with OpenId Connect
 * web.js: used to configure the web server (hapi)
+
+## Diagram
+
+```mermaid
+flowchart TD
+  Incoming[Incoming request] --> server{node.js server}
+  server -->|DB| db{MongoDB holds\napplication data}
+  server -->|Cookies| cookies{Redis holds cookie data\nencrypted by server}
+```
