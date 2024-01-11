@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.3.5](https://github.com/UN-OCHA/hid-api/compare/v5.3.4...v5.3.5) (2024-01-11)
+
+### Bug Fixes
+
+- **security:** bump follow-redirects from 1.15.2 to 1.15.4 ([eb5dbcf7](https://github.com/UN-OCHA/hid-api/commit/eb5dbcf7a5017a02a59c1347e8b5cf85c4524ea3))
+
+
 ## [5.3.4](https://github.com/UN-OCHA/hid-api/compare/v5.3.3...v5.3.4) (2023-11-16)
 
 ### Bug Fixes
