@@ -1,16 +1,22 @@
 # Humanitarian ID
 
-[![Build Status](https://travis-ci.org/UN-OCHA/hid-api.svg?branch=main)](https://travis-ci.org/UN-OCHA/hid-api)
+[![Status](https://github.com/UN-OCHA/hid-api/actions/workflows/checks.yml/badge.svg)](https://github.com/UN-OCHA/hid-api/actions/workflows/checks.yml)
 [![Create image](https://github.com/UN-OCHA/hid-api/actions/workflows/build.yml/badge.svg)](https://github.com/UN-OCHA/hid-api/actions/workflows/build.yml)
 
-Humanitarian ID is built with:
+## Installation / Setup
+
+We have a separate [`hid-stack` repo][hid-stack-install] with instructions for running HID locally. Please follow those instructions. You can't run HID locally without the stack.
+
+  [hid-stack-install]: https://github.com/UN-OCHA/hid-stack/#installation--first-time-setup
+
+## About the application
+
+Humanitarian ID is an OAuth 2.0 and OpenID Connect server. Most end users will only briefly see HID as they log in, approve a website, and get redirected. It is built with:
 
 - mongoDB as its database backend
 - node.js + hapi as the server
 
-HID acts as an OAuth 2.0 and OpenID Connect server.
-
-The API is documented here: https://api.humanitarian.id/docs/
+If you want to use HID within an application that requires a REST API, those docs are here: https://api.humanitarian.id/docs/
 
 ## Models
 
@@ -50,6 +56,7 @@ Services are helper methods provided to the controllers.
 
 Configuration files are stored in `/config`.
 
+* env/index.js: config for different environments (local, testing, prod)
 * log.js: configure logging
 * main.js: configure trailpacks and paths
 * routes.js: configure routes
