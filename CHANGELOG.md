@@ -2,32 +2,39 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## [5.3.5](https://github.com/UN-OCHA/hid-api/compare/v5.3.4...v5.3.5) (2024-01-11)
+### [5.3.6](https://github.com/UN-OCHA/hid-api/compare/v5.3.5...v5.3.6) (2024-04-04)
+
+### Bug Fixes
+
+- **security:** update node.js deps ([cf0f585](https://github.com/UN-OCHA/hid-api/pull/431/commits/cf0f585cb43cc97f388ffbb4d7b9680a760f5d40))
+
+
+### [5.3.5](https://github.com/UN-OCHA/hid-api/compare/v5.3.4...v5.3.5) (2024-01-11)
 
 ### Bug Fixes
 
 - **security:** bump follow-redirects from 1.15.2 to 1.15.4 ([eb5dbcf7](https://github.com/UN-OCHA/hid-api/commit/eb5dbcf7a5017a02a59c1347e8b5cf85c4524ea3))
 
 
-## [5.3.4](https://github.com/UN-OCHA/hid-api/compare/v5.3.3...v5.3.4) (2023-11-16)
+### [5.3.4](https://github.com/UN-OCHA/hid-api/compare/v5.3.3...v5.3.4) (2023-11-16)
 
 ### Bug Fixes
 
 * **security:** update node.js deps ([503d82e](https://github.com/UN-OCHA/hid-api/commit/503d82e0408ba61c771b4db4352137edc37ccc96))
 
 
-## [5.3.3](https://github.com/UN-OCHA/hid-api/compare/v5.3.2...v5.3.3) (2023-10-19)
+### [5.3.3](https://github.com/UN-OCHA/hid-api/compare/v5.3.2...v5.3.3) (2023-10-19)
 
 ### Bug Fixes
 
 * explicitly set DB option to suppress deprecation warning ([23afd27](https://github.com/UN-OCHA/hid-api/commit/23afd27241662f47051f8399683259e3368c8b11))
 
-## [5.3.2](https://github.com/UN-OCHA/hid-api/compare/v5.3.1...v5.3.2) (2023-10-17)
+### [5.3.2](https://github.com/UN-OCHA/hid-api/compare/v5.3.1...v5.3.2) (2023-10-17)
 
 - Security updates
 
 
-## [5.3.1](https://github.com/UN-OCHA/hid-api/compare/v5.3.0...v5.3.1) (2023-08-28)
+### [5.3.1](https://github.com/UN-OCHA/hid-api/compare/v5.3.0...v5.3.1) (2023-08-28)
 
 ### Bug Fixes
 
@@ -69,14 +76,14 @@ All notable changes to this project will be documented in this file. See [standa
 * **ux:** show a branded 404 page when using browser ([f957a2d](https://github.com/UN-OCHA/hid-api/commit/f957a2dea5a283d7842570d80aed13fa3fa27d0e))
 
 
-## [5.2.4](https://github.com/UN-OCHA/hid-api/compare/v5.2.3...v5.2.4) (2023-05-04)
+### [5.2.4](https://github.com/UN-OCHA/hid-api/compare/v5.2.3...v5.2.4) (2023-05-04)
 
 ### Chores
 
 * regular security updates
 
 
-## [5.2.3](https://github.com/UN-OCHA/hid-api/compare/v5.2.2...v5.2.3) (2023-04-06)
+### [5.2.3](https://github.com/UN-OCHA/hid-api/compare/v5.2.2...v5.2.3) (2023-04-06)
 
 ### Chores
 
@@ -85,14 +92,14 @@ All notable changes to this project will be documented in this file. See [standa
 * regular security updates
 
 
-## [5.2.2](https://github.com/UN-OCHA/hid-api/compare/v5.2.1...v5.2.2) (2023-03-09)
+### [5.2.2](https://github.com/UN-OCHA/hid-api/compare/v5.2.1...v5.2.2) (2023-03-09)
 
 ### Bug Fixes
 
 * regular security updates
 
 
-## [5.2.1](https://github.com/UN-OCHA/hid-api/compare/v5.2.0...v5.2.1) (2023-02-09)
+### [5.2.1](https://github.com/UN-OCHA/hid-api/compare/v5.2.0...v5.2.1) (2023-02-09)
 
 ### Bug Fixes
 
@@ -113,7 +120,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 * new endpoint allowing admins to force-reset user passwords ([0eab067](https://github.com/UN-OCHA/hid-api/commit/0eab067d7c7f3f7ef8fff60912197e467a416f05))
 
-## [5.1.9](https://github.com/UN-OCHA/hid-api/compare/v5.1.8...v5.1.9) (2022-11-17)
+### [5.1.9](https://github.com/UN-OCHA/hid-api/compare/v5.1.8...v5.1.9) (2022-11-17)
 
 
 ### Bug Fixes
@@ -121,7 +128,7 @@ All notable changes to this project will be documented in this file. See [standa
 * add csp settings ([79c8589](https://github.com/UN-OCHA/hid-api/commit/79c8589b25400ab57deb7895eb0463a607dd2d0c))
 * allow new GTM inline script ([161324e](https://github.com/UN-OCHA/hid-api/commit/161324e5642b94bc903b85484f5584903a4621c9)), closes [#383](https://github.com/UN-OCHA/hid-api/issues/383)
 
-## [5.1.8](https://github.com/UN-OCHA/hid-api/compare/v5.1.7...v5.1.8) (2022-09-22)
+### [5.1.8](https://github.com/UN-OCHA/hid-api/compare/v5.1.7...v5.1.8) (2022-09-22)
 
 
 ### Bug Fixes
@@ -130,33 +137,33 @@ All notable changes to this project will be documented in this file. See [standa
 * update tracking code to use GTM/GA4 ([1be35f2](https://github.com/UN-OCHA/hid-api/commit/1be35f2a8a945b98524b1c64c44f9e8fd3d0b651))
 * Use the shared build action with tagging, notifications and pushing. ([fabb069](https://github.com/UN-OCHA/hid-api/commit/fabb0697a9df84dc08c5af0c28923f61d190c0c4))
 
-## [5.1.7](https://github.com/UN-OCHA/hid-api/compare/v5.1.6...v5.1.7) (2022-07-28)
+### [5.1.7](https://github.com/UN-OCHA/hid-api/compare/v5.1.6...v5.1.7) (2022-07-28)
 
 
 ### Bug Fixes
 
 * **security:** security updates to dependencies ([aef65eb](https://github.com/UN-OCHA/hid-api/commit/aef65eb60d8631c56816e691b8af96374a1da6e7))
 
-## [5.1.6](https://github.com/UN-OCHA/hid-api/compare/v5.1.5...v5.1.6) (2022-06-30)
+### [5.1.6](https://github.com/UN-OCHA/hid-api/compare/v5.1.5...v5.1.6) (2022-06-30)
 
 
 ### Bug Fixes
 
 * update packages for security ([e309d09](https://github.com/UN-OCHA/hid-api/commit/e309d096df2e9ed8bff8697b0521c45907c5dc09))
 
-## [5.1.5](https://github.com/UN-OCHA/hid-api/compare/v5.1.4...v5.1.5) (2022-06-02)
+### [5.1.5](https://github.com/UN-OCHA/hid-api/compare/v5.1.4...v5.1.5) (2022-06-02)
 
 ### Bug Fixes
 
 * **security:** Update EJS and other dependabot updates
 
-## [5.1.4](https://github.com/UN-OCHA/hid-api/compare/v5.1.3...v5.1.4) (2022-05-03)
+### [5.1.4](https://github.com/UN-OCHA/hid-api/compare/v5.1.3...v5.1.4) (2022-05-03)
 
 ### Bug Fixes
 
 * **security:** dependabot updates, nodejs update
 
-## [5.1.3](https://github.com/UN-OCHA/hid-api/compare/v5.1.2...v5.1.3) (2022-04-07)
+### [5.1.3](https://github.com/UN-OCHA/hid-api/compare/v5.1.2...v5.1.3) (2022-04-07)
 
 
 ### Bug Fixes
@@ -164,7 +171,7 @@ All notable changes to this project will be documented in this file. See [standa
 * security: updates to dependencies
 * prevent errors during OAuth dialog confirmations ([c98b59f](https://github.com/UN-OCHA/hid-api/commit/c98b59fdf0ecebb89a233c967b0c900974108c1f))
 
-## [5.1.2](https://github.com/UN-OCHA/hid-api/compare/v5.1.1...v5.1.2) (2022-02-04)
+### [5.1.2](https://github.com/UN-OCHA/hid-api/compare/v5.1.1...v5.1.2) (2022-02-04)
 
 
 ### Bug Fixes
@@ -172,7 +179,7 @@ All notable changes to this project will be documented in this file. See [standa
 * **logs:** supply correct client_id value when generating OAuth tokens ([289f06a](https://github.com/UN-OCHA/hid-api/commit/289f06a455d509d183e3ce6ee9e9004fd98e503d))
 * **ux:** when displaying user-friendly registration errors, parse for new error strings ([33334b1](https://github.com/UN-OCHA/hid-api/commit/33334b1b7b4cfa786ed4f708eab69781fdbb70ab))
 
-## [5.1.1](https://github.com/UN-OCHA/hid-api/compare/v5.1.0...v5.1.1) (2022-01-13)
+### [5.1.1](https://github.com/UN-OCHA/hid-api/compare/v5.1.0...v5.1.1) (2022-01-13)
 
 
 ### Bug Fixes
@@ -231,17 +238,14 @@ All notable changes to this project will be documented in this file. See [standa
 * upgrade qrcode and underlying dependencies ([50a4bb8](https://github.com/UN-OCHA/hid-api/commit/50a4bb807b05b78b1114746a11ec4f8d3e6c0ed3))
 * when password requirements are not met during password reset, show form again ([80803bf](https://github.com/UN-OCHA/hid-api/commit/80803bf427bc6d1d0a1d520b3ff99dd558d15f0c))
 
-## [5.0.1](https://github.com/UN-OCHA/hid_api/compare/v5.0.0...v5.0.1) (2021-10-28)
+### [5.0.1](https://github.com/UN-OCHA/hid_api/compare/v5.0.0...v5.0.1) (2021-10-28)
 
 
 ### Bug Fixes
 
 * **security:** only destroy session after password reset succeeds ([0d30eea](https://github.com/UN-OCHA/hid_api/commit/0d30eea40ccb7ea199cdfffea58b0582c6313d7e))
 
-## [4.0.0](https://github.com/UN-OCHA/hid_api/compare/v4.0.0-rc1...v4.0.0) (2021-09-16)
-
 ## [5.0.0](https://github.com/UN-OCHA/hid_api/compare/v4.0.0-rc1...v5.0.0) (2021-10-20)
-
 
 ### ⚠ BREAKING CHANGES
 
