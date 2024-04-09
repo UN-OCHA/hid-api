@@ -88,6 +88,7 @@
     "postcss-cli": "^10.1.0",
     "postcss-csso": "^6.0.1",
     "postcss-import": "^15.1.0",
+    "postcss-nesting": "^12.1.1",
     "standard-version": "^9.3.2",
     "swagger-inline": "^3.0.4"
   },
