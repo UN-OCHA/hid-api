@@ -135,6 +135,14 @@ ul[data-cd-hidden=true] > ul {
   background: var(--brand-grey);
 }
 
+.cd-nav a:focus-visible,
+.cd-nav button:focus-visible {
+  color: var(--cd-black);
+  outline: var(--cd-outline-size) solid var(--brand-primary--light);
+  outline-offset: calc(0px - var(--cd-outline-size));
+  background: transparent;
+}
+
 /**
  * First level
  */
@@ -246,7 +254,6 @@ ul[data-cd-hidden=true] > ul {
 
   .menu-item--collapsed .cd-nav-level-1__btn.is-active::before,
   .menu-item--expanded .cd-nav-level-1__btn.is-active::before {
-    opacity: 0.2;
     background: var(--brand-highlight);
   }
 
@@ -258,7 +265,7 @@ ul[data-cd-hidden=true] > ul {
     height: 48px;
     margin-inline-start: -15px;
     content: "";
-    opacity: 0.2;
+    opacity: 0.6;
     background: var(--brand-highlight);
   }
 
@@ -275,7 +282,7 @@ ul[data-cd-hidden=true] > ul {
    */
   .cd-nav > ul ul > li.menu-item--active-trail a::before,
   .cd-nav > ul ul > li.menu-item--active-trail button::before {
-    opacity: 0.6;
+    opacity: 1;
   }
 }
 
@@ -297,7 +304,6 @@ ul[data-cd-hidden=true] > ul {
 
   .cd-nav > .menu > .menu-item.menu-item--active-trail a::before,
   .cd-nav > .menu > .menu-item.menu-item--active-trail button::before {
-    opacity: 0.2;
     background: var(--brand-highlight);
   }
 
@@ -340,6 +346,11 @@ ul[data-cd-hidden=true] > ul {
   .cd-nav > .menu > .menu-item button.is-active::before,
   .cd-nav > .menu > .menu-item button:focus::before {
     background: var(--brand-highlight);
+  }
+
+  .cd-nav > .menu > .menu-item:not(.menu-item--active-trail) > a:focus-visible::before,
+  .cd-nav > .menu > .menu-item:not(.menu-item--active-trail) button:focus-visible::before {
+    background: transparent;
   }
 
   .cd-nav > .menu > .menu-item svg {

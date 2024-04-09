@@ -48,3 +48,42 @@ body.no-scroll {
   padding: 0;
   list-style: none;
 }
+
+/**
+ * Respect user prefs for animations/transitions
+ *
+ * Some people prefer not to see animations/transitions for medical or personal
+ * reasons. Additionally it can happen that the browser is unable to draw the
+ * animations at a sufficient speed.
+ *
+ * This block of rules will wholesale disable the animations when unwanted,
+ * leaving the codebase to implement its animations/transitions in a simple
+ * format without individual rules needing to be qualified.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  *,
+  *::before,
+  *::after {
+    /* turn animations on if user doesn't mind */
+    animation-play-state: running;
+  }
+}
+
+@media not (update: fast) {
+  *,
+  *::before,
+  *::after {
+    /* turn them off again if the browser can't draw them effectively */
+    animation-play-state: paused;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* explicitly disable animations and transitions when requested */
+    transition-duration: 0s !important;
+    animation-play-state: paused;
+  }
+}

@@ -51,7 +51,6 @@
 /* COMPONENT: cd-header */
 @import "cd/cd-header/cd-header.css";
 @import "cd/cd-header/cd-global-header.css";
-@import "cd/cd-header/cd-ocha.css";
 @import "cd/cd-header/cd-language-switcher.css";
 @import "cd/cd-header/cd-user-menu.css";
 @import "cd/cd-header/cd-site-header.css";
@@ -65,6 +64,7 @@
 @import "cd/cd-footer/cd-footer-copyright.css";
 @import "cd/cd-footer/cd-footer-menu.css";
 @import "cd/cd-footer/cd-footer-mandate.css";
+@import "cd/cd-footer/cd-ocha.css";
 @import "cd/cd-footer/cd-footer-social.css";
 @import "cd/cd-footer/cd-footer-soft.css";
 

@@ -52,7 +52,7 @@
   /**
    * <main> content container
    */
-  .cd-container[role=main] {
+  main.cd-container {
     padding-block-start: 2rem;
     padding-block-end: 2rem;
   }
@@ -76,7 +76,7 @@
    * Adopt column layout once space allows.
    */
   @media (min-width: 1024px) {
-    .cd-container[role=main] {
+    main.cd-container {
       padding-block-start: 3rem;
       padding-block-end: 4rem;
     }

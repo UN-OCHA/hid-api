@@ -134,5 +134,16 @@
   --brand-primary--dark: var(--cd-blue--dark);
   --brand-highlight: var(--cd-highlight-red);
   --brand-grey: #e6eff2;
-  --brand-logo-width: 256px;
+
+  /**
+   * Site logos
+   *
+   * Specify the logo paths/dimensions here. The URL is relative to
+   * common_design/libraries/cd/cd-header/cd-logo.css
+   */
+  --brand-logo-mobile-width: 256px;
+  --brand-logo-desktop-width: 256px;
+
+  /* DEPRECATED: this variable will be removed in the future */
+  --brand-logo-width: var(--brand-logo-desktop-width);
 }
