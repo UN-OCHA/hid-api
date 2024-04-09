@@ -30,7 +30,7 @@
       Skip to main content
     </a>
     <div class="cd-page-layout-container"><!-- intentionally unclosed! -->
-      <header class="cd-header" role="banner">
+      <header class="cd-header" aria-label="Site header">
         <div class="cd-global-header">
           <div class="cd-container cd-global-header__inner">
             <div id="cd-global-header__actions" class="cd-global-header__actions">
@@ -41,7 +41,7 @@
                 </div>
               </div>
 
-              <nav role="navigation" class="block block-menu navigation menu--account cd-global-header__user-menu">
+              <nav aria-label="User menu" class="block block-menu navigation menu--account cd-global-header__user-menu">
                 <h2 class="visually-hidden">User menu</h2>
                 <ul class="menu cd-user-menu" data-cd-menu-level="0">
                   <% if (locals.user) { %>
