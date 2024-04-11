@@ -191,8 +191,7 @@ const config = {
           'https://www.gstatic.com',
           'https://www.googletagmanager.com',
           // GTM inline script.
-          "'sha256-e7CIW/Iehpzy0nB3j0M8Z6Wl1n+HE3rmyT2K0lz8na8='",
-          "'sha256-g62AIFyyvfvqRMhNu7QMQ0GMk0Rx+Bbk1KzTy+CzTCI='",
+          "'sha256-IWFT2+AzbwEwprR9FTHoZxirn9HBB+bXcjCDQ07yinU='",
           // Inline JS mustard-cut
           "'sha256-/rGLbsC3KREsVOihkt0j7wGku9aMLV2tcrug1R+VUY0='",
         ],
