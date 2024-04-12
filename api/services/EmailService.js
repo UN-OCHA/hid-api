@@ -10,26 +10,27 @@ const { getDefaultRoleAssumerWithWebIdentity } = require('@aws-sdk/client-sts');
 const config = require('../../config/env');
 
 const { logger } = config;
+let TransporterSettings;
 
 if (process.env.AWS_ROLE_ARN) {
   const provider = defaultProvider({
     roleAssumerWithWebIdentity: getDefaultRoleAssumerWithWebIdentity({
       roleArn: process.env.AWS_ROLE_ARN,
-      region: process.env.AWS_REGION || "us-east-1",
+      region: process.env.AWS_REGION || 'us-east-1',
     }),
   });
 
   const ses = new aws.SES({
-    apiVersion: "2010-12-01",
-    region: process.env.AWS_REGION || "us-east-1",
+    apiVersion: '2010-12-01',
+    region: process.env.AWS_REGION || 'us-east-1',
     credentialDefaultProvider: provider,
   });
 
-  const TransporterSettings = {
-     SES: { ses, aws },
+  TransporterSettings = {
+    SES: { ses, aws },
   };
 } else {
-  const TransporterSettings = {
+  TransporterSettings = {
     host: process.env.SMTP_HOST || 'localhost',
     port: process.env.SMTP_PORT || 25,
     secure: process.env.SMTP_TLS === 'true' || false,
