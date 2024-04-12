@@ -5,20 +5,42 @@
 const Nodemailer = require('nodemailer');
 const Email = require('email-templates');
 const config = require('../../config/env');
+const aws = require("@aws-sdk/client-ses");
+const { defaultProvider } = require("@aws-sdk/credential-provider-node");
 
 const { logger } = config;
-const TransporterSettings = {
-  host: process.env.SMTP_HOST || 'localhost',
-  port: process.env.SMTP_PORT || 25,
-  secure: process.env.SMTP_TLS === 'true' || false,
-};
 
-// Only append `auth` property if we have both values to pass.
-if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-  TransporterSettings.auth = {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+if (process.env.AWS_ROLE_ARN) {
+  const provider = defaultProvider({
+    roleAssumerWithWebIdentity: getDefaultRoleAssumerWithWebIdentity({
+      roleArn: process.env.AWS_ROLE_ARN,
+      region: process.env.AWS_REGION || "us-east-1",
+    }),
+  });
+
+  const ses = new aws.SES({
+    apiVersion: "2010-12-01",
+    region: process.env.AWS_REGION || "us-east-1",
+    credentialDefaultProvider: provider,
+  });
+
+  const TransporterSettings = {
+     SES: { ses, aws },
   };
+} else {
+  const TransporterSettings = {
+    host: process.env.SMTP_HOST || 'localhost',
+    port: process.env.SMTP_PORT || 25,
+    secure: process.env.SMTP_TLS === 'true' || false,
+  };
+
+  // Only append `auth` property if we have both values to pass.
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    TransporterSettings.auth = {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    };
+  }
 }
 
 const Transporter = Nodemailer.createTransport(TransporterSettings);
