@@ -2,11 +2,12 @@
  * @module EmailService
  * @description Service to send emails
  */
+const aws = require('@aws-sdk/client-ses');
 const Nodemailer = require('nodemailer');
 const Email = require('email-templates');
+const { defaultProvider } = require('@aws-sdk/credential-provider-node');
+const { getDefaultRoleAssumerWithWebIdentity } = require('@aws-sdk/client-sts');
 const config = require('../../config/env');
-const aws = require("@aws-sdk/client-ses");
-const { defaultProvider } = require("@aws-sdk/credential-provider-node");
 
 const { logger } = config;
 
