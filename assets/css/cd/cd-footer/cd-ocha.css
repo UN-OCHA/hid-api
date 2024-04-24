@@ -1,0 +1,147 @@
+/**
+ * Common Design: OCHA Services
+ */
+.cd-ocha-services {
+  position: relative;
+  margin-block-end: 3rem;
+  padding-block-end: 1rem;
+
+  /* Add a horizontal separator once layout expands */
+  &::before {
+    position: absolute;
+    bottom: 0;
+    left: 10%;
+    display: block;
+    width: 80%;
+    height: 1px;
+    content: '';
+    opacity: 0.6;
+    background: var(--cd-white);
+
+  }
+
+  @media screen and (min-width: 768px) {
+    &::before {
+      left: 0;
+      width: 100%;
+    }
+  }
+}
+
+.cd-ocha-services h2 {
+  margin-block-end: 0;
+  color: var(--cd-white);
+  font-size: var(--cd-font-size--medium);
+}
+
+.cd-ocha-services__content {
+  width: 100%;
+  padding: 1.25rem 0;
+}
+
+.cd-ocha-services__inner {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0 12px;
+  max-width: var(--cd-max-width);
+  padding: 0;
+}
+
+.cd-ocha-services__section {
+  position: relative; /* For the see-all link */
+  margin-bottom: 1.5rem;
+}
+
+.cd-ocha-services__heading {
+  margin: 0 0 10px;
+  padding-bottom: 2px;
+  color: var(--brand-grey);
+}
+
+.cd-ocha-services__list {
+  margin: 0;
+  padding: 0;
+}
+
+/**
+ * backwards-compat: the .cd-ocha-dropdown class is legacy, but is used by lots
+ * of sub-themes which customized their OCHA Services links. If these classnames
+ * get removed then the styling of the first column will look strange.
+ */
+.cd-ocha-services__link,
+.cd-ocha-dropdown__link {
+  display: block;
+  margin: 0 0 12px;
+  padding: 0;
+  font-weight: 700;
+}
+
+.cd-ocha-services__link a,
+.cd-ocha-dropdown__link a {
+  text-decoration: none;
+  color: var(--cd-white);
+}
+
+.cd-ocha-dropdown__link a:focus-visible,
+.cd-ocha-services__link a:focus-visible {
+  outline-offset: 8px;
+}
+
+.cd-ocha-services__see-all svg {
+  position: relative;
+  top: 0.5px;
+  width: 10px;
+  height: 10px;
+  fill: var(--cd-white);
+}
+
+@media (max-width: 767px) {
+  /* On mobile, the two middle columns should look like one list. */
+  .cd-ocha-services__section:nth-child(2) {
+    margin-bottom: 0;
+  }
+
+  /* There's an invisible heading in the third column to keep the links inside
+  column 2/3 in line with each other. It's hidden on mobile. */
+  .cd-ocha-services__section:nth-child(3) .cd-ocha-services__heading {
+    display: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+@media (min-width: 768px) {
+  .cd-ocha-services__inner {
+    flex-flow: row nowrap;
+    align-items: flex-start;
+    margin: 0 auto;
+  }
+
+  .cd-ocha-services__section {
+    flex: 0 1 25%;
+    margin-bottom: 0;
+  }
+}
+
+@media (min-width: 1200px) {
+  .cd-ocha-services__link {
+    white-space: nowrap;
+  }
+
+  .cd-ocha-services__inner {
+    gap: 0 32px;
+  }
+}
+
+/**
+ * When JS is disabled, OCHA Services moves to the footer.
+ * Undo the .cd-footer anchor rule affecting the link colour.
+ */
+.no-js .cd-footer .cd-ocha-services__see-all {
+  color: initial;
+}
+
+.no-js .cd-footer .cd-ocha {
+  width: 100%;
+  text-align: left;
+}

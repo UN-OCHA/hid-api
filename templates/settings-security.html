@@ -2,7 +2,7 @@
 <link rel="stylesheet" href="/assets/css/hid-tabs/hid-tabs.css">
 <link rel="stylesheet" href="/assets/css/pages/settings-security.css">
 
-<main role="main" id="main-content" class="cd-layout cd-container">
+<main aria-label="Page content" id="main-content" class="cd-layout cd-container">
   <div class="cd-layout__content">
     <h1 class="cd-page-title page-header__heading">Settings for <%= user.name %></h1>
     <%- include('includes/alert') %>
@@ -56,6 +56,7 @@
                       type: 'warning',
                       message: `
                         <p><strong>Store these backup codes in a secure location!</strong> In the event you lose access to your authenticator app the backup codes can be used to log in, restore access to your account, and reconfigure 2FA with a new device.</p>
+                        <br>
                         <p>If you lose both your authenticator app and the backup codes, <strong>we CANNOT restore access to your account!</strong></p>
                       `,
                     },

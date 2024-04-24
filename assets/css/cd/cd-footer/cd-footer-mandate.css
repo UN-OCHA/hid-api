@@ -22,7 +22,7 @@
 
 .cd-mandate__text {
   display: block;
-  max-width: 540px;
+  max-width: 550px;
   margin: 0 auto;
   padding: 0 var(--cd-container-padding);
 }

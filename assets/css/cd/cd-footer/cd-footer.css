@@ -66,7 +66,7 @@
 .cd-footer__section {
   width: 100%;
   margin: 0 auto;
-  padding-bottom: 3rem;
+  padding-block-end: 3rem;
 }
 
 /**
@@ -87,22 +87,19 @@
   .cd-footer__inner {
     display: flex;
     flex-wrap: wrap;
+    justify-content: space-between;
   }
 
-  .cd-footer__section--menu {
+  .cd-footer__section--menu,
+  .cd-footer__section--social,
+  .cd-footer__section--mandate,
+  .cd-footer__section--copyright,
+  .cd-footer__section--ocha-services {
     flex: 1 0 100%;
   }
 
-  .cd-footer__section--social {
-    flex: 1 0 100%;
-  }
-
-  .cd-footer__section--mandate {
-    flex: 1 0 100%;
-  }
-
-  .cd-footer__section--copyright {
-    flex: 1 0 100%;
+  .cd-footer__section--ocha-services {
+    text-align: start;
   }
 }
 

@@ -63,10 +63,6 @@ a:focus {
   color: var(--brand-primary);
 }
 
-ol {
-  list-style: decimal;
-}
-
 ol,
 dl {
   margin-bottom: 1rem;
@@ -240,4 +236,14 @@ img {
   font-size: 15px;
   font-weight: 700;
   line-height: 1.3;
+}
+
+/**
+ * Code blocks in sidebars
+ */
+.cd-layout__sidebar code {
+  padding: .1em .2em;
+  white-space: nowrap;
+  border-radius: 3px;
+  background: rgba(0,0,0,.15);
 }

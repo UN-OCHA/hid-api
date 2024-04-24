@@ -18,10 +18,6 @@
   line-height: var(--cd-global-header-height);
 }
 
-.cd-language-switcher__btn:focus {
-  outline: var(--cd-outline-size) solid var(--brand-primary--light);
-}
-
 @media (min-width: 768px) {
   .cd-language-switcher__btn {
     padding-inline: 1.5rem;
@@ -82,7 +78,7 @@
  * rules to a smaller breakpoint should your website need it. Do NOT adjust
  * here, only in the sub-theme.
  *
- * @see common_design_subtheme/components/cd-language-switcher/cd-language-switcher.css
+ * @see common_design_subtheme/libraries/cd-language-switcher/cd-language-switcher.css
  */
 @media (min-width: 1024px) {
   /**

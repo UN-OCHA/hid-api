@@ -4,7 +4,7 @@
  * Replace images with your site logo.
  */
 
-/* Wrap the logo in h1 if it's the main heading for the page (e.g. on homepage). */
+/* Logo is wrapped in H1 since it serves as top-level of outline. */
 .cd-site-header h1 {
   margin: 0;
 }
@@ -12,10 +12,16 @@
 .cd-site-logo {
   display: block;
   float: left;
-  width: 52px;
+  width: var(--brand-logo-mobile-width, 52px);
   height: var(--cd-site-header-height);
-  background: url("../../../img/logos/ocha-logo-blue@53x37.png") center no-repeat;
-  background: linear-gradient(transparent, transparent), url("../../../img/logos/ocha-logo-blue.svg") center no-repeat;
+  background:
+    linear-gradient(transparent, transparent),
+    url(../../../img/logos/ocha-logo-blue.svg) center no-repeat;
+}
+
+/* Mobile: Hides logo set in info.yml in favour of background image. */
+.cd-site-logo img {
+  display: none;
 }
 
 /**
@@ -28,26 +34,23 @@
   z-index: var(--cd-z-default);
 }
 
-/* Larger format logo once space permits */
+/**
+ * Desktop logo
+ *
+ * Unhide logo set in info.yml once space permits.
+ */
 @media (min-width: 768px) {
   .cd-site-logo {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
-    width: var(--brand-logo-width); /* adjust within sub-theme's brand.css */
+    width: var(--brand-logo-desktop-width); /* adjust within sub-theme's brand.css */
     padding-top: 0;
     background: none;
   }
-}
 
-/* Hides logo set in info.yml on mobile, in favour of background image. */
-.cd-site-logo img {
-  display: none;
-}
-
-/* Displays logo set in info.yml on larger viewports. */
-@media (min-width: 768px) {
+  /* Displays logo set in info.yml on larger viewports. */
   .cd-site-logo img {
     display: block;
     width: 100%;

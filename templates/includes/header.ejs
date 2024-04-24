@@ -9,17 +9,18 @@
     <script>document.documentElement.className = document.documentElement.className.replace('no-js', typeof document.addEventListener !== 'undefined' ? 'js' : 'no-js');</script>
     <link rel="shortcut icon" href="/assets/img/favicon.ico" type="image/vnd.microsoft.icon">
     <link rel="stylesheet" href="/assets/css/hid.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,400;1,700&amp;display=swap" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <% /* Not using preload because our markup pattern required CSP to specify unsafe-inline */ %>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:ital,wght@0,300%3B0,400%3B0,500%3B0,700%3B0,900%3B1,400%3B1,700&amp;display=swap">
 
-<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-NZ6C3RP');</script>
-<!-- End Google Tag Manager -->
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-NZ6C3RP');</script>
+    <!-- End Google Tag Manager -->
   </head>
   <body>
     <!-- Google Tag Manager (noscript) -->
@@ -30,7 +31,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       Skip to main content
     </a>
     <div class="cd-page-layout-container"><!-- intentionally unclosed! -->
-      <header class="cd-header" role="banner">
+      <header class="cd-header" aria-label="Site header">
         <div class="cd-global-header">
           <div class="cd-container cd-global-header__inner">
             <div id="cd-global-header__actions" class="cd-global-header__actions">
@@ -41,7 +42,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 </div>
               </div>
 
-              <nav role="navigation" class="block block-menu navigation menu--account cd-global-header__user-menu">
+              <nav aria-label="User menu" class="block block-menu navigation menu--account cd-global-header__user-menu">
                 <h2 class="visually-hidden">User menu</h2>
                 <ul class="menu cd-user-menu" data-cd-menu-level="0">
                   <% if (locals.user) { %>

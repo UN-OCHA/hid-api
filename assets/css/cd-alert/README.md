@@ -1,31 +1,30 @@
 # Alert
 
 ## Purpose and Usage
+
 Provides feedback messages for user actions and site-wide notifications.
 
-- title
+- title (visually-hidden)
 - message
 - SVG icon
 
-All elements are optional.
+All elements are optional. Title and message are width-restricted using `cd-max-width`.
 
-Title and message are width-restricted using `cd-max-width` on said elements.
+Message can contain `<p>` or `<ul>` elements. If there is one message it outputs the markup, but will automatically switch to a `<ul>` if there is an array of messages.
 
-Message can contain `<p>` and `<ul>` elements.
+- If the alert is an error message, the wrapping div should have `role="alert"` which implicitly sets `aria-live="assertive"`.
+- If the alert is a warning or status message, the wrapping div should have `role="status"` which implicitly sets `aria-live="polite"`.
+- In both cases do NOT set the `aria-live` yourself. Let the `role` do the work.
 
-If the alert is a warning or an error message, the wrapping div should have role='alert' which is equivalent to 
-aria-live='assertive'.
-If the alert is a status message, the wrapping div should have aria-live='polite'.
 
 ## Caveats
-Uses SVG icon as an element in the markup, not a background image.
+
+Uses SVG icon as an element in the markup, not a background image. This allows dynamic coloring by way of the modifier classes listed in the next section:
 
 ### Variants
 
 ```
-.cd-alert // default
 .cd-alert--error
 .cd-alert--warning
 .cd-alert--status
-
 ```
