@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.3.7](https://github.com/UN-OCHA/hid-api/compare/v5.3.6...v5.3.7) (2024-05-02)
+
+### Bug Fixes
+
+* **a11y:** replace redundant role with aria-label on main tags ([297acc7](https://github.com/UN-OCHA/hid-api/commit/297acc7f806b61613b7699c97159268487f8f683))
+* **a11y:** update landmark roles with labels ([4a492d1](https://github.com/UN-OCHA/hid-api/commit/4a492d1374e4a96e6827e001141ee9056487f85e))
+* **security:** new GTM hash for CSP ([aeb1e07](https://github.com/UN-OCHA/hid-api/commit/aeb1e07d027a040f96412260b5d29f7f0aabb984))
+* **CD:** compile CSS ([b1961ac](https://github.com/UN-OCHA/hid-api/commit/b1961ac204c673695680ac459c2db0c03c722b0d))
+* **CD:** update CD Alert markup ([ba43e82](https://github.com/UN-OCHA/hid-api/commit/ba43e82872e36ab4809ddad790f5b245454413c9))
+* **CD:** update OCHA logos ([acb00c3](https://github.com/UN-OCHA/hid-api/commit/acb00c39e3a742569e49279b29272a241d7467d7))
+* **CD:** update OCHA Services to be in footer ([4470492](https://github.com/UN-OCHA/hid-api/commit/4470492ad260d617886f65a11fee95cd2326168e))
+* **CD:** update SVG sprite ([ba6bf38](https://github.com/UN-OCHA/hid-api/commit/ba6bf388631020d02fd1b6b2d104530929b70d6f))
+* **CD:** update copyright ([0424d34](https://github.com/UN-OCHA/hid-api/commit/0424d348d78fe455841bd5e17578c09e6b949c47))
+* **CD:** update JS for HID ([eac1738](https://github.com/UN-OCHA/hid-api/commit/eac17382e78e76e9ad9dfa3bb183302e828dd4b8))
+
 ### [5.3.6](https://github.com/UN-OCHA/hid-api/compare/v5.3.5...v5.3.6) (2024-04-04)
 
 ### Bug Fixes

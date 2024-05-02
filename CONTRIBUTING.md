@@ -302,6 +302,10 @@ Once the tagged Release has been created, [create a PR from `dev` to `main`][pr-
 
 ## CD Upgrades
 
+| Audience    |
+| :---------- |
+| Maintainers |
+
 Since HID doesn't use Drupal, a few manual tasks are required to update certain files during CD upgrades.
 
 
