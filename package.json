@@ -1,6 +1,6 @@
 {
   "name": "hid-api",
-  "version": "5.3.6",
+  "version": "5.3.8",
   "description": "Humanitarian ID API+Auth",
   "homepage": "https://about.humanitarian.id",
   "repository": "https://github.com/UN-OCHA/hid-api.git",
@@ -41,7 +41,7 @@
     "bcryptjs": "^2.3.0",
     "blankie": "^5.0.0",
     "cracklib": "^1.1.0",
-    "ejs": "^3.1.7",
+    "ejs": "^3.1.10",
     "email-templates": "^8.0.8",
     "hapi-rate-limit": "^6.0.0",
     "is-html": "^1.1.0",
@@ -88,6 +88,7 @@
     "postcss-cli": "^10.1.0",
     "postcss-csso": "^6.0.1",
     "postcss-import": "^15.1.0",
+    "postcss-nesting": "^12.1.1",
     "standard-version": "^9.3.2",
     "swagger-inline": "^3.0.4"
   },

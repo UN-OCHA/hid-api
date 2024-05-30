@@ -13,11 +13,11 @@
 .cd-global-header__inner {
   display: flex;
   flex-flow: row nowrap;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 8px;
 }
 
-.cd-global-header__inner .cd-ocha {
+.cd-global-header__inner #cd-ocha-services-container {
   order: -1;
 }
 

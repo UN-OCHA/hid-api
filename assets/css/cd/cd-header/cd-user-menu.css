@@ -1,8 +1,13 @@
 /**
- * Common Design: User Menu
+ * Common Design: User Menus
+ *
+ * User menus are the dropdowns in the Global Header, such as Help or Account.
+ * Site configuration can affect how many of them are displayed, but they all
+ * get styled in a similar fashion.
  */
 
 .cd-user-menu {
+  position: relative;
   margin: 0;
   padding-inline-start: 0;
   list-style: none;
@@ -21,11 +26,12 @@
  *
  * @TODO: add proper classes to make it more robust.
  */
+.cd-global-header__user-menu svg + span,
 .cd-user-menu svg + span {
   margin-inline-start: 10px;
 }
 
-/* Other icons, for example user or help icon. */
+/* Other icons, for example Help/Account icons. */
 .cd-user-menu .cd-icon:not(.cd-icon--arrow-down) {
   width: 14px;
   height: 14px;
@@ -33,12 +39,11 @@
 
 .cd-user-menu li {
   position: relative;
-  float: left;
 }
 
 .cd-user-menu__item,
-.cd-user-menu li a,
-.cd-user-menu li button {
+.cd-user-menu a,
+.cd-user-menu button {
   position: relative;
   display: flex;
   align-items: center;
@@ -53,17 +58,17 @@
 }
 
 .cd-user-menu__item:hover,
-.cd-user-menu li a:hover,
-.cd-user-menu li button:hover,
+.cd-user-menu a:hover,
+.cd-user-menu button:hover,
 .cd-user-menu__item:focus,
-.cd-user-menu li a:focus,
-.cd-user-menu li button:focus {
+.cd-user-menu a:focus,
+.cd-user-menu button:focus {
   text-decoration: underline;
 }
 
 .cd-user-menu__item .cd-user-menu__btn-label,
-.cd-user-menu li a .cd-user-menu__btn-label,
-.cd-user-menu li button .cd-user-menu__btn-label {
+.cd-user-menu a .cd-user-menu__btn-label,
+.cd-user-menu button .cd-user-menu__btn-label {
   position: relative;
   display: block;
   overflow: hidden;
@@ -73,8 +78,8 @@
 
 @media (min-width: 768px) {
   .cd-user-menu__item .cd-user-menu__btn-label,
-  .cd-user-menu li a .cd-user-menu__btn-label,
-  .cd-user-menu li button .cd-user-menu__btn-label {
+  .cd-user-menu a .cd-user-menu__btn-label,
+  .cd-user-menu button .cd-user-menu__btn-label {
     max-width: unset;
   }
 }

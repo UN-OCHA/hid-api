@@ -4,91 +4,62 @@
 
 .cd-alert {
   --cd-flow-space: 0.5rem;
+  --cd-alert-color: var(--cd-blue--bright);
+  --cd-alert-color-bg: var(--cd-white);
 
   margin: 1rem 0 2rem;
   padding: 1rem;
   color: var(--cd-grey--dark);
-  border: 1px solid var(--cd-blue--bright);
+  border: 1px solid var(--cd-alert-color);
   border-radius: 0.25rem;
-  background-color: var(--cd-white);
-  box-shadow: -8px 0 0 var(--cd-blue--bright);
+  background-color: var(--cd-alert-color-bg);
+  box-shadow: -8px 0 0 var(--cd-alert-color);
 }
 
-.cd-alert > div {
+.cd-alert > div[role] {
   display: flex;
   align-items: flex-start;
-}
-
-.cd-alert__title {
-  font-weight: 700;
+  gap: 1rem;
 }
 
 .cd-alert svg {
   flex: 0 0 1.5rem;
   width: 1.5rem;
   height: 1.5rem;
-  fill: var(--cd-blue--bright);
+  fill: var(--cd-alert-color);
 }
 
-[dir="ltr"] .cd-alert svg {
-  margin-right: 1rem;
+.cd-alert__message p {
+  margin: 0;
 }
 
-[dir="rtl"] .cd-alert svg {
-  margin-left: 1rem;
-}
-
-.cd-alert a,
-.cd-alert a:hover,
-.cd-alert a:focus {
+.cd-alert__message a,
+.cd-alert__message a:hover,
+.cd-alert__message a:focus {
   color: inherit;
 }
 
+/**
+ * Message types
+ *
+ * The "info" type is the default style defined above in the `.cd-alert` rule.
+ * The remaining message types are defined here according to a modifier class.
+ */
+
+/* Error */
 .cd-alert--error {
-  border: 1px solid var(--cd-red);
-  background: var(--cd-red--light);
-  box-shadow: -8px 0 0 var(--cd-red);
+  --cd-alert-color: var(--cd-red);
+  --cd-alert-color-bg: var(--cd-red--light);
 }
 
-.cd-alert--error svg {
-  fill: var(--cd-red);
-}
-
+/* Warning */
 .cd-alert--warning {
-  border: 1px solid var(--cd-orange);
-  background: var(--cd-orange--light);
-  box-shadow: -8px 0 0 var(--cd-orange);
+  --cd-alert-color: var(--cd-orange);
+  --cd-alert-color-bg: var(--cd-orange--light);
 }
 
-.cd-alert--warning svg {
-  fill: var(--cd-orange);
-}
-
+/* Status */
 .cd-alert--status {
-  border: 1px solid var(--cd-green);
-  background: var(--cd-green--light);
-  box-shadow: -8px 0 0 var(--cd-green);
-}
-
-.cd-alert--status svg {
-  fill: var(--cd-green);
-}
-
-.cd-alert__message ul {
-  margin: 0;
-  padding: 0;
-  list-style-type: none;
-}
-
-.cd-alert__message p + ul,
-.cd-alert__message p {
-  margin: 0.5rem 0 0;
-}
-
-.cd-alert__message > ul {
-  margin-top: 0;
-}
-
-.cd-alert__message p:first-child {
-  margin-top: 0;
+  --cd-alert-color: var(--cd-green);
+  --cd-alert-color-bg: var(--cd-green--light);
 }

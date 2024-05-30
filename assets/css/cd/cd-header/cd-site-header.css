@@ -24,12 +24,12 @@ now that we layout with flex. */
 }
 
 .cd-site-header__inner .region-header-logo {
-  flex: 0 0 52px;
+  flex: 0 0 var(--brand-logo-mobile-width);
 }
 
 @media (min-width: 768px) {
   .cd-site-header__inner .region-header-logo {
-    flex: 0 0 var(--brand-logo-width);
+    flex: 0 0 var(--brand-logo-desktop-width);
   }
 }
 
@@ -55,21 +55,26 @@ now that we layout with flex. */
 }
 
 .cd-site-header__nav-holder nav > ul > li,
-.cd-site-header__nav-holder nav > ul > .cd-nav__item, {
+.cd-site-header__nav-holder nav > ul > .cd-nav__item {
   flex: 1 0 100%;
 }
 
 @media (min-width: 1024px) {
   .cd-site-header__nav-holder nav > ul > li,
-  .cd-site-header__nav-holder nav > ul > .cd-nav__item, {
+  .cd-site-header__nav-holder nav > ul > .cd-nav__item {
     flex: 1 1 auto;
+  }
+
+  .cd-site-header__nav-holder nav > ul > li:last-child,
+  .cd-site-header__nav-holder nav > ul > .cd-nav__item:last-child {
+    flex: 0 1 auto;
   }
 }
 
 /**
- * No-JS styles
+ * JS-disabled styles
  *
- * In the even JS doesn't execute at all, these styles will apply. In cases
+ * In the event JS doesn't execute at all, these styles will apply. In cases
  * JS fails to load, or times out, these styles will NOT apply, because our
  * inline script will have taken this classname off the <html> element.
  */
@@ -89,7 +94,7 @@ now that we layout with flex. */
 }
 
 .no-js .cd-site-header__nav-holder nav > ul > li,
-.no-js .cd-site-header__nav-holder nav > ul > .cd-nav__item, {
+.no-js .cd-site-header__nav-holder nav > ul > .cd-nav__item {
   float: left;
   max-width: unset;
 }
