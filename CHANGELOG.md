@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.3.12](https://github.com/UN-OCHA/hid-api/compare/v5.3.11...v5.3.12) (2024-10-17)
+
 ### [5.3.11](https://github.com/UN-OCHA/hid-api/compare/v5.3.10...v5.3.11) (2024-08-22)
 
 ### [5.3.10](https://github.com/UN-OCHA/hid-api/compare/v5.3.9...v5.3.10) (2024-07-25)
