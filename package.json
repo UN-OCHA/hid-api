@@ -73,7 +73,7 @@
     "axios": "^1.6.0",
     "diff": ">=3.5.0",
     "dot-prop": ">=4.2.1",
-    "ejs-lint": "^1.2.2",
+    "ejs-lint": "^2.0.1",
     "eslint": "^8.37.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-standard": "^17.0.0",
@@ -93,8 +93,8 @@
     "swagger-inline": "^3.0.4"
   },
   "engines": {
-    "node": "^18.20.4",
-    "npm": "^10.7.0"
+    "node": "^20.18.1",
+    "npm": "^10.8.2"
   },
   "//": "To integrate with our release process, we instruct standard-version to skip creation of git tags, which we manage on GitHub.",
   "standard-version": {
