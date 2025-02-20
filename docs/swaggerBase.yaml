@@ -1,7 +1,7 @@
 openapi: 3.0.3
 x-api-id: hid-api
 info:
-  version: 5.3.16
+  version: 5.3.17
   title: HID API
   license:
     name: Apache-2.0
