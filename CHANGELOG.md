@@ -10,7 +10,6 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [5.3.17](https://github.com/UN-OCHA/hid-api/compare/v5.3.16...v5.3.17) (2025-02-20)
 
-
 ### Bug Fixes
 
 * update mongodb config ([da80032](https://github.com/UN-OCHA/hid-api/commit/da800323f354056f80e810fb2d26fe7410154a4f))
