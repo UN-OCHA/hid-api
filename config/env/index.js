@@ -50,10 +50,7 @@ const config = {
       migrate: 'create',
       uri: databaseUri,
       options: {
-        keepAlive: 'true',
         connectTimeoutMS: 60000,
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
       },
     },
     models: {
