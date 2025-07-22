@@ -3,6 +3,10 @@
 [![Status](https://github.com/UN-OCHA/hid-api/actions/workflows/checks.yml/badge.svg)](https://github.com/UN-OCHA/hid-api/actions/workflows/checks.yml)
 [![Create image](https://github.com/UN-OCHA/hid-api/actions/workflows/build.yml/badge.svg)](https://github.com/UN-OCHA/hid-api/actions/workflows/build.yml)
 
+## Deprecation Notice
+
+After careful review, the Humanitarian ID project will be **officially decommissioned on 31 December 2025**. All developers and site owners currently using Humanitarian ID are advised to **transition to alternative authentication methods** as soon as possible.
+
 ## Installation / Setup
 
 We have a separate [`hid-stack` repo][hid-stack-install] with instructions for running HID locally. Please follow those instructions. You can't run HID locally without the stack.
