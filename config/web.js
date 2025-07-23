@@ -104,8 +104,8 @@ const config = {
           // Adopt our server-side cache defined in top-level `options`.
           cache: 'session',
 
-          // 1-week sessions
-          expiresIn: 7 * 24 * 60 * 60 * 1000,
+          // 1-day sessions
+          expiresIn: 24 * 60 * 60 * 1000,
         },
 
         // Force use of backend storage.
