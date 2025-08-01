@@ -427,7 +427,7 @@ module.exports = {
       return reply.view('password', {
         alert: {
           type: 'status',
-          message: `The request to change your password has been received. If ${request.payload.email} exists in our system you will receive a link to reset your password. You may need to check your spam folder if the email does not arrive.`,
+          message: `The request to change your password has been received. If your email exists in our system you will receive a link to reset your password. You may need to check your spam folder if the email does not arrive.`,
         },
         query: request.query,
         requestUrl,
