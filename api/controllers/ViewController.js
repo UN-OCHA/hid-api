@@ -4,7 +4,6 @@
  */
 const Boom = require('@hapi/boom');
 const Hoek = require('@hapi/hoek');
-const Recaptcha = require('recaptcha2');
 const Client = require('../models/Client');
 const User = require('../models/User');
 const EmailService = require('../services/EmailService');
@@ -18,16 +17,12 @@ const { logger } = config;
 
 function _getRegisterLink(args) {
   // Registrations disabled. No register page link.
-  return '/';
-
-  /*
   const params = HelperService.getOauthParams(args);
-  let registerLink = '/register';
+  let registerLink = '/';
   if (params) {
     registerLink += `?${params}`;
   }
   return registerLink;
-  */
 }
 
 function _getPasswordLink(args) {
@@ -221,6 +216,7 @@ module.exports = {
   },
 
   register(request, reply) {
+    // Early return, no registration allowed.
     return reply.view('login', {
       alert: {
         type: 'error',
@@ -231,7 +227,6 @@ module.exports = {
   },
 
   async registerPost(request, reply) {
-
     // Early return, no registration allowed.
     return reply.view('login', {
       alert: {
