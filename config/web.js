@@ -130,7 +130,6 @@ const config = {
             '/',
             '/login',
             '/oauth/authorize',
-            '/register',
             '/verify',
             '/password',
             '/new-password',

@@ -17,6 +17,9 @@ const config = require('../../config/env');
 const { logger } = config;
 
 function _getRegisterLink(args) {
+  // Registrations disabled. No register page link.
+  return '/';
+
   const params = HelperService.getOauthParams(args);
   let registerLink = '/register';
   if (params) {
@@ -216,6 +219,17 @@ module.exports = {
   },
 
   register(request, reply) {
+
+    return reply.view('login', {
+      alert: {
+        type: 'error',
+        message: 'No new registrations are accepted.',
+      },
+      query: request.query,
+      registerLink,
+      passwordLink,
+    });
+
     const requestUrl = _buildRequestUrl(request, 'verify');
     return reply.view('register', {
       title: 'Register a Humanitarian ID account',
@@ -228,6 +242,18 @@ module.exports = {
   },
 
   async registerPost(request, reply) {
+
+    // Early return, no registration allowed.
+    return reply.view('login', {
+      alert: {
+        type: 'error',
+        message: 'No new registrations are accepted.',
+      },
+      query: request.query,
+      registerLink,
+      passwordLink,
+    });
+
     // Check recaptcha
     const recaptcha = new Recaptcha({
       siteKey: process.env.RECAPTCHA_PUBLIC_KEY,
