@@ -20,21 +20,23 @@ function _getRegisterLink(args) {
   // Registrations disabled. No register page link.
   return '/';
 
+  /*
   const params = HelperService.getOauthParams(args);
   let registerLink = '/register';
   if (params) {
     registerLink += `?${params}`;
   }
   return registerLink;
+  */
 }
 
 function _getPasswordLink(args) {
   const params = HelperService.getOauthParams(args);
-  let registerLink = '/password';
+  let passwordLink = '/password';
   if (params) {
-    registerLink += `?${params}`;
+    passwordLink += `?${params}`;
   }
-  return registerLink;
+  return passwordLink;
 }
 
 function _buildRequestUrl(request, url) {
@@ -219,25 +221,12 @@ module.exports = {
   },
 
   register(request, reply) {
-
     return reply.view('login', {
       alert: {
         type: 'error',
         message: 'No new registrations are accepted.',
       },
       query: request.query,
-      registerLink,
-      passwordLink,
-    });
-
-    const requestUrl = _buildRequestUrl(request, 'verify');
-    return reply.view('register', {
-      title: 'Register a Humanitarian ID account',
-      formEmail: '',
-      formGivenName: '',
-      formFamilyName: '',
-      requestUrl,
-      recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY,
     });
   },
 
@@ -250,117 +239,7 @@ module.exports = {
         message: 'No new registrations are accepted.',
       },
       query: request.query,
-      registerLink,
-      passwordLink,
     });
-
-    // Check recaptcha
-    const recaptcha = new Recaptcha({
-      siteKey: process.env.RECAPTCHA_PUBLIC_KEY,
-      secretKey: process.env.RECAPTCHA_PRIVATE_KEY,
-    });
-    const registerLink = _getRegisterLink(request.payload);
-    const passwordLink = _getPasswordLink(request.payload);
-    let requestUrl = _buildRequestUrl(request, 'verify');
-
-    // Validate the visitor's response to reCAPTCHA challenge.
-    try {
-      await recaptcha.validate(request.payload['g-recaptcha-response']);
-    } catch (err) {
-      const errorType = 'RECAPTCHA';
-
-      logger.warn(
-        '[ViewController->registerPost] Failure during reCAPTCHA validation.',
-        {
-          request,
-          security: true,
-          fail: true,
-          stack_trace: err.stack,
-          error_type: errorType,
-        },
-      );
-
-      return reply.view('register', {
-        alert: {
-          type: 'error',
-          message: `
-            <p>Our system detected your registration attempt as spam. We apologize for the inconvenience.</p>
-            <p>For more information on why this problem may be occurring, <a href="https://about.humanitarian.id/faqs">please see our FAQs</a></p>
-          `,
-          error_type: errorType,
-        },
-        formEmail: request.payload.email,
-        formGivenName: request.payload.given_name,
-        formFamilyName: request.payload.family_name,
-        query: request.query,
-        registerLink,
-        passwordLink,
-        requestUrl,
-        recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY,
-      });
-    }
-
-    // reCAPTCHA validation was successful. Proceed.
-    try {
-      // Attempt to create a new HID account.
-      await UserController.create(request);
-
-      // Render login form with success message.
-      return reply.view('login', {
-        alert: {
-          type: 'status',
-          message: 'Thank you for creating an account. You will soon receive a confirmation email to confirm your account.',
-        },
-        query: request.query,
-        registerLink,
-        passwordLink,
-      });
-    } catch (err) {
-      // Check if we have an error worth telling the user about.
-      const errorMessage = err.output && err.output.payload && err.output.payload.message;
-      let userMessage = 'There is an error in your registration. You may have already registered. If so, simply reset your password at https://auth.humanitarian.id/password.';
-
-      // If the error says the email already exists, we'll redirect to login.
-      if (errorMessage && errorMessage.indexOf('is already registered') !== -1) {
-        userMessage = 'That email address is already registered. Please login, or if you\'ve forgotten your password, reset using the link below.';
-
-        return reply.view('login', {
-          alert: {
-            type: 'error',
-            message: userMessage,
-          },
-          query: request.query,
-          registerLink,
-          passwordLink,
-        });
-      }
-
-      // Check the error for a few special cases to provide better user feedback.
-      // All of these will render the registration form.
-      if (errorMessage && errorMessage.indexOf('password does not meet') !== -1) {
-        userMessage = 'Your password was not strong enough. Please check the requirements and try again.';
-      }
-      if (errorMessage && errorMessage.indexOf('fields do not match') !== -1) {
-        userMessage = 'Your password fields did not match. Please try again and carefully confirm the password.';
-      }
-
-      // Add a domain from the allow-list.
-      requestUrl = _buildRequestUrl(request, 'register');
-
-      // Render registration form.
-      return reply.view('register', {
-        alert: {
-          type: 'warning',
-          message: userMessage,
-        },
-        query: request.query,
-        formEmail: request.payload.email,
-        formGivenName: request.payload.given_name,
-        formFamilyName: request.payload.family_name,
-        requestUrl,
-        recaptcha_site_key: process.env.RECAPTCHA_PUBLIC_KEY,
-      });
-    }
   },
 
   async verify(request, reply) {
