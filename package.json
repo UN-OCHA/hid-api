@@ -52,7 +52,7 @@
     "mongoose": "^8.9.5",
     "mongoose-validator": "^2.1.0",
     "node-fetch": ">=3.2.10",
-    "nodemailer": "^6.9.9",
+    "nodemailer": "^7.0.7",
     "oauth2orize": "UN-OCHA/oauth2orize",
     "oauth2orize-openid": "^0.4.0",
     "qrcode": "^1.5.0",
