@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.4.3](https://github.com/UN-OCHA/hid-api/compare/v5.4.2...v5.4.3) (2025-10-13)
+
+### Chores
+
+- **chore:** Empty commit to ensure we build with the new node image. by @cafuego in https://github.com/UN-OCHA/hid-api/pull/469
+- **security:** Update various package via `npm audit`. by @cafuego in https://github.com/UN-OCHA/hid-api/pull/470
+- **security:** Run npm audit fix to solve the easy problems.  by @cafuego in https://github.com/UN-OCHA/hid-api/pull/476
+
+### [5.4.2](https://github.com/UN-OCHA/hid-api/compare/v5.4.1...v5.4.2) (2025-09-04)
+
+### Chores
+
+- **security:** Update various package via `npm audit`. by @cafuego in https://github.com/UN-OCHA/hid-api/pull/470
+
+### [5.4.1](https://github.com/UN-OCHA/hid-api/compare/v5.4.0...v5.4.1) (2025-08-07)
+
+### Chores
+
+- **security:** Do not echo the entered value back to the user. by @cafuego in https://github.com/UN-OCHA/hid-api/pull/467
+
+### [5.4.0](https://github.com/UN-OCHA/hid-api/compare/v5.3.19...v5.4.0) (2025-07-30)
+
+### Chores
+
+- **security:** bump tar-fs from 3.0.8 to 3.0.9 by @dependabot[bot] in https://github.com/UN-OCHA/hid-api/pull/462
+- **chore:** edit decommission message as per HID-2433 by @joempora in https://github.com/UN-OCHA/hid-api/pull/463
+- **chore:** Reduce valkey storage use by reducing the cookie ttl. by @cafuego in https://github.com/UN-OCHA/hid-api/pull/465
+
+### [5.3.19](https://github.com/UN-OCHA/hid-api/compare/v5.3.18...v5.3.19) (2025-04-17)
+
+### Chores
+
+- **chore:** decommission notice
+
 ### [5.3.18](https://github.com/UN-OCHA/hid-api/compare/v5.3.17...v5.3.18) (2025-04-03)
 
 ### Chores
