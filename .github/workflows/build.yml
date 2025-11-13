@@ -8,6 +8,7 @@ on:
       - HID-*
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -16,7 +17,7 @@ jobs:
 
     - name: Checkout code
       id: checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
