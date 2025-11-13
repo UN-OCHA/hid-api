@@ -4,61 +4,25 @@
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
 <main aria-label="Page content" id="main-content" class=" cd-layout cd-container">
+  <%- include('includes/alert') %>
   <div class="cd-layout__content [ cd-flow ]">
     <h1 class="cd-page-title page-header__heading">Register a Humanitarian ID account</h1>
 
-    <%- include('includes/alert') %>
+    <div class="cd-alert">
+      <div role="status" aria-label="Info message">
+        <svg class="cd-icon cd-icon--about" aria-hidden="true" focusable="false" width="16" height="16">
+          <use xlink:href="#cd-icon--about">
+            <symbol viewBox="0 0 42 42" id="cd-icon--about" xmlns="http://www.w3.org/2000/svg">
+              <path d="M38 0H4a4 4 0 0 0-4 4v34a4 4 0 0 0 4 4h34a4 4 0 0 0 4-4V4a4 4 0 0 0-4-4ZM24 35h-4a2 2 0 0 1-2-2V18h4a2 2 0 0 1 2 2Zm-3-22a3 3 0 1 1 3-3 3 3 0 0 1-3 3Z"></path>
+            </symbol>
+          </use>
+        </svg>
+        <div class="cd-alert__container cd-max-width">
+          After careful review, the Humanitarian ID project will be decommissioned as of 31 December 2025. New account registrations are disabled.
+        </div>
+      </div>
+    </div>
 
-    <form id="passwordForm" name="register" action="/register" method="POST" class="[ cd-flow ]">
-      <div class="form-field">
-        <label for="email" translate>Email</label>
-        <input type="email" name="email" id="email" value="<%= formEmail %>" placeholder="you@example.com" required>
-      </div>
-      <div class="form-field">
-        <label for="given_name">First Name</label>
-        <input type="text" name="given_name" id="given_name" value="<%= formGivenName %>" placeholder="Your first name" required>
-      </div>
-      <div class="form-field">
-        <label for="family_name">Last Name</label>
-        <input type="text" name="family_name" id="family_name" value="<%= formFamilyName %>" placeholder="Your last name" required>
-      </div>
-      <div class="form-field">
-        <label for="password">Password</label>
-        <input
-          type="password"
-          name="password"
-          id="password"
-          autocomplete="off"
-          required
-          minlength="12"
-          pattern="<%- include('includes/password-regex') %>"
-          title="See password requirements below.">
-        <button type="button" class="password__viz-toggle viz-toggle viz-toggle--see">
-          <span class="visually-hidden">Toggle password visibility</span>
-        </button>
-      </div>
-      <div class="form-field">
-        <label for="confirm_password">Confirm password</label>
-        <input
-          type="password"
-          name="confirm_password"
-          id="confirm_password"
-          autocomplete="off"
-          required
-          minlength="12"
-          pattern="<%- include('includes/password-regex') %>"
-          title="See password requirements below.">
-        <button type="button" class="password__viz-toggle viz-toggle viz-toggle--see">
-          <span class="visually-hidden">Toggle password visibility</span>
-        </button>
-      </div>
-      <div class="form-field">
-        <%- include('includes/password-requirements') %>
-      </div>
-      <div class="g-recaptcha" data-sitekey="<%= recaptcha_site_key %>"></div>
-      <input type="hidden" name="crumb" value="<%= crumb %>" />
-      <button type="submit" class="cd-button cd-button--bold cd-button--wide cd-button--uppercase t-btn--register">Register</button>
-    </form>
   </div>
 </main>
 

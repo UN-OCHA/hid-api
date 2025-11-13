@@ -26,7 +26,8 @@ module.exports = [
    * Public-facing pages
    *
    * None of these routes require a session. Account setup/recovery actions are
-   * all included here: registration, verify, password reset, API docs, etc.
+   * all included here: verify, password reset, API docs, etc.
+   * Registration is disabled - https://humanitarian.atlassian.net/browse/HID-2438
    */
   {
     method: 'GET',
@@ -46,6 +47,7 @@ module.exports = [
     },
   },
 
+  /*
   {
     method: 'GET',
     path: '/register',
@@ -63,6 +65,7 @@ module.exports = [
       auth: false,
     },
   },
+  */
 
   {
     method: 'GET',
